@@ -1,1 +1,1 @@
-from . import geothermal
+from . import ground_heat_exchangers
