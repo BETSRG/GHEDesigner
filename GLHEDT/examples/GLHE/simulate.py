@@ -126,8 +126,8 @@ def main():
     r_data = r_unimodal[key]
 
     # Configure the database data for input to the goethermal GFunction object
-    geothermal_g_input = \
-        GLHEDT.geothermal.GFunction.configure_database_file_for_usage(r_data)
+    geothermal_g_input = gfdb.Management.\
+        application.GFunction.configure_database_file_for_usage(r_data)
 
     # Initialize the GFunction object
     GFunction = gfdb.Management.application.GFunction(**geothermal_g_input)
