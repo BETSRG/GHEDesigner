@@ -1,10 +1,10 @@
 # Jack C. Cook
 # Thursday, September 16, 2021
 
-import PLAT
+import GLHEDT.PLAT as PLAT
 import matplotlib.pyplot as plt
 import pandas as pd
-import PLAT.pygfunction as gt
+import GLHEDT.PLAT.pygfunction as gt
 import gFunctionDatabase as gfdb
 import GLHEDT
 
