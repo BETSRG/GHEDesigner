@@ -6,7 +6,6 @@ import gFunctionDatabase.Management.application
 import scipy.interpolate
 import scipy.optimize
 
-import GLHEDT.geothermal
 import PLAT.borehole_heat_exchangers
 import numpy as np
 
@@ -63,7 +62,7 @@ class HybridGLHE:
 
         return T_excess
 
-    def size(self, max_H, min_H, max_EFT_allowable, min_EFT_allowable, B=None) \
+    def size(self, B, max_H, min_H, max_EFT_allowable, min_EFT_allowable) \
             -> None:
         # Size the ground heat exchanger
 
