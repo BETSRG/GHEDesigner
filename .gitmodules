@@ -1,1 +1,4 @@
 
+[submodule "GLHEDT/PLAT"]
+	path = GLHEDT/PLAT
+	url = https://github.com/j-c-cook/PLAT
