@@ -5,8 +5,8 @@ import warnings
 import gFunctionDatabase.Management.application
 import scipy.interpolate
 import scipy.optimize
+import GLHEDT.PLAT as PLAT
 
-import PLAT.borehole_heat_exchangers
 import numpy as np
 
 
