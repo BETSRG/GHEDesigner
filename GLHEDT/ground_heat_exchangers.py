@@ -2,6 +2,7 @@
 # Thursday, September 16, 2021
 import warnings
 
+import gFunctionDatabase.Management.application
 import scipy.interpolate
 import scipy.optimize
 
@@ -11,10 +12,10 @@ import numpy as np
 
 
 class HybridGLHE:
-    def __init__(self, bhe: PLAT.borehole_heat_exchangers.SingleUTube,
+    def __init__(self, bhe: PLAT.borehole_heat_exchangers,
                  radial_numerical: PLAT.radial_numerical_borehole.RadialNumericalBH,
                  hybrid_load: PLAT.ground_loads.HybridLoad,
-                 GFunction: GLHEDT.geothermal.GFunction):
+                 GFunction: gFunctionDatabase.Management.application.GFunction):
         # borehole heat exchanger object
         self.bhe = bhe
         # sts radial numerical object
@@ -62,7 +63,8 @@ class HybridGLHE:
 
         return T_excess
 
-    def size(self, max_H, min_H, max_EFT_allowable, min_EFT_allowable, B=None) -> None:
+    def size(self, max_H, min_H, max_EFT_allowable, min_EFT_allowable, B=None) \
+            -> None:
         # Size the ground heat exchanger
 
         def local_objective(H):
@@ -90,12 +92,12 @@ class HybridGLHE:
 
         return
 
-    def simulate(self, B=None):
-        if B is None:
-            B = self.GFunction.B
-        else:
-            B = B
+    def simulate(self, B):
         B_over_H = B / self.bhe.b.H
+        # Solve for equivalent single U-tube
+        single_u_tube = PLAT.equivalance.compute_equivalent(self.bhe)
+        # Update short time step object with equivalent single u-tube
+        self.radial_numerical.calc_sts_g_functions(single_u_tube)
         # interpolate for the Long time step g-function
         g_function, rb_value, D_value, H_eq = \
             self.GFunction.g_function_interpolation(B_over_H)
