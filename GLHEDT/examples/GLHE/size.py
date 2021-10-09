@@ -42,20 +42,24 @@ def main():
 
     # Thermal properties
     # ------------------
-    pipe = PLAT.media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp=rhoCp_p)
-    soil = PLAT.media.ThermalProperty(k=k_s, rhoCp=rhoCp_s)
-    grout = PLAT.media.ThermalProperty(k=k_g, rhoCp=rhoCp_g)
+    # Pipe
+    pipe = PLAT.media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    # Soil
+    ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
+    soil = PLAT.media.Soil(k_s, rhoCp_s, ugt)
+    # Grout
+    grout = PLAT.media.ThermalProperty(k_g, rhoCp_g)
 
     # Number in the x and y
     # ---------------------
-    N = 13
+    N = 12
     M = 13
     configuration = 'rectangle'
     nbh = N * M
 
     # Inputs related to fluid
     # -----------------------
-    V_flow_system = 15.  # System volumetric flow rate (L/s)
+    V_flow_system = 31.2  # System volumetric flow rate (L/s)
     mixer = 'MEG'  # Ethylene glycol mixed with water
     percent = 0.  # Percentage of ethylene glycol added in
 
@@ -63,16 +67,17 @@ def main():
     # --------------------------------
     # Simulation start month and end month
     start_month = 1
-    n_years = 10
+    n_years = 20
     end_month = n_years * 12
-    # Initial ground temperature
-    ugt = 18.3  # undisturbed ground temperature in Celsius
     # Maximum and minimum allowable fluid temperatures
     max_EFT_allowable = 35  # degrees Celsius
     min_EFT_allowable = 5  # degrees Celsius
     # Maximum and minimum allowable heights
-    max_Height = 100  # in meters
+    max_Height = 200  # in meters
     min_Height = 60  # in meters
+    sim_params = PLAT.media.SimulationParameters(
+        start_month, end_month, max_EFT_allowable, min_EFT_allowable,
+        max_Height, min_Height)
 
     # Process loads from file
     # -----------------------
@@ -98,7 +103,7 @@ def main():
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
 
     single_u_tube = PLAT.borehole_heat_exchangers.SingleUTube(
-        m_flow_borehole, fluid, borehole, soil, grout, pipe)
+        m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
     # Radial Numerical short time step g-function
     # -------------------------------------------
@@ -107,8 +112,7 @@ def main():
     radial_numerical = \
         PLAT.radial_numerical_borehole.RadialNumericalBH(single_u_tube)
 
-    two_day = 49. * 3600.  # PLAT performs two day hourly simulation
-    radial_numerical.calc_sts_g_functions(single_u_tube, final_time=two_day)
+    radial_numerical.calc_sts_g_functions(single_u_tube)
 
     # Hybrid load
     # -----------
@@ -120,7 +124,7 @@ def main():
 
     hybrid_load = PLAT.ground_loads.HybridLoad(
         hourly_rejection_loads, hourly_extraction_loads, single_u_tube,
-        radial_numerical, start_month, end_month)
+        radial_numerical, sim_params)
 
     # GFunction
     # ---------
@@ -142,12 +146,9 @@ def main():
     # Hybrid GLHE
     # -----------
     # Initialize a HybridGLHE
-    HybridGLHE = GLHEDT.ground_heat_exchangers.HybridGLHE(single_u_tube,
-                                                          radial_numerical,
-                                                          hybrid_load,
-                                                          GFunction)
-    HybridGLHE.size(
-        B, max_Height, min_Height, max_EFT_allowable, min_EFT_allowable)
+    HybridGLHE = GLHEDT.ground_heat_exchangers.HybridGLHE(
+        single_u_tube, radial_numerical, hybrid_load, GFunction, sim_params)
+    HybridGLHE.size(B, max_Height, min_Height)
 
     print('The sized height: {}'.format(single_u_tube.b.H))
 
@@ -157,19 +158,17 @@ def main():
     # Check to see if we need to update the hybrid load
     # --------------------------------------------------
     # Recompute the short-time step using the BHE sized for
-    radial_numerical.calc_sts_g_functions(single_u_tube, final_time=two_day)
+    radial_numerical.calc_sts_g_functions(single_u_tube)
     # Check the error in EFT
     hybrid_load = PLAT.ground_loads.HybridLoad(
         hourly_rejection_loads, hourly_extraction_loads, single_u_tube,
-        radial_numerical, start_month, end_month)
-    HybridGLHE = GLHEDT.ground_heat_exchangers.HybridGLHE(single_u_tube,
-                                                          radial_numerical,
-                                                          hybrid_load,
-                                                          GFunction)
+        radial_numerical, sim_params)
+    HybridGLHE = GLHEDT.ground_heat_exchangers.HybridGLHE(
+        single_u_tube, radial_numerical, hybrid_load, GFunction, sim_params)
     max_HP_EFT, min_HP_EFT = HybridGLHE.simulate(B)
     print('max_HP_EFT: {}\tmin_HP_EFT: {}'.format(max_HP_EFT, min_HP_EFT))
 
-    print('Error in max HP EFT: {}'.
+    print('Error (%) in max HP EFT: {0:.4f}'.
           format((_max_HP_EFT - max_HP_EFT) / max_HP_EFT * 100.))
 
 
