@@ -149,7 +149,7 @@ class TestHybridGLHE(unittest.TestCase):
                 hourly_extraction_loads)
 
     def test_single_u_tube(self):
-        from GLHEDT import ground_heat_exchangers
+        from GLHEDT.ground_heat_exchangers import HybridGLHE
         from GLHEDT import PLAT
 
         # Define a borehole
@@ -169,7 +169,7 @@ class TestHybridGLHE(unittest.TestCase):
             self.hourly_rejection_loads, self.hourly_extraction_loads,
             single_u_tube_eq, radial_numerical, self.sim_params)
 
-        HybridGLHE = ground_heat_exchangers.HybridGLHE(
+        HybridGLHE = HybridGLHE(
             single_u_tube, radial_numerical, hybrid_load, self.GFunction,
             self.sim_params)
 
