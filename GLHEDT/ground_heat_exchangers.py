@@ -197,12 +197,12 @@ class HybridGLHE(GLHEBase):
             load_per_m = 1000 * self.hybrid_load.load[i] / (self.bhe.b.H * nbh)  # to check W/m
             linehour = self.hybrid_load.hour[i]
 
-        def key_if_not(dnary, key, Type='list'):
-            keys = list(dnary.keys())
-            if key in keys:
-                return
-            elif Type is 'list':
-                dnary[key] = []
+        # def key_if_not(dnary, key, Type='list'):
+        #     keys = list(dnary.keys())
+        #     if key in keys:
+        #         return
+        #     elif Type is 'list':
+        #         dnary[key] = []
 
         self.TBHW = TBHW
         self.MFT = MFT
