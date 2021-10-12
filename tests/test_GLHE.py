@@ -3,8 +3,6 @@
 
 import unittest
 
-import GLHEDT.ground_heat_exchangers
-from GLHEDT import PLAT
 import gFunctionDatabase as gfdb
 import pygfunction as gt
 import pandas as pd
@@ -13,6 +11,7 @@ import pandas as pd
 class TestHybridGLHE(unittest.TestCase):
 
     def setUp(self) -> None:
+        from GLHEDT import PLAT
         # Borehole dimensions
         # -------------------
         self.H = 100.  # Borehole length (m)
@@ -150,6 +149,9 @@ class TestHybridGLHE(unittest.TestCase):
                 hourly_extraction_loads)
 
     def test_single_u_tube(self):
+        from GLHEDT import ground_heat_exchangers
+        from GLHEDT import PLAT
+
         # Define a borehole
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
 
@@ -167,7 +169,7 @@ class TestHybridGLHE(unittest.TestCase):
             self.hourly_rejection_loads, self.hourly_extraction_loads,
             single_u_tube_eq, radial_numerical, self.sim_params)
 
-        HybridGLHE = GLHEDT.ground_heat_exchangers.HybridGLHE(
+        HybridGLHE = ground_heat_exchangers.HybridGLHE(
             single_u_tube, radial_numerical, hybrid_load, self.GFunction,
             self.sim_params)
 
