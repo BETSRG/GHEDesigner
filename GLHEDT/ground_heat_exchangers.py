@@ -10,28 +10,27 @@ import GLHEDT.PLAT as PLAT
 import numpy as np
 
 
-class HybridGLHE:
+class GLHEBase:
     def __init__(self, bhe: PLAT.borehole_heat_exchangers,
                  radial_numerical: PLAT.radial_numerical_borehole.RadialNumericalBH,
-                 hybrid_load: PLAT.ground_loads.HybridLoad,
                  GFunction: gFunctionDatabase.Management.application.GFunction,
                  sim_params: PLAT.media.SimulationParameters):
         # borehole heat exchanger object
         self.bhe = bhe
         # sts radial numerical object
         self.radial_numerical = radial_numerical
-        # hybrid load object
-        self.hybrid_load = hybrid_load
         # GFunction object
         self.GFunction = GFunction
         # Additional simulation parameters
         self.sim_params = sim_params
 
-        self.TBHW: list = []
-        self.MFT: list = []
-        self.HPEFT: list = []
-        self.linehour: list = []
-        self.loadperm: list = []
+    def cost(self, max_EFT, min_EFT):
+        delta_T_max = max_EFT - self.sim_params.max_EFT_allowable
+        delta_T_min = self.sim_params.min_EFT_allowable - min_EFT
+
+        T_excess = max([delta_T_max, delta_T_min])
+
+        return T_excess
 
     @staticmethod
     def combine_sts_lts(log_time_lts: list, g_lts: list, log_time_sts: list,
@@ -57,13 +56,23 @@ class HybridGLHE:
 
         return g
 
-    def cost(self, max_EFT, min_EFT):
-        delta_T_max = max_EFT - self.sim_params.max_EFT_allowable
-        delta_T_min = self.sim_params.min_EFT_allowable - min_EFT
 
-        T_excess = max([delta_T_max, delta_T_min])
+class HybridGLHE(GLHEBase):
+    def __init__(self, bhe: PLAT.borehole_heat_exchangers,
+                 radial_numerical: PLAT.radial_numerical_borehole.RadialNumericalBH,
+                 hybrid_load: PLAT.ground_loads.HybridLoad,
+                 GFunction: gFunctionDatabase.Management.application.GFunction,
+                 sim_params: PLAT.media.SimulationParameters):
+        GLHEBase.__init__(self, bhe, radial_numerical, GFunction, sim_params)
 
-        return T_excess
+        # hybrid load object
+        self.hybrid_load = hybrid_load
+
+        self.TBHW: list = []
+        self.MFT: list = []
+        self.HPEFT: list = []
+        self.linehour: list = []
+        self.loadperm: list = []
 
     def size(self, B) -> None:
         # Size the ground heat exchanger
@@ -206,3 +215,11 @@ class HybridGLHE:
         max_HP_EFT = float(max(HPEFT[2:n]))
         min_HP_EFT = float(min(HPEFT[2:n]))
         return max_HP_EFT, min_HP_EFT
+
+
+class HourlyGLHE:
+    def __init__(self):
+        a = 1
+
+
+
