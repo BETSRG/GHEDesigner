@@ -6,6 +6,7 @@ import pandas as pd
 from GLHEDT.PLAT import pygfunction as gt
 import gFunctionDatabase as gfdb
 import GLHEDT
+from time import time as clock
 
 
 def main():
@@ -148,7 +149,11 @@ def main():
     # Initialize a HybridGLHE
     HybridGLHE = GLHEDT.ground_heat_exchangers.HybridGLHE(
         single_u_tube, radial_numerical, hybrid_load, GFunction, sim_params)
-    HybridGLHE.size(B, max_Height, min_Height)
+    tic = clock()
+    HybridGLHE.size(B)
+    toc = clock()
+    total = toc - tic
+    print('Hybrid GLHE Size time (s): {}'.format(total))
 
     print('The sized height: {}'.format(single_u_tube.b.H))
 

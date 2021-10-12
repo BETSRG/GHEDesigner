@@ -71,7 +71,7 @@ def main():
     # --------------------------------
     # Simulation start month and end month
     start_month = 1
-    n_years = 20
+    n_years = 5
     end_month = n_years * 12
     # Maximum and minimum allowable fluid temperatures
     max_EFT_allowable = 35  # degrees Celsius
@@ -161,6 +161,35 @@ def main():
 
     print('max_HP_EFT: {}\tmin_HP_EFT: {}'.format(max_HP_EFT, min_HP_EFT))
 
+    # Hourly GLHE
+    # -----------
+    total_H = nbh * H
+    _hourly_rejection_loads, _hourly_extraction_loads \
+        = hybrid_load.hourly_load_representation()
+
+    ground_extraction_loads = \
+        [-1 * (_hourly_extraction_loads[i]) * 1000. / total_H
+         for i in range(len(_hourly_extraction_loads))]
+
+    HourlyGLHE = GLHEDT.ground_heat_exchangers.HourlyGLHE(
+        single_u_tube, radial_numerical, ground_extraction_loads, GFunction,
+        sim_params
+    )
+
+    _, _min_HP_EFT = HourlyGLHE.simulate(B)
+
+    ground_rejection_loads = \
+        [(_hourly_rejection_loads[i]) * 1000. / total_H
+         for i in range(len(_hourly_extraction_loads))]
+
+    HourlyGLHE = GLHEDT.ground_heat_exchangers.HourlyGLHE(
+        single_u_tube, radial_numerical, ground_rejection_loads, GFunction,
+        sim_params
+    )
+
+    _max_HP_EFT, _ = HourlyGLHE.simulate(B)
+    print('max_HP_EFT: {}\tmin_HP_EFT: {}'.format(_max_HP_EFT, _min_HP_EFT))
+
     # --------------------------------------------------------------------------
 
     # Plot the simulation results
@@ -191,11 +220,24 @@ def main():
 
     fig.savefig('hybrid_monthly_simulation.png')
 
-    # Plot the load profile
+    # Plot the hourly load profile
     # ---------------------
     fig = HybridGLHE.hybrid_load.visualize_hourly_heat_extraction()
 
     fig.savefig('Atlanta_Office_Building_extraction_loads.png')
+
+    # Plot the hybrid load representation
+    # -----------------------------------
+    fig, ax = plt.subplots()
+
+    ax.plot(HybridGLHE.hybrid_load.load)
+
+    ax.set_xlabel('Month number')
+    ax.set_ylabel('Monthly load (kW)')
+
+    fig.tight_layout()
+
+    fig.savefig('monthly_load_representation.png')
 
 
 if __name__ == '__main__':

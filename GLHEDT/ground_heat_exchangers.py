@@ -88,7 +88,8 @@ class HybridGLHE(GLHEBase):
         # bhe.b.H is updated during sizing
         PLAT.equivalance.solve_root(
             self.bhe.b.H, local_objective, lower=self.sim_params.min_Height,
-            upper=self.sim_params.max_Height)
+            upper=self.sim_params.max_Height, xtol=1.0e-6, rtol=1.0e-6,
+            maxiter=15)
         if self.bhe.b.H == self.sim_params.min_Height:
             warnings.warn('The minimum height provided to size this ground heat'
                           ' exchanger is not shallow enough. Provide a '
@@ -217,9 +218,80 @@ class HybridGLHE(GLHEBase):
         return max_HP_EFT, min_HP_EFT
 
 
-class HourlyGLHE:
-    def __init__(self):
-        a = 1
+class HourlyGLHE(GLHEBase):
+    def __init__(self, bhe: PLAT.borehole_heat_exchangers,
+                 radial_numerical: PLAT.radial_numerical_borehole.RadialNumericalBH,
+                 hourly_extraction_loads: list,
+                 GFunction: gFunctionDatabase.Management.application.GFunction,
+                 sim_params: PLAT.media.SimulationParameters):
+        GLHEBase.__init__(self, bhe, radial_numerical, GFunction, sim_params)
 
+        # 8760 hourly ground extraction loads
+        self.hourly_extraction_loads = hourly_extraction_loads
 
+        self.HPEFT = []
 
+    def simulate_hourly(self, hours, q, g, Rb, two_pi_k, ts, Tg):
+        # An hourly simulation for the fluid temperature
+        # Chapter 2 of Advances in Ground Source Heat Pumps
+
+        # How many times does q need to be repeated?
+        n_years = np.ceil(hours / 8760)
+
+        q = np.array(q)
+        q = np.repeat(q, n_years)
+        q_dt = np.hstack((q[0], q[1:] - q[:-1]))
+        t = np.arange(1, hours, 1)
+        t = t[::-1]
+
+        HPEFT = []
+        for n in range(1, hours):
+            _time = t[hours - 1 - n:hours-1]
+            g_values = g(np.log((_time * 3600.) / ts))
+            # Tb = Tg + sum_{i=1}^{n} (q_{i} - q_{i-1}) /
+                #                             (2 pi k) * g((t_n - t_{i-1}) / ts)
+            summer = (q_dt[1:n+1] / two_pi_k).dot(g_values)
+            # Tf = Tb + q_i * R_b^* (equation 2.13)
+            Tb = (Tg + 273.15) + summer
+            Tf = Tb + q[n] * Rb
+            T_entering = \
+                q[n] * self.bhe.b.H / (2 * self.bhe.m_flow_borehole * self.bhe.fluid.cp) + Tf
+            HPEFT.append(T_entering - 273.15)
+
+        return HPEFT
+
+    def simulate(self, B):
+        B_over_H = B / self.bhe.b.H
+        # Solve for equivalent single U-tube
+        single_u_tube = PLAT.equivalance.compute_equivalent(self.bhe)
+        # Update short time step object with equivalent single u-tube
+        self.radial_numerical.calc_sts_g_functions(single_u_tube)
+        # interpolate for the Long time step g-function
+        g_function, rb_value, D_value, H_eq = \
+            self.GFunction.g_function_interpolation(B_over_H)
+        # correct the long time step for borehole radius
+        g_function_corrected = \
+            self.GFunction.borehole_radius_correction(g_function,
+                                                      rb_value,
+                                                      self.bhe.b.r_b)
+        # Don't Update the HybridLoad (its dependent on the STS) because
+        # it doesn't change the results much and it slows things down a lot
+        # combine the short and long time step g-function
+        g = self.combine_sts_lts(
+            self.GFunction.log_time, g_function_corrected,
+            self.radial_numerical.lntts.tolist(),
+            self.radial_numerical.g.tolist())
+
+        ts = self.radial_numerical.t_s
+        two_pi_k = 2. * np.pi * self.bhe.soil.k
+        Rb = self.bhe.compute_effective_borehole_resistance()
+
+        n_months = self.sim_params.end_month - self.sim_params.start_month + 1
+        n_hours = int(n_months / 12. * 8760.)
+
+        self.HPEFT = self.simulate_hourly(n_hours, self.hourly_extraction_loads,
+                                        g, Rb, two_pi_k, ts, self.bhe.soil.ugt)
+
+        max_HP_EFT = float(max(self.HPEFT))
+        min_HP_EFT = float(min(self.HPEFT))
+        return max_HP_EFT, min_HP_EFT

@@ -45,6 +45,13 @@ def size_HybridGLHE(m_flow_borehole, fluid, borehole, pipe, grout, soil,
 
 
 def main():
+    # read in GLHEPro results
+    file_name = 'BHE_size_variation_GLHEPRO.xlsx'
+
+    xlsx = pd.ExcelFile(file_name)
+    sheet_name = xlsx.sheet_names[0]
+    d = pd.read_excel(xlsx, sheet_name=sheet_name).to_dict('list')
+
     # --------------------------------------------------------------------------
 
     # Borehole dimensions
@@ -213,6 +220,9 @@ def main():
             hourly_rejection_loads, hourly_extraction_loads, GFunction,
             sim_params, bhe_func=PLAT.borehole_heat_exchangers.MultipleUTube
         )
+        bhe_eq = PLAT.equivalance.compute_equivalent(HybridGLHE_d.bhe)
+        Rb = bhe_eq.compute_effective_borehole_resistance()
+        print(Rb)
         # Coaxial Hybrid GLHE
         HybridGLHE_c = size_HybridGLHE(
             m_flow_borehole, fluid, borehole_c, pipe_c, grout, soil,
@@ -224,7 +234,7 @@ def main():
         sized_height_dictionary['Double U-tube'].append(HybridGLHE_d.bhe.b.H)
         sized_height_dictionary['Coaxial'].append(HybridGLHE_c.bhe.b.H)
 
-        print('{0:.2f}\t{1:.2f}\t{2:.2f}\t{3:.2f}'.format(
+        print('{0:.8f}\t{1:.8f}\t{2:.8f}\t{3:.8f}'.format(
             V_flow_borehole, HybridGLHE_s.bhe.b.H, HybridGLHE_d.bhe.b.H,
             HybridGLHE_c.bhe.b.H))
 
@@ -249,6 +259,29 @@ def main():
     fig.legend(bbox_to_anchor=(.4, .95))
 
     fig.savefig('BHE_size_variation.png')
+
+    # Create a plot comparing GLHEPro results
+    # ---------------------------------------
+    fig, ax = plt.subplots(3, sharex=True, sharey=True)
+    ax[0].plot(d['V_flow_borehole'], d['Single U-tube'],
+               label='Single U-tube (GLHEPRO)')
+    ax[1].plot(d['V_flow_borehole'], d['Double U-tube'],
+               label='Double U-tube (GLHEPRO)')
+    ax[2].plot(d['V_flow_borehole'], d['Coaxial'], label='Coaxial (GLHEPRO)')
+    ax[0].plot(V_flow_borehole_rates, sized_height_dictionary['Single U-tube'], '--',
+               label='Single U-tube (GLHEDT)')
+    ax[1].plot(V_flow_borehole_rates, sized_height_dictionary['Double U-tube'], '--',
+               label='Double U-tube (GLHEDT)')
+    ax[2].plot(V_flow_borehole_rates, sized_height_dictionary['Coaxial'], '--',
+               label='Coaxial (GLHEDT)')
+    for i in range(3):
+        ax[i].grid()
+        ax[i].set_axisbelow(True)
+        ax[i].legend()
+    ax[2].set_xlabel('Volumetric flow rate per borehole (L/s)')
+    ax[1].set_ylabel(r'Height of boreholes (m)')
+    fig.tight_layout()
+    fig.savefig('bhe_sizing_comparison.png')
 
 
 if __name__ == '__main__':

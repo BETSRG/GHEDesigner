@@ -1,5 +1,6 @@
 # Jack C. Cook
 # Saturday, October 9, 2021
+import copy
 
 import GLHEDT.PLAT as PLAT
 import matplotlib.pyplot as plt
@@ -91,6 +92,8 @@ def main():
     hourly_extraction_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
 
+    hourly_extraction_loads_stored = copy.deepcopy(hourly_extraction_loads)
+
     # --------------------------------------------------------------------------
 
     # Borehole heat exchanger
@@ -156,27 +159,43 @@ def main():
     # --------------------------------------------------------------------------
 
     # Range through height values and return the T_excess value
-    height_values = [48. + float(12 * i) for i in range(0, 16)]
+    height_values = [48. + float(12 * i) for i in range(0, 1)]
 
-    T_excess_values = []
+    Excess_temperatures = {'Hourly': [], 'Hybrid': []}
 
     for height in height_values:
         HybridGLHE.bhe.b.H = height
         max_HP_EFT, min_HP_EFT = HybridGLHE.simulate(B)
         T_excess = HybridGLHE.cost(max_HP_EFT, min_HP_EFT)
-        T_excess_values.append(T_excess)
+        Excess_temperatures['Hybrid'].append(T_excess)
+
+        total_H = nbh * height
+        _hourly_extraction_loads = \
+            [1 * hourly_extraction_loads_stored[i] / total_H
+             for i in range(len(hourly_extraction_loads_stored))]
+        HourlyGLHE = GLHEDT.ground_heat_exchangers.HourlyGLHE(
+            single_u_tube, radial_numerical, _hourly_extraction_loads,
+            GFunction, sim_params)
+        max_HP_EFT, min_HP_EFT = HourlyGLHE.simulate(B)
+        T_excess = HourlyGLHE.cost(max_HP_EFT, min_HP_EFT)
+        Excess_temperatures['Hourly'].append(T_excess)
 
     # Plot excess values
     # ------------------
     fig, ax = plt.subplots()
 
-    ax.plot(height_values, T_excess_values, marker='o', ls='--')
+    ax.plot(height_values, Excess_temperatures['Hourly'],
+            marker='o', ls='--', label='Hourly')
+    ax.plot(height_values, Excess_temperatures['Hybrid'],
+            marker='s', ls='--', label='Hybrid')
 
     ax.set_xlabel('Borehole height (m)')
     ax.set_ylabel('Excess fluid temperature ($\degree$C)')
 
     ax.grid()
     ax.set_axisbelow(True)
+
+    fig.legend()
 
     fig.tight_layout()
 
