@@ -7,6 +7,7 @@ import pandas as pd
 import GLHEDT.PLAT.pygfunction as gt
 import gFunctionDatabase as gfdb
 import GLHEDT
+from time import time as clock
 
 
 def main():
@@ -45,9 +46,13 @@ def main():
 
     # Thermal properties
     # ------------------
-    pipe = PLAT.media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp=rhoCp_p)
-    soil = PLAT.media.ThermalProperty(k=k_s, rhoCp=rhoCp_s)
-    grout = PLAT.media.ThermalProperty(k=k_g, rhoCp=rhoCp_g)
+    # Pipe
+    pipe = PLAT.media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    # Soil
+    ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
+    soil = PLAT.media.Soil(k_s, rhoCp_s, ugt)
+    # Grout
+    grout = PLAT.media.ThermalProperty(k_g, rhoCp_g)
 
     # Number in the x and y
     # ---------------------
@@ -58,15 +63,25 @@ def main():
 
     # Inputs related to fluid
     # -----------------------
-    V_flow_system = 15.  # System volumetric flow rate (L/s)
+    V_flow_system = 31.2  # System volumetric flow rate (L/s)
     mixer = 'MEG'  # Ethylene glycol mixed with water
     percent = 0.  # Percentage of ethylene glycol added in
 
     # Simulation start month and end month
-    # ------------------------------------
+    # --------------------------------
+    # Simulation start month and end month
     start_month = 1
-    n_years = 10
+    n_years = 20
     end_month = n_years * 12
+    # Maximum and minimum allowable fluid temperatures
+    max_EFT_allowable = 35  # degrees Celsius
+    min_EFT_allowable = 5  # degrees Celsius
+    # Maximum and minimum allowable heights
+    max_Height = 100  # in meters
+    min_Height = 60  # in meters
+    sim_params = PLAT.media.SimulationParameters(
+        start_month, end_month, max_EFT_allowable, min_EFT_allowable,
+        max_Height, min_Height)
 
     # Process loads from file
     # -----------------------
@@ -92,7 +107,7 @@ def main():
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
 
     single_u_tube = PLAT.borehole_heat_exchangers.SingleUTube(
-        m_flow_borehole, fluid, borehole, soil, grout, pipe)
+        m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
     # Radial Numerical short time step g-function
     # -------------------------------------------
@@ -113,7 +128,7 @@ def main():
 
     hybrid_load = PLAT.ground_loads.HybridLoad(
         hourly_rejection_loads, hourly_extraction_loads, single_u_tube,
-        radial_numerical, start_month, end_month)
+        radial_numerical, sim_params)
 
     # GFunction
     # ---------
@@ -135,11 +150,14 @@ def main():
     # Hybrid GLHE
     # -----------
     # Initialize a HybridGLHE
-    HybridGLHE = GLHEDT.ground_heat_exchangers.HybridGLHE(single_u_tube,
-                                                          radial_numerical,
-                                                          hybrid_load,
-                                                          GFunction)
+    HybridGLHE = GLHEDT.ground_heat_exchangers.HybridGLHE(
+        single_u_tube, radial_numerical, hybrid_load, GFunction, sim_params)
+
+    tic = clock()
     max_HP_EFT, min_HP_EFT = HybridGLHE.simulate(B)
+    toc = clock()
+    total = toc - tic
+    print('Hybrid simulation time: {}'.format(total))
 
     print('max_HP_EFT: {}\tmin_HP_EFT: {}'.format(max_HP_EFT, min_HP_EFT))
 
@@ -163,6 +181,9 @@ def main():
 
     ax.set_xlabel('Month number')
     ax.set_ylabel('Heat pump entering fluid temperature ($\degree$C)')
+
+    ax.grid()
+    ax.set_axisbelow(True)
 
     fig.legend(bbox_to_anchor=(.5, .95))
 
