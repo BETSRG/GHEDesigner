@@ -177,3 +177,66 @@ class TestHybridGLHE(unittest.TestCase):
 
         self.assertEqual(38.67304849133883, max_HP_EFT)
         self.assertEqual(16.729464533883572, min_HP_EFT)
+
+        HybridGLHE.size(self.B)
+
+        self.assertAlmostEqual(HybridGLHE.bhe.b.H, 137.31934417)
+
+    def test_double_u_tube(self):
+        from GLHEDT.ground_heat_exchangers import HybridGLHE
+        from GLHEDT import PLAT
+
+        # Define a borehole
+        borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
+
+        double_u_tube = PLAT.borehole_heat_exchangers.MultipleUTube(
+            self.m_flow_borehole, self.fluid, borehole, self.pipe_d,
+            self.grout, self.soil)
+
+        double_u_tube_eq = PLAT.equivalance.compute_equivalent(double_u_tube)
+
+        radial_numerical = \
+            PLAT.radial_numerical_borehole.RadialNumericalBH(double_u_tube_eq)
+        radial_numerical.calc_sts_g_functions(double_u_tube_eq)
+
+        hybrid_load = PLAT.ground_loads.HybridLoad(
+            self.hourly_rejection_loads, self.hourly_extraction_loads,
+            double_u_tube_eq, radial_numerical, self.sim_params)
+
+        HybridGLHE = HybridGLHE(
+            double_u_tube, radial_numerical, hybrid_load, self.GFunction,
+            self.sim_params)
+
+        HybridGLHE.size(self.B)
+
+        self.assertAlmostEqual(HybridGLHE.bhe.b.H, 122.82645217)
+
+    def test_coaxial_tube(self):
+        from GLHEDT.ground_heat_exchangers import HybridGLHE
+        from GLHEDT import PLAT
+
+        # Define a borehole
+        borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
+
+        coaxial = PLAT.borehole_heat_exchangers.CoaxialPipe(
+            self.m_flow_borehole, self.fluid, borehole, self.pipe_c,
+            self.grout, self.soil)
+
+        coaxial_eq = PLAT.equivalance.compute_equivalent(coaxial)
+
+        radial_numerical = \
+            PLAT.radial_numerical_borehole.RadialNumericalBH(coaxial_eq)
+        radial_numerical.calc_sts_g_functions(coaxial_eq)
+
+        hybrid_load = PLAT.ground_loads.HybridLoad(
+            self.hourly_rejection_loads, self.hourly_extraction_loads,
+            coaxial_eq, radial_numerical, self.sim_params)
+
+        HybridGLHE = HybridGLHE(
+            coaxial, radial_numerical, hybrid_load, self.GFunction,
+            self.sim_params)
+
+        HybridGLHE.size(self.B)
+
+        self.assertAlmostEqual(HybridGLHE.bhe.b.H, 124.86827973)
+
