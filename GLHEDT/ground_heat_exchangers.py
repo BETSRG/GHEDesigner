@@ -14,7 +14,8 @@ class HybridGLHE:
     def __init__(self, bhe: PLAT.borehole_heat_exchangers,
                  radial_numerical: PLAT.radial_numerical_borehole.RadialNumericalBH,
                  hybrid_load: PLAT.ground_loads.HybridLoad,
-                 GFunction: gFunctionDatabase.Management.application.GFunction):
+                 GFunction: gFunctionDatabase.Management.application.GFunction,
+                 sim_params: PLAT.media.SimulationParameters):
         # borehole heat exchanger object
         self.bhe = bhe
         # sts radial numerical object
@@ -23,6 +24,8 @@ class HybridGLHE:
         self.hybrid_load = hybrid_load
         # GFunction object
         self.GFunction = GFunction
+        # Additional simulation parameters
+        self.sim_params = sim_params
 
         self.TBHW: list = []
         self.MFT: list = []
@@ -44,8 +47,9 @@ class HybridGLHE:
             # find where to stop in sts
             i = 0
             value = log_time_sts[i]
-            while value < min_log_time_lts:
+            while value <= min_log_time_lts:
                 i += 1
+                value = log_time_sts[i]
             log_time = log_time_sts[0:i] + log_time_lts
             g = g_sts[0:i] + g_lts
 
@@ -53,41 +57,39 @@ class HybridGLHE:
 
         return g
 
-    @staticmethod
-    def cost(max_EFT, min_EFT, max_EFT_allowable, min_EFT_allowable):
-        delta_T_max = max_EFT - max_EFT_allowable
-        delta_T_min = min_EFT_allowable - min_EFT
+    def cost(self, max_EFT, min_EFT):
+        delta_T_max = max_EFT - self.sim_params.max_EFT_allowable
+        delta_T_min = self.sim_params.min_EFT_allowable - min_EFT
 
         T_excess = max([delta_T_max, delta_T_min])
 
         return T_excess
 
-    def size(self, B, max_H, min_H, max_EFT_allowable, min_EFT_allowable) \
-            -> None:
+    def size(self, B) -> None:
         # Size the ground heat exchanger
 
         def local_objective(H):
             self.bhe.b.H = H
             max_HP_EFT, min_HP_EFT = self.simulate(B=B)
-            T_excess = self.cost(max_HP_EFT, min_HP_EFT,
-                                      max_EFT_allowable, min_EFT_allowable)
+            T_excess = self.cost(max_HP_EFT, min_HP_EFT)
             return T_excess
         # Make the initial guess variable the average of the heights given
-        self.bhe.b.H = (max_H + min_H) / 2.
+        self.bhe.b.H = \
+            (self.sim_params.max_Height + self.sim_params.min_Height) / 2.
         # bhe.b.H is updated during sizing
         PLAT.equivalance.solve_root(
-            self.bhe.b.H, local_objective, lower=min_H, upper=max_H)
-        # TODO: look and see if equivalence.solve_root is returning the opposite of what we want when not bracketed
-        if self.bhe.b.H == min_H:
-            warnings.warn('The maximum height provided to size this ground '
-                          'heat exchanger is not deep enough. Provide a deeper '
-                          'allowable depth or increase the size of the heat '
-                          'exchanger.')
-        if self.bhe.b.H == max_H:
+            self.bhe.b.H, local_objective, lower=self.sim_params.min_Height,
+            upper=self.sim_params.max_Height)
+        if self.bhe.b.H == self.sim_params.min_Height:
             warnings.warn('The minimum height provided to size this ground heat'
                           ' exchanger is not shallow enough. Provide a '
                           'shallower allowable depth or decrease the size of '
                           'the heat exchanger.')
+        if self.bhe.b.H == self.sim_params.max_Height:
+            warnings.warn('The maximum height provided to size this ground '
+                          'heat exchanger is not deep enough. Provide a deeper '
+                          'allowable depth or increase the size of the heat '
+                          'exchanger.')
 
         return
 
@@ -122,7 +124,6 @@ class HybridGLHE:
 
         nbh = len(self.GFunction.bore_locations)
 
-        # n = loads.hour.size
         n = self.hybrid_load.hour.size
         # calculate lntts for each time and then find g-function value
         lntts = []
@@ -132,29 +133,31 @@ class HybridGLHE:
         MFT = [0, 0]  # Simple mean fluid temperature
         HPEFT = [0, 0]
         Pi = 3.141592
-        for i in range(2,
-                       n):  # This outer loop organizes the calculation of DeltaTBHW for the end of the ith period.
+        # This outer loop organizes the calculation of DeltaTBHW for the end of
+        # the ith period.
+        for i in range(2, n):
             DeltaTBHW = 0
-            for j in range(1,
-                           i):  # This inner loop sums the responses of all previous step functions
+            # This inner loop sums the responses of all previous step functions
+            for j in range(1, i):
                 # sftime = loads.hour[i] - loads.hour[j]
                 sftime = self.hybrid_load.hour[i] - self.hybrid_load.hour[j]
                 if sftime > 0:
                     lnttssf = np.log(sftime / tsh)
                     lntts.append(lnttssf)
                     # gsf = myGHE.gi(lnttssf)
-                    gsf = g(lnttssf)
+                    if lnttssf < g.x[0]:
+                        gsf = g.y[0]
+                    else:
+                        gsf = g(lnttssf)
                     g_all.append(gsf)
-                    # stepfunctionload = 1000 * loads.sfload[j + 1] / (myGHE.depth * myGHE.nbh)  # convert loads from total on GHE
-                    stepfunctionload = 1000 * self.hybrid_load.sfload[j + 1] / (self.bhe.b.H * nbh)  # convert loads from total on GHE
-                    # in kW to W/m
-                    # DeltaTBHW = DeltaTBHW + gsf * stepfunctionload / (2 * Pi * myGHE.k)
+                    # convert loads from total on GHE in kW to W/m
+                    stepfunctionload \
+                        = 1000. * self.hybrid_load.sfload[j + 1] / (self.bhe.b.H * nbh)
                     DeltaTBHW = DeltaTBHW + gsf * stepfunctionload / (2 * Pi * self.bhe.soil.k)
             DTBHW.append(DeltaTBHW)
 
         for i in range(2, n):
-            # TODO: move ugt to soil
-            ugt = 18.3
+            ugt = self.bhe.soil.ugt
             # Peak heating flow rate is the system flow rate in L/s
             peakhtgflowrate = self.bhe.m_flow_borehole / self.bhe.fluid.rho * 1000. * nbh
             # Peak cooling flow rate is the system flow rate in L/s
