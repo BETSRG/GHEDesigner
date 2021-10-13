@@ -62,7 +62,6 @@ def main():
     N = 12
     M = 13
     configuration = 'rectangle'
-    nbh = N * M
     # GFunction
     # ---------
     # Access the database for specified configuration
@@ -132,99 +131,6 @@ def main():
     file = open('SingleUTube-HybridGLHE-info.txt', 'w+')
     file.write(GLHE_info)
     file.close()
-
-    # Borehole heat exchanger
-    # -----------------------
-
-    # # Volumetric flow rate per borehole (L/s)
-    # V_flow_borehole = V_flow_system / nbh
-    # # Total fluid mass flow rate per borehole (kg/s)
-    # m_flow_borehole = V_flow_borehole / 1000. * fluid.rho
-    #
-    #
-    #
-    # single_u_tube = PLAT.borehole_heat_exchangers.SingleUTube(
-    #     m_flow_borehole, fluid, borehole, pipe, grout, soil)
-    #
-    # # Radial Numerical short time step g-function
-    # # -------------------------------------------
-    # # Compute short time step now that the BHE is defined
-    # # Compute short time step
-    # radial_numerical = \
-    #     PLAT.radial_numerical_borehole.RadialNumericalBH(single_u_tube)
-    #
-    # radial_numerical.calc_sts_g_functions(single_u_tube)
-    #
-    # # Hybrid load
-    # # -----------
-    # # Split the extraction loads into heating and cooling for input to the
-    # # HybridLoad object
-    # hourly_rejection_loads, hourly_extraction_loads = \
-    #     PLAT.ground_loads.HybridLoad.split_heat_and_cool(
-    #         hourly_extraction_loads)
-    #
-    # hybrid_load = PLAT.ground_loads.HybridLoad(
-    #     hourly_rejection_loads, hourly_extraction_loads, single_u_tube,
-    #     radial_numerical, sim_params)
-    #
-    #
-    #
-    #
-    #
-    # # Hybrid GLHE
-    # # -----------
-    # # Initialize a HybridGLHE
-    # HybridGLHE = GLHEDT.ground_heat_exchangers.HybridGLHE(
-    #     single_u_tube, radial_numerical, hybrid_load, GFunction, sim_params)
-
-    # --------------------------------------------------------------------------
-
-    # Plot the simulation results
-    # # ---------------------------
-    # fig, ax = plt.subplots()
-    #
-    # heat_pump_EFT = HybridGLHE.HPEFT[2:]
-    # months = range(1, len(heat_pump_EFT) + 1)
-    #
-    # min_HP_EFT_idx = HybridGLHE.HPEFT.index(min_HP_EFT) - 1
-    # max_HP_EFT_idx = HybridGLHE.HPEFT.index(max_HP_EFT) - 1
-    #
-    # ax.plot(months, heat_pump_EFT, 'k')
-    # ax.scatter(min_HP_EFT_idx, min_HP_EFT, color='b', marker='X', s=200,
-    #            label='Minimum Temperature')
-    # ax.scatter(max_HP_EFT_idx, max_HP_EFT, color='r',  marker='P', s=200,
-    #            label='Maximum Temperature')
-    #
-    # ax.set_xlabel('Month number')
-    # ax.set_ylabel('Heat pump entering fluid temperature ($\degree$C)')
-    #
-    # ax.grid()
-    # ax.set_axisbelow(True)
-    #
-    # fig.legend(bbox_to_anchor=(.5, .95))
-    #
-    # fig.tight_layout()
-    #
-    # fig.savefig('hybrid_monthly_simulation.png')
-    #
-    # # Plot the hourly load profile
-    # # ---------------------
-    # fig = HybridGLHE.hybrid_load.visualize_hourly_heat_extraction()
-    #
-    # fig.savefig('Atlanta_Office_Building_extraction_loads.png')
-    #
-    # # Plot the hybrid load representation
-    # # -----------------------------------
-    # fig, ax = plt.subplots()
-    #
-    # ax.plot(HybridGLHE.hybrid_load.load)
-    #
-    # ax.set_xlabel('Month number')
-    # ax.set_ylabel('Monthly load (kW)')
-    #
-    # fig.tight_layout()
-    #
-    # fig.savefig('monthly_load_representation.png')
 
 
 if __name__ == '__main__':
