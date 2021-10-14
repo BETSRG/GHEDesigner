@@ -113,16 +113,12 @@ class TestHybridGHE(unittest.TestCase):
         # Inputs related to fluid
         # -----------------------
         self.V_flow_system = 31.2 # System volumetric flow rate (L/s)
-        V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
         mixer = 'MEG'  # Ethylene glycol mixed with water
         percent = 0.  # Percentage of ethylene glycol added in
 
         # -----------------------
         # Fluid properties
         self.fluid = gt.media.Fluid(mixer=mixer, percent=percent)
-
-        # Total fluid mass flow rate per borehole (kg/s)
-        self.m_flow_borehole = V_flow_borehole / 1000. * self.fluid.rho
 
         # Simulation start month and end month
         # --------------------------------
@@ -168,7 +164,7 @@ class TestHybridGHE(unittest.TestCase):
 
         HybridGHE.size()
 
-        self.assertAlmostEqual(HybridGHE.bhe.b.H, 137.31934417)
+        self.assertAlmostEqual(HybridGHE.bhe.b.H, 126.10474961, places=4)
 
     def test_double_u_tube(self):
         from GHEDT.ground_heat_exchangers import HybridGHE
@@ -184,7 +180,7 @@ class TestHybridGHE(unittest.TestCase):
 
         HybridGHE.size()
 
-        self.assertAlmostEqual(HybridGHE.bhe.b.H, 118.40426713829007)
+        self.assertAlmostEqual(HybridGHE.bhe.b.H, 118.40426713829007, places=4)
 
     def test_coaxial_tube(self):
         from GHEDT.ground_heat_exchangers import HybridGHE
@@ -200,4 +196,4 @@ class TestHybridGHE(unittest.TestCase):
 
         HybridGHE.size()
 
-        self.assertAlmostEqual(HybridGHE.bhe.b.H, 120.95072621885528)
+        self.assertAlmostEqual(HybridGHE.bhe.b.H, 120.95072621885528, places=4)
