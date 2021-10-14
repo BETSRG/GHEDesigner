@@ -23,6 +23,6 @@ source ${conda_activate} ${conda_env}
 # pygfunction-v2.0 needs python3 and some specific packages to python3.7
 
 # Declare array of volumetric flow rates
-V_flow_rates = (7.8 15.6 31.2 46.8 62.4 78)
+V_flow_rates=(7.8 15.6 31.2 46.8 62.4 78)
 
 python Coaxial_Tube_HOTS_GHE.py ${V_flow_rates[${SLURM_ARRAY_TASK_ID}]}
