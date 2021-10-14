@@ -8,6 +8,8 @@ import GLHEDT.PLAT.pygfunction as gt
 import gFunctionDatabase as gfdb
 import GLHEDT
 from time import time as clock
+from numpy import pi
+import numpy as np
 
 
 def main():
@@ -135,7 +137,19 @@ def main():
 
     HybridGLHE.size()
 
-    print(HybridGLHE.bhe.b.H)
+    print('Height of boreholes: {}'.format(HybridGLHE.bhe.b.H))
+
+    print('Effective borehole thermal resistance: {}'.
+          format(HybridGLHE.bhe.compute_effective_borehole_resistance()))
+
+    Rb_star = gt.pipes.borehole_thermal_resistance(
+        HybridGLHE.bhe, HybridGLHE.bhe.m_flow_borehole, HybridGLHE.bhe.fluid.cp)
+    coaxial = PLAT.borehole_heat_exchangers.CoaxialPipe(
+        HybridGLHE.bhe.m_flow_borehole, fluid, borehole, pipe, grout, soil
+    )
+    print(Rb_star)
+    Rb_star = HybridGLHE.bhe.update_thermal_resistance()
+    print(Rb_star)
 
     GLHE_info = HybridGLHE.__repr__()
 

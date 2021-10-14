@@ -124,7 +124,10 @@ def main():
 
     HybridGLHE.size()
 
-    print(HybridGLHE.bhe.b.H)
+    print('Height of boreholes: {}'.format(HybridGLHE.bhe.b.H))
+
+    print('Effective borehole thermal resistance: {}'.
+          format(HybridGLHE.bhe.compute_effective_borehole_resistance()))
 
     GLHE_info = HybridGLHE.__repr__()
 
