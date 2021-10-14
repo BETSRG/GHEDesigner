@@ -8,10 +8,10 @@ import pygfunction as gt
 import pandas as pd
 
 
-class TestHybridGLHE(unittest.TestCase):
+class TestHybridGHE(unittest.TestCase):
 
     def setUp(self) -> None:
-        from GLHEDT import PLAT
+        from GHEDT import PLAT
         # Borehole dimensions
         # -------------------
         self.H = 100.  # Borehole length (m)
@@ -71,6 +71,14 @@ class TestHybridGLHE(unittest.TestCase):
         self.pipe_d = PLAT.media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rhoCp_p)
         self.pipe_c = \
             PLAT.media.Pipe(pos_c, r_inner, r_outer, s, epsilon, k_p_c, rhoCp_p)
+
+        # Single U-tube BHE object
+        self.SingleUTube = PLAT.borehole_heat_exchangers.SingleUTube
+        # Double U-tube bhe object
+        self.DoubleUTube = PLAT.borehole_heat_exchangers.MultipleUTube
+        # Coaxial tube bhe object
+        self.CoaxialTube = PLAT.borehole_heat_exchangers.CoaxialPipe
+
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         self.soil = PLAT.media.Soil(k_s, rhoCp_s, ugt)
@@ -104,6 +112,7 @@ class TestHybridGLHE(unittest.TestCase):
 
         # Inputs related to fluid
         # -----------------------
+        self.V_flow_system = 31.2 # System volumetric flow rate (L/s)
         V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
         mixer = 'MEG'  # Ethylene glycol mixed with water
         percent = 0.  # Percentage of ethylene glycol added in
@@ -137,106 +146,58 @@ class TestHybridGLHE(unittest.TestCase):
         hourly_extraction: dict = \
             pd.read_csv('Atlanta_Office_Building_Loads.csv').to_dict('list')
         # Take only the first column in the dictionary
-        hourly_extraction_loads: list = \
+        self.hourly_extraction_ground_loads: list = \
             hourly_extraction[list(hourly_extraction.keys())[0]]
 
-        # Hybrid load
-        # -----------
-        # Split the extraction loads into heating and cooling for input to the
-        # HybridLoad object
-        self.hourly_rejection_loads, self.hourly_extraction_loads = \
-            PLAT.ground_loads.HybridLoad.split_heat_and_cool(
-                hourly_extraction_loads)
-
     def test_single_u_tube(self):
-        from GLHEDT.ground_heat_exchangers import HybridGLHE
-        from GLHEDT import PLAT
+        from GHEDT.ground_heat_exchangers import HybridGHE
 
         # Define a borehole
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
 
-        single_u_tube = PLAT.borehole_heat_exchangers.SingleUTube(
-            self.m_flow_borehole, self.fluid, borehole, self.pipe_s,
-            self.grout, self.soil)
+        # Initialize Hybrid GLHE object
+        HybridGHE = HybridGHE(
+            self.V_flow_system, self.B, self.SingleUTube, self.fluid, borehole,
+            self.pipe_s, self.grout, self.soil, self.GFunction, self.sim_params,
+            self.hourly_extraction_ground_loads)
 
-        single_u_tube_eq = PLAT.equivalance.compute_equivalent(single_u_tube)
-
-        radial_numerical = \
-            PLAT.radial_numerical_borehole.RadialNumericalBH(single_u_tube_eq)
-        radial_numerical.calc_sts_g_functions(single_u_tube_eq)
-
-        hybrid_load = PLAT.ground_loads.HybridLoad(
-            self.hourly_rejection_loads, self.hourly_extraction_loads,
-            single_u_tube_eq, radial_numerical, self.sim_params)
-
-        HybridGLHE = HybridGLHE(
-            single_u_tube, radial_numerical, hybrid_load, self.GFunction,
-            self.sim_params)
-
-        max_HP_EFT, min_HP_EFT = HybridGLHE.simulate(self.B)
+        max_HP_EFT, min_HP_EFT = HybridGHE.simulate()
 
         self.assertEqual(38.67304849133883, max_HP_EFT)
         self.assertEqual(16.729464533883572, min_HP_EFT)
 
-        HybridGLHE.size(self.B)
+        HybridGHE.size()
 
-        self.assertAlmostEqual(HybridGLHE.bhe.b.H, 137.31934417)
+        self.assertAlmostEqual(HybridGHE.bhe.b.H, 137.31934417)
 
     def test_double_u_tube(self):
-        from GLHEDT.ground_heat_exchangers import HybridGLHE
-        from GLHEDT import PLAT
+        from GHEDT.ground_heat_exchangers import HybridGHE
 
         # Define a borehole
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
 
-        double_u_tube = PLAT.borehole_heat_exchangers.MultipleUTube(
-            self.m_flow_borehole, self.fluid, borehole, self.pipe_d,
-            self.grout, self.soil)
+        # Initialize Hybrid GLHE object
+        HybridGHE = HybridGHE(
+            self.V_flow_system, self.B, self.DoubleUTube, self.fluid, borehole,
+            self.pipe_d, self.grout, self.soil, self.GFunction, self.sim_params,
+            self.hourly_extraction_ground_loads)
 
-        double_u_tube_eq = PLAT.equivalance.compute_equivalent(double_u_tube)
+        HybridGHE.size()
 
-        radial_numerical = \
-            PLAT.radial_numerical_borehole.RadialNumericalBH(double_u_tube_eq)
-        radial_numerical.calc_sts_g_functions(double_u_tube_eq)
-
-        hybrid_load = PLAT.ground_loads.HybridLoad(
-            self.hourly_rejection_loads, self.hourly_extraction_loads,
-            double_u_tube_eq, radial_numerical, self.sim_params)
-
-        HybridGLHE = HybridGLHE(
-            double_u_tube, radial_numerical, hybrid_load, self.GFunction,
-            self.sim_params)
-
-        HybridGLHE.size(self.B)
-
-        self.assertAlmostEqual(HybridGLHE.bhe.b.H, 122.82645217)
+        self.assertAlmostEqual(HybridGHE.bhe.b.H, 118.40426713829007)
 
     def test_coaxial_tube(self):
-        from GLHEDT.ground_heat_exchangers import HybridGLHE
-        from GLHEDT import PLAT
+        from GHEDT.ground_heat_exchangers import HybridGHE
 
         # Define a borehole
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
 
-        coaxial = PLAT.borehole_heat_exchangers.CoaxialPipe(
-            self.m_flow_borehole, self.fluid, borehole, self.pipe_c,
-            self.grout, self.soil)
+        # Initialize Hybrid GLHE object
+        HybridGHE = HybridGHE(
+            self.V_flow_system, self.B, self.CoaxialTube, self.fluid, borehole,
+            self.pipe_c, self.grout, self.soil, self.GFunction, self.sim_params,
+            self.hourly_extraction_ground_loads)
 
-        coaxial_eq = PLAT.equivalance.compute_equivalent(coaxial)
+        HybridGHE.size()
 
-        radial_numerical = \
-            PLAT.radial_numerical_borehole.RadialNumericalBH(coaxial_eq)
-        radial_numerical.calc_sts_g_functions(coaxial_eq)
-
-        hybrid_load = PLAT.ground_loads.HybridLoad(
-            self.hourly_rejection_loads, self.hourly_extraction_loads,
-            coaxial_eq, radial_numerical, self.sim_params)
-
-        HybridGLHE = HybridGLHE(
-            coaxial, radial_numerical, hybrid_load, self.GFunction,
-            self.sim_params)
-
-        HybridGLHE.size(self.B)
-
-        self.assertAlmostEqual(HybridGLHE.bhe.b.H, 124.86827973)
-
+        self.assertAlmostEqual(HybridGHE.bhe.b.H, 120.95072621885528)
