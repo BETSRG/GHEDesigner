@@ -46,7 +46,7 @@ this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-setup(name='GLHEDT',
+setup(name='GHEDT',
       install_requires=['matplotlib>=3.3.4',
                         'numpy>=1.19.2',
                         'Pillow>=8.1.0',
@@ -65,4 +65,4 @@ setup(name='GLHEDT',
       include_package_data=True,
       author='Jack C. Cook',
       author_email='jack.cook@okstate.edu',
-      description='A ground loop heat exchanger design tool.')
+      description='A ground heat exchanger design tool.')
