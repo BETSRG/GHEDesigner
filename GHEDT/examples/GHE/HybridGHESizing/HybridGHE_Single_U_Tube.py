@@ -122,11 +122,11 @@ def main():
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 
-    HybridGHE.size()
-
     max_HP_EFT, min_HP_EFT = HybridGHE.simulate()
 
     print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
+
+    HybridGHE.size()
 
     print('Height of boreholes: {}'.format(HybridGHE.bhe.b.H))
 

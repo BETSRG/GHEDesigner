@@ -11,7 +11,7 @@
 #SBATCH --time 5-00:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=32
-#SBATCH --output=poisson_%A-%a.out    # Standard output and error log
+#SBATCH --output=SUSim_%A-%a.out    # Standard output and error log
 # The following needs edited before each submission
 #SBATCH --array=0
 
