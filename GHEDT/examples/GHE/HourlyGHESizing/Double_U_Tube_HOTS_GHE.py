@@ -85,6 +85,7 @@ def main(args):
     # Inputs related to fluid
     # -----------------------
     V_flow_system = float(args[1])  # System volumetric flow rate (L/s)
+    print('V_flow_system: {}'.format(V_flow_system))
     mixer = 'MEG'  # Ethylene glycol mixed with water
     percent = 0.  # Percentage of ethylene glycol added in
     # Fluid properties

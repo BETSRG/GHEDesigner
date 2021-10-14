@@ -9,11 +9,10 @@ import GHEDT.PLAT.pygfunction as gt
 import gFunctionDatabase as gfdb
 import GHEDT
 from time import time as clock
+from numpy import pi
+import numpy as np
 
 
-# NOTE: System volumetric flow rate is passed in from the command line
-# Type the following into the command line to run:
-# python HourlyGHE_Single_U_Tube.py 31.2
 def main(args):
     # --------------------------------------------------------------------------
 
@@ -26,21 +25,32 @@ def main(args):
 
     # Pipe dimensions
     # ---------------
-    r_out = 26.67 / 1000. / 2.  # Pipe outer radius (m)
-    r_in = 21.6 / 1000. / 2.  # Pipe inner radius (m)
     s = 32.3 / 1000.  # Inner-tube to inner-tube Shank spacing (m)
+    # Coaxial
+    # Inner pipe radii
+    r_in_in = 44.2 / 1000. / 2.
+    r_in_out = 50. / 1000. / 2.
+    # Outer pipe radii
+    r_out_in = 97.4 / 1000. / 2.
+    r_out_out = 110. / 1000. / 2.
+    # Pipe radii
+    # Note: This convention is different from pygfunction
+    r_inner = [r_in_in,
+               r_in_out]  # The radii of the inner pipe from in to out
+    r_outer = [r_out_in,
+               r_out_out]  # The radii of the outer pipe from in to out
     epsilon = 1.0e-6  # Pipe roughness (m)
 
     # Pipe positions
     # --------------
-    # Single U-tube [(x_in, y_in), (x_out, y_out)]
-    pos = PLAT.media.Pipe.place_pipes(s, r_out, 1)
-    # Single U-tube BHE object
-    bhe_object = PLAT.borehole_heat_exchangers.SingleUTube
+    # Coaxial
+    pos_c = (0, 0)
+    # Double U-tube bhe object
+    bhe_object = PLAT.borehole_heat_exchangers.CoaxialPipe
 
     # Thermal conductivities
     # ----------------------
-    k_p = 0.4  # Pipe thermal conductivity (W/m.K)
+    k_p = [0.4, 0.4]  # Inner and outer pipe thermal conductivity (W/m.K)
     k_s = 2.0  # Ground thermal conductivity (W/m.K)
     k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
@@ -53,7 +63,8 @@ def main(args):
     # Thermal properties
     # ------------------
     # Pipe
-    pipe = PLAT.media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe = \
+        PLAT.media.Pipe(pos_c, r_inner, r_outer, s, epsilon, k_p, rhoCp_p)
     # Soil
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
     soil = PLAT.media.Soil(k_s, rhoCp_s, ugt)
@@ -85,6 +96,7 @@ def main(args):
     # Inputs related to fluid
     # -----------------------
     V_flow_system = float(args[1])  # System volumetric flow rate (L/s)
+    print('V_flow_system: {}'.format(V_flow_system))
     mixer = 'MEG'  # Ethylene glycol mixed with water
     percent = 0.  # Percentage of ethylene glycol added in
     # Fluid properties
@@ -120,27 +132,23 @@ def main(args):
 
     # --------------------------------------------------------------------------
 
-    # Initialize Hourly GHE object
+    # Initialize Hybrid GLHE object
     HourlyGHE = GHEDT.ground_heat_exchangers.HourlyGHE(
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 
     HourlyGHE.size()
 
-    max_HP_EFT, min_HP_EFT = HourlyGHE.simulate()
-
-    print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
-
     print('Height of boreholes: {}'.format(HourlyGHE.bhe.b.H))
 
     print('Effective borehole thermal resistance: {}'.
           format(HourlyGHE.bhe.compute_effective_borehole_resistance()))
 
-    GLHE_info = HourlyGHE.__repr__()
+    GHE_info = HourlyGHE.__repr__()
 
-    file = open('SingleUTube-HourlyGHE-info' + str(V_flow_system) + '.txt',
+    file = open('CoaxialTube-HourlyGHE-info' + str(V_flow_system) + '.txt',
                 'w+')
-    file.write(GLHE_info)
+    file.write(GHE_info)
     file.close()
 
 
