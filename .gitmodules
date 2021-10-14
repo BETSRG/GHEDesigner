@@ -1,4 +1,4 @@
 
-[submodule "GLHEDT/PLAT"]
-	path = GLHEDT/PLAT
+[submodule "GHEDT/PLAT"]
+	path = GHEDT/PLAT
 	url = https://github.com/j-c-cook/PLAT
