@@ -127,6 +127,34 @@ def main():
 
     print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
 
+    # Plot the simulation results
+    # ---------------------------
+    fig, ax = plt.subplots()
+
+    heat_pump_EFT = HourlyGHE.HPEFT
+    hours = range(1, len(heat_pump_EFT) + 1)
+
+    min_HP_EFT_idx = HourlyGHE.HPEFT.index(min_HP_EFT) - 1
+    max_HP_EFT_idx = HourlyGHE.HPEFT.index(max_HP_EFT) - 1
+
+    ax.plot(hours, heat_pump_EFT, 'k')
+    ax.scatter(min_HP_EFT_idx, min_HP_EFT, color='b', marker='X', s=200,
+               label='Minimum Temperature')
+    ax.scatter(max_HP_EFT_idx, max_HP_EFT, color='r', marker='P', s=200,
+               label='Maximum Temperature')
+
+    ax.set_xlabel('Hour number')
+    ax.set_ylabel('Heat pump entering fluid temperature ($\degree$C)')
+
+    ax.grid()
+    ax.set_axisbelow(True)
+
+    fig.legend(bbox_to_anchor=(.5, .95))
+
+    fig.tight_layout()
+
+    fig.savefig('hourly_simulation.png')
+
 
 if __name__ == '__main__':
     main()
