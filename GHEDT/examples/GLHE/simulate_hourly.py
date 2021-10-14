@@ -1,5 +1,5 @@
 # Jack C. Cook
-# Thursday, September 16, 2021
+# Tuesday, October 12, 2021
 
 import GLHEDT.PLAT as PLAT
 import matplotlib.pyplot as plt
@@ -60,6 +60,7 @@ def main():
     M = 13
     configuration = 'rectangle'
     nbh = N * M
+    total_H = nbh * H
 
     # Inputs related to fluid
     # -----------------------
@@ -71,7 +72,7 @@ def main():
     # --------------------------------
     # Simulation start month and end month
     start_month = 1
-    n_years = 5
+    n_years = 1
     end_month = n_years * 12
     # Maximum and minimum allowable fluid temperatures
     max_EFT_allowable = 35  # degrees Celsius
@@ -91,6 +92,8 @@ def main():
     # Take only the first column in the dictionary
     hourly_extraction_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
+    hourly_extraction_loads = [-1 * hourly_extraction_loads[i] / total_H
+                               for i in range(len(hourly_extraction_loads))]
 
     # --------------------------------------------------------------------------
 
@@ -118,18 +121,6 @@ def main():
 
     radial_numerical.calc_sts_g_functions(single_u_tube)
 
-    # Hybrid load
-    # -----------
-    # Split the extraction loads into heating and cooling for input to the
-    # HybridLoad object
-    hourly_rejection_loads, hourly_extraction_loads = \
-        PLAT.ground_loads.HybridLoad.split_heat_and_cool(
-            hourly_extraction_loads)
-
-    hybrid_load = PLAT.ground_loads.HybridLoad(
-        hourly_rejection_loads, hourly_extraction_loads, single_u_tube,
-        radial_numerical, sim_params)
-
     # GFunction
     # ---------
     # Access the database for specified configuration
@@ -141,7 +132,7 @@ def main():
     r_data = r_unimodal[key]
 
     # Configure the database data for input to the goethermal GFunction object
-    geothermal_g_input = gfdb.Management.\
+    geothermal_g_input = gfdb.Management. \
         application.GFunction.configure_database_file_for_usage(r_data)
 
     # Initialize the GFunction object
@@ -150,45 +141,17 @@ def main():
     # Hybrid GLHE
     # -----------
     # Initialize a HybridGLHE
-    HybridGLHE = GLHEDT.ground_heat_exchangers.HybridGLHE(
-        single_u_tube, radial_numerical, hybrid_load, GFunction, sim_params)
+    HourlyGLHE = GLHEDT.ground_heat_exchangers.HourlyGLHE(
+        single_u_tube, radial_numerical, hourly_extraction_loads, GFunction,
+        sim_params)
 
     tic = clock()
-    max_HP_EFT, min_HP_EFT = HybridGLHE.simulate(B)
+    max_HP_EFT, min_HP_EFT = HourlyGLHE.simulate(B)
     toc = clock()
     total = toc - tic
     print('Hybrid simulation time: {}'.format(total))
 
     print('max_HP_EFT: {}\tmin_HP_EFT: {}'.format(max_HP_EFT, min_HP_EFT))
-
-    # Hourly GLHE
-    # -----------
-    total_H = nbh * H
-    _hourly_rejection_loads, _hourly_extraction_loads \
-        = hybrid_load.hourly_load_representation()
-
-    ground_extraction_loads = \
-        [-1 * (_hourly_extraction_loads[i]) * 1000. / total_H
-         for i in range(len(_hourly_extraction_loads))]
-
-    HourlyGLHE = GLHEDT.ground_heat_exchangers.HourlyGLHE(
-        single_u_tube, radial_numerical, ground_extraction_loads, GFunction,
-        sim_params
-    )
-
-    _, _min_HP_EFT = HourlyGLHE.simulate(B)
-
-    ground_rejection_loads = \
-        [(_hourly_rejection_loads[i]) * 1000. / total_H
-         for i in range(len(_hourly_extraction_loads))]
-
-    HourlyGLHE = GLHEDT.ground_heat_exchangers.HourlyGLHE(
-        single_u_tube, radial_numerical, ground_rejection_loads, GFunction,
-        sim_params
-    )
-
-    _max_HP_EFT, _ = HourlyGLHE.simulate(B)
-    print('max_HP_EFT: {}\tmin_HP_EFT: {}'.format(_max_HP_EFT, _min_HP_EFT))
 
     # --------------------------------------------------------------------------
 
@@ -196,19 +159,19 @@ def main():
     # ---------------------------
     fig, ax = plt.subplots()
 
-    heat_pump_EFT = HybridGLHE.HPEFT[2:]
-    months = range(1, len(heat_pump_EFT) + 1)
+    heat_pump_EFT = HourlyGLHE.HPEFT
+    hours = range(1, len(heat_pump_EFT) + 1)
 
-    min_HP_EFT_idx = HybridGLHE.HPEFT.index(min_HP_EFT) - 1
-    max_HP_EFT_idx = HybridGLHE.HPEFT.index(max_HP_EFT) - 1
+    min_HP_EFT_idx = HourlyGLHE.HPEFT.index(min_HP_EFT) - 1
+    max_HP_EFT_idx = HourlyGLHE.HPEFT.index(max_HP_EFT) - 1
 
-    ax.plot(months, heat_pump_EFT, 'k')
+    ax.plot(hours, heat_pump_EFT, 'k')
     ax.scatter(min_HP_EFT_idx, min_HP_EFT, color='b', marker='X', s=200,
                label='Minimum Temperature')
-    ax.scatter(max_HP_EFT_idx, max_HP_EFT, color='r',  marker='P', s=200,
+    ax.scatter(max_HP_EFT_idx, max_HP_EFT, color='r', marker='P', s=200,
                label='Maximum Temperature')
 
-    ax.set_xlabel('Month number')
+    ax.set_xlabel('Hour number')
     ax.set_ylabel('Heat pump entering fluid temperature ($\degree$C)')
 
     ax.grid()
@@ -218,26 +181,7 @@ def main():
 
     fig.tight_layout()
 
-    fig.savefig('hybrid_monthly_simulation.png')
-
-    # Plot the hourly load profile
-    # ---------------------
-    fig = HybridGLHE.hybrid_load.visualize_hourly_heat_extraction()
-
-    fig.savefig('Atlanta_Office_Building_extraction_loads.png')
-
-    # Plot the hybrid load representation
-    # -----------------------------------
-    fig, ax = plt.subplots()
-
-    ax.plot(HybridGLHE.hybrid_load.load)
-
-    ax.set_xlabel('Month number')
-    ax.set_ylabel('Monthly load (kW)')
-
-    fig.tight_layout()
-
-    fig.savefig('monthly_load_representation.png')
+    fig.savefig('hourly_simulation.png')
 
 
 if __name__ == '__main__':

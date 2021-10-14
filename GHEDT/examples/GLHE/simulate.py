@@ -1,6 +1,5 @@
 # Jack C. Cook
-# Saturday, October 9, 2021
-import copy
+# Thursday, September 16, 2021
 
 import GLHEDT.PLAT as PLAT
 import matplotlib.pyplot as plt
@@ -8,6 +7,7 @@ import pandas as pd
 import GLHEDT.PLAT.pygfunction as gt
 import gFunctionDatabase as gfdb
 import GLHEDT
+from time import time as clock
 
 
 def main():
@@ -71,7 +71,7 @@ def main():
     # --------------------------------
     # Simulation start month and end month
     start_month = 1
-    n_years = 20
+    n_years = 5
     end_month = n_years * 12
     # Maximum and minimum allowable fluid temperatures
     max_EFT_allowable = 35  # degrees Celsius
@@ -91,8 +91,6 @@ def main():
     # Take only the first column in the dictionary
     hourly_extraction_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
-
-    hourly_extraction_loads_stored = copy.deepcopy(hourly_extraction_loads)
 
     # --------------------------------------------------------------------------
 
@@ -152,54 +150,71 @@ def main():
     # Hybrid GLHE
     # -----------
     # Initialize a HybridGLHE
-    # Initialize a HybridGLHE
     HybridGLHE = GLHEDT.ground_heat_exchangers.HybridGLHE(
         single_u_tube, radial_numerical, hybrid_load, GFunction, sim_params)
 
+    tic = clock()
+    max_HP_EFT, min_HP_EFT = HybridGLHE.simulate(B)
+    toc = clock()
+    total = toc - tic
+    print('Hybrid simulation time: {}'.format(total))
+
+    print('max_HP_EFT: {}\tmin_HP_EFT: {}'.format(max_HP_EFT, min_HP_EFT))
+
+    # Hourly load representation
+    # --------------------------
+
+    _hourly_rejection_loads, _hourly_extraction_loads \
+        = hybrid_load.hourly_load_representation()
+
     # --------------------------------------------------------------------------
 
-    # Range through height values and return the T_excess value
-    height_values = [48. + float(12 * i) for i in range(0, 1)]
-
-    Excess_temperatures = {'Hourly': [], 'Hybrid': []}
-
-    for height in height_values:
-        HybridGLHE.bhe.b.H = height
-        max_HP_EFT, min_HP_EFT = HybridGLHE.simulate(B)
-        T_excess = HybridGLHE.cost(max_HP_EFT, min_HP_EFT)
-        Excess_temperatures['Hybrid'].append(T_excess)
-
-        total_H = nbh * height
-        _hourly_extraction_loads = \
-            [1 * hourly_extraction_loads_stored[i] / total_H
-             for i in range(len(hourly_extraction_loads_stored))]
-        HourlyGLHE = GLHEDT.ground_heat_exchangers.HourlyGLHE(
-            single_u_tube, radial_numerical, _hourly_extraction_loads,
-            GFunction, sim_params)
-        max_HP_EFT, min_HP_EFT = HourlyGLHE.simulate(B)
-        T_excess = HourlyGLHE.cost(max_HP_EFT, min_HP_EFT)
-        Excess_temperatures['Hourly'].append(T_excess)
-
-    # Plot excess values
-    # ------------------
+    # Plot the simulation results
+    # ---------------------------
     fig, ax = plt.subplots()
 
-    ax.plot(height_values, Excess_temperatures['Hourly'],
-            marker='o', ls='--', label='Hourly')
-    ax.plot(height_values, Excess_temperatures['Hybrid'],
-            marker='s', ls='--', label='Hybrid')
+    heat_pump_EFT = HybridGLHE.HPEFT[2:]
+    months = range(1, len(heat_pump_EFT) + 1)
 
-    ax.set_xlabel('Borehole height (m)')
-    ax.set_ylabel('Excess fluid temperature ($\degree$C)')
+    min_HP_EFT_idx = HybridGLHE.HPEFT.index(min_HP_EFT) - 1
+    max_HP_EFT_idx = HybridGLHE.HPEFT.index(max_HP_EFT) - 1
+
+    ax.plot(months, heat_pump_EFT, 'k')
+    ax.scatter(min_HP_EFT_idx, min_HP_EFT, color='b', marker='X', s=200,
+               label='Minimum Temperature')
+    ax.scatter(max_HP_EFT_idx, max_HP_EFT, color='r',  marker='P', s=200,
+               label='Maximum Temperature')
+
+    ax.set_xlabel('Month number')
+    ax.set_ylabel('Heat pump entering fluid temperature ($\degree$C)')
 
     ax.grid()
     ax.set_axisbelow(True)
 
-    fig.legend()
+    fig.legend(bbox_to_anchor=(.5, .95))
 
     fig.tight_layout()
 
-    fig.savefig('range_excess.png')
+    fig.savefig('hybrid_monthly_simulation.png')
+
+    # Plot the hourly load profile
+    # ---------------------
+    fig = HybridGLHE.hybrid_load.visualize_hourly_heat_extraction()
+
+    fig.savefig('Atlanta_Office_Building_extraction_loads.png')
+
+    # Plot the hybrid load representation
+    # -----------------------------------
+    fig, ax = plt.subplots()
+
+    ax.plot(HybridGLHE.hybrid_load.load)
+
+    ax.set_xlabel('Month number')
+    ax.set_ylabel('Monthly load (kW)')
+
+    fig.tight_layout()
+
+    fig.savefig('monthly_load_representation.png')
 
 
 if __name__ == '__main__':

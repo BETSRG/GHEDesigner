@@ -118,11 +118,15 @@ def main():
     # --------------------------------------------------------------------------
 
     # Initialize Hybrid GLHE object
-    HybridGLHE = GLHEDT.ground_heat_exchangers._HybridGLHE(
+    HybridGLHE = GLHEDT.ground_heat_exchangers.HybridGLHE(
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 
     HybridGLHE.size()
+
+    max_HP_EFT, min_HP_EFT = HybridGLHE.simulate()
+
+    print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
 
     print('Height of boreholes: {}'.format(HybridGLHE.bhe.b.H))
 
