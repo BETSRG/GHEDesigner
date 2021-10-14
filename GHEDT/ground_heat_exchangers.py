@@ -363,8 +363,7 @@ class HourlyGHE(GHEBase):
                                str(round(T_excess, 4)) + ' (degrees Celsius)')
 
         output += self.header('Peak Load Analysis')
-        output += self.hybrid_load.__repr__() + '\n'
-
+        
         output += self.header('GFunction Information')
         output += 'Coordinates\nx(m)\ty(m)\n'
         for i in range(len(self.GFunction.bore_locations)):
