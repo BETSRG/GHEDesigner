@@ -10,43 +10,9 @@ import gFunctionDatabase as gfdb
 import GLHEDT
 
 
-def size_HybridGLHE(m_flow_borehole, fluid, borehole, pipe, grout, soil,
-                    hourly_rejection_loads, hourly_extraction_loads, GFunction,
-                    sim_params, bhe_func=PLAT.borehole_heat_exchangers.SingleUTube):
-    B = 5.
-    # Define borehole heat exchanger
-    bhe = bhe_func(m_flow_borehole, fluid, borehole, pipe, grout, soil)
-    # Compute equivalent borehole heat exchanger
-    bhe_eq = PLAT.equivalance.compute_equivalent(bhe)
-
-    # Radial Numerical short time step g-function
-    # -------------------------------------------
-    # Compute short time step now that the BHE is defined
-    # Compute short time step
-    radial_numerical_s = \
-        PLAT.radial_numerical_borehole.RadialNumericalBH(bhe_eq)
-    radial_numerical_s.calc_sts_g_functions(bhe_eq)
-
-    hybrid_load = PLAT.ground_loads.HybridLoad(
-        hourly_rejection_loads, hourly_extraction_loads, bhe_eq,
-        radial_numerical_s, sim_params)
-
-    # Hybrid GLHE
-    # -----------
-    # Initialize a HybridGLHE
-    # Single U-tube Hybrid GLHE
-    HybridGLHE = GLHEDT.ground_heat_exchangers.HybridGLHE(
-        bhe, radial_numerical_s, hybrid_load, GFunction, sim_params)
-
-    # Size the Hybrid GLHEs
-    HybridGLHE.size(B)
-
-    return HybridGLHE
-
-
 def main():
     # read in GLHEPro results
-    file_name = 'BHE_size_variation_GLHEPRO.xlsx'
+    file_name = '../BHE_size_variation_GLHEPRO.xlsx'
 
     xlsx = pd.ExcelFile(file_name)
     sheet_name = xlsx.sheet_names[0]
@@ -119,16 +85,37 @@ def main():
     # Grout
     grout = PLAT.media.ThermalProperty(k_g, rhoCp_g)
 
+    # BHE object pointers
+    # -------------------
+    single_u_tube_object = PLAT.borehole_heat_exchangers.SingleUTube
+    double_u_tube_object = PLAT.borehole_heat_exchangers.MultipleUTube
+    coaxial_tube_object = PLAT.borehole_heat_exchangers.CoaxialPipe
+
     # Number in the x and y
     # ---------------------
     N = 12
     M = 13
     configuration = 'rectangle'
-    nbh = N * M
+
+    # GFunction
+    # ---------
+    # Access the database for specified configuration
+    r = gfdb.Management.retrieval.Retrieve(configuration)
+    # There is just one value returned in the unimodal domain for rectangles
+    r_unimodal = r.retrieve(N, M)
+    key = list(r_unimodal.keys())[0]
+    r_data = r_unimodal[key]
+
+    # Configure the database data for input to the goethermal GFunction object
+    geothermal_g_input = gfdb.Management. \
+        application.GFunction.configure_database_file_for_usage(r_data)
+
+    # Initialize the GFunction object
+    GFunction = gfdb.Management.application.GFunction(**geothermal_g_input)
 
     # Inputs related to fluid
     # -----------------------
-    V_flow_system = 31.2  # System volumetric flow rate (L/s)
+    V_flow_system_rates = [7.8, 15.6, 31.2, 46.8, 62.4, 78.]
     mixer = 'MEG'  # Ethylene glycol mixed with water
     percent = 0.  # Percentage of ethylene glycol added in
 
@@ -152,41 +139,17 @@ def main():
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
     hourly_extraction: dict = \
-        pd.read_csv('Atlanta_Office_Building_Loads.csv').to_dict('list')
+        pd.read_csv('../Atlanta_Office_Building_Loads.csv').to_dict('list')
     # Take only the first column in the dictionary
-    hourly_extraction_loads: list = \
+    hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
 
     # --------------------------------------------------------------------------
 
-    # GFunction
-    # ---------
-    # Access the database for specified configuration
-    r = gfdb.Management.retrieval.Retrieve(configuration)
-    # There is just one value returned in the unimodal domain for rectangles
-    r_unimodal = r.retrieve(N, M)
-    key = list(r_unimodal.keys())[0]
-    r_data = r_unimodal[key]
-
-    # Configure the database data for input to the goethermal GFunction object
-    geothermal_g_input = gfdb.Management. \
-        application.GFunction.configure_database_file_for_usage(r_data)
-
-    # Initialize the GFunction object
-    GFunction = gfdb.Management.application.GFunction(**geothermal_g_input)
-
-    # Hybrid load
-    # -----------
-    # Split the extraction loads into heating and cooling for input to the
-    # HybridLoad object
-    hourly_rejection_loads, hourly_extraction_loads = \
-        PLAT.ground_loads.HybridLoad.split_heat_and_cool(
-            hourly_extraction_loads)
-
     print('Volumetric Flow Rate per Borehole (L/s)\tSingle U-tube'
           '\tDouble U-tube\tCoaxial')
 
-    V_flow_borehole_rates = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
+    V_flow_borehole_rates = []
 
     # Borehole heat exchanger
     # -----------------------
@@ -197,11 +160,8 @@ def main():
                                'Double U-tube': [],
                                'Coaxial': []}
 
-    for i in range(0, len(V_flow_borehole_rates)):
-        # Volumetric flow rate per borehole (L/s)
-        V_flow_borehole = V_flow_borehole_rates[i]
-        # Total fluid mass flow rate per borehole (kg/s)
-        m_flow_borehole = V_flow_borehole / 1000. * fluid.rho
+    for i in range(0, len(V_flow_system_rates)):
+        V_flow_system = V_flow_system_rates[i]
 
         # Define a borehole
         borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
@@ -210,33 +170,34 @@ def main():
 
         # Size Hybrid GLHEs
         # Single U-tube Hybrid GLHE
-        HybridGLHE_s = size_HybridGLHE(
-            m_flow_borehole, fluid, borehole, pipe_s,  grout, soil,
-            hourly_rejection_loads, hourly_extraction_loads, GFunction,
-            sim_params, bhe_func=PLAT.borehole_heat_exchangers.SingleUTube)
+        HybridGLHE_s = GLHEDT.ground_heat_exchangers._HybridGLHE(
+            V_flow_system, B, single_u_tube_object, fluid, borehole,
+            pipe_s, grout, soil, GFunction, sim_params,
+            hourly_extraction_ground_loads)
+        V_flow_borehole_rates.append(HybridGLHE_s.V_flow_borehole)
         # Double u-Tube Hybrid GLHE
-        HybridGLHE_d = size_HybridGLHE(
-            m_flow_borehole, fluid, borehole_d, pipe_d, grout, soil,
-            hourly_rejection_loads, hourly_extraction_loads, GFunction,
-            sim_params, bhe_func=PLAT.borehole_heat_exchangers.MultipleUTube
-        )
-        bhe_eq = PLAT.equivalance.compute_equivalent(HybridGLHE_d.bhe)
-        Rb = bhe_eq.compute_effective_borehole_resistance()
-        print(Rb)
+        HybridGLHE_d = GLHEDT.ground_heat_exchangers._HybridGLHE(
+            V_flow_system, B, double_u_tube_object, fluid, borehole_d,
+            pipe_d, grout, soil, GFunction, sim_params,
+            hourly_extraction_ground_loads)
         # Coaxial Hybrid GLHE
-        HybridGLHE_c = size_HybridGLHE(
-            m_flow_borehole, fluid, borehole_c, pipe_c, grout, soil,
-            hourly_rejection_loads, hourly_extraction_loads, GFunction,
-            sim_params, bhe_func=PLAT.borehole_heat_exchangers.CoaxialPipe
-        )
+        HybridGLHE_c = GLHEDT.ground_heat_exchangers._HybridGLHE(
+            V_flow_system, B, coaxial_tube_object, fluid, borehole_c,
+            pipe_c, grout, soil, GFunction, sim_params,
+            hourly_extraction_ground_loads)
+
+        # Size each hybrid GLHE
+        HybridGLHE_s.size()
+        HybridGLHE_d.size()
+        HybridGLHE_c.size()
 
         sized_height_dictionary['Single U-tube'].append(HybridGLHE_s.bhe.b.H)
         sized_height_dictionary['Double U-tube'].append(HybridGLHE_d.bhe.b.H)
         sized_height_dictionary['Coaxial'].append(HybridGLHE_c.bhe.b.H)
 
         print('{0:.8f}\t{1:.8f}\t{2:.8f}\t{3:.8f}'.format(
-            V_flow_borehole, HybridGLHE_s.bhe.b.H, HybridGLHE_d.bhe.b.H,
-            HybridGLHE_c.bhe.b.H))
+            HybridGLHE_s.V_flow_borehole, HybridGLHE_s.bhe.b.H,
+            HybridGLHE_d.bhe.b.H, HybridGLHE_c.bhe.b.H))
 
     # Create plot of V_flow_borehole vs. Sized Height
     # -----------------------------------------------
@@ -268,12 +229,12 @@ def main():
     ax[1].plot(d['V_flow_borehole'], d['Double U-tube'],
                label='Double U-tube (GLHEPRO)')
     ax[2].plot(d['V_flow_borehole'], d['Coaxial'], label='Coaxial (GLHEPRO)')
-    ax[0].plot(V_flow_borehole_rates, sized_height_dictionary['Single U-tube'], '--',
-               label='Single U-tube (GLHEDT)')
-    ax[1].plot(V_flow_borehole_rates, sized_height_dictionary['Double U-tube'], '--',
-               label='Double U-tube (GLHEDT)')
-    ax[2].plot(V_flow_borehole_rates, sized_height_dictionary['Coaxial'], '--',
-               label='Coaxial (GLHEDT)')
+    ax[0].plot(V_flow_borehole_rates, sized_height_dictionary['Single U-tube'],
+               '--', label='Single U-tube (GLHEDT)')
+    ax[1].plot(V_flow_borehole_rates, sized_height_dictionary['Double U-tube'],
+               '--', label='Double U-tube (GLHEDT)')
+    ax[2].plot(V_flow_borehole_rates, sized_height_dictionary['Coaxial'],
+               '--', label='Coaxial (GLHEDT)')
     for i in range(3):
         ax[i].grid()
         ax[i].set_axisbelow(True)
