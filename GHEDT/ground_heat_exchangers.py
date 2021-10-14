@@ -5,13 +5,13 @@ import warnings
 import gFunctionDatabase.Management.application
 import scipy.interpolate
 import scipy.optimize
-import GLHEDT.PLAT as PLAT
-import GLHEDT.PLAT.pygfunction as gt
+import GHEDT.PLAT as PLAT
+import GHEDT.PLAT.pygfunction as gt
 
 import numpy as np
 
 
-class GLHEBase:
+class GHEBase:
     def __init__(
             self, V_flow_system: float, B_spacing: float,
                  bhe_function: PLAT.borehole_heat_exchangers,
@@ -60,7 +60,7 @@ class GLHEBase:
         header = self.header
         # Header
         output = 50 * '-' + '\n'
-        output += header('GLHEDT GLHE Output - Version 0.1')
+        output += header('GHEDT GLHE Output - Version 0.1')
         output += 50 * '-' + '\n'
 
         def justify(category, value):
@@ -138,7 +138,7 @@ class GLHEBase:
         return g
 
 
-class HybridGLHE(GLHEBase):
+class HybridGHE(GHEBase):
     def __init__(self, V_flow_system: float, B_spacing: float,
                  bhe_object: PLAT.borehole_heat_exchangers,
                  fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
@@ -148,7 +148,7 @@ class HybridGLHE(GLHEBase):
                  sim_params: PLAT.media.SimulationParameters,
                  hourly_extraction_ground_loads: list
                  ):
-        GLHEBase.__init__(
+        GHEBase.__init__(
             self, V_flow_system, B_spacing, bhe_object, fluid, borehole, pipe,
             grout, soil, GFunction, sim_params, hourly_extraction_ground_loads)
 
@@ -172,7 +172,7 @@ class HybridGLHE(GLHEBase):
         self.loadperm: list = []
 
     def __repr__(self):
-        output = GLHEBase.__repr__(self)
+        output = GHEBase.__repr__(self)
         self.header('Simulation Results')
 
         max_HP_EFT, min_HP_EFT = self.simulate()
@@ -334,7 +334,7 @@ class HybridGLHE(GLHEBase):
         return max_HP_EFT, min_HP_EFT
 
 
-class HourlyGLHE(GLHEBase):
+class HourlyGHE(GHEBase):
     def __init__(self, V_flow_system: float, B_spacing: float,
                  bhe_object: PLAT.borehole_heat_exchangers, fluid: gt.media.Fluid,
                  borehole: gt.boreholes.Borehole, pipe: PLAT.media.Pipe,
@@ -342,12 +342,57 @@ class HourlyGLHE(GLHEBase):
                  GFunction: gFunctionDatabase.Management.application.GFunction,
                  sim_params: PLAT.media.SimulationParameters,
                  hourly_extraction_ground_loads: list):
-        GLHEBase.__init__(
+        GHEBase.__init__(
             self, V_flow_system, B_spacing, bhe_object, fluid, borehole, pipe,
             grout, soil, GFunction, sim_params, hourly_extraction_ground_loads)
 
         self.HPEFT = []
         self.delta_Tb = []
+
+    def __repr__(self):
+        output = GHEBase.__repr__(self)
+        self.header('Simulation Results')
+
+        max_HP_EFT, min_HP_EFT = self.simulate()
+        output += self.justify('Max HP entering temp',
+                               str(round(max_HP_EFT, 4)) + ' (degrees Celsius)')
+        output += self.justify('Min HP entering temp',
+                               str(round(min_HP_EFT, 4)) + ' (degrees Celsius)')
+        T_excess = self.cost(max_HP_EFT, min_HP_EFT)
+        output += self.justify('Excess fluid temperature',
+                               str(round(T_excess, 4)) + ' (degrees Celsius)')
+
+        output += self.header('Peak Load Analysis')
+        output += self.hybrid_load.__repr__() + '\n'
+
+        output += self.header('GFunction Information')
+        output += 'Coordinates\nx(m)\ty(m)\n'
+        for i in range(len(self.GFunction.bore_locations)):
+            x, y = self.GFunction.bore_locations[i]
+            output += str(x) + '\t' + str(y) + '\n'
+
+        output += 'G-Function\nln(t/ts)\tg\n'
+        B_over_H = self.B_spacing / self.bhe.b.H
+        g = self.grab_g_function(B_over_H)
+
+        total_g_values = g.x.size
+        number_lts_g_values = 27
+        number_sts_g_values = 50
+        sts_step_size = int(np.floor((total_g_values - number_lts_g_values) /
+                                 number_sts_g_values).tolist())
+        lntts = []
+        g_values = []
+        for i in range(0, (total_g_values-number_lts_g_values), sts_step_size):
+            lntts.append(g.x[i].tolist())
+            g_values.append(g.y[i].tolist())
+        lntts += g.x[total_g_values-number_lts_g_values: total_g_values].tolist()
+        g_values += g.y[total_g_values-number_lts_g_values: total_g_values].tolist()
+
+        for i in range(len(lntts)):
+            output += str(round(lntts[i], 4)) + '\t' + \
+                      str(round(g_values[i], 4)) + '\n'
+
+        return output
 
     def simulate_hourly(self, hours, q, g, Rb, two_pi_k, ts, Tg):
         # An hourly simulation for the fluid temperature
@@ -376,8 +421,8 @@ class HourlyGLHE(GLHEBase):
             # Tf = Tb + q_i * R_b^* (equation 2.13)
             Tb = (Tg + 273.15) + summer
             Tf = Tb + q[n] * Rb
-            T_entering = \
-                q[n] * self.bhe.b.H / (2 * self.bhe.m_flow_borehole * self.bhe.fluid.cp) + Tf
+            T_entering = q[n] * self.bhe.b.H / \
+                         (2 * self.bhe.m_flow_borehole * self.bhe.fluid.cp) + Tf
             HPEFT.append(T_entering - 273.15)
             self.delta_Tb.append(Tb - 273.15 - self.bhe.soil.ugt)
 
@@ -405,3 +450,33 @@ class HourlyGLHE(GLHEBase):
         max_HP_EFT = float(max(self.HPEFT))
         min_HP_EFT = float(min(self.HPEFT))
         return max_HP_EFT, min_HP_EFT
+
+    def size(self) -> None:
+        # Size the ground heat exchanger
+
+        def local_objective(H):
+            self.bhe.b.H = H
+            max_HP_EFT, min_HP_EFT = self.simulate()
+            T_excess = self.cost(max_HP_EFT, min_HP_EFT)
+            return T_excess
+
+        # Make the initial guess variable the average of the heights given
+        self.bhe.b.H = \
+            (self.sim_params.max_Height + self.sim_params.min_Height) / 2.
+        # bhe.b.H is updated during sizing
+        PLAT.equivalance.solve_root(
+            self.bhe.b.H, local_objective, lower=self.sim_params.min_Height,
+            upper=self.sim_params.max_Height, xtol=1.0e-6, rtol=1.0e-6,
+            maxiter=50)
+        if self.bhe.b.H == self.sim_params.min_Height:
+            warnings.warn('The minimum height provided to size this ground heat'
+                          ' exchanger is not shallow enough. Provide a '
+                          'shallower allowable depth or decrease the size of '
+                          'the heat exchanger.')
+        if self.bhe.b.H == self.sim_params.max_Height:
+            warnings.warn('The maximum height provided to size this ground '
+                          'heat exchanger is not deep enough. Provide a deeper '
+                          'allowable depth or increase the size of the heat '
+                          'exchanger.')
+
+        return
