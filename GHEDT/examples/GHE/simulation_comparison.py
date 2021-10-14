@@ -152,6 +152,17 @@ def main():
 
         print('Hourly excess: {}'.format(T_excess))
 
+        hourly_rejection_loads, hourly_extraction_loads = \
+            PLAT.ground_loads.HybridLoad.split_heat_and_cool(
+                hourly_extraction_ground_loads)
+
+        hybrid_load = PLAT.ground_loads.HybridLoad(
+            hourly_rejection_loads, hourly_extraction_loads, HybridGHE.bhe_eq,
+            HybridGHE.radial_numerical, sim_params)
+
+        # hybrid load object
+        HybridGHE.hybrid_load = hybrid_load
+
         tic = clock()
         max_HP_EFT, min_HP_EFT = HybridGHE.simulate()
         toc = clock()
