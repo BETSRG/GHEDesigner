@@ -61,7 +61,7 @@ class BaseGHE:
         header = self.header
         # Header
         output = 50 * '-' + '\n'
-        output += header('GHEDT GLHE Output - Version 0.1')
+        output += header('GHEDT GHE Output - Version 0.1')
         output += 50 * '-' + '\n'
 
         def justify(category, value):
