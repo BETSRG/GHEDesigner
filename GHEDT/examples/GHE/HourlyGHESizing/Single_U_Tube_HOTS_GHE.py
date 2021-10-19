@@ -121,23 +121,23 @@ def main(args):
 
     # --------------------------------------------------------------------------
 
-    # Initialize Hourly GHE object
-    HourlyGHE = GHEDT.ground_heat_exchangers.HourlyGHE(
+    # Initialize GHE object
+    GHE = GHEDT.ground_heat_exchangers.GHE(
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 
-    HourlyGHE.size()
+    GHE.size(method='hourly')
 
-    max_HP_EFT, min_HP_EFT = HourlyGHE.simulate()
+    max_HP_EFT, min_HP_EFT = GHE.simulate(method='hourly')
 
     print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
 
-    print('Height of boreholes: {}'.format(HourlyGHE.bhe.b.H))
+    print('Height of boreholes: {}'.format(GHE.bhe.b.H))
 
     print('Effective borehole thermal resistance: {}'.
-          format(HourlyGHE.bhe.compute_effective_borehole_resistance()))
+          format(GHE.bhe.compute_effective_borehole_resistance()))
 
-    GLHE_info = HourlyGHE.__repr__()
+    GLHE_info = GHE.__repr__()
 
     file = open('SingleUTube-HourlyGHE-info' + str(V_flow_system) + '.txt',
                 'w+')
