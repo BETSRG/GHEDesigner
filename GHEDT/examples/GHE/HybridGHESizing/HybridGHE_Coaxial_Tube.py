@@ -131,20 +131,20 @@ def main():
     # --------------------------------------------------------------------------
 
     # Initialize Hybrid GLHE object
-    HybridGHE = GHEDT.ground_heat_exchangers.HybridGHE(
+    GHE = GHEDT.ground_heat_exchangers.GHE(
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 
-    HybridGHE.size()
+    GHE.size(method='hybrid')
 
-    print('Height of boreholes: {}'.format(HybridGHE.bhe.b.H))
+    print('Height of boreholes: {}'.format(GHE.bhe.b.H))
 
     print('Effective borehole thermal resistance: {}'.
-          format(HybridGHE.bhe.compute_effective_borehole_resistance()))
+          format(GHE.bhe.compute_effective_borehole_resistance()))
 
-    GHE_info = HybridGHE.__repr__()
+    GHE_info = GHE.__repr__()
 
-    file = open('CoaxialTube-HybridGHE-info.txt', 'w+')
+    file = open('CoaxialTube-GHE-info.txt', 'w+')
     file.write(GHE_info)
     file.close()
 
