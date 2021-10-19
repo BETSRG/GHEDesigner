@@ -121,19 +121,20 @@ def main(args):
 
     # --------------------------------------------------------------------------
 
-    # Initialize Hybrid GLHE object
-    HourlyGHE = GHEDT.ground_heat_exchangers.HourlyGHE(
+    # Initialize GHE object
+    GHE = GHEDT.ground_heat_exchangers.GHE(
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 
-    HourlyGHE.size()
+    # Size using hourly detailed simulation
+    GHE.size(method='hourly')
 
-    print('Height of boreholes: {}'.format(HourlyGHE.bhe.b.H))
+    print('Height of boreholes: {}'.format(GHE.bhe.b.H))
 
     print('Effective borehole thermal resistance: {}'.
-          format(HourlyGHE.bhe.compute_effective_borehole_resistance()))
+          format(GHE.bhe.compute_effective_borehole_resistance()))
 
-    GHE_info = HourlyGHE.__repr__()
+    GHE_info = GHE.__repr__()
 
     file = open('DoubleUTube-HourlyGHE-info' + str(V_flow_system) + '.txt',
                 'w+')
