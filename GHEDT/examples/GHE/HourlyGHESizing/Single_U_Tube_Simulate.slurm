@@ -26,4 +26,4 @@ source ${conda_activate} ${conda_env}
 
 # pygfunction-v2.0 needs python3 and some specific packages to python3.7
 
-python simulate.py
+python simulate_hourly.py
