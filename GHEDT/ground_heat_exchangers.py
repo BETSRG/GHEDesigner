@@ -212,6 +212,49 @@ class GHE(BaseGHE):
         # list of change in borehole wall temperatures
         self.dTb = []
 
+    def __repr__(self):
+        output = BaseGHE.__repr__(self)
+
+        self.header('Simulation Results')
+        max_HP_EFT = max(self.HPEFT)
+        min_HP_EFT = min (self.HPEFT)
+        output += self.justify('Max HP entering temp',
+                               str(round(max_HP_EFT, 4)) + ' (degrees Celsius)')
+        output += self.justify('Min HP entering temp',
+                               str(round(min_HP_EFT, 4)) + ' (degrees Celsius)')
+        T_excess = self.cost(max_HP_EFT, min_HP_EFT)
+        output += self.justify('Excess fluid temperature',
+                               str(round(T_excess, 4)) + ' (degrees Celsius)')
+        output += self.header('Peak Load Analysis')
+        output += self.hybrid_load.__repr__() + '\n'
+        output += self.header('GFunction Information')
+        output += 'Coordinates\nx(m)\ty(m)\n'
+        for i in range(len(self.GFunction.bore_locations)):
+            x, y = self.GFunction.bore_locations[i]
+            output += str(x) + '\t' + str(y) + '\n'
+        output += 'G-Function\nln(t/ts)\tg\n'
+        B_over_H = self.B_spacing / self.bhe.b.H
+        g = self.grab_g_function(B_over_H)
+        total_g_values = g.x.size
+        number_lts_g_values = 27
+        number_sts_g_values = 50
+        sts_step_size = int(np.floor((total_g_values - number_lts_g_values) /
+                                     number_sts_g_values).tolist())
+        lntts = []
+        g_values = []
+        for i in range(0, (total_g_values - number_lts_g_values),
+                       sts_step_size):
+            lntts.append(g.x[i].tolist())
+            g_values.append(g.y[i].tolist())
+        lntts += g.x[
+                 total_g_values - number_lts_g_values: total_g_values].tolist()
+        g_values += g.y[
+                    total_g_values - number_lts_g_values: total_g_values].tolist()
+        for i in range(len(lntts)):
+            output += str(round(lntts[i], 4)) + '\t' + \
+                      str(round(g_values[i], 4)) + '\n'
+        return output
+
     def simulate(self, method='hybrid'):
         B = self.B_spacing
         B_over_H = B / self.bhe.b.H
