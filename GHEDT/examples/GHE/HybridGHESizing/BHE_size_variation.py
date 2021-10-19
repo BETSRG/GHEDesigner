@@ -175,35 +175,35 @@ def main():
         borehole_c = copy.deepcopy(borehole)
 
         # Size Hybrid GLHEs
-        # Single U-tube Hybrid GLHE
-        HybridGHE_s = GHEDT.ground_heat_exchangers.HybridGHE(
+        # Single U-tube GHE
+        GHE_s = GHEDT.ground_heat_exchangers.GHE(
             V_flow_system, B, single_u_tube_object, fluid, borehole,
             pipe_s, grout, soil, GFunction, sim_params,
             hourly_extraction_ground_loads)
-        V_flow_borehole_rates.append(HybridGHE_s.V_flow_borehole)
-        # Double u-Tube Hybrid GLHE
-        HybridGHE_d = GHEDT.ground_heat_exchangers.HybridGHE(
+        V_flow_borehole_rates.append(GHE_s.V_flow_borehole)
+        # Double u-Tube GHE
+        GHE_d = GHEDT.ground_heat_exchangers.GHE(
             V_flow_system, B, double_u_tube_object, fluid, borehole_d,
             pipe_d, grout, soil, GFunction, sim_params,
             hourly_extraction_ground_loads)
-        # Coaxial Hybrid GLHE
-        HybridGHE_c = GHEDT.ground_heat_exchangers.HybridGHE(
+        # Coaxial tube GHE
+        GHE_c = GHEDT.ground_heat_exchangers.GHE(
             V_flow_system, B, coaxial_tube_object, fluid, borehole_c,
             pipe_c, grout, soil, GFunction, sim_params,
             hourly_extraction_ground_loads)
 
-        # Size each hybrid GLHE
-        HybridGHE_s.size()
-        HybridGHE_d.size()
-        HybridGHE_c.size()
+        # Size each GHE using a hybrid simulation
+        GHE_s.size(method='hybrid')
+        GHE_d.size(method='hybrid')
+        GHE_c.size(method='hybrid')
 
-        sized_height_dictionary['Single U-tube'].append(HybridGHE_s.bhe.b.H)
-        sized_height_dictionary['Double U-tube'].append(HybridGHE_d.bhe.b.H)
-        sized_height_dictionary['Coaxial'].append(HybridGHE_c.bhe.b.H)
+        sized_height_dictionary['Single U-tube'].append(GHE_s.bhe.b.H)
+        sized_height_dictionary['Double U-tube'].append(GHE_d.bhe.b.H)
+        sized_height_dictionary['Coaxial'].append(GHE_c.bhe.b.H)
 
         print('{0:.8f}\t{1:.8f}\t{2:.8f}\t{3:.8f}'.format(
-            HybridGHE_s.V_flow_borehole, HybridGHE_s.bhe.b.H,
-            HybridGHE_d.bhe.b.H, HybridGHE_c.bhe.b.H))
+            GHE_s.V_flow_borehole, GHE_s.bhe.b.H,
+            GHE_d.bhe.b.H, GHE_c.bhe.b.H))
 
     # Create plot of V_flow_borehole vs. Sized Height
     # -----------------------------------------------
