@@ -119,11 +119,11 @@ def main():
     # --------------------------------------------------------------------------
 
     # Initialize Hourly GLHE object
-    HourlyGHE = GHEDT.ground_heat_exchangers.HourlyGHE(
+    GHE = GHEDT.ground_heat_exchangers.GHE(
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 
-    max_HP_EFT, min_HP_EFT = HourlyGHE.simulate()
+    max_HP_EFT, min_HP_EFT = GHE.simulate(method='hourly')
 
     print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
 
@@ -131,11 +131,11 @@ def main():
     # ---------------------------
     fig, ax = plt.subplots()
 
-    heat_pump_EFT = HourlyGHE.HPEFT
+    heat_pump_EFT = GHE.HPEFT
     hours = range(1, len(heat_pump_EFT) + 1)
 
-    min_HP_EFT_idx = HourlyGHE.HPEFT.index(min_HP_EFT) - 1
-    max_HP_EFT_idx = HourlyGHE.HPEFT.index(max_HP_EFT) - 1
+    min_HP_EFT_idx = GHE.HPEFT.index(min_HP_EFT) - 1
+    max_HP_EFT_idx = GHE.HPEFT.index(max_HP_EFT) - 1
 
     ax.plot(hours, heat_pump_EFT, 'k')
     ax.scatter(min_HP_EFT_idx, min_HP_EFT, color='b', marker='X', s=200,
