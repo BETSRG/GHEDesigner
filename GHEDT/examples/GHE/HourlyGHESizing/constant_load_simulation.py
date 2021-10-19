@@ -96,7 +96,7 @@ def main():
     # --------------------------------
     # Simulation start month and end month
     start_month = 1
-    n_years = 1
+    n_years = 4
     end_month = n_years * 12
     # Maximum and minimum allowable fluid temperatures
     max_EFT_allowable = 35  # degrees Celsius
@@ -116,27 +116,31 @@ def main():
     # --------------------------------------------------------------------------
 
     # Initialize Hybrid GLHE object
-    HourlyGHE = GHEDT.ground_heat_exchangers.HourlyGHE(
+    GHE = GHEDT.ground_heat_exchangers.GHE(
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 
-    max_HP_EFT, min_HP_EFT = HourlyGHE.simulate()
+    max_HP_EFT, min_HP_EFT = GHE.simulate(method='hourly')
 
     print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
+
+    T_excess = GHE.cost(max_HP_EFT, min_HP_EFT)
+
+    print('T_excess: {}'.format(T_excess))
 
     # Plot change in fluid temperature
     # --------------------------------
     fig, ax = plt.subplots()
 
-    time_values = list(range(1, 8760 * n_years))
-    lntts = [np.log(time_values[i] * 3600 / HourlyGHE.radial_numerical.t_s)
+    time_values = list(range(1, 8760 * n_years + 1))
+    lntts = [np.log(time_values[i] * 3600 / GHE.radial_numerical.t_s)
              for i in range(len(time_values))]
 
-    B_over_H = B / HourlyGHE.bhe.b.H
-    g = HourlyGHE.grab_g_function(B_over_H)
+    B_over_H = B / GHE.bhe.b.H
+    g = GHE.grab_g_function(B_over_H)
 
     ax.plot(g.x, g.y)
-    ax.plot(lntts, HourlyGHE.delta_Tb, '--')
+    ax.plot(lntts, GHE.dTb, '--')
 
     ax.set_ylabel('g = $\Delta T_b$')
     ax.set_xlabel('ln(t/ts)')
