@@ -97,7 +97,7 @@ def main():
     # --------------------------------
     # Simulation start month and end month
     start_month = 1
-    n_years = 1
+    n_years = 20
     end_month = n_years * 12
     # Maximum and minimum allowable fluid temperatures
     max_EFT_allowable = 35  # degrees Celsius
@@ -118,13 +118,8 @@ def main():
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
 
-    # Initialize Hourly GHE object
-    HourlyGHE = GHEDT.ground_heat_exchangers.HourlyGHE(
-        V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
-        GFunction, sim_params, hourly_extraction_ground_loads)
-
-    # Initialize Hybrid GLHE object
-    HybridGHE = GHEDT.ground_heat_exchangers.HybridGHE(
+    # Initialize GHE object
+    GHE = GHEDT.ground_heat_exchangers.GHE(
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 
@@ -140,41 +135,43 @@ def main():
         sim_params.end_month = end_month
 
         tic = clock()
-        max_HP_EFT, min_HP_EFT = HourlyGHE.simulate()
+        max_HP_EFT, min_HP_EFT = GHE.simulate(method='hourly')
         toc = clock()
         total = toc - tic
         Simulation_times['Hourly'].append(total)
 
         print('max_HP_EFT: {}\tmin_HP_EFT: {}'.format(max_HP_EFT, min_HP_EFT))
 
-        T_excess = HourlyGHE.cost(max_HP_EFT, min_HP_EFT)
-        Excess_temperatures['Hourly'].append(T_excess)
+        T_excess_ = GHE.cost(max_HP_EFT, min_HP_EFT)
+        Excess_temperatures['Hourly'].append(T_excess_)
 
-        print('Hourly excess: {}'.format(T_excess))
+        print('Hourly excess: {}'.format(T_excess_))
 
         hourly_rejection_loads, hourly_extraction_loads = \
             PLAT.ground_loads.HybridLoad.split_heat_and_cool(
                 hourly_extraction_ground_loads)
 
         hybrid_load = PLAT.ground_loads.HybridLoad(
-            hourly_rejection_loads, hourly_extraction_loads, HybridGHE.bhe_eq,
-            HybridGHE.radial_numerical, sim_params)
+            hourly_rejection_loads, hourly_extraction_loads, GHE.bhe_eq,
+            GHE.radial_numerical, sim_params)
 
         # hybrid load object
-        HybridGHE.hybrid_load = hybrid_load
+        GHE.hybrid_load = hybrid_load
 
         tic = clock()
-        max_HP_EFT, min_HP_EFT = HybridGHE.simulate()
+        max_HP_EFT, min_HP_EFT = GHE.simulate(method='hybrid')
         toc = clock()
         total = toc - tic
         Simulation_times['Hybrid'].append(total)
 
         print('max_HP_EFT: {}\tmin_HP_EFT: {}'.format(max_HP_EFT, min_HP_EFT))
 
-        T_excess = HybridGHE.cost(max_HP_EFT, min_HP_EFT)
+        T_excess = GHE.cost(max_HP_EFT, min_HP_EFT)
         Excess_temperatures['Hybrid'].append(T_excess)
 
         print('Hybrid excess: {}'.format(T_excess))
+
+        print('% DIFF: {}'.format( (abs(T_excess - T_excess_)) / T_excess_ * 100. ))
 
     # Plot excess values
     # ------------------
