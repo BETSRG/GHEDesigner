@@ -47,8 +47,6 @@ def main():
 
     # Thermal properties
     # ------------------
-    # Thermal properties
-    # ------------------
     # Pipe
     pipe = PLAT.media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
     # Soil
