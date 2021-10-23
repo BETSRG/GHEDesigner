@@ -97,20 +97,9 @@ def main():
     double_u_tube_object = PLAT.borehole_heat_exchangers.MultipleUTube
     coaxial_tube_object = PLAT.borehole_heat_exchangers.CoaxialPipe
 
-    # Number in the x and y
-    # ---------------------
-    N = 12
-    M = 13
-    configuration = 'rectangle'
-
-    # GFunction
-    # ---------
-    # Access the database for specified configuration
-    r = gfdb.Management.retrieval.Retrieve(configuration)
-    # There is just one value returned in the unimodal domain for rectangles
-    r_unimodal = r.retrieve(N, M)
-    key = list(r_unimodal.keys())[0]
-    r_data = r_unimodal[key]
+    # Read in g-functions from GLHEPro
+    file = '../../1DInterpolation/GLHEPRO_gFunctions_12x13.json'
+    r_data, _ = gfdb.fileio.read_file(file)
 
     # Configure the database data for input to the goethermal GFunction object
     geothermal_g_input = gfdb.Management. \
@@ -201,13 +190,52 @@ def main():
         sized_height_dictionary['Double U-tube'].append(GHE_d.bhe.b.H)
         sized_height_dictionary['Coaxial'].append(GHE_c.bhe.b.H)
 
+        # Effective borehole thermal resistances
+        Rb_star_s = \
+            gt.pipes.borehole_thermal_resistance(GHE_s.bhe,
+                                                 GHE_s.bhe.m_flow_borehole,
+                                                 GHE_s.bhe.fluid.cp)
+        Rb_star_d = \
+            gt.pipes.borehole_thermal_resistance(GHE_d.bhe,
+                                                 GHE_d.bhe.m_flow_borehole,
+                                                 GHE_d.bhe.fluid.cp)
+        Rb_star_c = \
+            gt.pipes.borehole_thermal_resistance(GHE_c.bhe,
+                                                 GHE_c.bhe.m_flow_borehole,
+                                                 GHE_c.bhe.fluid.cp)
+        # Local borehole thermal resistances
+        import numpy as np
+        Rb_s = 1 / np.trace(1 / GHE_s.bhe._Rd)
+        Rb_d = 1 / np.trace(1 / GHE_d.bhe._Rd)
+        Rb_c = 1 / np.trace(1 / GHE_c.bhe._Rd)
+
+        # Reynolds numbers
+        Re_s = PLAT.borehole_heat_exchangers.compute_Reynolds(
+            GHE_s.bhe.m_flow_pipe, GHE_s.bhe.r_in, GHE_s.bhe.pipe.eps,
+            GHE_s.bhe.fluid)
+        Re_d = PLAT.borehole_heat_exchangers.compute_Reynolds(
+            GHE_d.bhe.m_flow_pipe, GHE_d.bhe.r_in, GHE_d.bhe.pipe.eps,
+            GHE_d.bhe.fluid)
+        Re_c = PLAT.borehole_heat_exchangers.compute_Reynolds_concentric(
+            GHE_c.bhe.m_flow_pipe, GHE_c.bhe.r_in_out, GHE_c.bhe.r_out_in,
+            GHE_c.bhe.fluid)
+
         print('{0:.8f}\t{1:.8f}\t{2:.8f}\t{3:.8f}'.format(
             GHE_s.V_flow_borehole, GHE_s.bhe.b.H,
             GHE_d.bhe.b.H, GHE_c.bhe.b.H))
+        # print('{0:.8f}\t{1:.8f}\t{2:.8f}\t{3:.8f}'.format(
+        #     GHE_s.V_flow_borehole, Rb_star_s,
+        #     Rb_star_d, Rb_star_c))
+        # print('{0:.8f}\t{1:.8f}\t{2:.8f}\t{3:.8f}'.format(
+        #     GHE_s.V_flow_borehole, Rb_s,
+        #     Rb_d, Rb_c))
+        # print('{0:.8f}\t{1:.8f}\t{2:.8f}\t{3:.8f}'.format(
+        #     GHE_s.V_flow_borehole, Re_s, Re_d, Re_c))
 
     # Create plot of V_flow_borehole vs. Sized Height
     # -----------------------------------------------
-    fig, ax = plt.subplots()
+    fig = gt.gfunction._initialize_figure()
+    ax = fig.add_subplot(111)
 
     ax.plot(V_flow_borehole_rates, sized_height_dictionary['Single U-tube'],
             label='Single U-tube', marker='o', ls='--')
@@ -225,11 +253,13 @@ def main():
     fig.tight_layout()
     fig.legend(bbox_to_anchor=(.4, .95))
 
-    fig.savefig('BHE_size_variation.png')
+    fig.savefig('BHE_HYTS_size_variation.png')
 
     # Create a plot comparing GLHEPro results
     # ---------------------------------------
-    fig, ax = plt.subplots(3, sharex=True, sharey=True)
+    fig = gt.gfunction._initialize_figure()
+    ax = fig.subplots(3, sharex=True, sharey=True)
+    # fig, ax = plt.subplots(3, sharex=True, sharey=True)
     ax[0].plot(d['V_flow_borehole'], d['Single U-tube'],
                label='Single U-tube (GLHEPRO)')
     ax[1].plot(d['V_flow_borehole'], d['Double U-tube'],
