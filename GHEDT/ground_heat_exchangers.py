@@ -216,15 +216,19 @@ class GHE(BaseGHE):
         output = BaseGHE.__repr__(self)
 
         self.header('Simulation Results')
-        max_HP_EFT = max(self.HPEFT)
-        min_HP_EFT = min (self.HPEFT)
-        output += self.justify('Max HP entering temp',
-                               str(round(max_HP_EFT, 4)) + ' (degrees Celsius)')
-        output += self.justify('Min HP entering temp',
-                               str(round(min_HP_EFT, 4)) + ' (degrees Celsius)')
-        T_excess = self.cost(max_HP_EFT, min_HP_EFT)
-        output += self.justify('Excess fluid temperature',
-                               str(round(T_excess, 4)) + ' (degrees Celsius)')
+        if len(self.HPEFT) > 0:
+            max_HP_EFT = max(self.HPEFT)
+            min_HP_EFT = min(self.HPEFT)
+            output += self.justify('Max HP entering temp',
+                                   str(round(max_HP_EFT, 4)) +
+                                   ' (degrees Celsius)')
+            output += self.justify('Min HP entering temp',
+                                   str(round(min_HP_EFT, 4)) +
+                                   ' (degrees Celsius)')
+            T_excess = self.cost(max_HP_EFT, min_HP_EFT)
+            output += self.justify('Excess fluid temperature',
+                                   str(round(T_excess, 4)) +
+                                   ' (degrees Celsius)')
         output += self.header('Peak Load Analysis')
         output += self.hybrid_load.__repr__() + '\n'
         output += self.header('GFunction Information')
