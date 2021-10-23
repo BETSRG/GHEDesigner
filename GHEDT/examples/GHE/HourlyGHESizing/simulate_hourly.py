@@ -94,7 +94,7 @@ def main():
     # --------------------------------
     # Simulation start month and end month
     start_month = 1
-    n_years = 20
+    n_years = 3
     end_month = n_years * 12
     # Maximum and minimum allowable fluid temperatures
     max_EFT_allowable = 35  # degrees Celsius
@@ -129,7 +129,8 @@ def main():
 
     # Plot the simulation results
     # ---------------------------
-    fig, ax = plt.subplots()
+    fig = gt.gfunction._initialize_figure()
+    ax = fig.add_subplot(111)
 
     heat_pump_EFT = GHE.HPEFT
     hours = range(1, len(heat_pump_EFT) + 1)
