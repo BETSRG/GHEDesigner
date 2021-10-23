@@ -4,16 +4,14 @@
 """
 Purpose:
     - Pull a configuration from the g-function database
-    - load the GLHEDT.geothermal.GFunction from the database configuration
+    - load the GHEDT.geothermal.GFunction from the database configuration
     - perform interpolation
     - do correction for rb value
 """
 
 
-import PLAT.pygfunction as gt
-import PLAT
 import gFunctionDatabase as gfdb
-import GLHEDT
+import GHEDT
 
 
 def main():
@@ -40,10 +38,10 @@ def main():
 
     # Configure the database data for input to the goethermal GFunction object
     geothermal_g_input = \
-        GLHEDT.geothermal.GFunction.configure_database_file_for_usage(r_data)
+        gfdb.Management.application.GFunction.configure_database_file_for_usage(r_data)
 
     # Initialize the GFunction object
-    GFunction = GLHEDT.geothermal.GFunction(**geothermal_g_input)
+    GFunction = gfdb.Management.application.GFunction(**geothermal_g_input)
 
     # Perform interpolation
     B_over_H = B / H
