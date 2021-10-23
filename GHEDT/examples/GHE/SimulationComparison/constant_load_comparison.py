@@ -3,7 +3,7 @@
 
 import GHEDT.PLAT as PLAT
 import matplotlib.pyplot as plt
-import pandas as pd
+import numpy as np
 import GHEDT.PLAT.pygfunction as gt
 import gFunctionDatabase as gfdb
 import GHEDT
@@ -97,7 +97,7 @@ def main():
     # --------------------------------
     # Simulation start month and end month
     start_month = 1
-    n_years = 1
+    n_years = 3
     end_month = n_years * 12
     # Maximum and minimum allowable fluid temperatures
     max_EFT_allowable = 35  # degrees Celsius
@@ -109,116 +109,101 @@ def main():
         start_month, end_month, max_EFT_allowable, min_EFT_allowable,
         max_Height, min_Height)
 
-    # Process loads from file
-    # -----------------------
-    # read in the csv file and convert the loads to a list of length 8760
-    hourly_extraction: dict = \
-        pd.read_csv('../Atlanta_Office_Building_Loads.csv').to_dict('list')
-    # Take only the first column in the dictionary
-    hourly_extraction_ground_loads: list = \
-        hourly_extraction[list(hourly_extraction.keys())[0]]
-    import numpy as np
+    # Constant load profile
     two_pi_k = 2. * np.pi * soil.k
     hourly_extraction_ground_loads = [-(two_pi_k) * nbh * H] * 8760
 
-    # Initialize Hourly GHE object
+    # Initialize GHE object
     GHE = GHEDT.ground_heat_exchangers.GHE(
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 
     # --------------------------------------------------------------------------
 
-    years = 5
     Excess_temperatures = {'Hourly': [], 'Hybrid': []}
     Simulation_times = {'Hourly': [], 'Hybrid': []}
 
-    for i in range(1, years+1):
-        # Simulation start month and end month
-        end_month = 12 * i
-        sim_params.end_month = end_month
+    Minimum_temperatures = {'Hourly': [], 'Hybrid': []}
+    Maximum_temperatures = {'Hourly': [], 'Hybrid': []}
 
-        tic = clock()
-        max_HP_EFT, min_HP_EFT = GHE.simulate(method='hourly')
-        toc = clock()
-        total = toc - tic
-        Simulation_times['Hourly'].append(total)
+    fig = gt.gfunction._initialize_figure()
+    ax = fig.add_subplot(111)
 
-        print('max_HP_EFT: {}\tmin_HP_EFT: {}'.format(max_HP_EFT, min_HP_EFT))
+    # Hourly simulation
 
-        T_excess_ = GHE.cost(max_HP_EFT, min_HP_EFT)
-        Excess_temperatures['Hourly'].append(T_excess_)
+    tic = clock()
+    max_HP_EFT, min_HP_EFT = GHE.simulate(method='hourly')
+    toc = clock()
+    total = toc - tic
+    Simulation_times['Hourly'].append(total)
 
-        print('Hourly excess: {}'.format(T_excess_))
+    hours = list(range(1, len(GHE.HPEFT)+1))
+    ax.scatter(hours, GHE.HPEFT, label='Hourly')
 
-        hourly_rejection_loads, hourly_extraction_loads = \
-            PLAT.ground_loads.HybridLoad.split_heat_and_cool(
-                hourly_extraction_ground_loads)
+    print('max_HP_EFT: {}\tmin_HP_EFT: {}'.format(max_HP_EFT, min_HP_EFT))
+    Minimum_temperatures['Hourly'].append(min_HP_EFT)
+    Maximum_temperatures['Hourly'].append(max_HP_EFT)
 
-        hybrid_load = PLAT.ground_loads.HybridLoad(
-            hourly_rejection_loads, hourly_extraction_loads, GHE.bhe_eq,
-            GHE.radial_numerical, sim_params)
+    T_excess_ = GHE.cost(max_HP_EFT, min_HP_EFT)
+    Excess_temperatures['Hourly'].append(T_excess_)
 
-        # hybrid load object
-        GHE.hybrid_load = hybrid_load
+    print('Hourly excess: {}'.format(T_excess_))
 
-        tic = clock()
-        max_HP_EFT, min_HP_EFT = GHE.simulate(method='hybrid')
-        toc = clock()
-        total = toc - tic
-        Simulation_times['Hybrid'].append(total)
+    # Hybrid time step simulation
 
-        print('max_HP_EFT: {}\tmin_HP_EFT: {}'.format(max_HP_EFT, min_HP_EFT))
+    tic = clock()
+    max_HP_EFT, min_HP_EFT = GHE.simulate(method='hybrid')
+    toc = clock()
+    total = toc - tic
+    Simulation_times['Hybrid'].append(total)
+    Minimum_temperatures['Hybrid'].append(min_HP_EFT)
+    Maximum_temperatures['Hybrid'].append(max_HP_EFT)
 
-        T_excess = GHE.cost(max_HP_EFT, min_HP_EFT)
-        Excess_temperatures['Hybrid'].append(T_excess)
+    ax.scatter(GHE.hybrid_load.hour[2:], GHE.HPEFT, label='Hybrid', marker='s')
 
-        print('Hybrid excess: {}'.format(T_excess))
+    print('max_HP_EFT: {}\tmin_HP_EFT: {}'.format(max_HP_EFT, min_HP_EFT))
 
-        print('% DIFF: {}'.format( (abs(T_excess - T_excess_)) / T_excess_ * 100. ))
+    T_excess = GHE.cost(max_HP_EFT, min_HP_EFT)
+    Excess_temperatures['Hybrid'].append(T_excess)
 
-    # Plot excess values
-    # ------------------
-    fig, ax = plt.subplots()
+    print('Hybrid excess: {}'.format(T_excess))
 
-    ax.plot(list(range(1, years+1)), Excess_temperatures['Hourly'], marker='o',
-            ls='--', label='Hourly')
-    ax.plot(list(range(1, years+1)), Excess_temperatures['Hybrid'], marker='s',
-            ls='--', label='Hybrid')
-
-    ax.set_xlabel('Simulation time in years')
-    ax.set_ylabel('Excess fluid temperature ($\degree$C)')
+    print('% DIFF: {}'.format( (abs(T_excess - T_excess_)) / T_excess_ * 100. ))
 
     ax.grid()
-    ax.set_axisbelow(True)
+    fig.legend()
 
-    fig.legend(bbox_to_anchor=(.5, .95))
+    ax.set_xlabel('Hours')
+    ax.set_ylabel('HPEFT (in Celsius)')
 
     fig.tight_layout()
 
-    fig.savefig('constant_load_excess_temperatures.png')
+    fig.savefig('constant_HPEFT_comparison.png')
 
-    # Plot simulation clock time results
-    # ----------------------------------
-    fig, ax = plt.subplots()
+    plt.close(fig)
 
-    ax.plot(list(range(1, years+1)), Simulation_times['Hourly'], marker='o',
-            ls='--', label='Hourly')
-    ax.plot(list(range(1, years+1)), Simulation_times['Hybrid'], marker='s',
-            ls='--', label='Hybrid')
+    # Plot the Extraction ground loads
 
-    ax.set_xlabel('Simulation time in years')
-    ax.set_ylabel('Computing time for simulation (s)')
+    fig = gt.gfunction._initialize_figure()
+    ax = fig.add_subplot(111)
 
-    ax.set_yscale('log')
-
+    _hourly_extraction_ground_loads = [
+        hourly_extraction_ground_loads[i] / -1000.
+        for i in range(len(hourly_extraction_ground_loads))]
+    ax.scatter(hours, [_hourly_extraction_ground_loads] * n_years,
+               label='Hourly')
+    ax.scatter(GHE.hybrid_load.hour[2:], GHE.hybrid_load.load[2:],
+               label='Hybrid', marker='s')
+    ax.set_xlabel('Hours')
+    ax.set_ylabel('Ground rejection loads (kW)')
+    fig.legend()
     ax.grid()
-    ax.set_axisbelow(True)
-
-    fig.legend(bbox_to_anchor=(.5, .95))
 
     fig.tight_layout()
 
-    fig.savefig('simulation_clock_time.png')
+    fig.savefig('constant_load_comparison.png')
+
+    plt.close(fig)
 
 
 if __name__ == '__main__':
