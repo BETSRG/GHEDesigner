@@ -129,13 +129,13 @@ def main():
 
     # Plot go and no-go zone with corrected borefield
     # -----------------------------------------------
-    new_coordinates = GFunction.correct_coordinates(B)
+    coordinates = gfdb.coordinates.rectangle(M, N, B, B)
 
     perimeter = [[0., 0.], [70.104, 0.], [70.104, 80.772], [0., 80.772]]
     no_go = [[9.997, 36.51], [9.997, 69.79], [59.92, 69.79], [59.92, 36.51]]
 
     fig, ax = GFunction.visualize_area_and_constraints(perimeter,
-                                                       new_coordinates,
+                                                       coordinates,
                                                        no_go=no_go)
 
     fig.savefig('base_case_2.png')
