@@ -118,24 +118,24 @@ def main():
     # --------------------------------------------------------------------------
 
     # Initialize Hybrid GLHE object
-    HybridGHE = GHEDT.ground_heat_exchangers.HybridGHE(
+    GHE = GHEDT.ground_heat_exchangers.GHE(
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 
-    max_HP_EFT, min_HP_EFT = HybridGHE.simulate()
+    max_HP_EFT, min_HP_EFT = GHE.simulate()
 
     print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
 
-    HybridGHE.size()
+    GHE.size()
 
-    print('Height of boreholes: {}'.format(HybridGHE.bhe.b.H))
+    print('Height of boreholes: {}'.format(GHE.bhe.b.H))
 
     print('Effective borehole thermal resistance: {}'.
-          format(HybridGHE.bhe.compute_effective_borehole_resistance()))
+          format(GHE.bhe.compute_effective_borehole_resistance()))
 
-    GLHE_info = HybridGHE.__repr__()
+    GLHE_info = GHE.__repr__()
 
-    file = open('SingleUTube-HybridGHE-info.txt', 'w+')
+    file = open('SingleUTube-GHE-info.txt', 'w+')
     file.write(GLHE_info)
     file.close()
 
