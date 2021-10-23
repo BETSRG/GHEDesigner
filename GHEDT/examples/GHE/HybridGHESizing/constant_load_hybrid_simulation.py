@@ -130,7 +130,8 @@ def main():
 
     # Plot change in fluid temperature
     # --------------------------------
-    fig, ax = plt.subplots()
+    fig = gt.gfunction._initialize_figure()
+    ax = fig.add_subplot(111)
 
     time_values = GHE.hybrid_load.hour[2:]
     lntts = [np.log(time_values[i] * 3600 / GHE.radial_numerical.t_s)
@@ -139,7 +140,7 @@ def main():
     B_over_H = B / GHE.bhe.b.H
     g = GHE.grab_g_function(B_over_H)
 
-    ax.plot(g.x, g.y)
+    ax.plot(g.x[1:], g.y[1:])
     ax.plot(lntts, GHE.dTb, '--')
 
     ax.set_ylabel('g = $\Delta T_b$')
