@@ -2,7 +2,7 @@
 # Thursday, September 16, 2021
 
 import gFunctionDatabase as gfdb
-import GLHEDT
+import GHEDT
 
 
 def main():
@@ -29,16 +29,18 @@ def main():
 
     # Configure the database data for input to the goethermal GFunction object
     geothermal_g_input = \
-        GLHEDT.geothermal.GFunction.configure_database_file_for_usage(r_data)
+        gfdb.Management.application.GFunction.configure_database_file_for_usage(
+            r_data)
 
     # Initialize the GFunction object
-    GFunction = GLHEDT.geothermal.GFunction(**geothermal_g_input)
+    GFunction = gfdb.Management.application.GFunction(**geothermal_g_input)
 
     new_coordinates = GFunction.correct_coordinates(B)
 
     perimeter = [[0., 0.], [50., 0.], [50., 50.], [0., 50.]]
 
-    fig, ax = GFunction.visualize_area_and_constraints(perimeter, new_coordinates)
+    fig, ax = GFunction.visualize_area_and_constraints(perimeter,
+                                                       new_coordinates)
 
     fig.show()
 
