@@ -2,6 +2,8 @@
 # Tuesday, October 19, 2021
 import matplotlib.pyplot as plt
 import pandas as pd
+import pygfunction as gt
+import numpy as np
 
 
 def error(ref, pred):
@@ -9,7 +11,7 @@ def error(ref, pred):
 
 
 def main():
-    file = '../BHE_size_variation.xlsx'
+    file = 'BHE_size_variation.xlsx'
 
     xlsx = pd.ExcelFile(file)
 
@@ -52,9 +54,9 @@ def main():
             GLHEPRO_error[tube].append(_GLHEPRO_error)
             GHEDT_error[tube].append(_GHEDT_error)
 
+    fig = gt.gfunction._initialize_figure()
+    ax = fig.subplots(3, sharex=True, sharey=True)
 
-    fig, ax = plt.subplots(3, sharex=True, sharey=True)
-    import numpy as np
     ind = np.arange(len(GLHEPro_d['V_flow_borehole']))
     width = 0.35
 
@@ -66,13 +68,14 @@ def main():
         plt.xticks(ind + width/2, GLHEPro_d['V_flow_borehole'])
 
         ax[i].legend()
+        ax[i].set_ylim([-12, 12])
 
     ax[2].set_xlabel('Volumetric flow rate per borehole (L/s)')
-    ax[1].set_ylabel('Error (%)')
+    ax[1].set_ylabel(r'Error (%) = $\dfrac{ref-pred}{ref} * 100 \%$')
 
     fig.tight_layout()
 
-    plt.show()
+    fig.savefig('size_comparison_bar.png')
 
 
 if __name__ == '__main__':
