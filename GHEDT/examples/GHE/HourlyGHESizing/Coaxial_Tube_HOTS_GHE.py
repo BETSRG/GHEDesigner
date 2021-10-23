@@ -71,20 +71,9 @@ def main(args):
     # Grout
     grout = PLAT.media.ThermalProperty(k_g, rhoCp_g)
 
-    # Number in the x and y
-    # ---------------------
-    N = 12
-    M = 13
-    configuration = 'rectangle'
-    # GFunction
-    # ---------
-    # Access the database for specified configuration
-    r = gfdb.Management.retrieval.Retrieve(configuration)
-    # There is just one value returned in the unimodal domain for rectangles
-    r_unimodal = r.retrieve(N, M)
-    key = list(r_unimodal.keys())[0]
-    print('The key value: {}'.format(key))
-    r_data = r_unimodal[key]
+    # Read in g-functions from GLHEPro
+    file = '../../1DInterpolation/GLHEPRO_gFunctions_12x13.json'
+    r_data, _ = gfdb.fileio.read_file(file)
 
     # Configure the database data for input to the goethermal GFunction object
     geothermal_g_input = gfdb.Management. \
