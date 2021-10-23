@@ -119,31 +119,29 @@ def main():
     # --------------------------------------------------------------------------
 
     # Initialize Hourly GLHE object
-    HybridGHE = GHEDT.ground_heat_exchangers.HybridGHE(
+    GHE = GHEDT.ground_heat_exchangers.GHE(
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 
-    max_HP_EFT, min_HP_EFT = HybridGHE.simulate()
+    max_HP_EFT, min_HP_EFT = GHE.simulate(method='hybrid')
 
     print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
 
     # Plot the simulation results
     # ---------------------------
-    fig, ax = plt.subplots()
+    fig = gt.gfunction._initialize_figure()
+    ax = fig.add_subplot(111)
 
-    heat_pump_EFT = HybridGHE.HPEFT[2:]
-    months = range(1, len(heat_pump_EFT) + 1)
+    min_HP_EFT_idx = GHE.HPEFT.index(min_HP_EFT) - 1
+    max_HP_EFT_idx = GHE.HPEFT.index(max_HP_EFT) - 1
 
-    min_HP_EFT_idx = HybridGHE.HPEFT.index(min_HP_EFT) - 1
-    max_HP_EFT_idx = HybridGHE.HPEFT.index(max_HP_EFT) - 1
-
-    ax.plot(months, heat_pump_EFT, 'k')
-    ax.scatter(min_HP_EFT_idx, min_HP_EFT, color='b', marker='X', s=200,
+    ax.plot(GHE.hybrid_load.hour[2:], GHE.HPEFT, 'k')
+    ax.scatter(GHE.hybrid_load.hour[min_HP_EFT_idx+2], min_HP_EFT, color='b', marker='X', s=200,
                label='Minimum Temperature')
-    ax.scatter(max_HP_EFT_idx, max_HP_EFT, color='r', marker='P', s=200,
+    ax.scatter(GHE.hybrid_load.hour[max_HP_EFT_idx+2], max_HP_EFT, color='r', marker='P', s=200,
                label='Maximum Temperature')
 
-    ax.set_xlabel('Month number')
+    ax.set_xlabel('Hours')
     ax.set_ylabel('Heat pump entering fluid temperature ($\degree$C)')
 
     ax.grid()
@@ -157,18 +155,19 @@ def main():
 
     # Plot the hourly load profile
     # ---------------------
-    fig = HybridGHE.hybrid_load.visualize_hourly_heat_extraction()
+    fig = GHE.hybrid_load.visualize_hourly_heat_extraction()
 
     fig.savefig('Atlanta_Office_Building_extraction_loads.png')
 
     # Plot the hybrid load representation
     # -----------------------------------
-    fig, ax = plt.subplots()
+    fig = gt.gfunction._initialize_figure()
+    ax = fig.add_subplot(111)
 
-    ax.plot(HybridGHE.hybrid_load.load)
+    ax.plot(GHE.hybrid_load.hour[2:], GHE.hybrid_load.load[2:])
 
-    ax.set_xlabel('Month number')
-    ax.set_ylabel('Monthly load (kW)')
+    ax.set_xlabel('Hours')
+    ax.set_ylabel('Ground rejection load (kW)')
 
     fig.tight_layout()
 
