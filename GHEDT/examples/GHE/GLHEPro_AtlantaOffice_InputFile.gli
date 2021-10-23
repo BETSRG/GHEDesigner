@@ -1,0 +1,264 @@
+;Ver 5.0
+;Borehole Profile and Monthly Loadings Table
+;===========================================
+Units IN (IP : 1; SI : 2)               = 2
+Units OUT (IP : 1; SI : 2)              = 2
+;COMMON VERTICAL BH VARIABLES
+MainConfiguration of Borehole = LARGE RECTANGLE
+SubConfiguration of Borehole = 156 : 12 x 13
+Depth of the borehole                   = 96
+Bore hole spacing                       = 5
+Radius of the borehole                  = 0.075
+Borehole thermal resistance             = 0.2067
+U-TUBE
+Pipe Type/Size Selection                : 11
+U-Tube Inside Diameter                  = 0.0216
+U-Tube Outside Diameter                 = 0.02667
+Shank Spacing Selection                 : C
+Shank Spacing                           = 0.0323
+Pipe Conductivity                       = 0.4
+;DOUBLE U-TUBE
+Double U-Tube Inside Diameter           = 0.0216
+Double U-Tube Outside Diameter          = 0.0267
+Double U-Tube Shank Spacing             = 0.0323
+Double U-Tube Pipe Conductivity         = 0.4
+;CONCENTRIC
+Inner Tube Inside Diameter              = 0.0442
+Inner Tube Outside Diameter             = 0.05
+Outer Tube Inside Diameter              = 0.0974
+Outer Tube Inside Diameter              = 0.11
+Inner Pipe Conductivity                 = 0.4
+Outer Pipe Conductivity                 = 0.4
+;STANDING COLUMN WELL
+Inner Tube Inside Diameter				= 0.0727456
+Inner Tube Outside Diameter				= 0.0889
+Bleed Strategy							= 1
+Bleed Rate (%)							= 10
+Bleed Tmin								= 4.44444444444444
+Bleed Tmax                                = 21.1111111111111
+Ground Porosity	(%)						= 27
+Hydraulic Conductivity					= 0
+;COMMON HORIZONTAL BH VARIABLES
+Model Configuration = Horizontal Straight: 7 (trenches)
+Tube Inside Diameter					= 0.0218186
+Tube Outside Diameter					= 0.02667
+Line Spacing							= 3.048
+Depth									= 1.524
+Trench/Line Length						= 28.956
+Total pipe Length						= 202.692
+Pipe Conductivity						= 0.3899943
+;STRAIGHT HORIZONTAL
+Tube Configuration						= Single
+Shank Spacing							= 0.3048
+Fluid Factor							= 1
+;SLINKY
+Orientation							= Horizontal
+Ring Diameter							= 1.1
+Pitch									= 0.460000000000001
+;PROPERTIES
+Soil type currently entered = Average Rock
+Thermal conductivity of the ground      = 2.000
+Ground Volumetric heat capacity         = 2343.493
+Undisturbed ground temperature          = 18.3
+Soil record currently entered 			= Atlanta, Office building
+Ground Cover selected					= Short Grass
+Average Annual ground temperature		= 18.3
+ Soil Temperature model variables		= 0, 0, 0, 0
+Fluid type currently entered =0% Pure Water
+Fluid Conductivity                      = 0.5928991592
+Fluid Volumetric heat capacity          = 4173.79500521475
+Fluid Viscosity                         = 0.00100174875940895
+Density of the fluid                    = 998.204132200584
+Mass flow rate of the fluid             = 0.0312
+Grout Conductivity                      = 1
+Grout Volumetric heat capacity          = 3901
+Convection Coefficient                  = 2539
+Convection Coefficient at Inside InnerPipe= 930.49839714128
+Convection Coefficient at Outside InnerPipe= 305.990037188194
+Fluid Factor                            = 1
+g-function number                       = 823
+;
+;
+;Antifreeze and Numerical Model Related Variables
+Average Temperature for thermophysical properties calculation    = 20.0000
+Volumetric Heat Capacity of Pipe   = 1542.0000
+Volumetric Heat Capacity of Pipe of double U-tube  = 1543.0000
+Volumetric Heat Capacity of Inner Pipe   = 1542.0000
+Volumetric Heat Capacity of Outer Pipe   = 1542.0000
+Volumetric Heat Capacity of Horizontal Pipe   = 1541.9989
+Freezing point of the fluid = 0.000
+Boolean to check if the fluid was chosen from library = False
+Fluid type represented in numbers    = 0
+Concentration of fluid in the mixture   = 0.00
+;
+;Monthly Loadings
+;==================
+;
+ GLHE Loads
+;Month     Total Heating     Total Cooling     Peak Heating     Peak Cooling
+;===========================================================================
+January        11501.94           2985.28            175.98            101.65      
+February        6088.58           7348.19            180.00            168.58      
+March            520.00          24242.47             44.32            249.86      
+April            145.84          38355.36             45.41            254.22      
+May                0.39          66819.13              0.30            337.12      
+June               0.00          92585.01              0.00            357.06      
+July               0.00         101198.14              0.00            372.18      
+August             0.00         113087.48              0.00            379.23      
+September          0.00          72806.65              0.00            369.81      
+October          194.26          36683.98             44.44            319.94      
+November        1385.22          14823.05            111.85            187.07      
+December        4749.60           6905.24            149.05            164.35      
+;
+;
+ HeatPump Loads
+;Month     Total Heating     Total Cooling     Peak Heating     Peak Cooling
+;===========================================================================
+January            0.00              0.00              0.00              0.00      
+February           0.00              0.00              0.00              0.00      
+March              0.00              0.00              0.00              0.00      
+April              0.00              0.00              0.00              0.00      
+May                0.00              0.00              0.00              0.00      
+June               0.00              0.00              0.00              0.00      
+July               0.00              0.00              0.00              0.00      
+August             0.00              0.00              0.00              0.00      
+September          0.00              0.00              0.00              0.00      
+October            0.00              0.00              0.00              0.00      
+November           0.00              0.00              0.00              0.00      
+December           0.00              0.00              0.00              0.00      
+;
+;
+Peak_Heating Hours = 2
+Peak_Cooling Hours = 6
+;
+;
+First month you want data for   = 1
+Last month you want data for    = 240
+Maximum entering fluid temperature  = 35
+Minimum entering fluid temperature  = 5
+;
+;
+;Heat pump curve fit equations and coefficients:
+Heatpump selected = ClimateMaster : TS024_ECM_MOTOR@6GPM_610CFM
+;
+;Cooling:  Heat of Rejection = QC[a+b(EFT)+c(EFT^2)]
+;                      Power = QC[d+e(EFT)+f(EFT^2)]
+a = 1.0924400000
+b = 0.0003143610
+c = 0.0001144560
+d = 0.0955068000
+e = 0.0003059820
+f = 0.0001123770
+;
+;Heating:  Heat of Absorption = QH[a+b(EFT)+c(EFT^2)]
+;                       Power = QH[d+e(EFT)+f(EFT^2)]
+u = 0.7054590000
+v = 0.0054469600
+w = -0.0000772000
+x = 0.3099770000
+y = -0.0067573500
+z = 0.0000978000
+;
+;
+Output data filename = glhewin.glo
+;
+;
+Output File Preferences
+0
+0
+1
+1
+1
+1
+0
+1
+;
+Default
+Default file for User Manual. 
+;
+  BH#,  x(m),  y(m),  z(m),  length(m),inclination angle (° from vertical), direction angle (°CW from N)
+1, 0.3048, 0.3048, 1.524, 128.016, 0, 0
+;
+;
+LARGE RECTANGLE 156 : 12 x 13
+823
+0.0520833333
+156
+76
+-15.2014848678732        -2.10098401451965
+-15.0647198705697        -2.03703949564717
+-14.9279548732662        -1.9716558612462
+-14.7911898759626        -1.90439655481786
+-14.6544248786591        -1.83501538368621
+-14.5176598813556        -1.76337130461495
+-14.380894884052         -1.68939187868076
+-14.2441298867485        -1.61305430981363
+-14.107364889445         -1.53437410335457
+-13.9705998921414        -1.45339735243825
+-13.8338348948379        -1.37019485372346
+-13.6970698975343        -1.28485721068516
+-13.5603049002308        -1.19749057209859
+-13.4235399029273        -1.10821295224978
+-13.2867749056237        -1.01715128349018
+-13.1500099083202        -0.924439471327654
+-13.0132449110167        -0.830217729226611
+-12.8764799137131        -0.734633338875829
+-12.7397149164096        -0.637842722765071
+-12.6029499191061        -0.540014391003526
+-12.4661849218025        -0.441332031511798
+-12.329419924499         -0.341996851440137
+-12.1926549271955        -0.242228310917242
+-12.0558899298919        -0.142262621787111
+-11.9191249325884        -0.0423487594151903
+-11.7823599352849        0.0572578354728456
+-11.6455949379813        0.156303301775009
+-11.5088299406778        0.254544316840551
+-11.3720649433742        0.351757020349164
+-11.2352999460707        0.447744992673816
+-11.0985349487672        0.542345541999068
+-10.9617699514636        0.635433802663637
+-10.8250049541601        0.726924431928908
+-10.6882399568566        0.816770969333334
+-10.551474959553         0.904963156644821
+-10.4147099622495        0.991522681963975
+-10.277944964946         1.07649789682162
+-10.1411799676424        1.15995806169533
+-10.0044149703389        1.24198761561458
+-9.86764997303536        1.32268086051576
+-9.73088497573182        1.40213732497207
+-9.59411997842829        1.48045794663625
+-9.45735498112475        1.55774210526714
+-9.32058998382121        1.63408545778799
+-9.18382498651768        1.70957847597931
+-9.04705998921414        1.78430556329026
+-8.91029499191061        1.85834462325949
+-8.77352999460707        1.93176696229665
+-8.63676499730354        2.00463742654292
+-8.5                     2.0770146924774
+-8.5                     2.0770146924774
+-7.8                     2.40039999579223
+-7.2                     2.86465502863797
+-6.5                     3.22493313528329
+-5.9                     3.61072862989984
+-5.2                     4.34919386984479
+-4.5                     5.72797877745524
+-3.963                   7.37764719954304
+-3.27                    11.1291103650316
+-2.864                   14.3825457018486
+-2.577                   17.2663968426638
+-2.171                   22.2114459258545
+-1.884                   26.3643175381871
+-1.191                   38.0536089149955
+-0.497                   51.0300564971301
+-0.274                   54.9124456370548
+-0.051                   58.5465239947366
+0.196                    62.1612991338101
+0.419                    65.0408678474951
+0.642                    67.5216930587971
+0.873                    69.6719034419732
+1.112                    71.4705061195036
+1.335                    72.7803007540141
+1.679                    74.2554571627972
+2.028                    75.2446558131441
+2.275                    75.7235997034914
+3.003                    76.5270611619175
