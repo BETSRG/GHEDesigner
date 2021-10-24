@@ -8,7 +8,7 @@ import pygfunction as gt
 import pandas as pd
 
 
-class TestHybridGHE(unittest.TestCase):
+class TestGHE(unittest.TestCase):
 
     def setUp(self) -> None:
         from GHEDT import PLAT
@@ -146,54 +146,54 @@ class TestHybridGHE(unittest.TestCase):
             hourly_extraction[list(hourly_extraction.keys())[0]]
 
     def test_single_u_tube(self):
-        from GHEDT.ground_heat_exchangers import HybridGHE
+        from GHEDT.ground_heat_exchangers import GHE
 
         # Define a borehole
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
 
         # Initialize Hybrid GLHE object
-        HybridGHE = HybridGHE(
+        GHE = GHE(
             self.V_flow_system, self.B, self.SingleUTube, self.fluid, borehole,
             self.pipe_s, self.grout, self.soil, self.GFunction, self.sim_params,
             self.hourly_extraction_ground_loads)
 
-        max_HP_EFT, min_HP_EFT = HybridGHE.simulate()
+        max_HP_EFT, min_HP_EFT = GHE.simulate(method='Hybrid')
 
-        self.assertEqual(38.67304849133883, max_HP_EFT)
-        self.assertEqual(16.729464533883572, min_HP_EFT)
+        self.assertEqual(38.7730129823955, max_HP_EFT)
+        self.assertEqual(16.660969488710354, min_HP_EFT)
 
-        HybridGHE.size()
+        GHE.size()
 
-        self.assertAlmostEqual(HybridGHE.bhe.b.H, 126.10474961, places=4)
+        self.assertAlmostEqual(GHE.bhe.b.H, 126.85677082230617, places=4)
 
     def test_double_u_tube(self):
-        from GHEDT.ground_heat_exchangers import HybridGHE
+        from GHEDT.ground_heat_exchangers import GHE
 
         # Define a borehole
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
 
         # Initialize Hybrid GLHE object
-        HybridGHE = HybridGHE(
+        GHE = GHE(
             self.V_flow_system, self.B, self.DoubleUTube, self.fluid, borehole,
             self.pipe_d, self.grout, self.soil, self.GFunction, self.sim_params,
             self.hourly_extraction_ground_loads)
 
-        HybridGHE.size()
+        GHE.size()
 
-        self.assertAlmostEqual(HybridGHE.bhe.b.H, 118.40426713829007, places=4)
+        self.assertAlmostEqual(GHE.bhe.b.H, 120.37362456661276, places=4)
 
     def test_coaxial_tube(self):
-        from GHEDT.ground_heat_exchangers import HybridGHE
+        from GHEDT.ground_heat_exchangers import GHE
 
         # Define a borehole
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
 
         # Initialize Hybrid GLHE object
-        HybridGHE = HybridGHE(
+        GHE = GHE(
             self.V_flow_system, self.B, self.CoaxialTube, self.fluid, borehole,
             self.pipe_c, self.grout, self.soil, self.GFunction, self.sim_params,
             self.hourly_extraction_ground_loads)
 
-        HybridGHE.size()
+        GHE.size()
 
-        self.assertAlmostEqual(HybridGHE.bhe.b.H, 120.95072621885528, places=4)
+        self.assertAlmostEqual(GHE.bhe.b.H, 119.57422578754375, places=4)
