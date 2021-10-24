@@ -7,7 +7,7 @@ import numpy as np
 
 
 def error(ref, pred):
-    return (ref - pred) / ref * 100.
+    return (pred-ref) / ref * 100.
 
 
 def main():
@@ -68,10 +68,10 @@ def main():
         plt.xticks(ind + width/2, GLHEPro_d['V_flow_borehole'])
 
         ax[i].legend()
-        ax[i].set_ylim([-12, 12])
+        ax[i].set_ylim([-14, 12])
 
     ax[2].set_xlabel('Volumetric flow rate per borehole (L/s)')
-    ax[1].set_ylabel(r'Error (%) = $\dfrac{ref-pred}{ref} * 100 \%$')
+    ax[1].set_ylabel(r'Error (%) = $\dfrac{pred-ref}{ref} * 100 \%$')
 
     fig.tight_layout()
 
