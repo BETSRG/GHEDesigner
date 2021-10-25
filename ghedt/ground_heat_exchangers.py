@@ -6,8 +6,8 @@ import warnings
 import gFunctionDatabase.Management.application
 import scipy.interpolate
 import scipy.optimize
-import GHEDT.PLAT as PLAT
-import GHEDT.PLAT.pygfunction as gt
+import ghedt.PLAT as PLAT
+import ghedt.PLAT.pygfunction as gt
 
 import numpy as np
 
