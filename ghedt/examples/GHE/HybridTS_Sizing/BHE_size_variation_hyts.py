@@ -8,12 +8,12 @@ GLHEPro.
 
 import copy
 
-import GHEDT.PLAT as PLAT
+import ghedt.PLAT as PLAT
 import matplotlib.pyplot as plt
 import pandas as pd
-import GHEDT.PLAT.pygfunction as gt
+import ghedt.PLAT.pygfunction as gt
 import gFunctionDatabase as gfdb
-import GHEDT
+import ghedt
 
 
 def main():
@@ -165,18 +165,18 @@ def main():
 
         # Size Hybrid GLHEs
         # Single U-tube GHE
-        GHE_s = GHEDT.ground_heat_exchangers.GHE(
+        GHE_s = ghedt.ground_heat_exchangers.GHE(
             V_flow_system, B, single_u_tube_object, fluid, borehole,
             pipe_s, grout, soil, GFunction, sim_params,
             hourly_extraction_ground_loads)
         V_flow_borehole_rates.append(GHE_s.V_flow_borehole)
         # Double u-Tube GHE
-        GHE_d = GHEDT.ground_heat_exchangers.GHE(
+        GHE_d = ghedt.ground_heat_exchangers.GHE(
             V_flow_system, B, double_u_tube_object, fluid, borehole_d,
             pipe_d, grout, soil, GFunction, sim_params,
             hourly_extraction_ground_loads)
         # Coaxial tube GHE
-        GHE_c = GHEDT.ground_heat_exchangers.GHE(
+        GHE_c = ghedt.ground_heat_exchangers.GHE(
             V_flow_system, B, coaxial_tube_object, fluid, borehole_c,
             pipe_c, grout, soil, GFunction, sim_params,
             hourly_extraction_ground_loads)

@@ -11,7 +11,6 @@ Purpose:
 
 
 import gFunctionDatabase as gfdb
-import GHEDT
 
 
 def main():

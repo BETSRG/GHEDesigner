@@ -2,12 +2,12 @@
 # Wednesday, October 13, 2021
 
 
-import GHEDT.PLAT as PLAT
+import ghedt.PLAT as PLAT
 import matplotlib.pyplot as plt
 import pandas as pd
-import GHEDT.PLAT.pygfunction as gt
+import ghedt.PLAT.pygfunction as gt
 import gFunctionDatabase as gfdb
-import GHEDT
+import ghedt
 from time import time as clock
 
 
@@ -119,7 +119,7 @@ def main():
     # --------------------------------------------------------------------------
 
     # Initialize Hourly GLHE object
-    GHE = GHEDT.ground_heat_exchangers.GHE(
+    GHE = ghedt.ground_heat_exchangers.GHE(
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 

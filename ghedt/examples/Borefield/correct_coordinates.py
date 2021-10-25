@@ -2,7 +2,6 @@
 # Thursday, September 16, 2021
 
 import gFunctionDatabase as gfdb
-import GHEDT
 
 
 def main():
