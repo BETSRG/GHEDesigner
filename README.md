@@ -1,5 +1,4 @@
-# GLHEDT
-Ground loop heat exchanger design tool
+# Ground Heat Exchanger Design Toolbox
 
 ## Usage
 Clone the repository.
