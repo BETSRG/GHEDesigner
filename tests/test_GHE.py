@@ -11,7 +11,7 @@ import pandas as pd
 class TestGHE(unittest.TestCase):
 
     def setUp(self) -> None:
-        from GHEDT import PLAT
+        from ghedt import PLAT
         # Borehole dimensions
         # -------------------
         self.H = 100.  # Borehole length (m)
@@ -146,7 +146,7 @@ class TestGHE(unittest.TestCase):
             hourly_extraction[list(hourly_extraction.keys())[0]]
 
     def test_single_u_tube(self):
-        from GHEDT.ground_heat_exchangers import GHE
+        from ghedt.ground_heat_exchangers import GHE
 
         # Define a borehole
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
@@ -167,7 +167,7 @@ class TestGHE(unittest.TestCase):
         self.assertAlmostEqual(GHE.bhe.b.H, 126.85677082230617, places=4)
 
     def test_double_u_tube(self):
-        from GHEDT.ground_heat_exchangers import GHE
+        from ghedt.ground_heat_exchangers import GHE
 
         # Define a borehole
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
@@ -183,7 +183,7 @@ class TestGHE(unittest.TestCase):
         self.assertAlmostEqual(GHE.bhe.b.H, 120.37362456661276, places=4)
 
     def test_coaxial_tube(self):
-        from GHEDT.ground_heat_exchangers import GHE
+        from ghedt.ground_heat_exchangers import GHE
 
         # Define a borehole
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
