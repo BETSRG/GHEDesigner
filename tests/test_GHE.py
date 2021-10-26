@@ -3,9 +3,9 @@
 
 import unittest
 
-import gFunctionDatabase as gfdb
-import pygfunction as gt
+import ghedt.PLAT.pygfunction as gt
 import pandas as pd
+import ghedt
 
 
 class TestGHE(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestGHE(unittest.TestCase):
         # -------------------
         self.H = 100.  # Borehole length (m)
         self.D = 2.  # Borehole buried depth (m)
-        self.r_b = 150. / 1000. / 2.  # Borehole radius
+        self.r_b = 0.075  # Borehole radius]
         self.B = 5.  # Borehole spacing (m)
 
         # Pipe dimensions
@@ -67,8 +67,10 @@ class TestGHE(unittest.TestCase):
         # Thermal properties
         # ------------------
         # Pipe
-        self.pipe_s = PLAT.media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-        self.pipe_d = PLAT.media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        self.pipe_s = \
+            PLAT.media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        self.pipe_d = \
+            PLAT.media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rhoCp_p)
         self.pipe_c = \
             PLAT.media.Pipe(pos_c, r_inner, r_outer, s, epsilon, k_p_c, rhoCp_p)
 
@@ -85,40 +87,30 @@ class TestGHE(unittest.TestCase):
         # Grout
         self.grout = PLAT.media.ThermalProperty(k_g, rhoCp_g)
 
-        # Number in the x and y
-        # ---------------------
-        N = 12
-        M = 13
-        configuration = 'rectangle'
-        nbh = N * M
+        # Coordinates
+        Nx = 12
+        Ny = 13
+        self.coordinates = ghedt.coordinates.rectangle(Nx, Ny, self.B, self.B)
 
-        # GFunction
-        # ---------
-        # Access the database for specified configuration
-        r = gfdb.Management.retrieval.Retrieve(configuration)
-        # There is just one value returned in the unimodal domain for rectangles
-        r_unimodal = r.retrieve(N, M)
-        key = list(r_unimodal.keys())[0]
-        r_data = r_unimodal[key]
-
-        # Configure the database data for input to the goethermal GFunction
-        # object
-        geothermal_g_input = gfdb.Management. \
-            application.GFunction.configure_database_file_for_usage(r_data)
-
-        # Initialize the GFunction object
-        self.GFunction = \
-            gfdb.Management.application.GFunction(**geothermal_g_input)
+        # Compute a range of g-functions for interpolation
+        self.log_time = ghedt.utilities.Eskilson_log_times()
+        self.H_values = [24., 48., 96., 192., 384.]
+        self.r_b_values = [self.r_b] * len(self.H_values)
+        self.D_values = [2.] * len(self.H_values)
 
         # Inputs related to fluid
         # -----------------------
-        self.V_flow_system = 31.2 # System volumetric flow rate (L/s)
+        V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
         mixer = 'MEG'  # Ethylene glycol mixed with water
         percent = 0.  # Percentage of ethylene glycol added in
 
         # -----------------------
         # Fluid properties
         self.fluid = gt.media.Fluid(mixer=mixer, percent=percent)
+        self.V_flow_system = V_flow_borehole * float(
+            Nx * Ny)  # System volumetric flow rate (L/s)
+        # Total fluid mass flow rate per borehole (kg/s)
+        self.m_flow_borehole = V_flow_borehole / 1000. * self.fluid.rho
 
         # Simulation start month and end month
         # --------------------------------
@@ -146,54 +138,82 @@ class TestGHE(unittest.TestCase):
             hourly_extraction[list(hourly_extraction.keys())[0]]
 
     def test_single_u_tube(self):
-        from ghedt.ground_heat_exchangers import GHE
 
         # Define a borehole
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
 
-        # Initialize Hybrid GLHE object
-        GHE = GHE(
-            self.V_flow_system, self.B, self.SingleUTube, self.fluid, borehole,
-            self.pipe_s, self.grout, self.soil, self.GFunction, self.sim_params,
-            self.hourly_extraction_ground_loads)
+        # Initialize GHE object
+        g_function = ghedt.gfunction.compute_live_g_function(
+            self.B, self.H_values, self.r_b_values, self.D_values,
+            self.m_flow_borehole, self.SingleUTube,
+            self.log_time, self.coordinates, self.fluid, self.pipe_s,
+            self.grout, self.soil)
 
-        max_HP_EFT, min_HP_EFT = GHE.simulate(method='Hybrid')
+        # Initialize the GHE object
+        ghe = ghedt.ground_heat_exchangers.GHE(
+            self.V_flow_system, self.B, self.SingleUTube, self.fluid,
+            borehole, self.pipe_s, self.grout, self.soil,
+            g_function, self.sim_params, self.hourly_extraction_ground_loads)
 
-        self.assertEqual(38.7730129823955, max_HP_EFT)
-        self.assertEqual(16.660969488710354, min_HP_EFT)
+        max_HP_EFT, min_HP_EFT = ghe.simulate(method='hybrid')
 
-        GHE.size()
+        self.assertEqual(39.084419566119934, max_HP_EFT)
+        self.assertEqual(16.660966674440232, min_HP_EFT)
 
-        self.assertAlmostEqual(GHE.bhe.b.H, 126.85677082230617, places=4)
+        ghe.size(method='hybrid')
+
+        self.assertAlmostEqual(ghe.bhe.b.H, 130.13510780396268, places=2)
 
     def test_double_u_tube(self):
-        from ghedt.ground_heat_exchangers import GHE
 
         # Define a borehole
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
 
-        # Initialize Hybrid GLHE object
-        GHE = GHE(
-            self.V_flow_system, self.B, self.DoubleUTube, self.fluid, borehole,
-            self.pipe_d, self.grout, self.soil, self.GFunction, self.sim_params,
-            self.hourly_extraction_ground_loads)
+        # Initialize GHE object
+        g_function = ghedt.gfunction.compute_live_g_function(
+            self.B, self.H_values, self.r_b_values, self.D_values,
+            self.m_flow_borehole, self.DoubleUTube,
+            self.log_time, self.coordinates, self.fluid, self.pipe_d,
+            self.grout, self.soil)
 
-        GHE.size()
+        # Initialize the GHE object
+        ghe = ghedt.ground_heat_exchangers.GHE(
+            self.V_flow_system, self.B, self.DoubleUTube, self.fluid,
+            borehole, self.pipe_d, self.grout, self.soil,
+            g_function, self.sim_params, self.hourly_extraction_ground_loads)
 
-        self.assertAlmostEqual(GHE.bhe.b.H, 120.37362456661276, places=4)
+        max_HP_EFT, min_HP_EFT = ghe.simulate(method='hybrid')
+
+        self.assertEqual(37.97229212228275, max_HP_EFT)
+        self.assertEqual(16.989189768401793, min_HP_EFT)
+
+        ghe.size(method='hybrid')
+
+        self.assertAlmostEqual(ghe.bhe.b.H, 121.85659366084005, places=2)
 
     def test_coaxial_tube(self):
-        from ghedt.ground_heat_exchangers import GHE
 
         # Define a borehole
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
 
-        # Initialize Hybrid GLHE object
-        GHE = GHE(
-            self.V_flow_system, self.B, self.CoaxialTube, self.fluid, borehole,
-            self.pipe_c, self.grout, self.soil, self.GFunction, self.sim_params,
-            self.hourly_extraction_ground_loads)
+        # Initialize GHE object
+        g_function = ghedt.gfunction.compute_live_g_function(
+            self.B, self.H_values, self.r_b_values, self.D_values,
+            self.m_flow_borehole, self.CoaxialTube,
+            self.log_time, self.coordinates, self.fluid, self.pipe_c,
+            self.grout, self.soil)
 
-        GHE.size()
+        # Re-Initialize the GHE object
+        ghe = ghedt.ground_heat_exchangers.GHE(
+            self.V_flow_system, self.B, self.CoaxialTube, self.fluid,
+            borehole, self.pipe_c, self.grout, self.soil,
+            g_function, self.sim_params, self.hourly_extraction_ground_loads)
 
-        self.assertAlmostEqual(GHE.bhe.b.H, 119.57422578754375, places=4)
+        max_HP_EFT, min_HP_EFT = ghe.simulate(method='hybrid')
+
+        self.assertEqual(37.73503652828782, max_HP_EFT)
+        self.assertEqual(17.61422171583412, min_HP_EFT)
+
+        ghe.size(method='hybrid')
+
+        self.assertAlmostEqual(ghe.bhe.b.H, 120.89971616555863, places=2)
