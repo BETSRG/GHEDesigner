@@ -33,9 +33,7 @@ def main():
         GFunction.g_function_interpolation(B_over_H)
     # correct the long time step for borehole radius
     g_function_corrected = \
-        GFunction.borehole_radius_correction(g_function,
-                                                  rb_value,
-                                                  rb)
+        GFunction.borehole_radius_correction(g_function, rb_value, rb)
 
     figure, axs = plt.subplots()
 
