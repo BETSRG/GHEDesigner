@@ -26,6 +26,7 @@ def main():
     years = [10, 20, 30]
 
     for j in range(len(years)):
+        print('YEARS = {}'.format(years[j]))
 
         d_out[years[j]] = {}
 
