@@ -11,7 +11,7 @@ import numpy as np
 
 def calculate_g_function(
         m_flow_borehole, bhe_object, time_values, coordinates, borehole,
-        nSegments, fluid, pipe, grout, soil, segments='unequal',
+        fluid, pipe, grout, soil, nSegments=8, segments='unequal',
         solver='equivalent', boundary='MIFT', disp=False):
 
     boreField = []
@@ -63,6 +63,42 @@ def calculate_g_function(
         raise ValueError('UHTR, UBWT or MIFT are accepted boundary conditions.')
 
     return gfunc
+
+
+def compute_live_g_function(
+        B: float, H_values: list, r_b_values: list, D_values: list,
+        m_flow_borehole, bhe_object, log_time,  coordinates,
+        fluid, pipe, grout, soil, nSegments=8, segments='unequal',
+        solver='equivalent', boundary='MIFT', disp=False):
+
+    d = {'g': {}, 'bore_locations': coordinates, 'logtime': log_time}
+
+    for i in range(len(H_values)):
+
+        H = H_values[i]
+        r_b = r_b_values[i]
+        D = D_values[i]
+        _borehole = gt.boreholes.Borehole(H, D, r_b, 0., 0.)
+
+        alpha = soil.k / soil.rhoCp
+
+        ts = H ** 2 / (9. * alpha)  # Bore field characteristic time
+        time_values = np.exp(log_time) * ts
+
+        gfunc = calculate_g_function(
+            m_flow_borehole, bhe_object, time_values, coordinates, _borehole,
+            fluid, pipe, grout, soil, nSegments=nSegments, segments=segments,
+            solver=solver, boundary=boundary, disp=disp)
+
+        key = '{}_{}_{}_{}'.format(B, H, r_b, D)
+
+        d['g'][key] = gfunc.gFunc.tolist()
+
+    geothermal_g_input = GFunction.configure_database_file_for_usage(d)
+    # Initialize the GFunction object
+    g_function = GFunction(**geothermal_g_input)
+
+    return g_function
 
 
 class GFunction:
@@ -129,8 +165,15 @@ class GFunction:
             elif num_curves == 2:
                 kind = 'linear'
             else:
-                raise ValueError(
-                    'Interpolation requires two g-function curves.')
+                if (H_eq-height_values[0]) / height_values[0] < 0.001:
+                    g_function = self.g_lts[height_values[0]]
+                    rb = self.r_b_values[height_values[0]]
+                    D = self.D_values[height_values[0]]
+                    return g_function, rb, D, H_eq
+                else:
+                    raise ValueError(
+                        'The interpolation requires two g-function curves if '
+                        'the requested B/H is not already computed.')
 
         # Automatically adjust interpolation if necessary
         # Lagrange also needs 2
