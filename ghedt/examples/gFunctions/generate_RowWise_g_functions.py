@@ -28,123 +28,130 @@ def create_if_not(directory):
 
 def main():
 
-    output_folder = 'Calculated_g_Functions_RowWise/'
-
     calculations = ['12_Equal_Segments_Similarities_UBWT',
                     '12_Equal_Segments_Similarities_MIFT',
                     '12_Equal_Segments_Equivalent_MIFT',
                     '8_Unequal_Segments_Equivalent_MIFT']
 
-    submission_folder = 'Submission_Files/'
-    submission_files = os.listdir(submission_folder)
+    H_values = [96, 192.]
 
-    for j in range(len(calculations)):
+    for k in range(len(H_values)):
 
-        calculation = calculations[j]
+        output_folder = \
+            'Calculated_g_Functions/RowWise/' + str(int(H_values[k])) \
+            + 'm_Depth/'
 
-        calculation_folder = output_folder + calculation + '/'
-        create_if_not(calculation_folder)
+        submission_folder = 'Submission_Files/' + str(int(H_values[k])) \
+                            + 'm_Depth/'
+        submission_files = os.listdir(submission_folder)
 
-        # -------------------------------------------------------------------------
-        # Simulation parameters
-        # -------------------------------------------------------------------------
-        for i in range(len(submission_files)):
+        for j in range(len(calculations)):
 
-            submission_file = submission_folder + submission_files[i]
-            submission_data = js_r(submission_file)
+            calculation = calculations[j]
 
-            # Borehole dimensions
-            # -------------------
-            name = submission_data['name']
-            H = submission_data['H']  # Borehole length (m)
-            D = submission_data['D']  # Borehole buried depth (m)
-            r_b = submission_data['r_b']  # Borehole radius]
-            B = submission_data['B']  # Borehole spacing (m)
+            calculation_folder = output_folder + calculation + '/'
+            create_if_not(calculation_folder)
 
-            # Pipe dimensions
-            # ---------------
-            r_out = submission_data['r_out']  # Pipe outer radius (m)
-            r_in = submission_data['r_in']  # Pipe inner radius (m)
-            s = 32.3 / 1000.  # Inner-tube to inner-tube Shank spacing (m)
-            epsilon = submission_data['epsilon']  # Pipe roughness (m)
+            # ------------------------------------------------------------------
+            # Simulation parameters
+            # ------------------------------------------------------------------
+            for i in range(len(submission_files)):
 
-            # Pipe positions
-            # --------------
-            # Single U-tube [(x_in, y_in), (x_out, y_out)]
-            pos = PLAT.media.Pipe.place_pipes(s, r_out, 1)
-            # Single U-tube BHE object
-            bhe_object = PLAT.borehole_heat_exchangers.SingleUTube
+                submission_file = submission_folder + submission_files[i]
+                submission_data = js_r(submission_file)
 
-            # Thermal conductivities
-            # ----------------------
-            k_p = submission_data['k_p']  # Pipe thermal conductivity (W/m.K)
-            k_s = submission_data['k_s']  # Ground thermal conductivity (W/m.K)
-            k_g = submission_data['k_g']  # Grout thermal conductivity (W/m.K)
+                # Borehole dimensions
+                # -------------------
+                name = submission_data['name']
+                H = submission_data['H']  # Borehole length (m)
+                D = submission_data['D']  # Borehole buried depth (m)
+                r_b = submission_data['r_b']  # Borehole radius]
+                B = submission_data['B']  # Borehole spacing (m)
 
-            # Volumetric heat capacities
-            # --------------------------
-            rhoCp_p = 1542. * 1000.  # Pipe volumetric heat capacity (J/K.m3)
-            rhoCp_s = submission_data['rhoCp_s']  # Soil volumetric heat capacity (J/K.m3)
-            rhoCp_g = 3901. * 1000.  # Grout volumetric heat capacity (J/K.m3)
+                # Pipe dimensions
+                # ---------------
+                r_out = submission_data['r_out']  # Pipe outer radius (m)
+                r_in = submission_data['r_in']  # Pipe inner radius (m)
+                s = 32.3 / 1000.  # Inner-tube to inner-tube Shank spacing (m)
+                epsilon = submission_data['epsilon']  # Pipe roughness (m)
 
-            # Thermal properties
-            # ------------------
-            # Pipe
-            pipe = PLAT.media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-            # Soil
-            ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-            soil = PLAT.media.Soil(k_s, rhoCp_s, ugt)
-            # Grout
-            grout = PLAT.media.ThermalProperty(k_g, rhoCp_g)
+                # Pipe positions
+                # --------------
+                # Single U-tube [(x_in, y_in), (x_out, y_out)]
+                pos = PLAT.media.Pipe.place_pipes(s, r_out, 1)
+                # Single U-tube BHE object
+                bhe_object = PLAT.borehole_heat_exchangers.SingleUTube
 
-            alpha = soil.k / soil.rhoCp
+                # Thermal conductivities
+                # ----------------------
+                k_p = submission_data['k_p']  # Pipe thermal conductivity (W/m.K)
+                k_s = submission_data['k_s']  # Ground thermal conductivity (W/m.K)
+                k_g = submission_data['k_g']  # Grout thermal conductivity (W/m.K)
 
-            # Eskilson's original ln(t/ts) values
-            ts = H ** 2 / (9. * alpha)  # Bore field characteristic time
-            log_time = np.array(gfdb.utilities.Eskilson_log_times())
-            time_values = np.exp(log_time) * ts
+                # Volumetric heat capacities
+                # --------------------------
+                rhoCp_p = 1542. * 1000.  # Pipe volumetric heat capacity (J/K.m3)
+                rhoCp_s = submission_data['rhoCp_s']  # Soil volumetric heat capacity (J/K.m3)
+                rhoCp_g = 3901. * 1000.  # Grout volumetric heat capacity (J/K.m3)
 
-            # Inputs related to fluid
-            # -----------------------
-            # Fluid properties
-            mixer = submission_data['mixer']  # Ethylene glycol mixed with water
-            percent = submission_data['percent']  # Percentage of ethylene glycol added in
-            fluid = gt.media.Fluid(mixer=mixer, percent=percent)
+                # Thermal properties
+                # ------------------
+                # Pipe
+                pipe = PLAT.media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+                # Soil
+                ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
+                soil = PLAT.media.Soil(k_s, rhoCp_s, ugt)
+                # Grout
+                grout = PLAT.media.ThermalProperty(k_g, rhoCp_g)
 
-            # Total fluid mass flow rate per borehole (kg/s)
-            m_flow_borehole = submission_data['m_flow_borehole']
+                alpha = soil.k / soil.rhoCp
 
-            # Define a borehole
-            borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
+                # Eskilson's original ln(t/ts) values
+                ts = H ** 2 / (9. * alpha)  # Bore field characteristic time
+                log_time = np.array(gfdb.utilities.Eskilson_log_times())
+                time_values = np.exp(log_time) * ts
 
-            # Coordinates
-            coordinates = submission_data['bore_locations']
+                # Inputs related to fluid
+                # -----------------------
+                # Fluid properties
+                mixer = submission_data['mixer']  # Ethylene glycol mixed with water
+                percent = submission_data['percent']  # Percentage of ethylene glycol added in
+                fluid = gt.media.Fluid(mixer=mixer, percent=percent)
 
-            # Calculate g-functions
-            # g-Function calculation options
-            disp = True
+                # Total fluid mass flow rate per borehole (kg/s)
+                m_flow_borehole = submission_data['m_flow_borehole']
 
-            # Calculate a uniform inlet fluid temperature g-function with 12 equal
-            # segments using the similarities solver
+                # Define a borehole
+                borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
 
-            calc_details = calculation.split('_')
-            nSegments = int(calc_details[0])
-            segments = calc_details[1]
-            solver = calc_details[3].lower()
-            boundary = calc_details[4]
+                # Coordinates
+                coordinates = submission_data['bore_locations']
 
-            gfunc = ghedt.gfunction.calculate_g_function(
-                m_flow_borehole, bhe_object, time_values, coordinates, borehole,
-                nSegments, fluid, pipe, grout, soil, segments=segments,
-                solver=solver, boundary=boundary, disp=disp)
+                # Calculate g-functions
+                # g-Function calculation options
+                disp = True
 
-            key = '{}_{}_{}_{}'.format(B, H, r_b, D)
+                # Calculate a uniform inlet fluid temperature g-function with 12 equal
+                # segments using the similarities solver
 
-            d_out = {'g': {}, 'bore_locations': coordinates,
-                     'logtime': log_time.tolist()}
-            d_out['g'][key] = gfunc.gFunc.tolist()
+                calc_details = calculation.split('_')
+                nSegments = int(calc_details[0])
+                segments = calc_details[1]
+                solver = calc_details[3].lower()
+                boundary = calc_details[4]
 
-            js_out(calculation_folder + name, d_out)
+                gfunc = ghedt.gfunction.calculate_g_function(
+                    m_flow_borehole, bhe_object, time_values, coordinates, borehole,
+                    nSegments, fluid, pipe, grout, soil, segments=segments,
+                    solver=solver, boundary=boundary, disp=disp)
+
+                key = '{}_{}_{}_{}'.format(B, H, r_b, D)
+
+                d_out = {'g': {}, 'bore_locations': coordinates,
+                         'logtime': log_time.tolist()}
+                d_out['g'][key] = gfunc.gFunc.tolist()
+
+                js_out(calculation_folder + name, d_out)
 
 
 if __name__ == '__main__':
