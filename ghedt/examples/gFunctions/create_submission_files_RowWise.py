@@ -23,83 +23,87 @@ def main():
     Input_folder = '100-400_RowWise_Cases/'
     input_coordinate_files = os.listdir(Input_folder)
 
-    output_folder = 'Submission_Files/'
-    create_if_not(output_folder)
+    H_values = [96., 192.]
 
-    # Borehole dimensions
-    D = 2.          # Borehole buried depth (m)
-    H = 96.        # Borehole length (m)
-    r_b = 0.075    # Borehole radius (m)
-    B = 5.          # Uniform borehole spacing (m)
+    for i in range(len(H_values)):
 
-    # Pipe dimensions (all configurations)
-    epsilon = 1.0e-6    # Pipe roughness (m)
+        output_folder = 'Submission_Files/' + str(int(H_values[i])) + 'm_Depth/'
+        create_if_not(output_folder)
 
-    # Pipe dimensions (single U-tube and double U-tube)
-    r_out = 26.67 / 1000. / 2.      # Pipe outer radius (m)
-    r_in = 21.6 / 1000. / 2.       # Pipe inner radius (m)
+        # Borehole dimensions
+        D = 2.          # Borehole buried depth (m)
+        H = H_values[i]        # Borehole length (m)
+        r_b = 0.075    # Borehole radius (m)
+        B = 5.          # Uniform borehole spacing (m)
 
-    # Ground properties
-    k_p = 0.4  # Pipe thermal conductivity (W/m.K)
-    k_s = 2.0  # Ground thermal conductivity (W/m.K)
-    k_g = 1.0  # Grout thermal conductivity (W/m.K)
-    rhoCp_s = 2343.493 * 1000.  # J/kg.m3
-    alpha = k_s / rhoCp_s
+        # Pipe dimensions (all configurations)
+        epsilon = 1.0e-6    # Pipe roughness (m)
 
-    # Fluid properties
-    mixer = 'MEG'  # Ethylene glycol mixed with water
-    percent = 0.  # Percentage of ethylene glycol added in
-    fluid = gt.media.Fluid(mixer=mixer, percent=percent)
+        # Pipe dimensions (single U-tube and double U-tube)
+        r_out = 26.67 / 1000. / 2.      # Pipe outer radius (m)
+        r_in = 21.6 / 1000. / 2.       # Pipe inner radius (m)
 
-    # Fluid properties
-    V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
-    # Total fluid mass flow rate per borehole (kg/s)
-    m_flow_borehole = V_flow_borehole / 1000. * fluid.rho
+        # Ground properties
+        k_p = 0.4  # Pipe thermal conductivity (W/m.K)
+        k_s = 2.0  # Ground thermal conductivity (W/m.K)
+        k_g = 1.0  # Grout thermal conductivity (W/m.K)
+        rhoCp_s = 2343.493 * 1000.  # J/kg.m3
+        alpha = k_s / rhoCp_s
 
-    s = 32.3 / 1000.  # Inner-tube to inner-tube Shank spacing (m)
+        # Fluid properties
+        mixer = 'MEG'  # Ethylene glycol mixed with water
+        percent = 0.  # Percentage of ethylene glycol added in
+        fluid = gt.media.Fluid(mixer=mixer, percent=percent)
 
-    pos = [(-0.029484999999999997, 3.610871087285971e-18),
-           (0.029484999999999997, -7.221742174571942e-18)]
+        # Fluid properties
+        V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
+        # Total fluid mass flow rate per borehole (kg/s)
+        m_flow_borehole = V_flow_borehole / 1000. * fluid.rho
 
-    log_time = [-8.5, -7.8, -7.2, -6.5, -5.9, -5.2, -4.5,
-                -3.963, -3.27, -2.864, -2.577, -2.171, -1.884,
-                -1.191, -0.497, -0.274, -0.051, 0.196, 0.419,
-                0.642, 0.873, 1.112, 1.335, 1.679, 2.028,
-                2.275, 3.003]
+        s = 32.3 / 1000.  # Inner-tube to inner-tube Shank spacing (m)
 
-    for i in range(len(input_coordinate_files)):
-        input_file_path = Input_folder + input_coordinate_files[i]
+        pos = [(-0.029484999999999997, 3.610871087285971e-18),
+               (0.029484999999999997, -7.221742174571942e-18)]
 
-        d = pd.read_csv(input_file_path).to_dict('list')
+        log_time = [-8.5, -7.8, -7.2, -6.5, -5.9, -5.2, -4.5,
+                    -3.963, -3.27, -2.864, -2.577, -2.171, -1.884,
+                    -1.191, -0.497, -0.274, -0.051, 0.196, 0.419,
+                    0.642, 0.873, 1.112, 1.335, 1.679, 2.028,
+                    2.275, 3.003]
 
-        x = d['x']
-        y = d['y']
-        coordinates = list(zip(x, y))
+        for i in range(len(input_coordinate_files)):
+            input_file_path = Input_folder + input_coordinate_files[i]
 
-        name = input_coordinate_files[i].split('.')[0]
-        d_out = {
-            'B': B,
-            'D': D,
-            'H': H,
-            'r_b': r_b,
-            'alpha': alpha,
-            'r_out': r_out,
-            'r_in': r_in,
-            'epsilon': epsilon,
-            'pos': pos,
-            'm_flow_borehole': m_flow_borehole,
-            'k_p': k_p,
-            'k_s': k_s,
-            'k_g': k_g,
-            'rhoCp_s': rhoCp_s,
-            'mixer': mixer,
-            'percent': percent,
-            'bore_locations': coordinates,
-            'logtime': log_time,
-            'name': name
-        }
+            d = pd.read_csv(input_file_path).to_dict('list')
 
-        js_o(output_folder + 'sub-' + str(i), d_out)
+            x = d['x']
+            y = d['y']
+            coordinates = list(zip(x, y))
+
+            name = input_coordinate_files[i].split('.')[0]
+            d_out = {
+                'B': B,
+                'D': D,
+                'H': H,
+                'r_b': r_b,
+                'alpha': alpha,
+                'r_out': r_out,
+                'r_in': r_in,
+                'epsilon': epsilon,
+                'pos': pos,
+                'm_flow_borehole': m_flow_borehole,
+                'k_p': k_p,
+                'k_s': k_s,
+                'k_g': k_g,
+                'rhoCp_s': rhoCp_s,
+                'mixer': mixer,
+                'percent': percent,
+                'bore_locations': coordinates,
+                'logtime': log_time,
+                'name': name
+            }
+
+            js_o(output_folder + 'sub-' + str(i), d_out)
 
     return
 
