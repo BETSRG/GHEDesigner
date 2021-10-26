@@ -179,10 +179,10 @@ def main():
             label='8 Unequal Equivalent UIFT')
     ax.plot(log_time, gfunc_uniform_T.gFunc,
             label='12 Equal Similarities UBWT')
-    ax.plot(log_time, g_function_corrected_UIFT_ref, marker='x',
-            linestyle='', label='96 Equal Similarities UIFT')
     ax.plot(log_time, g_function_corrected_GLHEPro, marker=None, linestyle='--',
             label=r'GLHEPro (UBWT, $D\approx5$m)')
+    ax.plot(log_time, g_function_corrected_UIFT_ref, marker='x',
+            linestyle='', label='96 Equal Similarities UIFT')
 
     fig.legend(bbox_to_anchor=(0.5, 0.88))
 

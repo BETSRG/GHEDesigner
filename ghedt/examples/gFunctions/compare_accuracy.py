@@ -46,6 +46,10 @@ def main():
 
     field_types = os.listdir(g_function_folder)
 
+    heights = os.listdir(g_function_folder)
+
+    k = 0
+
     reference_folder = '96_Equal_Segments_Similarities_MIFT'
     predicted_folders = ['12_Equal_Segments_Similarities_MIFT',
                          '12_Equal_Segments_Equivalent_MIFT',
@@ -55,8 +59,17 @@ def main():
 
         field_type = field_types[j]
 
+        reference_heights_location = \
+            g_function_folder + field_type + '/'
+
+        height_values = os.listdir(reference_heights_location)
+
+        height_value_location = \
+            reference_heights_location + height_values[k] + '/'
+
         reference_files_location = \
-            g_function_folder + field_type + '/' + reference_folder + '/'
+            height_value_location + reference_folder + '/'
+
         reference_files = os.listdir(reference_files_location)
 
         fig = gt.gfunction._initialize_figure()
@@ -68,7 +81,7 @@ def main():
 
             predicted_folder_i = predicted_folders[i]
             predicted_files_location_i = \
-                g_function_folder + field_type + '/' + predicted_folder_i + '/'
+                height_value_location + predicted_folder_i + '/'
             plotting_data = {predicted_folder_i: {'nbh': [], 'RMSE': []}}
 
             key = '5.0_96.0_0.075_2.0'
