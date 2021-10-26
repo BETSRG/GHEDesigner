@@ -95,7 +95,7 @@ def main():
 
     gfunc_equal_Tf_in = ghedt.gfunction.calculate_g_function(
         m_flow_borehole, bhe_object, time_values, coordinates, borehole,
-        nSegments, fluid, pipe, grout, soil, segments=segments,
+        fluid, pipe, grout, soil, nSegments=nSegments, segments=segments,
         solver=solver, boundary=boundary, disp=disp)
 
     # Calculate a uniform inlet fluid temperature g-function with 12 equal
@@ -104,14 +104,14 @@ def main():
     solver = 'equivalent'
     gfunc_equal_Tf_in_eq = ghedt.gfunction.calculate_g_function(
         m_flow_borehole, bhe_object, time_values, coordinates, borehole,
-        nSegments, fluid, pipe, grout, soil, segments=segments,
+        fluid, pipe, grout, soil, nSegments=nSegments, segments=segments,
         solver=solver, boundary=boundary, disp=disp)
 
     segments = 'unequal'
 
     gfunc_equal_Tf_in_uneq = ghedt.gfunction.calculate_g_function(
         m_flow_borehole, bhe_object, time_values, coordinates, borehole,
-        nSegments, fluid, pipe, grout, soil, segments=segments,
+        fluid, pipe, grout, soil, nSegments=nSegments, segments=segments,
         solver=solver, boundary=boundary, disp=disp)
 
     # Calculate a uniform borehole wall temperature g-function with 12 equal
@@ -120,7 +120,7 @@ def main():
 
     gfunc_uniform_T = ghedt.gfunction.calculate_g_function(
         m_flow_borehole, bhe_object, time_values, coordinates, borehole,
-        nSegments, fluid, pipe, grout, soil, segments=segments,
+        fluid, pipe, grout, soil, nSegments=nSegments, segments=segments,
         solver=solver, boundary=boundary, disp=disp
     )
 
@@ -163,6 +163,35 @@ def main():
         GFunction.borehole_radius_correction(g_function,
                                              rb_value,
                                              rb)
+    # Database g-Function
+    # Number in the x and y
+    # ---------------------
+    N = 12
+    M = 13
+    configuration = 'rectangle'
+    # GFunction
+    # ---------
+    # Access the database for specified configuration
+    r = gfdb.Management.retrieval.Retrieve(configuration)
+    # There is just one value returned in the unimodal domain for rectangles
+    r_unimodal = r.retrieve(N, M)
+    key = list(r_unimodal.keys())[0]
+    print('The key value: {}'.format(key))
+    r_data = r_unimodal[key]
+
+    # Configure the database data for input to the goethermal GFunction object
+    geothermal_g_input = gfdb.Management. \
+        application.GFunction.configure_database_file_for_usage(r_data)
+
+    # Initialize the GFunction object
+    GFunction = gfdb.Management.application.GFunction(**geothermal_g_input)
+
+    # interpolate for the Long time step g-function
+    g_function, rb_value, D_value, H_eq = \
+        GFunction.g_function_interpolation(B_over_H)
+    # correct the long time step for borehole radius
+    g_function_corrected_DB = \
+        GFunction.borehole_radius_correction(g_function, rb_value, rb)
 
     # Plot the g-functions
     fig = gt.gfunction._initialize_figure()
@@ -183,6 +212,8 @@ def main():
             label=r'GLHEPro (UBWT, $D\approx5$m)')
     ax.plot(log_time, g_function_corrected_UIFT_ref, marker='x',
             linestyle='', label='96 Equal Similarities UIFT')
+    ax.plot(log_time, g_function_corrected_DB, linestyle='-.', label='GFDB',
+            zorder=0)
 
     fig.legend(bbox_to_anchor=(0.5, 0.88))
 
