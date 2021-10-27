@@ -5,6 +5,7 @@ import ghedt
 import ghedt.PLAT as PLAT
 import ghedt.PLAT.pygfunction as gt
 import pandas as pd
+from time import time as clock
 
 
 def main():
@@ -77,7 +78,7 @@ def main():
     max_EFT_allowable = 35  # degrees Celsius
     min_EFT_allowable = 5  # degrees Celsius
     # Maximum and minimum allowable heights
-    max_Height = 96  # in meters
+    max_Height = 135.  # in meters
     min_Height = 60  # in meters
     sim_params = PLAT.media.SimulationParameters(
         start_month, end_month, max_EFT_allowable, min_EFT_allowable,
@@ -94,16 +95,28 @@ def main():
 
     # --------------------------------------------------------------------------
 
-    # Compute a range of g-functions for interpolation
-    H_values = [H]
-    r_b_values = [r_b] * len(H_values)
-    D_values = [D] * len(H_values)
+    coordinates_domain = ghedt.domains.square_and_near_square(10, 25, B)
 
-    coordinates_domain = ghedt.domains.square_and_near_square(1, 3, B)
-
-    ghedt.search_routines.Bisection1D(
+    tic = clock()
+    bisection_search = ghedt.search_routines.Bisection1D(
         coordinates_domain, V_flow_borehole, borehole, bhe_object,
-        fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads)
+        fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
+        disp=True)
+    toc = clock()
+    print('Time to perform bisection search: {} seconds'.format(toc - tic))
+
+    print(bisection_search.selection_key)
+    print('Number of boreholes: {}'.format(
+        len(bisection_search.selected_coordinates)))
+
+    fig = gt.utilities._initialize_figure()
+    ax = fig.add_subplot(111)
+
+    x, y = list(zip(*bisection_search.selected_coordinates))
+
+    ax.scatter(x, y)
+
+    # fig.show()
 
 
 if __name__ == '__main__':
