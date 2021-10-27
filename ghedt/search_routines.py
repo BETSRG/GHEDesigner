@@ -5,6 +5,8 @@ import ghedt
 import ghedt.PLAT.pygfunction as gt
 import ghedt.PLAT as PLAT
 from ghedt.utilities import sign, check_bracket
+import numpy as np
+import copy
 
 
 class Bisection1D:
@@ -14,7 +16,8 @@ class Bisection1D:
                  fluid: gt.media.Fluid, pipe: PLAT.media.Pipe,
                  grout: PLAT.media.ThermalProperty, soil: PLAT.media.Soil,
                  sim_params: PLAT.media.SimulationParameters,
-                 hourly_extraction_ground_loads: list):
+                 hourly_extraction_ground_loads: list,
+                 max_iter=15, disp=False):
 
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
@@ -29,6 +32,8 @@ class Bisection1D:
         self.sim_params = sim_params
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.coordinates_domain = coordinates_domain
+        self.max_iter = max_iter
+        self.disp = disp
 
         B = ghedt.utilities.borehole_spacing(borehole, coordinates)
 
@@ -45,14 +50,13 @@ class Bisection1D:
 
         self.calculated_temperatures = {}
 
-        self.search()
+        self.selection_key, self.selected_coordinates = self.search()
 
     def initialize_ghe(self, coordinates, H):
 
         self.ghe.bhe.b.H = H
         borehole = self.ghe.bhe.b
         m_flow_borehole = self.ghe.bhe.m_flow_borehole
-        bhe_object = self.ghe.bhe
         fluid = self.ghe.bhe.fluid
         pipe = self.ghe.bhe.pipe
         grout = self.ghe.bhe.grout
@@ -85,20 +89,22 @@ class Bisection1D:
 
     def search(self):
 
+        xL_idx = 0
+        xR_idx = len(self.coordinates_domain) - 1
         # Do some initial checks before searching
         # Get the lowest possible excess temperature from minimum height at the
         # smallest location in the domain
-        T_0_lower = self.calculate_excess(self.coordinates_domain[0],
+        T_0_lower = self.calculate_excess(self.coordinates_domain[xL_idx],
                                           self.sim_params.min_Height)
-        T_0_upper = self.calculate_excess(self.coordinates_domain[0],
+        T_0_upper = self.calculate_excess(self.coordinates_domain[xL_idx],
                                           self.sim_params.max_Height)
         T_m1 = \
             self.calculate_excess(
-                self.coordinates_domain[len(self.coordinates_domain)-1],
+                self.coordinates_domain[xR_idx],
                 self.sim_params.max_Height)
 
-        self.calculated_temperatures[0] = T_0_upper
-        self.calculated_temperatures[len(self.coordinates_domain)-1] = T_m1
+        self.calculated_temperatures[xL_idx] = T_0_upper
+        self.calculated_temperatures[xR_idx] = T_m1
 
         if check_bracket(sign(T_0_lower), sign(T_0_upper)):
             # Size between min and max of lower bound in domain
@@ -109,14 +115,47 @@ class Bisection1D:
         else:
             # This domain does not bracked the solution
             return None
+
+        xL_sign = sign(T_0_upper)
+        xR_sign = sign(T_m1)
         
         i = 0
+
+        while i < self.max_iter:
+            c_idx = int(np.ceil((xL_idx + xR_idx) / 2))
+            # if the solution is no longer making progress break the while
+            if c_idx == xL_idx or c_idx == xR_idx:
+                break
+
+            c_T_excess = self.calculate_excess(self.coordinates_domain[c_idx],
+                                               self.sim_params.max_Height)
+            self.calculated_temperatures[c_idx] = c_T_excess
+            c_sign = sign(c_T_excess)
+
+            if c_sign == xL_sign:
+                xL_idx = copy.deepcopy(c_idx)
+            else:
+                xR_idx = copy.deepcopy(c_idx)
+
+            i += 1
 
         coordinates = self.coordinates_domain[i]
 
         H = self.sim_params.max_Height
 
-        self.initialize_ghe(coordinates, H)
+        self.calculate_excess(coordinates, H)
+        # Make sure the field being returned pertains to the index which is the
+        # closest to 0 but also negative (the maximum of all 0 or negative
+        # excess temperatures)
+        keys = list(self.calculated_temperatures.keys())
+        values = list(self.calculated_temperatures.values())
 
-        self.calculate_excess()
-        a = 1
+        negative_excess_values = [values[i] for i in range(len(values))
+                                  if values[i] <= 0.0]
+
+        excess_of_interest = max(negative_excess_values)
+        idx = values.index(excess_of_interest)
+        selection_key = keys[idx]
+        selected_coordinates = self.coordinates_domain[selection_key]
+
+        return selection_key, selected_coordinates
