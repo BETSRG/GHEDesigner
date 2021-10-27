@@ -7,11 +7,13 @@ import ghedt.PLAT.pygfunction as gt
 import pandas as pd
 from time import time as clock
 
+from ghedt.utilities import js_dump
+
 
 def main():
     # Borehole dimensions
     # -------------------
-    H = 96.  # Borehole length (m)
+    H = 135.  # Borehole length (m)
     D = 2.  # Borehole buried depth (m)
     r_b = 0.075  # Borehole radius]
     B = 5.  # Borehole spacing (m)
@@ -124,23 +126,6 @@ def main():
         nbh_values.append(len(coordinates))
         T_excess_values.append(T_excess)
 
-    fig = gt.utilities._initialize_figure()
-    ax = fig.add_subplot(111)
-    import matplotlib.pyplot as plt
-
-    sub_axes = plt.axes([.30, .30, .44, .44])
-    # plot the zoomed portion
-    # sub_axes.scatter(nbh_s, TE_s, s=14, c='red')
-    sub_axes.set_ylim([-10, 10])
-    sub_axes.set_xlim([40, 300])
-    sub_axes.grid()
-    sub_axes.set_axisbelow(True)
-
-    ax.scatter(nbh_values, T_excess_values, facecolors='none',
-               edgecolors='blue', s=7, label='Unimodal list')
-
-    fig.show()
-
     tic = clock()
     bisection_search = ghedt.search_routines.Bisection1D(
         coordinates_domain, V_flow_borehole, borehole, bhe_object,
@@ -152,9 +137,19 @@ def main():
     print('Number of boreholes: {}'.
           format(len(bisection_search.selected_coordinates)))
 
+    d = {'Domain': {'nbh': nbh_values, 'T_excess': T_excess_values}}
 
+    nbh_values = []
+    T_excess_values = []
+    for i in bisection_search.calculated_temperatures:
+        coordinates = bisection_search.coordinates_domain[i]
+        nbh_values.append(len(coordinates))
+        T_excess_values.append(bisection_search.calculated_temperatures[i])
 
+    d['Searched'] = {'nbh': nbh_values, 'T_excess': T_excess_values}
 
+    file_name = 'near_square_search'
+    js_dump(file_name, d)
 
 
 if __name__ == '__main__':
