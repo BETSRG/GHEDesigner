@@ -61,9 +61,13 @@ def main():
 
     # Fluid properties
     V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
+    # Total fluid mass flow rate per borehole (kg/s)
+    m_flow_borehole = V_flow_borehole / 1000. * fluid.rho
 
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
+
+    log_time = ghedt.utilities.Eskilson_log_times()
 
     # Simulation start month and end month
     # --------------------------------
@@ -95,6 +99,48 @@ def main():
     # Perform field selection using bisection search between a 1x1 and 32x32
     coordinates_domain = ghedt.domains.square_and_near_square(1, 32, B)
 
+    # Need to compute the whole domain for the plot
+    nbh_values = []
+    T_excess_values = []
+    for i in range(len(coordinates_domain)):
+        coordinates = coordinates_domain[i]
+
+        V_flow_system = V_flow_borehole * float(
+            len(coordinates))  # System volumetric flow rate (L/s)
+
+        g_function = ghedt.gfunction.compute_live_g_function(
+            B, [borehole.H], [borehole.r_b], [borehole.D], m_flow_borehole,
+            bhe_object, log_time, coordinates, fluid, pipe, grout,
+            soil)
+
+        # Initialize the GHE object
+        ghe = ghedt.ground_heat_exchangers.GHE(
+            V_flow_system, B, bhe_object, fluid, borehole, pipe, grout,
+            soil, g_function, sim_params,
+            hourly_extraction_ground_loads)
+
+        T_excess = ghe.cost(*ghe.simulate(method='hybrid'))
+
+        nbh_values.append(len(coordinates))
+        T_excess_values.append(T_excess)
+
+    fig = gt.utilities._initialize_figure()
+    ax = fig.add_subplot(111)
+    import matplotlib.pyplot as plt
+
+    sub_axes = plt.axes([.30, .30, .44, .44])
+    # plot the zoomed portion
+    # sub_axes.scatter(nbh_s, TE_s, s=14, c='red')
+    sub_axes.set_ylim([-10, 10])
+    sub_axes.set_xlim([40, 300])
+    sub_axes.grid()
+    sub_axes.set_axisbelow(True)
+
+    ax.scatter(nbh_values, T_excess_values, facecolors='none',
+               edgecolors='blue', s=7, label='Unimodal list')
+
+    fig.show()
+
     tic = clock()
     bisection_search = ghedt.search_routines.Bisection1D(
         coordinates_domain, V_flow_borehole, borehole, bhe_object,
@@ -106,16 +152,9 @@ def main():
     print('Number of boreholes: {}'.
           format(len(bisection_search.selected_coordinates)))
 
-    # Perform sizing in between the min and max bounds
-    tic = clock()
-    ghe = bisection_search.ghe
-    ghe.compute_g_functions()
 
-    ghe.size(method='hybrid')
-    toc = clock()
-    print('Time to compute g-functions and size: {} seconds'.format(toc-tic))
 
-    print('Sized height of boreholes: {} m'.format(ghe.bhe.b.H))
+
 
 
 if __name__ == '__main__':
