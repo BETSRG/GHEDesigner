@@ -101,29 +101,9 @@ def main():
 
     coordinates_domain = ghedt.domains.square_and_near_square(1, 3, B)
 
-    i = 0
-
-    coordinates = coordinates_domain[i]
-
-    V_flow_system = V_flow_borehole * float(len(coordinates))
-    # Total fluid mass flow rate per borehole (kg/s)
-    m_flow_borehole = V_flow_borehole / 1000. * fluid.rho
-
-    # Calculate a g-function for uniform inlet fluid temperature with
-    # 8 unequal segments using the equivalent solver
-    g_function = ghedt.gfunction.compute_live_g_function(
-        B, H_values, r_b_values, D_values, m_flow_borehole, bhe_object, log_time,
-        coordinates, fluid, pipe, grout, soil)
-
-    # Initialize the GHE object
-    ghe = ghedt.ground_heat_exchangers.GHE(
-        V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
-        g_function, sim_params, hourly_extraction_ground_loads)
-
-    # Simulate after computing just one g-function
-    max_HP_EFT, min_HP_EFT = ghe.simulate()
-
-    print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
+    ghedt.search_routines.Bisection1D(
+        coordinates_domain, V_flow_borehole, borehole, bhe_object,
+        fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads)
 
 
 if __name__ == '__main__':
