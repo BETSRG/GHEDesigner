@@ -12,7 +12,9 @@
 * [Issue 3](https://github.com/j-c-cook/GLHEDT/issues/3) - Adds a GHE object with the ability to simulate and size with a hybrid time step using information found by the peak load analysis tool.
 * [Issue 8](https://github.com/j-c-cook/GLHEDT/issues/8) - Adds a detailed hourly simulation so that the hybrid time step can be validated. 
 * [Issue 9](https://github.com/j-c-cook/ghedt/issues/11) - A function that computes a live g-function using `pygfunction` is created. The functions default arguments are unequal segments, the equivalent solver and the mixed inlet fluid temperature boundary condition.
-* [Issue 14](https://github.com/j-c-cook/ghedt/issues/14) - The `coordinates.py` module is moved from the g-Function Database repository to this package. 
+* [Issue 14](https://github.com/j-c-cook/ghedt/issues/14) - The `coordinates.py` module is moved from the g-Function Database repository to this package.
+* [Issue 18](https://github.com/j-c-cook/ghedt/issues/18) - The methodology for determining the `B` spacing for a borefield is one that compares the first two boreholes in the list. If there is one borehole, the borehole radius is set as the borehole spacing.
+* [Issue 17](https://github.com/j-c-cook/ghedt/issues/17) - A design routine that can determine a square or near square routine based on a range (ie. 1 to 3 is 1x1, 1x2, 2x2, 2x3, 3x3), and a target depth (maximum height).
 
 ### Tests and CI
 
