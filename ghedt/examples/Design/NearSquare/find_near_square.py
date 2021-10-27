@@ -95,8 +95,8 @@ def main():
 
     # --------------------------------------------------------------------------
 
-    # Perform field selection using bisection search
-    coordinates_domain = ghedt.domains.square_and_near_square(10, 15, B)
+    # Perform field selection using bisection search between a 1x1 and 32x32
+    coordinates_domain = ghedt.domains.square_and_near_square(1, 32, B)
 
     tic = clock()
     bisection_search = ghedt.search_routines.Bisection1D(
