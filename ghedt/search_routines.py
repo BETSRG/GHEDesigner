@@ -74,8 +74,9 @@ class Bisection1D:
 
         # Initialize the GHE object
         self.ghe = ghedt.ground_heat_exchangers.GHE(
-            V_flow_system, B, self.bhe_object, fluid, borehole, pipe, grout, soil,
-            g_function, self.sim_params, self.hourly_extraction_ground_loads)
+            V_flow_system, B, self.bhe_object, fluid, borehole, pipe, grout,
+            soil, g_function, self.sim_params,
+            self.hourly_extraction_ground_loads)
 
     def calculate_excess(self, coordinates, H):
         self.initialize_ghe(coordinates, H)
@@ -161,5 +162,7 @@ class Bisection1D:
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
         selected_coordinates = self.coordinates_domain[selection_key]
+
+        self.initialize_ghe(selected_coordinates, H)
 
         return selection_key, selected_coordinates

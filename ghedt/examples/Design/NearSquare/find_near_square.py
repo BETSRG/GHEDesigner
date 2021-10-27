@@ -95,28 +95,30 @@ def main():
 
     # --------------------------------------------------------------------------
 
-    coordinates_domain = ghedt.domains.square_and_near_square(10, 25, B)
+    # Perform field selection using bisection search
+    coordinates_domain = ghedt.domains.square_and_near_square(10, 15, B)
 
     tic = clock()
     bisection_search = ghedt.search_routines.Bisection1D(
         coordinates_domain, V_flow_borehole, borehole, bhe_object,
         fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
-        disp=True)
+        disp=False)
     toc = clock()
     print('Time to perform bisection search: {} seconds'.format(toc - tic))
 
-    print(bisection_search.selection_key)
-    print('Number of boreholes: {}'.format(
-        len(bisection_search.selected_coordinates)))
+    print('Number of boreholes: {}'.
+          format(len(bisection_search.selected_coordinates)))
 
-    fig = gt.utilities._initialize_figure()
-    ax = fig.add_subplot(111)
+    # Perform sizing in between the min and max bounds
+    tic = clock()
+    ghe = bisection_search.ghe
+    ghe.compute_g_functions()
 
-    x, y = list(zip(*bisection_search.selected_coordinates))
+    ghe.size(method='hybrid')
+    toc = clock()
+    print('Time to compute g-functions and size: {} seconds'.format(toc-tic))
 
-    ax.scatter(x, y)
-
-    # fig.show()
+    print('Sized height of boreholes: {} m'.format(ghe.bhe.b.H))
 
 
 if __name__ == '__main__':
