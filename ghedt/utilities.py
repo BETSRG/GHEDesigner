@@ -3,6 +3,7 @@
 
 import copy
 import numpy as np
+import json
 
 
 def Eskilson_log_times():
@@ -54,3 +55,12 @@ def check_bracket(sign_xL, sign_xR, disp=False) -> bool:
                   'this method will return false.')
         return False
 
+
+def js_dump(file_name, d, indent=4):
+    with open(file_name + '.json', 'w') as fp:
+        json.dump(d, fp, indent=indent)
+
+
+def js_load(filename: str):
+    with open(filename) as f_in:
+        return json.load(f_in)
