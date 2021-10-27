@@ -150,6 +150,8 @@ class GFunction:
         height_values = list(self.g_lts.keys())
         if min(height_values) <= H_eq <= max(height_values):
             fill_value = ''
+        elif min(height_values) - H_eq < 0.001:
+            fill_value = ''
         else:
             fill_value = 'extrapolate'
             warnings.warn('Extrapolation is being used.')
@@ -166,6 +168,11 @@ class GFunction:
                 kind = 'linear'
             else:
                 if (H_eq-height_values[0]) / height_values[0] < 0.001:
+                    g_function = self.g_lts[height_values[0]]
+                    rb = self.r_b_values[height_values[0]]
+                    D = self.D_values[height_values[0]]
+                    return g_function, rb, D, H_eq
+                elif min(height_values) - H_eq < 0.001:
                     g_function = self.g_lts[height_values[0]]
                     rb = self.r_b_values[height_values[0]]
                     D = self.D_values[height_values[0]]
