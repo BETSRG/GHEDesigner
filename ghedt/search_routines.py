@@ -83,7 +83,8 @@ class Bisection1D:
         max_HP_EFT, min_HP_EFT = self.ghe.simulate()
         T_excess = self.ghe.cost(max_HP_EFT, min_HP_EFT)
 
-        print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
+        if self.disp:
+            print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
 
         return T_excess
 
@@ -106,15 +107,18 @@ class Bisection1D:
         self.calculated_temperatures[xL_idx] = T_0_upper
         self.calculated_temperatures[xR_idx] = T_m1
 
-        if check_bracket(sign(T_0_lower), sign(T_0_upper)):
+        if check_bracket(sign(T_0_lower), sign(T_0_upper), disp=self.disp):
             # Size between min and max of lower bound in domain
             return self.coordinates_domain[0]
-        elif check_bracket(sign(T_0_upper), sign(T_m1)):
+        elif check_bracket(sign(T_0_upper), sign(T_m1), disp=self.disp):
             # Do the integer bisection search routine
             pass
         else:
             # This domain does not bracked the solution
-            return None
+            return None, None
+
+        if self.disp:
+            print('Beginning bisection search...')
 
         xL_sign = sign(T_0_upper)
         xR_sign = sign(T_m1)
