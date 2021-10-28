@@ -46,9 +46,7 @@ def main():
 
     field_types = os.listdir(g_function_folder)
 
-    heights = os.listdir(g_function_folder)
-
-    k = 0
+    k = 1
 
     reference_folder = '96_Equal_Segments_Similarities_MIFT'
     predicted_folders = ['12_Equal_Segments_Similarities_MIFT',
@@ -63,6 +61,11 @@ def main():
             g_function_folder + field_type + '/'
 
         height_values = os.listdir(reference_heights_location)
+
+        if field_type == 'Square':
+            k = 0
+
+        height = height_values[k].split('_')[0].replace('m', '')
 
         height_value_location = \
             reference_heights_location + height_values[k] + '/'
@@ -85,6 +88,7 @@ def main():
             plotting_data = {predicted_folder_i: {'nbh': [], 'RMSE': []}}
 
             key = '5.0_96.0_0.075_2.0'
+            key = '5.0_{}.0_0.075_2.0'.format(height)
 
             for j in range(len(reference_files)):
                 file_name = reference_files[j]
@@ -111,7 +115,7 @@ def main():
             rmse_values = plotting_data[predicted_folder_i]['RMSE']
 
             ax.scatter(nbh_values, rmse_values,
-                       label=predicted_folder_i.replace('_', ' '),
+                       label=predicted_folder_i.replace('_', ' ').replace('MIFT', 'UIFT'),
                        marker=markers[i])
 
         ax.set_xlabel('Number of boreholes')
@@ -126,7 +130,7 @@ def main():
 
         fig.tight_layout(rect=(0, 0, 1, 0.965))
 
-        fig.savefig('accuracy_comparison_{}.png'.format(field_type))
+        fig.savefig('accuracy_comparison_{}_{}.png'.format(field_type, height))
 
 
 if __name__ == '__main__':
