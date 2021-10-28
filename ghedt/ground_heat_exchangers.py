@@ -8,6 +8,7 @@ import scipy.interpolate
 import scipy.optimize
 import ghedt.PLAT as PLAT
 import ghedt.PLAT.pygfunction as gt
+import ghedt
 
 import numpy as np
 
@@ -30,6 +31,7 @@ class BaseGHE:
         m_flow_borehole = self.V_flow_borehole / 1000. * fluid.rho
 
         # Borehole Heat Exchanger
+        self.bhe_object = bhe_function
         self.bhe = bhe_function(
             m_flow_borehole, fluid, borehole, pipe, grout, soil)
         # Equivalent borehole Heat Exchanger
@@ -178,6 +180,29 @@ class BaseGHE:
             delta_Tb.append(delta_Tb_i)
 
         return HPEFT, delta_Tb
+
+    def compute_g_functions(self):
+        # Compute g-functions for a bracketed solution, based on min and max
+        # height
+        min_height = self.sim_params.min_Height
+        max_height = self.sim_params.max_Height
+        avg_height = (min_height + max_height) / 2.
+        H_values = [min_height, avg_height, max_height]
+        r_b_values = [self.bhe.b.r_b] * len(H_values)
+        D_values = [self.bhe.b.D] * len(H_values)
+
+        coordinates = self.GFunction.bore_locations
+        log_time = self.GFunction.log_time
+
+        g_function = ghedt.gfunction.compute_live_g_function(
+            self.B_spacing, H_values, r_b_values, D_values,
+            self.bhe.m_flow_borehole, self.bhe_object, log_time,
+            coordinates, self.bhe.fluid, self.bhe.pipe,
+            self.bhe.grout, self.bhe.soil)
+
+        self.GFunction = g_function
+
+        return
 
 
 class GHE(BaseGHE):
