@@ -92,14 +92,55 @@ def main():
 
     # --------------------------------------------------------------------------
 
-    # Plot go and no-go zone with corrected borefield
-    N = 9
-    M = 13
-    # -----------------------------------------------
-    coordinates = ghedt.coordinates.rectangle(M, N, B, B)
+    # Rectangular design constraints are the land and range of B-spacing
+    length = 85.  # m
+    width = 36.5  # m
+    B_min = 3.  # m
+    B_max = 10.  # m
 
-    perimeter = [[0., 0.], [70., 0.], [70., 80.], [0., 80.]]
-    no_go = [[10., 36.5], [10., 70.], [60., 70.], [60., 36.5]]
+    # Perform field selection using bisection search between a 1x1 and 32x32
+    coordinates_domain = ghedt.domains.rectangular(length, width, B_min, B_max)
+
+    output_folder = 'Rectangle_Domain'
+    ghedt.domains.visualize_domain(coordinates_domain, output_folder)
+
+    tic = clock()
+    bisection_search = ghedt.search_routines.Bisection1D(
+        coordinates_domain, V_flow_borehole, borehole, bhe_object,
+        fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
+        disp=False)
+    toc = clock()
+    print('Time to perform bisection search: {} seconds'.format(toc - tic))
+
+    nbh = len(bisection_search.selected_coordinates)
+    print('Number of boreholes: {}'.format(nbh))
+
+    print('Borehole spacing: {}'.format(bisection_search.ghe.GFunction.B))
+
+    # Perform sizing in between the min and max bounds
+    tic = clock()
+    ghe = bisection_search.ghe
+    ghe.compute_g_functions()
+
+    ghe.size(method='hybrid')
+    toc = clock()
+    print('Time to compute g-functions and size: {} seconds'.format(toc - tic))
+
+    print('Sized height of boreholes: {} m'.format(ghe.bhe.b.H))
+
+    print('Total drilling depth: {}'.format(ghe.bhe.b.H * nbh))
+
+    # Plot go and no-go zone with corrected borefield
+    # -----------------------------------------------
+    coordinates = bisection_search.selected_coordinates
+
+    perimeter = [[0., 0.], [85., 0.], [85., 80.], [0., 80.]]
+    l_x_building = 50
+    l_y_building = 33.3
+    origin_x, origin_y = (15, 36.5)
+    no_go = [[origin_x, origin_y], [origin_x+l_x_building, origin_y],
+             [origin_x+l_x_building, origin_y+l_y_building],
+             [origin_x, origin_y+l_y_building]]
 
     fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
         perimeter, coordinates, no_go=no_go)
