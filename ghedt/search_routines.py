@@ -41,7 +41,8 @@ class Bisection1D:
         # 8 unequal segments using the equivalent solver
         g_function = ghedt.gfunction.compute_live_g_function(
             B, [borehole.H], [borehole.r_b], [borehole.D], m_flow_borehole,
-            self.bhe_object, self.log_time, coordinates, fluid, pipe, grout, soil)
+            self.bhe_object, self.log_time, coordinates, fluid, pipe, grout,
+            soil)
 
         # Initialize the GHE object
         self.ghe = ghedt.ground_heat_exchangers.GHE(
