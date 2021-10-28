@@ -126,9 +126,9 @@ def main():
     toc = clock()
     print('Time to compute g-functions and size: {} seconds'.format(toc - tic))
 
-    print('Sized height of boreholes: {} m'.format(ghe.bhe.b.H))
+    print('Sized height of boreholes: {0:.2f} m'.format(ghe.bhe.b.H))
 
-    print('Total drilling depth: {}'.format(ghe.bhe.b.H * nbh))
+    print('Total drilling depth: {0:.1f} m'.format(ghe.bhe.b.H * nbh))
 
     # Plot go and no-go zone with corrected borefield
     # -----------------------------------------------
