@@ -17,7 +17,7 @@ class Bisection1D:
                  grout: PLAT.media.ThermalProperty, soil: PLAT.media.Soil,
                  sim_params: PLAT.media.SimulationParameters,
                  hourly_extraction_ground_loads: list,
-                 max_iter=15, disp=False):
+                 max_iter=15, disp=False, search=True):
 
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
@@ -51,7 +51,8 @@ class Bisection1D:
 
         self.calculated_temperatures = {}
 
-        self.selection_key, self.selected_coordinates = self.search()
+        if search:
+            self.selection_key, self.selected_coordinates = self.search()
 
     def initialize_ghe(self, coordinates, H):
 
@@ -168,3 +169,77 @@ class Bisection1D:
         self.initialize_ghe(selected_coordinates, H)
 
         return selection_key, selected_coordinates
+
+
+class Bisection2D(Bisection1D):
+    def __init__(self, coordinates_domain_nested: list, V_flow_borehole: float,
+                 borehole: gt.boreholes.Borehole,
+                 bhe_object: PLAT.borehole_heat_exchangers,
+                 fluid: gt.media.Fluid, pipe: PLAT.media.Pipe,
+                 grout: PLAT.media.ThermalProperty, soil: PLAT.media.Soil,
+                 sim_params: PLAT.media.SimulationParameters,
+                 hourly_extraction_ground_loads: list,
+                 max_iter=15, disp=False):
+        # Get a coordinates domain for initialization
+        coordinates_domain = coordinates_domain_nested[0]
+        Bisection1D.__init__(
+            self, coordinates_domain, V_flow_borehole, borehole, bhe_object,
+            fluid, pipe, grout, soil, sim_params,
+            hourly_extraction_ground_loads, max_iter=max_iter, disp=disp,
+            search=False)
+
+        self.coordinates_domain_nested = []
+        self.calculated_temperatures_nested = []
+        # Tack on one borehole at the beginning to provide a high excess
+        # temperature
+        outer_domain = [coordinates_domain_nested[0][0]]
+        for i in range(len(coordinates_domain_nested)):
+            outer_domain.append(coordinates_domain_nested[i][-1])
+
+        self.coordinates_domain = outer_domain
+
+        selection_key, selected_coordinates = self.search()
+
+        self.calculated_temperatures_nested.append(self.calculated_temperatures)
+
+        # We tacked on one borehole to the beginning, so we need to subtract 1
+        # on the index
+        inner_domain = coordinates_domain_nested[selection_key-1]
+        self.coordinates_domain = inner_domain
+
+        self.selection_key, self.selected_coordinates = self.search()
+
+
+# def bi_rectangular_search(length_x, length_y, B_min, B_max_x, B_max_y):
+#     # Make this work for the transpose
+#     if length_x >= length_y:
+#         length_1 = length_x
+#         length_2 = length_y
+#         B_max_1 = B_max_x
+#         B_max_2 = B_max_y
+#     else:
+#         length_1 = length_y
+#         length_2 = length_x
+#         B_max_1 = B_max_y
+#         B_max_2 = B_max_x
+#
+#     def func(B, length, n):
+#         _n = (length / B) + 1
+#         return n - _n
+#
+#     # find the maximum number of boreholes as a float
+#     n_2_max = (length_2 / B_min) + 1
+#     n_2_min = (length_2 / B_max_2) + 1
+#
+#     N_min = int(np.ceil(n_2_min).tolist())
+#     N_max = int(np.floor(n_2_max).tolist())
+#
+#     bi_rectangle_nested_domain = []
+#
+#     for n_2 in range(N_min, N_max+1):
+#         b_2 = length_2 / (n_2 - 1)
+#         bi_rectangle_domain = ghedt.domains.bi_rectangular(
+#             length_1, length_2, B_min, B_max_1, b_2)
+#         bi_rectangle_nested_domain.append(bi_rectangle_domain)
+#
+#     return bi_rectangle_nested_domain
