@@ -97,18 +97,20 @@ def main():
     width = 36.5  # m
     B_min = 4.45  # m
     B_max_x = 10.  # m
-    B_max_y = 6.
+    B_max_y = 12.
 
     # Perform field selection using bisection search between a 1x1 and 32x32
-    coordinates_domain = \
-        ghedt.domains.bi_rectangular(length, width, B_min, B_max_x, B_max_y)
+    coordinates_domain_nested = \
+        ghedt.domains.bi_rectangle_nested(length, width, B_min, B_max_x, B_max_y)
+
+    coordinates_domain = coordinates_domain_nested[0]
 
     output_folder = 'Bi-Rectangle_Domain'
     ghedt.domains.visualize_domain(coordinates_domain, output_folder)
 
     tic = clock()
-    bisection_search = ghedt.search_routines.Bisection1D(
-        coordinates_domain, V_flow_borehole, borehole, bhe_object,
+    bisection_search = ghedt.search_routines.Bisection2D(
+        coordinates_domain_nested, V_flow_borehole, borehole, bhe_object,
         fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
         disp=True)
     toc = clock()
