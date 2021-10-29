@@ -141,9 +141,10 @@ def main():
                 boundary = calc_details[4]
 
                 gfunc = ghedt.gfunction.calculate_g_function(
-                    m_flow_borehole, bhe_object, time_values, coordinates, borehole,
-                    nSegments, fluid, pipe, grout, soil, segments=segments,
-                    solver=solver, boundary=boundary, disp=disp)
+                    m_flow_borehole, bhe_object, time_values, coordinates,
+                    borehole, fluid, pipe, grout, soil, nSegments=nSegments,
+                    segments=segments, solver=solver, boundary=boundary,
+                    disp=disp)
 
                 key = '{}_{}_{}_{}'.format(B, H, r_b, D)
 

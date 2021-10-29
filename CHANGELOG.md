@@ -4,7 +4,11 @@
 
 ### Enhancements
 
-* [Issue 12](https://github.com/j-c-cook/ghedt/issues/12) - The `GFunction` object can be passed into the `GHE` object with only one g-function calculated, as long as the `B/H` value being "interpolated" for is the same one that it was computed for. 
+* [Issue 12](https://github.com/j-c-cook/ghedt/issues/12) - The `GFunction` object can be passed into the `GHE` object with only one g-function calculated, as long as the `B/H` value being "interpolated" for is the same one that it was computed for.
+
+### Fixes
+
+* [Issue 23](https://github.com/j-c-cook/ghedt/issues/23) - Fixes the possibility for an extrapolation error to be thrown on the interpolation function at the outer bounds when floating point rounding causes the number to be out of bounds by 1e-16 or less. A check is put in place to compare the absolute value of the difference for the outer bounds, and if the value is within 1.0e-06, then the outer bound is made use of. 
 
 ### New features
 
@@ -16,7 +20,7 @@
 * [Issue 16](https://github.com/j-c-cook/ghedt/issues/16) - An integer bisection search routine is implemented that, given a domain of coordinates specified at a target height, selects the borefield that results in an excess temperature less than or equal to 0.
 * [Issue 17](https://github.com/j-c-cook/ghedt/issues/17) - A design routine that can determine a square or near square routine based on a range (ie. 1 to 3 is 1x1, 1x2, 2x2, 2x3, 3x3), and a target depth (maximum height).
 * [Issue 18](https://github.com/j-c-cook/ghedt/issues/18) - The methodology for determining the `B` spacing for a borefield is one that compares the first two boreholes in the list. If there is one borehole, the borehole radius is set as the borehole spacing.
-
+* [Issue 10](https://github.com/j-c-cook/ghedt/issues) - A rectangular design routine that requires length x width land area constraint, and minimum and maximum borehole spacings.
 
 ### Tests and CI
 

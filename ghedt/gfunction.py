@@ -148,9 +148,15 @@ class GFunction:
 
         # Determine if we are out of range and need to extrapolate
         height_values = list(self.g_lts.keys())
+        # If we are close to the outer bounds, then set H_eq as outer bounds
+        if abs(H_eq - max(height_values)) < 1.0e-6:
+            H_eq = max(height_values)
+        if abs(H_eq - min(height_values)) < 1.0e-6:
+            H_eq = min(height_values)
+
         if min(height_values) <= H_eq <= max(height_values):
             fill_value = ''
-        elif min(height_values) - H_eq < 0.001:
+        elif abs(min(height_values) - H_eq) < 0.001:
             fill_value = ''
         else:
             fill_value = 'extrapolate'
