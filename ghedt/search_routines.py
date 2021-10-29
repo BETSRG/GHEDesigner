@@ -190,7 +190,8 @@ class Bisection2D(Bisection1D):
 
         self.coordinates_domain_nested = []
         self.calculated_temperatures_nested = []
-
+        # Tack on one borehole at the beginning to provide a high excess
+        # temperature
         outer_domain = [coordinates_domain_nested[0][0]]
         for i in range(len(coordinates_domain_nested)):
             outer_domain.append(coordinates_domain_nested[i][-1])
@@ -201,7 +202,9 @@ class Bisection2D(Bisection1D):
 
         self.calculated_temperatures_nested.append(self.calculated_temperatures)
 
-        inner_domain = coordinates_domain_nested[selection_key]
+        # We tacked on one borehole to the beginning, so we need to subtract 1
+        # on the index
+        inner_domain = coordinates_domain_nested[selection_key-1]
         self.coordinates_domain = inner_domain
 
         self.selection_key, self.selected_coordinates = self.search()
