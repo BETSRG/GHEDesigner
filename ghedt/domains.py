@@ -215,6 +215,86 @@ def zoned_rectangle_domain(length_x, length_y, n_x, n_y):
     return zoned_rectangle_domain
 
 
+def _bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y):
+    # Make this work for the transpose
+    if length_x >= length_y:
+        length_1 = length_x
+        length_2 = length_y
+        B_max_1 = B_max_x
+        B_max_2 = B_max_y
+    else:
+        length_1 = length_y
+        length_2 = length_x
+        B_max_1 = B_max_y
+        B_max_2 = B_max_x
+
+    # find the maximum number of boreholes as a float
+    n_1_max = (length_1 / B_min) + 1
+    n_1_min = (length_2 / B_max_1) + 1
+
+    n_2_max = (length_2 / B_min) + 1
+    n_2_min = (length_2 / B_max_2) + 1
+
+    N_min_1 = int(np.ceil(n_1_min).tolist())
+    N_max_1 = int(np.floor(n_1_max).tolist())
+
+    N_min_2 = int(np.ceil(n_2_min).tolist())
+    N_max_2 = int(np.floor(n_2_max).tolist())
+
+    bi_rectangle_zoned_nested_domain = []
+
+    n_1_values = list(range(N_min_1, N_max_1+1))
+    n_2_values = list(range(N_min_2, N_max_2+1))
+
+    j = 0  # pertains to n_1_values
+    k = 0  # pertains to n_2_values
+
+    for i in range(len(n_1_values) + len(n_2_values)-1):
+        if i % 2 == 0:
+            bi_rectangle_zoned_domain = \
+                zoned_rectangle_domain(length_1, length_2, n_1_values[j],
+                                       n_2_values[k])
+            print('{}x{}'.format(n_1_values[j], n_2_values[k]))
+            if j < len(n_1_values)-1:
+                j += 1
+            else:
+                k += 1
+        else:
+            bi_rectangle_zoned_domain = \
+                zoned_rectangle_domain(length_1, length_2, n_1_values[j],
+                                       n_2_values[k])
+            print('{}x{}'.format(n_1_values[j], n_2_values[k]))
+            if k < len(n_2_values)-1:
+                k += 1
+            else:
+                j += 1
+
+        bi_rectangle_zoned_nested_domain.append(bi_rectangle_zoned_domain)
+
+    return bi_rectangle_zoned_nested_domain
+
+
+def bi_rectangle_domain_restructured(
+        length_x, length_y, B_min, B_max_x, B_max_y):
+    bi_rectangle_zoned_nested_domain = \
+        _bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y)
+
+    bi_rectangle_zoned_nested_domain_restructured = []
+
+    for j in range(len(bi_rectangle_zoned_nested_domain[-1])):
+        domain = []
+        for i in range(len(bi_rectangle_zoned_nested_domain)):
+            if j >= len(bi_rectangle_zoned_nested_domain[i]):
+                coordinates = bi_rectangle_zoned_nested_domain[i][-1]
+            else:
+                coordinates = bi_rectangle_zoned_nested_domain[i][j]
+            domain.append(coordinates)
+
+        bi_rectangle_zoned_nested_domain_restructured.append(domain)
+
+    return bi_rectangle_zoned_nested_domain_restructured
+
+
 def visualize_domain(domain, output_folder_name):
     import os
     if not os.path.exists(output_folder_name):
