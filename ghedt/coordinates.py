@@ -62,26 +62,6 @@ def L_shape(Nx, Ny, Bx, By):
     return L
 
 
-def coordinate(i: int, j: int, Bx, By):
-    """
-    Given and i and a j value, return the x and y coordinate based on the
-    equal B spacing in the field.
-    Parameters
-    ----------
-    i: int
-        the iterator i in a for loop, corresponding to the x-coordinate
-    j: int
-        the iterator j in a for loop, corresponding to the y-coordinate
-    Returns
-    -------
-    (x, y): tuple
-        A tuple containing the x and y coordinate for this i and j
-    """
-    x = (i - 1) * Bx
-    y = (j - 1) * By
-    return x, y
-
-
 def zoned_rectangle(Nx, Ny, Bx, By, Nix, Niy):
     # Create a zoned rectangle
     # The creator of the idea behind the "zoned rectangle" is
