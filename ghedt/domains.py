@@ -159,6 +159,69 @@ def bi_rectangle_nested(length_x, length_y, B_min, B_max_x, B_max_y):
     return bi_rectangle_nested_domain
 
 
+def zoned_rectangle_domain(length_x, length_y, n_x, n_y):
+    # Make this work for the transpose
+    if length_x >= length_y:
+        length_1 = length_x
+        length_2 = length_y
+        n_1 = n_x
+        n_2 = n_y
+    else:
+        length_1 = length_y
+        length_2 = length_x
+        n_1 = n_y
+        n_2 = n_x
+
+    b_1 = length_1 / (n_1 - 1)
+    b_2 = length_2 / (n_2 - 1)
+
+    zoned_rectangle_domain = []
+
+    # for i in range(1, n_1-1):
+    #     z = ghedt.coordinates.zoned_rectangle(n_1, n_2, b_1, b_2, i, 1)
+    #     zoned_rectangle_domain.append(z)
+    # for i in range(1, n_2-1):
+    #     z = ghedt.coordinates.zoned_rectangle(n_1, n_2, b_1, b_2, n_1 - 2, i)
+    #     zoned_rectangle_domain.append(z)
+
+    n_i1 = 2
+    n_i2 = 2
+
+    for _ in range(n_1-2):
+
+        # general case where we can reduce in either direction
+        # current x spacing
+        x_spacing_c = (n_1 - 1) * b_1 / (n_i1 + 1)
+        # current y spacing
+        y_spacing_c = (n_2 - 1) * b_2 / (n_i2 + 1)
+        # x spacing if we reduce one column
+        x_spacing_t = (n_1 - 1) * b_1 / n_i1
+        # y spacing if we reduce one row
+        y_spacing_t = (n_2 - 1) * b_2 / n_i2
+
+        # possible outcomes
+        # ratio (fraction) if we reduce one column
+        f_x = x_spacing_t / y_spacing_c
+        if f_x < 1:
+            f_x = 1 / f_x
+        # ratio (fraction) if we reduce one row
+        f_y = x_spacing_c / y_spacing_t
+        if f_y < 1:
+            f_y = 1 / f_y
+        d_f_x = f_x - 1  # distance of ratio from 1 if we reduce one column
+        d_f_y = f_y - 1  # distance of ratio from 1 if wer reduce one row
+        if d_f_x > d_f_y:
+            # Niy = Niym1
+            n_i2 += 1
+        else:
+            # Nix = Nixm1
+            n_i1 += 1
+        z = ghedt.coordinates.zoned_rectangle(n_1, n_2, b_1, b_2, n_i1, n_i2)
+        zoned_rectangle_domain.append(z)
+
+    return zoned_rectangle_domain
+
+
 def visualize_domain(domain, output_folder_name):
     import os
     if not os.path.exists(output_folder_name):
