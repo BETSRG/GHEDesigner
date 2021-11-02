@@ -2,6 +2,14 @@
 # Tuesday, October 26, 2021
 
 
+def transpose_coordinates(coordinates):
+    coordinates_transposed = []
+    for i in range(len(coordinates)):
+        x,y = coordinates[i]
+        coordinates_transposed.append((y, x))
+    return coordinates_transposed
+
+
 def rectangle(Nx, Ny, Bx, By):
     # Create a list of (x, y) pairs for a rectangle
     r = []
