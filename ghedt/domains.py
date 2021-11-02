@@ -50,14 +50,27 @@ def rectangular(length_x, length_y, B_min, B_max):
 
     N_min = int(np.ceil(n_1_min).tolist())
     N_max = int(np.floor(n_1_max).tolist())
+
+    iter = 0
     for N in range(N_min, N_max+1):
         # Check to see if we bracket
         a = func(N, length_1, B_min)
         b = func(N, length_1, B_max)
         if ghedt.utilities.sign(a) != ghedt.utilities.sign(b):
-            B = length_1 / (N - 1)
 
+            B = length_1 / (N - 1)
             n_2 = int(np.floor((length_2 / B) + 1))
+
+            if iter == 0:
+                for i in range(1, N_min):
+                    rectangle_domain.append(
+                        ghedt.coordinates.rectangle(i, 1, B, B))
+                for j in range(1, n_2):
+                    rectangle_domain.append(
+                        ghedt.coordinates.rectangle(N_min, j, B, B))
+
+                iter += 1
+
             rectangle_domain.append(ghedt.coordinates.rectangle(N, n_2, B, B))
         else:
             raise ValueError('The solution was not bracketed, and this function'
