@@ -296,16 +296,52 @@ def _bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y):
     return bi_rectangle_zoned_nested_domain
 
 
-def bi_rectangle_domain_restructured(
+def bi_zoned_domain_restructured(
         length_x, length_y, B_min, B_max_x, B_max_y):
     bi_rectangle_zoned_nested_domain = \
         _bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y)
 
     bi_rectangle_zoned_nested_domain_restructured = []
 
+    k = 0
+
     for j in range(len(bi_rectangle_zoned_nested_domain[-1])):
         domain = []
         for i in range(len(bi_rectangle_zoned_nested_domain)):
+
+            if k == 0:
+                n_1_min = (length_x / B_max_x) + 1
+                n_2_min = (length_y / B_max_y) + 1
+
+                N_min_1 = int(np.ceil(n_1_min).tolist())
+                N_min_2 = int(np.ceil(n_2_min).tolist())
+
+                b_x = length_x / (N_min_1 - 1)
+                b_y = length_y / (N_min_2 - 1)
+
+                # go from one borehole to a line
+                for l in range(1, N_min_1 + 1):
+                    r = ghedt.coordinates.rectangle(l, 1, b_x, b_y)
+                    domain.append(r)
+
+                # go from a line to an L
+                for l in range(2, N_min_2 + 1):
+                    L = ghedt.coordinates.L_shape(N_min_1, l, b_x, b_y)
+                    domain.append(L)
+
+                # go from an L to a U
+                for l in range(2, N_min_2 + 1):
+                    lop_u = \
+                        ghedt.coordinates.lop_U(N_min_1, N_min_2, b_x, b_y, l)
+                    domain.append(lop_u)
+
+                # go from a U to an open
+                for l in range(1, N_min_1-1):
+                    c = ghedt.coordinates.C_shape(N_min_1, N_min_2, b_x, b_y, l)
+                    domain.append(c)
+
+                k += 1
+
             if j >= len(bi_rectangle_zoned_nested_domain[i]):
                 coordinates = bi_rectangle_zoned_nested_domain[i][-1]
             else:

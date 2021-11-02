@@ -43,6 +43,23 @@ def open_rectangle(Nx, Ny, Bx, By):
     return open_r
 
 
+def C_shape(Nx_1, Ny, Bx, By, Nx_2):
+    nbh = Nx_1 + (Ny * 2) - 1 + Nx_2 - 1
+    c = []
+    for i in range(Nx_1):
+        c.append((i * Bx, 0.))
+    x_loc = (Nx_1 - 1) * Bx
+    for j in range(1, Ny):
+        c.append((0., j * By))
+    for j in range(1, Ny):
+        c.append((x_loc, j * By))
+    y_loc = (Ny-1) * By
+    for i in range(1, Nx_2+1):
+        c.append((i * Bx, y_loc))
+    assert len(c) == nbh
+    return c
+
+
 def U_shape(Nx, Ny, Bx, By):
     # Create a list of (x, y) pairs for a U-shape
     U = []
@@ -57,6 +74,20 @@ def U_shape(Nx, Ny, Bx, By):
         U = rectangle(Nx, Ny, Bx, By)
     assert len(U) == nbh
     return U
+
+
+def lop_U(Nx, Ny_1, Bx, By, Ny_2):
+    nbh = Nx + Ny_1 - 1 + Ny_2 - 1
+    lop_u = []
+    for i in range(Nx):
+        lop_u.append((i * Bx, 0.))
+    for j in range(1, Ny_1):
+        lop_u.append((0., j * By))
+    x_loc = (Nx-1)*Bx
+    for j in range(1, Ny_2):
+        lop_u.append((x_loc, j * By))
+    assert len(lop_u) == nbh
+    return lop_u
 
 
 def L_shape(Nx, Ny, Bx, By):
