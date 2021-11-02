@@ -39,10 +39,6 @@ def rectangular(length_x, length_y, B_min, B_max):
         length_1 = length_y
         length_2 = length_x
 
-    def func(B, length, n):
-        _n = (length / B) + 1
-        return n - _n
-
     rectangle_domain = []
     # find the maximum number of boreholes as a float
     n_1_max = (length_1 / B_min) + 1
@@ -54,27 +50,20 @@ def rectangular(length_x, length_y, B_min, B_max):
     iter = 0
     for N in range(N_min, N_max+1):
         # Check to see if we bracket
-        a = func(N, length_1, B_min)
-        b = func(N, length_1, B_max)
-        if ghedt.utilities.sign(a) != ghedt.utilities.sign(b):
+        B = length_1 / (N - 1)
+        n_2 = int(np.floor((length_2 / B) + 1))
 
-            B = length_1 / (N - 1)
-            n_2 = int(np.floor((length_2 / B) + 1))
+        if iter == 0:
+            for i in range(1, N_min):
+                rectangle_domain.append(
+                    ghedt.coordinates.rectangle(i, 1, B, B))
+            for j in range(1, n_2):
+                rectangle_domain.append(
+                    ghedt.coordinates.rectangle(N_min, j, B, B))
 
-            if iter == 0:
-                for i in range(1, N_min):
-                    rectangle_domain.append(
-                        ghedt.coordinates.rectangle(i, 1, B, B))
-                for j in range(1, n_2):
-                    rectangle_domain.append(
-                        ghedt.coordinates.rectangle(N_min, j, B, B))
+            iter += 1
 
-                iter += 1
-
-            rectangle_domain.append(ghedt.coordinates.rectangle(N, n_2, B, B))
-        else:
-            raise ValueError('The solution was not bracketed, and this function'
-                             'is always supposed to bracket')
+        rectangle_domain.append(ghedt.coordinates.rectangle(N, n_2, B, B))
 
         N += 1
 
