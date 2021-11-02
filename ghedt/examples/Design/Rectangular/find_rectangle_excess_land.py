@@ -93,7 +93,7 @@ def main():
     # --------------------------------------------------------------------------
 
     # Rectangular design constraints are the land and range of B-spacing
-    length = 85.  # m
+    length = 200.  # m
     width = 36.5  # m
     B_min = 3.  # m
     B_max = 10.  # m
@@ -134,7 +134,7 @@ def main():
     # -----------------------------------------------
     coordinates = bisection_search.selected_coordinates
 
-    perimeter = [[0., 0.], [85., 0.], [85., 80.], [0., 80.]]
+    perimeter = [[0., 0.], [200., 0.], [200., 80.], [0., 80.]]
     l_x_building = 50
     l_y_building = 33.3
     origin_x, origin_y = (15, 36.5)
@@ -145,7 +145,8 @@ def main():
     fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
         perimeter, coordinates, no_go=no_go)
 
-    fig.savefig('base_case.png', bbox_inches='tight', pad_inches=0.1)
+    fig.savefig('base_case_excess_land.png', bbox_inches='tight',
+                pad_inches=0.1)
 
 
 if __name__ == '__main__':

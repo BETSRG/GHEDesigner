@@ -119,6 +119,22 @@ class Bisection1D:
             pass
         else:
             # This domain does not bracked the solution
+            if T_0_upper < 0.0 and T_m1 < 0.0:
+                msg = 'Based on the loads provided, the excess temperatures ' \
+                      'for the minimum and maximum number of boreholes falls ' \
+                      'below 0. This means that the loads are "miniscule" or ' \
+                      'that the lower end of the domain needs to contain ' \
+                      'less boreholes.'.format()
+                raise ValueError(msg)
+            if T_0_upper > 0.0 and T_m1 > 0.0:
+                msg = 'Based on the loads provided, the excess temperatures ' \
+                      'for the minimum and maximum number of boreholes falls ' \
+                      'above 0. This means that the loads are "astronomical" ' \
+                      'or that the higher end of the domain needs to contain ' \
+                      'more boreholes. Consider increasing the available land' \
+                      ' area, or decreasing the minimum allowable borehole ' \
+                      'spacing.'
+                raise ValueError(msg)
             return None, None
 
         if self.disp:

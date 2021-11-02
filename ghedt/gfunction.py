@@ -405,6 +405,8 @@ class GFunction:
         ax.set_xlabel('x (m)')
         ax.set_ylabel('y (m)')
 
+        fig.gca().set_aspect('equal')
+
         fig.tight_layout()
 
         return fig, ax

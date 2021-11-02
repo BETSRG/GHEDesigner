@@ -89,6 +89,21 @@ def main():
     # Take only the first column in the dictionary
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
+    hourly_extraction_ground_loads_miniscule = \
+        [1 / 1000. * hourly_extraction_ground_loads[i]
+         for i in range(len(hourly_extraction_ground_loads))]
+
+    hourly_extraction_ground_loads_astronomical = \
+        [1000. * hourly_extraction_ground_loads[i]
+         for i in range(len(hourly_extraction_ground_loads))]
+
+    hourly_extraction_ground_loads_one_half = \
+        [1 / 2. * hourly_extraction_ground_loads[i]
+         for i in range(len(hourly_extraction_ground_loads))]
+
+    hourly_extraction_ground_loads_one_sixteenth = \
+        [1 / 16. * hourly_extraction_ground_loads[i]
+         for i in range(len(hourly_extraction_ground_loads))]
 
     # --------------------------------------------------------------------------
 
@@ -96,19 +111,84 @@ def main():
     length = 85.  # m
     width = 36.5  # m
     B_min = 3.  # m
-    B_max = 10.  # m
+    B_max_x = 10.  # m
+    B_max_y = 12.
 
     # Perform field selection using bisection search between a 1x1 and 32x32
-    coordinates_domain = ghedt.domains.rectangular(length, width, B_min, B_max)
+    coordinates_domain_nested = \
+        ghedt.domains.bi_rectangle_nested(length, width, B_min, B_max_x,
+                                          B_max_y)
 
-    output_folder = 'Rectangle_Domain'
-    ghedt.domains.visualize_domain(coordinates_domain, output_folder)
+    # MINISCULE
+    try:
+        bisection_search = ghedt.search_routines.Bisection2D(
+            coordinates_domain_nested, V_flow_borehole, borehole, bhe_object,
+            fluid, pipe, grout, soil, sim_params,
+            hourly_extraction_ground_loads_miniscule, disp=False)
+    except ValueError as msg:
+        print(msg)
+
+    # ASTRONOMICAL LOADS
+    try:
+        bisection_search = ghedt.search_routines.Bisection2D(
+            coordinates_domain_nested, V_flow_borehole, borehole, bhe_object,
+            fluid, pipe, grout, soil, sim_params,
+            hourly_extraction_ground_loads_astronomical, disp=False)
+    except ValueError as msg:
+        print(msg)
+
+    # ONE HALF
+
+    bisection_search = ghedt.search_routines.Bisection2D(
+        coordinates_domain_nested, V_flow_borehole, borehole, bhe_object,
+        fluid, pipe, grout, soil, sim_params,
+        hourly_extraction_ground_loads_one_half, disp=False)
+
+    nbh = len(bisection_search.selected_coordinates)
+    print('Number of boreholes: {}'.format(nbh))
+
+    print('Borehole spacing: {}'.format(bisection_search.ghe.GFunction.B))
+
+    # Perform sizing in between the min and max bounds
+    tic = clock()
+    ghe = bisection_search.ghe
+    ghe.compute_g_functions()
+
+    ghe.size(method='hybrid')
+    toc = clock()
+    print('Time to compute g-functions and size: {} seconds'.format(toc - tic))
+
+    print('Sized height of boreholes: {0:.2f} m'.format(ghe.bhe.b.H))
+
+    print('Total drilling depth: {0:.1f} m'.format(ghe.bhe.b.H * nbh))
+
+    # Plot go and no-go zone with corrected borefield
+    # -----------------------------------------------
+    coordinates = bisection_search.selected_coordinates
+
+    perimeter = [[0., 0.], [85., 0.], [85., 80.], [0., 80.]]
+    l_x_building = 50
+    l_y_building = 33.3
+    origin_x, origin_y = (15, 36.5)
+    no_go = [[origin_x, origin_y], [origin_x + l_x_building, origin_y],
+             [origin_x + l_x_building, origin_y + l_y_building],
+             [origin_x, origin_y + l_y_building]]
+
+    fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
+        perimeter, coordinates, no_go=no_go)
+
+    fig.gca().set_aspect('equal')
+
+    fig.savefig('bi-rectangular_scaled_one_half.png', bbox_inches='tight',
+                pad_inches=0.1)
+
+    # ONE SIXTEENTH
 
     tic = clock()
-    bisection_search = ghedt.search_routines.Bisection1D(
-        coordinates_domain, V_flow_borehole, borehole, bhe_object,
-        fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
-        disp=False)
+    bisection_search = ghedt.search_routines.Bisection2D(
+        coordinates_domain_nested, V_flow_borehole, borehole, bhe_object,
+        fluid, pipe, grout, soil, sim_params,
+        hourly_extraction_ground_loads_one_sixteenth, disp=False)
     toc = clock()
     print('Time to perform bisection search: {} seconds'.format(toc - tic))
 
@@ -138,14 +218,16 @@ def main():
     l_x_building = 50
     l_y_building = 33.3
     origin_x, origin_y = (15, 36.5)
-    no_go = [[origin_x, origin_y], [origin_x+l_x_building, origin_y],
-             [origin_x+l_x_building, origin_y+l_y_building],
-             [origin_x, origin_y+l_y_building]]
+    no_go = [[origin_x, origin_y], [origin_x + l_x_building, origin_y],
+             [origin_x + l_x_building, origin_y + l_y_building],
+             [origin_x, origin_y + l_y_building]]
 
     fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
         perimeter, coordinates, no_go=no_go)
 
-    fig.savefig('base_case.png', bbox_inches='tight', pad_inches=0.1)
+    fig.savefig('bi-rectangular_scaled_one_sixteenth.png',
+                bbox_inches='tight',
+                pad_inches=0.1)
 
 
 if __name__ == '__main__':
