@@ -145,7 +145,8 @@ def main():
     fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
         perimeter, coordinates, no_go=no_go)
 
-    fig.savefig('base_case_excess_land.png')
+    fig.savefig('base_case_excess_land.png', bbox_inches='tight',
+                pad_inches=0.1)
 
 
 if __name__ == '__main__':

@@ -177,7 +177,8 @@ def main():
 
     fig.gca().set_aspect('equal')
 
-    fig.savefig('rectangular_scaled_one_half.png')
+    fig.savefig('rectangular_scaled_one_half.png', bbox_inches='tight',
+                pad_inches=0.1)
 
     # ONE SIXTEENTH
 
@@ -225,7 +226,9 @@ def main():
     fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
         perimeter, coordinates, no_go=no_go)
 
-    fig.savefig('rectangular_scaled_one_sixteenth.png')
+    fig.savefig('rectangular_scaled_one_sixteenth.png',
+                bbox_inches='tight',
+                pad_inches=0.1)
 
 
 if __name__ == '__main__':

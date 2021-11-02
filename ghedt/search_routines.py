@@ -132,7 +132,8 @@ class Bisection1D:
                       'above 0. This means that the loads are "astronomical" ' \
                       'or that the higher end of the domain needs to contain ' \
                       'more boreholes. Consider increasing the available land' \
-                      ' area.'
+                      ' area, or decreasing the minimum allowable borehole ' \
+                      'spacing.'
                 raise ValueError(msg)
             return None, None
 
