@@ -35,9 +35,11 @@ def rectangular(length_x, length_y, B_min, B_max):
     if length_x >= length_y:
         length_1 = length_x
         length_2 = length_y
+        transpose = False
     else:
         length_1 = length_y
         length_2 = length_x
+        transpose = True
 
     rectangle_domain = []
     # find the maximum number of boreholes as a float
@@ -55,15 +57,21 @@ def rectangular(length_x, length_y, B_min, B_max):
 
         if iter == 0:
             for i in range(1, N_min):
-                rectangle_domain.append(
-                    ghedt.coordinates.rectangle(i, 1, B, B))
+                r = ghedt.coordinates.rectangle(i, 1, B, B)
+                if transpose:
+                    r = ghedt.coordinates.transpose_coordinates(r)
+                rectangle_domain.append(r)
             for j in range(1, n_2):
-                rectangle_domain.append(
-                    ghedt.coordinates.rectangle(N_min, j, B, B))
+                r = ghedt.coordinates.rectangle(N_min, j, B, B)
+                if transpose:
+                    r = ghedt.coordinates.transpose_coordinates(r)
+                rectangle_domain.append(r)
 
             iter += 1
-
-        rectangle_domain.append(ghedt.coordinates.rectangle(N, n_2, B, B))
+        r = ghedt.coordinates.rectangle(N, n_2, B, B)
+        if transpose:
+            r = ghedt.coordinates.transpose_coordinates(r)
+        rectangle_domain.append(r)
 
         N += 1
 
