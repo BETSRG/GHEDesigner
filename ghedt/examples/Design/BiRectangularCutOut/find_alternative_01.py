@@ -179,9 +179,12 @@ def main():
              [43.4264068711929, 92.4264068711929],
              [1, 50]]
 
-
     fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
         perimeter, coordinates, no_go=no_go)
+
+    fig.gca().set_aspect('equal')
+
+    fig.tight_layout()
 
     fig.savefig('bi-rectangle_case-cutout-alternative-01.png')
 
