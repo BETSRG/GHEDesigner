@@ -35,13 +35,11 @@ def rectangular(length_x, length_y, B_min, B_max):
     if length_x >= length_y:
         length_1 = length_x
         length_2 = length_y
+        transpose = False
     else:
         length_1 = length_y
         length_2 = length_x
-
-    def func(B, length, n):
-        _n = (length / B) + 1
-        return n - _n
+        transpose = True
 
     rectangle_domain = []
     # find the maximum number of boreholes as a float
@@ -50,18 +48,30 @@ def rectangular(length_x, length_y, B_min, B_max):
 
     N_min = int(np.ceil(n_1_min).tolist())
     N_max = int(np.floor(n_1_max).tolist())
+
+    iter = 0
     for N in range(N_min, N_max+1):
         # Check to see if we bracket
-        a = func(N, length_1, B_min)
-        b = func(N, length_1, B_max)
-        if ghedt.utilities.sign(a) != ghedt.utilities.sign(b):
-            B = length_1 / (N - 1)
+        B = length_1 / (N - 1)
+        n_2 = int(np.floor((length_2 / B) + 1))
 
-            n_2 = int(np.floor((length_2 / B) + 1))
-            rectangle_domain.append(ghedt.coordinates.rectangle(N, n_2, B, B))
-        else:
-            raise ValueError('The solution was not bracketed, and this function'
-                             'is always supposed to bracket')
+        if iter == 0:
+            for i in range(1, N_min):
+                r = ghedt.coordinates.rectangle(i, 1, B, B)
+                if transpose:
+                    r = ghedt.coordinates.transpose_coordinates(r)
+                rectangle_domain.append(r)
+            for j in range(1, n_2):
+                r = ghedt.coordinates.rectangle(N_min, j, B, B)
+                if transpose:
+                    r = ghedt.coordinates.transpose_coordinates(r)
+                rectangle_domain.append(r)
+
+            iter += 1
+        r = ghedt.coordinates.rectangle(N, n_2, B, B)
+        if transpose:
+            r = ghedt.coordinates.transpose_coordinates(r)
+        rectangle_domain.append(r)
 
         N += 1
 
