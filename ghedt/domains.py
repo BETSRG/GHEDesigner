@@ -252,7 +252,7 @@ def _bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y):
 
     # find the maximum number of boreholes as a float
     n_1_max = (length_1 / B_min) + 1
-    n_1_min = (length_2 / B_max_1) + 1
+    n_1_min = (length_1 / B_max_1) + 1
 
     n_2_max = (length_2 / B_min) + 1
     n_2_min = (length_2 / B_max_2) + 1

@@ -99,70 +99,40 @@ def main():
     B_max_x = 10.  # m
     B_max_y = 12.
 
-    _coordinates_domain_nested = \
+    coordinates_domain_nested = \
         ghedt.domains._bi_rectangle_zoned_nested(length, width, B_min,
                                                  B_max_x, B_max_y)
 
-    output_folder = 'Bi-Rectangle_Zoned_Domain_Original/'
-    # for i in range(len(_coordinates_domain_nested)):
-    #     coordinates_domain = _coordinates_domain_nested[i]
-    #     ghedt.domains.visualize_domain(coordinates_domain,
-    #                                    output_folder + str(i))
+    for i in range(len(coordinates_domain_nested)):
+        try:
+            tic = clock()
+            bisection_search = ghedt.search_routines.Bisection1D(
+                coordinates_domain_nested[i], V_flow_borehole, borehole, bhe_object,
+                fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
+                disp=False)
+            toc = clock()
+            print('Time to perform bisection search: {} seconds'.format(toc - tic))
 
-    # Perform field selection using bisection search between a 1x1 and 32x32
-    # coordinates_domain_nested = \
-    #     ghedt.domains.bi_zoned_domain_restructured(
-    #         length, width, B_min, B_max_x, B_max_y)
+            nbh = len(bisection_search.selected_coordinates)
+            print('Number of boreholes: {}'.format(nbh))
 
-    output_folder = 'Bi-Rectangle_Zoned_Domain_Restructured/'
-    # for i in range(len(coordinates_domain_nested)):
-    #     coordinates_domain = coordinates_domain_nested[i]
-    #     ghedt.domains.visualize_domain(coordinates_domain,
-    #                                    output_folder + str(i))
+            print('Borehole spacing: {}'.format(bisection_search.ghe.GFunction.B))
 
-    tic = clock()
-    bisection_search = ghedt.search_routines.BisectionZD(
-        _coordinates_domain_nested, V_flow_borehole, borehole, bhe_object,
-        fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
-        disp=True)
-    toc = clock()
-    print('Time to perform bisection search: {} seconds'.format(toc - tic))
+            # Perform sizing in between the min and max bounds
+            tic = clock()
+            ghe = bisection_search.ghe
+            ghe.compute_g_functions()
 
-    nbh = len(bisection_search.selected_coordinates)
-    print('Number of boreholes: {}'.format(nbh))
+            ghe.size(method='hybrid')
+            toc = clock()
+            print('Time to compute g-functions and size: {} seconds'.format(toc - tic))
 
-    print('Borehole spacing: {}'.format(bisection_search.ghe.GFunction.B))
+            print('Sized height of boreholes: {0:.2f} m'.format(ghe.bhe.b.H))
 
-    # Perform sizing in between the min and max bounds
-    tic = clock()
-    ghe = bisection_search.ghe
-    ghe.compute_g_functions()
-
-    ghe.size(method='hybrid')
-    toc = clock()
-    print('Time to compute g-functions and size: {} seconds'.format(toc - tic))
-
-    print('Sized height of boreholes: {0:.2f} m'.format(ghe.bhe.b.H))
-
-    print('Total drilling depth: {0:.1f} m'.format(ghe.bhe.b.H * nbh))
-
-    # Plot go and no-go zone with corrected borefield
-    # -----------------------------------------------
-    coordinates = bisection_search.selected_coordinates
-
-    perimeter = [[0., 0.], [85., 0.], [85., 80.], [0., 80.]]
-    l_x_building = 50
-    l_y_building = 33.3
-    origin_x, origin_y = (15, 36.5)
-    no_go = [[origin_x, origin_y], [origin_x+l_x_building, origin_y],
-             [origin_x+l_x_building, origin_y+l_y_building],
-             [origin_x, origin_y+l_y_building]]
-
-    fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
-        perimeter, coordinates, no_go=no_go)
-
-    fig.savefig('bi-rectangle_zoned_case.png', bbox_inches='tight',
-                pad_inches=0.1)
+            print('Total drilling depth: {0:.1f} m'.format(ghe.bhe.b.H * nbh))
+        except ValueError as msg:
+            print(i)
+            print(msg)
 
 
 if __name__ == '__main__':
