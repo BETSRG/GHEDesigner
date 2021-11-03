@@ -100,22 +100,29 @@ def main():
     B_max_y = 12.
 
     coordinates_domain_nested = \
-        ghedt.domains._bi_rectangle_zoned_nested(length, width, B_min,
-                                                 B_max_x, B_max_y)
+        ghedt.domains.bi_rectangle_zoned_nested(
+            length, width, B_min, B_max_x, B_max_y)
 
-    for i in range(len(coordinates_domain_nested)):
+    T_excess_values_outer = []
+    total_drilling_depth_sized = []
+
+    for i in range(11, len(coordinates_domain_nested)):
         try:
-            tic = clock()
             bisection_search = ghedt.search_routines.Bisection1D(
-                coordinates_domain_nested[i], V_flow_borehole, borehole, bhe_object,
-                fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
-                disp=False)
-            toc = clock()
-            print('Time to perform bisection search: {} seconds'.format(toc - tic))
+                coordinates_domain_nested[i], V_flow_borehole, borehole,
+                bhe_object, fluid, pipe, grout, soil, sim_params,
+                hourly_extraction_ground_loads, disp=False)
+
+            calculated_excess_values = \
+                list(bisection_search.calculated_temperatures.values())
+            calculated_excess_indices = \
+                list(bisection_search.calculated_temperatures.keys())
+            idx = max(calculated_excess_indices)
+            T_excess_outer = bisection_search.calculated_temperatures[idx]
+            T_excess_values_outer.append(T_excess_outer)
 
             nbh = len(bisection_search.selected_coordinates)
             print('Number of boreholes: {}'.format(nbh))
-
             print('Borehole spacing: {}'.format(bisection_search.ghe.GFunction.B))
 
             # Perform sizing in between the min and max bounds
@@ -130,9 +137,28 @@ def main():
             print('Sized height of boreholes: {0:.2f} m'.format(ghe.bhe.b.H))
 
             print('Total drilling depth: {0:.1f} m'.format(ghe.bhe.b.H * nbh))
+            total_drilling_depth = ghe.bhe.b.H * nbh
+
+            total_drilling_depth_sized.append(total_drilling_depth)
+
         except ValueError as msg:
             print(i)
             print(msg)
+
+    fig = gt.utilities._initialize_figure()
+    ax = fig.add_subplot(111)
+
+    ax.scatter(T_excess_values_outer, total_drilling_depth_sized)
+
+    ax.set_xlabel('Outer domain excess temperature ($\degree$C)')
+    ax.set_ylabel('Sizing result of search on inner domain (m)')
+
+    ax.grid()
+    ax.set_axisbelow(True)
+
+    fig.tight_layout()
+
+    fig.savefig('outer_vs_inner_sizing.png')
 
 
 if __name__ == '__main__':

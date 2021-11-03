@@ -113,7 +113,9 @@ class Bisection1D:
 
         if check_bracket(sign(T_0_lower), sign(T_0_upper), disp=self.disp):
             # Size between min and max of lower bound in domain
-            return self.coordinates_domain[0]
+            self.initialize_ghe(self.coordinates_domain[0],
+                                self.sim_params.max_Height)
+            return 0, self.coordinates_domain[0]
         elif check_bracket(sign(T_0_upper), sign(T_m1), disp=self.disp):
             # Do the integer bisection search routine
             pass
@@ -256,16 +258,11 @@ class BisectionZD(Bisection1D):
         self.selection_key_outer, self.selected_coordinates_outer = \
             self.search()
 
-        self.selection_key_outer -= 1
+        if self.selection_key_outer > 0:
+            self.selection_key_outer -= 1
         self.calculated_heights = {}
 
-        if self.selection_key_outer <= 0:
-            self.coordinates_domain = \
-                self.coordinates_domain_nested[self.selection_key_outer]
-            self.selection_key, self.selected_coordinates = self.search()
-        else:
-            self.selection_key, self.selected_coordinates = \
-                self.search_successive()
+        self.selection_key, self.selected_coordinates = self.search_successive()
 
     def search_successive(self, max_iter=None):
         if max_iter is None:
@@ -279,7 +276,10 @@ class BisectionZD(Bisection1D):
 
             self.coordinates_domain = self.coordinates_domain_nested[i]
             self.calculated_temperatures = {}
-            selection_key, selected_coordinates = self.search()
+            try:
+                selection_key, selected_coordinates = self.search()
+            except ValueError:
+                break
             self.calculated_temperatures_nested[i] = \
                 copy.deepcopy(self.calculated_temperatures)
 
