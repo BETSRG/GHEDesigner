@@ -1,6 +1,6 @@
 # Jack C. Cook
-# Wednesdday, October 27, 2021
-import copy
+# Wednesday, October 27, 2021
+
 
 import ghedt
 import numpy as np
@@ -78,7 +78,8 @@ def rectangular(length_x, length_y, B_min, B_max):
     return rectangle_domain
 
 
-def bi_rectangular(length_x, length_y, B_min, B_max_x, B_max_y, transpose=False):
+def bi_rectangular(
+        length_x, length_y, B_min, B_max_x, B_max_y, transpose=False):
     # Make this work for the transpose
     if length_x >= length_y:
         length_1 = length_x
@@ -181,7 +182,7 @@ def bi_rectangle_nested(length_x, length_y, B_min, B_max_x, B_max_y):
     return bi_rectangle_nested_domain
 
 
-def zoned_rectangle_domain(length_x, length_y, n_x, n_y):
+def zoned_rectangle_domain(length_x, length_y, n_x, n_y, transpose=False):
     # Make this work for the transpose
     if length_x >= length_y:
         length_1 = length_x
@@ -232,6 +233,8 @@ def zoned_rectangle_domain(length_x, length_y, n_x, n_y):
                              'this point, there may be a problem with the '
                              'inputs.')
         z = ghedt.coordinates.zoned_rectangle(n_1, n_2, b_1, b_2, n_i1, n_i2)
+        if transpose:
+            z = ghedt.coordinates.transpose_coordinates(z)
         zoned_rectangle_domain.append(z)
 
     return zoned_rectangle_domain
@@ -244,11 +247,13 @@ def bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y):
         length_2 = length_y
         B_max_1 = B_max_x
         B_max_2 = B_max_y
+        transpose = False
     else:
         length_1 = length_y
         length_2 = length_x
         B_max_1 = B_max_y
         B_max_2 = B_max_x
+        transpose = True
 
     # find the maximum number of boreholes as a float
     n_1_max = (length_1 / B_min) + 1
@@ -281,22 +286,30 @@ def bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y):
             # go from one borehole to a line
             for l in range(1, N_min_1 + 1):
                 r = ghedt.coordinates.rectangle(l, 1, b_x, b_y)
+                if transpose:
+                    r = ghedt.coordinates.transpose_coordinates(r)
                 domain.append(r)
 
             # go from a line to an L
             for l in range(2, N_min_2 + 1):
                 L = ghedt.coordinates.L_shape(N_min_1, l, b_x, b_y)
+                if transpose:
+                    L = ghedt.coordinates.transpose_coordinates(L)
                 domain.append(L)
 
             # go from an L to a U
             for l in range(2, N_min_2 + 1):
                 lop_u = \
                     ghedt.coordinates.lop_U(N_min_1, N_min_2, b_x, b_y, l)
+                if transpose:
+                    lop_u = ghedt.coordinates.transpose_coordinates(lop_u)
                 domain.append(lop_u)
 
             # go from a U to an open
             for l in range(1, N_min_1 - 1):
                 c = ghedt.coordinates.C_shape(N_min_1, N_min_2, b_x, b_y, l)
+                if transpose:
+                    c = ghedt.coordinates.transpose_coordinates(c)
                 domain.append(c)
 
             l += 1
@@ -304,7 +317,7 @@ def bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y):
         if i % 2 == 0:
             bi_rectangle_zoned_domain = \
                 zoned_rectangle_domain(length_1, length_2, n_1_values[j],
-                                       n_2_values[k])
+                                       n_2_values[k], transpose=transpose)
             domain.extend(bi_rectangle_zoned_domain)
             if j < len(n_1_values)-1:
                 j += 1
@@ -313,7 +326,7 @@ def bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y):
         else:
             bi_rectangle_zoned_domain = \
                 zoned_rectangle_domain(length_1, length_2, n_1_values[j],
-                                       n_2_values[k])
+                                       n_2_values[k], transpose=transpose)
             domain.extend(bi_rectangle_zoned_domain)
             if k < len(n_2_values)-1:
                 k += 1
