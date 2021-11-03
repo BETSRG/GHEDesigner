@@ -100,8 +100,8 @@ def main():
     B_max_y = 12.
 
     _coordinates_domain_nested = \
-        ghedt.domains._bi_rectangle_zoned_nested(length, width, B_min,
-                                                 B_max_x, B_max_y)
+        ghedt.domains.bi_rectangle_zoned_nested(
+            length, width, B_min, B_max_x, B_max_y)
 
     output_folder = 'Bi-Rectangle_Zoned_Domain_Original/'
     # for i in range(len(_coordinates_domain_nested)):

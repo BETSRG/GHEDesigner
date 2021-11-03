@@ -257,11 +257,15 @@ class BisectionZD(Bisection1D):
             self.search()
 
         self.selection_key_outer -= 1
-
         self.calculated_heights = {}
 
-        self.selection_key, self.selected_coordinates = \
-            self.search_successive()
+        if self.selection_key_outer <= 0:
+            self.coordinates_domain = \
+                self.coordinates_domain_nested[self.selection_key_outer]
+            self.selection_key, self.selected_coordinates = self.search()
+        else:
+            self.selection_key, self.selected_coordinates = \
+                self.search_successive()
 
     def search_successive(self, max_iter=None):
         if max_iter is None:
