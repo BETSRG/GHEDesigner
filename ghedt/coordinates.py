@@ -10,13 +10,15 @@ def transpose_coordinates(coordinates):
     return coordinates_transposed
 
 
-def rectangle(Nx, Ny, Bx, By):
+def rectangle(Nx, Ny, Bx, By, origin=(0, 0)):
     # Create a list of (x, y) pairs for a rectangle
     r = []
     nbh = Nx * Ny
+    _x = origin[0]
+    _y = origin[1]
     for i in range(Nx):
         for j in range(Ny):
-            r.append((i * Bx, j * By))
+            r.append((_x + i * Bx, _y + j * By))
     assert len(r) == nbh
     return r
 
@@ -41,6 +43,23 @@ def open_rectangle(Nx, Ny, Bx, By):
     return open_r
 
 
+def C_shape(Nx_1, Ny, Bx, By, Nx_2):
+    nbh = Nx_1 + (Ny * 2) - 1 + Nx_2 - 1
+    c = []
+    for i in range(Nx_1):
+        c.append((i * Bx, 0.))
+    x_loc = (Nx_1 - 1) * Bx
+    for j in range(1, Ny):
+        c.append((0., j * By))
+    for j in range(1, Ny):
+        c.append((x_loc, j * By))
+    y_loc = (Ny-1) * By
+    for i in range(1, Nx_2+1):
+        c.append((i * Bx, y_loc))
+    assert len(c) == nbh
+    return c
+
+
 def U_shape(Nx, Ny, Bx, By):
     # Create a list of (x, y) pairs for a U-shape
     U = []
@@ -57,6 +76,20 @@ def U_shape(Nx, Ny, Bx, By):
     return U
 
 
+def lop_U(Nx, Ny_1, Bx, By, Ny_2):
+    nbh = Nx + Ny_1 - 1 + Ny_2 - 1
+    lop_u = []
+    for i in range(Nx):
+        lop_u.append((i * Bx, 0.))
+    for j in range(1, Ny_1):
+        lop_u.append((0., j * By))
+    x_loc = (Nx-1)*Bx
+    for j in range(1, Ny_2):
+        lop_u.append((x_loc, j * By))
+    assert len(lop_u) == nbh
+    return lop_u
+
+
 def L_shape(Nx, Ny, Bx, By):
     nbh = Nx + Ny - 1
     L = []
@@ -66,3 +99,28 @@ def L_shape(Nx, Ny, Bx, By):
         L.append((0., j * By))
     assert len(L) == nbh
     return L
+
+
+def zoned_rectangle(Nx, Ny, Bx, By, Nix, Niy):
+    # Create a zoned rectangle
+    # The creator of the idea behind the "zoned rectangle" is
+    # Dr. Jeffrey D. Spitler
+
+    if Nix > (Nx - 2):
+        raise ValueError('To many interior x boreholes.')
+    if Niy > (Ny - 2):
+        raise ValueError('Too many interior y boreholes.')
+
+    # Create a list of (x, y) coordinates
+    zoned = []
+
+    # Boreholes on the perimeter
+    zoned.extend(open_rectangle(Nx, Ny, Bx, By))
+
+    # Create the interior coordinates
+    Bix = (Nx - 1) * Bx / (Nix + 1)
+    Biy = (Ny - 1) * By / (Niy + 1)
+
+    zoned.extend(rectangle(Nix, Niy, Bix, Biy, origin=(Bix, Biy)))
+
+    return zoned

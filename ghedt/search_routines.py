@@ -113,7 +113,9 @@ class Bisection1D:
 
         if check_bracket(sign(T_0_lower), sign(T_0_upper), disp=self.disp):
             # Size between min and max of lower bound in domain
-            return self.coordinates_domain[0]
+            self.initialize_ghe(self.coordinates_domain[0],
+                                self.sim_params.max_Height)
+            return 0, self.coordinates_domain[0]
         elif check_bracket(sign(T_0_upper), sign(T_m1), disp=self.disp):
             # Do the integer bisection search routine
             pass
@@ -224,3 +226,101 @@ class Bisection2D(Bisection1D):
         self.coordinates_domain = inner_domain
 
         self.selection_key, self.selected_coordinates = self.search()
+
+
+class BisectionZD(Bisection1D):
+    def __init__(self, coordinates_domain_nested: list, V_flow_borehole: float,
+                 borehole: gt.boreholes.Borehole,
+                 bhe_object: PLAT.borehole_heat_exchangers,
+                 fluid: gt.media.Fluid, pipe: PLAT.media.Pipe,
+                 grout: PLAT.media.ThermalProperty, soil: PLAT.media.Soil,
+                 sim_params: PLAT.media.SimulationParameters,
+                 hourly_extraction_ground_loads: list,
+                 max_iter=15, disp=False):
+        # Get a coordinates domain for initialization
+        coordinates_domain = coordinates_domain_nested[0]
+        Bisection1D.__init__(
+            self, coordinates_domain, V_flow_borehole, borehole, bhe_object,
+            fluid, pipe, grout, soil, sim_params,
+            hourly_extraction_ground_loads, max_iter=max_iter, disp=disp,
+            search=False)
+
+        self.coordinates_domain_nested = coordinates_domain_nested
+        self.calculated_temperatures_nested = {}
+        # Tack on one borehole at the beginning to provide a high excess
+        # temperature
+        outer_domain = [coordinates_domain_nested[0][0]]
+        for i in range(len(coordinates_domain_nested)):
+            outer_domain.append(coordinates_domain_nested[i][-1])
+
+        self.coordinates_domain = outer_domain
+
+        self.selection_key_outer, self.selected_coordinates_outer = \
+            self.search()
+
+        if self.selection_key_outer > 0:
+            self.selection_key_outer -= 1
+        self.calculated_heights = {}
+
+        self.selection_key, self.selected_coordinates = self.search_successive()
+
+    def search_successive(self, max_iter=None):
+        if max_iter is None:
+            max_iter = self.selection_key_outer + 7
+
+        i = self.selection_key_outer
+
+        old_height = 99999
+
+        while i < len(self.coordinates_domain_nested) and i < max_iter:
+
+            self.coordinates_domain = self.coordinates_domain_nested[i]
+            self.calculated_temperatures = {}
+            try:
+                selection_key, selected_coordinates = self.search()
+            except ValueError:
+                break
+            self.calculated_temperatures_nested[i] = \
+                copy.deepcopy(self.calculated_temperatures)
+
+            self.ghe.compute_g_functions()
+            self.ghe.size(method='hybrid')
+
+            nbh = len(selected_coordinates)
+            total_drilling = float(nbh) * self.ghe.bhe.b.H
+            self.calculated_heights[i] = total_drilling
+
+            if old_height < total_drilling:
+                break
+            else:
+                old_height = copy.deepcopy(total_drilling)
+
+            i += 1
+
+        keys = list(self.calculated_heights.keys())
+        values = list(self.calculated_heights.values())
+
+        minimum_total_drilling = min(values)
+        idx = values.index(minimum_total_drilling)
+        selection_key_outer = keys[idx]
+        self.calculated_temperatures = \
+            copy.deepcopy(self.calculated_temperatures_nested[
+                              selection_key_outer])
+
+        keys = list(self.calculated_temperatures.keys())
+        values = list(self.calculated_temperatures.values())
+
+        negative_excess_values = [values[i] for i in range(len(values))
+                                  if values[i] <= 0.0]
+
+        excess_of_interest = max(negative_excess_values)
+        idx = values.index(excess_of_interest)
+        selection_key = keys[idx]
+        selected_coordinates = \
+            self.coordinates_domain_nested[selection_key_outer][selection_key]
+
+        self.initialize_ghe(selected_coordinates, self.sim_params.max_Height)
+        self.ghe.compute_g_functions()
+        self.ghe.size(method='hybrid')
+
+        return selection_key, selected_coordinates
