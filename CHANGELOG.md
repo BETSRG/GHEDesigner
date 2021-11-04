@@ -22,6 +22,9 @@
 * [Issue 18](https://github.com/j-c-cook/ghedt/issues/18) - The methodology for determining the `B` spacing for a borefield is one that compares the first two boreholes in the list. If there is one borehole, the borehole radius is set as the borehole spacing.
 * [Issue 10](https://github.com/j-c-cook/ghedt/issues) - A rectangular design routine that requires length x width land area constraint, and minimum and maximum borehole spacings.
 * [Issue 25](https://github.com/j-c-cook/ghedt/tree/issue25_BiRectangle) - A bi-rectangular search routine is implemented that requires the arguments in the rectangular design in addition to the maximum spacing along the shortest length.
+* [Issue 21](https://github.com/j-c-cook/ghedt/issues/21) - Adds the ability to create zoned rectangle, lopsided U and C shape configurations. 
+* [Issue 22](https://github.com/j-c-cook/ghedt/issues/22) - Adds a bi-zoned rectangle domain and nested bi-zoned rectangle domain can be used in the `Bisection1D` and `BisectionZD` search routines respectively.
+* [Issue 32](https://github.com/j-c-cook/ghedt/issues/32) - Adds a `BisectionZD` search that locates an outer domain, and then performs a successive search in the negative excess direction. The search ends when the total drilling depth stops decreasing, or reaches a max_iter of 7.
 
 ### Tests and CI
 
