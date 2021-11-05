@@ -1,5 +1,5 @@
 # Jack C. Cook
-# Monday, October 25, 2021
+# Thursday, November 4, 2021
 
 import ghedt
 import ghedt.PLAT as PLAT
@@ -16,7 +16,7 @@ def main():
     # Borehole dimensions
     # -------------------
     H = 96.  # Borehole length (m)
-    D_values = [1., 2., 3., 4., 5.]  # Borehole buried depth (m)
+    D = 2.  # Borehole buried depth (m)
     r_b = 150. / 1000. / 2.  # Borehole radius]
     B = 5.  # Borehole spacing (m)
 
@@ -79,54 +79,12 @@ def main():
     # Total fluid mass flow rate per borehole (kg/s)
     m_flow_borehole = V_flow_borehole / 1000. * fluid.rho
 
-    # Calculate g-functions
-    # g-Function calculation options
-    disp = True
-
-    # Calculate a uniform inlet fluid temperature g-function with 12 equal
-    # segments using the similarities solver
-    nSegments = 12
-    segments = 'equal'
-    boundary = 'UBWT'
-    solver = 'similarities'
-
-    # Plot the g-functions
-    fig = gt.gfunction._initialize_figure()
-    ax = fig.add_subplot(111)
-    ax.set_xlabel(r'ln$(t/t_s)$')
-    ax.set_ylabel(r'$g$-function')
-    gt.gfunction._format_axes(ax)
-
-    ax.set_xlim([-8.8, 3.99])
-    ax.set_ylim([-2, 90])
-
     # Define a borehole
-    for i in range(len(D_values)):
-        D = D_values[i]
-        borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
+    borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
 
-        ax.text(2.8, 82, 'D (m)')
-
-        # Calculate a uniform borehole wall temperature g-function with 12 equal
-        # segments using the similarities solver
-
-        gfunc_uniform_T = ghedt.gfunction.calculate_g_function(
-            m_flow_borehole, bhe_object, time_values, coordinates, borehole,
-            fluid, pipe, grout, soil, nSegments=nSegments, segments=segments,
-            solver=solver, boundary=boundary, disp=disp
-        )
-
-        ax.plot(log_time, gfunc_uniform_T.gFunc,
-                label='12ESL Similarities UBWT ($D=' + str(int(D)) + '$m)')
-
-        x_n = log_time[-1]
-        y_n = gfunc_uniform_T.gFunc.tolist()[-1]
-
-        ax.annotate(str(int(D)),
-                    xy=(x_n + 0.1, y_n - 0.1))
-
-    # GLHEPro g-function
-    file_path = '12x13_Calculated_g_Functions/GLHEPRO_gFunctions_12x13.json'
+    # Reference UIFT g-function with 96 equal segments
+    file_path = '12x13_Calculated_g_Functions/' \
+                '96_Equal_Segments_Similarities_UIFT.json'
     data, file_name = gfdb.fileio.read_file(file_path)
 
     geothermal_g_input = gfdb.Management.application.GFunction. \
@@ -140,27 +98,90 @@ def main():
     g_function, rb_value, D_value, H_eq = \
         GFunction.g_function_interpolation(B_over_H)
     # correct the long time step for borehole radius
-    g_function_corrected_GLHEPro = \
-        GFunction.borehole_radius_correction(g_function,
-                                             rb_value,
-                                             rb)
+    g_function_corrected_UIFT_ref = \
+        GFunction.borehole_radius_correction(g_function, rb_value, rb)
 
-    ax.plot(log_time, g_function_corrected_GLHEPro, marker=None,
-            linestyle='--', label=r'GLHEPro (UBWT, $D\approx5$m)')
+    # Calculate g-functions
+    # g-Function calculation options
+    disp = True
 
-    fig.legend(bbox_to_anchor=(0.55, 0.88))
+    # Calculate a uniform inlet fluid temperature g-function with 12 equal
+    # segments using the similarities solver
+    nSegments = 20
+    unequal = 'unequal'
+    equal = 'equal'
+    boundary = 'MIFT'
+    equivalent = 'equivalent'
+    similarities = 'similarities'
 
-    ax2 = ax.twiny()
-    ax2.set_xticks(ax.get_xticks())
-    ax2.set_xbound(ax.get_xbound())
-    ax2.set_xticklabels([round(np.exp(x)*ts / 3600. / 8760., 3)
-                         for x in ax.get_xticks()])
-    ax2.set_xlabel('Time (years)')
-    gt.utilities._format_axes(ax2)
+    equivalent_errors = []
+    similar_errors = []
+
+    for i in range(3, nSegments):
+
+        gfunc_equal_Tf_in_uneq = ghedt.gfunction.calculate_g_function(
+            m_flow_borehole, bhe_object, time_values, coordinates, borehole,
+            fluid, pipe, grout, soil, nSegments=i, segments=unequal,
+            solver=equivalent, boundary=boundary, disp=disp)
+
+        gfunc_equal_Tf_in_eq = ghedt.gfunction.calculate_g_function(
+            m_flow_borehole, bhe_object, time_values, coordinates, borehole,
+            fluid, pipe, grout, soil, nSegments=i, segments=equal,
+            solver=similarities, boundary=boundary, disp=disp)
+
+        mpe = compute_mpe(g_function_corrected_UIFT_ref,
+                          gfunc_equal_Tf_in_uneq.gFunc)
+        equivalent_errors.append(mpe)
+
+        mpe = compute_mpe(g_function_corrected_UIFT_ref,
+                          gfunc_equal_Tf_in_eq.gFunc)
+        similar_errors.append(mpe)
+
+    # Plot the g-functions
+    fig = gt.gfunction._initialize_figure()
+    ax = fig.add_subplot(111)
+    ax.set_xlabel(r'Number of segments $n_q$')
+    ax.set_ylabel('Mean Percent Error = '
+                  r'$\dfrac{\mathbf{p} - \mathbf{r}}{\mathbf{r}} \;\; '
+                  r'\dfrac{100\%}{n} $')
+    gt.gfunction._format_axes(ax)
+
+    segments = list(range(3, nSegments))
+
+    ax.scatter(segments, equivalent_errors, label='Equivalent Borehole Method')
+    ax.scatter(segments, similar_errors, label='Similar Borehole Method')
+
+    fig.legend(bbox_to_anchor=(0.5, 0.88))
 
     fig.tight_layout()
 
-    fig.savefig('burial_depth_comparison_plot.png')
+    fig.savefig('g_function_discretization_vary_min_ratio.png')
+
+
+def compute_mpe(actual: list, predicted: list) -> float:
+    """
+    The following mean percentage error formula is used:
+    .. math::
+        MPE = \dfrac{100\%}{n}\sum_{i=0}^{n-1}\dfrac{a_t-p_t}{a_t}
+    Parameters
+    ----------
+    actual: list
+        The actual computed g-function values
+    predicted: list
+        The predicted g-function values
+    Returns
+    -------
+    **mean_percent_error: float**
+        The mean percentage error in percent
+    """
+    # the lengths of the two lists should be the same
+    assert len(actual) == len(predicted)
+    # create a summation variable
+    summation: float = 0.
+    for i in range(len(actual)):
+        summation += (predicted[i] - actual[i]) / actual[i]
+    mean_percent_error = summation * 100 / len(actual)
+    return mean_percent_error
 
 
 if __name__ == '__main__':

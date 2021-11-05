@@ -148,6 +148,16 @@ def main():
     fig = gt.utilities._initialize_figure()
     ax = fig.add_subplot(111)
 
+    # define an alphabet
+    alfa = "abcdefghijklmnopqrstuvwxyz"
+
+    for i in range(len(T_excess_values_outer)):
+        txt = alfa[i]
+        ax.annotate(
+            txt, xy=(T_excess_values_outer[i], total_drilling_depth_sized[i]),
+            xytext=(T_excess_values_outer[i], total_drilling_depth_sized[i]+20),
+            size=10)
+
     ax.scatter(T_excess_values_outer, total_drilling_depth_sized)
 
     ax.set_xlabel('Outer domain excess temperature ($\degree$C)')

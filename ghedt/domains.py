@@ -1,6 +1,6 @@
 # Jack C. Cook
 # Wednesday, October 27, 2021
-
+import copy
 
 import ghedt
 import numpy as np
@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 def square_and_near_square(lower: int,
                            upper: int,
                            B: float):
-    if lower or upper <= 0:
+    if lower < 1 or upper < 1:
         raise ValueError('The lower and upper arguments must be positive'
                          'integer values.')
     if upper < lower:
@@ -30,7 +30,7 @@ def square_and_near_square(lower: int,
     return coordinates_domain
 
 
-def rectangular(length_x, length_y, B_min, B_max):
+def rectangular(length_x, length_y, B_min, B_max, disp=False):
     # Make this work for the transpose
     if length_x >= length_y:
         length_1 = length_x
@@ -48,6 +48,8 @@ def rectangular(length_x, length_y, B_min, B_max):
 
     N_min = int(np.ceil(n_1_min).tolist())
     N_max = int(np.floor(n_1_max).tolist())
+
+    n_2_old = 1
 
     iter = 0
     for N in range(N_min, N_max+1):
@@ -68,10 +70,16 @@ def rectangular(length_x, length_y, B_min, B_max):
                 rectangle_domain.append(r)
 
             iter += 1
-        r = ghedt.coordinates.rectangle(N, n_2, B, B)
-        if transpose:
-            r = ghedt.coordinates.transpose_coordinates(r)
-        rectangle_domain.append(r)
+        if n_2_old == n_2:
+            pass
+        else:
+            r = ghedt.coordinates.rectangle(N, n_2, B, B)
+            if disp:
+                print('{}x{} {}'.format(N, n_2, B))
+            if transpose:
+                r = ghedt.coordinates.transpose_coordinates(r)
+            rectangle_domain.append(r)
+            n_2_old = copy.deepcopy(n_2)
 
         N += 1
 
@@ -79,7 +87,8 @@ def rectangular(length_x, length_y, B_min, B_max):
 
 
 def bi_rectangular(
-        length_x, length_y, B_min, B_max_x, B_max_y, transpose=False):
+        length_x, length_y, B_min, B_max_x, B_max_y, transpose=False,
+        disp=False):
     # Make this work for the transpose
     if length_x >= length_y:
         length_1 = length_x
@@ -134,6 +143,9 @@ def bi_rectangular(
 
                 iter += 1
 
+            if disp:
+                print('{0}x{1} with {2:.1f}x{3:.1f}'.format(n_1, n_2, b_1, b_2))
+
             coordinates = ghedt.coordinates.rectangle(n_1, n_2, b_1, b_2)
             if transpose:
                 coordinates = \
@@ -149,7 +161,8 @@ def bi_rectangular(
     return bi_rectangle_domain
 
 
-def bi_rectangle_nested(length_x, length_y, B_min, B_max_x, B_max_y):
+def bi_rectangle_nested(length_x, length_y, B_min, B_max_x, B_max_y,
+                        disp=False):
     # Make this work for the transpose
     if length_x >= length_y:
         length_1 = length_x
@@ -176,7 +189,8 @@ def bi_rectangle_nested(length_x, length_y, B_min, B_max_x, B_max_y):
     for n_2 in range(N_min, N_max + 1):
         b_2 = length_2 / (n_2 - 1)
         bi_rectangle_domain = ghedt.domains.bi_rectangular(
-            length_1, length_2, B_min, B_max_1, b_2, transpose=transpose)
+            length_1, length_2, B_min, B_max_1, b_2, transpose=transpose,
+            disp=disp)
         bi_rectangle_nested_domain.append(bi_rectangle_domain)
 
     return bi_rectangle_nested_domain

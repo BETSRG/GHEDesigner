@@ -1,5 +1,5 @@
 # Jack C. Cook
-# Wednesday, October 27, 2021
+# Friday, November 5, 2021
 
 import ghedt.PLAT.pygfunction as gt
 import ghedt.utilities
@@ -7,7 +7,7 @@ from ghedt.utilities import js_load
 
 
 def main():
-    file_name = 'near_square_search.json'
+    file_name = 'uniform_rectangular_search.json'
 
     d = js_load(file_name)
 
@@ -41,33 +41,12 @@ def main():
     ax.scatter(NBH, TE, facecolors='none', edgecolors='blue', s=7, label='Unimodal list')
     sub_axes.scatter(NBH, TE, facecolors='none', edgecolors='blue', s=17)
 
-    # Draw a square box showing where we have pulled
-
-    b_x = 50.
-    b_y = -13.
-    r_x = 300.
-    t_y = 10.
-
-    square = [(b_x, b_y), (r_x, b_y), (r_x, t_y), (b_x, t_y), (b_x, b_y)]
-
-    line_1 = [(r_x, b_y), (817, 167)]
-    x, y = list(zip(*line_1))
-    ax.plot(x, y, linestyle='-', zorder=0, color='lightgray', linewidth=0.5)
-
-    line_2 = [(b_x, t_y), (188, 721)]
-    x, y = list(zip(*line_2))
-    ax.plot(x, y, linestyle='-', zorder=0, color='lightgray', linewidth=0.5)
-
-    ax.plot()
-
-    x, y = list(zip(*square))
-    ax.plot(x, y, linestyle='-', zorder=0, color='lightgray', linewidth=0.5)
-
     ax.set_xlabel('Number of boreholes')
     ax.set_ylabel('Heat pump excess temperature ($\degree$C)')
     ax.legend()
 
-    fig.savefig('bisection_search_domain.png')
+    fig.savefig('bisection_search_domain_rectangle.png',
+                bbox_inches='tight', pad_inches=0.1)
     plt.close(fig)
 
     fig = gt.utilities._initialize_figure()
@@ -107,16 +86,19 @@ def main():
     ax.grid()
     ax.set_axisbelow(True)
 
-    ax.set_ylim([-10, 0.75])
+    ax.set_ylim([-450, 0.])
 
-    # ax.set_yscale('symlog')
+    ax.set_yscale('symlog')
+
+    yaxis = plt.gca().yaxis
+    yaxis.set_minor_locator(ghedt.utilities.MinorSymLogLocator(1e-1))
 
     ax.set_ylabel('$\Delta T_j = T_{i} - T_{i-1}$')
     ax.set_xlabel('Index, $j$')
 
     fig.tight_layout()
 
-    fig.savefig('square_unimodal_proof.png')
+    fig.savefig('rectangle_unimodal_proof.png')
 
 
 if __name__ == '__main__':

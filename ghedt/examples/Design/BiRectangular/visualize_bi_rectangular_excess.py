@@ -3,6 +3,7 @@
 
 import ghedt.PLAT.pygfunction as gt
 from ghedt.utilities import js_load
+import ghedt
 
 
 def main():
@@ -42,11 +43,40 @@ def main():
 
     ax.set_xlabel('Number of boreholes')
     ax.set_ylabel('Heat pump excess temperature ($\degree$C)')
-    ax.legend()
+    ax.legend(loc=1, ncol=2)
+
+    # fig.tight_layout()
+
+    fig.savefig('bi-rectangular-outer-search.png',
+                bbox_inches='tight', pad_inches=0.1)
+
+    delta_T_values, unimodal = ghedt.utilities.verify_excess(TE)
+    indices = list(range(1, len(delta_T_values) + 1))
+    print('Unimodal domain: {}'.format(unimodal))
+
+    fig = gt.utilities._initialize_figure()
+    ax = fig.add_subplot(111)
+    gt.utilities._format_axes(ax)
+
+    ax.plot(indices, delta_T_values)
+
+    ax.grid()
+    ax.set_axisbelow(True)
+
+    ax.set_ylim([-1000, 0.])
+
+    ax.set_yscale('symlog')
+
+    yaxis = plt.gca().yaxis
+    yaxis.set_minor_locator(ghedt.utilities.MinorSymLogLocator(1e-1))
+
+    ax.set_ylabel('$\Delta T_j = T_{i} - T_{i-1}$')
+    ax.set_xlabel('Index, $j$')
 
     fig.tight_layout()
 
-    fig.savefig('bi-rectangular-outer-search.png')
+    fig.savefig('outer_bi_uniform_unimodal_proof.png')
+
 
     domain = d['Selected_Domain']['Domain']
     searched = d['Selected_Domain']['Searched']
@@ -85,12 +115,40 @@ def main():
 
     ax.set_xlabel('Number of boreholes')
     ax.set_ylabel('Heat pump excess temperature ($\degree$C)')
-    ax.legend()
+    ax.legend(loc=1, ncol=2)
+
+    # fig.tight_layout()
+
+    fig.savefig('bi-rectangular_selected_domain.png',
+                bbox_inches='tight', pad_inches=0.1)
+    plt.close(fig)
+
+    delta_T_values, unimodal = ghedt.utilities.verify_excess(TE)
+    indices = list(range(1, len(delta_T_values) + 1))
+    print('Unimodal domain: {}'.format(unimodal))
+
+    fig = gt.utilities._initialize_figure()
+    ax = fig.add_subplot(111)
+    gt.utilities._format_axes(ax)
+
+    ax.plot(indices, delta_T_values)
+
+    ax.grid()
+    ax.set_axisbelow(True)
+
+    ax.set_ylim([-450, 0.])
+
+    ax.set_yscale('symlog')
+
+    yaxis = plt.gca().yaxis
+    yaxis.set_minor_locator(ghedt.utilities.MinorSymLogLocator(1e-1))
+
+    ax.set_ylabel('$\Delta T_j = T_{i} - T_{i-1}$')
+    ax.set_xlabel('Index, $j$')
 
     fig.tight_layout()
 
-    fig.savefig('bi-rectangular_selected_domain.png')
-    plt.close(fig)
+    fig.savefig('selected_bi_uniform_unimodal_proof.png')
 
 
 if __name__ == '__main__':

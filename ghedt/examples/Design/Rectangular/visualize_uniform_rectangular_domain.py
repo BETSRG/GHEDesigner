@@ -1,5 +1,5 @@
 # Jack C. Cook
-# Thursday, October 28, 2021
+# Wednesday, October 27, 2021
 
 import ghedt
 import ghedt.PLAT as PLAT
@@ -7,11 +7,13 @@ import ghedt.PLAT.pygfunction as gt
 import pandas as pd
 from time import time as clock
 
+from ghedt.utilities import js_dump
+
 
 def main():
     # Borehole dimensions
     # -------------------
-    H = 96.  # Borehole length (m)
+    H = 135.  # Borehole length (m)
     D = 2.  # Borehole buried depth (m)
     r_b = 0.075  # Borehole radius]
     B = 5.  # Borehole spacing (m)
@@ -61,9 +63,13 @@ def main():
 
     # Fluid properties
     V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
+    # Total fluid mass flow rate per borehole (kg/s)
+    m_flow_borehole = V_flow_borehole / 1000. * fluid.rho
 
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
+
+    log_time = ghedt.utilities.Eskilson_log_times()
 
     # Simulation start month and end month
     # --------------------------------
@@ -95,62 +101,61 @@ def main():
     # Rectangular design constraints are the land and range of B-spacing
     length = 85.  # m
     width = 36.5  # m
-    B_min = 4.45  # m
-    B_max_x = 10.  # m
-    B_max_y = 12.
+    B_min = 3.  # m
+    B_max = 10.  # m
 
     # Perform field selection using bisection search between a 1x1 and 32x32
-    coordinates_domain_nested = \
-        ghedt.domains.bi_rectangle_nested(length, width, B_min, B_max_x,
-                                          B_max_y, disp=True)
+    coordinates_domain = ghedt.domains.rectangular(length, width, B_min, B_max)
 
-    coordinates_domain = coordinates_domain_nested[0]
+    # Need to compute the whole domain for the plot
+    nbh_values = []
+    T_excess_values = []
+    for i in range(len(coordinates_domain)):
+        coordinates = coordinates_domain[i]
 
-    output_folder = 'Bi-Rectangle_Domain'
-    ghedt.domains.visualize_domain(coordinates_domain, output_folder)
+        V_flow_system = V_flow_borehole * float(
+            len(coordinates))  # System volumetric flow rate (L/s)
+
+        g_function = ghedt.gfunction.compute_live_g_function(
+            B, [borehole.H], [borehole.r_b], [borehole.D], m_flow_borehole,
+            bhe_object, log_time, coordinates, fluid, pipe, grout,
+            soil)
+
+        # Initialize the GHE object
+        ghe = ghedt.ground_heat_exchangers.GHE(
+            V_flow_system, B, bhe_object, fluid, borehole, pipe, grout,
+            soil, g_function, sim_params,
+            hourly_extraction_ground_loads)
+
+        T_excess = ghe.cost(*ghe.simulate(method='hybrid'))
+
+        nbh_values.append(len(coordinates))
+        T_excess_values.append(T_excess)
 
     tic = clock()
-    bisection_search = ghedt.search_routines.Bisection2D(
-        coordinates_domain_nested, V_flow_borehole, borehole, bhe_object,
+    bisection_search = ghedt.search_routines.Bisection1D(
+        coordinates_domain, V_flow_borehole, borehole, bhe_object,
         fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
-        disp=True)
+        disp=False)
     toc = clock()
     print('Time to perform bisection search: {} seconds'.format(toc - tic))
 
-    nbh = len(bisection_search.selected_coordinates)
-    print('Number of boreholes: {}'.format(nbh))
+    print('Number of boreholes: {}'.
+          format(len(bisection_search.selected_coordinates)))
 
-    print('Borehole spacing: {}'.format(bisection_search.ghe.GFunction.B))
+    d = {'Domain': {'nbh': nbh_values, 'T_excess': T_excess_values}}
 
-    # Perform sizing in between the min and max bounds
-    tic = clock()
-    ghe = bisection_search.ghe
-    ghe.compute_g_functions()
+    nbh_values = []
+    T_excess_values = []
+    for i in bisection_search.calculated_temperatures:
+        coordinates = bisection_search.coordinates_domain[i]
+        nbh_values.append(len(coordinates))
+        T_excess_values.append(bisection_search.calculated_temperatures[i])
 
-    ghe.size(method='hybrid')
-    toc = clock()
-    print('Time to compute g-functions and size: {} seconds'.format(toc - tic))
+    d['Searched'] = {'nbh': nbh_values, 'T_excess': T_excess_values}
 
-    print('Sized height of boreholes: {0:.2f} m'.format(ghe.bhe.b.H))
-
-    print('Total drilling depth: {0:.1f} m'.format(ghe.bhe.b.H * nbh))
-
-    # Plot go and no-go zone with corrected borefield
-    # -----------------------------------------------
-    coordinates = bisection_search.selected_coordinates
-
-    perimeter = [[0., 0.], [85., 0.], [85., 80.], [0., 80.]]
-    l_x_building = 50
-    l_y_building = 33.3
-    origin_x, origin_y = (15, 36.5)
-    no_go = [[origin_x, origin_y], [origin_x+l_x_building, origin_y],
-             [origin_x+l_x_building, origin_y+l_y_building],
-             [origin_x, origin_y+l_y_building]]
-
-    fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
-        perimeter, coordinates, no_go=no_go)
-
-    fig.savefig('bi-rectangle_case.png', bbox_inches='tight', pad_inches=0.1)
+    file_name = 'uniform_rectangular_search'
+    js_dump(file_name, d)
 
 
 if __name__ == '__main__':

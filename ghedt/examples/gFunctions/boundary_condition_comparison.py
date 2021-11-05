@@ -201,19 +201,19 @@ def main():
     gt.gfunction._format_axes(ax)
 
     ax.plot(log_time, gfunc_equal_Tf_in.gFunc, marker=None, linestyle='-',
-            label='12 Equal Similarities UIFT')
+            label='12ESL Similarities UIFT')
     ax.plot(log_time, gfunc_equal_Tf_in_eq.gFunc, marker=None, linestyle='-',
-            label='12 Equal Equivalent UIFT')
+            label='12ESL Equivalent UIFT')
     ax.plot(log_time, gfunc_equal_Tf_in_uneq.gFunc, marker=None, linestyle='-',
-            label='8 Unequal Equivalent UIFT')
+            label='8USL Equivalent UIFT')
     ax.plot(log_time, gfunc_uniform_T.gFunc,
-            label='12 Equal Similarities UBWT')
+            label='12ESL Similarities UBWT')
     ax.plot(log_time, g_function_corrected_GLHEPro, marker=None, linestyle='--',
             label=r'GLHEPro (UBWT, $D\approx5$m)')
     ax.plot(log_time, g_function_corrected_UIFT_ref, marker='x',
             linestyle='', label='96 Equal Similarities UIFT')
-    ax.plot(log_time, g_function_corrected_DB, linestyle='-.', label='GFDB',
-            zorder=0)
+    # ax.plot(log_time, g_function_corrected_DB, linestyle='-.', label='GFDB',
+    #         zorder=0)
 
     fig.legend(bbox_to_anchor=(0.5, 0.88))
 
@@ -222,7 +222,7 @@ def main():
     ax2.set_xbound(ax.get_xbound())
     ax2.set_xticklabels([round(np.exp(x)*ts / 3600. / 8760., 3)
                          for x in ax.get_xticks()])
-    ax2.set_xlabel('Time (seconds)')
+    ax2.set_xlabel('Time (years)')
     gt.utilities._format_axes(ax2)
 
     fig.tight_layout()
