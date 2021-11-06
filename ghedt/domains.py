@@ -117,44 +117,36 @@ def bi_rectangular(
     N_min = int(np.ceil(n_1_min).tolist())
     N_max = int(np.floor(n_1_max).tolist())
     for n_1 in range(N_min, N_max + 1):
-        # Check to see if we bracket
-        a = func(n_1, length_1, B_min)
-        b = func(n_1, length_1, B_max_1)
-        if ghedt.utilities.sign(a) != ghedt.utilities.sign(b):
 
-            n_2 = int(np.ceil((length_2 / B_max_2) + 1))
-            b_2 = length_2 / (n_2 - 1)
+        n_2 = int(np.ceil((length_2 / B_max_2) + 1))
+        b_2 = length_2 / (n_2 - 1)
 
-            b_1 = length_1 / (n_1 - 1)
+        b_1 = length_1 / (n_1 - 1)
 
-            if iter == 0:
-                for i in range(1, n_1):
-                    coordinates = ghedt.coordinates.rectangle(i, 1, b_1, b_2)
-                    if transpose:
-                        coordinates = \
-                            ghedt.coordinates.transpose_coordinates(coordinates)
-                    bi_rectangle_domain.append(coordinates)
-                for j in range(1, n_2):
-                    coordinates = ghedt.coordinates.rectangle(n_1, j, b_1, b_2)
-                    if transpose:
-                        coordinates = \
-                            ghedt.coordinates.transpose_coordinates(coordinates)
-                    bi_rectangle_domain.append(coordinates)
+        if iter == 0:
+            for i in range(1, n_1):
+                coordinates = ghedt.coordinates.rectangle(i, 1, b_1, b_2)
+                if transpose:
+                    coordinates = \
+                        ghedt.coordinates.transpose_coordinates(coordinates)
+                bi_rectangle_domain.append(coordinates)
+            for j in range(1, n_2):
+                coordinates = ghedt.coordinates.rectangle(n_1, j, b_1, b_2)
+                if transpose:
+                    coordinates = \
+                        ghedt.coordinates.transpose_coordinates(coordinates)
+                bi_rectangle_domain.append(coordinates)
 
-                iter += 1
+            iter += 1
 
-            if disp:
-                print('{0}x{1} with {2:.1f}x{3:.1f}'.format(n_1, n_2, b_1, b_2))
+        if disp:
+            print('{0}x{1} with {2:.1f}x{3:.1f}'.format(n_1, n_2, b_1, b_2))
 
-            coordinates = ghedt.coordinates.rectangle(n_1, n_2, b_1, b_2)
-            if transpose:
-                coordinates = \
-                    ghedt.coordinates.transpose_coordinates(coordinates)
-            bi_rectangle_domain.append(coordinates)
-
-        else:
-            raise ValueError('The solution was not bracketed, and this function'
-                             'is always supposed to bracket')
+        coordinates = ghedt.coordinates.rectangle(n_1, n_2, b_1, b_2)
+        if transpose:
+            coordinates = \
+                ghedt.coordinates.transpose_coordinates(coordinates)
+        bi_rectangle_domain.append(coordinates)
 
         n_1 += 1
 
@@ -350,6 +342,42 @@ def bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y):
         bi_rectangle_zoned_nested_domain.append(domain)
 
     return bi_rectangle_zoned_nested_domain
+
+
+def polygonal_land_constraint(property_boundary, B_min, B_max_x, B_max_y,
+                              building_description=None):
+    if building_description is None:
+        building_description = []
+
+    outer_rectangle = \
+        ghedt.feature_recognition.determine_largest_rectangle(property_boundary)
+
+    x, y = list(zip(*outer_rectangle))
+    length = max(x)
+    width = max(y)
+    coordinates_domain_nested = \
+            ghedt.domains.bi_rectangle_nested(length, width, B_min, B_max_x,
+                                              B_max_y)
+
+    coordinates_domain_nested_cutout = []
+
+    for i in range(len(coordinates_domain_nested)):
+        new_coordinates_domain = []
+        for j in range(len(coordinates_domain_nested[i])):
+            coordinates = coordinates_domain_nested[i][j]
+            # Remove boreholes outside of property
+            new_coordinates = ghedt.feature_recognition.remove_cutout(
+                coordinates, boundary=property_boundary, remove_inside=False)
+            # Remove boreholes inside of building
+            if len(new_coordinates) == 0:
+                continue
+            new_coordinates = ghedt.feature_recognition.remove_cutout(
+                new_coordinates, boundary=building_description,
+                remove_inside=True, keep_contour=False)
+            new_coordinates_domain.append(new_coordinates)
+        coordinates_domain_nested_cutout.append(new_coordinates_domain)
+
+    return coordinates_domain_nested_cutout
 
 
 def visualize_domain(domain, output_folder_name):
