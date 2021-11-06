@@ -101,7 +101,8 @@ def main():
 
     # Perform field selection using bisection search between a 1x1 and 32x32
     coordinates_domain_nested = \
-        ghedt.domains.bi_rectangle_nested(length, width, B_min, B_max_x, B_max_y)
+        ghedt.domains.bi_rectangle_nested(length, width, B_min, B_max_x,
+                                          B_max_y, disp=True)
 
     coordinates_domain = coordinates_domain_nested[0]
 

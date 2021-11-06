@@ -66,6 +66,7 @@ def js_load(filename: str):
     with open(filename) as f_in:
         return json.load(f_in)
 
+
 def verify_excess(domain):
     unimodal = True
     delta_T_values = []
@@ -136,4 +137,4 @@ class MinorSymLogLocator(Locator):
 
     def tick_values(self, vmin, vmax):
         raise NotImplementedError('Cannot get tick locations for a '
-                          '%s type.' % type(self))
+                                  '%s type.' % type(self))
