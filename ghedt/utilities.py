@@ -149,3 +149,22 @@ def polygonal_area(corners):
         area -= corners[j][0] * corners[i][1]
     area = abs(area) / 2.0
     return area
+
+
+def reorder_domain(domain):
+    # Reorder the domain so that the number of boreholes successively grow
+    numbers = {}
+    for i in range(len(domain)):
+        numbers[i] = len(domain[i])
+
+    sorted_values = sorted(numbers.values())
+
+    reordered_domain = []
+
+    for i in sorted_values:
+        for j in numbers.keys():
+            if numbers[j] == i:
+                reordered_domain.append(domain[j])
+                break
+
+    return reordered_domain

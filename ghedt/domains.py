@@ -377,7 +377,13 @@ def polygonal_land_constraint(property_boundary, B_min, B_max_x, B_max_y,
             new_coordinates_domain.append(new_coordinates)
         coordinates_domain_nested_cutout.append(new_coordinates_domain)
 
-    return coordinates_domain_nested_cutout
+    coordinates_domain_nested_cutout_reordered = []
+    for i in range(len(coordinates_domain_nested_cutout)):
+        domain = coordinates_domain_nested_cutout[i]
+        domain_reordered = ghedt.utilities.reorder_domain(domain)
+        coordinates_domain_nested_cutout_reordered.append(domain_reordered)
+
+    return coordinates_domain_nested_cutout_reordered
 
 
 def visualize_domain(domain, output_folder_name):
