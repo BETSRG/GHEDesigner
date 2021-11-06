@@ -25,6 +25,7 @@
 * [Issue 21](https://github.com/j-c-cook/ghedt/issues/21) - Adds the ability to create zoned rectangle, lopsided U and C shape configurations. 
 * [Issue 22](https://github.com/j-c-cook/ghedt/issues/22) - Adds a bi-zoned rectangle domain and nested bi-zoned rectangle domain can be used in the `Bisection1D` and `BisectionZD` search routines respectively.
 * [Issue 32](https://github.com/j-c-cook/ghedt/issues/32) - Adds a `BisectionZD` search that locates an outer domain, and then performs a successive search in the negative excess direction. The search ends when the total drilling depth stops decreasing, or reaches a max_iter of 7.
+* [Issue 34](https://github.com/j-c-cook/ghedt/issues/34) - Adds a `feature_recognition` module that can determine if boreholes are inside of a no drill zone defined by a polygon. This enables a bi-rectangular search with no drill zones. 
 
 ### Tests and CI
 
