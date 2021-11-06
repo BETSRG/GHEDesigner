@@ -23,7 +23,7 @@ def main():
     Input_folder = '100-400_RowWise_Cases/'
     input_coordinate_files = os.listdir(Input_folder)
 
-    H_values = [96., 192.]
+    H_values = [48., 96., 192., 384]
 
     for i in range(len(H_values)):
 

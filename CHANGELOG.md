@@ -18,10 +18,13 @@
 * [Issue 9](https://github.com/j-c-cook/ghedt/issues/11) - A function that computes a live g-function using `pygfunction` is created. The functions default arguments are unequal segments, the equivalent solver and the mixed inlet fluid temperature boundary condition.
 * [Issue 14](https://github.com/j-c-cook/ghedt/issues/14) - The `coordinates.py` module is moved from the g-Function Database repository to this package.
 * [Issue 16](https://github.com/j-c-cook/ghedt/issues/16) - An integer bisection search routine is implemented that, given a domain of coordinates specified at a target height, selects the borefield that results in an excess temperature less than or equal to 0.
-* [Issue 17](https://github.com/j-c-cook/ghedt/issues/17) - A design routine that can determine a square or near square routine based on a range (ie. 1 to 3 is 1x1, 1x2, 2x2, 2x3, 3x3), and a target depth (maximum height).
+* [Issue 17](https://github.com/j-c-cook/ghedt/issues/17) - A design routine that can determine a square or near square routine based on a range (ie. 1 to 3 is 1x1, 1x2, 2x2, 2x3, 3x3), and a target depth (maximum height). A lower end of the domain is inserted prior to the rectangular domain, which works from one borehole, to a line of boreholes to rows of lines of boreholes all at the maximum spacing based on prescribed inputs. 
 * [Issue 18](https://github.com/j-c-cook/ghedt/issues/18) - The methodology for determining the `B` spacing for a borefield is one that compares the first two boreholes in the list. If there is one borehole, the borehole radius is set as the borehole spacing.
 * [Issue 10](https://github.com/j-c-cook/ghedt/issues) - A rectangular design routine that requires length x width land area constraint, and minimum and maximum borehole spacings.
 * [Issue 25](https://github.com/j-c-cook/ghedt/tree/issue25_BiRectangle) - A bi-rectangular search routine is implemented that requires the arguments in the rectangular design in addition to the maximum spacing along the shortest length.
+* [Issue 21](https://github.com/j-c-cook/ghedt/issues/21) - Adds the ability to create zoned rectangle, lopsided U and C shape configurations. 
+* [Issue 22](https://github.com/j-c-cook/ghedt/issues/22) - Adds a bi-zoned rectangle domain and nested bi-zoned rectangle domain can be used in the `Bisection1D` and `BisectionZD` search routines respectively.
+* [Issue 32](https://github.com/j-c-cook/ghedt/issues/32) - Adds a `BisectionZD` search that locates an outer domain, and then performs a successive search in the negative excess direction. The search ends when the total drilling depth stops decreasing, or reaches a max_iter of 7.
 
 ### Tests and CI
 

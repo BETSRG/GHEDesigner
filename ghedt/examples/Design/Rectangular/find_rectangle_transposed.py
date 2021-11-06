@@ -93,8 +93,8 @@ def main():
     # --------------------------------------------------------------------------
 
     # Rectangular design constraints are the land and range of B-spacing
-    length = 85.  # m
-    width = 36.5  # m
+    length = 36.5  # m
+    width = 85.  # m
     B_min = 3.  # m
     B_max = 10.  # m
 
@@ -141,11 +141,13 @@ def main():
     no_go = [[origin_x, origin_y], [origin_x+l_x_building, origin_y],
              [origin_x+l_x_building, origin_y+l_y_building],
              [origin_x, origin_y+l_y_building]]
+    perimeter = ghedt.coordinates.transpose_coordinates(perimeter)
+    no_go = ghedt.coordinates.transpose_coordinates(no_go)
 
     fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
         perimeter, coordinates, no_go=no_go)
 
-    fig.savefig('base_case.png', bbox_inches='tight', pad_inches=0.1)
+    fig.savefig('base_case_transposed.png')
 
 
 if __name__ == '__main__':

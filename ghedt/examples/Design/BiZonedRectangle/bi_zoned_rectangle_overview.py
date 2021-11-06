@@ -1,5 +1,5 @@
 # Jack C. Cook
-# Thursday, October 28, 2021
+# Saturday, October 30, 2021
 
 import ghedt
 import ghedt.PLAT as PLAT
@@ -95,57 +95,70 @@ def main():
     # Rectangular design constraints are the land and range of B-spacing
     length = 85.  # m
     width = 36.5  # m
-    B_min = 3.  # m
-    B_max = 10.  # m
+    B_min = 4.45  # m
+    B_max_x = 10.  # m
+    B_max_y = 12.
 
-    # Perform field selection using bisection search between a 1x1 and 32x32
-    coordinates_domain = ghedt.domains.rectangular(length, width, B_min, B_max)
+    coordinates_domain_nested = \
+        ghedt.domains.bi_rectangle_zoned_nested(
+            length, width, B_min, B_max_x, B_max_y)
 
-    output_folder = 'Rectangle_Domain'
-    ghedt.domains.visualize_domain(coordinates_domain, output_folder)
+    T_excess_values_outer = []
+    total_drilling_depth_sized = []
 
-    tic = clock()
-    bisection_search = ghedt.search_routines.Bisection1D(
-        coordinates_domain, V_flow_borehole, borehole, bhe_object,
-        fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
-        disp=False)
-    toc = clock()
-    print('Time to perform bisection search: {} seconds'.format(toc - tic))
+    for i in range(11, len(coordinates_domain_nested)):
+        try:
+            bisection_search = ghedt.search_routines.Bisection1D(
+                coordinates_domain_nested[i], V_flow_borehole, borehole,
+                bhe_object, fluid, pipe, grout, soil, sim_params,
+                hourly_extraction_ground_loads, disp=False)
 
-    nbh = len(bisection_search.selected_coordinates)
-    print('Number of boreholes: {}'.format(nbh))
+            calculated_excess_values = \
+                list(bisection_search.calculated_temperatures.values())
+            calculated_excess_indices = \
+                list(bisection_search.calculated_temperatures.keys())
+            idx = max(calculated_excess_indices)
+            T_excess_outer = bisection_search.calculated_temperatures[idx]
+            T_excess_values_outer.append(T_excess_outer)
 
-    print('Borehole spacing: {}'.format(bisection_search.ghe.GFunction.B))
+            nbh = len(bisection_search.selected_coordinates)
+            print('Number of boreholes: {}'.format(nbh))
+            print('Borehole spacing: {}'.format(bisection_search.ghe.GFunction.B))
 
-    # Perform sizing in between the min and max bounds
-    tic = clock()
-    ghe = bisection_search.ghe
-    ghe.compute_g_functions()
+            # Perform sizing in between the min and max bounds
+            tic = clock()
+            ghe = bisection_search.ghe
+            ghe.compute_g_functions()
 
-    ghe.size(method='hybrid')
-    toc = clock()
-    print('Time to compute g-functions and size: {} seconds'.format(toc - tic))
+            ghe.size(method='hybrid')
+            toc = clock()
+            print('Time to compute g-functions and size: {} seconds'.format(toc - tic))
 
-    print('Sized height of boreholes: {0:.2f} m'.format(ghe.bhe.b.H))
+            print('Sized height of boreholes: {0:.2f} m'.format(ghe.bhe.b.H))
 
-    print('Total drilling depth: {0:.1f} m'.format(ghe.bhe.b.H * nbh))
+            print('Total drilling depth: {0:.1f} m'.format(ghe.bhe.b.H * nbh))
+            total_drilling_depth = ghe.bhe.b.H * nbh
 
-    # Plot go and no-go zone with corrected borefield
-    # -----------------------------------------------
-    coordinates = bisection_search.selected_coordinates
+            total_drilling_depth_sized.append(total_drilling_depth)
 
-    perimeter = [[0., 0.], [85., 0.], [85., 80.], [0., 80.]]
-    l_x_building = 50
-    l_y_building = 33.3
-    origin_x, origin_y = (15, 36.5)
-    no_go = [[origin_x, origin_y], [origin_x+l_x_building, origin_y],
-             [origin_x+l_x_building, origin_y+l_y_building],
-             [origin_x, origin_y+l_y_building]]
+        except ValueError as msg:
+            print(i)
+            print(msg)
 
-    fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
-        perimeter, coordinates, no_go=no_go)
+    fig = gt.utilities._initialize_figure()
+    ax = fig.add_subplot(111)
 
-    fig.savefig('base_case.png', bbox_inches='tight', pad_inches=0.1)
+    ax.scatter(T_excess_values_outer, total_drilling_depth_sized)
+
+    ax.set_xlabel('Outer domain excess temperature ($\degree$C)')
+    ax.set_ylabel('Sizing result of search on inner domain (m)')
+
+    ax.grid()
+    ax.set_axisbelow(True)
+
+    fig.tight_layout()
+
+    fig.savefig('outer_vs_inner_sizing.png')
 
 
 if __name__ == '__main__':

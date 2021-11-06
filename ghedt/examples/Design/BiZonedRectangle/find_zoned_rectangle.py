@@ -1,5 +1,5 @@
 # Jack C. Cook
-# Thursday, October 28, 2021
+# Saturday, October 30, 2021
 
 import ghedt
 import ghedt.PLAT as PLAT
@@ -85,7 +85,8 @@ def main():
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
     hourly_extraction: dict = \
-        pd.read_csv('../../GHE/Atlanta_Office_Building_Loads.csv').to_dict('list')
+        pd.read_csv('../../GHE/Atlanta_Office_Building_Loads.csv').to_dict(
+            'list')
     # Take only the first column in the dictionary
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
@@ -98,8 +99,12 @@ def main():
     B_min = 3.  # m
     B_max = 10.  # m
 
+    n_x = 21
+    n_y = 9
+
     # Perform field selection using bisection search between a 1x1 and 32x32
-    coordinates_domain = ghedt.domains.rectangular(length, width, B_min, B_max)
+    coordinates_domain = \
+        ghedt.domains.zoned_rectangle_domain(length, width, n_x, n_y)
 
     output_folder = 'Rectangle_Domain'
     ghedt.domains.visualize_domain(coordinates_domain, output_folder)
@@ -138,15 +143,16 @@ def main():
     l_x_building = 50
     l_y_building = 33.3
     origin_x, origin_y = (15, 36.5)
-    no_go = [[origin_x, origin_y], [origin_x+l_x_building, origin_y],
-             [origin_x+l_x_building, origin_y+l_y_building],
-             [origin_x, origin_y+l_y_building]]
+    no_go = [[origin_x, origin_y], [origin_x + l_x_building, origin_y],
+             [origin_x + l_x_building, origin_y + l_y_building],
+             [origin_x, origin_y + l_y_building]]
 
     fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
         perimeter, coordinates, no_go=no_go)
 
-    fig.savefig('base_case.png', bbox_inches='tight', pad_inches=0.1)
+    fig.savefig('zoned-rectangle-case-00.png')
 
 
 if __name__ == '__main__':
     main()
+

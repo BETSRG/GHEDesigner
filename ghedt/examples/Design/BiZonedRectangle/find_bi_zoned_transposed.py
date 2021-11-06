@@ -1,5 +1,5 @@
 # Jack C. Cook
-# Thursday, October 28, 2021
+# Saturday, October 30, 2021
 
 import ghedt
 import ghedt.PLAT as PLAT
@@ -93,22 +93,21 @@ def main():
     # --------------------------------------------------------------------------
 
     # Rectangular design constraints are the land and range of B-spacing
-    length = 85.  # m
-    width = 36.5  # m
-    B_min = 3.  # m
-    B_max = 10.  # m
+    length = 36.5  # m
+    width = 85.  # m
+    B_min = 4.45  # m
+    B_max_x = 10.  # m
+    B_max_y = 12.
 
-    # Perform field selection using bisection search between a 1x1 and 32x32
-    coordinates_domain = ghedt.domains.rectangular(length, width, B_min, B_max)
-
-    output_folder = 'Rectangle_Domain'
-    ghedt.domains.visualize_domain(coordinates_domain, output_folder)
+    coordinates_domain_nested = \
+        ghedt.domains.bi_rectangle_zoned_nested(
+            length, width, B_min, B_max_x, B_max_y)
 
     tic = clock()
-    bisection_search = ghedt.search_routines.Bisection1D(
-        coordinates_domain, V_flow_borehole, borehole, bhe_object,
+    bisection_search = ghedt.search_routines.BisectionZD(
+        coordinates_domain_nested, V_flow_borehole, borehole, bhe_object,
         fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
-        disp=False)
+        disp=True)
     toc = clock()
     print('Time to perform bisection search: {} seconds'.format(toc - tic))
 
@@ -141,11 +140,14 @@ def main():
     no_go = [[origin_x, origin_y], [origin_x+l_x_building, origin_y],
              [origin_x+l_x_building, origin_y+l_y_building],
              [origin_x, origin_y+l_y_building]]
+    perimeter = ghedt.coordinates.transpose_coordinates(perimeter)
+    no_go = ghedt.coordinates.transpose_coordinates(no_go)
 
     fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
         perimeter, coordinates, no_go=no_go)
 
-    fig.savefig('base_case.png', bbox_inches='tight', pad_inches=0.1)
+    fig.savefig('bi-rectangle_zoned_case_transposed.png', bbox_inches='tight',
+                pad_inches=0.1)
 
 
 if __name__ == '__main__':
