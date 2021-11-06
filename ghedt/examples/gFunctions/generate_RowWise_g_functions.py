@@ -33,7 +33,7 @@ def main():
                     '12_Equal_Segments_Equivalent_MIFT',
                     '8_Unequal_Segments_Equivalent_MIFT']
 
-    H_values = [96, 192.]
+    H_values = [48., 96., 192., 384.]
 
     for k in range(len(H_values)):
 
@@ -157,4 +157,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

@@ -112,12 +112,12 @@ def main():
 
         gfunc_uniform_T = ghedt.gfunction.calculate_g_function(
             m_flow_borehole, bhe_object, time_values, coordinates, borehole,
-            nSegments, fluid, pipe, grout, soil, segments=segments,
+            fluid, pipe, grout, soil, nSegments=nSegments, segments=segments,
             solver=solver, boundary=boundary, disp=disp
         )
 
         ax.plot(log_time, gfunc_uniform_T.gFunc,
-                label='12 Equal Similarities UBWT ($D=' + str(int(D)) + '$m)')
+                label='12ESL Similarities UBWT ($D=' + str(int(D)) + '$m)')
 
         x_n = log_time[-1]
         y_n = gfunc_uniform_T.gFunc.tolist()[-1]
@@ -155,7 +155,7 @@ def main():
     ax2.set_xbound(ax.get_xbound())
     ax2.set_xticklabels([round(np.exp(x)*ts / 3600. / 8760., 3)
                          for x in ax.get_xticks()])
-    ax2.set_xlabel('Time (seconds)')
+    ax2.set_xlabel('Time (years)')
     gt.utilities._format_axes(ax2)
 
     fig.tight_layout()

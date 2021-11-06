@@ -2,6 +2,7 @@
 # Wednesday, October 27, 2021
 
 import ghedt.PLAT.pygfunction as gt
+import ghedt.utilities
 from ghedt.utilities import js_load
 
 
@@ -68,6 +69,54 @@ def main():
 
     fig.savefig('bisection_search_domain.png')
     plt.close(fig)
+
+    fig = gt.utilities._initialize_figure()
+    ax = fig.add_subplot(111)
+    gt.utilities._format_axes(ax)
+    import matplotlib.pyplot as plt
+
+    ax.scatter(NBH, TE, facecolors='none', edgecolors='blue', s=7,
+               label='Unimodal list')
+
+    # ax.set_ylim([-20, 50])
+
+    ax.set_yscale('symlog')
+
+    ax.grid()
+    ax.set_axisbelow(True)
+
+    ax.set_xlabel('Number of boreholes')
+    ax.set_ylabel('Heat pump excess temperature ($\degree$C)')
+    ax.legend()
+
+    fig.tight_layout()
+
+    fig.savefig('square_unimodal_domain.png')
+    plt.close(fig)
+
+    delta_T_values, unimodal = ghedt.utilities.verify_excess(TE)
+    indices = list(range(1, len(delta_T_values)+1))
+    print('Unimodal domain: {}'.format(unimodal))
+
+    fig = gt.utilities._initialize_figure()
+    ax = fig.add_subplot(111)
+    gt.utilities._format_axes(ax)
+
+    ax.plot(indices, delta_T_values)
+
+    ax.grid()
+    ax.set_axisbelow(True)
+
+    ax.set_ylim([-10, 0.75])
+
+    # ax.set_yscale('symlog')
+
+    ax.set_ylabel('$\Delta T_j = T_{i} - T_{i-1}$')
+    ax.set_xlabel('Index, $j$')
+
+    fig.tight_layout()
+
+    fig.savefig('square_unimodal_proof.png')
 
 
 if __name__ == '__main__':
