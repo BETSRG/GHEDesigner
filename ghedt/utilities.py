@@ -103,17 +103,25 @@ class MinorSymLogLocator(Locator):
 
         # add temporary major tick locs at either end of the current range
         # to fill in minor tick gaps
-        dmlower = majorlocs[1] - majorlocs[0]    # major tick difference at lower end
-        dmupper = majorlocs[-1] - majorlocs[-2]  # major tick difference at upper end
+        # major tick difference at lower end
+        dmlower = majorlocs[1] - majorlocs[0]
+        # major tick difference at upper end
+        dmupper = majorlocs[-1] - majorlocs[-2]
 
         # add temporary major tick location at the lower end
-        if majorlocs[0] != 0. and ((majorlocs[0] != self.linthresh and dmlower > self.linthresh) or (dmlower == self.linthresh and majorlocs[0] < 0)):
+        if majorlocs[0] != 0. and \
+                ((majorlocs[0] != self.linthresh and
+                  dmlower > self.linthresh) or
+                 (dmlower == self.linthresh and majorlocs[0] < 0)):
             majorlocs = np.insert(majorlocs, 0, majorlocs[0]*10.)
         else:
             majorlocs = np.insert(majorlocs, 0, majorlocs[0]-self.linthresh)
 
         # add temporary major tick location at the upper end
-        if majorlocs[-1] != 0. and ((np.abs(majorlocs[-1]) != self.linthresh and dmupper > self.linthresh) or (dmupper == self.linthresh and majorlocs[-1] > 0)):
+        if majorlocs[-1] != 0. and \
+                ((np.abs(majorlocs[-1]) != self.linthresh and
+                  dmupper > self.linthresh) or
+                 (dmupper == self.linthresh and majorlocs[-1] > 0)):
             majorlocs = np.append(majorlocs, majorlocs[-1]*10.)
         else:
             majorlocs = np.append(majorlocs, majorlocs[-1]+self.linthresh)
@@ -138,3 +146,60 @@ class MinorSymLogLocator(Locator):
     def tick_values(self, vmin, vmax):
         raise NotImplementedError('Cannot get tick locations for a '
                                   '%s type.' % type(self))
+
+
+def polygonal_area(corners):
+    n = len(corners) # of corners
+    area = 0.0
+    for i in range(n):
+        j = (i + 1) % n
+        area += corners[i][0] * corners[j][1]
+        area -= corners[j][0] * corners[i][1]
+    area = abs(area) / 2.0
+    return area
+
+
+def reorder_domain(domain):
+    # TODO: move this to the domains.py module
+    # Reorder the domain so that the number of boreholes successively grow
+    numbers = {}
+    for i in range(len(domain)):
+        numbers[i] = len(domain[i])
+
+    sorted_values = sorted(numbers.values())
+
+    reordered_domain = []
+
+    for i in sorted_values:
+        for j in numbers.keys():
+            if numbers[j] == i:
+                reordered_domain.append(domain[j])
+                break
+
+    return reordered_domain
+
+
+def compute_mpe(actual: list, predicted: list) -> float:
+    """
+    The following mean percentage error formula is used:
+    .. math::
+        MPE = \dfrac{100\%}{n}\sum_{i=0}^{n-1}\dfrac{a_t-p_t}{a_t}
+    Parameters
+    ----------
+    actual: list
+        The actual computed g-function values
+    predicted: list
+        The predicted g-function values
+    Returns
+    -------
+    **mean_percent_error: float**
+        The mean percentage error in percent
+    """
+    # the lengths of the two lists should be the same
+    assert len(actual) == len(predicted)
+    # create a summation variable
+    summation: float = 0.
+    for i in range(len(actual)):
+        summation += (predicted[i] - actual[i]) / actual[i]
+    mean_percent_error = summation * 100 / len(actual)
+    return mean_percent_error

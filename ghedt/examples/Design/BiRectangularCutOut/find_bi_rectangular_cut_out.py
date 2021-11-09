@@ -120,7 +120,7 @@ def main():
         for j in range(len(coordinates_domain_nested[i])):
             coordinates = coordinates_domain_nested[i][j]
             new_coordinates = ghedt.feature_recognition.remove_cutout(
-                coordinates, no_go=no_go)
+                coordinates, boundary=no_go)
             new_coordinates_domain.append(new_coordinates)
         coordinates_domain_nested_cutout.append(new_coordinates_domain)
 

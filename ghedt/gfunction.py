@@ -11,8 +11,8 @@ import numpy as np
 
 def calculate_g_function(
         m_flow_borehole, bhe_object, time_values, coordinates, borehole,
-        fluid, pipe, grout, soil, nSegments=8, segments='unequal',
-        solver='equivalent', boundary='MIFT', disp=False):
+        fluid, pipe, grout, soil, nSegments=8, end_length_ratio=0.02,
+        segments='unequal', solver='equivalent', boundary='MIFT', disp=False):
 
     boreField = []
     BHEs = []
@@ -40,7 +40,8 @@ def calculate_g_function(
     if segments == 'equal':
         options = {'nSegments': nSegments, 'disp': disp}
     elif segments == 'unequal':
-        segment_ratios = gt.utilities.segment_ratios(nSegments)
+        segment_ratios = gt.utilities.segment_ratios(
+            nSegments, end_length_ratio=end_length_ratio)
         options = {'nSegments': nSegments, 'segment_ratios': segment_ratios,
                    'disp': disp}
     else:
@@ -237,13 +238,15 @@ class GFunction:
                 rb_f = lagrange(height_values, rb_values)
             else:
                 # interpolation function for rb values by H equivalent
-                rb_f = interp1d(height_values, rb_values, kind=kind, fill_value=fill_value)
+                rb_f = interp1d(height_values, rb_values, kind=kind,
+                                fill_value=fill_value)
             self.interpolation_table['rb'] = rb_f
             try:
                 if kind == 'lagrange':
                     D_f = lagrange(height_values, D_values)
                 else:
-                    D_f = interp1d(height_values, D_values, kind=kind, fill_value=fill_value)
+                    D_f = interp1d(height_values, D_values, kind=kind,
+                                   fill_value=fill_value)
                 self.interpolation_table['D'] = D_f
             except:
                 pass
@@ -337,9 +340,6 @@ class GFunction:
 
         handles, labels = ax.get_legend_handles_labels()
 
-        # legend = fig.legend(handles=handles, labels=labels,
-        #                     title='B/H'.rjust(5) + '\nLibrary',
-        #                     bbox_to_anchor=(1, 1.0))
         legend = fig.legend(handles=handles, labels=labels,
                             title='B/H'.rjust(5), bbox_to_anchor=(1, 1.0))
         fig.gca().add_artist(legend)
@@ -430,9 +430,12 @@ class GFunction:
         bore_locations = data[
             'bore_locations']  # store the bore locations in the object
         g_values: dict = data['g']  # pull the g-functions into the g_values
-        g_tmp: dict = {}  # a temporary g-function dictionary that might be out of order
-        Ds_tmp: dict = {}  # a temporary burial depth dictionary that may be out of order
-        r_bs_tmp: dict = {}  # the borehole radius dictionary that may be out of order
+        # a temporary g-function dictionary that might be out of order
+        g_tmp: dict = {}
+        # a temporary burial depth dictionary that may be out of order
+        Ds_tmp: dict = {}
+        # the borehole radius dictionary that may be out of order
+        r_bs_tmp: dict = {}
         t_tmp: dict = {}
         for key in g_values:
             # do the g-function dictionary
@@ -444,7 +447,9 @@ class GFunction:
             # create a r_b value associated with this height key
             r_b = float(key_split[2])
             r_bs_tmp[height] = r_b
-            try:  # the D value is recently added to the key value for the saved g-functions computed
+            # the D value is recently added to the key value for the saved
+            # g-functions computed
+            try:
                 D = float(key_split[3])
                 Ds_tmp[height] = D
             except:
@@ -458,17 +463,15 @@ class GFunction:
                 t_year = t_seconds / 60 / 24 / 365
                 time_arr.append(t_year)
             t_tmp[height] = time_arr
-
-        B = float(list(g_values.keys())[0].split('_')[
-                           0])  # every B-spacing should be the same for each file
+        # every B-spacing should be the same for each file
+        B = float(list(g_values.keys())[0].split('_')[0])
 
         keys = sorted(list(g_tmp.keys()), key=int)  # sort the heights in order
-
-        g = {key: g_tmp[key] for key in
-                  keys}  # fill the g-function dictionary with sorted heights
+        # fill the g-function dictionary with sorted heights
+        g = {key: g_tmp[key] for key in keys}
+        # fill the burial depth dictionary with sorted heights
         try:
-            Ds = {key: Ds_tmp[key] for key in
-                       keys}  # fill the burial depth dictionary with sorted heights
+            Ds = {key: Ds_tmp[key] for key in keys}
         except:
             # if there's no D provided, make it 2
             Ds = {key: 2. for key in keys}

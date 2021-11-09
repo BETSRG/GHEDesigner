@@ -1,11 +1,11 @@
 # Jack C. Cook
-# Thursday, November 4, 2021
+# Sunday, November 7, 2021
 
+import numpy as np
 import ghedt
 import ghedt.PLAT as PLAT
-import numpy as np
 import gFunctionDatabase as gfdb
-import pygfunction as gt
+import ghedt.PLAT.pygfunction as gt
 
 
 def main():
@@ -107,86 +107,58 @@ def main():
 
     # Calculate a uniform inlet fluid temperature g-function with 12 equal
     # segments using the similarities solver
-    nSegments = 21
     unequal = 'unequal'
-    equal = 'equal'
     boundary = 'MIFT'
     equivalent = 'equivalent'
-    similarities = 'similarities'
 
-    equivalent_errors = []
-    similar_errors = []
+    x = np.arange(5, 25, 1, dtype=int)  # segments
+    y = np.arange(0.01, 0.06, 0.01, dtype=float)  # alpha
 
-    for i in range(3, nSegments):
+    xv, yv = np.meshgrid(x, y)
 
-        gfunc_equal_Tf_in_uneq = ghedt.gfunction.calculate_g_function(
-            m_flow_borehole, bhe_object, time_values, coordinates, borehole,
-            fluid, pipe, grout, soil, nSegments=i, segments=unequal,
-            solver=equivalent, boundary=boundary, disp=disp)
+    z = np.zeros_like(yv)
 
-        gfunc_equal_Tf_in_eq = ghedt.gfunction.calculate_g_function(
-            m_flow_borehole, bhe_object, time_values, coordinates, borehole,
-            fluid, pipe, grout, soil, nSegments=i, segments=equal,
-            solver=similarities, boundary=boundary, disp=disp)
+    for i in range((len(z))):
+        for j in range(len(z[i])):
+            nSegments = xv[i][j].tolist()
+            alpha = yv[i][j].tolist()
+            gfunc = ghedt.gfunction.calculate_g_function(
+                m_flow_borehole, bhe_object, time_values, coordinates, borehole,
+                fluid, pipe, grout, soil, nSegments=nSegments,
+                end_length_ratio=alpha, segments=unequal, solver=equivalent,
+                boundary=boundary, disp=disp)
 
-        mpe = compute_mpe(g_function_corrected_UIFT_ref,
-                          gfunc_equal_Tf_in_uneq.gFunc)
-        equivalent_errors.append(mpe)
+            mpe = ghedt.utilities.compute_mpe(g_function_corrected_UIFT_ref,
+                                              gfunc.gFunc)
 
-        mpe = compute_mpe(g_function_corrected_UIFT_ref,
-                          gfunc_equal_Tf_in_eq.gFunc)
-        similar_errors.append(mpe)
-
-    # Plot the g-functions
-    fig = gt.gfunction._initialize_figure()
+            z[i][j] = mpe
+    fig = gt.utilities._initialize_figure()
     ax = fig.add_subplot(111)
-    ax.set_xlabel(r'Number of segments, $n_q$')
-    ax.set_ylabel('Mean Percent Error = '
-                  r'$\dfrac{\mathbf{p} - \mathbf{r}}{\mathbf{r}} \;\; '
-                  r'\dfrac{100\%}{n} $')
-    gt.gfunction._format_axes(ax)
+    gt.utilities._format_axes(ax)
 
-    segments = list(range(3, nSegments))
+    import matplotlib.pyplot as plt
+    import matplotlib
+    # ax.contourf(x, y, z)
+    # sc = ax.scatter(xv.ravel(), yv.ravel(), c=z.ravel(), vmin=0, vmax=0.3)
+    print(z.min())
+    print(z.max())
+    # sc = ax.scatter(xv.ravel(), yv.ravel(), c=z.ravel(),
+    #                 norm=matplotlib.colors.LogNorm(z.min(), z.max()),
+    #                 cmap='magma')
+    sc = ax.scatter(xv.ravel(), yv.ravel(), c=z.ravel(), vmin=z.min(),
+                    vmax=z.max(), cmap='magma')
+    # sc = ax.pcolor(x, y, z,
+    #                 norm=matplotlib.colors.LogNorm(0.000001, 10))
+    cbar = fig.colorbar(sc, ax=ax, extend='max')
+    cbar.ax.set_ylabel('Mean Percent Error = '
+                      r'$\dfrac{\mathbf{p} - \mathbf{r}}{\mathbf{r}} \;\; '
+                      r'\dfrac{100\%}{n} $')
 
-    ax.scatter(segments, equivalent_errors, marker='*',
-               label='EBM Unequal Segments')
-    ax.scatter(segments, similar_errors,
-               label='SBM Equal Segments')
-
-    ax.grid()
-    ax.set_axisbelow(True)
-
-    fig.legend(ncol=2)
+    ax.set_xlabel('Number of sources, $n_q$')
+    ax.set_ylabel(r'End segment ratio, $\alpha$')
 
     fig.tight_layout()
-
-    fig.savefig('g_function_discretization_vary_min_ratio.png')
-
-
-def compute_mpe(actual: list, predicted: list) -> float:
-    """
-    The following mean percentage error formula is used:
-    .. math::
-        MPE = \dfrac{100\%}{n}\sum_{i=0}^{n-1}\dfrac{a_t-p_t}{a_t}
-    Parameters
-    ----------
-    actual: list
-        The actual computed g-function values
-    predicted: list
-        The predicted g-function values
-    Returns
-    -------
-    **mean_percent_error: float**
-        The mean percentage error in percent
-    """
-    # the lengths of the two lists should be the same
-    assert len(actual) == len(predicted)
-    # create a summation variable
-    summation: float = 0.
-    for i in range(len(actual)):
-        summation += (predicted[i] - actual[i]) / actual[i]
-    mean_percent_error = summation * 100 / len(actual)
-    return mean_percent_error
+    fig.savefig('vertical_meshgrid_analysis.png')
 
 
 if __name__ == '__main__':
