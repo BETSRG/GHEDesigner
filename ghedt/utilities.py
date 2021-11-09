@@ -160,6 +160,7 @@ def polygonal_area(corners):
 
 
 def reorder_domain(domain):
+    # TODO: move this to the domains.py module
     # Reorder the domain so that the number of boreholes successively grow
     numbers = {}
     for i in range(len(domain)):
