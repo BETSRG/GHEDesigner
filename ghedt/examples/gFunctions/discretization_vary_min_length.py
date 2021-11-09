@@ -107,7 +107,7 @@ def main():
 
     # Calculate a uniform inlet fluid temperature g-function with 12 equal
     # segments using the similarities solver
-    nSegments = 20
+    nSegments = 21
     unequal = 'unequal'
     equal = 'equal'
     boundary = 'MIFT'
@@ -140,7 +140,7 @@ def main():
     # Plot the g-functions
     fig = gt.gfunction._initialize_figure()
     ax = fig.add_subplot(111)
-    ax.set_xlabel(r'Number of segments $n_q$')
+    ax.set_xlabel(r'Number of segments, $n_q$')
     ax.set_ylabel('Mean Percent Error = '
                   r'$\dfrac{\mathbf{p} - \mathbf{r}}{\mathbf{r}} \;\; '
                   r'\dfrac{100\%}{n} $')
@@ -148,10 +148,15 @@ def main():
 
     segments = list(range(3, nSegments))
 
-    ax.scatter(segments, equivalent_errors, label='Equivalent Borehole Method')
-    ax.scatter(segments, similar_errors, label='Similar Borehole Method')
+    ax.scatter(segments, equivalent_errors, marker='*',
+               label='EBM Unequal Segments')
+    ax.scatter(segments, similar_errors,
+               label='SBM Equal Segments')
 
-    fig.legend(bbox_to_anchor=(0.5, 0.88))
+    ax.grid()
+    ax.set_axisbelow(True)
+
+    fig.legend(ncol=2)
 
     fig.tight_layout()
 

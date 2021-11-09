@@ -99,7 +99,8 @@ def main():
     B_max = 10.  # m
 
     # Perform field selection using bisection search between a 1x1 and 32x32
-    coordinates_domain = ghedt.domains.rectangular(length, width, B_min, B_max)
+    coordinates_domain = \
+        ghedt.domains.rectangular(length, width, B_min, B_max, disp=True)
 
     output_folder = 'Rectangle_Domain'
     ghedt.domains.visualize_domain(coordinates_domain, output_folder)
