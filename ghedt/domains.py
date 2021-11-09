@@ -51,6 +51,10 @@ def rectangular(length_x, length_y, B_min, B_max, disp=False):
 
     n_2_old = 1
 
+    if disp:
+        print(50 * '-')
+        print('Rectangular Domain\nNx\tNy\tBx\tBy')
+
     iter = 0
     for N in range(N_min, N_max+1):
         # Check to see if we bracket
@@ -75,7 +79,7 @@ def rectangular(length_x, length_y, B_min, B_max, disp=False):
         else:
             r = ghedt.coordinates.rectangle(N, n_2, B, B)
             if disp:
-                print('{}x{} {}'.format(N, n_2, B))
+                print('{}\t{}\t{}\t{}'.format(N, n_2, B, B))
             if transpose:
                 r = ghedt.coordinates.transpose_coordinates(r)
             rectangle_domain.append(r)
