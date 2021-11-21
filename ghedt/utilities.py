@@ -6,6 +6,8 @@ import numpy as np
 import json
 from matplotlib.ticker import Locator
 
+import ghedt.PLAT.media
+
 
 def Eskilson_log_times():
     log_time = [-8.5, -7.8, -7.2, -6.5, -5.9, -5.2, -4.5, -3.963, -3.27,
@@ -203,3 +205,21 @@ def compute_mpe(actual: list, predicted: list) -> float:
         summation += (predicted[i] - actual[i]) / actual[i]
     mean_percent_error = summation * 100 / len(actual)
     return mean_percent_error
+
+
+def set_shank(configuration: str, rb: float, r_in: float, r_out: float):
+
+    if configuration == 'A':
+        a = 1
+    elif configuration == 'B':
+        a = 1
+    elif configuration == 'C':
+        a = 1
+    else:
+        raise ValueError('Only configurations A, B, or C are valid.')
+
+
+def create_if_not(directory):
+    import os
+    if not os.path.exists(directory):
+        os.makedirs(directory)

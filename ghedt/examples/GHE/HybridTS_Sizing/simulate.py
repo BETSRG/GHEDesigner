@@ -59,18 +59,9 @@ def main():
 
     # Number in the x and y
     # ---------------------
-    N = 12
-    M = 13
-    configuration = 'rectangle'
-    # GFunction
-    # ---------
-    # Access the database for specified configuration
-    r = gfdb.Management.retrieval.Retrieve(configuration)
-    # There is just one value returned in the unimodal domain for rectangles
-    r_unimodal = r.retrieve(N, M)
-    key = list(r_unimodal.keys())[0]
-    print('The key value: {}'.format(key))
-    r_data = r_unimodal[key]
+    # Read in g-functions from GLHEPro
+    file = '../../1DInterpolation/GLHEPRO_gFunctions_12x13.json'
+    r_data, _ = gfdb.fileio.read_file(file)
 
     # Configure the database data for input to the goethermal GFunction object
     geothermal_g_input = gfdb.Management. \
@@ -131,17 +122,23 @@ def main():
     # ---------------------------
     fig = gt.gfunction._initialize_figure()
     ax = fig.add_subplot(111)
+    gt.utilities._format_axes(ax)
 
     min_HP_EFT_idx = GHE.HPEFT.index(min_HP_EFT) - 1
     max_HP_EFT_idx = GHE.HPEFT.index(max_HP_EFT) - 1
 
-    ax.plot(GHE.hybrid_load.hour[2:], GHE.HPEFT, 'k')
-    ax.scatter(GHE.hybrid_load.hour[min_HP_EFT_idx+2], min_HP_EFT, color='b', marker='X', s=200,
+    hours = GHE.hybrid_load.hour[2:].tolist()
+    print('Number of points in load: {}'.format(len(hours)))
+    years = [hours[i] / 8760 for i in range(len(hours))]
+
+    ax.plot(years, GHE.HPEFT, 'k', zorder=1)
+
+    ax.scatter(years[min_HP_EFT_idx], min_HP_EFT, color='b', marker='X', s=200,
                label='Minimum Temperature')
-    ax.scatter(GHE.hybrid_load.hour[max_HP_EFT_idx+2], max_HP_EFT, color='r', marker='P', s=200,
+    ax.scatter(years[max_HP_EFT_idx], max_HP_EFT, color='r', marker='P', s=200,
                label='Maximum Temperature')
 
-    ax.set_xlabel('Hours')
+    ax.set_xlabel('Time (Years)')
     ax.set_ylabel('Heat pump entering fluid temperature ($\degree$C)')
 
     ax.grid()
@@ -164,14 +161,70 @@ def main():
     fig = gt.gfunction._initialize_figure()
     ax = fig.add_subplot(111)
 
-    ax.plot(GHE.hybrid_load.hour[2:], GHE.hybrid_load.load[2:])
+    ax.plot(years, GHE.hybrid_load.load[2:])
 
-    ax.set_xlabel('Hours')
+    ax.set_xlabel('Time (years)')
     ax.set_ylabel('Ground rejection load (kW)')
 
     fig.tight_layout()
 
     fig.savefig('monthly_load_representation.png')
+
+    # ----------------------------------------------------------
+    # Now simulate with a sized height
+    GHE.size(method='hybrid')
+
+    print(GHE.bhe.b.H)
+
+    max_HP_EFT, min_HP_EFT = GHE.simulate(method='hybrid')
+
+    print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
+
+    # Plot the simulation results
+    # ---------------------------
+    fig = gt.gfunction._initialize_figure()
+    ax = fig.add_subplot(111)
+    gt.utilities._format_axes(ax)
+
+    min_HP_EFT_idx = GHE.HPEFT.index(min_HP_EFT) - 1
+    max_HP_EFT_idx = GHE.HPEFT.index(max_HP_EFT) - 1
+
+    hours = GHE.hybrid_load.hour[2:].tolist()
+    years = [hours[i] / 8760 for i in range(len(hours))]
+
+    ax.plot(years, GHE.HPEFT, 'k', zorder=1, label='Heat Pump Entering Fluid')
+
+    # ax.scatter(years[min_HP_EFT_idx], min_HP_EFT, color='b', marker='X', s=200,
+    #            label='Minimum Temperature')
+    # ax.scatter(years[max_HP_EFT_idx], max_HP_EFT, color='r', marker='P', s=200,
+    #            label='Maximum Temperature')
+
+    ax.set_xlabel('Time (Years)')
+    ax.set_ylabel('Temperature ($\degree$C)')
+
+    ax.hlines(y=35, xmin=-4, xmax=25, color='r', linestyle='--',
+              label='Max EFT Allowable')
+
+    ax.grid()
+    ax.set_axisbelow(True)
+
+    fig.legend(bbox_to_anchor=(.48, .90))
+
+    ax.set_xlim([-2, 22])
+
+    fig.tight_layout()
+
+    fig.savefig('hybrid_monthly_simulation_sized.png')
+
+    # Plot borefield
+    Nx = 12
+    Ny = 13
+    Bx = 5
+    By = 5
+    coordinates = ghedt.coordinates.rectangle(Nx, Ny, Bx, By)
+    fig, ax = ghedt.coordinates.visualize_coordinates(coordinates)
+
+    fig.savefig('12x13_visualized.png', bbox_inches='tight', pad_inches=0.1)
 
 
 if __name__ == '__main__':

@@ -158,6 +158,36 @@ def main():
     fig.savefig('polygonal_boundary_alternative_03.png',
                 bbox_inches='tight', pad_inches=0.1)
 
+    # Export plots for animation
+    folder = 'Calculated_Temperature_Fields/'
+    ghedt.utilities.create_if_not(folder)
+
+    outer_domain = [coordinates_domain_nested[0][0]]
+    for i in range(len(coordinates_domain_nested)):
+        outer_domain.append(coordinates_domain_nested[i][-1])
+
+    calculated_temperatures_nested = \
+        bisection_search.calculated_temperatures_nested[0]
+
+    count = 0
+    for key in calculated_temperatures_nested:
+        _coordinates = outer_domain[key]
+        fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
+            property_boundary, _coordinates, no_go=building_description)
+        name = str(count).zfill(2)
+        fig.savefig(folder + name + '.png', bbox_inches='tight', pad_inches=0.1)
+        count += 1
+
+    calculated_temperatures = bisection_search.calculated_temperatures
+    inner_domain = bisection_search.coordinates_domain
+    for key in calculated_temperatures:
+        _coordinates = inner_domain[key]
+        fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
+            property_boundary, _coordinates, no_go=building_description)
+        name = str(count).zfill(2)
+        fig.savefig(folder + name + '.png', bbox_inches='tight', pad_inches=0.1)
+        count += 1
+
 
 if __name__ == '__main__':
     main()

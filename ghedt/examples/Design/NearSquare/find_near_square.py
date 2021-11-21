@@ -117,6 +117,21 @@ def main():
 
     print('Sized height of boreholes: {} m'.format(ghe.bhe.b.H))
 
+    # Export the calculated fields in order
+    folder = 'Calculated_Temperature_Fields/'
+    ghedt.utilities.create_if_not(folder)
+
+    perimeter = [[0., 0.], [155., 0.], [155., 160.], [0., 160.]]
+
+    count = 0
+    for key in bisection_search.calculated_temperatures:
+        _coordinates = coordinates_domain[key]
+        fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
+            perimeter, _coordinates, no_go=None)
+        name = str(count).zfill(2)
+        fig.savefig(folder + name + '.png', bbox_inches='tight', pad_inches=0.1)
+        count += 1
+
 
 if __name__ == '__main__':
     main()

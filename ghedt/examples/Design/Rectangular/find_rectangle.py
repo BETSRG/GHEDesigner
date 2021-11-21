@@ -148,6 +148,19 @@ def main():
 
     fig.savefig('base_case.png', bbox_inches='tight', pad_inches=0.1)
 
+    # Export the calculated fields in order
+    folder = 'Calculated_Temperature_Fields/'
+    ghedt.utilities.create_if_not(folder)
+
+    count = 0
+    for key in bisection_search.calculated_temperatures:
+        _coordinates = coordinates_domain[key]
+        fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
+            perimeter, _coordinates, no_go=no_go)
+        name = str(count).zfill(2)
+        fig.savefig(folder + name + '.png', bbox_inches='tight', pad_inches=0.1)
+        count += 1
+
 
 if __name__ == '__main__':
     main()

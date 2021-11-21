@@ -124,3 +124,34 @@ def zoned_rectangle(Nx, Ny, Bx, By, Nix, Niy):
     zoned.extend(rectangle(Nix, Niy, Bix, Biy, origin=(Bix, Biy)))
 
     return zoned
+
+
+def visualize_coordinates(coordinates):
+    """
+    Visualize the (x,y) coordinates.
+    Returns
+    -------
+    **fig, ax**
+        Figure and axes information.
+    """
+    import matplotlib.pyplot as plt
+    plt.rc('font', size=9)
+    plt.rc('xtick', labelsize=9)
+    plt.rc('ytick', labelsize=9)
+    plt.rc('lines', lw=1.5, markersize=5.0)
+    plt.rc('savefig', dpi=500)
+    # fig, ax = plt.subplots(figsize=(3.5, 5))
+    import pygfunction as gt
+    fig = gt.utilities._initialize_figure()
+    ax = fig.add_subplot(111)
+
+    x, y = list(zip(*coordinates))
+
+    ax.scatter(x, y)
+
+    ax.set_xlabel('x (m)')
+    ax.set_ylabel('y (m)')
+
+    ax.set_aspect('equal')
+
+    return fig, ax
