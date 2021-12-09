@@ -122,6 +122,8 @@ def main():
         x_n = log_time[-1]
         y_n = gfunc_uniform_T.gFunc.tolist()[-1]
 
+        print('D: {}\tg: {}'.format(D, y_n))
+
         ax.annotate(str(int(D)),
                     xy=(x_n + 0.1, y_n - 0.1))
 
