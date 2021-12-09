@@ -69,9 +69,12 @@ def main():
 
         ax[i].legend()
         ax[i].set_ylim([-14, 12])
+        ax[i].set_yscale('symlog')
+        ax[i].grid()
+        ax[i].set_axisbelow(True)
 
     ax[2].set_xlabel('Volumetric flow rate per borehole (L/s)')
-    ax[1].set_ylabel(r'Error (%) = $\dfrac{pred-ref}{ref} * 100 \%$')
+    ax[1].set_ylabel(r'Height Error (%) = $\dfrac{pred-ref}{ref} * 100 \%$')
 
     fig.tight_layout()
 
