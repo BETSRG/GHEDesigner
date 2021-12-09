@@ -20,10 +20,10 @@ pwd;hostname;date
 # Activate local installlation of anaconda
 conda_activate=/home/jackcook/anaconda3/bin/activate
 conda_envs_dir=/home/jackcook/anaconda3/envs
-conda_env=GLHE
+conda_env=GHEDT
 
 source ${conda_activate} ${conda_env}
 
 # pygfunction-v2.0 needs python3 and some specific packages to python3.7
 
-python range_years_timing_cluster.py
+python range_years_timing_cluster.py ${SLURM_ARRAY_TASK_ID}
