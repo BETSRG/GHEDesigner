@@ -148,6 +148,11 @@ def main():
 
     fig.savefig('base_case.png', bbox_inches='tight', pad_inches=0.1)
 
+    fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
+        perimeter, [], no_go=no_go)
+
+    fig.savefig('land_description.png', bbox_inches='tight', pad_inches=0.1)
+
     # Export the calculated fields in order
     folder = 'Calculated_Temperature_Fields/'
     ghedt.utilities.create_if_not(folder)
