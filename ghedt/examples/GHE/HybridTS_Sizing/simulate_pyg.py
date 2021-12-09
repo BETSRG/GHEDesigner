@@ -57,19 +57,6 @@ def main():
     # Grout
     grout = PLAT.media.ThermalProperty(k_g, rhoCp_g)
 
-    # Number in the x and y
-    # ---------------------
-    # Read in g-functions from GLHEPro
-    file = '../../1DInterpolation/GLHEPRO_gFunctions_12x13.json'
-    r_data, _ = gfdb.fileio.read_file(file)
-
-    # Configure the database data for input to the goethermal GFunction object
-    geothermal_g_input = gfdb.Management. \
-        application.GFunction.configure_database_file_for_usage(r_data)
-
-    # Initialize the GFunction object
-    GFunction = gfdb.Management.application.GFunction(**geothermal_g_input)
-
     # Inputs related to fluid
     # -----------------------
     V_flow_system = 31.2  # System volumetric flow rate (L/s)
@@ -77,6 +64,21 @@ def main():
     percent = 0.  # Percentage of ethylene glycol added in
     # Fluid properties
     fluid = gt.media.Fluid(mixer=mixer, percent=percent)
+    m_flow_borehole = V_flow_system / 1000. * fluid.rho / (12. * 13.)
+
+    height_values = [24., 48., 96., 192., 384.]
+    r_b_values = [r_b] * len(height_values)
+    D_values = [2.] * len(height_values)
+
+    log_time = ghedt.utilities.Eskilson_log_times()
+
+    N = 12
+    M = 13
+    coordinates = ghedt.coordinates.rectangle(N, M, B, B)
+
+    GFunction = ghedt.gfunction.compute_live_g_function(
+        B, height_values, r_b_values, D_values, m_flow_borehole, bhe_object,
+        log_time, coordinates, fluid, pipe, grout, soil)
 
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)

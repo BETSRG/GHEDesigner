@@ -1,6 +1,6 @@
 # Jack C. Cook
-# Wednesday, October 13, 2021
-
+# Saturday, October 9, 2021
+import copy
 
 import ghedt.PLAT as PLAT
 import matplotlib.pyplot as plt
@@ -8,7 +8,6 @@ import pandas as pd
 import ghedt.PLAT.pygfunction as gt
 import gFunctionDatabase as gfdb
 import ghedt
-from time import time as clock
 
 
 def main():
@@ -57,19 +56,6 @@ def main():
     # Grout
     grout = PLAT.media.ThermalProperty(k_g, rhoCp_g)
 
-    # Number in the x and y
-    # ---------------------
-    # Read in g-functions from GLHEPro
-    file = '../../1DInterpolation/GLHEPRO_gFunctions_12x13.json'
-    r_data, _ = gfdb.fileio.read_file(file)
-
-    # Configure the database data for input to the goethermal GFunction object
-    geothermal_g_input = gfdb.Management. \
-        application.GFunction.configure_database_file_for_usage(r_data)
-
-    # Initialize the GFunction object
-    GFunction = gfdb.Management.application.GFunction(**geothermal_g_input)
-
     # Inputs related to fluid
     # -----------------------
     V_flow_system = 31.2  # System volumetric flow rate (L/s)
@@ -77,6 +63,21 @@ def main():
     percent = 0.  # Percentage of ethylene glycol added in
     # Fluid properties
     fluid = gt.media.Fluid(mixer=mixer, percent=percent)
+    m_flow_borehole = V_flow_system / 1000. * fluid.rho / (12. * 13.)
+
+    height_values = [24., 48., 96., 192., 384.]
+    r_b_values = [r_b] * len(height_values)
+    D_values = [2.] * len(height_values)
+
+    log_time = ghedt.utilities.Eskilson_log_times()
+
+    N = 12
+    M = 13
+    coordinates = ghedt.coordinates.rectangle(N, M, B, B)
+
+    GFunction = ghedt.gfunction.compute_live_g_function(
+        B, height_values, r_b_values, D_values, m_flow_borehole, bhe_object,
+        log_time, coordinates, fluid, pipe, grout, soil)
 
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
@@ -91,13 +92,12 @@ def main():
     max_EFT_allowable = 35  # degrees Celsius
     min_EFT_allowable = 5  # degrees Celsius
     # Maximum and minimum allowable heights
-    max_Height = 150  # in meters
+    max_Height = 100  # in meters
     min_Height = 60  # in meters
     sim_params = PLAT.media.SimulationParameters(
         start_month, end_month, max_EFT_allowable, min_EFT_allowable,
         max_Height, min_Height)
 
-    # Constant hourly rejection ground loads
     # Process loads from file
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
@@ -109,122 +109,88 @@ def main():
 
     # --------------------------------------------------------------------------
 
-    # Initialize Hourly GLHE object
+    # Ground heat exchanger objects
+    # -----------
+    # Initialize a GHE
     GHE = ghedt.ground_heat_exchangers.GHE(
         V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
         GFunction, sim_params, hourly_extraction_ground_loads)
 
-    max_HP_EFT, min_HP_EFT = GHE.simulate(method='hybrid')
+    # --------------------------------------------------------------------------
 
-    print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
+    # Range through height values and return the T_excess value
+    height_values = [48. + float(12 * i) for i in range(0, 14)]
 
-    # Plot the simulation results
-    # ---------------------------
+    Excess_temperatures = {'Hourly': [], 'Hybrid': []}
+
+    min_HP_EFTs = []
+    max_HP_EFTs = []
+
+    for height in height_values:
+        print(height)
+        GHE.bhe.b.H = height
+        max_HP_EFT, min_HP_EFT = GHE.simulate()
+        min_HP_EFTs.append(min_HP_EFT)
+        max_HP_EFTs.append(max_HP_EFT)
+        T_excess_ = GHE.cost(max_HP_EFT, min_HP_EFT)
+        Excess_temperatures['Hybrid'].append(T_excess_)
+
+    # Plot excess values
+    # ------------------
     fig = gt.gfunction._initialize_figure()
     ax = fig.add_subplot(111)
     gt.utilities._format_axes(ax)
 
-    min_HP_EFT_idx = GHE.HPEFT.index(min_HP_EFT) - 1
-    max_HP_EFT_idx = GHE.HPEFT.index(max_HP_EFT) - 1
+    from scipy import interpolate
+    f = interpolate.interp1d(Excess_temperatures['Hybrid'], height_values)
+    print(f(0))
+    ax.vlines(x=f(0), ymin=-10, ymax=0, color='k', zorder=0, linestyles='--')
+    ax.scatter(f(0), 0, label='Root', color='r', marker='x', s=50, zorder=2)
 
-    hours = GHE.hybrid_load.hour[2:].tolist()
-    print('Number of points in load: {}'.format(len(hours)))
-    years = [hours[i] / 8760 for i in range(len(hours))]
+    ax.plot(height_values, Excess_temperatures['Hybrid'],
+            marker='s', ls='--', label='Temperature', zorder=1)
 
-    ax.plot(years, GHE.HPEFT, 'k', zorder=1)
-
-    ax.scatter(years[min_HP_EFT_idx], min_HP_EFT, color='b', marker='X', s=200,
-               label='Minimum Temperature')
-    ax.scatter(years[max_HP_EFT_idx], max_HP_EFT, color='r', marker='P', s=200,
-               label='Maximum Temperature')
-
-    ax.set_xlabel('Time (Years)')
-    ax.set_ylabel('Heat pump entering fluid temperature ($\degree$C)')
+    ax.set_xlabel('Borehole height (m)')
+    ax.set_ylabel('Excess fluid temperature ($\degree$C)')
 
     ax.grid()
     ax.set_axisbelow(True)
 
-    fig.legend(bbox_to_anchor=(.5, .95))
+    ax.set_ylim([-7, 20])
+
+    fig.legend()
 
     fig.tight_layout()
 
-    fig.savefig('hybrid_monthly_simulation.png')
+    fig.savefig('range_excess.png')
+    plt.close(fig)
 
-    # Plot the hourly load profile
-    # ---------------------
-    fig = GHE.hybrid_load.visualize_hourly_heat_extraction()
-
-    fig.savefig('Atlanta_Office_Building_extraction_loads.png')
-
-    # Plot the hybrid load representation
-    # -----------------------------------
-    fig = gt.gfunction._initialize_figure()
-    ax = fig.add_subplot(111)
-
-    ax.plot(years, GHE.hybrid_load.load[2:])
-
-    ax.set_xlabel('Time (years)')
-    ax.set_ylabel('Ground rejection load (kW)')
-
-    fig.tight_layout()
-
-    fig.savefig('monthly_load_representation.png')
-
-    # ----------------------------------------------------------
-    # Now simulate with a sized height
-    GHE.size(method='hybrid')
-
-    print(GHE.bhe.b.H)
-
-    max_HP_EFT, min_HP_EFT = GHE.simulate(method='hybrid')
-
-    print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
-
-    # Plot the simulation results
-    # ---------------------------
-    fig = gt.gfunction._initialize_figure()
+    fig = gt.utilities._initialize_figure()
     ax = fig.add_subplot(111)
     gt.utilities._format_axes(ax)
 
-    min_HP_EFT_idx = GHE.HPEFT.index(min_HP_EFT) - 1
-    max_HP_EFT_idx = GHE.HPEFT.index(max_HP_EFT) - 1
+    ax.scatter(height_values, min_HP_EFTs, color='b', label='min(EFT$_{HP}$)')
+    ax.scatter(height_values, max_HP_EFTs, color='r', label='max(EFT$_{HP}$',
+               zorder=2)
 
-    hours = GHE.hybrid_load.hour[2:].tolist()
-    years = [hours[i] / 8760 for i in range(len(hours))]
+    ax.set_ylabel('Heat Pump Entering fluid temperature ($\degree$C)')
+    ax.set_xlabel('Borehole height (m)')
 
-    ax.plot(years, GHE.HPEFT, 'k', zorder=1, label='Heat Pump Entering Fluid')
-
-    # ax.scatter(years[min_HP_EFT_idx], min_HP_EFT, color='b', marker='X', s=200,
-    #            label='Minimum Temperature')
-    # ax.scatter(years[max_HP_EFT_idx], max_HP_EFT, color='r', marker='P', s=200,
-    #            label='Maximum Temperature')
-
-    ax.set_xlabel('Time (Years)')
-    ax.set_ylabel('Temperature ($\degree$C)')
-
-    ax.hlines(y=35, xmin=-4, xmax=25, color='r', linestyle='--',
-              label='Max EFT Allowable')
+    ax.hlines(y=35, xmin=0, xmax=210, color='k', linestyle='--', zorder=1)
+    ax.hlines(y=5, xmin=0, xmax=210, color='k', linestyle='--')
 
     ax.grid()
     ax.set_axisbelow(True)
 
-    fig.legend(bbox_to_anchor=(.48, .90))
-
-    ax.set_xlim([-2, 22])
+    fig.legend()
 
     fig.tight_layout()
 
-    fig.savefig('hybrid_monthly_simulation_sized.png')
+    ax.set_xlim([50, 210])
 
-    # Plot borefield
-    Nx = 12
-    Ny = 13
-    Bx = 5
-    By = 5
-    coordinates = ghedt.coordinates.rectangle(Nx, Ny, Bx, By)
-    fig, ax = ghedt.coordinates.visualize_coordinates(coordinates)
+    fig.savefig('min_and_max_HPEFTs.png')
 
-    fig.savefig('12x13_visualized.png', bbox_inches='tight', pad_inches=0.1)
+    # Now Size for the height
 
 
 if __name__ == '__main__':

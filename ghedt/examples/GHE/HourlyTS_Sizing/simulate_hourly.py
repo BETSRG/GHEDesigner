@@ -134,17 +134,18 @@ def main():
 
     heat_pump_EFT = GHE.HPEFT
     hours = range(1, len(heat_pump_EFT) + 1)
+    years = [hours[i] / 8760 for i in range(len(hours))]
 
     min_HP_EFT_idx = GHE.HPEFT.index(min_HP_EFT) - 1
     max_HP_EFT_idx = GHE.HPEFT.index(max_HP_EFT) - 1
 
-    ax.plot(hours, heat_pump_EFT, 'k')
-    ax.scatter(min_HP_EFT_idx, min_HP_EFT, color='b', marker='X', s=200,
+    ax.plot(years, heat_pump_EFT, 'k')
+    ax.scatter(years[min_HP_EFT_idx], min_HP_EFT, color='b', marker='X', s=200,
                label='Minimum Temperature')
-    ax.scatter(max_HP_EFT_idx, max_HP_EFT, color='r', marker='P', s=200,
+    ax.scatter(years[max_HP_EFT_idx], max_HP_EFT, color='r', marker='P', s=200,
                label='Maximum Temperature')
 
-    ax.set_xlabel('Hour number')
+    ax.set_xlabel('Time (years)')
     ax.set_ylabel('Heat pump entering fluid temperature ($\degree$C)')
 
     ax.grid()

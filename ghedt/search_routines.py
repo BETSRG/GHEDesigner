@@ -218,12 +218,16 @@ class Bisection2D(Bisection1D):
 
         selection_key, selected_coordinates = self.search()
 
-        self.calculated_temperatures_nested.append(self.calculated_temperatures)
+        self.calculated_temperatures_nested.append(
+            copy.deepcopy(self.calculated_temperatures))
 
         # We tacked on one borehole to the beginning, so we need to subtract 1
         # on the index
         inner_domain = coordinates_domain_nested[selection_key-1]
         self.coordinates_domain = inner_domain
+
+        # Reset calculated temperatures
+        self.calculated_temperatures = {}
 
         self.selection_key, self.selected_coordinates = self.search()
 

@@ -344,7 +344,7 @@ class GFunction:
                             title='B/H'.rjust(5), bbox_to_anchor=(1, 1.0))
         fig.gca().add_artist(legend)
 
-        ax.set_ylabel('g')
+        ax.set_ylabel('g-function')
         ax.set_xlabel('ln(t/t$_s$)')
         ax.grid()
         ax.set_axisbelow(True)
@@ -392,10 +392,13 @@ class GFunction:
 
         perimeter = perimeter + [perimeter[0]]
 
-        x, y = list(zip(*coordinates))
+        if len(coordinates) > 0:
 
-        ax.scatter(x, y)
+            x, y = list(zip(*coordinates))
+
+            ax.scatter(x, y)
         _x, _y = list(zip(*perimeter))
+
         ax.plot(_x, _y, 'g')
         if no_go is not None:
             no_go = no_go + [no_go[0]]

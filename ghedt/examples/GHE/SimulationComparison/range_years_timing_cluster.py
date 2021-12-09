@@ -1,19 +1,23 @@
 # Jack C. Cook
-# Wednesday, October 27, 2021
+# Sunday, November 18, 2021
+import copy
+import sys
 
-import ghedt
 import ghedt.PLAT as PLAT
 import ghedt.PLAT.pygfunction as gt
-import pandas as pd
+import gFunctionDatabase as gfdb
+import ghedt
 from time import time as clock
 
 
-def main():
+def main(arg):
+    # --------------------------------------------------------------------------
+
     # Borehole dimensions
     # -------------------
-    H = 96.  # Borehole length (m)
+    H = 100.  # Borehole length (m)
     D = 2.  # Borehole buried depth (m)
-    r_b = 0.075  # Borehole radius]
+    r_b = 150. / 1000. / 2.  # Borehole radius]
     B = 5.  # Borehole spacing (m)
 
     # Pipe dimensions
@@ -52,15 +56,39 @@ def main():
     # Grout
     grout = PLAT.media.ThermalProperty(k_g, rhoCp_g)
 
+    # Number in the x and y
+    # ---------------------
+    N = 12
+    M = 13
+    configuration = 'rectangle'
+    nbh = N * M
+    total_H = nbh * H
+
+    # GFunction
+    # ---------
+    # Access the database for specified configuration
+    r = gfdb.Management.retrieval.Retrieve(configuration)
+    # There is just one value returned in the unimodal domain for rectangles
+    r_unimodal = r.retrieve(N, M)
+    key = list(r_unimodal.keys())[0]
+    print('The key value: {}'.format(key))
+    r_data = r_unimodal[key]
+
+    # Configure the database data for input to the goethermal GFunction object
+    geothermal_g_input = gfdb.Management. \
+        application.GFunction.configure_database_file_for_usage(r_data)
+
+    # Initialize the GFunction object
+    GFunction = gfdb.Management.application.GFunction(**geothermal_g_input)
+
     # Inputs related to fluid
     # -----------------------
-    # Fluid properties
+    V_flow_system = 31.2  # System volumetric flow rate (L/s)
     mixer = 'MEG'  # Ethylene glycol mixed with water
     percent = 0.  # Percentage of ethylene glycol added in
-    fluid = gt.media.Fluid(mixer=mixer, percent=percent)
 
     # Fluid properties
-    V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
+    fluid = gt.media.Fluid(mixer=mixer, percent=percent)
 
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
@@ -69,69 +97,50 @@ def main():
     # --------------------------------
     # Simulation start month and end month
     start_month = 1
-    n_years = 20
+    n_years = int(arg[1])
     end_month = n_years * 12
     # Maximum and minimum allowable fluid temperatures
     max_EFT_allowable = 35  # degrees Celsius
     min_EFT_allowable = 5  # degrees Celsius
     # Maximum and minimum allowable heights
-    max_Height = 135.  # in meters
+    max_Height = 100  # in meters
     min_Height = 60  # in meters
     sim_params = PLAT.media.SimulationParameters(
         start_month, end_month, max_EFT_allowable, min_EFT_allowable,
         max_Height, min_Height)
 
-    # Process loads from file
-    # -----------------------
-    # read in the csv file and convert the loads to a list of length 8760
-    hourly_extraction: dict = \
-        pd.read_csv('../../GHE/Atlanta_Office_Building_Loads.csv').to_dict('list')
-    # Take only the first column in the dictionary
-    hourly_extraction_ground_loads: list = \
-        hourly_extraction[list(hourly_extraction.keys())[0]]
+    # Create synthetic load profile
+    _, hourly_extraction_ground_loads = \
+        PLAT.ground_loads.create_synthetic_doubling_load_profile()
+
+    hourly_extraction_ground_loads = [-1 * h for _, h in
+                                      enumerate(hourly_extraction_ground_loads)]
+
+    # Initialize GHE object
+    GHE = ghedt.ground_heat_exchangers.GHE(
+        V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
+        GFunction, sim_params, hourly_extraction_ground_loads)
 
     # --------------------------------------------------------------------------
-
-    # Perform field selection using bisection search between a 1x1 and 32x32
-    coordinates_domain = ghedt.domains.square_and_near_square(1, 32, B)
+    # Simulation start month and end month
 
     tic = clock()
-    bisection_search = ghedt.search_routines.Bisection1D(
-        coordinates_domain, V_flow_borehole, borehole, bhe_object,
-        fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
-        disp=False)
+    max_HP_EFT, min_HP_EFT = GHE.simulate(method='hourly')
     toc = clock()
-    print('Time to perform bisection search: {} seconds'.format(toc - tic))
+    total = toc - tic
+    hourly_sim_time = copy.deepcopy(total)
 
-    print('Number of boreholes: {}'.
-          format(len(bisection_search.selected_coordinates)))
-
-    # Perform sizing in between the min and max bounds
     tic = clock()
-    ghe = bisection_search.ghe
-    ghe.compute_g_functions()
-
-    ghe.size(method='hybrid')
+    max_HP_EFT, min_HP_EFT = GHE.simulate(method='hybrid')
     toc = clock()
-    print('Time to compute g-functions and size: {} seconds'.format(toc-tic))
+    total = toc - tic
+    hybrid_sim_time = copy.deepcopy(total)
 
-    print('Sized height of boreholes: {} m'.format(ghe.bhe.b.H))
+    d_out = {'hourly_time': hourly_sim_time,
+             'hybrid_time': hybrid_sim_time}
 
-    # Export the calculated fields in order
-    folder = 'Calculated_Temperature_Fields/'
-    ghedt.utilities.create_if_not(folder)
-
-    perimeter = [[0., 0.], [155., 0.], [155., 160.], [0., 160.]]
-
-    count = 0
-    for key in bisection_search.calculated_temperatures:
-        _coordinates = coordinates_domain[key]
-        fig, ax = ghedt.gfunction.GFunction.visualize_area_and_constraints(
-            perimeter, _coordinates, no_go=None)
-        name = str(count).zfill(2)
-        fig.savefig(folder + name + '.png', bbox_inches='tight', pad_inches=0.1)
-        count += 1
+    ghedt.utilities.js_dump(str(n_years).zfill(2), d_out)
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
