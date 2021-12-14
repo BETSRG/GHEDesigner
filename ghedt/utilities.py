@@ -223,3 +223,13 @@ def create_if_not(directory):
     import os
     if not os.path.exists(directory):
         os.makedirs(directory)
+
+
+def make_rectangle_perimeter(length_x, length_y, origin=(0, 0)):
+    origin_x = origin[0]
+    origin_y = origin[1]
+    rectangle_perimeter = \
+        [[origin_x, origin_y], [origin_x + length_x, origin_y],
+         [origin_x + length_x, origin_y + length_y],
+         [origin_x, origin_y + length_y]]
+    return rectangle_perimeter
