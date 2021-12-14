@@ -5,6 +5,7 @@ import ghedt as dt
 import ghedt.PLAT as PLAT
 import ghedt.PLAT.pygfunction as gt
 import pandas as pd
+from time import time as clock
 
 
 def main():
@@ -89,14 +90,36 @@ def main():
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
 
+    # Perform field selection using bisection search between a 1x1 and 32x32
+    coordinates_domain = dt.domains.square_and_near_square(1, 32, B)
+
     # Geometric constraints for the `near-square` routine
     geometric_constraints = dt.media.GeometricConstraints(
         B_max_x=B, unconstrained=True)
 
     design = dt.design.Design(
         V_flow_borehole, borehole, bhe_object, fluid, pipe, grout, soil,
-        sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square', flow='borehole')
+        sim_params, geometric_constraints, coordinates_domain,
+        hourly_extraction_ground_loads, routine='near-square', flow='borehole')
+
+    tic = clock()
+    bisection_search = design.find_design()
+    toc = clock()
+    print('Time to perform bisection search: {} seconds'.format(toc - tic))
+
+    print('Number of boreholes: {}'.
+          format(len(bisection_search.selected_coordinates)))
+
+    # Perform sizing in between the min and max bounds
+    tic = clock()
+    ghe = bisection_search.ghe
+    ghe.compute_g_functions()
+
+    ghe.size(method='hybrid')
+    toc = clock()
+    print('Time to compute g-functions and size: {} seconds'.format(toc - tic))
+
+    print('Sized height of boreholes: {} m'.format(ghe.bhe.b.H))
 
 
 if __name__ == '__main__':

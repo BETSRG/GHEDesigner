@@ -4,7 +4,7 @@
 
 ### Enhancements
 
-* [Issue 12](https://github.com/j-c-cook/ghedt/issues/12) - The `GFunction` object can be passed into the `GHE` object with only one g-function calculated, as long as the `B/H` value being "interpolated" for is the same one that it was computed for.
+* [Issue 12](https://github.com/j-c-cook/ghedt/issues/12) - The `GFunction` object can be passed into the `GHE` object with only one g-function calculated, as long as the `B/H` value being "interpolated" for is the same one that it was computed for. 
 
 ### Fixes
 
@@ -27,7 +27,9 @@
 * [Issue 32](https://github.com/j-c-cook/ghedt/issues/32) - Adds a `BisectionZD` search that locates an outer domain, and then performs a successive search in the negative excess direction. The search ends when the total drilling depth stops decreasing, or reaches a max_iter of 7.
 * [Issue 34](https://github.com/j-c-cook/ghedt/issues/34) - Adds a `feature_recognition` module that can determine if boreholes are inside of a no drill zone defined by a polygon. This enables a bi-rectangular search with no drill zones.
 * [Issue 29](https://github.com/j-c-cook/ghedt/issues/29) - Adds the ability to determine the largest rectangle of a property boundary that is defined as a polygon. 
-* [Issue 35](https://github.com/j-c-cook/ghedt/issues/35) - Adds a bi-rectangular search routine with the ability to specify outer polygonal boundaries with no drilling zones. 
+* [Issue 35](https://github.com/j-c-cook/ghedt/issues/35) - Adds a bi-rectangular search routine with the ability to specify outer polygonal boundaries with no drilling zones.
+* [Issue 38](https://github.com/j-c-cook/ghedt/issues/38) - Adds common `design` interface. The following pull requests enhance the initial interface:
+  * [PR 42](https://github.com/j-c-cook/ghedt/pull/42) - The `Design.py` module is created, a `design` object is created, and functionality for the `near-square` routine is added.
 
 ### Tests and CI
 
