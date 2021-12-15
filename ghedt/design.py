@@ -66,3 +66,50 @@ class Design:
                              '`near-square`.')
 
         return bisection_search
+
+    def create_input_file(self, file_name='ghedt_input'):
+        # Track the version to keep up to date with compatibility. Only change
+        # this version number when the previous one is incompatible.
+        version = 0.1
+        import pickle
+
+        file_handler = open(file_name + '.obj', 'wb')
+        pickle.dump(self, file_handler)
+        file_handler.close()
+
+        return
+
+
+def read_input_file(path_to_file):
+    import pickle
+    file = open(path_to_file, 'rb')
+    object_file = pickle.load(file)
+    file.close()
+
+    return object_file
+
+
+def oak_ridge_export(bisection_search, file_name='ghedt_output'):
+    # Dictionary for export
+    d = {}
+    d['number_of_boreholes'] = len(bisection_search.selected_coordinates)
+    d['g_function_pairs'] = []
+
+    ghe = bisection_search.ghe
+    H = ghe.bhe.b.H
+    B_over_H = ghe.B_spacing / H
+    g = ghe.grab_g_function(B_over_H)
+
+    lntts = []
+    g_values = []
+    for i in range(len(g.y)):
+        lntts.append(g.x[i].tolist())
+        g_values.append(g.y[i].tolist())
+
+    for i in range(len(lntts)):
+        d['g_function_pairs'].append({'ln_tts': lntts[i],
+                                      'g_value': g_values[i]})
+
+    dt.utilities.js_dump(file_name, d, indent=4)
+
+    return
