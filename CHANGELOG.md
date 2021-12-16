@@ -30,6 +30,7 @@
 * [Issue 35](https://github.com/j-c-cook/ghedt/issues/35) - Adds a bi-rectangular search routine with the ability to specify outer polygonal boundaries with no drilling zones.
 * [Issue 38](https://github.com/j-c-cook/ghedt/issues/38) - Adds common `design` interface. The following pull requests enhance the initial interface:
   * [PR 42](https://github.com/j-c-cook/ghedt/pull/42) - The `Design.py` module is created, a `design` object is created, and functionality for the `near-square` routine is added.
+* [Issue 39](https://github.com/j-c-cook/ghedt/issues/39) - Adds the ability to save a `design` configuration file, and then design based on the file. 
 
 ### Tests and CI
 
