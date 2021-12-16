@@ -3,7 +3,7 @@
 import copy
 import warnings
 
-import gFunctionDatabase.Management.application
+# import gFunctionDatabase.Management.application
 import scipy.interpolate
 import scipy.optimize
 import ghedt.PLAT as PLAT
@@ -20,7 +20,7 @@ class BaseGHE:
                  fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
                  pipe: PLAT.media.Pipe, grout: PLAT.media.ThermalProperty,
                  soil: PLAT.media.Soil,
-                 GFunction: gFunctionDatabase.Management.application.GFunction,
+                 GFunction: ghedt.gfunction.GFunction,
                  sim_params: PLAT.media.SimulationParameters,
                  hourly_extraction_ground_loads: list):
 
@@ -211,7 +211,7 @@ class GHE(BaseGHE):
                  fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
                  pipe: PLAT.media.Pipe, grout: PLAT.media.ThermalProperty,
                  soil: PLAT.media.Soil,
-                 GFunction: gFunctionDatabase.Management.application.GFunction,
+                 GFunction: ghedt.gfunction.GFunction,
                  sim_params: PLAT.media.SimulationParameters,
                  hourly_extraction_ground_loads: list
                  ):
