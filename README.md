@@ -30,3 +30,7 @@ Install GHEDT to the environment.
 cd ghedt/
 pip install .
 ```
+or if the package is zipped. 
+```angular2html
+pip install ghedt.zip
+```
