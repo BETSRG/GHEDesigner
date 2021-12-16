@@ -11,7 +11,7 @@ borehole field layout based on a target depth.
 ## Usage
 Clone the repository.
 ```angular2html
-git clone https://github.com/j-c-cook/GLHEDT
+git clone https://github.com/j-c-cook/ghedt
 ```
 Recursively update the submodules.
 ```angular2html
@@ -27,5 +27,6 @@ conda activate ENV
 ```
 Install GHEDT to the environment.
 ```angular2html
-pip install GHEDT.zip
+cd ghedt/
+pip install .
 ```
