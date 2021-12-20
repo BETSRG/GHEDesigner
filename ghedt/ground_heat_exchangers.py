@@ -6,8 +6,8 @@ import warnings
 # import gFunctionDatabase.Management.application
 import scipy.interpolate
 import scipy.optimize
-import ghedt.PLAT as PLAT
-import ghedt.PLAT.pygfunction as gt
+import ghedt.pygfunction as gt
+import ghedt.peak_load_analysis_tool as plat
 import ghedt
 
 import numpy as np
@@ -16,13 +16,12 @@ import numpy as np
 class BaseGHE:
     def __init__(
             self, V_flow_system: float, B_spacing: float,
-                 bhe_function: PLAT.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
-                 pipe: PLAT.media.Pipe, grout: PLAT.media.ThermalProperty,
-                 soil: PLAT.media.Soil,
-                 GFunction: ghedt.gfunction.GFunction,
-                 sim_params: PLAT.media.SimulationParameters,
-                 hourly_extraction_ground_loads: list):
+            bhe_function: plat.borehole_heat_exchangers,
+            fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
+            pipe: plat.media.Pipe, grout: plat.media.ThermalProperty,
+            soil: plat.media.Soil, GFunction: ghedt.gfunction.GFunction,
+            sim_params: plat.media.SimulationParameters,
+            hourly_extraction_ground_loads: list):
 
         self.V_flow_system = V_flow_system
         self.B_spacing = B_spacing
@@ -35,11 +34,11 @@ class BaseGHE:
         self.bhe = bhe_function(
             m_flow_borehole, fluid, borehole, pipe, grout, soil)
         # Equivalent borehole Heat Exchanger
-        self.bhe_eq = PLAT.equivalance.compute_equivalent(self.bhe)
+        self.bhe_eq = plat.equivalance.compute_equivalent(self.bhe)
 
         # Radial numerical short time step
         self.radial_numerical = \
-            PLAT.radial_numerical_borehole.RadialNumericalBH(self.bhe_eq)
+            plat.radial_numerical_borehole.RadialNumericalBH(self.bhe_eq)
         self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
 
         # GFunction object
@@ -207,12 +206,12 @@ class BaseGHE:
 
 class GHE(BaseGHE):
     def __init__(self, V_flow_system: float, B_spacing: float,
-                 bhe_object: PLAT.borehole_heat_exchangers,
+                 bhe_object: plat.borehole_heat_exchangers,
                  fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
-                 pipe: PLAT.media.Pipe, grout: PLAT.media.ThermalProperty,
-                 soil: PLAT.media.Soil,
+                 pipe: plat.media.Pipe, grout: plat.media.ThermalProperty,
+                 soil: plat.media.Soil,
                  GFunction: ghedt.gfunction.GFunction,
-                 sim_params: PLAT.media.SimulationParameters,
+                 sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list
                  ):
         BaseGHE.__init__(
@@ -222,10 +221,10 @@ class GHE(BaseGHE):
         # Split the extraction loads into heating and cooling for input to the
         # HybridLoad object
         hourly_rejection_loads, hourly_extraction_loads = \
-            PLAT.ground_loads.HybridLoad.split_heat_and_cool(
+            plat.ground_loads.HybridLoad.split_heat_and_cool(
                 self.hourly_extraction_ground_loads)
 
-        hybrid_load = PLAT.ground_loads.HybridLoad(
+        hybrid_load = plat.ground_loads.HybridLoad(
             hourly_rejection_loads, hourly_extraction_loads, self.bhe_eq,
             self.radial_numerical, sim_params)
 
@@ -291,7 +290,7 @@ class GHE(BaseGHE):
         self.bhe.update_thermal_resistance()
 
         # Solve for equivalent single U-tube
-        self.bhe_eq = PLAT.equivalance.compute_equivalent(self.bhe)
+        self.bhe_eq = plat.equivalance.compute_equivalent(self.bhe)
         # Update short time step object with equivalent single u-tube
         self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
         # Combine the short and long-term g-functions. The long term g-function
@@ -338,7 +337,7 @@ class GHE(BaseGHE):
         self.bhe.b.H = \
             (self.sim_params.max_Height + self.sim_params.min_Height) / 2.
         # bhe.b.H is updated during sizing
-        PLAT.equivalance.solve_root(
+        plat.equivalance.solve_root(
             self.bhe.b.H, local_objective, lower=self.sim_params.min_Height,
             upper=self.sim_params.max_Height, xtol=1.0e-6, rtol=1.0e-6,
             maxiter=50)

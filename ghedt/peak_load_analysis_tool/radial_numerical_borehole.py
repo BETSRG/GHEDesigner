@@ -3,7 +3,7 @@
 
 # Note: This was originally pulled out of Matt Mitchell's GLHE repository,
 # https://github.com/mitchute/GLHE. The file has been heavily edited. Namely,
-# this object takes in a borehole heat exchanger object from PLAT. This code
+# this object takes in a borehole heat exchanger object from plat. This code
 # has also been vectorized, which resulted in a 20x speed increase. It is likely
 # that Mitchell did not have the code vectorized using numpy because the
 # implementation was going to be placed in C++. Upon vectorizing the code, the
@@ -35,7 +35,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import PLAT.borehole_heat_exchangers
+import ghedt.peak_load_analysis_tool as plat
 import numpy as np
 from math import log, sqrt, exp
 from math import pi
@@ -71,7 +71,7 @@ class RadialNumericalBH(object):
     """
 
     def __init__(
-            self, single_u_tube: PLAT.borehole_heat_exchangers.SingleUTube,
+            self, single_u_tube: plat.borehole_heat_exchangers.SingleUTube,
             ground_init_temp: float = 20., dtype: np.dtype = np.double):
         self.single_u_tube = single_u_tube
         self.dtype = dtype

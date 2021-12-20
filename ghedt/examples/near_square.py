@@ -2,8 +2,8 @@
 # Friday, December 10, 2021
 
 import ghedt as dt
-import ghedt.PLAT as PLAT
-import ghedt.PLAT.pygfunction as gt
+import ghedt.pygfunction as gt
+import ghedt.peak_load_analysis_tool as plat
 import pandas as pd
 from time import time as clock
 
@@ -26,9 +26,9 @@ def main():
     # Pipe positions
     # --------------
     # Single U-tube [(x_in, y_in), (x_out, y_out)]
-    pos = PLAT.media.Pipe.place_pipes(s, r_out, 1)
+    pos = plat.media.Pipe.place_pipes(s, r_out, 1)
     # Single U-tube BHE object
-    bhe_object = PLAT.borehole_heat_exchangers.SingleUTube
+    bhe_object = plat.borehole_heat_exchangers.SingleUTube
 
     # Thermal conductivities
     # ----------------------
@@ -45,12 +45,12 @@ def main():
     # Thermal properties
     # ------------------
     # Pipe
-    pipe = PLAT.media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe = plat.media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
     # Soil
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-    soil = PLAT.media.Soil(k_s, rhoCp_s, ugt)
+    soil = plat.media.Soil(k_s, rhoCp_s, ugt)
     # Grout
-    grout = PLAT.media.ThermalProperty(k_g, rhoCp_g)
+    grout = plat.media.ThermalProperty(k_g, rhoCp_g)
 
     # Inputs related to fluid
     # -----------------------
@@ -77,7 +77,7 @@ def main():
     # Maximum and minimum allowable heights
     max_Height = 135.  # in meters
     min_Height = 60  # in meters
-    sim_params = PLAT.media.SimulationParameters(
+    sim_params = plat.media.SimulationParameters(
         start_month, end_month, max_EFT_allowable, min_EFT_allowable,
         max_Height, min_Height)
 

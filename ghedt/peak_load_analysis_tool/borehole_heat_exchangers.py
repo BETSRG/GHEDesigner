@@ -1,12 +1,10 @@
 # Jack C. Cook
 # Friday, August 20, 2021
 
-import pygfunction as gt
-import PLAT
+import ghedt.pygfunction as gt
+import ghedt.peak_load_analysis_tool as plat
 import numpy as np
 from numpy import pi
-
-import pygfunction.media
 
 
 class BasePipe(object):
@@ -115,10 +113,10 @@ class BasePipe(object):
 
 
 class SingleUTube(BasePipe, gt.pipes.SingleUTube):
-    def __init__(self, m_flow_borehole: float, fluid: pygfunction.media.Fluid,
-                 borehole: pygfunction.boreholes.Borehole,
-                 pipe: PLAT.media.Pipe, grout: PLAT.media.ThermalProperty,
-                 soil: PLAT.media.Soil):
+    def __init__(self, m_flow_borehole: float,
+                 fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
+                 pipe: plat.media.Pipe, grout: plat.media.ThermalProperty,
+                 soil: plat.media.Soil):
         # Initialize base pipe class
         BasePipe.__init__(
             self, m_flow_borehole, fluid, borehole, soil, grout, pipe)
@@ -186,10 +184,10 @@ class SingleUTube(BasePipe, gt.pipes.SingleUTube):
 
 
 class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
-    def __init__(self, m_flow_borehole: float, fluid: pygfunction.media.Fluid,
-                 borehole: pygfunction.boreholes.Borehole,
-                 pipe: PLAT.media.Pipe, grout: PLAT.media.ThermalProperty,
-                 soil: PLAT.media.Soil, config='parallel'):
+    def __init__(self, m_flow_borehole: float, fluid: gt.media.Fluid,
+                 borehole: gt.boreholes.Borehole,
+                 pipe: plat.media.Pipe, grout: plat.media.ThermalProperty,
+                 soil: plat.media.Soil, config='parallel'):
         # Initialize base pipe class
         BasePipe.__init__(
             self, m_flow_borehole, fluid, borehole, soil, grout, pipe,
@@ -390,10 +388,10 @@ class CoaxialBase(object):
 
 
 class CoaxialPipe(CoaxialBase, gt.pipes.Coaxial, BasePipe):
-    def __init__(self, m_flow_borehole: float, fluid: pygfunction.media.Fluid,
-                 borehole: pygfunction.boreholes.Borehole,
-                 pipe: PLAT.media.Pipe, grout: PLAT.media.ThermalProperty,
-                 soil: PLAT.media.Soil, config=None):
+    def __init__(self, m_flow_borehole: float, fluid: gt.media.Fluid,
+                 borehole: gt.boreholes.Borehole,
+                 pipe: plat.media.Pipe, grout: plat.media.ThermalProperty,
+                 soil: plat.media.Soil, config=None):
         CoaxialBase.__init__(self, m_flow_borehole, fluid, borehole, pipe,
                              soil, grout, config=config)
 

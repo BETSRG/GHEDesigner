@@ -1,21 +1,21 @@
 # Jack C. Cook
 # Monday, August 16, 2021
 
-import pygfunction as gt
+import ghedt.pygfunction as gt
 from copy import deepcopy
 from numpy import pi, log, sqrt
 from scipy.optimize import brentq
 from . import borehole_heat_exchangers
-import PLAT
+import ghedt.peak_load_analysis_tool as plat
 
 
 def compute_equivalent(bhe):
     # Compute an equivalent borehole heat exchanger based on the type
-    if type(bhe) == PLAT.borehole_heat_exchangers.SingleUTube:
+    if type(bhe) == plat.borehole_heat_exchangers.SingleUTube:
         _bhe = bhe
-    elif type(bhe) == PLAT.borehole_heat_exchangers.MultipleUTube:
+    elif type(bhe) == plat.borehole_heat_exchangers.MultipleUTube:
         _bhe = multiple_to_single(bhe)
-    elif type(bhe) == PLAT.borehole_heat_exchangers.CoaxialPipe:
+    elif type(bhe) == plat.borehole_heat_exchangers.CoaxialPipe:
         _bhe = coaxial_to_single(bhe)
     else:
         raise ValueError('Not an acceptable BHE.')
@@ -23,7 +23,8 @@ def compute_equivalent(bhe):
     return _bhe
 
 
-def solve_root(x, objective_function, lower=None, upper=None):
+def solve_root(x, objective_function, lower=None, upper=None,
+               xtol=1.0e-6, rtol=1.0e-6, maxiter=50):
     # Vary flow rate to match the convective resistance
 
     # Use Brent Quadratic to find the root
@@ -46,7 +47,8 @@ def solve_root(x, objective_function, lower=None, upper=None):
 
     # Solve the root if we can, if not, take the higher value
     if kg_plus_sign != kg_minus_sign:
-        x = brentq(objective_function, lower, upper)
+        x = brentq(objective_function, lower, upper,
+                   xtol=xtol, rtol=rtol, maxiter=maxiter)
     elif kg_plus_sign == -1 and kg_minus_sign == -1:
         x = upper
     elif kg_plus_sign == 1 and kg_minus_sign == 1:
@@ -77,13 +79,13 @@ def equivalent_single_u_tube(bhe, V_fluid, V_pipe, R_conv, R_pipe):
         spacing = (borehole.r_b * 2.) / 10.  # make spacing 1/10th of diameter
         borehole.r_b += spacing
     s = spacing / 3  # outer tube-to-tube shank spacing (m)
-    pos = PLAT.media.Pipe.place_pipes(s, r_p_o_prime, 1)  # Place single u-tube pipe
+    pos = plat.media.Pipe.place_pipes(s, r_p_o_prime, 1)  # Place single u-tube pipe
 
     # New pipe geometry
     eps = deepcopy(bhe.pipe.eps)
     rhoCp = deepcopy(bhe.pipe.rhoCp)
     pipe = \
-        PLAT.media.Pipe(pos, r_p_i_prime, r_p_o_prime, s, eps, k_p_prime, rhoCp)
+        plat.media.Pipe(pos, r_p_i_prime, r_p_o_prime, s, eps, k_p_prime, rhoCp)
 
     # Don't tie together the original and equivalent BHE's
     m_flow_borehole = deepcopy(bhe.m_flow_borehole)

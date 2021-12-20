@@ -2,17 +2,17 @@
 # Friday, December 10, 2021
 
 import ghedt as dt
-import ghedt.PLAT as PLAT
-import ghedt.PLAT.pygfunction as gt
+import ghedt.peak_load_analysis_tool as plat
+import ghedt.pygfunction as gt
 
 
 # Common design interface
 class Design:
     def __init__(self, V_flow: float, borehole: gt.boreholes.Borehole,
-                 bhe_object: PLAT.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: PLAT.media.Pipe,
-                 grout: PLAT.media.ThermalProperty, soil: PLAT.media.Soil,
-                 sim_params: PLAT.media.SimulationParameters,
+                 bhe_object: plat.borehole_heat_exchangers,
+                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
+                 grout: plat.media.ThermalProperty, soil: plat.media.Soil,
+                 sim_params: plat.media.SimulationParameters,
                  geometric_constraints: dt.media.GeometricConstraints,
                  coordinates_domain: list, hourly_extraction_ground_loads: list,
                  routine: str = 'near-square', flow: str = 'borehole'):

@@ -2,18 +2,16 @@
 # Wednesday, September 8, 2021
 import copy
 
-import matplotlib.pyplot as plt
-import numpy as np
 from calendar import monthrange
 
 import scipy.optimize.optimize
 
-import PLAT
+import ghedt.peak_load_analysis_tool as plat
 from scipy import interpolate
 import math
 import pandas as pd
 import numpy as np
-import pygfunction as gt
+import ghedt.pygfunction as gt
 
 
 def synthetic_load_function(
@@ -125,9 +123,9 @@ def create_synthetic_doubling_load_profile(units='W', year=2019) -> tuple:
 class HybridLoad:
     def __init__(self,
                  hourly_rejection_loads: list, hourly_extraction_loads: list,
-                 bhe: PLAT.borehole_heat_exchangers.SingleUTube,
-                 radial_numerical: PLAT.radial_numerical_borehole.RadialNumericalBH,
-                 sim_params: PLAT.media.SimulationParameters,
+                 bhe: plat.borehole_heat_exchangers.SingleUTube,
+                 radial_numerical: plat.radial_numerical_borehole.RadialNumericalBH,
+                 sim_params: plat.media.SimulationParameters,
                  COP_rejection=None, COP_extraction=None, year=2019):
         # Split the hourly loads into heating and cooling (kW)
         self.hourly_rejection_loads = hourly_rejection_loads
