@@ -1,21 +1,21 @@
 # Jack C. Cook
-# Friday, December 10, 2021
+# Monday, December 20, 2021
 
-# Purpose: Show how to design a square or near-square borehole field.
+# Purpose: Show how to simulate and size a g-function that has been previously
+# computed and stored in a `cpgfunction-output` style json file.
 
-import ghedt as dt
-import ghedt.pygfunction as gt
 import ghedt.peak_load_analysis_tool as plat
 import pandas as pd
-from time import time as clock
+import ghedt.pygfunction as gt
+import ghedt as dt
 
 
 def main():
     # Borehole dimensions
     # -------------------
-    H = 96.  # Borehole length (m)
+    H = 100.  # Borehole length (m)
     D = 2.  # Borehole buried depth (m)
-    r_b = 0.075  # Borehole radius (m)
+    r_b = 150. / 1000. / 2.  # Borehole radius]
     B = 5.  # Borehole spacing (m)
 
     # Pipe dimensions
@@ -54,15 +54,24 @@ def main():
     # Grout
     grout = plat.media.ThermalProperty(k_g, rhoCp_g)
 
+    # Read in g-functions from GLHEPro
+    file = '12x13_Calculated_g_Functions/' + 'GLHEPRO_gFunctions_12x13.json'
+    data = dt.utilities.js_load(file)
+
+    # Configure the database data for input to the goethermal GFunction object
+    geothermal_g_input = \
+        dt.gfunction.GFunction.configure_database_file_for_usage(data)
+
+    # Initialize the GFunction object
+    g_function = dt.gfunction.GFunction(**geothermal_g_input)
+
     # Inputs related to fluid
     # -----------------------
-    # Fluid properties
+    V_flow_system = 31.2  # System volumetric flow rate (L/s)
     mixer = 'MEG'  # Ethylene glycol mixed with water
     percent = 0.  # Percentage of ethylene glycol added in
-    fluid = gt.media.Fluid(mixer=mixer, percent=percent)
-
     # Fluid properties
-    V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
+    fluid = gt.media.Fluid(mixer=mixer, percent=percent)
 
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
@@ -77,7 +86,7 @@ def main():
     max_EFT_allowable = 35  # degrees Celsius
     min_EFT_allowable = 5  # degrees Celsius
     # Maximum and minimum allowable heights
-    max_Height = 135.  # in meters
+    max_Height = 200  # in meters
     min_Height = 60  # in meters
     sim_params = plat.media.SimulationParameters(
         start_month, end_month, max_EFT_allowable, min_EFT_allowable,
@@ -87,43 +96,23 @@ def main():
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
     hourly_extraction: dict = \
-        pd.read_csv('Atlanta_Office_Building_Loads.csv').to_dict('list')
+        pd.read_csv('../Atlanta_Office_Building_Loads.csv').to_dict('list')
     # Take only the first column in the dictionary
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
 
-    # Perform field selection using bisection search between a 1x1 and 32x32
-    coordinates_domain = dt.domains.square_and_near_square(1, 32, B)
+    # --------------------------------------------------------------------------
 
-    # Geometric constraints for the `near-square` routine
-    geometric_constraints = dt.media.GeometricConstraints(
-        B_max_x=B, unconstrained=True)
+    # Initialize GHE object
+    ghe = dt.ground_heat_exchangers.GHE(
+        V_flow_system, B, bhe_object, fluid, borehole, pipe, grout,
+        soil, g_function, sim_params, hourly_extraction_ground_loads)
 
-    design = dt.design.Design(
-        V_flow_borehole, borehole, bhe_object, fluid, pipe, grout, soil,
-        sim_params, geometric_constraints, coordinates_domain,
-        hourly_extraction_ground_loads, routine='near-square', flow='borehole')
+    ghe.size()
 
-    print('Beginning bisection search to select a configuration.')
-    tic = clock()
-    bisection_search = design.find_design()
-    toc = clock()
-    print('Time to perform bisection search: {0:.2f} seconds'.format(toc - tic))
-
-    print('Number of boreholes: {}'.
-          format(len(bisection_search.selected_coordinates)))
-
-    # Perform sizing in between the min and max bounds
-    tic = clock()
-    ghe = bisection_search.ghe
-    ghe.compute_g_functions()
-
-    ghe.size(method='hybrid')
-    toc = clock()
-    print('Time to compute g-functions and size: {0:.2f} '
-          'seconds'.format(toc - tic))
-
-    print('Sized height of boreholes: {0:.2f} m'.format(ghe.bhe.b.H))
+    calculation_details = 'GLHEPRO_gFunctions_12x13.json'.split('.')[0]
+    print(calculation_details)
+    print('Height of boreholes: {0:.3f}'.format(ghe.bhe.b.H))
 
 
 if __name__ == '__main__':

@@ -4,7 +4,6 @@ import copy
 import warnings
 
 from scipy.interpolate import interp1d, lagrange
-import ghedt
 import ghedt.pygfunction as gt
 import numpy as np
 
@@ -12,7 +11,8 @@ import numpy as np
 def calculate_g_function(
         m_flow_borehole, bhe_object, time_values, coordinates, borehole,
         fluid, pipe, grout, soil, nSegments=8, end_length_ratio=0.02,
-        segments='unequal', solver='equivalent', boundary='MIFT', disp=False):
+        segments='unequal', solver='equivalent', boundary='MIFT',
+        segment_ratios=None, disp=False):
 
     boreField = []
     BHEs = []
@@ -40,8 +40,11 @@ def calculate_g_function(
     if segments == 'equal':
         options = {'nSegments': nSegments, 'disp': disp}
     elif segments == 'unequal':
-        segment_ratios = gt.utilities.segment_ratios(
-            nSegments, end_length_ratio=end_length_ratio)
+        if segment_ratios is None:
+            segment_ratios = gt.utilities.segment_ratios(
+                nSegments, end_length_ratio=end_length_ratio)
+        else:
+            segment_ratios = segment_ratios
         options = {'nSegments': nSegments, 'segment_ratios': segment_ratios,
                    'disp': disp}
     else:
@@ -70,7 +73,7 @@ def compute_live_g_function(
         B: float, H_values: list, r_b_values: list, D_values: list,
         m_flow_borehole, bhe_object, log_time,  coordinates,
         fluid, pipe, grout, soil, nSegments=8, segments='unequal',
-        solver='equivalent', boundary='MIFT', disp=False):
+        solver='equivalent', boundary='MIFT', segment_ratios=None, disp=False):
 
     d = {'g': {}, 'bore_locations': coordinates, 'logtime': log_time}
 
@@ -89,7 +92,8 @@ def compute_live_g_function(
         gfunc = calculate_g_function(
             m_flow_borehole, bhe_object, time_values, coordinates, _borehole,
             fluid, pipe, grout, soil, nSegments=nSegments, segments=segments,
-            solver=solver, boundary=boundary, disp=disp)
+            solver=solver, boundary=boundary, segment_ratios=segment_ratios,
+            disp=disp)
 
         key = '{}_{}_{}_{}'.format(B, H, r_b, D)
 
