@@ -5,7 +5,7 @@ import warnings
 
 from scipy.interpolate import interp1d, lagrange
 import ghedt
-import ghedt.PLAT.pygfunction as gt
+import ghedt.pygfunction as gt
 import numpy as np
 
 

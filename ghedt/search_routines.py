@@ -2,8 +2,8 @@
 # Wednesday, October 27, 2021
 
 import ghedt
-import ghedt.PLAT.pygfunction as gt
-import ghedt.PLAT as PLAT
+import ghedt.pygfunction as gt
+import ghedt.peak_load_analysis_tool as plat
 from ghedt.utilities import sign, check_bracket
 import numpy as np
 import copy
@@ -12,10 +12,10 @@ import copy
 class Bisection1D:
     def __init__(self, coordinates_domain: list, V_flow_borehole: float,
                  borehole: gt.boreholes.Borehole,
-                 bhe_object: PLAT.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: PLAT.media.Pipe,
-                 grout: PLAT.media.ThermalProperty, soil: PLAT.media.Soil,
-                 sim_params: PLAT.media.SimulationParameters,
+                 bhe_object: plat.borehole_heat_exchangers,
+                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
+                 grout: plat.media.ThermalProperty, soil: plat.media.Soil,
+                 sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list,
                  max_iter=15, disp=False, search=True):
 
@@ -192,10 +192,10 @@ class Bisection1D:
 class Bisection2D(Bisection1D):
     def __init__(self, coordinates_domain_nested: list, V_flow_borehole: float,
                  borehole: gt.boreholes.Borehole,
-                 bhe_object: PLAT.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: PLAT.media.Pipe,
-                 grout: PLAT.media.ThermalProperty, soil: PLAT.media.Soil,
-                 sim_params: PLAT.media.SimulationParameters,
+                 bhe_object: plat.borehole_heat_exchangers,
+                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
+                 grout: plat.media.ThermalProperty, soil: plat.media.Soil,
+                 sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list,
                  max_iter=15, disp=False):
         # Get a coordinates domain for initialization
@@ -235,10 +235,10 @@ class Bisection2D(Bisection1D):
 class BisectionZD(Bisection1D):
     def __init__(self, coordinates_domain_nested: list, V_flow_borehole: float,
                  borehole: gt.boreholes.Borehole,
-                 bhe_object: PLAT.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: PLAT.media.Pipe,
-                 grout: PLAT.media.ThermalProperty, soil: PLAT.media.Soil,
-                 sim_params: PLAT.media.SimulationParameters,
+                 bhe_object: plat.borehole_heat_exchangers,
+                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
+                 grout: plat.media.ThermalProperty, soil: plat.media.Soil,
+                 sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list,
                  max_iter=15, disp=False):
         # Get a coordinates domain for initialization

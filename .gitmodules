@@ -1,4 +1,4 @@
 
-[submodule "GHEDT/PLAT"]
-	path = ghedt/PLAT
-	url = https://github.com/j-c-cook/PLAT
+[submodule "ghedt/pygfunction"]
+	path = ghedt/pygfunction
+	url = https://github.com/j-c-cook/pygfunction

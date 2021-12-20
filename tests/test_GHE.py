@@ -3,7 +3,7 @@
 
 import unittest
 
-import ghedt.PLAT.pygfunction as gt
+import ghedt.pygfunction as gt
 import pandas as pd
 import ghedt
 
@@ -11,7 +11,7 @@ import ghedt
 class TestGHE(unittest.TestCase):
 
     def setUp(self) -> None:
-        from ghedt import PLAT
+        import ghedt.peak_load_analysis_tool as plat
         # Borehole dimensions
         # -------------------
         self.H = 100.  # Borehole length (m)
@@ -44,9 +44,9 @@ class TestGHE(unittest.TestCase):
         # Pipe positions
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos_s = PLAT.media.Pipe.place_pipes(s, r_out, 1)
+        pos_s = plat.media.Pipe.place_pipes(s, r_out, 1)
         # Double U-tube
-        pos_d = PLAT.media.Pipe.place_pipes(s, r_out, 2)
+        pos_d = plat.media.Pipe.place_pipes(s, r_out, 2)
         # Coaxial
         pos_c = (0, 0)
 
@@ -68,24 +68,24 @@ class TestGHE(unittest.TestCase):
         # ------------------
         # Pipe
         self.pipe_s = \
-            PLAT.media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+            plat.media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rhoCp_p)
         self.pipe_d = \
-            PLAT.media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+            plat.media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rhoCp_p)
         self.pipe_c = \
-            PLAT.media.Pipe(pos_c, r_inner, r_outer, s, epsilon, k_p_c, rhoCp_p)
+            plat.media.Pipe(pos_c, r_inner, r_outer, s, epsilon, k_p_c, rhoCp_p)
 
         # Single U-tube BHE object
-        self.SingleUTube = PLAT.borehole_heat_exchangers.SingleUTube
+        self.SingleUTube = plat.borehole_heat_exchangers.SingleUTube
         # Double U-tube bhe object
-        self.DoubleUTube = PLAT.borehole_heat_exchangers.MultipleUTube
+        self.DoubleUTube = plat.borehole_heat_exchangers.MultipleUTube
         # Coaxial tube bhe object
-        self.CoaxialTube = PLAT.borehole_heat_exchangers.CoaxialPipe
+        self.CoaxialTube = plat.borehole_heat_exchangers.CoaxialPipe
 
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        self.soil = PLAT.media.Soil(k_s, rhoCp_s, ugt)
+        self.soil = plat.media.Soil(k_s, rhoCp_s, ugt)
         # Grout
-        self.grout = PLAT.media.ThermalProperty(k_g, rhoCp_g)
+        self.grout = plat.media.ThermalProperty(k_g, rhoCp_g)
 
         # Coordinates
         Nx = 12
@@ -124,7 +124,7 @@ class TestGHE(unittest.TestCase):
         # Maximum and minimum allowable heights
         max_Height = 384  # in meters
         min_Height = 24  # in meters
-        self.sim_params = PLAT.media.SimulationParameters(
+        self.sim_params = plat.media.SimulationParameters(
             start_month, end_month, max_EFT_allowable, min_EFT_allowable,
             max_Height, min_Height)
 

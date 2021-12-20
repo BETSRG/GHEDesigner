@@ -6,8 +6,6 @@ import numpy as np
 import json
 from matplotlib.ticker import Locator
 
-import ghedt.PLAT.media
-
 
 def Eskilson_log_times():
     log_time = [-8.5, -7.8, -7.2, -6.5, -5.9, -5.2, -4.5, -3.963, -3.27,
