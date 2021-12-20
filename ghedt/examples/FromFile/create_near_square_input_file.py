@@ -2,8 +2,8 @@
 # Friday, December 10, 2021
 
 import ghedt as dt
-import ghedt.PLAT as PLAT
-import ghedt.PLAT.pygfunction as gt
+import ghedt.peak_load_analysis_tool as plat
+import ghedt.pygfunction as gt
 import pandas as pd
 
 
@@ -36,15 +36,15 @@ def main():
     # Pipe positions
     # --------------
     # Single U-tube [(x_in, y_in), (x_out, y_out)]
-    pos_single = PLAT.media.Pipe.place_pipes(s, r_out, 1)
+    pos_single = plat.media.Pipe.place_pipes(s, r_out, 1)
     # Single U-tube BHE object
-    single_u_tube = PLAT.borehole_heat_exchangers.SingleUTube
+    single_u_tube = plat.borehole_heat_exchangers.SingleUTube
     # Double U-tube
-    pos_double = PLAT.media.Pipe.place_pipes(s, r_out, 2)
-    double_u_tube = PLAT.borehole_heat_exchangers.MultipleUTube
+    pos_double = plat.media.Pipe.place_pipes(s, r_out, 2)
+    double_u_tube = plat.borehole_heat_exchangers.MultipleUTube
     # Coaxial tube
     pos_coaxial = (0, 0)
-    coaxial_tube = PLAT.borehole_heat_exchangers.CoaxialPipe
+    coaxial_tube = plat.borehole_heat_exchangers.CoaxialPipe
 
     # Thermal conductivities
     # ----------------------
@@ -62,16 +62,16 @@ def main():
     # ------------------
     # Pipe
     pipe_single = \
-        PLAT.media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        plat.media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
     pipe_double = \
-        PLAT.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        plat.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
     pipe_coaxial = \
-        PLAT.media.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p, rhoCp_p)
+        plat.media.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p, rhoCp_p)
     # Soil
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-    soil = PLAT.media.Soil(k_s, rhoCp_s, ugt)
+    soil = plat.media.Soil(k_s, rhoCp_s, ugt)
     # Grout
-    grout = PLAT.media.ThermalProperty(k_g, rhoCp_g)
+    grout = plat.media.ThermalProperty(k_g, rhoCp_g)
 
     # Inputs related to fluid
     # -----------------------
@@ -98,7 +98,7 @@ def main():
     # Maximum and minimum allowable heights
     max_Height = 135.  # in meters
     min_Height = 60  # in meters
-    sim_params = PLAT.media.SimulationParameters(
+    sim_params = plat.media.SimulationParameters(
         start_month, end_month, max_EFT_allowable, min_EFT_allowable,
         max_Height, min_Height)
 
