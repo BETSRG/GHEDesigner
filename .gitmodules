@@ -1,1 +1,4 @@
 
+[submodule "ghedt/pygfunction"]
+	path = ghedt/pygfunction
+	url = https://github.com/j-c-cook/pygfunction
