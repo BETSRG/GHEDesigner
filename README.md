@@ -10,4 +10,6 @@ borehole field layout based on a target depth.
 
 ## Novel Design Algorithms
 
-![polygonal](Reports/find_bi_alternative_03.gif)
+![polygonal](Reports/find_bi_alternative_03.gif | width=75)
+
+## Acknowledgements
