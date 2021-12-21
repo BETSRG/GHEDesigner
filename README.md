@@ -8,29 +8,6 @@ of a specified borehole field to ensure the heat pump entering fluid temperature
 remains within specified bounds. GHEDT is novel in its ability to select a 
 borehole field layout based on a target depth.
 
-## Usage
-Clone the repository.
-```angular2html
-git clone https://github.com/j-c-cook/ghedt
-```
-Recursively update the submodules.
-```angular2html
- git submodule update --init --recursive
-```
-Create environment that GHEDT can be installed to. 
-```angular2html
-conda create -n ENV python=3.7
-```
-Activate the environment. 
-```angular2html
-conda activate ENV
-```
-Install GHEDT to the environment.
-```angular2html
-cd ghedt/
-pip install .
-```
-or if the package is zipped. 
-```angular2html
-pip install ghedt.zip
-```
+## Novel Design Algorithms
+
+![polygonal](Reports/find_bi_alternative_03.gif)
