@@ -2,10 +2,14 @@
 # Monday, October 11, 2021
 
 import unittest
+import os
 
 import ghedt.pygfunction as gt
 import pandas as pd
 import ghedt
+
+TESTDATA_FILENAME = os.path.join(os.path.dirname(__file__),
+                                 'Atlanta_Office_Building_Loads.csv')
 
 
 class TestGHE(unittest.TestCase):
@@ -132,7 +136,7 @@ class TestGHE(unittest.TestCase):
         # -----------------------
         # read in the csv file and convert the loads to a list of length 8760
         hourly_extraction: dict = \
-            pd.read_csv('Atlanta_Office_Building_Loads.csv').to_dict('list')
+            pd.read_csv(TESTDATA_FILENAME).to_dict('list')
         # Take only the first column in the dictionary
         self.hourly_extraction_ground_loads: list = \
             hourly_extraction[list(hourly_extraction.keys())[0]]
@@ -157,8 +161,8 @@ class TestGHE(unittest.TestCase):
 
         max_HP_EFT, min_HP_EFT = ghe.simulate(method='hybrid')
 
-        self.assertEqual(39.084419566119934, max_HP_EFT)
-        self.assertEqual(16.660966674440232, min_HP_EFT)
+        self.assertAlmostEqual(39.084419566119934, max_HP_EFT)
+        self.assertAlmostEqual(16.660966674440232, min_HP_EFT)
 
         ghe.size(method='hybrid')
 
@@ -184,8 +188,8 @@ class TestGHE(unittest.TestCase):
 
         max_HP_EFT, min_HP_EFT = ghe.simulate(method='hybrid')
 
-        self.assertEqual(37.97229212228275, max_HP_EFT)
-        self.assertEqual(16.989189768401793, min_HP_EFT)
+        self.assertAlmostEqual(37.97229212228275, max_HP_EFT)
+        self.assertAlmostEqual(16.989189768401793, min_HP_EFT)
 
         ghe.size(method='hybrid')
 
@@ -211,8 +215,8 @@ class TestGHE(unittest.TestCase):
 
         max_HP_EFT, min_HP_EFT = ghe.simulate(method='hybrid')
 
-        self.assertEqual(37.73503652828782, max_HP_EFT)
-        self.assertEqual(17.61422171583412, min_HP_EFT)
+        self.assertAlmostEqual(37.73503652828782, max_HP_EFT)
+        self.assertAlmostEqual(17.61422171583412, min_HP_EFT)
 
         ghe.size(method='hybrid')
 

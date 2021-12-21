@@ -55,7 +55,7 @@ def main():
     grout = plat.media.ThermalProperty(k_g, rhoCp_g)
 
     # Read in g-functions from GLHEPro
-    file = '12x13_Calculated_g_Functions/' + 'GLHEPRO_gFunctions_12x13.json'
+    file = 'GLHEPRO_gFunctions_12x13.json'
     data = dt.utilities.js_load(file)
 
     # Configure the database data for input to the goethermal GFunction object
