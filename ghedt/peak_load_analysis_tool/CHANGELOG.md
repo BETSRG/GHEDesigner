@@ -1,6 +1,6 @@
 # PLAT - History of changes
 
-The peak load analysis tool (PLAT) was in its own repository, but has now been located inside of `ghedt`. The changes given here are the changes in the `PLAT` repository. 
+The peak load analysis tool (PLAT) was in its own repository, but has now been located inside of `ghedt`. The changes given here are the changes that occurred while located in the `PLAT` repository. 
 
 ## Version 0.1
 
