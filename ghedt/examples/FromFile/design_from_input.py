@@ -12,7 +12,7 @@ def main():
     path_to_file = 'ghedt_input.obj'
     # Initialize a Design object that is based on the content of the
     # path_to_file variable.
-    design = dt.design.read_input_file(path_to_file)
+    design = dt.utilities.read_input_file(path_to_file)
     # Find the design based on the inputs.
     bisection_search = design.find_design()
     # Perform sizing in between the min and max bounds.
@@ -21,7 +21,8 @@ def main():
     ghe.size(method='hybrid')
     # Export the g-function to a file named `ghedt_output`. A json file will be
     # created.
-    dt.design.oak_ridge_export(bisection_search, file_name='ghedt_output')
+    dt.search_routines.oak_ridge_export(
+        bisection_search, file_name='ghedt_output')
 
 
 if __name__ == '__main__':

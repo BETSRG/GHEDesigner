@@ -390,6 +390,40 @@ def polygonal_land_constraint(property_boundary, B_min, B_max_x, B_max_y,
     return coordinates_domain_nested_cutout_reordered
 
 
+# The following functions are utility functions specific to domains.py
+# ------------------------------------------------------------------------------
+def verify_excess(domain):
+    # Verify that the domain is unimodal
+    unimodal = True
+    delta_T_values = []
+    for i in range(1, len(domain)):
+        delta_T = domain[i] - domain[i-1]
+        delta_T_values.append(delta_T)
+        if delta_T > 0:
+            unimodal = False
+
+    return delta_T_values, unimodal
+
+
+def reorder_domain(domain):
+    # Reorder the domain so that the number of boreholes successively grow
+    numbers = {}
+    for i in range(len(domain)):
+        numbers[i] = len(domain[i])
+
+    sorted_values = sorted(numbers.values())
+
+    reordered_domain = []
+
+    for i in sorted_values:
+        for j in numbers.keys():
+            if numbers[j] == i:
+                reordered_domain.append(domain[j])
+                break
+
+    return reordered_domain
+
+
 def visualize_domain(domain, output_folder_name):
     import os
     if not os.path.exists(output_folder_name):

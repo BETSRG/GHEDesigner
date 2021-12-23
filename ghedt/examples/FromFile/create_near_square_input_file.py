@@ -127,21 +127,24 @@ def main():
         hourly_extraction_ground_loads, routine='near-square')
 
     # Output the design interface object to a json file so it can be reused
-    design_single_u_tube.create_input_file(file_name='ghedt_input')
+    dt.utilities.create_input_file(
+        design_single_u_tube, file_name='ghedt_input')
 
     design_double_u_tube = dt.design.Design(
         V_flow_borehole, borehole, double_u_tube, fluid, pipe_double, grout,
         soil, sim_params, geometric_constraints, coordinates_domain,
         hourly_extraction_ground_loads, routine='near-square')
 
-    design_double_u_tube.create_input_file(file_name='double_u_tube')
+    dt.utilities.create_input_file(
+        design_double_u_tube, file_name='double_u_tube')
 
     design_coaxial_u_tube = dt.design.Design(
         V_flow_borehole, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
         soil, sim_params, geometric_constraints, coordinates_domain,
         hourly_extraction_ground_loads, routine='near-square')
 
-    design_coaxial_u_tube.create_input_file(file_name='coaxial_tube')
+    dt.utilities.create_input_file(
+        design_coaxial_u_tube, file_name='coaxial_tube')
 
 
 if __name__ == '__main__':
