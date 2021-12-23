@@ -18,7 +18,7 @@ over a unimodal domain of boreholes. GHEDT can consider available drilling and
 no-drilling zones defined as polygons. For more information, refer to 
 `Cook (2021)`.
 
-![polygonal](Reports/find_bi_alternative_03.gif)
+![polygonal](images/find_bi_alternative_03.gif)
 
 ## Citing GHEDT 
 

@@ -1,7 +1,7 @@
 # Jack C. Cook
 # Wednesday, October 27, 2021
 
-import ghedt
+import ghedt as dt
 import ghedt.pygfunction as gt
 import ghedt.peak_load_analysis_tool as plat
 from ghedt.utilities import sign, check_bracket
@@ -27,7 +27,7 @@ class Bisection1D:
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = V_flow_borehole / 1000. * fluid.rho
 
-        self.log_time = ghedt.utilities.Eskilson_log_times()
+        self.log_time = dt.utilities.Eskilson_log_times()
         self.bhe_object = bhe_object
         self.sim_params = sim_params
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
@@ -35,17 +35,17 @@ class Bisection1D:
         self.max_iter = max_iter
         self.disp = disp
 
-        B = ghedt.utilities.borehole_spacing(borehole, coordinates)
+        B = dt.utilities.borehole_spacing(borehole, coordinates)
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
-        g_function = ghedt.gfunction.compute_live_g_function(
+        g_function = dt.gfunction.compute_live_g_function(
             B, [borehole.H], [borehole.r_b], [borehole.D], m_flow_borehole,
             self.bhe_object, self.log_time, coordinates, fluid, pipe, grout,
             soil)
 
         # Initialize the GHE object
-        self.ghe = ghedt.ground_heat_exchangers.GHE(
+        self.ghe = dt.ground_heat_exchangers.GHE(
             V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
             g_function, sim_params, hourly_extraction_ground_loads)
 
@@ -66,17 +66,17 @@ class Bisection1D:
         V_flow_borehole = self.ghe.V_flow_borehole
         V_flow_system = V_flow_borehole * float(len(coordinates))
 
-        B = ghedt.utilities.borehole_spacing(borehole, coordinates)
+        B = dt.utilities.borehole_spacing(borehole, coordinates)
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
-        g_function = ghedt.gfunction.compute_live_g_function(
+        g_function = dt.gfunction.compute_live_g_function(
             B, [borehole.H], [borehole.r_b], [borehole.D], m_flow_borehole,
             self.bhe_object, self.log_time, coordinates, fluid, pipe, grout,
             soil)
 
         # Initialize the GHE object
-        self.ghe = ghedt.ground_heat_exchangers.GHE(
+        self.ghe = dt.ground_heat_exchangers.GHE(
             V_flow_system, B, self.bhe_object, fluid, borehole, pipe, grout,
             soil, g_function, self.sim_params,
             self.hourly_extraction_ground_loads)
@@ -328,3 +328,47 @@ class BisectionZD(Bisection1D):
         self.ghe.size(method='hybrid')
 
         return selection_key, selected_coordinates
+
+
+# The following functions are utility functions specific to search_routines.py
+# ------------------------------------------------------------------------------
+def oak_ridge_export(bisection_search, file_name='ghedt_output'):
+    # Dictionary for export
+    d = {}
+    d['number_of_boreholes'] = len(bisection_search.selected_coordinates)
+    d['g_function_pairs'] = []
+    d['single_u_tube'] = {}
+
+    # create a local single U-tube object
+    bhe_eq = bisection_search.ghe.bhe_eq
+    d['single_u_tube']['r_b'] = bhe_eq.borehole.r_b  # Borehole radius
+    d['single_u_tube']['r_in'] = bhe_eq.r_in  # Inner pipe radius
+    d['single_u_tube']['r_out'] = bhe_eq.r_out  # Outer pipe radius
+    # Note: Shank spacing or center pipe positions could be used
+    d['single_u_tube']['s'] = bhe_eq.pipe.s  # Shank spacing (tube-to-tube)
+    d['single_u_tube']['pos'] = bhe_eq.pos  # Center of the pipes
+    d['single_u_tube']['m_flow_borehole'] = \
+        bhe_eq.m_flow_borehole  # mass flow rate of the borehole
+    d['single_u_tube']['k_g'] = bhe_eq.grout.k  # Grout thermal conductivity
+    d['single_u_tube']['k_s'] = bhe_eq.soil.k  # Soil thermal conductivity
+    d['single_u_tube']['k_p'] = bhe_eq.pipe.k  # Pipe thermal conductivity
+
+    # create a local ghe object
+    ghe = bisection_search.ghe
+    H = ghe.bhe.b.H
+    B_over_H = ghe.B_spacing / H
+    g = ghe.grab_g_function(B_over_H)
+
+    lntts = []
+    g_values = []
+    for i in range(len(g.y)):
+        lntts.append(g.x[i].tolist())
+        g_values.append(g.y[i].tolist())
+
+    for i in range(len(lntts)):
+        d['g_function_pairs'].append({'ln_tts': lntts[i],
+                                      'g_value': g_values[i]})
+
+    dt.utilities.js_dump(file_name, d, indent=4)
+
+    return
