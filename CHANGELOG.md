@@ -30,7 +30,8 @@
 * [Issue 35](https://github.com/j-c-cook/ghedt/issues/35) - Adds a bi-rectangular search routine with the ability to specify outer polygonal boundaries with no drilling zones.
 * [Issue 38](https://github.com/j-c-cook/ghedt/issues/38) - Adds common `design` interface. The following pull requests enhance the initial interface:
   * [PR 42](https://github.com/j-c-cook/ghedt/pull/42) - The `Design.py` module is created, a `design` object is created, and functionality for the `near-square` routine is added.
-* [Issue 39](https://github.com/j-c-cook/ghedt/issues/39) - Adds the ability to save a `design` configuration file, and then design based on the file. 
+* [Issue 39](https://github.com/j-c-cook/ghedt/issues/39) - Adds the ability to save a `design` configuration file, and then design based on the file.
+* [Issue 55](https://github.com/j-c-cook/ghedt/issues/55) - Adds equivalent single U-tube parameters to the `oak_ridge_export` function so that the online techno-economic tool can utilize borehole heat exchangers consisting of multiple U-tubes or a concentric tube (in addition to a single U-tube). 
 
 ### Tests and CI
 
