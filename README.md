@@ -3,11 +3,12 @@
 The Ground Heat Exchanger Design Toolbox is a Python package that can quantify
 the short- and long-term thermal interaction in a ground heat exchanger (GHE).
 The long-term thermal response g-functions are computed live-time with 
-`pygfunction`. The GHEDT contains a fast monthly hybrid time step simulation 
-for prediction of heat pump entering fluid temperatures over a design life. 
-GHEDT can vary the size (or borehole height) of a specified borehole field to 
-ensure the heat pump entering fluid temperature remains within specified bounds.
-GHEDT contains a novel borehole configuration selection algorithm.
+[pygfunction](https://github.com/MassimoCimmino/pygfunction). 
+The GHEDT contains a fast monthly hybrid time step simulation for prediction of 
+heat pump entering fluid temperatures over a design life. GHEDT can vary the 
+size (or borehole height) of a specified borehole field to ensure the heat pump 
+entering fluid temperature remains within specified bounds. GHEDT contains a 
+novel borehole configuration selection algorithm.
 
 ## Novel Design Algorithms
 
@@ -19,6 +20,36 @@ no-drilling zones defined as polygons. For more information, refer to
 `Cook (2021)`.
 
 ![polygonal](images/find_bi_alternative_03.gif)
+
+## Requirements 
+
+GHEDT requires at least Python 3.7 and is tested with Python 3.7 and 3.8. GHEDT 
+is dependent on the following packages:
+
+- numpy (>=1.19.2)
+- scipy (>=1.6.2)
+- matplotlib (>=3.3.4)
+- coolprop (>=6.4.1)
+- pandas (>=1.3.2)
+- openpyxl (>=3.0.8)
+- opencv-python (==4.5.4.58)
+
+## Quick Start
+
+**Users** - Install `ghedt` via the package installer for Python
+([pip](https://pip.pypa.io/en/latest/)):
+```angular2html
+pip install ghedt
+```
+
+**Developers** - Clone the repository to via git:
+```angular2html
+git clone https://github.com/j-c-cook/ghedt
+```
+
+See [installation](https://github.com/j-c-cook/ghedt/blob/main/INSTALLATION.md) 
+for more notes on installing. See [ghedt/examples/](https://github.com/j-c-cook/ghedt/tree/main/ghedt/examples) 
+for usage.   
 
 ## Citing GHEDT 
 
