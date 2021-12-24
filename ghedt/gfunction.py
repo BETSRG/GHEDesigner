@@ -382,10 +382,11 @@ class GFunction:
         return fig, ax
 
     @staticmethod
-    def visualize_area_and_constraints(perimeter: list, coordinates: list,
-                                       no_go=None):
+    def visualize_area_and_constraints(
+            perimeter: list, coordinates: list, no_go: list = None):
         """
         Visualize the (x,y) coordinates, and no go zone.
+
         Returns
         -------
         **fig, ax**
@@ -394,16 +395,17 @@ class GFunction:
         fig = gt.utilities._initialize_figure()
         ax = fig.add_subplot(111)
 
-        perimeter = perimeter + [perimeter[0]]
+        # Plot the perimeter if it's not None
+        if len(perimeter) > 0:
+            perimeter = perimeter + [perimeter[0]]
+            _x, _y = list(zip(*perimeter))
+            ax.plot(_x, _y, 'g')
 
+        # Plot the coordinates if they are provided
         if len(coordinates) > 0:
-
             x, y = list(zip(*coordinates))
-
             ax.scatter(x, y)
-        _x, _y = list(zip(*perimeter))
 
-        ax.plot(_x, _y, 'g')
         if no_go is not None:
             no_go = no_go + [no_go[0]]
             _x, _y = list(zip(*no_go))
