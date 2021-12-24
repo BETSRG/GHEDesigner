@@ -1,11 +1,9 @@
 # Jack C. Cook
-# Friday, December 10, 2021
-
-# Purpose: Show how to design a square or near-square borehole field.
+# Thursday, October 28, 2021
 
 import ghedt as dt
-import ghedt.pygfunction as gt
 import ghedt.peak_load_analysis_tool as plat
+import ghedt.pygfunction as gt
 import pandas as pd
 from time import time as clock
 
@@ -15,7 +13,7 @@ def main():
     # -------------------
     H = 96.  # Borehole length (m)
     D = 2.  # Borehole buried depth (m)
-    r_b = 0.075  # Borehole radius (m)
+    r_b = 0.075  # Borehole radius]
     B = 5.  # Borehole spacing (m)
 
     # Pipe dimensions
@@ -92,26 +90,33 @@ def main():
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
 
+    # --------------------------------------------------------------------------
+
+    # Rectangular design constraints are the land and range of B-spacing
+    length = 85.  # m
+    width = 36.5  # m
+    B_min = 3.  # m
+    B_max = 10.  # m
+
     # Perform field selection using bisection search between a 1x1 and 32x32
-    coordinates_domain = dt.domains.square_and_near_square(1, 32, B)
+    coordinates_domain = \
+        dt.domains.rectangular(length, width, B_min, B_max, disp=True)
 
-    # Geometric constraints for the `near-square` routine
-    geometric_constraints = dt.media.GeometricConstraints(
-        B_max_x=B, unconstrained=True)
+    output_folder = 'Rectangle_Domain'
+    dt.domains.visualize_domain(coordinates_domain, output_folder)
 
-    design = dt.design.Design(
-        V_flow_borehole, borehole, bhe_object, fluid, pipe, grout, soil,
-        sim_params, geometric_constraints, coordinates_domain,
-        hourly_extraction_ground_loads, routine='near-square', flow='borehole')
-
-    print('Beginning bisection search to select a configuration.')
     tic = clock()
-    bisection_search = design.find_design()
+    bisection_search = dt.search_routines.Bisection1D(
+        coordinates_domain, V_flow_borehole, borehole, bhe_object,
+        fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
+        disp=False)
     toc = clock()
-    print('Time to perform bisection search: {0:.2f} seconds'.format(toc - tic))
+    print('Time to perform bisection search: {} seconds'.format(toc - tic))
 
-    print('Number of boreholes: {}'.
-          format(len(bisection_search.selected_coordinates)))
+    nbh = len(bisection_search.selected_coordinates)
+    print('Number of boreholes: {}'.format(nbh))
+
+    print('Borehole spacing: {}'.format(bisection_search.ghe.GFunction.B))
 
     # Perform sizing in between the min and max bounds
     tic = clock()
@@ -120,10 +125,46 @@ def main():
 
     ghe.size(method='hybrid')
     toc = clock()
-    print('Time to compute g-functions and size: {0:.2f} '
-          'seconds'.format(toc - tic))
+    print('Time to compute g-functions and size: {} seconds'.format(toc - tic))
 
     print('Sized height of boreholes: {0:.2f} m'.format(ghe.bhe.b.H))
+
+    print('Total drilling depth: {0:.1f} m'.format(ghe.bhe.b.H * nbh))
+
+    # Plot go and no-go zone with corrected borefield
+    # -----------------------------------------------
+    coordinates = bisection_search.selected_coordinates
+
+    perimeter = [[0., 0.], [85., 0.], [85., 80.], [0., 80.]]
+    l_x_building = 50
+    l_y_building = 33.3
+    origin_x, origin_y = (15, 36.5)
+    no_go = [[origin_x, origin_y], [origin_x+l_x_building, origin_y],
+             [origin_x+l_x_building, origin_y+l_y_building],
+             [origin_x, origin_y+l_y_building]]
+
+    fig, ax = dt.gfunction.GFunction.visualize_area_and_constraints(
+        perimeter, coordinates, no_go=no_go)
+
+    fig.savefig('base_case.png', bbox_inches='tight', pad_inches=0.1)
+
+    fig, ax = dt.gfunction.GFunction.visualize_area_and_constraints(
+        perimeter, [], no_go=no_go)
+
+    fig.savefig('land_description.png', bbox_inches='tight', pad_inches=0.1)
+
+    # Export the calculated fields in order
+    folder = 'Calculated_Temperature_Fields/'
+    dt.utilities.create_if_not(folder)
+
+    count = 0
+    for key in bisection_search.calculated_temperatures:
+        _coordinates = coordinates_domain[key]
+        fig, ax = dt.gfunction.GFunction.visualize_area_and_constraints(
+            perimeter, _coordinates, no_go=no_go)
+        name = str(count).zfill(2)
+        fig.savefig(folder + name + '.png', bbox_inches='tight', pad_inches=0.1)
+        count += 1
 
 
 if __name__ == '__main__':
