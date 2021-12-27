@@ -1,6 +1,8 @@
 # Jack C. Cook
 # Thursday, October 28, 2021
 
+# Purpose: show how to design a constrained rectangular field.
+
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
 import ghedt.pygfunction as gt
@@ -14,7 +16,7 @@ def main():
     H = 96.  # Borehole length (m)
     D = 2.  # Borehole buried depth (m)
     r_b = 0.075  # Borehole radius]
-    B = 5.  # Borehole spacing (m)
+    # B = 5.  # Borehole spacing (m)
 
     # Pipe dimensions
     # ---------------
@@ -85,7 +87,7 @@ def main():
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
     hourly_extraction: dict = \
-        pd.read_csv('Atlanta_Office_Building_Loads.csv').to_dict('list')
+        pd.read_csv('../../Atlanta_Office_Building_Loads.csv').to_dict('list')
     # Take only the first column in the dictionary
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
@@ -111,12 +113,12 @@ def main():
         fluid, pipe, grout, soil, sim_params, hourly_extraction_ground_loads,
         disp=False)
     toc = clock()
-    print('Time to perform bisection search: {} seconds'.format(toc - tic))
+    print('Time to perform bisection search: {0:.2f} seconds'.format(toc - tic))
 
     nbh = len(bisection_search.selected_coordinates)
     print('Number of boreholes: {}'.format(nbh))
 
-    print('Borehole spacing: {}'.format(bisection_search.ghe.GFunction.B))
+    print('Borehole spacing: {0:.2f}'.format(bisection_search.ghe.GFunction.B))
 
     # Perform sizing in between the min and max bounds
     tic = clock()
@@ -125,38 +127,38 @@ def main():
 
     ghe.size(method='hybrid')
     toc = clock()
-    print('Time to compute g-functions and size: {} seconds'.format(toc - tic))
-
+    print('Time to compute g-functions and size: {0:.2f} '
+          'seconds'.format(toc - tic))
     print('Sized height of boreholes: {0:.2f} m'.format(ghe.bhe.b.H))
+    print('Total drilling depth: {0:.2f} m'.format(ghe.bhe.b.H * nbh))
 
-    print('Total drilling depth: {0:.1f} m'.format(ghe.bhe.b.H * nbh))
-
-    # Plot go and no-go zone with corrected borefield
-    # -----------------------------------------------
-    coordinates = bisection_search.selected_coordinates
-
+    # Define the polygonal available zone
     perimeter = [[0., 0.], [85., 0.], [85., 80.], [0., 80.]]
+    # Define the length in the x and y for the no-go zone
     l_x_building = 50
     l_y_building = 33.3
     origin_x, origin_y = (15, 36.5)
-    no_go = [[origin_x, origin_y], [origin_x+l_x_building, origin_y],
-             [origin_x+l_x_building, origin_y+l_y_building],
-             [origin_x, origin_y+l_y_building]]
+    # Make a rectangular perimeter given side lengths and the origin
+    no_go = dt.utilities.make_rectangle_perimeter(
+        l_x_building, l_y_building, origin=(origin_x, origin_y)
+    )
 
+    # Create and save a figure of the selected rectangular field with the go and
+    # no-go zones highlighted
+    coordinates = bisection_search.selected_coordinates
     fig, ax = dt.gfunction.GFunction.visualize_area_and_constraints(
         perimeter, coordinates, no_go=no_go)
-
     fig.savefig('base_case.png', bbox_inches='tight', pad_inches=0.1)
 
+    # Create and save a figure of the land description with no boreholes
     fig, ax = dt.gfunction.GFunction.visualize_area_and_constraints(
         perimeter, [], no_go=no_go)
-
     fig.savefig('land_description.png', bbox_inches='tight', pad_inches=0.1)
 
-    # Export the calculated fields in order
+    # Export the fields that were simulated during the selection process in the
+    # order which they were calculated
     folder = 'Calculated_Temperature_Fields/'
     dt.utilities.create_if_not(folder)
-
     count = 0
     for key in bisection_search.calculated_temperatures:
         _coordinates = coordinates_domain[key]

@@ -1,5 +1,5 @@
 # Jack C. Cook
-# Friday, December 10, 2021
+# Sunday, December 26, 2021
 
 # Purpose: Show how to export the common design interface to an external file
 # that can then be loaded up and used in design later on.
@@ -114,44 +114,28 @@ def main():
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
 
+    # Rectangular design constraints are the land and range of B-spacing
+    length = 85.  # m
+    width = 36.5  # m
+    B_min = 3.  # m
+    B_max = 10.  # m
+
     # Geometric constraints for the `near-square` routine
     geometric_constraints = dt.media.GeometricConstraints(
-        B_max_x=B, unconstrained=True)
+        length=length, width=width, B_min=B_min, B_max_x=B_max,
+        unconstrained=False)
 
     # Note: Flow functionality is currently only on a borehole basis. Future
     # development will include the ability to change the flow rate to be on a
     # system flow rate basis.
-
-    # Single U-tube
-    # -------------
     design_single_u_tube = dt.design.Design(
         V_flow_borehole, borehole, single_u_tube, fluid, pipe_single, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square')
+        routine='rectangle')
 
     # Output the design interface object to a json file so it can be reused
     dt.utilities.create_input_file(
         design_single_u_tube, file_name='ghedt_input')
-
-    # Double U-tube
-    # -------------
-    design_double_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, double_u_tube, fluid, pipe_double, grout,
-        soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square')
-
-    dt.utilities.create_input_file(
-        design_double_u_tube, file_name='double_u_tube')
-
-    # Coaxial tube
-    # ------------
-    design_coaxial_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
-        soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square')
-
-    dt.utilities.create_input_file(
-        design_coaxial_u_tube, file_name='coaxial_tube')
 
 
 if __name__ == '__main__':
