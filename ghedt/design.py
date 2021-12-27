@@ -14,7 +14,7 @@ class Design:
                  grout: plat.media.ThermalProperty, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
                  geometric_constraints: dt.media.GeometricConstraints,
-                 coordinates_domain: list, hourly_extraction_ground_loads: list,
+                 hourly_extraction_ground_loads: list,
                  routine: str = 'near-square', flow: str = 'borehole'):
         self.V_flow = V_flow  # volumetric flow rate, m3/s
         self.borehole = borehole
@@ -25,12 +25,11 @@ class Design:
         self.soil = soil
         self.sim_params = sim_params
         self.geometric_constraints = geometric_constraints
-        self.coordinates_domain = coordinates_domain
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
 
         # Check the routine parameter
         self.routine = routine
-        available_routines = ['near-square']
+        available_routines = ['near-square', 'rectangle']
         if routine in available_routines:
             # If a near-square design routine is requested, then we go from a
             # 1x1 to 32x32 at the B-spacing
@@ -38,6 +37,11 @@ class Design:
                 self.coordinates_domain = \
                     dt.domains.square_and_near_square(
                         1, 32, self.geometric_constraints.B_max_x)
+            elif routine == 'rectangle':
+                gc = self.geometric_constraints
+                self.coordinates_domain = dt.domains.rectangular(
+                    gc.length, gc.width, gc.B_min, gc.B_max_x, disp=False
+                )
         else:
             raise ValueError('The requested routine is not available. '
                              'The currently available routines are: '
@@ -60,6 +64,12 @@ class Design:
                 self.bhe_object, self.fluid, self.pipe, self.grout,
                 self.soil, self.sim_params, self.hourly_extraction_ground_loads,
                 disp=disp)
+        # Find a rectangle
+        elif self.routine == 'rectangle':
+            bisection_search = dt.search_routines.Bisection1D(
+                self.coordinates_domain, self.V_flow_borehole, self.borehole,
+                self.bhe_object, self.fluid, self.pipe, self.grout, self.soil,
+                self.sim_params, self.hourly_extraction_ground_loads, disp=disp)
         else:
             raise ValueError('The requested routine is not available. '
                              'The currently available routines are: '

@@ -92,17 +92,14 @@ def main():
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
 
-    # Perform field selection using bisection search between a 1x1 and 32x32
-    coordinates_domain = dt.domains.square_and_near_square(1, 32, B)
-
     # Geometric constraints for the `near-square` routine
     geometric_constraints = dt.media.GeometricConstraints(
         B_max_x=B, unconstrained=True)
 
     design = dt.design.Design(
         V_flow_borehole, borehole, bhe_object, fluid, pipe, grout, soil,
-        sim_params, geometric_constraints, coordinates_domain,
-        hourly_extraction_ground_loads, routine='near-square', flow='borehole')
+        sim_params, geometric_constraints, hourly_extraction_ground_loads,
+        routine='near-square', flow='borehole')
 
     print('Beginning bisection search to select a configuration.')
     tic = clock()
@@ -124,6 +121,10 @@ def main():
           'seconds'.format(toc - tic))
 
     print('Sized height of boreholes: {0:.2f} m'.format(ghe.bhe.b.H))
+
+    file = open('ghe_output.txt', 'w+')
+    file.write(ghe.__repr__())
+    file.close()
 
     # Create a plot of the design
     # --------------------------------------------------------------------------
