@@ -67,7 +67,7 @@ def main():
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
 
-    # Simulation start month and end month
+    # Simulation parameters
     # --------------------------------
     # Simulation start month and end month
     start_month = 1
@@ -87,7 +87,7 @@ def main():
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
     hourly_extraction: dict = \
-        pd.read_csv('Atlanta_Office_Building_Loads.csv').to_dict('list')
+        pd.read_csv('../../Atlanta_Office_Building_Loads.csv').to_dict('list')
     # Take only the first column in the dictionary
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
@@ -124,6 +124,17 @@ def main():
           'seconds'.format(toc - tic))
 
     print('Sized height of boreholes: {0:.2f} m'.format(ghe.bhe.b.H))
+
+    # Create a plot of the design
+    # --------------------------------------------------------------------------
+    perimeter = []  # There is no constraint
+    no_go = None  # No-go is not applicable
+    coordinates = ghe.GFunction.bore_locations
+    fig, ax = dt.gfunction.GFunction.visualize_area_and_constraints(
+        perimeter, coordinates, no_go=no_go
+    )
+    # Save the figure with the margins trimmed to 0.1 inches
+    fig.savefig('near_square.png', bbox_inches='tight', pad_inches=0.1)
 
 
 if __name__ == '__main__':
