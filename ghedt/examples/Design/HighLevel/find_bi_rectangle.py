@@ -1,7 +1,7 @@
 # Jack C. Cook
-# Sunday, December 26, 2021
+# Monday, December 27, 2021
 
-# Purpose: Design a constrained rectangular field using the common design
+# Purpose: Design a constrained bi-rectangular field using the common design
 # interface with a single U-tube, multiple U-tube and coaxial tube borehole
 # heat exchanger.
 
@@ -19,7 +19,6 @@ def main():
     H = 96.  # Borehole length (m)
     D = 2.  # Borehole buried depth (m)
     r_b = 0.075  # Borehole radius (m)
-    B = 5.  # Borehole spacing (m)
 
     # Pipe dimensions
     # ---------------
@@ -123,14 +122,16 @@ def main():
     # Rectangular design constraints are the land and range of B-spacing
     length = 85.  # m
     width = 36.5  # m
-    B_min = 3.  # m
-    B_max = 10.  # m
+    B_min = 4.45  # m
+    B_max_x = 10.  # m
+    B_max_y = 12.  # m
 
     # Geometric constraints for the `find_rectangle` routine
     # Required geometric constraints for the uniform rectangle design: length,
     # width, B_min, B_max
     geometric_constraints = dt.media.GeometricConstraints(
-        length=length, width=width, B_min=B_min, B_max_x=B_max)
+        length=length, width=width, B_min=B_min, B_max_x=B_max_x,
+        B_max_y=B_max_y)
 
     # Note: Flow functionality is currently only on a borehole basis. Future
     # development will include the ability to change the flow rate to be on a
@@ -141,7 +142,7 @@ def main():
     design_single_u_tube = dt.design.Design(
         V_flow_borehole, borehole, single_u_tube, fluid, pipe_single, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='rectangle')
+        routine='bi-rectangle')
 
     # Find a constrained rectangular design for a single U-tube and size it.
     tic = clock()
@@ -149,7 +150,7 @@ def main():
     bisection_search.ghe.compute_g_functions()
     bisection_search.ghe.size(method='hybrid')
     toc = clock()
-    title = 'HighLevel/find_rectangle.py results'
+    title = 'HighLevel/find_bi_rectangle.py results'
     print(title + '\n' + len(title) * '=')
     subtitle = '* Single U-tube'
     print(subtitle + '\n' + len(subtitle) * '-')
@@ -165,7 +166,7 @@ def main():
     design_double_u_tube = dt.design.Design(
         V_flow_borehole, borehole, double_u_tube, fluid, pipe_double, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='rectangle')
+        routine='bi-rectangle')
 
     # Find a constrained rectangular design for a double U-tube and size it.
     tic = clock()
@@ -187,7 +188,7 @@ def main():
     design_coaxial_u_tube = dt.design.Design(
         V_flow_borehole, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='rectangle')
+        routine='bi-rectangle')
 
     # Find a constrained rectangular design for a coaxial tube and size it.
     tic = clock()

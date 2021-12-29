@@ -93,8 +93,7 @@ def main():
         hourly_extraction[list(hourly_extraction.keys())[0]]
 
     # Geometric constraints for the `near-square` routine
-    geometric_constraints = dt.media.GeometricConstraints(
-        B_max_x=B, unconstrained=True)
+    geometric_constraints = dt.media.GeometricConstraints(B=B)
 
     design = dt.design.Design(
         V_flow_borehole, borehole, bhe_object, fluid, pipe, grout, soil,

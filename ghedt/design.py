@@ -29,19 +29,24 @@ class Design:
 
         # Check the routine parameter
         self.routine = routine
-        available_routines = ['near-square', 'rectangle']
+        available_routines = ['near-square', 'rectangle', 'bi-rectangle']
+        self.geometric_constraints.check_inputs(self.routine)
+        gc = self.geometric_constraints
         if routine in available_routines:
             # If a near-square design routine is requested, then we go from a
             # 1x1 to 32x32 at the B-spacing
             if routine == 'near-square':
                 self.coordinates_domain = \
                     dt.domains.square_and_near_square(
-                        1, 32, self.geometric_constraints.B_max_x)
+                        1, 32, self.geometric_constraints.B)
             elif routine == 'rectangle':
-                gc = self.geometric_constraints
                 self.coordinates_domain = dt.domains.rectangular(
                     gc.length, gc.width, gc.B_min, gc.B_max_x, disp=False
                 )
+            elif routine == 'bi-rectangle':
+                self.coordinates_domain_nested = dt.domains.bi_rectangle_nested(
+                    gc.length, gc.width, gc.B_min, gc.B_max_x, gc.B_max_y,
+                    disp=False)
         else:
             raise ValueError('The requested routine is not available. '
                              'The currently available routines are: '
@@ -70,6 +75,13 @@ class Design:
                 self.coordinates_domain, self.V_flow_borehole, self.borehole,
                 self.bhe_object, self.fluid, self.pipe, self.grout, self.soil,
                 self.sim_params, self.hourly_extraction_ground_loads, disp=disp)
+        # Find a bi-rectangle
+        elif self.routine == 'bi-rectangle':
+            bisection_search = dt.search_routines.Bisection2D(
+                self.coordinates_domain_nested, self.V_flow_borehole,
+                self.borehole, self.bhe_object, self.fluid, self.pipe,
+                self.grout, self.soil, self.sim_params,
+                self.hourly_extraction_ground_loads, disp=False)
         else:
             raise ValueError('The requested routine is not available. '
                              'The currently available routines are: '

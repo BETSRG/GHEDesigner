@@ -335,6 +335,7 @@ class BisectionZD(Bisection1D):
 def oak_ridge_export(bisection_search, file_name='ghedt_output'):
     # Dictionary for export
     d = {}
+    d['height'] = bisection_search.ghe.bhe.b.H
     d['number_of_boreholes'] = len(bisection_search.selected_coordinates)
     d['g_function_pairs'] = []
     d['single_u_tube'] = {}

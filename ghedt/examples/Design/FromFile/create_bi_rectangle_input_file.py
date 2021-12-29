@@ -1,16 +1,14 @@
 # Jack C. Cook
-# Sunday, December 26, 2021
+# Monday, December 27, 2021
 
-# Purpose: Design a constrained rectangular field using the common design
-# interface with a single U-tube, multiple U-tube and coaxial tube borehole
-# heat exchanger.
-
+# Purpose: Show how to export the common design interface to an external file
+# that can then be loaded up and used in design later on using the bi-uniform
+# design routine.
 
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
 import ghedt.pygfunction as gt
 import pandas as pd
-from time import time as clock
 
 
 def main():
@@ -19,7 +17,6 @@ def main():
     H = 96.  # Borehole length (m)
     D = 2.  # Borehole buried depth (m)
     r_b = 0.075  # Borehole radius (m)
-    B = 5.  # Borehole spacing (m)
 
     # Pipe dimensions
     # ---------------
@@ -56,7 +53,6 @@ def main():
     # Thermal conductivities
     # ----------------------
     k_p = 0.4  # Pipe thermal conductivity (W/m.K)
-    k_p_coax = [0.4, 0.4]  # Pipes thermal conductivity (W/m.K)
     k_s = 2.0  # Ground thermal conductivity (W/m.K)
     k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
@@ -74,8 +70,7 @@ def main():
     pipe_double = \
         plat.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
     pipe_coaxial = \
-        plat.media.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax,
-                        rhoCp_p)
+        plat.media.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p, rhoCp_p)
     # Soil
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
     soil = plat.media.Soil(k_s, rhoCp_s, ugt)
@@ -95,8 +90,8 @@ def main():
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
 
-    # Simulation start month and end month
-    # --------------------------------
+    # Simulation parameters
+    # ---------------------
     # Simulation start month and end month
     start_month = 1
     n_years = 20
@@ -123,86 +118,26 @@ def main():
     # Rectangular design constraints are the land and range of B-spacing
     length = 85.  # m
     width = 36.5  # m
-    B_min = 3.  # m
-    B_max = 10.  # m
+    B_min = 4.45  # m
+    B_max_x = 10.  # m
+    B_max_y = 12.  # m
 
-    # Geometric constraints for the `find_rectangle` routine
-    # Required geometric constraints for the uniform rectangle design: length,
-    # width, B_min, B_max
+    # Geometric constraints for the `near-square` routine
     geometric_constraints = dt.media.GeometricConstraints(
-        length=length, width=width, B_min=B_min, B_max_x=B_max)
+        length=length, width=width, B_min=B_min, B_max_x=B_max_x,
+        B_max_y=B_max_y)
 
     # Note: Flow functionality is currently only on a borehole basis. Future
     # development will include the ability to change the flow rate to be on a
     # system flow rate basis.
-
-    # Single U-tube
-    # -------------
     design_single_u_tube = dt.design.Design(
         V_flow_borehole, borehole, single_u_tube, fluid, pipe_single, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='rectangle')
+        routine='bi-rectangle')
 
-    # Find a constrained rectangular design for a single U-tube and size it.
-    tic = clock()
-    bisection_search = design_single_u_tube.find_design()
-    bisection_search.ghe.compute_g_functions()
-    bisection_search.ghe.size(method='hybrid')
-    toc = clock()
-    title = 'HighLevel/find_rectangle.py results'
-    print(title + '\n' + len(title) * '=')
-    subtitle = '* Single U-tube'
-    print(subtitle + '\n' + len(subtitle) * '-')
-    print('Calculation time: {0:.2f} seconds'.format(toc - tic))
-    print('Height: {0:.4f} meters'.format(bisection_search.ghe.bhe.b.H))
-    nbh = len(bisection_search.ghe.GFunction.bore_locations)
-    print('Number of boreholes: {}'.format(nbh))
-    print('Total Drilling: {0:.1f} meters\n'.
-          format(bisection_search.ghe.bhe.b.H * nbh))
-
-    # Double U-tube
-    # -------------
-    design_double_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, double_u_tube, fluid, pipe_double, grout,
-        soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='rectangle')
-
-    # Find a constrained rectangular design for a double U-tube and size it.
-    tic = clock()
-    bisection_search = design_double_u_tube.find_design()
-    bisection_search.ghe.compute_g_functions()
-    bisection_search.ghe.size(method='hybrid')
-    toc = clock()
-    subtitle = '* Double U-tube'
-    print(subtitle + '\n' + len(subtitle) * '-')
-    print('Calculation time: {0:.2f} seconds'.format(toc - tic))
-    print('Height: {0:.4f} meters'.format(bisection_search.ghe.bhe.b.H))
-    nbh = len(bisection_search.ghe.GFunction.bore_locations)
-    print('Number of boreholes: {}'.format(nbh))
-    print('Total Drilling: {0:.1f} meters\n'.
-          format(bisection_search.ghe.bhe.b.H * nbh))
-
-    # Coaxial tube
-    # -------------
-    design_coaxial_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
-        soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='rectangle')
-
-    # Find a constrained rectangular design for a coaxial tube and size it.
-    tic = clock()
-    bisection_search = design_coaxial_u_tube.find_design()
-    bisection_search.ghe.compute_g_functions()
-    bisection_search.ghe.size(method='hybrid')
-    toc = clock()
-    subtitle = '* Coaxial tube'
-    print(subtitle + '\n' + len(subtitle) * '-')
-    print('Calculation time: {0:.2f} seconds'.format(toc - tic))
-    print('Height: {0:.4f} meters'.format(bisection_search.ghe.bhe.b.H))
-    nbh = len(bisection_search.ghe.GFunction.bore_locations)
-    print('Number of boreholes: {}'.format(nbh))
-    print('Total Drilling: {0:.1f} meters\n'.
-          format(bisection_search.ghe.bhe.b.H * nbh))
+    # Output the design interface object to a json file so it can be reused
+    dt.utilities.create_input_file(
+        design_single_u_tube, file_name='ghedt_input')
 
 
 if __name__ == '__main__':
