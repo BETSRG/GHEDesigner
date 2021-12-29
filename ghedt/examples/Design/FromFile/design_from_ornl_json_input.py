@@ -123,21 +123,14 @@ def main():
         routine='near-square')
 
     # Find the near-square design for a single U-tube and size it.
-    tic = clock()
     bisection_search = design_single_u_tube.find_design()
     bisection_search.ghe.compute_g_functions()
     bisection_search.ghe.size(method='hybrid')
-    toc = clock()
-    title = 'HighLevel/find_near_square.py results'
-    print(title + '\n' + len(title) * '=')
-    subtitle = '* Single U-tube'
-    print(subtitle + '\n' + len(subtitle) * '-')
-    print('Calculation time: {0:.2f} seconds'.format(toc - tic))
-    print('Height: {0:.4f} meters'.format(bisection_search.ghe.bhe.b.H))
-    nbh = len(bisection_search.ghe.GFunction.bore_locations)
-    print('Number of boreholes: {}'.format(nbh))
-    print('Total Drilling: {0:.1f} meters\n'.
-          format(bisection_search.ghe.bhe.b.H * nbh))
+
+    # Export the g-function to a file named `ghedt_output`. A json file will be
+    # created.
+    dt.search_routines.oak_ridge_export(
+        bisection_search, file_name='ghedt_output')
 
 
 if __name__ == '__main__':
