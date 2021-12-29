@@ -2,3 +2,6 @@
 [submodule "ghedt/pygfunction"]
 	path = ghedt/pygfunction
 	url = https://github.com/j-c-cook/pygfunction
+[submodule "ghedt/ghedt-examples"]
+	path = ghedt/-f
+	url = https://github.com/j-c-cook/ghedt-examples
