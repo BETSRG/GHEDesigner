@@ -335,7 +335,7 @@ class BisectionZD(Bisection1D):
 def oak_ridge_export(bisection_search, file_name='ghedt_output'):
     # Dictionary for export
     d = {}
-    d['height'] = bisection_search.ghe.bhe.b.H
+    d['borehole_length'] = bisection_search.ghe.bhe.b.H
     d['number_of_boreholes'] = len(bisection_search.selected_coordinates)
     d['g_function_pairs'] = []
     d['single_u_tube'] = {}
@@ -360,11 +360,21 @@ def oak_ridge_export(bisection_search, file_name='ghedt_output'):
     B_over_H = ghe.B_spacing / H
     g = ghe.grab_g_function(B_over_H)
 
+    total_g_values = g.x.size
+    number_lts_g_values = 27
+    number_sts_g_values = 30
+    sts_step_size = int(np.floor((total_g_values - number_lts_g_values) /
+                                 number_sts_g_values).tolist())
     lntts = []
     g_values = []
-    for i in range(len(g.y)):
+    for i in range(1, (total_g_values - number_lts_g_values),
+                   sts_step_size):
         lntts.append(g.x[i].tolist())
         g_values.append(g.y[i].tolist())
+    lntts += g.x[
+             total_g_values - number_lts_g_values: total_g_values].tolist()
+    g_values += g.y[
+                total_g_values - number_lts_g_values: total_g_values].tolist()
 
     for i in range(len(lntts)):
         d['g_function_pairs'].append({'ln_tts': lntts[i],
