@@ -248,21 +248,21 @@ class Bisection2D(Bisection1D):
 
 
 class BisectionZD(Bisection1D):
-    def __init__(self, coordinates_domain_nested: list, V_flow_borehole: float,
+    def __init__(self, coordinates_domain_nested: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
                  bhe_object: plat.borehole_heat_exchangers,
                  fluid: gt.media.Fluid, pipe: plat.media.Pipe,
                  grout: plat.media.ThermalProperty, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
-                 hourly_extraction_ground_loads: list,
+                 hourly_extraction_ground_loads: list, flow: str = 'borehole',
                  max_iter=15, disp=False):
         # Get a coordinates domain for initialization
         coordinates_domain = coordinates_domain_nested[0]
         Bisection1D.__init__(
-            self, coordinates_domain, V_flow_borehole, borehole, bhe_object,
+            self, coordinates_domain, V_flow, borehole, bhe_object,
             fluid, pipe, grout, soil, sim_params,
-            hourly_extraction_ground_loads, max_iter=max_iter, disp=disp,
-            search=False)
+            hourly_extraction_ground_loads, flow=flow, max_iter=max_iter,
+            disp=disp, search=False)
 
         self.coordinates_domain_nested = coordinates_domain_nested
         self.calculated_temperatures_nested = {}
