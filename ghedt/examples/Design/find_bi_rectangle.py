@@ -134,10 +134,6 @@ def main():
         length=length, width=width, B_min=B_min, B_max_x=B_max_x,
         B_max_y=B_max_y)
 
-    # Note: Flow functionality is currently only on a borehole basis. Future
-    # development will include the ability to change the flow rate to be on a
-    # system flow rate basis.
-
     # Single U-tube
     # -------------
     design_single_u_tube = dt.design.Design(

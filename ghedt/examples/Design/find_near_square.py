@@ -123,10 +123,6 @@ def main():
     # Required geometric constraints for the uniform rectangle design: B
     geometric_constraints = dt.media.GeometricConstraints(B=B)
 
-    # Note: Flow functionality is currently only on a borehole basis. Future
-    # development will include the ability to change the flow rate to be on a
-    # system flow rate basis.
-
     # Single U-tube
     # -------------
     design_single_u_tube = dt.design.Design(
