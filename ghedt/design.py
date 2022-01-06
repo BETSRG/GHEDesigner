@@ -51,37 +51,30 @@ class Design:
             raise ValueError('The requested routine is not available. '
                              'The currently available routines are: '
                              '`near-square`.')
-
-        # Check the flow rate parameter
-        if flow == 'borehole':
-            self.V_flow_borehole = V_flow  # borehole volumetric flow rate, m3/s
-        elif flow == 'system':
-            self.V_flow_system = V_flow  # system volumetric flow rate, m3/s
-        else:
-            raise ValueError('The flow rate should be on a `borehole` or '
-                             '`system` basis.')
+        self.flow = flow
 
     def find_design(self, disp=False):
         # Find near-square
         if self.routine == 'near-square':
             bisection_search = dt.search_routines.Bisection1D(
-                self.coordinates_domain, self.V_flow_borehole, self.borehole,
+                self.coordinates_domain, self.V_flow, self.borehole,
                 self.bhe_object, self.fluid, self.pipe, self.grout,
                 self.soil, self.sim_params, self.hourly_extraction_ground_loads,
-                disp=disp)
+                flow=self.flow, disp=disp)
         # Find a rectangle
         elif self.routine == 'rectangle':
             bisection_search = dt.search_routines.Bisection1D(
-                self.coordinates_domain, self.V_flow_borehole, self.borehole,
+                self.coordinates_domain, self.V_flow, self.borehole,
                 self.bhe_object, self.fluid, self.pipe, self.grout, self.soil,
-                self.sim_params, self.hourly_extraction_ground_loads, disp=disp)
+                self.sim_params, self.hourly_extraction_ground_loads,
+                flow=self.flow, disp=disp)
         # Find a bi-rectangle
         elif self.routine == 'bi-rectangle':
             bisection_search = dt.search_routines.Bisection2D(
-                self.coordinates_domain_nested, self.V_flow_borehole,
+                self.coordinates_domain_nested, self.V_flow,
                 self.borehole, self.bhe_object, self.fluid, self.pipe,
                 self.grout, self.soil, self.sim_params,
-                self.hourly_extraction_ground_loads, disp=False)
+                self.hourly_extraction_ground_loads, flow=self.flow, disp=False)
         else:
             raise ValueError('The requested routine is not available. '
                              'The currently available routines are: '

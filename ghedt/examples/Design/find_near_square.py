@@ -88,7 +88,8 @@ def main():
     fluid = gt.media.Fluid(mixer=mixer, percent=percent)
 
     # Fluid properties
-    V_flow_borehole = 0.2  # Borehole volumetric flow rate (L/s)
+    V_flow = 0.2  # Borehole volumetric flow rate (L/s)
+    flow = 'borehole'
 
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
@@ -113,7 +114,7 @@ def main():
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
     hourly_extraction: dict = \
-        pd.read_csv('../../Atlanta_Office_Building_Loads.csv').to_dict('list')
+        pd.read_csv('../Atlanta_Office_Building_Loads.csv').to_dict('list')
     # Take only the first column in the dictionary
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
@@ -129,9 +130,9 @@ def main():
     # Single U-tube
     # -------------
     design_single_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, single_u_tube, fluid, pipe_single, grout,
+        V_flow, borehole, single_u_tube, fluid, pipe_single, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square')
+        flow=flow, routine='near-square')
 
     # Find the near-square design for a single U-tube and size it.
     tic = clock()
@@ -153,9 +154,9 @@ def main():
     # Double U-tube
     # -------------
     design_double_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, double_u_tube, fluid, pipe_double, grout,
+        V_flow, borehole, double_u_tube, fluid, pipe_double, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square')
+        flow=flow, routine='near-square')
 
     # Find the near-square design for a double U-tube and size it.
     tic = clock()
@@ -175,9 +176,9 @@ def main():
     # Coaxial tube
     # -------------
     design_coaxial_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
+        V_flow, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square')
+        flow=flow, routine='near-square')
 
     # Find the near-square design for a coaxial tube and size it.
     tic = clock()
