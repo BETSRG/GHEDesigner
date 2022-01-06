@@ -4,9 +4,11 @@
 import unittest
 import os
 
+import ghedt as dt
+import ghedt.peak_load_analysis_tool as plat
 import ghedt.pygfunction as gt
+
 import pandas as pd
-import ghedt
 
 TESTDATA_FILENAME = os.path.join(os.path.dirname(__file__),
                                  'Atlanta_Office_Building_Loads.csv')
@@ -15,7 +17,6 @@ TESTDATA_FILENAME = os.path.join(os.path.dirname(__file__),
 class TestGHE(unittest.TestCase):
 
     def setUp(self) -> None:
-        import ghedt.peak_load_analysis_tool as plat
         # Borehole dimensions
         # -------------------
         self.H = 100.  # Borehole length (m)
@@ -94,10 +95,10 @@ class TestGHE(unittest.TestCase):
         # Coordinates
         Nx = 12
         Ny = 13
-        self.coordinates = ghedt.coordinates.rectangle(Nx, Ny, self.B, self.B)
+        self.coordinates = dt.coordinates.rectangle(Nx, Ny, self.B, self.B)
 
         # Compute a range of g-functions for interpolation
-        self.log_time = ghedt.utilities.Eskilson_log_times()
+        self.log_time = dt.utilities.Eskilson_log_times()
         self.H_values = [24., 48., 96., 192., 384.]
         self.r_b_values = [self.r_b] * len(self.H_values)
         self.D_values = [2.] * len(self.H_values)
@@ -147,14 +148,14 @@ class TestGHE(unittest.TestCase):
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
 
         # Initialize GHE object
-        g_function = ghedt.gfunction.compute_live_g_function(
+        g_function = dt.gfunction.compute_live_g_function(
             self.B, self.H_values, self.r_b_values, self.D_values,
             self.m_flow_borehole, self.SingleUTube,
             self.log_time, self.coordinates, self.fluid, self.pipe_s,
             self.grout, self.soil)
 
         # Initialize the GHE object
-        ghe = ghedt.ground_heat_exchangers.GHE(
+        ghe = dt.ground_heat_exchangers.GHE(
             self.V_flow_system, self.B, self.SingleUTube, self.fluid,
             borehole, self.pipe_s, self.grout, self.soil,
             g_function, self.sim_params, self.hourly_extraction_ground_loads)
@@ -174,14 +175,14 @@ class TestGHE(unittest.TestCase):
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
 
         # Initialize GHE object
-        g_function = ghedt.gfunction.compute_live_g_function(
+        g_function = dt.gfunction.compute_live_g_function(
             self.B, self.H_values, self.r_b_values, self.D_values,
             self.m_flow_borehole, self.DoubleUTube,
             self.log_time, self.coordinates, self.fluid, self.pipe_d,
             self.grout, self.soil)
 
         # Initialize the GHE object
-        ghe = ghedt.ground_heat_exchangers.GHE(
+        ghe = dt.ground_heat_exchangers.GHE(
             self.V_flow_system, self.B, self.DoubleUTube, self.fluid,
             borehole, self.pipe_d, self.grout, self.soil,
             g_function, self.sim_params, self.hourly_extraction_ground_loads)
@@ -201,14 +202,14 @@ class TestGHE(unittest.TestCase):
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
 
         # Initialize GHE object
-        g_function = ghedt.gfunction.compute_live_g_function(
+        g_function = dt.gfunction.compute_live_g_function(
             self.B, self.H_values, self.r_b_values, self.D_values,
             self.m_flow_borehole, self.CoaxialTube,
             self.log_time, self.coordinates, self.fluid, self.pipe_c,
             self.grout, self.soil)
 
         # Re-Initialize the GHE object
-        ghe = ghedt.ground_heat_exchangers.GHE(
+        ghe = dt.ground_heat_exchangers.GHE(
             self.V_flow_system, self.B, self.CoaxialTube, self.fluid,
             borehole, self.pipe_c, self.grout, self.soil,
             g_function, self.sim_params, self.hourly_extraction_ground_loads)
