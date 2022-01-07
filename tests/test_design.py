@@ -168,5 +168,7 @@ class TestNearSquare(unittest.TestCase, DesignBase):
         # Verify that the `flow` toggle is properly working
         self.assertAlmostEqual(H_single_u_tube_a, H_single_u_tube_b, places=8)
         # Verify that the proper height as been found
+        # Note: This reference was calculated on MacOS. It seems that on Linux
+        # the values are not equal starting around the 9th decimal place.
         H_reference = 130.18183587536208
         self.assertAlmostEqual(H_reference, H_single_u_tube_a, places=8)
