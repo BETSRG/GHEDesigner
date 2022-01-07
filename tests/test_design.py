@@ -166,7 +166,7 @@ class TestNearSquare(unittest.TestCase, DesignBase):
         H_single_u_tube_b = bisection_search.ghe.bhe.b.H
 
         # Verify that the `flow` toggle is properly working
-        self.assertEqual(H_single_u_tube_a, H_single_u_tube_b)
+        self.assertAlmostEqual(H_single_u_tube_a, H_single_u_tube_b, places=8)
         # Verify that the proper height as been found
         H_reference = 130.18183587536208
-        self.assertEqual(H_reference, H_single_u_tube_a)
+        self.assertAlmostEqual(H_reference, H_single_u_tube_a, places=8)
