@@ -4,7 +4,8 @@
 
 ### Enhancements
 
-* [Issue 12](https://github.com/j-c-cook/ghedt/issues/12) - The `GFunction` object can be passed into the `GHE` object with only one g-function calculated, as long as the `B/H` value being "interpolated" for is the same one that it was computed for. 
+* [Issue 12](https://github.com/j-c-cook/ghedt/issues/12) - The `GFunction` object can be passed into the `GHE` object with only one g-function calculated, as long as the `B/H` value being "interpolated" for is the same one that it was computed for.
+* [Issue 64](https://github.com/j-c-cook/ghedt/issues/64) - Enhances the `search_routines` API to accept flow rate on a borehole or system basis.
 
 ### Fixes
 
@@ -37,5 +38,6 @@
 
 ### Tests and CI
 
-* [Issue 15](https://github.com/j-c-cook/ghedt/issues/15) - A file is added for testing the sizing of a GHE using live-time g-function calculations that utilize the equivalent solver method and 8 unequal segment lengths along the borehole for Single U-tube, Double U-tube and Coaxial tube BHEs. 
+* [Issue 15](https://github.com/j-c-cook/ghedt/issues/15) - A file is added for testing the sizing of a GHE using live-time g-function calculations that utilize the equivalent solver method and 8 unequal segment lengths along the borehole for Single U-tube, Double U-tube and Coaxial tube BHEs.
+* [Issue 5](https://github.com/j-c-cook/ghedt/issues/5) - A Ubuntu 20.04.03 LTS virtual machine (via VirtualBox) has been created to provide support for running tests when the project goes public. 
 
