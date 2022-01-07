@@ -27,6 +27,12 @@ class ThermalProperty:
         return output
 
 
+class Grout(ThermalProperty):
+    def __init__(self, k, rhoCp):
+        # Make variables from ThermalProperty available to Grout
+        ThermalProperty.__init__(self, k, rhoCp)
+
+
 class Pipe(ThermalProperty):
     def __init__(self, pos, r_in, r_out, s, eps, k, rhoCp):
         # Make variables from ThermalProperty available to Pipe

@@ -10,22 +10,24 @@ import copy
 
 
 class Bisection1D:
-    def __init__(self, coordinates_domain: list, V_flow_borehole: float,
+    def __init__(self, coordinates_domain: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
                  bhe_object: plat.borehole_heat_exchangers,
                  fluid: gt.media.Fluid, pipe: plat.media.Pipe,
                  grout: plat.media.ThermalProperty, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
-                 hourly_extraction_ground_loads: list,
+                 hourly_extraction_ground_loads: list, flow: str = 'borehole',
                  max_iter=15, disp=False, search=True):
 
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
         coordinates = coordinates_domain[0]
 
-        V_flow_system = V_flow_borehole * float(len(coordinates))
-        # Total fluid mass flow rate per borehole (kg/s)
-        m_flow_borehole = V_flow_borehole / 1000. * fluid.rho
+        # Flow rate tracking
+        self.V_flow = V_flow
+        self.flow = flow
+        V_flow_system, m_flow_borehole = \
+            self.retrieve_flow(coordinates, fluid.rho)
 
         self.log_time = dt.utilities.Eskilson_log_times()
         self.bhe_object = bhe_object
@@ -46,25 +48,38 @@ class Bisection1D:
 
         # Initialize the GHE object
         self.ghe = dt.ground_heat_exchangers.GHE(
-            V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
-            g_function, sim_params, hourly_extraction_ground_loads)
+            V_flow_system, B, bhe_object, fluid, borehole, pipe, grout,
+            soil, g_function, sim_params, hourly_extraction_ground_loads)
 
         self.calculated_temperatures = {}
 
         if search:
             self.selection_key, self.selected_coordinates = self.search()
 
+    def retrieve_flow(self, coordinates, rho):
+        if self.flow == 'borehole':
+            V_flow_system = self.V_flow * float(len(coordinates))
+            # Total fluid mass flow rate per borehole (kg/s)
+            m_flow_borehole = self.V_flow / 1000. * rho
+        elif self.flow == 'system':
+            V_flow_system = self.V_flow
+            V_flow_borehole = self.V_flow / float(len(coordinates))
+            m_flow_borehole = V_flow_borehole / 1000. * rho
+        else:
+            raise ValueError('The flow argument should be either `borehole`'
+                             'or `system`.')
+        return V_flow_system, m_flow_borehole
+
     def initialize_ghe(self, coordinates, H):
+        V_flow_system, m_flow_borehole = \
+            self.retrieve_flow(coordinates, self.ghe.bhe.fluid.rho)
 
         self.ghe.bhe.b.H = H
         borehole = self.ghe.bhe.b
-        m_flow_borehole = self.ghe.bhe.m_flow_borehole
         fluid = self.ghe.bhe.fluid
         pipe = self.ghe.bhe.pipe
         grout = self.ghe.bhe.grout
         soil = self.ghe.bhe.soil
-        V_flow_borehole = self.ghe.V_flow_borehole
-        V_flow_system = V_flow_borehole * float(len(coordinates))
 
         B = dt.utilities.borehole_spacing(borehole, coordinates)
 
@@ -190,21 +205,21 @@ class Bisection1D:
 
 
 class Bisection2D(Bisection1D):
-    def __init__(self, coordinates_domain_nested: list, V_flow_borehole: float,
+    def __init__(self, coordinates_domain_nested: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
                  bhe_object: plat.borehole_heat_exchangers,
                  fluid: gt.media.Fluid, pipe: plat.media.Pipe,
                  grout: plat.media.ThermalProperty, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
-                 hourly_extraction_ground_loads: list,
+                 hourly_extraction_ground_loads: list, flow: str = 'borehole',
                  max_iter=15, disp=False):
         # Get a coordinates domain for initialization
         coordinates_domain = coordinates_domain_nested[0]
         Bisection1D.__init__(
-            self, coordinates_domain, V_flow_borehole, borehole, bhe_object,
+            self, coordinates_domain, V_flow, borehole, bhe_object,
             fluid, pipe, grout, soil, sim_params,
-            hourly_extraction_ground_loads, max_iter=max_iter, disp=disp,
-            search=False)
+            hourly_extraction_ground_loads, flow=flow, max_iter=max_iter,
+            disp=disp, search=False)
 
         self.coordinates_domain_nested = []
         self.calculated_temperatures_nested = []
@@ -233,21 +248,21 @@ class Bisection2D(Bisection1D):
 
 
 class BisectionZD(Bisection1D):
-    def __init__(self, coordinates_domain_nested: list, V_flow_borehole: float,
+    def __init__(self, coordinates_domain_nested: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
                  bhe_object: plat.borehole_heat_exchangers,
                  fluid: gt.media.Fluid, pipe: plat.media.Pipe,
                  grout: plat.media.ThermalProperty, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
-                 hourly_extraction_ground_loads: list,
+                 hourly_extraction_ground_loads: list, flow: str = 'borehole',
                  max_iter=15, disp=False):
         # Get a coordinates domain for initialization
         coordinates_domain = coordinates_domain_nested[0]
         Bisection1D.__init__(
-            self, coordinates_domain, V_flow_borehole, borehole, bhe_object,
+            self, coordinates_domain, V_flow, borehole, bhe_object,
             fluid, pipe, grout, soil, sim_params,
-            hourly_extraction_ground_loads, max_iter=max_iter, disp=disp,
-            search=False)
+            hourly_extraction_ground_loads, flow=flow, max_iter=max_iter,
+            disp=disp, search=False)
 
         self.coordinates_domain_nested = coordinates_domain_nested
         self.calculated_temperatures_nested = {}

@@ -1,8 +1,10 @@
 # Jack C. Cook
 # Sunday, December 26, 2021
 
-# Purpose: Design a square or near-square field using the common design
-# interface with a single U-tube, multiple U-tube and coaxial tube.
+# Purpose: Design a constrained rectangular field using the common design
+# interface with a single U-tube, multiple U-tube and coaxial tube borehole
+# heat exchanger.
+
 
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
@@ -17,7 +19,6 @@ def main():
     H = 96.  # Borehole length (m)
     D = 2.  # Borehole buried depth (m)
     r_b = 0.075  # Borehole radius (m)
-    B = 5.  # Borehole spacing (m)
 
     # Pipe dimensions
     # ---------------
@@ -88,13 +89,14 @@ def main():
     fluid = gt.media.Fluid(mixer=mixer, percent=percent)
 
     # Fluid properties
-    V_flow_borehole = 0.2  # Borehole volumetric flow rate (L/s)
+    V_flow = 0.2  # Borehole volumetric flow rate (L/s)
+    flow = 'borehole'
 
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
 
-    # Simulation parameters
-    # ---------------------
+    # Simulation start month and end month
+    # --------------------------------
     # Simulation start month and end month
     start_month = 1
     n_years = 20
@@ -113,33 +115,37 @@ def main():
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
     hourly_extraction: dict = \
-        pd.read_csv('../../Atlanta_Office_Building_Loads.csv').to_dict('list')
+        pd.read_csv('../Atlanta_Office_Building_Loads.csv').to_dict('list')
     # Take only the first column in the dictionary
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
 
-    # Geometric constraints for the `near-square` routine
-    # Required geometric constraints for the uniform rectangle design: B
-    geometric_constraints = dt.media.GeometricConstraints(B=B)
+    # Rectangular design constraints are the land and range of B-spacing
+    length = 85.  # m
+    width = 36.5  # m
+    B_min = 3.  # m
+    B_max = 10.  # m
 
-    # Note: Flow functionality is currently only on a borehole basis. Future
-    # development will include the ability to change the flow rate to be on a
-    # system flow rate basis.
+    # Geometric constraints for the `find_rectangle` routine
+    # Required geometric constraints for the uniform rectangle design: length,
+    # width, B_min, B_max
+    geometric_constraints = dt.media.GeometricConstraints(
+        length=length, width=width, B_min=B_min, B_max_x=B_max)
 
     # Single U-tube
     # -------------
     design_single_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, single_u_tube, fluid, pipe_single, grout,
+        V_flow, borehole, single_u_tube, fluid, pipe_single, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square')
+        flow=flow, routine='rectangle')
 
-    # Find the near-square design for a single U-tube and size it.
+    # Find a constrained rectangular design for a single U-tube and size it.
     tic = clock()
     bisection_search = design_single_u_tube.find_design()
     bisection_search.ghe.compute_g_functions()
     bisection_search.ghe.size(method='hybrid')
     toc = clock()
-    title = 'HighLevel/find_near_square.py results'
+    title = 'HighLevel/find_rectangle.py results'
     print(title + '\n' + len(title) * '=')
     subtitle = '* Single U-tube'
     print(subtitle + '\n' + len(subtitle) * '-')
@@ -153,11 +159,11 @@ def main():
     # Double U-tube
     # -------------
     design_double_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, double_u_tube, fluid, pipe_double, grout,
+        V_flow, borehole, double_u_tube, fluid, pipe_double, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square')
+        flow=flow, routine='rectangle')
 
-    # Find the near-square design for a double U-tube and size it.
+    # Find a constrained rectangular design for a double U-tube and size it.
     tic = clock()
     bisection_search = design_double_u_tube.find_design()
     bisection_search.ghe.compute_g_functions()
@@ -175,11 +181,11 @@ def main():
     # Coaxial tube
     # -------------
     design_coaxial_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
+        V_flow, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square')
+        flow=flow, routine='rectangle')
 
-    # Find the near-square design for a coaxial tube and size it.
+    # Find a constrained rectangular design for a coaxial tube and size it.
     tic = clock()
     bisection_search = design_coaxial_u_tube.find_design()
     bisection_search.ghe.compute_g_functions()
