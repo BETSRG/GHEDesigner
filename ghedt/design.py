@@ -29,7 +29,8 @@ class Design:
 
         # Check the routine parameter
         self.routine = routine
-        available_routines = ['near-square', 'rectangle', 'bi-rectangle']
+        available_routines = ['near-square', 'rectangle', 'bi-rectangle',
+                              'bi-zoned']
         self.geometric_constraints.check_inputs(self.routine)
         gc = self.geometric_constraints
         if routine in available_routines:
@@ -47,6 +48,10 @@ class Design:
                 self.coordinates_domain_nested = dt.domains.bi_rectangle_nested(
                     gc.length, gc.width, gc.B_min, gc.B_max_x, gc.B_max_y,
                     disp=False)
+            elif routine == 'bi-zoned':
+                self.coordinates_domain_nested = \
+                    dt.domains.bi_rectangle_zoned_nested(
+                        gc.length, gc.width, gc.B_min, gc.B_max_x, gc.B_max_y)
         else:
             raise ValueError('The requested routine is not available. '
                              'The currently available routines are: '
@@ -75,6 +80,13 @@ class Design:
                 self.borehole, self.bhe_object, self.fluid, self.pipe,
                 self.grout, self.soil, self.sim_params,
                 self.hourly_extraction_ground_loads, flow=self.flow, disp=False)
+        # Find bi-zoned rectangle
+        elif self.routine == 'bi-zoned':
+            bisection_search = dt.search_routines.BisectionZD(
+                self.coordinates_domain_nested, self.V_flow, self.borehole,
+                self.bhe_object, self.fluid, self.pipe, self.grout, self.soil,
+                self.sim_params, self.hourly_extraction_ground_loads,
+                flow=self.flow, disp=False)
         else:
             raise ValueError('The requested routine is not available. '
                              'The currently available routines are: '
