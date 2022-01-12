@@ -1,14 +1,18 @@
 # Ground Heat Exchanger Design Toolbox
 
-The Ground Heat Exchanger Design Toolbox is a Python package that can quantify
-the short- and long-term thermal interaction in a ground heat exchanger (GHE).
-The long-term thermal response g-functions are computed live-time with 
-[pygfunction](https://github.com/MassimoCimmino/pygfunction). 
-The GHEDT contains a fast monthly hybrid time step simulation for prediction of 
-heat pump entering fluid temperatures over a design life. GHEDT can vary the 
-size (or borehole height) of a specified borehole field to ensure the heat pump 
-entering fluid temperature remains within specified bounds. GHEDT contains a 
-novel borehole configuration selection algorithm.
+A package with the novel capability of automatically selecting ground heat 
+exchanger configurations based on polygonal land constraints. This package 
+contains advanced methods that are the first of their kind. The results are 
+validated against the world renowned `GLHEPRO` (Cook 2021).
+
+The Ground Heat Exchanger Design Toolbox (GHEDT) is a Python package that can 
+quantify the short- and long-term thermal interaction in a ground heat exchanger 
+(GHE). The long-term thermal response g-functions are computed live-time with 
+[pygfunction][#pygfunction]. The GHEDT contains a fast monthly hybrid time step 
+simulation for prediction of heat pump entering fluid temperatures over a design 
+life. GHEDT can vary the size (or borehole height) of a specified borehole field 
+to ensure the heat pump entering fluid temperature remains within specified 
+bounds. GHEDT contains a novel borehole configuration selection algorithm.
 
 ## Novel Design Algorithms
 
@@ -16,8 +20,11 @@ GHEDT contains a novel design methodology for automated selection of borehole
 fields. The advanced methodology performs optimization based on a target 
 drilling depth. An integer bisection routine is utilized to quickly search 
 over a unimodal domain of boreholes. GHEDT can consider available drilling and 
-no-drilling zones defined as polygons. For more information, refer to 
-`Cook (2021)`.
+no-drilling zones defined as polygons. 
+
+The selection process shown below is performed in less than half a minute on an 
+11th Gen Intel Core i9-11900K @ 3.50GHz. Refer to `Cook (2021)` for more 
+information.
 
 ![polygonal](images/find_bi_alternative_03.gif)
 
@@ -36,8 +43,7 @@ is dependent on the following packages:
 
 ## Quick Start
 
-**Users** - Install `ghedt` via the package installer for Python
-([pip](https://pip.pypa.io/en/latest/)):
+**Users** - Install `ghedt` via the package installer for Python ([pip][#pip]):
 ```angular2html
 pip install ghedt
 ```
@@ -46,7 +52,7 @@ pip install ghedt
 ```angular2html
 git clone https://github.com/j-c-cook/ghedt
 ```
-Recursively update the submodules.
+Recursively update the submodule.
 ```angular2html
  git submodule update --init --recursive
 ```
@@ -76,6 +82,12 @@ and Automated Ground Heat Exchanger Design}",
 year = {2021},
 }
 ```
+
+## Questions?
+
+If there are any questions, comments or concerns please [create][#create] an 
+issue, comment on an [open][#issue] issue, comment on a [closed][#closed] issue, 
+or [start][#start] a [discussion][#discussion]. 
   
 
 ## Acknowledgements
@@ -85,3 +97,11 @@ Laboratory and the National Renewable Energy Laboratory, and by OSU through the
 Center for Integrated Building Systems, the OG&E Energy Technology Chair, and 
 Oklahoma State University via return of indirect costs to Dr. Jeffrey D. 
 Spitler.
+
+[#pygfunction]: https://github.com/MassimoCimmino/pygfunction
+[#pip]: https://pip.pypa.io/en/latest/
+[#create]: https://github.com/j-c-cook/ghedt/issues/new
+[#issue]: https://github.com/j-c-cook/ghedt/issues
+[#closed]: https://github.com/j-c-cook/ghedt/issues?q=is%3Aissue+is%3Aclosed
+[#start]: https://github.com/j-c-cook/ghedt/discussions/new
+[#discussion]: https://github.com/j-c-cook/ghedt/discussions
