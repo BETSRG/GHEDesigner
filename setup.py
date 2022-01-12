@@ -47,7 +47,8 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='ghedt',
-      install_requires=['matplotlib>=3.3.4',
+      install_requires=['pygfunction>=2.1'
+                        'matplotlib>=3.3.4',
                         'numpy>=1.19.2',
                         'Pillow>=8.1.0',
                         'scipy>=1.6.2',
@@ -57,7 +58,7 @@ setup(name='ghedt',
                         'coolprop>=6.4.1',
                         'opencv-python==4.5.4.58'],
       url='https://github.com/j-c-cook/ghedt',
-      download_url='https://github.com/j-c-cook/ghedt/releases/download/v0.1-alpha.11/ghedt-v0.1-alpha.11.tar.gz',
+      download_url='https://github.com/j-c-cook/ghedt/archive/v0.1-alpha.10.tar.gz',
       long_description=long_description,
       long_description_content_type='text/markdown',
       version='0.1-alpha.11',

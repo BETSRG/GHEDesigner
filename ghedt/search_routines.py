@@ -2,7 +2,7 @@
 # Wednesday, October 27, 2021
 
 import ghedt as dt
-import ghedt.pygfunction as gt
+import pygfunction as gt
 import ghedt.peak_load_analysis_tool as plat
 from ghedt.utilities import sign, check_bracket
 import numpy as np

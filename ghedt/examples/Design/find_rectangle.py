@@ -8,7 +8,7 @@
 
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
-import ghedt.pygfunction as gt
+import pygfunction as gt
 import pandas as pd
 from time import time as clock
 

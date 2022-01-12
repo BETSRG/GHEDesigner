@@ -4,7 +4,7 @@ import copy
 import warnings
 
 from scipy.interpolate import interp1d, lagrange
-import ghedt.pygfunction as gt
+import pygfunction as gt
 import numpy as np
 
 

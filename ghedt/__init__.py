@@ -1,4 +1,3 @@
-from . import pygfunction
 from . import peak_load_analysis_tool
 from . import gfunction
 from . import ground_heat_exchangers

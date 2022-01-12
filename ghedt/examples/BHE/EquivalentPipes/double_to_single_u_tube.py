@@ -2,7 +2,7 @@
 # Saturday, August 21, 2021
 
 import ghedt.peak_load_analysis_tool as plat
-import ghedt.pygfunction as gt
+import pygfunction as gt
 
 
 def main():
