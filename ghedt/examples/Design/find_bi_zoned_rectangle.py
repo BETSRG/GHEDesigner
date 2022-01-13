@@ -88,8 +88,8 @@ def main():
     fluid = gt.media.Fluid(mixer=mixer, percent=percent)
 
     # Fluid properties
-    V_flow = 0.2 * 142.  # Borehole volumetric flow rate (L/s)
-    flow = 'system'
+    V_flow = 0.2  # Borehole volumetric flow rate (L/s)
+    flow = 'borehole'
 
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
