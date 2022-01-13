@@ -47,7 +47,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='ghedt',
-      install_requires=['pygfunction>=2.1'
+      install_requires=['pygfunction>=2.1',
                         'matplotlib>=3.3.4',
                         'numpy>=1.19.2',
                         'Pillow>=8.1.0',
