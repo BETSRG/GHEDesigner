@@ -19,8 +19,8 @@ jobs:
       # Run python commands
       - name: Display CWD
         run: python -c "import os; print(os.getcwd())"
-      - name: Submodules
-        run:  git submodule update --init --recursive
+      # - name: Submodules
+      #  run:  git submodule update --init --recursive
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
