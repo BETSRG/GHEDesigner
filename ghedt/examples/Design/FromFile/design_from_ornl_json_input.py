@@ -77,8 +77,10 @@ def main():
     fluid = gt.media.Fluid(mixer=mixer, percent=percent)
 
     # Fluid properties
-    # Borehole volumetric flow rate (L/s)
-    V_flow_borehole = ornl_param_file_data['design_flow_rate'] * 1000.
+    # Volumetric flow rate (L/s)
+    V_flow = ornl_param_file_data['design_flow_rate'] * 1000.
+    # Note: The flow parameter can be borehole or system.
+    flow = 'system'
 
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
@@ -111,16 +113,12 @@ def main():
     # Geometric constraints for the `near-square` routine
     geometric_constraints = dt.media.GeometricConstraints(B=B)
 
-    # Note: Flow functionality is currently only on a borehole basis. Future
-    # development will include the ability to change the flow rate to be on a
-    # system flow rate basis.
-
     # Single U-tube
     # -------------
     design_single_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, single_u_tube, fluid, pipe_single, grout,
+        V_flow, borehole, single_u_tube, fluid, pipe_single, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square')
+        routine='near-square', flow=flow)
 
     # Find the near-square design for a single U-tube and size it.
     bisection_search = design_single_u_tube.find_design()
