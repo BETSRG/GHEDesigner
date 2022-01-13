@@ -16,13 +16,6 @@ Clone and then change directories into the repository.
 ```angular2html
 git clone https://github.com/j-c-cook/ghedt && cd ghedt
 ```
-The Python package `pygfunction` is maintained as a `git submodule` and is 
-pointing to a long-lived branch at [j-c-cook:ghedt][#pyg-branch]. 
-
-Recursively update the submodule.
-```angular2html
- git submodule update --init --recursive
-```
 
 ### Create a Virtual Environment for ghedt
 
@@ -59,12 +52,10 @@ pip install ghedt.zip
 │   ├── gfunction.py
 │   ├── ground_heat_exchangers.py
 │   ├── media.py
-│   ├── peak_load_analysis_tool
-│   │   ├── ...
-│   ├── pygfunction
-│   │   ├── ...
 │   ├── search_routines.py
 │   └── utilities.py
+│   ├── peak_load_analysis_tool
+│   │   ├── ...
 ├── LICENSE
 ├── README.md
 ├── requirements.txt

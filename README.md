@@ -52,10 +52,6 @@ pip install ghedt
 ```angular2html
 git clone https://github.com/j-c-cook/ghedt
 ```
-Recursively update the submodule.
-```angular2html
- git submodule update --init --recursive
-```
 
 See [installation](https://github.com/j-c-cook/ghedt/blob/main/INSTALLATION.md) 
 for more notes on installing. See [ghedt/examples/](https://github.com/j-c-cook/ghedt/tree/main/ghedt/examples) 
