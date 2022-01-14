@@ -55,7 +55,7 @@ shows examples for how to create a branch from the command line.
 ```angular2html
 git checkout -b $branchName &&
 git push -u origin $branchName &&
-git branch --set-upstream-to=origin/$branchName $branchName &&
+git branch --set-upstream-to=origin/$branchName $branchName
 ```
 To list all the branches, run the following command. 
 ```angular2html

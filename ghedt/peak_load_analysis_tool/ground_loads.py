@@ -11,7 +11,7 @@ from scipy import interpolate
 import math
 import pandas as pd
 import numpy as np
-import ghedt.pygfunction as gt
+import pygfunction as gt
 
 
 def synthetic_load_function(
