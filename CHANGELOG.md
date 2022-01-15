@@ -13,7 +13,8 @@
 
 ### Maintenance
 
-* [Issue 71](https://github.com/j-c-cook/ghedt/issues/71) - Changes the definition of all grout variables (modules and examples) to point to the `Grout` object rather than the `ThermalProperty` object. 
+* [Issue 66](https://github.com/j-c-cook/ghedt/issues/66) - `pyfunction` is removed as a submodule and moved to the list of requirements.
+* [Issue 71](https://github.com/j-c-cook/ghedt/issues/71) - Modified the definition of all grout variables (modules and examples) to point to the `Grout` object rather than the `ThermalProperty` object. 
 
 ### New features
 
@@ -44,8 +45,4 @@
 ### Tests and CI
 
 * [Issue 15](https://github.com/j-c-cook/ghedt/issues/15) - A file is added for testing the sizing of a GHE using live-time g-function calculations that utilize the equivalent solver method and 8 unequal segment lengths along the borehole for Single U-tube, Double U-tube and Coaxial tube BHEs.
-* [Issue 5](https://github.com/j-c-cook/ghedt/issues/5) - A Ubuntu 20.04.03 LTS virtual machine (via VirtualBox) has been created to provide support for running tests when the project goes public. 
-
-### Other changes
-
-[Issue 66](https://github.com/j-c-cook/ghedt/issues/66) - `pyfunction` is removed as a submodule and moved to the list of requirements. 
+* [Issue 5](https://github.com/j-c-cook/ghedt/issues/5) - A Ubuntu 20.04.03 LTS virtual machine (via VirtualBox) has been created to provide support for running tests when the project goes public.
