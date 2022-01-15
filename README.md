@@ -33,6 +33,7 @@ information.
 GHEDT requires at least Python 3.7 and is tested with Python 3.7 and 3.8. GHEDT 
 is dependent on the following packages:
 
+- pygfunction (>=2.1)
 - numpy (>=1.19.2)
 - scipy (>=1.6.2)
 - matplotlib (>=3.3.4)
