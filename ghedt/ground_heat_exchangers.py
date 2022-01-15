@@ -17,7 +17,7 @@ class BaseGHE:
             self, V_flow_system: float, B_spacing: float,
             bhe_function: plat.borehole_heat_exchangers,
             fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
-            pipe: plat.media.Pipe, grout: plat.media.ThermalProperty,
+            pipe: plat.media.Pipe, grout: plat.media.Grout,
             soil: plat.media.Soil, GFunction: dt.gfunction.GFunction,
             sim_params: plat.media.SimulationParameters,
             hourly_extraction_ground_loads: list):
@@ -207,7 +207,7 @@ class GHE(BaseGHE):
     def __init__(self, V_flow_system: float, B_spacing: float,
                  bhe_object: plat.borehole_heat_exchangers,
                  fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
-                 pipe: plat.media.Pipe, grout: plat.media.ThermalProperty,
+                 pipe: plat.media.Pipe, grout: plat.media.Grout,
                  soil: plat.media.Soil,
                  GFunction: dt.gfunction.GFunction,
                  sim_params: plat.media.SimulationParameters,

@@ -45,7 +45,7 @@ def main():
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
     soil = plat.media.Soil(k_s, rhoCp_s, ugt)
     # Grout
-    grout = plat.media.ThermalProperty(k_g, rhoCp_g)
+    grout = plat.media.Grout(k_g, rhoCp_g)
 
     # Fluid properties
     fluid = gt.media.Fluid(mixer='MEG', percent=0.)
@@ -128,7 +128,7 @@ def main():
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
     soil = plat.media.Soil(k_s, rhoCp_s, ugt)
     # Grout
-    grout = plat.media.ThermalProperty(k_g, rhoCp_g)
+    grout = plat.media.Grout(k_g, rhoCp_g)
 
     V_flow_rates = [1., .9, .8, 0.7, 0.6, 0.5, 0.4, 0.3, .29, .28, .27, 0.26]
 

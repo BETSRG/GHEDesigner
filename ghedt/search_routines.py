@@ -14,7 +14,7 @@ class Bisection1D:
                  borehole: gt.boreholes.Borehole,
                  bhe_object: plat.borehole_heat_exchangers,
                  fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.ThermalProperty, soil: plat.media.Soil,
+                 grout: plat.media.Grout, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list, flow: str = 'borehole',
                  max_iter=15, disp=False, search=True):
@@ -209,7 +209,7 @@ class Bisection2D(Bisection1D):
                  borehole: gt.boreholes.Borehole,
                  bhe_object: plat.borehole_heat_exchangers,
                  fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.ThermalProperty, soil: plat.media.Soil,
+                 grout: plat.media.Grout, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list, flow: str = 'borehole',
                  max_iter=15, disp=False):
@@ -252,7 +252,7 @@ class BisectionZD(Bisection1D):
                  borehole: gt.boreholes.Borehole,
                  bhe_object: plat.borehole_heat_exchangers,
                  fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.ThermalProperty, soil: plat.media.Soil,
+                 grout: plat.media.Grout, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list, flow: str = 'borehole',
                  max_iter=15, disp=False):

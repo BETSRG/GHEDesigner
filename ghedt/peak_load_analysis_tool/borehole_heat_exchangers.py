@@ -115,7 +115,7 @@ class BasePipe(object):
 class SingleUTube(BasePipe, gt.pipes.SingleUTube):
     def __init__(self, m_flow_borehole: float,
                  fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
-                 pipe: plat.media.Pipe, grout: plat.media.ThermalProperty,
+                 pipe: plat.media.Pipe, grout: plat.media.Grout,
                  soil: plat.media.Soil):
         # Initialize base pipe class
         BasePipe.__init__(
@@ -186,7 +186,7 @@ class SingleUTube(BasePipe, gt.pipes.SingleUTube):
 class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
     def __init__(self, m_flow_borehole: float, fluid: gt.media.Fluid,
                  borehole: gt.boreholes.Borehole,
-                 pipe: plat.media.Pipe, grout: plat.media.ThermalProperty,
+                 pipe: plat.media.Pipe, grout: plat.media.Grout,
                  soil: plat.media.Soil, config='parallel'):
         # Initialize base pipe class
         BasePipe.__init__(
@@ -390,7 +390,7 @@ class CoaxialBase(object):
 class CoaxialPipe(CoaxialBase, gt.pipes.Coaxial, BasePipe):
     def __init__(self, m_flow_borehole: float, fluid: gt.media.Fluid,
                  borehole: gt.boreholes.Borehole,
-                 pipe: plat.media.Pipe, grout: plat.media.ThermalProperty,
+                 pipe: plat.media.Pipe, grout: plat.media.Grout,
                  soil: plat.media.Soil, config=None):
         CoaxialBase.__init__(self, m_flow_borehole, fluid, borehole, pipe,
                              soil, grout, config=config)

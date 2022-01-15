@@ -11,7 +11,7 @@ class Design:
     def __init__(self, V_flow: float, borehole: gt.boreholes.Borehole,
                  bhe_object: plat.borehole_heat_exchangers,
                  fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.ThermalProperty, soil: plat.media.Soil,
+                 grout: plat.media.Grout, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
                  geometric_constraints: dt.media.GeometricConstraints,
                  hourly_extraction_ground_loads: list,
