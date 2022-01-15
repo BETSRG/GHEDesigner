@@ -33,7 +33,7 @@ class GeometricConstraints:
             assert self.length is not None
             assert self.B_min is not None
             assert self.B_max_x is not None
-        if method == 'bi-rectangle' or 'bi-zoned':
+        elif method == 'bi-rectangle' or 'bi-zoned':
             assert self.width is not None
             assert self.length is not None
             assert self.B_min is not None
