@@ -3,12 +3,11 @@
 import copy
 import warnings
 
-# import gFunctionDatabase.Management.application
 import scipy.interpolate
 import scipy.optimize
 import pygfunction as gt
 import ghedt.peak_load_analysis_tool as plat
-import ghedt
+import ghedt as dt
 
 import numpy as np
 
@@ -19,7 +18,7 @@ class BaseGHE:
             bhe_function: plat.borehole_heat_exchangers,
             fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
             pipe: plat.media.Pipe, grout: plat.media.ThermalProperty,
-            soil: plat.media.Soil, GFunction: ghedt.gfunction.GFunction,
+            soil: plat.media.Soil, GFunction: dt.gfunction.GFunction,
             sim_params: plat.media.SimulationParameters,
             hourly_extraction_ground_loads: list):
 
@@ -193,7 +192,7 @@ class BaseGHE:
         coordinates = self.GFunction.bore_locations
         log_time = self.GFunction.log_time
 
-        g_function = ghedt.gfunction.compute_live_g_function(
+        g_function = dt.gfunction.compute_live_g_function(
             self.B_spacing, H_values, r_b_values, D_values,
             self.bhe.m_flow_borehole, self.bhe_object, log_time,
             coordinates, self.bhe.fluid, self.bhe.pipe,
@@ -210,7 +209,7 @@ class GHE(BaseGHE):
                  fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
                  pipe: plat.media.Pipe, grout: plat.media.ThermalProperty,
                  soil: plat.media.Soil,
-                 GFunction: ghedt.gfunction.GFunction,
+                 GFunction: dt.gfunction.GFunction,
                  sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list
                  ):

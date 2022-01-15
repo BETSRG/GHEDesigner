@@ -1,8 +1,6 @@
 # Jack C. Cook
 # Friday, December 10, 2021
 
-import ghedt as dt
-
 
 class GeometricConstraints:
     def __init__(self, length: float = None, width: float = None,
