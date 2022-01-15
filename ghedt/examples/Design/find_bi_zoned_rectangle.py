@@ -7,7 +7,7 @@
 
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
-import ghedt.pygfunction as gt
+import pygfunction as gt
 import pandas as pd
 from time import time as clock
 
@@ -89,6 +89,7 @@ def main():
 
     # Fluid properties
     V_flow = 0.2  # Borehole volumetric flow rate (L/s)
+    # Note: The flow parameter can be borehole or system.
     flow = 'borehole'
 
     # Define a borehole
