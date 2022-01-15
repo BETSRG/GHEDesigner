@@ -9,7 +9,11 @@
 
 ### Fixes
 
-* [Issue 23](https://github.com/j-c-cook/ghedt/issues/23) - Fixes the possibility for an extrapolation error to be thrown on the interpolation function at the outer bounds when floating point rounding causes the number to be out of bounds by 1e-16 or less. A check is put in place to compare the absolute value of the difference for the outer bounds, and if the value is within 1.0e-06, then the outer bound is made use of. 
+* [Issue 23](https://github.com/j-c-cook/ghedt/issues/23) - Fixes the possibility for an extrapolation error to be thrown on the interpolation function at the outer bounds when floating point rounding causes the number to be out of bounds by 1e-16 or less. A check is put in place to compare the absolute value of the difference for the outer bounds, and if the value is within 1.0e-06, then the outer bound is made use of.
+
+### Maintenance
+
+* [Issue 71](https://github.com/j-c-cook/ghedt/issues/71) - Changes the definition of all grout variables (modules and examples) to point to the `Grout` object rather than the `ThermalProperty` object. 
 
 ### New features
 
