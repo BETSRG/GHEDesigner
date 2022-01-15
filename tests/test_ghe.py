@@ -90,7 +90,7 @@ class TestGHE(unittest.TestCase):
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         self.soil = plat.media.Soil(k_s, rhoCp_s, ugt)
         # Grout
-        self.grout = plat.media.ThermalProperty(k_g, rhoCp_g)
+        self.grout = plat.media.Grout(k_g, rhoCp_g)
 
         # Coordinates
         Nx = 12

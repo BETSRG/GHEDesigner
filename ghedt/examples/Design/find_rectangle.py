@@ -79,7 +79,7 @@ def main():
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
     soil = plat.media.Soil(k_s, rhoCp_s, ugt)
     # Grout
-    grout = plat.media.ThermalProperty(k_g, rhoCp_g)
+    grout = plat.media.Grout(k_g, rhoCp_g)
 
     # Inputs related to fluid
     # -----------------------
