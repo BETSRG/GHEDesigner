@@ -1,8 +1,6 @@
 # Jack C. Cook
 # Friday, December 10, 2021
 
-import ghedt as dt
-
 
 class GeometricConstraints:
     def __init__(self, length: float = None, width: float = None,
@@ -33,3 +31,11 @@ class GeometricConstraints:
             assert self.length is not None
             assert self.B_min is not None
             assert self.B_max_x is not None
+        elif method == 'bi-rectangle' or 'bi-zoned':
+            assert self.width is not None
+            assert self.length is not None
+            assert self.B_min is not None
+            assert self.B_max_x is not None
+            assert self.B_max_y is not None
+
+        return
