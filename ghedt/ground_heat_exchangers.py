@@ -6,7 +6,7 @@ import warnings
 # import gFunctionDatabase.Management.application
 import scipy.interpolate
 import scipy.optimize
-import ghedt.pygfunction as gt
+import pygfunction as gt
 import ghedt.peak_load_analysis_tool as plat
 import ghedt
 

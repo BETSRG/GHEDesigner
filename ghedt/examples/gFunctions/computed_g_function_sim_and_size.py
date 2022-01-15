@@ -6,7 +6,7 @@
 
 import ghedt.peak_load_analysis_tool as plat
 import pandas as pd
-import ghedt.pygfunction as gt
+import pygfunction as gt
 import ghedt as dt
 
 

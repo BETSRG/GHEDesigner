@@ -3,7 +3,7 @@
 
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
-import ghedt.pygfunction as gt
+import pygfunction as gt
 
 
 # Common design interface

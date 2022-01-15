@@ -4,7 +4,7 @@ import copy
 
 import ghedt
 import numpy as np
-import ghedt.pygfunction as gt
+import pygfunction as gt
 import matplotlib.pyplot as plt
 
 

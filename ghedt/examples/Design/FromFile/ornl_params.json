@@ -1,5 +1,5 @@
 {
-  "design_flow_rate": 0.0002,
+  "design_flow_rate": 0.0312,
   "bore_hole_radius": 0.075,
   "ground_thermal_conductivity": 2.0,
   "ground_thermal_heat_capacity": 2343493.0,
