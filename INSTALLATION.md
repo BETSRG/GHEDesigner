@@ -1,69 +1,55 @@
 # INSTALLATION
 
-## Installation from source
+The `ghedt` package is tested on Python 3.7 and 3.8. It is recommended that 
+either Python 3.7 or 3.8 are used. There are two options for setting up a Python
+[virtual environment][#VirtualEnvironments] capable of running `ghedt`:
+1. Go to [Python.org](https://www.python.org/downloads/) and download release
+   version 3.7.11 for your operating system. 
+2. Download the free open-source individual [anaconda][#anaconda] package 
+   manager.
 
-This section is for developers who wish to modify and contribute to `ghedt`.
-
-### Install git
-
-Version control of this repository is maintained via [git][#git]. To install 
-`git`, see [git-downloads][#git-downloads]. For information about git not 
-provided later in this section, refer to the free online [book][#git-book].
-
-### Clone the repository
-
-Clone and then change directories into the repository.
+Please ensure that whether you install (1) or (2) above that you select the 
+"Add to PATH" option any time you see it. Now go into the command prompt and 
+type in `python`. The dynamic editor should pop up. It will look something like
+the following:
 ```angular2html
-git clone https://github.com/j-c-cook/ghedt && cd ghedt
+Python 3.7.11 (default, Jul 27 2021, 14:32:16) 
+[GCC 7.5.0] :: Anaconda, Inc. on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>>
+```
+To exit the dynamic environment, now type `quit()` and hit enter. Now ensure 
+that the package installer for python is in your path by typing `pip`. You 
+should see something like the following:
+```angular2html
+Usage:   
+  pip <command> [options]
+
+Commands:
+  install                     Install packages.
+  download                    Download packages.
+  uninstall                   Uninstall packages.
+  freeze                      Output installed packages in requirements format.
+  list                        List installed packages.
+  show                        Show information about installed packages.
+  check                       Verify installed packages have compatible dependencies.
+  config                      Manage local and global configuration.
+  search                      Search PyPI for packages.
+  cache                       Inspect and manage pip's wheel cache.
+  index                       Inspect information available from package indexes.
+  wheel                       Build wheels from your requirements.
+  hash                        Compute hashes of package archives.
+  completion                  A helper command used for command completion.
+  debug                       Show information useful for debugging.
+  help                        Show help for commands.
 ```
 
-### Create a Virtual Environment for ghedt
-
-Python [Virtual Environments][#VirtualEnvironments] are how packages are 
-accessed. 
-
-Create environment that GHEDT can be installed to. 
-```angular2html
-conda create -n ENV python=3.7
-```
-Activate the environment. 
-```angular2html
-conda activate ENV
-```
-Install GHEDT to the environment.
-```angular2html
-cd ghedt/
-pip install .
-```
-or if the package is zipped. 
-```angular2html
-pip install ghedt.zip
-```
-
-## Project Overview
-
-```angular2html
-├── ghedt
-│   ├── __init__.py 
-│   ├── coordinates.py
-│   ├── design.py
-│   ├── domains.py
-│   ├── feature_recognition.py
-│   ├── gfunction.py
-│   ├── ground_heat_exchangers.py
-│   ├── media.py
-│   ├── search_routines.py
-│   └── utilities.py
-│   ├── peak_load_analysis_tool
-│   │   ├── ...
-├── LICENSE
-├── README.md
-├── requirements.txt
-├── setup.py
-```
+Now to install `ghedt`, simply type `pip install ghedt` and hit enter. You 
+should now be able to successfully run the examples. 
 
 [#git]: https://en.wikipedia.org/wiki/Git
 [#git-downloads]: https://git-scm.com/downloads
 [#git-book]: https://git-scm.com/book/en/v2
 [#VirtualEnvironments]: https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/
 [#pyg-branch]: https://github.com/j-c-cook/pygfunction/tree/ghedt
+[#anaconda]: https://www.anaconda.com/products/individual

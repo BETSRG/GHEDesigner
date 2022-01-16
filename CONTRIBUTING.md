@@ -26,9 +26,23 @@ problem.
 After submitting a bug report, if you wish to contribute code to fix the
 problem, follow the steps outlined in the contribution workflow.
 
+## Fork, clone and configure the repository
+
+If you are a developer and are interested in contributing to *ghedt* by 
+modifying the code, the first step will likely be to [fork][#fork] the 
+repository.
+
+1. [Fork][#fork] the repository to your own Github profile. You will be able to 
+   alter any of the code in your own repository but will only be able to modify 
+   the code in my repository via pull requests.
+2. [Clone][#clone] the forked repository on your personal computer: `git clone https://github.com/YOUR-USERNAME/ghedt`
+3. [Configure][#Configure] my repository as a remote fork: `git remote add upstream https://github.com/j-c-cook/ghedt`.
+   With my repository configured as a fork you will be able to keep your main 
+   branch up to date with mine.
+
 ## Contribution workflow
 
-This section outlines the steps for contributing to *pygfunction*.
+This section outlines the steps for contributing to *ghedt*.
 
 1. **Open a new [issue][#issue_tracker].**
 2. **Use a short and descriptive title.** When proposing an enhancement,
@@ -37,7 +51,19 @@ the enhancement yourself, provide a step-by-step plan for the implementation.
 3. **Explain how the enhancement benefits _pygfunction_.**
 4. **Create (checkout) a new branch from the master.** The branch name should
 follow the naming convention: `issue#_shortDescription`. For example:
-issue1_loadAggregation.
+issue1_loadAggregation. The following is how to checkout, push a branch to your
+remote repository, and then set the local branch to an upstream branch. 
+```angular2html
+git checkout -b $branchName &&
+git push -u origin $branchName &&
+git branch --set-upstream-to=origin/$branchName $branchName
+```
+To list all the branches, run the following command. Now you should be able to 
+see that you have the new branch you created checked out, and that there is an 
+upstream branch as well. 
+```angular2html
+git branch -a
+```
 5. Implement unit tests for new features. If necessary, update already
 implement tests to cover the new features.
 6. Before submitting a [pull request][#pull_request], **merge the master to your 
@@ -51,21 +77,11 @@ This section describes various features regarding [git branches][#git_branches].
 ### Create a branch
 
 Prior to making changes to the code, a branch should be created. The following
-shows examples for how to create a branch from the command line. 
-```angular2html
-git checkout -b $branchName &&
-git push -u origin $branchName &&
-git branch --set-upstream-to=origin/$branchName $branchName
-```
-To list all the branches, run the following command. 
-```angular2html
-git branch -a
-```
+shows examples for how to create a branch from the command line.
 
 ## Styleguide
 
-`ghedt` follows the [PEP8 style guide][#pep]. Docstrings are written 
-following the [numpydoc format][#numpydoc], see also an example [here][#sphinx].
+`ghedt` follows the [PEP8 style guide][#pep]. 
 
 ## References
 
@@ -78,3 +94,6 @@ This contributing outline was originally taken from [pygfunction](https://github
 [#numpydoc]: https://github.com/numpy/numpy/blob/master/doc/example.py
 [#sphinx]: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html
 [#git_branches]: https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell
+[#fork]: https://docs.github.com/en/get-started/quickstart/fork-a-repo
+[#clone]: https://docs.github.com/en/get-started/quickstart/fork-a-repo#cloning-your-forked-repository
+[#Configure]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/configuring-a-remote-for-a-fork
