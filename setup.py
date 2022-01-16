@@ -20,13 +20,14 @@ setup(name='ghedt',
                         'coolprop>=6.4.1',
                         'opencv-python==4.5.4.58'],
       url='https://github.com/j-c-cook/ghedt',
-      download_url='https://github.com/j-c-cook/ghedt/archive/v0.1-beta.01.tar.gz',
+      download_url='https://github.com/j-c-cook/ghedt/archive/v0.1.tar.gz',
       long_description=long_description,
       long_description_content_type='text/markdown',
-      version='0.1-beta.01',
+      version='0.1',
       packages=find_packages(),
       include_package_data=True,
       author='Jack C. Cook',
       author_email='jack.cook@okstate.edu',
-      description='A ground heat exchanger design tool with the advanced and unmatched capability of automatic '
-                  'borehole field selection.')
+      description='A ground heat exchanger design tool with the advanced and '
+                  'unmatched capability of automatic borehole field selection '
+                  'based on drilling geometric land constraints.')
