@@ -16,6 +16,10 @@ non-exhaustive list of the possible categories issues could fall in:
  
 ## Current version
 
+### Documentation
+
+* [Issue 74](https://github.com/j-c-cook/ghedt/issues/74) - Expand documentation in change-log, contributor markdown file, installation markdown file, increase information in readme markdown for the `ghedt` and `plat` root directories and provide cross-referencing to Cook (2021) for the design example files.  
+
 ### Enhancements
 
 * [Issue 12](https://github.com/j-c-cook/ghedt/issues/12) - The `GFunction` object can be passed into the `GHE` object with only one g-function calculated, as long as the `B/H` value being "interpolated" for is the same one that it was computed for.
