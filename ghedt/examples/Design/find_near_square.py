@@ -4,6 +4,8 @@
 # Purpose: Design a square or near-square field using the common design
 # interface with a single U-tube, multiple U-tube and coaxial tube.
 
+# This search is described in section 4.3.2 of Cook (2021) from pages 123-129.
+
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
@@ -124,6 +126,9 @@ def main():
     # Required geometric constraints for the uniform rectangle design: B
     geometric_constraints = dt.media.GeometricConstraints(B=B)
 
+    title = 'Find near square...'
+    print(title + '\n' + len(title) * '=')
+
     # Single U-tube
     # -------------
     design_single_u_tube = dt.design.Design(
@@ -137,8 +142,6 @@ def main():
     bisection_search.ghe.compute_g_functions()
     bisection_search.ghe.size(method='hybrid')
     toc = clock()
-    title = 'HighLevel/find_near_square.py results'
-    print(title + '\n' + len(title) * '=')
     subtitle = '* Single U-tube'
     print(subtitle + '\n' + len(subtitle) * '-')
     print('Calculation time: {0:.2f} seconds'.format(toc - tic))
@@ -147,6 +150,13 @@ def main():
     print('Number of boreholes: {}'.format(nbh))
     print('Total Drilling: {0:.1f} meters\n'.
           format(bisection_search.ghe.bhe.b.H * nbh))
+
+    # Plot the selected borehole coordinates for the single U-tube
+    ghe = bisection_search.ghe
+    coordinates = ghe.GFunction.bore_locations
+    fig, ax = dt.gfunction.GFunction.visualize_area_and_constraints(
+        [], coordinates, no_go=None)
+    fig.savefig('near-square.png', bbox_inches='tight', pad_inches=0.1)
 
     # Double U-tube
     # -------------

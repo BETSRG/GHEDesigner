@@ -5,6 +5,8 @@
 # design interface with a single U-tube, multiple U-tube and coaxial tube
 # borehole heat exchanger.
 
+# This search is described in section 4.4.3 from pages 138-143 in Cook (2021).
+
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
@@ -134,6 +136,9 @@ def main():
         length=length, width=width, B_min=B_min, B_max_x=B_max_x,
         B_max_y=B_max_y)
 
+    title = 'Find bi-zoned rectangle'
+    print(title + '\n' + len(title) * '=')
+
     # Single U-tube
     # -------------
     design_single_u_tube = dt.design.Design(
@@ -147,8 +152,6 @@ def main():
     bisection_search.ghe.compute_g_functions()
     bisection_search.ghe.size(method='hybrid')
     toc = clock()
-    title = 'Find bi-zoned rectangle'
-    print(title + '\n' + len(title) * '=')
     subtitle = '* Single U-tube'
     print(subtitle + '\n' + len(subtitle) * '-')
     print('Calculation time: {0:.2f} seconds'.format(toc - tic))
@@ -157,6 +160,26 @@ def main():
     print('Number of boreholes: {}'.format(nbh))
     print('Total Drilling: {0:.1f} meters\n'.
           format(bisection_search.ghe.bhe.b.H * nbh))
+
+    # Plot the selected borehole coordinates for the single U-tube
+    # Land constraints
+    l_x_perimeter = 85.
+    l_y_perimeter = 80.
+    perimeter = \
+        dt.utilities.make_rectangle_perimeter(l_x_perimeter, l_y_perimeter)
+    # Building "no-go" zone
+    l_x_building = 50
+    l_y_building = 33.3
+    origin_x, origin_y = (15, 36.5)
+    no_go = dt.utilities.make_rectangle_perimeter(
+        l_x_building, l_y_building, origin=(origin_x, origin_y))
+    # Plot go and no-go zone with borehole coordinates
+    ghe = bisection_search.ghe
+    coordinates = ghe.GFunction.bore_locations
+    fig, ax = dt.gfunction.GFunction.visualize_area_and_constraints(
+        perimeter, coordinates, no_go=no_go)
+    # See Figure 4.24 on page 143 of Cook (2021)
+    fig.savefig('bi-zoned.png', bbox_inches='tight', pad_inches=0.1)
 
     # Double U-tube
     # -------------
