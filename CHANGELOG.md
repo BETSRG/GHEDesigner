@@ -13,8 +13,8 @@ non-exhaustive list of the possible categories issues could fall in:
 - Removed - for removed features
 - Fixes - for any bug fixes
 - Documentation - for changes to the package that are purely for purposes of documentation
- 
-## Current version
+
+## Version 0.1
 
 ### Documentation
 
