@@ -14,29 +14,33 @@ import numpy as np
 
 class BaseGHE:
     def __init__(
-            self, V_flow_system: float, B_spacing: float,
+            self, V_flow_system: list, B_spacing: float,
             bhe_function: plat.borehole_heat_exchangers,
-            fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
+            fluid: gt.media.Fluid, boreholes: list,bHTemplate:list,
             pipe: plat.media.Pipe, grout: plat.media.Grout,
             soil: plat.media.Soil, GFunction: dt.gfunction.GFunction,
             sim_params: plat.media.SimulationParameters,
             hourly_extraction_ground_loads: list,fieldType = "N/A",fieldSpecifier = "N/A"):
-
+        self.templateIndices = bHTemplate
+        self.boreholes = boreholes
         self.fieldType = fieldType
         self.fieldSpecifier = fieldSpecifier
-        self.V_flow_system = V_flow_system
+        self.V_flow_system = np.sum(self.templateIndexer(V_flow_system,bHTemplate))
         self.B_spacing = B_spacing
         self.nbh = float(len(GFunction.bore_locations))
-        self.V_flow_borehole = self.V_flow_system / self.nbh
-        m_flow_borehole = self.V_flow_borehole / 1000. * fluid.rho
+        self.V_flow_borehole = V_flow_system
+        m_flow_borehole = (np.array(self.V_flow_borehole) / 1000. * fluid.rho)
+        m_flow_borehole = m_flow_borehole.tolist()
         self.m_flow_borehole = m_flow_borehole
 
         # Borehole Heat Exchanger
         self.bhe_object = bhe_function
-        self.bhe = bhe_function(
-            m_flow_borehole, fluid, borehole, pipe, grout, soil)
+        self.bhes = [bhe_function(
+            m_flow_borehole, fluid, borehole, pipe, grout, soil) for borehole in boreholes]
+        self.bhe = self.bhes[0]
         # Equivalent borehole Heat Exchanger
-        self.bhe_eq = plat.equivalance.compute_equivalent(self.bhe)
+        self.bhe_eqs = [plat.equivalance.compute_equivalent(bhe) for bhe in self.bhes]
+        self.bhe_eq = self.bhe_eqs[0]
 
         # Radial numerical short time step
         self.radial_numerical = \
@@ -61,7 +65,8 @@ class BaseGHE:
     @staticmethod
     def justify(category, value):
         return category.ljust(40) + '= ' + value + '\n'
-
+    def templateIndexer(self,arrayToIndex,Indices):
+        return [arrayToIndex[index] for index in Indices]
     def __repr__(self):
         header = self.header
         # Header
@@ -131,7 +136,7 @@ class BaseGHE:
 
         return g
     def averageHeight(self):
-        return self.bhe.b.H
+        return np.sum(self.templateIndexer([boreHole.H for boreHole in self.boreholes],self.templateIndices))/(self.nbh)
 
     def cost(self, max_EFT, min_EFT):
         delta_T_max = max_EFT - self.sim_params.max_EFT_allowable
@@ -211,9 +216,9 @@ class BaseGHE:
 
 
 class GHE(BaseGHE):
-    def __init__(self, V_flow_system: float, B_spacing: float,
+    def __init__(self, V_flow_system: list, B_spacing: float,
                  bhe_object: plat.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
+                 fluid: gt.media.Fluid, boreholes: list,bHTemplate:list,
                  pipe: plat.media.Pipe, grout: plat.media.Grout,
                  soil: plat.media.Soil,
                  GFunction: dt.gfunction.GFunction,
@@ -221,7 +226,7 @@ class GHE(BaseGHE):
                  hourly_extraction_ground_loads: list,fieldType = "N/A",fieldSpecifier = "N/A"
                  ):
         BaseGHE.__init__(
-            self, V_flow_system, B_spacing, bhe_object, fluid, borehole, pipe,
+            self, V_flow_system, B_spacing, bhe_object, fluid, boreholes,bHTemplate, pipe,
             grout, soil, GFunction, sim_params, hourly_extraction_ground_loads,fieldType = fieldType,fieldSpecifier = fieldSpecifier)
 
         # Split the extraction loads into heating and cooling for input to
