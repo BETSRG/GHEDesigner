@@ -12,9 +12,14 @@ import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
 import pandas as pd
 from time import time as clock
+from ghedt import Output
 
 
 def main():
+    pN = "Atlanta Office Building"
+    notes = "Why?"
+    author = "Jeremy Johnson"
+    mN = "V1"
     # Borehole dimensions
     # -------------------
     H = 96.  # Borehole length (m)
@@ -181,7 +186,8 @@ def main():
         perimeter, coordinates, no_go=no_go)
     # See Figure 4.24 on page 143 of Cook (2021)
     fig.savefig('bi-zoned.png', bbox_inches='tight', pad_inches=0.1)
-
+    Output.OutputDesignDetails(bisection_search, toc - tic, pN, notes, author, mN)
+    '''
     # Double U-tube
     # -------------
     design_double_u_tube = dt.design.Design(
@@ -225,6 +231,7 @@ def main():
     print('Number of boreholes: {}'.format(nbh))
     print('Total Drilling: {0:.1f} meters\n'.
           format(bisection_search.ghe.bhe.b.H * nbh))
+    '''
 
 
 if __name__ == '__main__':

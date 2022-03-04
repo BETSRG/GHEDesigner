@@ -200,11 +200,13 @@ def bi_rectangle_nested(length_x, length_y, B_min, B_max_x, B_max_y,
 
     for n_2 in range(N_min, N_max + 1):
         b_2 = length_2 / (n_2 - 1)
-        bi_rectangle_domain = dt.domains.bi_rectangular(
+        bi_rectangle_domain,fD = dt.domains.bi_rectangular(
             length_1, length_2, B_min, B_max_1, b_2, transpose=transpose,
             disp=disp)
+        #print("Bi-Rectangular: ",bi_rectangle_domain)
         bi_rectangle_nested_domain.append(bi_rectangle_domain)
-        fieldDescriptors.append(str(length_1) + "X" + str(length_2) + "_" + str(B_min) + "_" + str(B_max_1)+"_"+str(b_2))
+        #fieldDescriptors.append(str(length_1) + "X" + str(length_2) + "_" + str(B_min) + "_" + str(B_max_1)+"_"+str(b_2))
+        fieldDescriptors.append(fD)
 
     return bi_rectangle_nested_domain,fieldDescriptors
 

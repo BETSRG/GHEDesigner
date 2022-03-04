@@ -50,8 +50,10 @@ class BaseGHE:
         # Hourly ground extraction loads
         # Building cooling is negative, building heating is positive
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
-        self.times = None
+        self.times = []
         self.loading = None
+        self.combinedGFunctionVals = None
+        self.combinedGFunctionLogTimes = None
 
     @staticmethod
     def header(text):
@@ -107,7 +109,6 @@ class BaseGHE:
                 value = log_time_sts[i]
             log_time = log_time_sts[0:i] + log_time_lts
             g = g_sts[0:i] + g_lts
-
         g = scipy.interpolate.interp1d(log_time, g)
 
         return g
@@ -319,9 +320,11 @@ class GHE(BaseGHE):
             n_years = int(np.ceil(n_hours / 8760))
             Q_dot = Q_dot * n_years
             Q_dot = -1. * np.array(Q_dot)  # Convert loads to rejection
-            if self.times == None:
+            #print("Times:",self.times)
+            if len(self.times) == 0:
                 self.times = np.arange(1, n_hours + 1, 1)
             t = self.times
+            self.loading = Q_dot
 
             HPEFT, dTb = self._simulate_detailed(Q_dot, t, g)
         else:

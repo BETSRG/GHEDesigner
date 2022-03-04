@@ -189,33 +189,8 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
     oS += createTitle(allocatedWidth,"GHE System",fillerSymbol="-")
 
 
-    gfunctionTableFormats = [".3f"]
-    gfTableFF = [".3f"]*(len(gfunction.g_lts)+2)
-    gfunctionTableFormats.extend(gfTableFF)
-    gfunctionColTitles = ["ln(t/ts)"]
 
-    for gfunctionName in list(gfunction.g_lts):
-        gfunctionColTitles.append("H:" + str(round(gfunctionName,0)) + "m")
-    gfunctionColTitles.append("H:" + str(round(bH.H,2)) + "m")
-    gfunctionColTitles.append("H:" + str(round(bH.H, 2)) + "m (STS included)")
-
-    gfunctionData = []
-    gheGF = gfunction.g_function_interpolation(float(ghe.B_spacing)/bH.H)[0]
-    gheGFAdjusted = ghe.grab_g_function(ghe.B_spacing/float(ghe.averageHeight()))
-    for i in range(len(gfunction.log_time)):
-        gfRow = []
-        gfRow.append(gfunction.log_time[i])
-        for gfunctionName in list(gfunction.g_lts):
-            #print(gfunction.g_lts[gfunctionName][i])
-            #print(gfunctionName)
-            gfRow.append(gfunction.g_lts[gfunctionName][i])
-        gfRow.append(gheGF[i])
-        gfRow.append(gheGFAdjusted(gfunction.log_time[i]))
-        gfunctionData.append(gfRow)
-
-    oS += createTable("GFunction Values",[gfunctionColTitles],gfunctionData,allocatedWidth,gfunctionTableFormats,fillerSymbol="-",centering="^")
-    oS += emptyLine
-    '''
+    #GFunction LTS Table
     gfunctionTableFormats = [".3f"]
     gfTableFF = [".3f"] * (len(gfunction.g_lts) + 1)
     gfunctionTableFormats.extend(gfTableFF)
@@ -236,9 +211,39 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
         gfRow.append(gheGF[i])
         gfunctionData.append(gfRow)
 
-    oS += createTable("GFunction Values", [gfunctionColTitles], gfunctionData, allocatedWidth, gfunctionTableFormats,
+    oS += createTable("GFunction LTS Values", [gfunctionColTitles], gfunctionData, allocatedWidth, gfunctionTableFormats,
                       fillerSymbol="-", centering="^")
     oS += emptyLine
+
+
+    #GFunction STS+LTS Table
+    gfunctionTableFormats = [".3f"]
+    gfTableFF = [".3f"] * (1)
+    gfunctionTableFormats.extend(gfTableFF)
+    gfunctionColTitles = ["ln(t/ts)"]
+
+    gfunctionColTitles.append("H:" + str(round(bH.H, 2)) + "m")
+
+    gfunctionData = []
+    gheGF = gfunction.g_function_interpolation(float(ghe.B_spacing) / bH.H)[0]
+    gheGFAdjusted = ghe.grab_g_function(ghe.B_spacing / float(ghe.averageHeight()))
+    gfunctionLogVals = gheGFAdjusted.x
+    gfunctionGVals = gheGFAdjusted.y
+    for i in range(len(gfunctionLogVals)):
+        gfRow = []
+        gfRow.append(gfunctionLogVals[i])
+        #for gfunctionName in list(gfunction.g_lts):
+            # print(gfunction.g_lts[gfunctionName][i])
+            # print(gfunctionName)
+            #gfRow.append(gfunction.g_lts[gfunctionName][i])
+        gfRow.append(gfunctionGVals[i])
+        gfunctionData.append(gfRow)
+
+    oS += createTable("GFunction Combined Values", [gfunctionColTitles], gfunctionData, allocatedWidth, gfunctionTableFormats,
+                      fillerSymbol="-", centering="^")
+    oS += emptyLine
+    '''
+   
     '''
 
 

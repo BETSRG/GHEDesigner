@@ -149,7 +149,7 @@ def main():
     tic = clock()
     bisection_search = design_single_u_tube.find_design(disp=True)
     bisection_search.ghe.compute_g_functions()
-    bisection_search.ghe.size(method='hybrid')
+    bisection_search.ghe.size(method='hourly')
     toc = clock()
     subtitle = '* Single U-tube'
     print(subtitle + '\n' + len(subtitle) * '-')

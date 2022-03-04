@@ -216,24 +216,25 @@ class Bisection1D:
 
 
 class Bisection2D(Bisection1D):
-    def __init__(self, coordinates_domain_nested: list, V_flow: float,
+    def __init__(self, coordinates_domain_nested: list,fieldDescriptors: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
                  bhe_object: plat.borehole_heat_exchangers,
                  fluid: gt.media.Fluid, pipe: plat.media.Pipe,
                  grout: plat.media.Grout, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
-                 flow: str = 'borehole', max_iter=15, disp=False):
+                 flow: str = 'borehole', max_iter=15, disp=False,fieldType="N/A"):
         if disp:
             print('Note: This routine requires a nested bisection search.')
 
         # Get a coordinates domain for initialization
         coordinates_domain = coordinates_domain_nested[0]
+       # print("Coordinate Dimensions",len(coordinates_domain),len(coordinates_domain[0]))
         Bisection1D.__init__(
-            self, coordinates_domain, V_flow, borehole, bhe_object,
+            self, coordinates_domain,fieldDescriptors[0], V_flow, borehole, bhe_object,
             fluid, pipe, grout, soil, sim_params,
             hourly_extraction_ground_loads, method=method, flow=flow,
-            max_iter=max_iter, disp=disp, search=False)
+            max_iter=max_iter, disp=disp, search=False,fieldType=fieldType)
 
         self.coordinates_domain_nested = []
         self.calculated_temperatures_nested = []
@@ -254,6 +255,7 @@ class Bisection2D(Bisection1D):
         # on the index
         inner_domain = coordinates_domain_nested[selection_key-1]
         self.coordinates_domain = inner_domain
+        self.fieldDescriptors = fieldDescriptors[selection_key-1]
 
         # Reset calculated temperatures
         self.calculated_temperatures = {}
@@ -262,14 +264,14 @@ class Bisection2D(Bisection1D):
 
 
 class BisectionZD(Bisection1D):
-    def __init__(self, coordinates_domain_nested: list, V_flow: float,
+    def __init__(self, coordinates_domain_nested: list,fieldDescriptors: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
                  bhe_object: plat.borehole_heat_exchangers,
                  fluid: gt.media.Fluid, pipe: plat.media.Pipe,
                  grout: plat.media.Grout, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
-                 flow: str = 'borehole', max_iter=15, disp=False):
+                 flow: str = 'borehole', max_iter=15, disp=False,fieldType="N/A"):
         if disp:
             print('Note: This design routine currently requires several '
                   'bisection searches.')
@@ -277,24 +279,27 @@ class BisectionZD(Bisection1D):
         # Get a coordinates domain for initialization
         coordinates_domain = coordinates_domain_nested[0]
         Bisection1D.__init__(
-            self, coordinates_domain, V_flow, borehole, bhe_object,
+            self, coordinates_domain,fieldDescriptors[0], V_flow, borehole, bhe_object,
             fluid, pipe, grout, soil, sim_params,
             hourly_extraction_ground_loads, method=method, flow=flow,
-            max_iter=max_iter, disp=disp, search=False)
+            max_iter=max_iter, disp=disp, search=False,fieldType=fieldType)
 
         self.coordinates_domain_nested = coordinates_domain_nested
+        self.nested_fieldDescriptors = fieldDescriptors
         self.calculated_temperatures_nested = {}
         # Tack on one borehole at the beginning to provide a high excess
         # temperature
         outer_domain = [coordinates_domain_nested[0][0]]
+        outerDescriptors = [fieldDescriptors[0][0]]
         for i in range(len(coordinates_domain_nested)):
             outer_domain.append(coordinates_domain_nested[i][-1])
+            outerDescriptors.append(fieldDescriptors[i][-1])
 
         self.coordinates_domain = outer_domain
+        self.fieldDescriptors = outerDescriptors
 
         self.selection_key_outer, self.selected_coordinates_outer = \
             self.search()
-
         if self.selection_key_outer > 0:
             self.selection_key_outer -= 1
         self.calculated_heights = {}
@@ -312,6 +317,7 @@ class BisectionZD(Bisection1D):
         while i < len(self.coordinates_domain_nested) and i < max_iter:
 
             self.coordinates_domain = self.coordinates_domain_nested[i]
+            self.fieldDescriptors = self.nested_fieldDescriptors[i]
             self.calculated_temperatures = {}
             try:
                 selection_key, selected_coordinates = self.search()
@@ -356,7 +362,7 @@ class BisectionZD(Bisection1D):
         selected_coordinates = \
             self.coordinates_domain_nested[selection_key_outer][selection_key]
 
-        self.initialize_ghe(selected_coordinates, self.sim_params.max_Height)
+        self.initialize_ghe(selected_coordinates, self.sim_params.max_Height,fieldSpecifier=self.nested_fieldDescriptors[selection_key_outer][selection_key])
         self.ghe.compute_g_functions()
         self.ghe.size(method='hybrid')
 
