@@ -262,7 +262,8 @@ class RadialNumericalBH(object):
             self, single_u_tube, final_time=None, calculate_at_bh_wall=False) -> tuple:
 
         self.__init__(single_u_tube)
-
+        #print("Getting Resistance:")
+        #print("Borehole Height Used: ",self.single_u_tube.b.H)
         Rb = self.single_u_tube.compute_effective_borehole_resistance()
 
         R_f_eq = self.single_u_tube.R_f / 2.
@@ -271,13 +272,14 @@ class RadialNumericalBH(object):
 
         # Pass radial cell by reference and fill here so that it can be
         # destroyed when this method returns
+        #print("Radial Cell Stuff")
         radial_cell = np.zeros(shape=(len(self.cell_inputs), self.num_cells),
                                dtype=self.dtype)
         self.fill_radial_cell(radial_cell, R_p_eq, R_f_eq, R_TG_eq)
-
+        #print("Final Time Stuff")
         if final_time is None:
             final_time = self.calc_time_in_sec
-
+        #print("Final Time Used: ",final_time)
         g = []
         lntts = []
 
@@ -315,10 +317,11 @@ class RadialNumericalBH(object):
         _center_cell = radial_cell[:, 1:self.num_cells - 1]
         _east_cell = radial_cell[:, 2:self.num_cells - 0]
 
+        #print("Starting Loop")
         while True:
 
             time += time_step
-
+            #print("Current Time: ",time)
             # For the idx == 0 case:
 
             fe_1 = \

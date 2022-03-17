@@ -28,7 +28,9 @@ class BaseGHE:
         self.V_flow_system = np.sum(self.templateIndexer(V_flow_system,bHTemplate))
         self.B_spacing = B_spacing
         self.nbh = float(len(GFunction.bore_locations))
-        self.V_flow_borehole = V_flow_system
+        #print(V_flow_system)
+        #print(self.nbh)
+        self.V_flow_borehole = self.V_flow_system/self.nbh
         m_flow_borehole = (np.array(self.V_flow_borehole) / 1000. * fluid.rho)
         m_flow_borehole = m_flow_borehole.tolist()
         self.m_flow_borehole = m_flow_borehole
@@ -56,6 +58,7 @@ class BaseGHE:
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.times = None
         self.loading = None
+        self.H = self.averageHeight()
 
     @staticmethod
     def header(text):
@@ -135,8 +138,37 @@ class BaseGHE:
             self.radial_numerical.g.tolist())
 
         return g
+
     def averageHeight(self):
+        #print("Starting Average Height Calc")
         return np.sum(self.templateIndexer([boreHole.H for boreHole in self.boreholes],self.templateIndices))/(self.nbh)
+        #print("Finished Average Height Calc")
+
+    def averageResistance(self,m_flow_borehole = None, fluid = None):
+        return self.avgR
+    def calcAverageResistance(self,m_flow_borehole = None, fluid = None):
+        #print("Calculating Average Resistance...")
+        self.avgR = np.sum(self.templateIndexer([bhe.compute_effective_borehole_resistance(m_flow_borehole=m_flow_borehole
+                                                ,fluid=fluid) for bhe in self.bhes],self.templateIndices))/(self.nbh)
+        #print("Done Calculating Average Resistance...")
+        return self.avgR
+
+    def setHeights(self,newAverageHeight):
+        beta = []
+        bhes = self.bhes
+        firstBhe = bhes[0]
+        for bhe in bhes:
+            beta.append(bhe.b.H/firstBhe.b.H)
+        nbh = self.nbh
+        weightBetaSum = np.sum(self.templateIndexer(beta,self.templateIndices))
+        h1 = (nbh*newAverageHeight)/(weightBetaSum)
+        for i in range(len(bhes)):
+            #print("Height Set:",h1*beta[i])
+            if i == 0:
+                bhe.b.H = h1*beta[0]
+            bhes[i].b.H = h1*beta[i]
+        return
+
 
     def cost(self, max_EFT, min_EFT):
         delta_T_max = max_EFT - self.sim_params.max_EFT_allowable
@@ -165,14 +197,16 @@ class BaseGHE:
 
         ts = self.radial_numerical.t_s  # (-)
         two_pi_k = 2. * np.pi * self.bhe.soil.k  # (W/m.K)
-        H = self.bhe.b.H  # (meters)
+        #H = self.bhe.b.H  # (meters)
         Tg = self.bhe.soil.ugt  # (Celsius)
-        Rb = self.bhe.compute_effective_borehole_resistance()  # (m.K/W)
+        Rb = self.averageResistance()  # (m.K/W)
         m_dot = self.bhe.m_flow_borehole  # (kg/s)
         cp = self.bhe.fluid.cp  # (J/kg.s)
+        H = self.H
 
         HPEFT = []
         delta_Tb = []
+        #print("Starting Detailed Simulation...")
         for i in range(1, n+1):
             # Take the last i elements of the reversed time array
             _time = time_values[i] - time_values[0:i]
@@ -188,6 +222,7 @@ class BaseGHE:
             Tf_out = Tf_bulk - Q_dot_b[i] / (2 * m_dot * cp)
             HPEFT.append(Tf_out)
             delta_Tb.append(delta_Tb_i)
+        #print("Finished Detailed Simulation")
 
         return HPEFT, delta_Tb
 
@@ -231,6 +266,7 @@ class GHE(BaseGHE):
 
         # Split the extraction loads into heating and cooling for input to
         # the HybridLoad object
+        #print(self.hourly_extraction_ground_loads)
         hourly_rejection_loads, hourly_extraction_loads = \
             plat.ground_loads.HybridLoad.split_heat_and_cool(
                 self.hourly_extraction_ground_loads)
@@ -296,18 +332,23 @@ class GHE(BaseGHE):
 
     def simulate(self, method='hybrid'):
         B = self.B_spacing
-        B_over_H = B / self.bhe.b.H
+        B_over_H = B / self.H
 
         self.bhe.update_thermal_resistance()
+        self.calcAverageResistance()
 
         # Solve for equivalent single U-tube
+        #print("Getting Equivalent Borehole Heat Exchanger")
         self.bhe_eq = plat.equivalance.compute_equivalent(self.bhe)
         # Update short time step object with equivalent single u-tube
+        #print("Getting Radial Numerical gfunction values")
         self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
         # Combine the short and long-term g-functions. The long term g-function
         # is interpolated for specific B/H and rb/H values.
+        #print("Getting GFunction Values")
         g = self.grab_g_function(B_over_H)
 
+        #print("Getting Loading Values")
         if method == 'hybrid':
             Q_dot = self.hybrid_load.load[2:] * 1000.  # convert to Watts
             time_values = self.hybrid_load.hour[2:]  # convert to seconds
@@ -343,7 +384,9 @@ class GHE(BaseGHE):
         # Size the ground heat exchanger
 
         def local_objective(H):
-            self.bhe.b.H = H
+            self.setHeights(H)
+            #print("H Vals: ",H)
+            self.H = H
             max_HP_EFT, min_HP_EFT = self.simulate(method=method)
             T_excess = self.cost(max_HP_EFT, min_HP_EFT)
             return T_excess
@@ -368,4 +411,35 @@ class GHE(BaseGHE):
                           'exchanger.')
 
         return
+
+def multiDepthSquare(averageHeight,Betas,m,n,D,r_b,spacing = 5):
+    coordinates = []
+    indices = []
+    bL = len(Betas)
+    for i in range(m):
+        for j in range(n):
+            xEdgeLength = min(i,m-1-i)
+            yEdgeLength = min(j,n-1-j)
+            edgeLength=min(xEdgeLength,yEdgeLength)
+            if edgeLength > bL-1:
+                indices.append(len(Betas)-1)
+            else:
+                indices.append(edgeLength)
+            coordinates.append([i*spacing,j*spacing])
+    boreholes = []
+    nbh = m*n
+    if not nbh == len(coordinates) and not nbh == len(indices):
+        print("Length Mismatch in Coordinate Generation")
+    nBSum = 0
+    #print("Indices: ",indices)
+    for index in indices:
+        nBSum += Betas[index]
+    heights = []
+    for b in Betas:
+        heights.append(b*(averageHeight*nbh)/(nBSum))
+    for h in heights:
+        boreholes.append(gt.boreholes.Borehole(h, D, r_b, x=0., y=0.))
+    if not len(Betas) == len(boreholes) and not len(Betas) == len(heights):
+        print("Length Mismatch in Height Values")
+    return [coordinates,indices,boreholes]
 

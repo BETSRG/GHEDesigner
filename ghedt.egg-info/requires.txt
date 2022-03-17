@@ -1,0 +1,10 @@
+pygfunction>=2.1
+matplotlib>=3.3.4
+numpy>=1.19.2
+Pillow>=8.1.0
+scipy>=1.6.2
+pandas>=1.3.2
+natsort>=7.1.1
+openpyxl>=3.0.8
+coolprop>=6.4.1
+opencv-python==4.5.4.58

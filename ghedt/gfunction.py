@@ -105,6 +105,109 @@ def compute_live_g_function(
 
     return g_function
 
+def calculate_g_function_dH(
+        m_flow_borehole, bhe_object, time_values, coordinates, boreholes,indices,
+        fluid, pipe, grout, soil, nSegments=8, end_length_ratio=0.02,
+        segments='unequal', solver='equivalent', boundary='MIFT',
+        segment_ratios=None, disp=False):
+
+    boreField = []
+    BHEs = []
+
+
+
+    for i in range(len(coordinates)):
+        x, y = coordinates[i]
+        index = indices[i]
+        H = copy.deepcopy(boreholes[index].H)
+        r_b = copy.deepcopy(boreholes[index].r_b)
+        D = copy.deepcopy(boreholes[index].D)
+        tilt = copy.deepcopy(boreholes[index].tilt)
+        orientation = copy.deepcopy(boreholes[index].orientation)
+        _borehole = gt.boreholes.Borehole(H, D, r_b, x, y, tilt, orientation)
+        boreField.append(_borehole)
+        # Initialize pipe model
+        if boundary == 'MIFT':
+            bhe = \
+                bhe_object(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+            BHEs.append(bhe)
+
+    alpha = soil.k / soil.rhoCp
+
+    # setup options
+    segments = segments.lower()
+    if segments == 'equal':
+        options = {'nSegments': nSegments, 'disp': disp}
+    elif segments == 'unequal':
+        if segment_ratios is None:
+            segment_ratios = gt.utilities.segment_ratios(
+                nSegments, end_length_ratio=end_length_ratio)
+        else:
+            segment_ratios = segment_ratios
+        options = {'nSegments': nSegments, 'segment_ratios': segment_ratios,
+                   'disp': disp}
+    else:
+        raise ValueError('Equal or Unequal are acceptable options '
+                         'for segments.')
+
+    if boundary == 'UHTR' or boundary == 'UBWT':
+        gfunc = gt.gfunction.gFunction(
+            boreField, alpha, time=time_values, boundary_condition=boundary,
+            options=options, method=solver
+        )
+    elif boundary == 'MIFT':
+        m_flow_network = len(boreField) * m_flow_borehole
+        network = gt.networks.Network(
+            boreField, BHEs, m_flow_network=m_flow_network, cp_f=fluid.cp)
+        gfunc = gt.gfunction.gFunction(
+            network, alpha, time=time_values,
+            boundary_condition=boundary, options=options, method=solver)
+    else:
+        raise ValueError('UHTR, UBWT or MIFT are accepted boundary conditions.')
+
+    return gfunc
+
+
+def compute_live_g_function_dH(
+        B: float, H_values: list,indices: list,BetaVals: list, r_b_values: list, D_values: list,
+        m_flow_borehole, bhe_object, log_time,  coordinates,
+        fluid, pipe, grout, soil, nSegments=8, segments='unequal',
+        solver='equivalent', boundary='MIFT', segment_ratios=None, disp=False):
+
+    d = {'g': {}, 'bore_locations': coordinates, 'logtime': log_time}
+    nbh = len(coordinates)
+    nBSum = 0
+    for index in indices:
+        nBSum += BetaVals[index]
+
+    for i in range(len(H_values)):
+
+        H = H_values[i]
+        r_b = r_b_values[i]
+        D = D_values[i]
+        boreholes = []
+        h1 = (nbh*H)/nBSum
+        for b in BetaVals:
+            boreholes.append(gt.boreholes.Borehole(b*h1,D,r_b,0.,0.))
+        alpha = soil.k / soil.rhoCp
+        ts = H ** 2 / (9. * alpha)  # Bore field characteristic time
+        time_values = np.exp(log_time) * ts
+        #print("nSegments: ",nSegments)
+        gfunc = calculate_g_function_dH(
+            m_flow_borehole, bhe_object, time_values, coordinates, boreholes,indices,
+            fluid, pipe, grout, soil, nSegments=nSegments, segments=segments,
+            solver=solver, boundary=boundary, segment_ratios=segment_ratios,
+            disp=disp)
+
+        key = '{}_{}_{}_{}'.format(B, H, r_b, D)
+
+        d['g'][key] = gfunc.gFunc.tolist()
+
+    geothermal_g_input = GFunction.configure_database_file_for_usage(d)
+    # Initialize the GFunction object
+    g_function = GFunction(**geothermal_g_input)
+
+    return g_function
 
 class GFunction:
     def __init__(self, B: float, r_b_values: dict, D_values: dict,
