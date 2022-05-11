@@ -47,7 +47,7 @@ class Design:
         # Check the routine parameter
         self.routine = routine
         available_routines = ['near-square', 'rectangle', 'bi-rectangle',
-                              'bi-zoned']
+                              'bi-zoned','row-wise']
         self.geometric_constraints.check_inputs(self.routine)
         gc = self.geometric_constraints
         if routine in available_routines:
@@ -76,6 +76,8 @@ class Design:
                 self.coordinates_domain_nested, self.fieldDescriptors = \
                     dt.domains.bi_rectangle_zoned_nested(
                         gc.length, gc.width, gc.B_min, gc.B_max_x, gc.B_max_y)
+            elif routine == 'row-wise':
+                pass
         else:
             raise ValueError('The requested routine is not available. '
                              'The currently available routines are: '
@@ -115,6 +117,11 @@ class Design:
                 self.bhe_object, self.fluid, self.pipe, self.grout, self.soil,
                 self.sim_params, self.hourly_extraction_ground_loads,
                 method=self.method, flow=self.flow, disp=disp,fieldType="bi-zoned")
+        elif self.routine == 'row-wise':
+            bisection_search = dt.search_routines.RowWiseModifiedBisectionSearch( self.V_flow, self.borehole,
+                self.bhe_object, self.fluid, self.pipe, self.grout,
+                self.soil, self.sim_params, self.hourly_extraction_ground_loads,self.geometric_constraints,
+                method=self.method, flow=self.flow, disp=disp,fieldType="row-wise")
         else:
             raise ValueError('The requested routine is not available. '
                              'The currently available routines are: '

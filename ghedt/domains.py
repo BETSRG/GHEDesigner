@@ -6,6 +6,7 @@ import ghedt as dt
 import numpy as np
 import pygfunction as gt
 import matplotlib.pyplot as plt
+import ghedt.RowWise.RowWiseGeneration as RW
 
 
 def square_and_near_square(lower: int,
@@ -421,6 +422,13 @@ def polygonal_land_constraint(property_boundary, B_min, B_max_x, B_max_y,
 
     return coordinates_domain_nested_cutout_reordered
 
+def RowWise_Domain(pSpac,spacStart,spacStop,spacStep,rotateStep,propBound,ngZones,rotateStart,rotateStop,Directory = "",pdfOutputName="Graphs.pdf"):
+    domain,fieldDestriptors = RW.fieldOptimizationWPSpac_FR([pSpac],spacStart,spacStop,spacStep,rotateStep,Directory
+                                                            ,propBound,ngZones=ngZones,rotateStart=rotateStart
+                                                            ,rotateStop=rotateStop,pdfOutputName=pdfOutputName)
+    domain = [domain[i] for i in range(len(domain)-1,-1,-1)]
+    fieldDestriptors = [fieldDestriptors[i] for i in range(len(fieldDestriptors) - 1, -1, -1)]
+    return [domain,fieldDestriptors]
 
 # The following functions are utility functions specific to domains.py
 # ------------------------------------------------------------------------------

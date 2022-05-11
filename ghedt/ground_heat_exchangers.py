@@ -339,7 +339,6 @@ class GHE(BaseGHE):
 
     def size(self, method='hybrid') -> None:
         # Size the ground heat exchanger
-
         def local_objective(H):
             self.bhe.b.H = H
             max_HP_EFT, min_HP_EFT = self.simulate(method=method)
