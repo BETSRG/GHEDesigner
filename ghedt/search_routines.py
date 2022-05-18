@@ -274,7 +274,7 @@ class RowWiseModifiedBisectionSearch:
         V_flow_system, m_flow_borehole = \
             self.retrieve_flow(coordinates, self.fluid.rho)
 
-        self.borehole.H = H
+        self.borehole.H = h
         borehole = self.borehole
         fluid = self.fluid
         pipe = self.pipe
