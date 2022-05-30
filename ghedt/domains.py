@@ -75,13 +75,13 @@ def rectangular(length_x, length_y, B_min, B_max, disp=False):
                 if transpose:
                     r = dt.coordinates.transpose_coordinates(r)
                 rectangle_domain.append(r)
-                fieldDescriptors.append(str(i)+ "X" + str(1))
+                fieldDescriptors.append(str(i)+ "X" + str(1)+"_B"+str(B))
             for j in range(1, n_2):
                 r = dt.coordinates.rectangle(N_min, j, B, B)
                 if transpose:
                     r = dt.coordinates.transpose_coordinates(r)
                 rectangle_domain.append(r)
-                fieldDescriptors.append(str(N_min) + "X" + str(j))
+                fieldDescriptors.append(str(N_min) + "X" + str(j)+"_B"+str(B))
 
             iter += 1
         if n_2_old == n_2:
@@ -93,7 +93,7 @@ def rectangular(length_x, length_y, B_min, B_max, disp=False):
             if transpose:
                 r = dt.coordinates.transpose_coordinates(r)
             rectangle_domain.append(r)
-            fieldDescriptors.append(str(N) + "X" + str(n_2))
+            fieldDescriptors.append(str(N) + "X" + str(n_2)+"_B"+str(B))
             n_2_old = copy.deepcopy(n_2)
 
         N += 1
@@ -391,7 +391,7 @@ def polygonal_land_constraint(property_boundary, B_min, B_max_x, B_max_y,
     x, y = list(zip(*outer_rectangle))
     length = max(x)
     width = max(y)
-    coordinates_domain_nested = \
+    coordinates_domain_nested,fieldDescriptors = \
             dt.domains.bi_rectangle_nested(length, width, B_min, B_max_x,
                                               B_max_y)
 
@@ -414,12 +414,14 @@ def polygonal_land_constraint(property_boundary, B_min, B_max_x, B_max_y,
         coordinates_domain_nested_cutout.append(new_coordinates_domain)
 
     coordinates_domain_nested_cutout_reordered = []
+    fieldDescriptors_reordered = []
     for i in range(len(coordinates_domain_nested_cutout)):
         domain = coordinates_domain_nested_cutout[i]
-        domain_reordered = reorder_domain(domain)
+        domain_reordered, fD_reordered = reorder_domain(domain,fieldDescriptors[i])
         coordinates_domain_nested_cutout_reordered.append(domain_reordered)
+        fieldDescriptors_reordered.append(fD_reordered)
 
-    return coordinates_domain_nested_cutout_reordered
+    return coordinates_domain_nested_cutout_reordered,fieldDescriptors_reordered
 
 
 # The following functions are utility functions specific to domains.py
@@ -437,7 +439,7 @@ def verify_excess(domain):
     return delta_T_values, unimodal
 
 
-def reorder_domain(domain):
+def reorder_domain(domain,descriptors):
     # Reorder the domain so that the number of boreholes successively grow
     numbers = {}
     for i in range(len(domain)):
@@ -446,14 +448,16 @@ def reorder_domain(domain):
     sorted_values = sorted(numbers.values())
 
     reordered_domain = []
+    reordered_descriptors = []
 
     for i in sorted_values:
         for j in numbers.keys():
             if numbers[j] == i:
                 reordered_domain.append(domain[j])
+                reordered_descriptors.append(descriptors[j])
                 break
 
-    return reordered_domain
+    return reordered_domain,reordered_descriptors
 
 
 def visualize_domain(domain, output_folder_name):
