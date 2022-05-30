@@ -53,7 +53,7 @@ class Bisection1D:
         # Initialize the GHE object
         self.ghe = dt.ground_heat_exchangers.GHE(
             V_flow_system, B, bhe_object, fluid, borehole, pipe, grout,
-            soil, g_function, sim_params, hourly_extraction_ground_loads)
+            soil, g_function, sim_params, hourly_extraction_ground_loads,fieldSpecifier=currentField,fieldType=fieldType)
 
         self.calculated_temperatures = {}
 
