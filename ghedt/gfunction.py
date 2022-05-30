@@ -169,7 +169,7 @@ def calculate_g_function_dH(
 
 
 def compute_live_g_function_dH(
-        B: float, H_values: list,indices: list,BetaVals: list, r_b_values: list, D_values: list,
+        initial_boreholes: list,B: float, H_values: list,indices: list,BetaVals: list, r_b_values: list, D_values: list,
         m_flow_borehole, bhe_object, log_time,  coordinates,
         fluid, pipe, grout, soil, nSegments=8, segments='unequal',
         solver='equivalent', boundary='MIFT', segment_ratios=None, disp=False):
@@ -187,8 +187,10 @@ def compute_live_g_function_dH(
         D = D_values[i]
         boreholes = []
         h1 = (nbh*H)/nBSum
-        for b in BetaVals:
-            boreholes.append(gt.boreholes.Borehole(b*h1,D,r_b,0.,0.))
+        for j in range(len(BetaVals)):
+            b = BetaVals[j]
+            iB = initial_boreholes[j]
+            boreholes.append(gt.boreholes.Borehole(b*h1,D,r_b,0.,0.,orientation=iB.orientation,tilt=iB.tilt))
         alpha = soil.k / soil.rhoCp
         ts = H ** 2 / (9. * alpha)  # Bore field characteristic time
         time_values = np.exp(log_time) * ts

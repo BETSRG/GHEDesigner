@@ -3,10 +3,10 @@ Name: ghedt
 Version: 0.2
 Summary: A ground heat exchanger design tool with the advanced and unmatched capability of automatic borehole field selection based on drilling geometric land constraints.
 Home-page: https://github.com/j-c-cook/ghedt
+Download-URL: https://github.com/j-c-cook/ghedt/archive/v0.2.tar.gz
 Author: Jack C. Cook
 Author-email: jack.cook@okstate.edu
 License: UNKNOWN
-Download-URL: https://github.com/j-c-cook/ghedt/archive/v0.2.tar.gz
 Platform: UNKNOWN
 Description-Content-Type: text/markdown
 License-File: LICENSE

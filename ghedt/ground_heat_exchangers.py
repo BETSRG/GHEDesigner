@@ -148,6 +148,8 @@ class BaseGHE:
         return self.avgR
     def calcAverageResistance(self,m_flow_borehole = None, fluid = None):
         #print("Calculating Average Resistance...")
+        for bhe in self.bhes:
+            bhe.update_thermal_resistance()
         self.avgR = np.sum(self.templateIndexer([bhe.compute_effective_borehole_resistance(m_flow_borehole=m_flow_borehole
                                                 ,fluid=fluid) for bhe in self.bhes],self.templateIndices))/(self.nbh)
         #print("Done Calculating Average Resistance...")
@@ -392,8 +394,8 @@ class GHE(BaseGHE):
             return T_excess
 
         # Make the initial guess variable the average of the heights given
-        self.bhe.b.H = \
-            (self.sim_params.max_Height + self.sim_params.min_Height) / 2.
+        #self.bhe.b.H = \
+            #(self.sim_params.max_Height + self.sim_params.min_Height) / 2.
         # bhe.b.H is updated during sizing
         plat.equivalance.solve_root(
             self.bhe.b.H, local_objective, lower=self.sim_params.min_Height,
