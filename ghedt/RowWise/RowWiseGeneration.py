@@ -105,7 +105,72 @@ def fieldOptimizationWPSpac_FR(pSpacs,spacStart,rotateStep,propBound,ngZones=Non
             field = (maxHole)
             fieldName = ("P"+str(pSpac)+"_S"+str(spac)+"_rt"+str(maxrt))
         return [field,fieldName]
+def fieldOptimization_FR(spacStart,rotateStep,propBound,ngZones=None,rotateStart=None,rotateStop=None,pdfOutputName = "Graphs.pdf"):
+    ''' Optimizes a Field by iterating over input values w/o perimeter spacing
 
+        Parameters:
+            spacStart(float): the initial target spacing that the optimization program will start with
+            spacStop(float): the final target spacing that the optimization program will end with (inclusive)
+            spacStep(float): the value that each step will take in optimization program
+            rotateStep(float): the amount of rotation that will be changed per step (in degrees)
+            Directory(String): Directory where output files should be sent
+            propBound([[float,float]]): 2d array of floats that represent the property boundary (counter clockwise)
+            ngZones([[[float,float]]]): 3d array representing the different zones on the property where no boreholes can be placed
+            rotateStart(float): the rotation that the field will start at (-pi/2 < rotateStart < pi/2)
+            rotateStop(float): the rotation that the field will stop at (exclusive) (-pi/2 < rotateStop < pi/2)
+            pdfOutputName(string): the name of the output pdf containing the graphs for the max field at each target spacing
+
+        Outputs:
+            CSV's containing the coordinates for the max field for each target spacing, their respective graphs, and their respective data
+
+        '''
+    if rotateStart == None:
+        rotateStart = (-90.0+rotateStep)*(pi/180.0)
+    if rotateStop == None:
+        rotateStop = pi/2
+    if rotateStart >= pi / 2 or rotateStart <= -pi / 2 or rotateStop > pi / 2 or rotateStop < -pi / 2:
+        print("Invalid Rotation")
+        return
+    field = None
+    fieldName = None
+
+
+    #Target Spacing iterates
+
+    spac = spacStart
+    rt = rotateStart
+
+
+    yS = spac
+    xS = yS
+
+    maxL = 0
+    maxHole = None
+    maxrt = None
+
+    while rt < rotateStop:
+        #print("Current Rotation: ",rt)
+        hole = genBoreHoleConfig(propBound, yS, xS, rotate=rt, nogo=ngZones)
+
+        #Assuming that the rotation with the maximum number of boreholes is most efficiently using space
+        if len(hole) > maxL:
+            maxL = len(hole)
+            maxrt = rt*(180/pi)
+            maxHole = hole
+
+        rt+=rotateStep*(pi/180)
+
+        #Ensures that there are no repeated boreholes
+        maxHole = np.array(remove_duplicates(maxHole, xS*1.2))
+        #print("MaxHOle: ",maxHole)
+
+        #Reports removal of repeated boreholes
+        if maxL > len(maxHole):
+            print(maxL-len(maxHole)," holes removed")
+            maxL = len(maxHole)
+        field = (maxHole)
+        fieldName = ("S"+str(spac)+"_rt"+str(maxrt))
+        return [field,fieldName]
 def fieldOptimizationWPSpac(pSpacs,spacStart,spacStop,spacStep,rotateStep,Directory,propBound,ngZones=None,rotateStart=None,rotateStop=None,pdfOutputName = "Graphs.pdf"):
     ''' Optimizes a Field by iterating over input values w/o perimeter spacing
 
@@ -717,8 +782,11 @@ def perimeterDistribute(field,spac,r):
 
 
         #Distributing the spacing to the x and y directions
-        xSpac = dx/numHoles
-        ySpac = dy/numHoles
+        xSpac = None
+        ySpac = None
+        if numHoles > 0:
+            xSpac = dx/numHoles
+            ySpac = dy/numHoles
         #print("".join(["Dy: ",str(dy),", Dx: ",str(dx),", xNum: ",str(dx // (spac * cos(theta))),", yNum: ",str(( dy // (spac * sin(theta))))]))
         currentP = [vert1[0],vert1[1]]
 

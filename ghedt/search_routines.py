@@ -8,6 +8,8 @@ from ghedt.utilities import sign, check_bracket
 import numpy as np
 import copy
 from ghedt.RowWise.RowWiseGeneration import fieldOptimizationWPSpac_FR
+from ghedt.RowWise.RowWiseGeneration import fieldOptimization_FR
+import math
 
 class Bisection1D:
     def __init__(self, coordinates_domain: list,fieldDescriptors: list, V_flow: float,
@@ -105,8 +107,8 @@ class Bisection1D:
         # Simulate after computing just one g-function
         max_HP_EFT, min_HP_EFT = self.ghe.simulate(method=self.method)
         T_excess = self.ghe.cost(max_HP_EFT, min_HP_EFT)
-        self.searchTracker.append([fieldSpecifier, '{.2f}'.format(T_excess),'{.2f}'.format(max_HP_EFT)
-                                      ,'{.2f}'.format(min_HP_EFT)])
+        self.searchTracker.append([fieldSpecifier, T_excess,max_HP_EFT
+                                      ,min_HP_EFT])
 
         # This is more of a debugging statement. May remove it in the future.
         # Perhaps there becomes a debug: bool option in the API.
@@ -224,7 +226,7 @@ class RowWiseModifiedBisectionSearch:
                  grout: plat.media.Grout, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list,geometricConstraints, method: str = 'hybrid',
-                 flow: str = 'borehole', max_iter=10, disp=False, search=True,advanced_tracking=False, fieldType="N/A"):
+                 flow: str = 'borehole', max_iter=10, disp=False, search=True,advanced_tracking=True, fieldType="RowWise"):
 
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
@@ -250,9 +252,9 @@ class RowWiseModifiedBisectionSearch:
         self.disp = disp
         self.ghe = None
         self.calculated_temperatures = {}
-        self.advanced_tracking = advanced_tracking
+        #self.advanced_tracking = advanced_tracking
         if advanced_tracking:
-            self.excessTemperatures = []
+            self.advanced_tracking = [["TargetSpacing","Field Specifier","nbh","ExcessTemperature"]]
             self.checkedFields = []
         if search:
             self.selected_coordinates,self.selected_specifier = self.search()
@@ -276,7 +278,7 @@ class RowWiseModifiedBisectionSearch:
         V_flow_system, m_flow_borehole = \
             self.retrieve_flow(coordinates, self.fluid.rho)
 
-        self.borehole.H = h
+        self.borehole.H = H
         borehole = self.borehole
         fluid = self.fluid
         pipe = self.pipe
@@ -312,7 +314,7 @@ class RowWiseModifiedBisectionSearch:
 
         return T_excess
 
-    def search(self,eT = 1e-10):
+    def search(self,eT = 1e-10,BRPoint=[0.0,0.0],BRRemovalMethod = "CloseToCorner",exhaustiveFieldsToCheck=10,usePerimeter=True):
         #Copy all of the geometric constraints to local variables
         spacStart = self.geometricConstraints.spacStart
         spacStop = self.geometricConstraints.spacStop
@@ -327,21 +329,32 @@ class RowWiseModifiedBisectionSearch:
         selected_coordinates = None
         selected_specifier = None
         selected_temp_excess = None
+        selected_spacing = None
 
         #Check The Upper and Lower Bounds
 
         #Generate Fields
-        upperField,upperFieldSpecifier = fieldOptimizationWPSpac_FR([pSpac],spacStart,rotateStep,propBound,ngZones=ngZones
-                                                ,rotateStart=rotateStart,rotateStop=rotateStop)
-        lowerField,lowerFieldSpecifier = fieldOptimizationWPSpac_FR([pSpac], spacStop, rotateStep, propBound, ngZones=ngZones,
-                                                rotateStart=rotateStart, rotateStop=rotateStop)
+        upperField,upperFieldSpecifier,lowerField,lowerFieldSpecifier = None,None,None,None
+        if usePerimeter:
+            upperField,upperFieldSpecifier = fieldOptimizationWPSpac_FR([pSpac],spacStart,rotateStep,propBound,ngZones=ngZones
+                                                    ,rotateStart=rotateStart,rotateStop=rotateStop)
+            lowerField,lowerFieldSpecifier = fieldOptimizationWPSpac_FR([pSpac], spacStop, rotateStep, propBound, ngZones=ngZones,
+                                                    rotateStart=rotateStart, rotateStop=rotateStop)
+        else:
+            upperField, upperFieldSpecifier = fieldOptimization_FR(spacStart, rotateStep, propBound,
+                                                                         ngZones=ngZones
+                                                                         , rotateStart=rotateStart,
+                                                                         rotateStop=rotateStop)
+            lowerField, lowerFieldSpecifier = fieldOptimization_FR(spacStop, rotateStep, propBound,
+                                                                         ngZones=ngZones,
+                                                                         rotateStart=rotateStart, rotateStop=rotateStop)
         #Get Excess Temperatures
         T_upper = self.calculate_excess(upperField,self.sim_params.max_Height,fieldSpecifier=upperFieldSpecifier)
         T_lower = self.calculate_excess(lowerField,self.sim_params.max_Height,fieldSpecifier=lowerFieldSpecifier)
 
         if self.advanced_tracking:
-            self.excessTemperatures.append(T_upper)
-            self.excessTemperatures.append(T_lower)
+            self.advanced_tracking.append([spacStart,upperFieldSpecifier,len(upperField),T_upper])
+            self.advanced_tracking.append([spacStop,lowerFieldSpecifier,len(lowerField),T_lower])
             self.checkedFields.append(upperField)
             self.checkedFields.append(lowerField)
 
@@ -365,18 +378,22 @@ class RowWiseModifiedBisectionSearch:
             lowE = T_upper
             highE = T_lower
             spacM = (spacStop+spacStart)*0.5
-            selected_coordinates=upperField
             while (i < self.max_iter):
                 print("Bisection Search Iteration: ",i)
                 #Getting Three Middle Field
-                f1,f1Specifier = fieldOptimizationWPSpac_FR([pSpac],spacM,rotateStep,propBound,ngZones=ngZones
+                f1,f1Specifier = None,None
+                if usePerimeter:
+                    f1,f1Specifier = fieldOptimizationWPSpac_FR([pSpac],spacM,rotateStep,propBound,ngZones=ngZones
                                                 ,rotateStart=rotateStart,rotateStop=rotateStop)
+                else:
+                    f1, f1Specifier = fieldOptimization_FR(spacM, rotateStep, propBound, ngZones=ngZones
+                                                                 , rotateStart=rotateStart, rotateStop=rotateStop)
 
                 #Getting the three field's excess temperature
                 T_e1 = self.calculate_excess(f1,self.sim_params.max_Height,fieldSpecifier=f1Specifier)
 
                 if self.advanced_tracking:
-                    self.excessTemperatures.append(T_e1)
+                    self.advanced_tracking.append([spacM,f1Specifier,len(f1),T_e1])
                     self.checkedFields.append(f1)
                 if T_e1 <= 0.0:
                     spacHigh = spacM
@@ -384,6 +401,7 @@ class RowWiseModifiedBisectionSearch:
                     selected_coordinates = f1
                     selected_specifier = f1Specifier
                     selected_temp_excess = T_e1
+                    selected_spacing = spacM
                 else:
                     spacLow = spacM
                     lowE = T_e1
@@ -394,39 +412,33 @@ class RowWiseModifiedBisectionSearch:
 
                 i += 1
 
-            #Now Check fields to the left and right:
-            fR,fRS = fieldOptimizationWPSpac_FR([pSpac],spacM-spacStep,rotateStep,propBound,ngZones=ngZones
-                                            ,rotateStart=rotateStart,rotateStop=rotateStop)
-            fL,fLS = fieldOptimizationWPSpac_FR([pSpac],spacM+spacStep,rotateStep,propBound,ngZones=ngZones
-                                            ,rotateStart=rotateStart,rotateStop=rotateStop)
-            TR = self.calculate_excess(fR,self.sim_params.max_Height,fieldSpecifier=fRS)
-            TL = self.calculate_excess(fL,self.sim_params.max_Height,fieldSpecifier=fLS)
-            fieldsToCheck = [selected_coordinates]
-            fSTC = [selected_specifier]
-            excessTemps = [selected_temp_excess]
-            if TR < 0.0:
-                fieldsToCheck.append(fR)
-                fSTC.append(fRS)
-                excessTemps.append(TR)
-                if self.advanced_tracking:
-                    self.checkedFields.append(fR)
-                    self.excessTemperatures.append(TR)
-            if TL < 0.0:
-                fieldsToCheck.append(fL)
-                fSTC.append(fLS)
-                excessTemps.append(TL)
-                if self.advanced_tracking:
-                    self.checkedFields.append(fL)
-                    self.excessTemperatures.append(TL)
-
-            #Now look at the three fields and choose the one that has the least drilling with a satisfactory
-            #excess temperature.
+            #Now Check fields that have a higher target spacing to double check that none of them would work:
+            spacL = spacStep+spacHigh
+            targetSpacings = []
+            currentSpacing = spacHigh
+            spacChange = (spacL-currentSpacing)/exhaustiveFieldsToCheck
+            while currentSpacing <= spacL:
+                targetSpacings.append(currentSpacing)
+                currentSpacing += spacChange
             bestField = None
             bestDrilling = float('inf')
             bestExcess = None
-            for i in range(len(fieldsToCheck)):
-                field = fieldsToCheck[i]
-                fS = fSTC[i]
+            bestSpacing = None
+            for i in range(len(targetSpacings)):
+                field,fS = None,None
+                if usePerimeter:
+                    field,fS = fieldOptimizationWPSpac_FR([pSpac],targetSpacings[i],rotateStep,propBound,ngZones=ngZones
+                                                    ,rotateStart=rotateStart,rotateStop=rotateStop)
+                else:
+                    field, fS = fieldOptimization_FR(targetSpacings[i], rotateStep, propBound,
+                                                           ngZones=ngZones
+                                                           , rotateStart=rotateStart, rotateStop=rotateStop)
+                T_e = self.calculate_excess(field,self.sim_params.max_Height,fieldSpecifier=fS)
+
+                if self.advanced_tracking:
+                    self.advanced_tracking.append([targetSpacings[i], fS, len(field), T_e])
+                    self.checkedFields.append(field)
+
                 self.initialize_ghe(field,self.sim_params.max_Height,fieldSpecifier=fS)
                 self.ghe.compute_g_functions()
                 self.ghe.size()
@@ -435,54 +447,87 @@ class RowWiseModifiedBisectionSearch:
                 if bestField is None:
                     bestField = field
                     bestDrilling = totalDrilling
-                    bestExcess=excessTemps[i]
+                    bestExcess=T_e
+                    bestSpacing = targetSpacings[i]
                 else:
-                    if totalDrilling<bestDrilling:
+                    if T_e <= 0.0 and totalDrilling<bestDrilling:
                         bestDrilling = totalDrilling
                         bestField = field
-                        bestExcess = excessTemps[i]
+                        bestExcess = T_e
             selected_coordinates = bestField
             selected_temp_excess = bestExcess
+            selected_spacing = bestSpacing
 
         #If the excess temperature is < 0 when utilizing the largest depth and the smallest field, it is most likely
         # in the user's best interest to return a field smaller than the smallest one. This is done by removing
         #boreholes from the field.
         elif T_lower < 0.0 and T_upper < 0.0:
-            #The most efficient field is most likely the one utilizing the maximum target depth. As such, boreholes will
-            #be removed until the height used is as close to the maximum as possible.
-            currentField = lowerField
-            lastField = lowerField
-            lastExcess = 0
-            continueLoop = True
-            selected_specifier = lowerFieldSpecifier
-            while continueLoop: #Loop will terminate from if statements inside of loop.
-                currentField = self.RemoveRow(currentField)
-                T_excess = self.calculate_excess(currentField,self.sim_params.max_Height,fieldSpecifier=lowerFieldSpecifier)
-                if self.advanced_tracking:
-                    self.excessTemperatures.append(T_excess)
-                    self.checkedFields.append(currentField)
-                #If the excess temperature for this new field is > 0.0, that means that the previous field is the best
-                #option available.
-                if T_excess > 0.0:
-                    selected_coordinates = lastField
-                    selected_temp_excess = lastExcess
-                    continueLoop = False
-                #If there is no more progress being made, check the excess temperature utilizing the minimum height
-                #and either return the current field or notify the user that there is an issue with the smallest field.
-                elif len(currentField) == len(lastField):
-                    T_excess_minimum = self.calculate_excess(currentField,
-                                                        self.sim_params.min_Height,fieldSpecifier=lowerFieldSpecifier)
-                    if T_excess_minimum > 0.0:
-                        msg = 'Based on the loads provided, the excess temperatures for the minimum and maximum number of boreholes' \
-                        'fall below 0. This means that the loads are too small for the corresponding simulation parameters.' \
-                        'Please double check the loadings or adjust those parameters.'
-                        continueLoop = False
+
+            originalCoordinates = copy.deepcopy(lowerField)
+
+            #Function For Sorting Boreholes Based on Proximity to a Point
+            def pointSort(targetPoint,otherPoints,method='ascending'):
+                def dist(oP):
+                    return math.sqrt((targetPoint[0]-oP[0])*(targetPoint[0] \
+                                                             -oP[0])+(targetPoint[1]-oP[1])*(targetPoint[1]-oP[1]))
+                distances = map(dist,otherPoints)
+                if method == 'ascending':
+                    return [x for _, x in sorted(zip(distances,otherPoints))]
+                elif method == 'descending':
+                    return [x for _, x in sorted(zip(distances,otherPoints),reverse=True)]
+            startingField = None
+            if BRRemovalMethod == 'CloseToCorner':
+                startingField = pointSort(originalCoordinates[0],lowerField,method='descending')
+            elif BRRemovalMethod == 'CloseToPoint':
+                startingField = pointSort(BRPoint,lowerField,method='descending')
+            elif BRRemovalMethod == 'FarFromPoint':
+                startingField = pointSort(BRPoint, lowerField, method='ascending')
+            elif BRRemovalMethod == 'RowRemoval':
+                startingField = lowerField
+            else:
+                msg = BRRemovalMethod +  ' is not a valid method for removing boreholes. The valid methods are: ' \
+                                         'CloseToCorner, CloseToPoint, FarFromPoint, and RowRemoval.'
+                raise ValueError(msg)
+
+            #Check if a 1X1 field is satisfactory
+            T_e_single = self.calculate_excess([[0, 0]], self.sim_params.max_Height, fieldSpecifier="1X1")
+            if self.advanced_tracking:
+                self.advanced_tracking.append(["N/A","1X1", 1, T_e_single])
+                self.checkedFields.append([[0,0]])
+            if T_e_single <= 0:
+                selected_temp_excess = T_e_single
+                selected_specifier = "1X1"
+                selected_coordinates =startingField[len(startingField)-1:]
+                selected_spacing = spacStop
+            else:
+                #Perform a bisection search between nbh values to find the smallest satisfactory field
+                nbhMax = len(startingField)
+                nbhMin = 1
+                nbh_start=nbhMax
+                continueLoop = True
+                highT_e = T_lower
+                selected_specifier = lowerFieldSpecifier
+                i = 0
+                while i < self.max_iter:
+                    nbh = (nbhMax+nbhMin)//2
+                    currentField = startingField[nbh_start-nbh:]
+                    fS = lowerFieldSpecifier + '_BR{}'.format(nbh_start-nbh)
+                    T_e = self.calculate_excess(currentField,self.sim_params.max_Height,fieldSpecifier=fS)
+                    if self.advanced_tracking:
+                        self.advanced_tracking.append([spacStop, lowerFieldSpecifier + "_" + str(nbh), nbh, T_e])
+                        self.checkedFields.append(currentField)
+                    if T_e <= 0.0:
+                        highT_e = T_e
+                        nbhMax = nbh
+                        selected_coordinates = currentField
+                        selected_specifier = fS
+                        selected_temp_excess = T_e
+                        selected_spacing = spacStop
                     else:
-                        selected_coordinates=currentField
-                        selected_temp_excess = T_excess
-                        continueLoop = False
-                lastField = currentField
-                lastExcess = T_excess
+                        nbhMin = nbh
+                    if (nbhMax-nbhMin)<=1:
+                        break
+                    i+=1
         #If none of the options above have been true, then there is most likely an issue with the excess temperature
         #calculation.
         else:
@@ -491,6 +536,9 @@ class RowWiseModifiedBisectionSearch:
                   'assistance.'
             raise ValueError(msg)
         self.excess = selected_temp_excess
+        if self.advanced_tracking:
+            self.advanced_tracking.append([selected_spacing, selected_specifier, len(selected_coordinates), selected_temp_excess])
+            self.checkedFields.append(selected_coordinates)
         return selected_coordinates,selected_specifier
 
 #This is a somewhat depreciated function for RowWise searching. It could still be used, but does not seem optimal based
