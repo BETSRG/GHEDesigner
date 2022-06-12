@@ -29,7 +29,9 @@ def createRow(allocatedWidth,rowData,dataFormats,centering=">"):
         try:
             rS += "{:{c}{w}{fm}}".format(data,c=centering,w=width,fm=dF)
         except:
-            print(dF)
+            print("Ouput Row creation error: ", dF)
+            raise(ValueError)
+
     rS += "\n"
     return rS
 
@@ -143,7 +145,9 @@ def GHETimeConvert(hours):
     # print("Hour Months: ",hL/(hoursInYear[monthInYear]))
     # print(fracMonth)
     return monthInYear+1, dayInMonth, hourInDay
-def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocatedWidth = 100,roundingAmount=10,summaryFile = "SimulationSummary.txt",csvF1="TimeDependentValues.csv",csvF2="BoreFieldData.csv",csvF3="Loadings.csv"):
+def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocatedWidth = 100,roundingAmount=10,
+                        summaryFile = "SimulationSummary.txt",csvF1="TimeDependentValues.csv",csvF2="BoreFieldData.csv"
+                        ,csvF3="Loadings.csv",csvF4="Gfunction.csv",loadMethod='hybrid'):
     ghe = design.ghe
     bhe = ghe.bhe
     gfunction = ghe.GFunction
@@ -216,32 +220,7 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
     oS += emptyLine
 
 
-    #GFunction STS+LTS Table
-    gfunctionTableFormats = [".3f"]
-    gfTableFF = [".3f"] * (1)
-    gfunctionTableFormats.extend(gfTableFF)
-    gfunctionColTitles = ["ln(t/ts)"]
 
-    gfunctionColTitles.append("H:" + str(round(bH.H, 2)) + "m")
-
-    gfunctionData = []
-    gheGF = gfunction.g_function_interpolation(float(ghe.B_spacing) / bH.H)[0]
-    gheGFAdjusted = ghe.grab_g_function(ghe.B_spacing / float(ghe.averageHeight()))
-    gfunctionLogVals = gheGFAdjusted.x
-    gfunctionGVals = gheGFAdjusted.y
-    for i in range(len(gfunctionLogVals)):
-        gfRow = []
-        gfRow.append(gfunctionLogVals[i])
-        #for gfunctionName in list(gfunction.g_lts):
-            # print(gfunction.g_lts[gfunctionName][i])
-            # print(gfunctionName)
-            #gfRow.append(gfunction.g_lts[gfunctionName][i])
-        gfRow.append(gfunctionGVals[i])
-        gfunctionData.append(gfRow)
-
-    oS += createTable("GFunction Combined Values", [gfunctionColTitles], gfunctionData, allocatedWidth, gfunctionTableFormats,
-                      fillerSymbol="-", centering="^")
-    oS += emptyLine
     '''
    
     '''
@@ -332,6 +311,7 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
     oS += createDRow(allocatedWidth, "Maximum Allowable Height, m: ", ghe.sim_params.max_Height,stringFormat,floatFormat)
     oS += createDRow(allocatedWidth, "Minimum Allowable Height, m: ", ghe.sim_params.min_Height,stringFormat,floatFormat)
     oS += createDRow(allocatedWidth, "Simulation Time, years: ", int(ghe.sim_params.end_month/12),stringFormat,intFormat)
+    oS += createDRow(allocatedWidth,"Simulation Loading Type: ",loadMethod,stringFormat,stringFormat)
 
     oS += emptyLine
 
@@ -453,5 +433,38 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
         cW = csv.writer(csv3OF)
         cW.writerows(csv3Array)
 
+        # GFunction STS+LTS Table
+    #gfunctionTableFormats = [".3f"]
+    #gfTableFF = [".3f"] * (1)
+    #gfunctionTableFormats.extend(gfTableFF)
+    #gfunctionColTitles = ["ln(t/ts)"]
+
+    #gfunctionColTitles.append("H:" + str(round(bH.H, 2)) + "m")
+
+    gfunctionData = []
+    csv4Array = [["ln(t/ts)","H:{:.2f}".format(bhe.b.H)]]
+    #gheGF = gfunction.g_function_interpolation(float(ghe.B_spacing) / bH.H)[0]
+    gheGFAdjusted = ghe.grab_g_function(ghe.B_spacing / float(ghe.averageHeight()))
+    gfunctionLogVals = gheGFAdjusted.x
+    gfunctionGVals = gheGFAdjusted.y
+    for i in range(len(gfunctionLogVals)):
+        gfRow = []
+        gfRow.append(gfunctionLogVals[i])
+        # for gfunctionName in list(gfunction.g_lts):
+        # print(gfunction.g_lts[gfunctionName][i])
+        # print(gfunctionName)
+        # gfRow.append(gfunction.g_lts[gfunctionName][i])
+        gfRow.append(gfunctionGVals[i])
+        csv4Array.append(gfRow)
+
+    #oS += createTable("GFunction Combined Values", [gfunctionColTitles], gfunctionData, allocatedWidth,
+    #                  gfunctionTableFormats,
+    #                  fillerSymbol="-", centering="^")
+    #oS += emptyLine
+
+
+    with open(csvF4,"w",newline="") as csv4OF:
+        cW = csv.writer(csv4OF)
+        cW.writerows(csv4Array)
 
     return oS

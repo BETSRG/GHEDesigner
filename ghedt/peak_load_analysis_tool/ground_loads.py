@@ -313,6 +313,10 @@ class HybridLoad:
             self.monthly_peak_hl_day[i] = \
                 math.floor(month_extraction_loads.index(
                     self.monthly_peak_hl[i]) / hours_in_day)
+            #print("Monthly Peak HL Hour",month_extraction_loads.index(
+                    #self.monthly_peak_hl[i]) / hours_in_day)
+            #print("Monthly Peak HL Day: ",self.monthly_peak_hl_day[i])
+            #print("")
 
             hours_in_previous_months += hours_in_month
 
@@ -617,6 +621,7 @@ class HybridLoad:
             if i > self.endmonth - self.peakretainend:
                 ipf[i] = True
         pass
+        plastavghour = 0.0
         for i in range(self.startmonth, (self.endmonth + 1)):
             # There may be a more sophisticated way to do this, but I will loop
             # through the lists mduration is the number of hours over which to
@@ -665,6 +670,7 @@ class HybridLoad:
                 mrate = mload / mduration
                 peak_day_diff = 0
 
+            lastavghour = 0.0
             if peak_day_diff < 0:
                 # monthly peak heating day occurs after peak cooling day
                 # monthly average conditions before cooling peak
@@ -678,6 +684,12 @@ class HybridLoad:
                     self.load = np.append(self.load,
                                           self.monthly_peak_cl[i])
                     self.hour = np.append(self.hour, last_hour_cooling_peak)
+
+                    if (lastavghour - plastavghour < 0.0):
+                        print("time change: ", lastavghour - plastavghour)
+                        print("Month: ", i)
+                        print("IF: 0,0")
+                    plastavghour = lastavghour
                 # monthly average conditions between cooling peak and heating peak
                 if (self.monthly_peak_hl[i] > 0 and ipf[i]):
                     # lastavghour = first_hour_heating_peak - 1 JDS corrected 20200604
@@ -689,10 +701,22 @@ class HybridLoad:
                     self.load = np.append(self.load,
                                           -self.monthly_peak_hl[i])
                     self.hour = np.append(self.hour, last_hour_heating_peak)
+
+                    if (lastavghour - plastavghour < 0.0):
+                        print("time change: ", lastavghour - plastavghour)
+                        print("Month: ", i)
+                        print("IF: 0,1")
+                    plastavghour = lastavghour
                 # rest of month
                 lastavghour = lastmonthhour(i)
                 self.load = np.append(self.load, mrate)
                 self.hour = np.append(self.hour, lastavghour)
+
+                if (lastavghour - plastavghour < 0.0):
+                    print("time change: ", lastavghour - plastavghour)
+                    print("Month: ", i)
+                    print("IF: 0,-")
+                plastavghour = lastavghour
 
             elif peak_day_diff > 0:
                 # monthly peak heating day occurs before peak cooling day
@@ -705,6 +729,12 @@ class HybridLoad:
                     self.load = np.append(self.load,
                                           -self.monthly_peak_hl[i])
                     self.hour = np.append(self.hour, last_hour_heating_peak)
+
+                    if (lastavghour - plastavghour < 0.0):
+                        print("time change: ", lastavghour - plastavghour)
+                        print("Month: ", i)
+                        print("IF: 1,0")
+                    plastavghour = lastavghour
                 # monthly average conditions between heating peak and cooling peak
                 if (self.monthly_peak_cl[i] > 0 and ipf[i]):
                     lastavghour = first_hour_cooling_peak
@@ -714,10 +744,22 @@ class HybridLoad:
                     self.load = np.append(self.load,
                                           self.monthly_peak_cl[i])
                     self.hour = np.append(self.hour, last_hour_cooling_peak)
+
+                    if (lastavghour - plastavghour < 0.0):
+                        print("time change: ", lastavghour - plastavghour)
+                        print("Month: ", i)
+                        print("IF: 1,1")
+                    plastavghour = lastavghour
                 # rest of month
                 lastavghour = lastmonthhour(i)
                 self.load = np.append(self.load, mrate)
                 self.hour = np.append(self.hour, lastavghour)
+
+                if (lastavghour - plastavghour < 0.0):
+                    print("time change: ", lastavghour - plastavghour)
+                    print("Month: ", i)
+                    print("IF: 1,-")
+                plastavghour = lastavghour
             else:
                 # monthly peak heating day and cooling day are the same
                 # in this case, we are ignoring the peaks
@@ -726,8 +768,16 @@ class HybridLoad:
                 lastavghour = lastmonthhour(i)
                 self.load = np.append(self.load, mrate)
                 self.hour = np.append(self.hour, lastavghour)
+
+                if (lastavghour - plastavghour < 0.0):
+                    print("time change: ", lastavghour - plastavghour)
+                    print("Month: ", i)
+                    print("IF: 2,-")
+                plastavghour = lastavghour
+
         #       Now fill array containing step function loads
         #        Note they are paired with the ending hour, so the ith load will start with the (i-1)th time
+
         n = self.hour.size
         #       Note at this point the load and hour np arrays contain zeroes in indices zero and one, then continue from there.
         for i in range(1, n):
