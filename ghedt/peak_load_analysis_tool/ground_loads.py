@@ -126,17 +126,24 @@ class HybridLoad:
                  bhe: plat.borehole_heat_exchangers.SingleUTube,
                  radial_numerical: plat.radial_numerical_borehole.RadialNumericalBH,
                  sim_params: plat.media.SimulationParameters,
-                 COP_rejection=None, COP_extraction=None, year=2019):
+                 COP_rejection=None, COP_extraction=None, years=[2019]):
         # Split the hourly loads into heating and cooling (kW)
         self.hourly_rejection_loads = hourly_rejection_loads
         self.hourly_extraction_loads = hourly_extraction_loads
+
+        # Simulation start and end month
+        self.startmonth = sim_params.start_month
+        self.endmonth = sim_params.end_month
+
+        self.peakretainstart = 12  # use peak laods for first 12 months
+        self.peakretainend = 12  # use peak loads for last 12 months
 
         # Store the borehole heat exchanger
         self.bhe = bhe
         # Store the radial numerical g-function value
         # Note: this is intended to be a scipy.interp1d object
         self.radial_numerical = radial_numerical
-
+        self.years = years
         if COP_extraction is None:
             self.COP_extraction = 2.5  # When the building is heating mode
         else:
@@ -147,8 +154,9 @@ class HybridLoad:
             self.COP_rejection = COP_rejection
 
         # Get the number of days in each month for a given year (make 0 NULL)
-        self.days_in_month = \
-            [0] + [monthrange(year, i)[1] for i in range(1, 13)]
+        self.days_in_month = [0]
+        for year in years:
+            self.days_in_month.extend([monthrange(year, i)[1] for i in range(1, 13)])
         assert len(hourly_rejection_loads) == sum(self.days_in_month) * 24. \
                and len(hourly_extraction_loads) == \
                sum(self.days_in_month) * 24., "The total number of hours in " \
@@ -162,22 +170,24 @@ class HybridLoad:
         # January is the second item (1) and December the last (12)
         # We'll reserve the first item (0) for an annual total or peak
 
+        numberOfUniqueMonths = len(years)*12+1
+
         # monthly cooling loads (or heat rejection) in kWh
-        self.monthly_cl = [0] * 13
+        self.monthly_cl = [0] * numberOfUniqueMonths
         # monthly heating loads (or heat extraction) in kWh
-        self.monthly_hl = [0] * 13
+        self.monthly_hl = [0] * numberOfUniqueMonths
         # monthly peak cooling load (or heat rejection) in kW
-        self.monthly_peak_cl = [0] * 13
+        self.monthly_peak_cl = [0] * numberOfUniqueMonths
         # monthly peak heating load (or heat extraction) in kW
-        self.monthly_peak_hl = [0] * 13
+        self.monthly_peak_hl = [0] * numberOfUniqueMonths
         # monthly average cooling load (or heat rejection) in kW
-        self.monthly_avg_cl = [0] * 13
+        self.monthly_avg_cl = [0] * numberOfUniqueMonths
         # monthly average heating load (or heat extraction) in kW
-        self.monthly_avg_hl = [0] * 13
+        self.monthly_avg_hl = [0] * numberOfUniqueMonths
         # day of the month on which peak clg load occurs (e.g. 1-31)
-        self.monthly_peak_cl_day = [0] * 13
+        self.monthly_peak_cl_day = [0] * numberOfUniqueMonths
         # day of the month on which peak htg load occurs (e.g. 1-31)
-        self.monthly_peak_hl_day = [0] * 13
+        self.monthly_peak_hl_day = [0] * numberOfUniqueMonths
         # Process the loads by month
         self.split_loads_by_month()
 
@@ -205,17 +215,12 @@ class HybridLoad:
         self.two_day_fluid_temps_hl_pk = [[0]]
 
         # duration of monthly peak clg load in hours
-        self.monthly_peak_cl_duration = [0] * 13
+        self.monthly_peak_cl_duration = [0] * numberOfUniqueMonths
         # duration of monthly peak htg load in hours
-        self.monthly_peak_hl_duration = [0] * 13
+        self.monthly_peak_hl_duration = [0] * numberOfUniqueMonths
         self.find_peak_durations()
 
-        # Simulation start and end month
-        self.startmonth = sim_params.start_month
-        self.endmonth = sim_params.end_month
 
-        self.peakretainstart = 12  # use peak laods for first 12 months
-        self.peakretainend = 12  # use peak loads for last 12 months
         # This block of data holds the sequence of loads. This is an
         # intermediate form, where the load values hold the actual loads,
         # not the the devoluted loads
@@ -593,33 +598,38 @@ class HybridLoad:
         #        self.sfload = np.append(self.sfload,0)
         lastzerohour = firstmonthhour(self.startmonth) - 1
         self.hour = np.append(self.hour, lastzerohour)
-        # Second, replicate months. [if we want to add an option where all
-        # monthly loads are explicitly given, this code will be in an if block]
-        for i in range(self.startmonth, self.endmonth + 1):
-            if i > 12:
-                mi = i % 12
-                if mi == 0:
-                    mi = 12
-                self.monthly_cl.append(self.monthly_cl[mi])
-                self.monthly_hl.append(self.monthly_hl[mi])
-                self.monthly_peak_cl.append(self.monthly_peak_cl[mi])
-                self.monthly_peak_hl.append(self.monthly_peak_hl[mi])
-                self.monthly_peak_cl_duration.append(
-                    self.monthly_peak_cl_duration[mi])
-                self.monthly_peak_hl_duration.append(
-                    self.monthly_peak_hl_duration[mi])
-                self.monthly_peak_cl_day.append(
-                    self.monthly_peak_cl_day[mi])
-                self.monthly_peak_hl_day.append(
-                    self.monthly_peak_hl_day[mi])
+        if len(self.years) <= 1:
+            # Second, replicate months. [if we want to add an option where all
+            # monthly loads are explicitly given, this code will be in an if block]
+            for i in range(self.startmonth, self.endmonth + 1):
+                if i > 12:
+                    mi = i % 12
+                    if mi == 0:
+                        mi = 12
+                    self.monthly_cl.append(self.monthly_cl[mi])
+                    self.monthly_hl.append(self.monthly_hl[mi])
+                    self.monthly_peak_cl.append(self.monthly_peak_cl[mi])
+                    self.monthly_peak_hl.append(self.monthly_peak_hl[mi])
+                    self.monthly_peak_cl_duration.append(
+                        self.monthly_peak_cl_duration[mi])
+                    self.monthly_peak_hl_duration.append(
+                        self.monthly_peak_hl_duration[mi])
+                    self.monthly_peak_cl_day.append(
+                        self.monthly_peak_cl_day[mi])
+                    self.monthly_peak_hl_day.append(
+                        self.monthly_peak_hl_day[mi])
         # Set the ipf (include peak flag)
-        ipf = [False] * (self.endmonth + 1)
-        for i in range(self.startmonth, self.endmonth + 1):
-            # set flag that determines if peak load will be included
-            if i < self.startmonth + self.peakretainstart:
-                ipf[i] = True
-            if i > self.endmonth - self.peakretainend:
-                ipf[i] = True
+        ipf = []
+        if len(self.years) <= 1:
+            ipf = [False] * (self.endmonth + 1)
+            for i in range(self.startmonth, self.endmonth + 1):
+                # set flag that determines if peak load will be included
+                if i < self.startmonth + self.peakretainstart:
+                    ipf[i] = True
+                if i > self.endmonth - self.peakretainend:
+                    ipf[i] = True
+        else:
+            ipf = [True] * (self.endmonth+1)
         pass
         plastavghour = 0.0
         for i in range(self.startmonth, (self.endmonth + 1)):
@@ -647,7 +657,7 @@ class HybridLoad:
                 # Catch the first and last peak hours to make sure they aren't 0
                 # Could only be 0 when the first month has no load.
                 first_hour_heating_peak = \
-                    firstmonthhour(i) + (self.monthly_peak_hl_day[i] - 1) \
+                    firstmonthhour(i) + (self.monthly_peak_hl_day[i]) \
                     * 24 + 12 - (self.monthly_peak_hl_duration[i] / 2)
                 if first_hour_heating_peak < 0.:
                     first_hour_heating_peak = 1.0e-6
@@ -656,7 +666,7 @@ class HybridLoad:
                 if last_hour_heating_peak < 0.:
                     last_hour_heating_peak = 1.0e-6
                 first_hour_cooling_peak = \
-                    firstmonthhour(i) + (self.monthly_peak_cl_day[i] - 1) * 24 \
+                    firstmonthhour(i) + (self.monthly_peak_cl_day[i]) * 24 \
                     + 12 - self.monthly_peak_cl_duration[i] / 2
                 if first_hour_cooling_peak < 0.:
                     first_hour_cooling_peak = 1.0e-06

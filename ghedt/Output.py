@@ -396,11 +396,20 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
 
 
     for i in range(len(timeVals)):
+        if i > 0:
+            csv1Row = []
+            csv1Row.append(timeVals[i])
+            csv1Row.append(hoursToMonth(timeVals[i-1]))
+            csv1Row.append(ghe.loading[i-1])
+            csv1Row.append(ghe.loading[i-1] / (ghe.averageHeight() * ghe.nbh))
+            csv1Row.append(bhe.soil.ugt + dTbVals[i-1])
+            csv1Row.append(EFTVals[i-1])
+            csv1Array.append(csv1Row)
+            csv1Array.append(csv1Row)
         csv1Row = []
         csv1Row.append(timeVals[i])
         csv1Row.append(hoursToMonth(timeVals[i]))
         csv1Row.append(ghe.loading[i])
-        #print("Average Height: ",ghe.averageHeight())
         csv1Row.append(ghe.loading[i]/(ghe.averageHeight()*ghe.nbh))
         csv1Row.append(bhe.soil.ugt+dTbVals[i])
         csv1Row.append(EFTVals[i])

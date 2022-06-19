@@ -19,10 +19,11 @@ class Bisection1D:
                  grout: plat.media.Grout, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
-                 flow: str = 'borehole', max_iter=15, disp=False, search=True,fieldType="N/A"):
+                 flow: str = 'borehole', max_iter=15, disp=False, search=True,fieldType="N/A",load_years=[2019]):
 
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
+        self.load_years = load_years
         self.searchTracker = []
         coordinates = coordinates_domain[0]
         currentField = fieldDescriptors[0]
@@ -55,7 +56,8 @@ class Bisection1D:
         # Initialize the GHE object
         self.ghe = dt.ground_heat_exchangers.GHE(
             V_flow_system, B, bhe_object, fluid, borehole, pipe, grout,
-            soil, g_function, sim_params, hourly_extraction_ground_loads,fieldSpecifier=currentField,fieldType=fieldType)
+            soil, g_function, sim_params, hourly_extraction_ground_loads,fieldSpecifier=currentField,
+            fieldType=fieldType,load_years=load_years)
 
         self.calculated_temperatures = {}
 
@@ -100,7 +102,8 @@ class Bisection1D:
         self.ghe = dt.ground_heat_exchangers.GHE(
             V_flow_system, B, self.bhe_object, fluid, borehole, pipe, grout,
             soil, g_function, self.sim_params,
-            self.hourly_extraction_ground_loads,fieldType=self.fieldType,fieldSpecifier=fieldSpecifier)
+            self.hourly_extraction_ground_loads,fieldType=self.fieldType,fieldSpecifier=fieldSpecifier
+            ,load_years=self.load_years)
 
     def calculate_excess(self, coordinates, H,fieldSpecifier="N/A"):
         self.initialize_ghe(coordinates, H,fieldSpecifier=fieldSpecifier)
@@ -226,10 +229,12 @@ class RowWiseModifiedBisectionSearch:
                  grout: plat.media.Grout, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list,geometricConstraints, method: str = 'hybrid',
-                 flow: str = 'borehole', max_iter=10, disp=False, search=True,advanced_tracking=True, fieldType="RowWise"):
+                 flow: str = 'borehole', max_iter=10, disp=False, search=True,advanced_tracking=True,
+                 fieldType="RowWise",load_years = [2019]):
 
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
+        self.load_years = load_years
         self.excess = None
         self.fluid = fluid
         self.pipe = pipe
@@ -298,7 +303,8 @@ class RowWiseModifiedBisectionSearch:
         self.ghe = dt.ground_heat_exchangers.GHE(
             V_flow_system, B, self.bhe_object, fluid, borehole, pipe, grout,
             soil, g_function, self.sim_params,
-            self.hourly_extraction_ground_loads, fieldType=self.fieldType, fieldSpecifier=fieldSpecifier)
+            self.hourly_extraction_ground_loads, fieldType=self.fieldType, fieldSpecifier=fieldSpecifier,
+            load_years= self.load_years)
 
     def calculate_excess(self, coordinates, H, fieldSpecifier="N/A"):
         self.initialize_ghe(coordinates, H, fieldSpecifier=fieldSpecifier)
@@ -762,10 +768,10 @@ class Bisection2D(Bisection1D):
                  grout: plat.media.Grout, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
-                 flow: str = 'borehole', max_iter=15, disp=False,fieldType="N/A"):
+                 flow: str = 'borehole', max_iter=15, disp=False,fieldType="N/A",load_years=[2019]):
         if disp:
             print('Note: This routine requires a nested bisection search.')
-
+        self.load_years = load_years
         # Get a coordinates domain for initialization
         coordinates_domain = coordinates_domain_nested[0]
        # print("Coordinate Dimensions",len(coordinates_domain),len(coordinates_domain[0]))
@@ -773,7 +779,7 @@ class Bisection2D(Bisection1D):
             self, coordinates_domain,fieldDescriptors[0], V_flow, borehole, bhe_object,
             fluid, pipe, grout, soil, sim_params,
             hourly_extraction_ground_loads, method=method, flow=flow,
-            max_iter=max_iter, disp=disp, search=False,fieldType=fieldType)
+            max_iter=max_iter, disp=disp, search=False,fieldType=fieldType,load_years=load_years)
 
         self.coordinates_domain_nested = []
         self.calculated_temperatures_nested = []
@@ -810,7 +816,7 @@ class BisectionZD(Bisection1D):
                  grout: plat.media.Grout, soil: plat.media.Soil,
                  sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
-                 flow: str = 'borehole', max_iter=15, disp=False,fieldType="N/A"):
+                 flow: str = 'borehole', max_iter=15, disp=False,fieldType="N/A",load_years=[2019]):
         if disp:
             print('Note: This design routine currently requires several '
                   'bisection searches.')
@@ -821,7 +827,7 @@ class BisectionZD(Bisection1D):
             self, coordinates_domain,fieldDescriptors[0], V_flow, borehole, bhe_object,
             fluid, pipe, grout, soil, sim_params,
             hourly_extraction_ground_loads, method=method, flow=flow,
-            max_iter=max_iter, disp=disp, search=False,fieldType=fieldType)
+            max_iter=max_iter, disp=disp, search=False,fieldType=fieldType,load_years=load_years)
 
         self.coordinates_domain_nested = coordinates_domain_nested
         self.nested_fieldDescriptors = fieldDescriptors

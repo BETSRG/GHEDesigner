@@ -219,7 +219,7 @@ class GHE(BaseGHE):
                  soil: plat.media.Soil,
                  GFunction: dt.gfunction.GFunction,
                  sim_params: plat.media.SimulationParameters,
-                 hourly_extraction_ground_loads: list,fieldType = "N/A",fieldSpecifier = "N/A"
+                 hourly_extraction_ground_loads: list,fieldType = "N/A",fieldSpecifier = "N/A",load_years = [2019]
                  ):
         BaseGHE.__init__(
             self, V_flow_system, B_spacing, bhe_object, fluid, borehole, pipe,
@@ -233,7 +233,7 @@ class GHE(BaseGHE):
 
         hybrid_load = plat.ground_loads.HybridLoad(
             hourly_rejection_loads, hourly_extraction_loads, self.bhe_eq,
-            self.radial_numerical, sim_params)
+            self.radial_numerical, sim_params,years=load_years)
 
         # hybrid load object
         self.hybrid_load = hybrid_load

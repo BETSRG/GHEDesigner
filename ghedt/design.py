@@ -17,7 +17,9 @@ class Design:
                  sim_params: plat.media.SimulationParameters,
                  geometric_constraints: dt.media.GeometricConstraints,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
-                 routine: str = 'near-square', flow: str = 'borehole',property_boundary=None,buildingDescription = None):
+                 routine: str = 'near-square', flow: str = 'borehole',property_boundary=None,buildingDescription = None,
+                 load_years=[2019]):
+        self.load_years = load_years
         self.V_flow = V_flow  # volumetric flow rate, m3/s
         self.borehole = borehole
         self.bhe_object = bhe_object  # a borehole heat exchanger object
@@ -97,14 +99,14 @@ class Design:
                 self.coordinates_domain,self.fieldDescriptors, self.V_flow, self.borehole,
                 self.bhe_object, self.fluid, self.pipe, self.grout,
                 self.soil, self.sim_params, self.hourly_extraction_ground_loads,
-                method=self.method, flow=self.flow, disp=disp,fieldType="near-square")
+                method=self.method, flow=self.flow, disp=disp,fieldType="near-square",load_years=self.load_years)
         # Find a rectangle
         elif self.routine == 'rectangle':
             bisection_search = dt.search_routines.Bisection1D(
                 self.coordinates_domain,self.fieldDescriptors, self.V_flow, self.borehole,
                 self.bhe_object, self.fluid, self.pipe, self.grout, self.soil,
                 self.sim_params, self.hourly_extraction_ground_loads,
-                method=self.method, flow=self.flow, disp=disp,fieldType="rectangle")
+                method=self.method, flow=self.flow, disp=disp,fieldType="rectangle",load_years=self.load_years)
         # Find a bi-rectangle
         elif self.routine == 'bi-rectangle':
             bisection_search = dt.search_routines.Bisection2D(
@@ -112,26 +114,26 @@ class Design:
                 self.borehole, self.bhe_object, self.fluid, self.pipe,
                 self.grout, self.soil, self.sim_params,
                 self.hourly_extraction_ground_loads, method=self.method,
-                flow=self.flow, disp=disp,fieldType="bi-rectangle")
+                flow=self.flow, disp=disp,fieldType="bi-rectangle",load_years=self.load_years)
         elif self.routine == 'bi-rectangle_constrained':
             bisection_search = dt.search_routines.Bisection2D(
                 self.coordinates_domain_nested,self.fieldDescriptors, self.V_flow,
                 self.borehole, self.bhe_object, self.fluid, self.pipe,
                 self.grout, self.soil, self.sim_params,
                 self.hourly_extraction_ground_loads, method=self.method,
-                flow=self.flow, disp=disp,fieldType="bi-rectangle_constrained")
+                flow=self.flow, disp=disp,fieldType="bi-rectangle_constrained",load_years=self.load_years)
         # Find bi-zoned rectangle
         elif self.routine == 'bi-zoned':
             bisection_search = dt.search_routines.BisectionZD(
                 self.coordinates_domain_nested,self.fieldDescriptors, self.V_flow, self.borehole,
                 self.bhe_object, self.fluid, self.pipe, self.grout, self.soil,
                 self.sim_params, self.hourly_extraction_ground_loads,
-                method=self.method, flow=self.flow, disp=disp,fieldType="bi-zoned")
+                method=self.method, flow=self.flow, disp=disp,fieldType="bi-zoned",load_years=self.load_years)
         elif self.routine == 'row-wise':
             bisection_search = dt.search_routines.RowWiseModifiedBisectionSearch( self.V_flow, self.borehole,
                 self.bhe_object, self.fluid, self.pipe, self.grout,
                 self.soil, self.sim_params, self.hourly_extraction_ground_loads,self.geometric_constraints,
-                method=self.method, flow=self.flow, disp=disp,fieldType="row-wise")
+                method=self.method, flow=self.flow, disp=disp,fieldType="row-wise",load_years=self.load_years)
         else:
             raise ValueError('The requested routine is not available. '
                              'The currently available routines are: '
