@@ -318,7 +318,10 @@ class GHE(BaseGHE):
             Q_dot = copy.deepcopy(self.hourly_extraction_ground_loads)
             # How many times does q need to be repeated?
             n_years = int(np.ceil(n_hours / 8760))
-            Q_dot = Q_dot * n_years
+            if len(Q_dot)//8760 < n_years:
+                Q_dot = Q_dot * n_years
+            else:
+                n_hours = len(Q_dot)
             Q_dot = -1. * np.array(Q_dot)  # Convert loads to rejection
             #print("Times:",self.times)
             if len(self.times) == 0:
@@ -349,16 +352,16 @@ class GHE(BaseGHE):
         self.bhe.b.H = \
             (self.sim_params.max_Height + self.sim_params.min_Height) / 2.
         # bhe.b.H is updated during sizing
-        plat.equivalance.solve_root(
+        returnedHeight =plat.equivalance.solve_root(
             self.bhe.b.H, local_objective, lower=self.sim_params.min_Height,
             upper=self.sim_params.max_Height, xtol=1.0e-6, rtol=1.0e-6,
             maxiter=50)
-        if self.bhe.b.H == self.sim_params.min_Height:
+        if returnedHeight == self.sim_params.min_Height:
             warnings.warn('The minimum height provided to size this ground heat'
                           ' exchanger is not shallow enough. Provide a '
                           'shallower allowable depth or decrease the size of '
                           'the heat exchanger.')
-        if self.bhe.b.H == self.sim_params.max_Height:
+        if returnedHeight == self.sim_params.max_Height:
             warnings.warn('The maximum height provided to size this ground '
                           'heat exchanger is not deep enough. Provide a deeper '
                           'allowable depth or increase the size of the heat '

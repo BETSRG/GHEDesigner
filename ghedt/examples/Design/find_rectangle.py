@@ -1,6 +1,3 @@
-# Jack C. Cook
-# Sunday, December 26, 2021
-
 # Purpose: Design a constrained rectangular field using the common design
 # interface with a single U-tube, multiple U-tube and coaxial tube borehole
 # heat exchanger.

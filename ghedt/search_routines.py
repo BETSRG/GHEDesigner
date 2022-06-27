@@ -444,22 +444,22 @@ class RowWiseModifiedBisectionSearch:
                 if self.advanced_tracking:
                     self.advanced_tracking.append([targetSpacings[i], fS, len(field), T_e])
                     self.checkedFields.append(field)
-
-                self.initialize_ghe(field,self.sim_params.max_Height,fieldSpecifier=fS)
-                self.ghe.compute_g_functions()
-                self.ghe.size()
-                H = self.ghe.averageHeight()
-                totalDrilling = H*len(field)
-                if bestField is None:
-                    bestField = field
-                    bestDrilling = totalDrilling
-                    bestExcess=T_e
-                    bestSpacing = targetSpacings[i]
-                else:
-                    if T_e <= 0.0 and totalDrilling<bestDrilling:
-                        bestDrilling = totalDrilling
+                if T_e <= 0.0:
+                    self.initialize_ghe(field,self.sim_params.max_Height,fieldSpecifier=fS)
+                    self.ghe.compute_g_functions()
+                    self.ghe.size()
+                    H = self.ghe.averageHeight()
+                    totalDrilling = H*len(field)
+                    if bestField is None:
                         bestField = field
-                        bestExcess = T_e
+                        bestDrilling = totalDrilling
+                        bestExcess=T_e
+                        bestSpacing = targetSpacings[i]
+                    else:
+                        if T_e <= 0.0 and totalDrilling<bestDrilling:
+                            bestDrilling = totalDrilling
+                            bestField = field
+                            bestExcess = T_e
             selected_coordinates = bestField
             selected_temp_excess = bestExcess
             selected_spacing = bestSpacing

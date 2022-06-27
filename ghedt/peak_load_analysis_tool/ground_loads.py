@@ -134,9 +134,12 @@ class HybridLoad:
         # Simulation start and end month
         self.startmonth = sim_params.start_month
         self.endmonth = sim_params.end_month
-
-        self.peakretainstart = 12  # use peak laods for first 12 months
-        self.peakretainend = 12  # use peak loads for last 12 months
+        if len(years) <= 1:
+            self.peakretainstart = 12  # use peak laods for first 12 months
+            self.peakretainend = 12  # use peak loads for last 12 months
+        else:
+            self.peakretainstart = len(years)*6
+            self.peakretainend = len(years)*6
 
         # Store the borehole heat exchanger
         self.bhe = bhe

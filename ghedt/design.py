@@ -17,7 +17,7 @@ class Design:
                  sim_params: plat.media.SimulationParameters,
                  geometric_constraints: dt.media.GeometricConstraints,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
-                 routine: str = 'near-square', flow: str = 'borehole',property_boundary=None,buildingDescription = None,
+                 routine: str = 'near-square', flow: str = 'borehole',property_boundary=None,buildingDescriptions = None,
                  load_years=[2019]):
         self.load_years = load_years
         self.V_flow = V_flow  # volumetric flow rate, m3/s
@@ -76,7 +76,7 @@ class Design:
                     disp=False)
             elif routine == 'bi-rectangle_constrained':
                 self.coordinates_domain_nested, self.fieldDescriptors = dt.domains.polygonal_land_constraint(property_boundary, gc.B_min, gc.B_max_x, gc.B_max_y,
-                              building_description=buildingDescription)
+                              building_descriptions=buildingDescriptions)
             elif routine == 'bi-zoned':
                 self.coordinates_domain_nested, self.fieldDescriptors = \
                     dt.domains.bi_rectangle_zoned_nested(

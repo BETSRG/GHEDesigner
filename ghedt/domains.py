@@ -387,9 +387,9 @@ def bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y):
 
 
 def polygonal_land_constraint(property_boundary, B_min, B_max_x, B_max_y,
-                              building_description=None):
-    if building_description is None:
-        building_description = []
+                              building_descriptions=None):
+    if building_descriptions is None:
+        building_descriptions = []
 
     outer_rectangle = \
         dt.feature_recognition.determine_largest_rectangle(property_boundary)
@@ -413,9 +413,10 @@ def polygonal_land_constraint(property_boundary, B_min, B_max_x, B_max_y,
             # Remove boreholes inside of building
             if len(new_coordinates) == 0:
                 continue
-            new_coordinates = dt.feature_recognition.remove_cutout(
-                new_coordinates, boundary=building_description,
-                remove_inside=True, keep_contour=False)
+            for building_description in building_descriptions:
+                new_coordinates = dt.feature_recognition.remove_cutout(
+                    new_coordinates, boundary=building_description,
+                    remove_inside=True, keep_contour=False)
             new_coordinates_domain.append(new_coordinates)
         coordinates_domain_nested_cutout.append(new_coordinates_domain)
 

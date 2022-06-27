@@ -1,6 +1,3 @@
-# Jack C. Cook
-# Monday, December 27, 2021
-
 # Purpose: Design a constrained bi-rectangular field using the common design
 # interface with a single U-tube, multiple U-tube and coaxial tube borehole
 # heat exchanger.
@@ -17,10 +14,11 @@ from ghedt import Output
 
 
 def main():
-    pN = "Atlanta Office Building"
-    notes = "Why?"
-    author = "Jeremy Johnson"
-    mN = "V1"
+    projectName = "Atlanta Office Building"
+    note = "Bi-Rectangle Usage Example"
+    author = "John Doe"
+    IterationName = "Example 3"
+    outputFileDirectory = "DesignExampleOutput"
     # Borehole dimensions
     # -------------------
     H = 96.  # Borehole length (m)
@@ -187,7 +185,8 @@ def main():
         perimeter, coordinates, no_go=no_go)
     # See Figure 4.19 on page 138 of Cook (2021)
     fig.savefig('bi-rectangular.png', bbox_inches='tight', pad_inches=0.1)
-    Output.OutputDesignDetails(bisection_search, toc - tic, pN, notes, author, mN)
+    Output.OutputDesignDetails(bisection_search, toc - tic, projectName
+                               , note, author, IterationName, outputDirectory=outputFileDirectory)
     '''
     # Double U-tube
     # -------------

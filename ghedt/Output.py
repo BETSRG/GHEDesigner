@@ -4,7 +4,7 @@ import math
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers as BHE
 import numpy as np
 import csv
-
+import os
 
 
 
@@ -147,7 +147,7 @@ def GHETimeConvert(hours):
     return monthInYear+1, dayInMonth, hourInDay
 def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocatedWidth = 100,roundingAmount=10,
                         summaryFile = "SimulationSummary.txt",csvF1="TimeDependentValues.csv",csvF2="BoreFieldData.csv"
-                        ,csvF3="Loadings.csv",csvF4="Gfunction.csv",loadMethod='hybrid'):
+                        ,csvF3="Loadings.csv",csvF4="Gfunction.csv",loadMethod='hybrid',outputDirectory=""):
     ghe = design.ghe
     bhe = ghe.bhe
     gfunction = ghe.GFunction
@@ -388,7 +388,7 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
 
 
 
-    with open(summaryFile,"w",newline="") as txtF:
+    with open(os.path.join(outputDirectory,summaryFile),"w",newline="") as txtF:
         txtF.write(oS)
 
 
@@ -399,7 +399,7 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
         if i > 0:
             csv1Row = []
             csv1Row.append(timeVals[i])
-            csv1Row.append(hoursToMonth(timeVals[i-1]))
+            csv1Row.append(hoursToMonth(timeVals[i]))
             csv1Row.append(ghe.loading[i-1])
             csv1Row.append(ghe.loading[i-1] / (ghe.averageHeight() * ghe.nbh))
             csv1Row.append(bhe.soil.ugt + dTbVals[i-1])
@@ -414,7 +414,7 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
         csv1Row.append(bhe.soil.ugt+dTbVals[i])
         csv1Row.append(EFTVals[i])
         csv1Array.append(csv1Row)
-    with open(csvF1,"w",newline="") as csv1OF:
+    with open(os.path.join(outputDirectory,csvF1),"w",newline="") as csv1OF:
         cW = csv.writer(csv1OF)
         cW.writerow(["Time (hr)","Time (month)","Q (Rejection) (w) (before time)","Q (Rejection) (W/m) (before time)","Tb (C)","GHE ExFT (C)"])
         cW.writerows(csv1Array)
@@ -425,7 +425,7 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
     for bL in gfunction.bore_locations:
         csv2Array.append([bL[0],bL[1]])
 
-    with open(csvF2,"w",newline="") as csv2OF:
+    with open(os.path.join(outputDirectory,csvF2),"w",newline="") as csv2OF:
         cW = csv.writer(csv2OF)
         cW.writerows(csv2Array)
 
@@ -438,7 +438,7 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
         month,dayInMonth,hourInDay = GHETimeConvert(hour)
         csv3Array.append([month,dayInMonth,hourInDay,hour,hourlyLoadings[i]])
 
-    with open(csvF3,"w",newline="") as csv3OF:
+    with open(os.path.join(outputDirectory,csvF3),"w",newline="") as csv3OF:
         cW = csv.writer(csv3OF)
         cW.writerows(csv3Array)
 
@@ -472,7 +472,7 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
     #oS += emptyLine
 
 
-    with open(csvF4,"w",newline="") as csv4OF:
+    with open(os.path.join(outputDirectory,csvF4),"w",newline="") as csv4OF:
         cW = csv.writer(csv4OF)
         cW.writerows(csv4Array)
 

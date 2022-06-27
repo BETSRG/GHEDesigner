@@ -50,9 +50,9 @@ def solve_root(x, objective_function, lower=None, upper=None,
         x = brentq(objective_function, lower, upper,
                    xtol=xtol, rtol=rtol, maxiter=maxiter)
     elif kg_plus_sign == -1 and kg_minus_sign == -1:
-        x = upper
-    elif kg_plus_sign == 1 and kg_minus_sign == 1:
         x = lower
+    elif kg_plus_sign == 1 and kg_minus_sign == 1:
+        x = upper
 
     return x
 

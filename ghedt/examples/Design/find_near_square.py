@@ -1,6 +1,3 @@
-# Jack C. Cook
-# Sunday, December 26, 2021
-
 # Purpose: Design a square or near-square field using the common design
 # interface with a single U-tube, multiple U-tube and coaxial tube.
 
@@ -16,10 +13,11 @@ from ghedt import Output
 
 
 def main():
-    pN = "Atlanta Office Building"
-    notes = "Why?"
-    author = "Jeremy Johnson"
-    mN = "V1"
+    projectName = "Atlanta Office Building"
+    note = "Square-Near-Square Usage Example"
+    author = "John Doe"
+    IterationName = "Example 1"
+    outputFileDirectory = "DesignExampleOutput"
     # Borehole dimensions
     # -------------------
     H = 96.  # Borehole length (m)
@@ -166,7 +164,8 @@ def main():
     fig, ax = dt.gfunction.GFunction.visualize_area_and_constraints(
         [], coordinates, no_go=None)
     fig.savefig('near-square.png', bbox_inches='tight', pad_inches=0.1)
-    Output.OutputDesignDetails(bisection_search,toc-tic,pN,notes,author,mN)
+    Output.OutputDesignDetails(bisection_search,toc-tic,projectName
+                               ,note,author,IterationName,outputDirectory=outputFileDirectory)
 
 
 if __name__ == '__main__':
