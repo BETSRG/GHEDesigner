@@ -394,25 +394,65 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
 
     csv1Array = []
 
-
+    loadingValues = ghe.loading
+    #loadingValues_dt = np.hstack((loadingValues[1:] - loadingValues[:-1]))
+    currentTime = None
+    currentMonth = None
+    normalizedLoading = None
+    wallTemperature = None
+    HPEFTVal = None
     for i in range(len(timeVals)):
-        if i > 0:
-            csv1Row = []
-            csv1Row.append(timeVals[i])
-            csv1Row.append(hoursToMonth(timeVals[i]))
-            csv1Row.append(ghe.loading[i-1])
-            csv1Row.append(ghe.loading[i-1] / (ghe.averageHeight() * ghe.nbh))
-            csv1Row.append(bhe.soil.ugt + dTbVals[i-1])
-            csv1Row.append(EFTVals[i-1])
-            csv1Array.append(csv1Row)
-            csv1Array.append(csv1Row)
+        if i+1 < len(timeVals):
+            currentTime = timeVals[i]
+            loading = loadingValues[i+1]
+            currentMonth = hoursToMonth(timeVals[i])
+            normalizedLoading = loading/(ghe.averageHeight()*ghe.nbh)
+            wallTemperature = bhe.soil.ugt+dTbVals[i]
+            HPEFTVal = EFTVals[i]
+            if True:
+                csv1Row = []
+                csv1Row.append(timeVals[i])
+                csv1Row.append(hoursToMonth(timeVals[i]))
+                if i > 1:
+                    csv1Row.append(loadingValues[i])
+                    csv1Row.append(loadingValues[i] / (ghe.averageHeight() * ghe.nbh))
+                else:
+                    csv1Row.append(0)
+                    csv1Row.append(0)
+                csv1Row.append(bhe.soil.ugt + dTbVals[i-1])
+                csv1Row.append(EFTVals[i-1])
+                csv1Array.append(csv1Row)
+
+        else:
+
+            if True:
+                csv1Row = []
+                csv1Row.append(timeVals[i])
+                csv1Row.append(hoursToMonth(timeVals[i]))
+                if i > 1:
+                    csv1Row.append(loadingValues[i])
+                    csv1Row.append(loadingValues[i] / (ghe.averageHeight() * ghe.nbh))
+                else:
+                    csv1Row.append(0)
+                    csv1Row.append(0)
+                csv1Row.append(bhe.soil.ugt + dTbVals[i-1])
+                csv1Row.append(EFTVals[i-1])
+                csv1Array.append(csv1Row)
+
+
+            currentTime = timeVals[i]
+            loading = 0
+            currentMonth = hoursToMonth(timeVals[i])
+            normalizedLoading = loading / (ghe.averageHeight() * ghe.nbh)
+            wallTemperature = bhe.soil.ugt + dTbVals[i]
+            HPEFTVal = EFTVals[i]
         csv1Row = []
-        csv1Row.append(timeVals[i])
-        csv1Row.append(hoursToMonth(timeVals[i]))
-        csv1Row.append(ghe.loading[i])
-        csv1Row.append(ghe.loading[i]/(ghe.averageHeight()*ghe.nbh))
-        csv1Row.append(bhe.soil.ugt+dTbVals[i])
-        csv1Row.append(EFTVals[i])
+        csv1Row.append(currentTime)
+        csv1Row.append(currentMonth)
+        csv1Row.append(loading)
+        csv1Row.append(normalizedLoading)
+        csv1Row.append(wallTemperature)
+        csv1Row.append(HPEFTVal)
         csv1Array.append(csv1Row)
     with open(os.path.join(outputDirectory,csvF1),"w",newline="") as csv1OF:
         cW = csv.writer(csv1OF)
