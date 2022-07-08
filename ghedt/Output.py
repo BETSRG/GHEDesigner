@@ -148,7 +148,8 @@ def GHETimeConvert(hours):
 def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocatedWidth = 100,roundingAmount=10,
                         summaryFile = "SimulationSummary.txt",csvF1="TimeDependentValues.csv",csvF2="BoreFieldData.csv"
                         ,csvF3="Loadings.csv",csvF4="Gfunction.csv",loadMethod='hybrid',outputDirectory=""):
-    ghe = design.ghe
+    try: ghe = design.ghe
+    except: ghe = design
     bhe = ghe.bhe
     gfunction = ghe.GFunction
     bH =bhe.b
@@ -179,7 +180,8 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
 
     designHeader = [["Field","Excess Temperature","Max Temperature","Min Temperature"],
                     [" ","(C)","(C)","(C)"]]
-    designValues = design.searchTracker
+    try: designValues = design.searchTracker
+    except: designValues = ''
     designFormats = ["s",".3f",".3f",".3f"]
 
 
