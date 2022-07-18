@@ -89,7 +89,7 @@ class Design:
                              '`near-square`.')
         self.flow = flow
 
-    def find_design(self, disp=False):
+    def find_design(self, disp=False,BRPoint=[0.0,0.0],BRRemovalMethod = "CloseToCorner",exhaustiveFieldsToCheck=10,usePerimeter=True):
         if disp:
             title = 'Find {}...'.format(self.routine)
             print(title + '\n' + len(title) * '=')
@@ -133,7 +133,9 @@ class Design:
             bisection_search = dt.search_routines.RowWiseModifiedBisectionSearch( self.V_flow, self.borehole,
                 self.bhe_object, self.fluid, self.pipe, self.grout,
                 self.soil, self.sim_params, self.hourly_extraction_ground_loads,self.geometric_constraints,
-                method=self.method, flow=self.flow, disp=disp,fieldType="row-wise",load_years=self.load_years)
+                method=self.method, flow=self.flow, disp=disp,fieldType="row-wise",load_years=self.load_years,
+                BRPoint=BRPoint,BRRemovalMethod = BRRemovalMethod,exhaustiveFieldsToCheck=exhaustiveFieldsToCheck
+                                                                                  ,usePerimeter=usePerimeter)
         else:
             raise ValueError('The requested routine is not available. '
                              'The currently available routines are: '

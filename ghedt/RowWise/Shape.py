@@ -93,9 +93,9 @@ class Shapes:
         self.maxy = max(ys)
         self.miny = min(ys)
 
-    def lineintersect(self, xy,rotate = 0):
+    def lineintersect(self, xy, rotate=0, intersection_tolerance=1e-6):
         '''
-            returns the intersections between a line segment and the rectanlge
+            returns the intersections between a line segment and the shape
 
             Parameters
             -----------
@@ -107,32 +107,36 @@ class Shapes:
         x1, y1, x2, y2 = xy
         rA = []
         for i in range(len(self.c)):
-            if i == len(self.c)-1:
-                c1 = self.c[len(self.c)-1]
+            if i == len(self.c) - 1:
+                c1 = self.c[len(self.c) - 1]
                 c2 = self.c[0]
-                r = vectorintersect([c1[0], c1[1], c2[0], c2[1]], [x1, y1, x2, y2])
-                #print(r)
-                if r != None:
-                    if r[0] == float('inf'):
-                        continue
-                    if r[0] > max(c2[0],c1[0]) or r[0] < min(c2[0],c1[0]) or r[1] > max(c2[1],c1[1]) or r[1] < min(c2[1],c1[1]):
+                r = vectorintersect([c1[0], c1[1], c2[0], c2[1]], [x1, y1, x2, y2], intersection_tolerance)
+                # print(r)
+                if len(r) == 1:
+                    r = r[0]
+                    if (r[0] - max(c2[0], c1[0])) > intersection_tolerance or \
+                            (r[0] - min(c2[0], c1[0])) < -1 * intersection_tolerance \
+                            or (r[1] - max(c2[1], c1[1])) > intersection_tolerance \
+                            or (r[1] - min(c2[1], c1[1])) < -1 * intersection_tolerance:
                         continue
                     rA.append(r)
             else:
                 c1 = self.c[i]
                 c2 = self.c[i + 1]
-                r = vectorintersect([c1[0], c1[1], c2[0], c2[1]], [x1, y1, x2, y2])
-                if r != None:
-                    if r[0] == float('inf'):
-                        continue
-                    if r[0] > max(c2[0],c1[0]) or r[0] < min(c2[0],c1[0]) or r[1] > max(c2[1],c1[1]) or r[1] < min(c2[1],c1[1]):
+                r = vectorintersect([c1[0], c1[1], c2[0], c2[1]], [x1, y1, x2, y2], intersection_tolerance)
+                if len(r) == 1:
+                    r = r[0]
+                    if (r[0] - max(c2[0], c1[0])) > intersection_tolerance or \
+                            (r[0] - min(c2[0], c1[0])) < -1 * intersection_tolerance \
+                            or (r[1] - max(c2[1], c1[1])) > intersection_tolerance \
+                            or (r[1] - min(c2[1], c1[1])) < -1 * intersection_tolerance:
                         continue
                     rA.append(r)
-        #print("x value: %f, r values:"%x1)
-        #print(rA)
+        # print("x value: %f, r values:"%x1)
+        # print(rA)
 
-        rA = sortIntersections(rA,rotate)
-        #print(rA)
+        rA = sortIntersections(rA, rotate)
+        # print(rA)
         return rA
 
     def pointintersect(self, xy):
@@ -187,6 +191,8 @@ class Shapes:
 
 
 def sortIntersections(rA,rotate):
+    if len(rA) == 0:
+        return rA
     vals = [0] * len(rA)
     i=0
     for inter in rA:
@@ -215,7 +221,7 @@ def sortIntersections(rA,rotate):
     rA = [row for _, row in zipped]
     return rA
 
-def vectorintersect(l1, l2):
+def vectorintersect(l1, l2,intersection_tolerance):
     '''
          gives the intersection between two line segments
 
@@ -240,27 +246,25 @@ def vectorintersect(l1, l2):
     else:
         a2 = (y22 - y21) / (x22 - x21)
         c2 = y21 - x21 * a2
-   # if math.isnan(a1) or math.isnan(a2):
-        #print("a1: %f,a2: %f"%(a1,a2))
-
-    #print(c)
     if a1 == float('inf') or a2 == float('inf'):
         if a1 == float('inf') and a2 == float('inf'):
-            if x11-x21 < 1e-12:
-                return [float('inf')]
+            if abs(x11-x21) < intersection_tolerance:
+                return [[x11,y11],[x12,y12]]
             else:
-                return None
+                return []
         elif a1 == float('inf'):
-            return [x11,a2*x11+c2]
+            return [[x11,a2*x11+c2]]
         else:
-            return[x21,a1*x21+c1]
-    if  a1==a2:
-        if y22 == a1*x22 +c1:
-            return [float('inf')]
-        return None
+            return[[x21,a1*x21+c1]]
+    if  abs(a1-a2) <= intersection_tolerance:
+        if abs(y22-(a1*x22 +c1))<=intersection_tolerance:
+            #return [[x11,y11],[x12,y12]]
+            return []
+        else:
+            return []
     rx = (c2-c1)/(a1-a2)
     ry = a1*(c2-c1)/(a1-a2)+c1
-    return [rx,ry]
+    return [[rx,ry]]
 
 
 

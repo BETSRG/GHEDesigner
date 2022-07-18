@@ -1,7 +1,8 @@
-# Purpose: Design a square or near-square field using the common design
-# interface with a single U-tube, multiple U-tube and coaxial tube.
+# Purpose: Design a bi-uniform constrained polygonal field using the common
+# design interface with a single U-tube, multiple U-tube and coaxial tube
+# borehole heat exchanger.
 
-# This search is described in section 4.3.2 of Cook (2021) from pages 123-129.
+# This search is described in section 4.4.5 from pages 146-148 in Cook (2021).
 
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
@@ -9,21 +10,23 @@ import pygfunction as gt
 import pandas as pd
 from time import time as clock
 from ghedt import Output
+import csv
+import os
 
 
 
 def main():
 
-    #This file contains three examples utilizing the square-near-square design algorithm for a single U, double U, and
+    #This file contains three examples utilizing the bi-uniform polygonal design algorithm for a single U, double U, and
     #coaxial tube design. The results from these examples are exported to the "DesignExampleOutput" folder.
 
     #Single U-tube Example
 
     #Output File Configuration
     projectName = "Atlanta Office Building: Design Example"
-    note = "Square-Near-Square Usage Example: Single U Tube"
-    author = "John Doe"
-    IterationName = "Example 1"
+    note = "Bi-Uniform Polygon Usage Example: Single U Tube"
+    author = "Jane Doe"
+    IterationName = "Example 6"
     outputFileDirectory = "DesignExampleOutput"
 
     # Borehole dimensions
@@ -96,22 +99,50 @@ def main():
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
 
-    """ Geometric constraints for the `near-square` routine.
-    Required geometric constraints for the uniform rectangle design:
-      - B
-      - length
+    # Polygonal design constraints are the land and range of B-spacing
+    B_min = 5 # in m
+    B_max_x = 25 # in m
+    B_max_y = B_max_x # in m
+
+    # Building Description
+    propertyBoundaryFile = "PropertyDescriptions/PropBound.csv"
+    NogoZoneDirectory = "PropertyDescriptions/NogoZones"
+
+    propA = []  # in meters
+    ngA = []  # in meters
+
+    with open(propertyBoundaryFile, "r", newline="") as pF:
+        cR = csv.reader(pF)
+        for line in cR:
+            L = []
+            for row in line:
+                L.append(float(row))
+            propA.append(L)
+
+    for file in os.listdir(NogoZoneDirectory):
+        with open(os.path.join(NogoZoneDirectory, file), "r", newline="") as ngF:
+            cR = csv.reader(ngF)
+            ngA.append([])
+            for line in cR:
+                L = []
+                for row in line:
+                    L.append(float(row))
+                ngA[-1].append(L)
+
+
+    """ Geometric constraints for the `bi-rectangle_constrained` routine:
+      - B_min
+      - B_max_x
+      - B_max_y
     """
-    # B is already defined above
-    number_of_boreholes = 32
-    length = dt.utilities.length_of_side(number_of_boreholes, B)
-    geometric_constraints = dt.media.GeometricConstraints(B=B, length=length)
+    geometric_constraints = dt.media.GeometricConstraints(B_min=B_min, B_max_y=B_max_y, B_max_x=B_max_x)
 
     # Single U-tube
     # -------------
     design_single_u_tube = dt.design.Design(
         V_flow, borehole, single_u_tube, fluid, pipe_single, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        method='hybrid', flow=flow, routine='near-square')
+        method='hybrid', flow=flow, routine='bi-rectangle_constrained',property_boundary=propA,buildingDescriptions=ngA)
 
     # Find the near-square design for a single U-tube and size it.
     tic = clock() #Clock Start Time
@@ -139,7 +170,7 @@ def main():
     #*************************************************************************************************************
     #Double U-tube Example
 
-    note = "Square-Near-Square Usage Example: Double U Tube"
+    note = "Bi-Uniform Polygon Usage Example: Double U Tube"
 
     # Double U-tube
     pos_double = plat.media.Pipe.place_pipes(s, r_out, 2)
@@ -152,7 +183,7 @@ def main():
     design_double_u_tube = dt.design.Design(
         V_flow, borehole, double_u_tube, fluid, pipe_double, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        method='hybrid', flow=flow, routine='near-square')
+        method='hybrid', flow=flow, routine='bi-rectangle_constrained',property_boundary=propA,buildingDescriptions=ngA)
 
     # Find the near-square design for a single U-tube and size it.
     tic = clock()  # Clock Start Time
@@ -180,7 +211,7 @@ def main():
     # *************************************************************************************************************
     #Coaxial Tube Example
 
-    note = "Square-Near-Square Usage Example: Coaxial Tube"
+    note = "Bi-Uniform Polygon Usage Example: Coaxial Tube"
 
     # Coaxial tube
     r_in_in = 44.2 / 1000. / 2.
@@ -208,7 +239,7 @@ def main():
     design_coax_tube = dt.design.Design(
         V_flow, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        method='hybrid', flow=flow, routine='near-square')
+        method='hybrid', flow=flow, routine='bi-rectangle_constrained',property_boundary=propA,buildingDescriptions=ngA)
 
     # Find the near-square design for a single U-tube and size it.
     tic = clock()  # Clock Start Time

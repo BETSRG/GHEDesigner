@@ -230,7 +230,8 @@ class RowWiseModifiedBisectionSearch:
                  sim_params: plat.media.SimulationParameters,
                  hourly_extraction_ground_loads: list,geometricConstraints, method: str = 'hybrid',
                  flow: str = 'borehole', max_iter=10, disp=False, search=True,advanced_tracking=True,
-                 fieldType="RowWise",load_years = [2019]):
+                 fieldType="RowWise",load_years = [2019],
+                 BRPoint=[0.0,0.0],BRRemovalMethod = "CloseToCorner",exhaustiveFieldsToCheck=10,usePerimeter=True):
 
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
@@ -262,8 +263,11 @@ class RowWiseModifiedBisectionSearch:
             self.advanced_tracking = [["TargetSpacing","Field Specifier","nbh","ExcessTemperature"]]
             self.checkedFields = []
         if search:
-            self.selected_coordinates,self.selected_specifier = self.search()
-            self.initialize_ghe(self.selected_coordinates,self.sim_params.max_Height,fieldSpecifier=self.selected_specifier)
+            self.selected_coordinates,self.selected_specifier = self.search(BRPoint=BRPoint,
+                                BRRemovalMethod = BRRemovalMethod,exhaustiveFieldsToCheck=exhaustiveFieldsToCheck
+                                ,usePerimeter=usePerimeter)
+            self.initialize_ghe(self.selected_coordinates,self.sim_params.max_Height,
+                                fieldSpecifier=self.selected_specifier)
 
     def retrieve_flow(self, coordinates, rho):
         if self.flow == 'borehole':

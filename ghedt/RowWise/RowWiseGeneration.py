@@ -58,22 +58,20 @@ def fieldOptimizationWPSpac_FR(pSpacs,spacStart,rotateStep,propBound,ngZones=Non
 
         '''
     if rotateStart == None:
-        rotateStart = (-90.0+rotateStep)*(pi/180.0)
+        rotateStart = (-90.0 + rotateStep) * (pi / 180.0)
     if rotateStop == None:
-        rotateStop = pi/2
-    if rotateStart >= pi / 2 or rotateStart <= -pi / 2 or rotateStop > pi / 2 or rotateStop < -pi / 2:
+        rotateStop = pi / 2
+    if rotateStart > pi / 2 or rotateStart < -pi / 2 or rotateStop > pi / 2 or rotateStop < -pi / 2:
         print("Invalid Rotation")
         return
     field = None
     fieldName = None
     for pSpac in pSpacs:
 
-
-        #Target Spacing iterates
+        # Target Spacing iterates
 
         spac = spacStart
         rt = rotateStart
-
 
         yS = spac
         xS = yS
@@ -83,29 +81,30 @@ def fieldOptimizationWPSpac_FR(pSpacs,spacStart,rotateStep,propBound,ngZones=Non
         maxrt = None
 
         while rt < rotateStop:
-            #print("Current Rotation: ",rt)
-            hole = twoSpacGenBHC(propBound, yS, xS, rotate=rt, nogo=ngZones,PSpace=pSpac*xS)
+            # print("Current Rotation: ",rt)
+            hole = twoSpacGenBHC(propBound, yS, xS, rotate=rt, nogo=ngZones, PSpace=pSpac * xS,
+                                 intersection_tolerance=1e-5)
 
-            #Assuming that the rotation with the maximum number of boreholes is most efficiently using space
+            # Assuming that the rotation with the maximum number of boreholes is most efficiently using space
             if len(hole) > maxL:
                 maxL = len(hole)
-                maxrt = rt*(180/pi)
+                maxrt = rt * (180 / pi)
                 maxHole = hole
 
-            rt+=rotateStep*(pi/180)
+            rt += rotateStep * (pi / 180)
 
-            #Ensures that there are no repeated boreholes
+            # Ensures that there are no repeated boreholes
             maxHole = np.array(remove_duplicates(maxHole, pSpac * xS))
-            #print("MaxHOle: ",maxHole)
+            # print("MaxHOle: ",maxHole)
 
-            #Reports removal of repeated boreholes
+            # Reports removal of repeated boreholes
             if maxL > len(maxHole):
-                print(maxL-len(maxHole)," holes removed")
+                print(maxL - len(maxHole), " holes removed")
                 maxL = len(maxHole)
             field = (maxHole)
-            fieldName = ("P"+str(pSpac)+"_S"+str(spac)+"_rt"+str(maxrt))
-        return [field,fieldName]
-def fieldOptimization_FR(spacStart,rotateStep,propBound,ngZones=None,rotateStart=None,rotateStop=None,pdfOutputName = "Graphs.pdf"):
+            fieldName = ("P" + str(pSpac) + "_S" + str(spac) + "_rt" + str(maxrt))
+        return [field, fieldName]
+def fieldOptimization_FR(spacStart,rotateStep,propBound,ngZones=None,rotateStart=None,rotateStop=None,pdfOutputName = "Graphs.pdf",intersection_tolerance=1e-5):
     ''' Optimizes a Field by iterating over input values w/o perimeter spacing
 
         Parameters:
@@ -125,10 +124,10 @@ def fieldOptimization_FR(spacStart,rotateStep,propBound,ngZones=None,rotateStart
 
         '''
     if rotateStart == None:
-        rotateStart = (-90.0+rotateStep)*(pi/180.0)
+        rotateStart = (-90.0)*(pi/180.0)
     if rotateStop == None:
         rotateStop = pi/2
-    if rotateStart >= pi / 2 or rotateStart <= -pi / 2 or rotateStop > pi / 2 or rotateStop < -pi / 2:
+    if rotateStart > pi / 2 or rotateStart < -pi / 2 or rotateStop > pi / 2 or rotateStop < -pi / 2:
         print("Invalid Rotation")
         return
     field = None
@@ -150,7 +149,7 @@ def fieldOptimization_FR(spacStart,rotateStep,propBound,ngZones=None,rotateStart
 
     while rt < rotateStop:
         #print("Current Rotation: ",rt)
-        hole = genBoreHoleConfig(propBound, yS, xS, rotate=rt, nogo=ngZones)
+        hole = genBoreHoleConfig(propBound, yS, xS, rotate=rt, nogo=ngZones,intersection_tolerance=intersection_tolerance)
 
         #Assuming that the rotation with the maximum number of boreholes is most efficiently using space
         if len(hole) > maxL:
@@ -496,7 +495,7 @@ def remove_duplicates(boreField,spac, disp=False):
 
 
 
-def twoSpacGenBHC(field,YSpac,XSpac,nogo = None,maxLength = 250,minVertP=0,rotate = 0,PSpace = None,ISpace = None):
+def twoSpacGenBHC(field,YSpac,XSpac,nogo = None,maxLength = 250,minVertP=0,rotate = 0,PSpace = None,ISpace = None,intersection_tolerance=1e-5):
     ''' Generates a borefield that has perimeter spacing
 
     Parameters:
@@ -518,9 +517,10 @@ def twoSpacGenBHC(field,YSpac,XSpac,nogo = None,maxLength = 250,minVertP=0,rotat
         ISpace = XSpac
 
     #calls the standard row-wise coord generator w/ the adjusted vertices
-    holes = genBoreHoleConfig(field,YSpac,XSpac,nogo=nogo,maxLength=maxLength,minVertP=minVertP,rotate=rotate)
+    holes = genBoreHoleConfig(field,YSpac,XSpac,nogo=nogo,maxLength=maxLength,minVertP=minVertP,rotate=rotate,intersection_tolerance=intersection_tolerance)
     #plotField(np.array([holes[element] for element in holes]),shape=field,shapes=nogo)
-    holes = [holes[element] for element in holes]
+    #holes = [holes[element] for element in holes]
+    holes = holes.tolist()
     removePointsToClose(field,holes,ISpace,nogos=nogo)
     #plotField(np.array(holes),shape=field,shapes=nogo)
 
@@ -801,7 +801,7 @@ def perimeterDistribute(field,spac,r):
 
 
 
-def genBoreHoleConfig(field,YSpac,XSpac,nogo = None,maxLength = 250,minVertP=0,rotate = 0):
+def genBoreHoleConfig(field,YSpac,XSpac,nogo = None,maxLength = 250,minVertP=0,rotate = 0,intersection_tolerance=1e-6):
     '''
     Function generates a series of x,y points repersenting a field of bore holes
     in a trapezoidal shape. Returs empty if boreHole field does not meet given requirements
@@ -856,7 +856,7 @@ def genBoreHoleConfig(field,YSpac,XSpac,nogo = None,maxLength = 250,minVertP=0,r
                 else:
                     refang = 2*rotate + pi -phi
             else:
-                refang = pi - phi +2*rotate
+                refang = pi - phi + 2*rotate
        # if phi > pi + rotate or phi < rotate:
         #    sign = -1
         yp = R*sin(refang-rotate)
@@ -879,7 +879,7 @@ def genBoreHoleConfig(field,YSpac,XSpac,nogo = None,maxLength = 250,minVertP=0,r
     rowPoint = [lowestVert[0],lowestVert[1]]
 
     #This is just a value that is combined with the slope of the row's to establish two points defining a row (could be any value)
-    pointShift = 100.0
+    pointShift = 1000.0
 
     for ri in range(nrows+1):
 
@@ -888,13 +888,14 @@ def genBoreHoleConfig(field,YSpac,XSpac,nogo = None,maxLength = 250,minVertP=0,r
 
 
         #Gets Intersection between current row and property boundary
-        finters = field.lineintersect(row,rotate)
+        finters = field.lineintersect(row,rotate,intersection_tolerance)
 
         #Stores the number of intersections with the row
         flen = len(finters)
 
         #Checks for edge case where a single intersection is reported as two and treats it as one
-        if (flen>1 and abs(finters[0][0]-finters[1][0])<1e-5 and abs(finters[0][1]-finters[1][1])<1e-5):
+        if (flen>1 and abs(finters[0][0]-finters[1][0])<=intersection_tolerance
+                and abs(finters[0][1]-finters[1][1])<=intersection_tolerance):
             fi = 0
             fij = 0
             while fi < flen:
@@ -902,7 +903,8 @@ def genBoreHoleConfig(field,YSpac,XSpac,nogo = None,maxLength = 250,minVertP=0,r
                     if fij == fi:
                         fij+=1
                         continue
-                    if abs(finters[fi][0]-finters[fij][0])<1e-5 and abs(finters[fi][1]-finters[fij][1])<1e-5:
+                    if abs(finters[fi][0]-finters[fij][0])<=intersection_tolerance \
+                            and abs(finters[fi][1]-finters[fij][1])<=intersection_tolerance:
                         finters.pop(fij)
                         if fi >= fij:
                             fi-=1
@@ -913,6 +915,7 @@ def genBoreHoleConfig(field,YSpac,XSpac,nogo = None,maxLength = 250,minVertP=0,r
 
 
         #Checks for edge case where there are no intersections detected due to a rounding error (can sometimes happen with the last row)
+        '''
         if flen == 0 and ri == nrows:
             ins = False
 
@@ -921,13 +924,12 @@ def genBoreHoleConfig(field,YSpac,XSpac,nogo = None,maxLength = 250,minVertP=0,r
                 if shape.pointintersect(highestVert):
                     ins = True
             if not ins:
-
                 #Double checks that this borehole has not already been included
                 if len(boreHoles)==0 or not (boreHoles[len(boreHoles) - 1][0] == highestVert[0] and boreHoles[len(boreHoles) - 1][1] ==highestVert[1]):
                     boreHoles[len(boreHoles)] = highestVert
-
+        '''
         #Handles cases with odd number of intersections
-        elif flen%2 ==0:
+        if flen%2 ==0:
 
             #Specific case with two intersections
             if flen == 2:
@@ -979,9 +981,10 @@ def genBoreHoleConfig(field,YSpac,XSpac,nogo = None,maxLength = 250,minVertP=0,r
     #if len(boreHoles) > maxLength:
         #return {}
     #print(boreHoles)
-    rA = np.array([boreHoles[element] for element in boreHoles])
-    #print(boreHoles)
-    return boreHoles
+    rA = [boreHoles[element] for element in boreHoles]
+    rA = np.array(remove_duplicates(rA, XSpac))
+    #print("Boreholes: \n" + boreHoles)
+    return rA
 
 
 def plotField (points,shape=None,shapes = None,title = "BoreField",SaveOrShow = True,Pdf = None):
@@ -1033,7 +1036,7 @@ def plotField (points,shape=None,shapes = None,title = "BoreField",SaveOrShow = 
     return
 
 
-def ProcessRows (row, rowsx, rowex, nogo, rowspace,rA,rotate):
+def ProcessRows (row, rowsx, rowex, nogo, rowspace,rA,rotate,intersection_tolerance = 1e-5):
     #print("Processing Row")
     '''
     Function generates a row of the borefield
@@ -1079,10 +1082,12 @@ def ProcessRows (row, rowsx, rowex, nogo, rowspace,rA,rotate):
       #  print("The intersections are: ",inters)
 
     if noin > 1:
-        if lessThan(inters[0],rowsx) and lessThan(rowex,inters[len(inters)-1]):
+        if lessThan(inters[0],rowsx,rotate=rotate) \
+                and lessThan(rowex,inters[len(inters)-1],rotate=rotate):
             inside = False
             for inter in inters:
-                if lessThan(rowsx,inters[0]) and lessThan(inters[0],rowex):
+                if lessThan(rowsx,inters[0],rotate=rotate) \
+                        and lessThan(inters[0],rowex,rotate=rotate):
                     inside = True
             if not inside:
                 pointIn = False
@@ -1092,14 +1097,15 @@ def ProcessRows (row, rowsx, rowex, nogo, rowspace,rA,rotate):
                 if pointIn:
                     return
     inters = np.array(inters)
-    indices = [j for j in range(noin) if not (lessThan(rowex,inters[j]) or lessThan(inters[j],rowsx))]
+    indices = [j for j in range(noin) if not (lessThan(rowex,inters[j],rotate=rotate)
+                                              or lessThan(inters[j],rowsx,rotate=rotate))]
     inters = inters[indices]
     #print(inters)
     noin = len(inters)
     #print("noin value is: ",noin)
     for i in range(noin-1):
-        #print("Inside for loop")
-        spac = float(sqrt((inters[i+1][0]-inters[i][0])*(inters[i+1][0]-inters[i][0]) + (inters[i+1][1]-inters[i][1])*(inters[i+1][1]-inters[i][1])))
+        spac = float(sqrt((inters[i+1][0]-inters[i][0])*(inters[i+1][0]-inters[i][0])
+                          + (inters[i+1][1]-inters[i][1])*(inters[i+1][1]-inters[i][1])))
         if spac < rowspace:
             inone = False
             for shape in nogo:
@@ -1198,9 +1204,16 @@ def notInside(p,ngs):
             inside = True
     return not inside
 def lessThan(p1,p2,rotate=0):
+    if p1[0] > 60:
+        #print("In if statement")
+        pass
     x1,y1 = p1
     x2,y2 = p2
-    phi1 = atan(y1/x1)
+    phi1 = None
+    if x1 != 0:
+        phi1 = atan(y1/x1)
+    else:
+        phi1 = pi/2.
     R1 = sqrt(y1 * y1 + x1 * x1)
     refang1 = pi / 2 - phi1
     signx1 = 1
@@ -1215,11 +1228,11 @@ def lessThan(p1,p2,rotate=0):
     if phi1 > pi/2 + rotate and phi1 < 3*pi/2 + rotate:
         signx1 = -1
     val1 = R1*sin(refang1+rotate)*signx1
-    phi2 = 0
-    if x2 == 0:
-        phi2 = pi/2
+    phi2 = None
+    if x2 != 0:
+        phi2 = atan(y2 / x2)
     else:
-        phi2 = atan(y2/x2)
+        phi2 = pi / 2.
     R2 = sqrt(y2 * y2 + x2 * x2)
     refang2 = pi / 2 - phi2
     signx2 = 1
@@ -1234,8 +1247,13 @@ def lessThan(p1,p2,rotate=0):
     if phi2 > pi / 2 + rotate and phi2 < 3 * pi / 2 + rotate:
         signx2 = -1
     val2 = R2 * sin(refang2 + rotate) * signx2
-    if val1 < val2:
-        return True
+
+    if rotate >= 0:
+        if val1<val2:
+            return True
+    else:
+        if val2 < val1:
+            return True
     return False
 def Between(x1,x2,x3):
     '''

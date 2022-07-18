@@ -250,18 +250,37 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
 
     oS += "Borehole Information: " + "\n"
     oS += createDRow(allocatedWidth, "Shank Spacing, m:", round(bhe.pipe.s,roundingAmount), stringFormat, floatFormat, bTabs=indentedAmount)
-    oS += createDRow(allocatedWidth, "Pipe Outer Radius, m:", round(bhe.pipe.r_out,roundingAmount), stringFormat, floatFormat,
+
+    if isinstance(bhe.pipe.r_out, float):
+        oS += createDRow(allocatedWidth, "Pipe Outer Radius, m:", round(bhe.pipe.r_out,roundingAmount), stringFormat, floatFormat,
                      bTabs=indentedAmount)
-    oS += createDRow(allocatedWidth, "Pipe Inner Radius, m:", round(bhe.pipe.r_in,roundingAmount), stringFormat, floatFormat,
+        oS += createDRow(allocatedWidth, "Pipe Inner Radius, m:", round(bhe.pipe.r_in,roundingAmount), stringFormat, floatFormat,
                      bTabs=indentedAmount)
+    else:
+        oS += createDRow(allocatedWidth, "Outer Pipe Outer Radius, m:", round(bhe.pipe.r_out[0], roundingAmount), stringFormat,
+                         floatFormat,bTabs=indentedAmount)
+        oS += createDRow(allocatedWidth, "Inner Pipe Outer Pipe Outer Radius, m:", round(bhe.pipe.r_out[1], roundingAmount),
+                         stringFormat,
+                         floatFormat, bTabs=indentedAmount)
+        oS += createDRow(allocatedWidth, "Outer Pipe Inner Radius, m:", round(bhe.pipe.r_in[0], roundingAmount), stringFormat,
+                         floatFormat,bTabs=indentedAmount)
+        oS += createDRow(allocatedWidth, "Inner Pipe Inner Radius, m:", round(bhe.pipe.r_in[1], roundingAmount),
+                         stringFormat,floatFormat, bTabs=indentedAmount)
+
     oS += createDRow(allocatedWidth, "Pipe Roughness, m:", round(bhe.pipe.eps,roundingAmount), stringFormat, sciFormat,
                      bTabs=indentedAmount)
     oS += createDRow(allocatedWidth, "Shank Spacing, m:", round(bhe.pipe.s,roundingAmount), stringFormat, floatFormat, bTabs=indentedAmount)
     oS += createDRow(allocatedWidth, "Grout Thermal Conductivity, W/(m*K):", round(bhe.grout.k,roundingAmount), stringFormat, floatFormat, bTabs=indentedAmount)
-    oS += createDRow(allocatedWidth, "Grout Volumetric Heat Capacity, kJ/(K*m^3):", round(bhe.pipe.s/1000,roundingAmount), stringFormat, floatFormat, bTabs=indentedAmount)
-    oS += createDRow(allocatedWidth, "Reynold's Number:", round(BHE.compute_Reynolds(bhe.m_flow_borehole,
-                        bhe.pipe.r_in,bhe.pipe.eps,bhe.fluid),roundingAmount)
-                     , stringFormat, floatFormat, bTabs=indentedAmount)
+    oS += createDRow(allocatedWidth, "Grout Volumetric Heat Capacity, kJ/(K*m^3):",
+                     round(bhe.pipe.s/1000,roundingAmount), stringFormat, floatFormat, bTabs=indentedAmount)
+    if isinstance(bhe.pipe.r_out, float):
+        oS += createDRow(allocatedWidth, "Reynold's Number:", round(BHE.compute_Reynolds(bhe.m_flow_borehole,
+                        bhe.pipe.r_in,bhe.pipe.eps,bhe.fluid),roundingAmount),stringFormat,floatFormat,bTabs=indentedAmount)
+    else:
+
+        oS += createDRow(allocatedWidth, "Reynold's Number:", round(BHE.compute_Reynolds_concentric(
+            bhe.m_flow_pipe, bhe.r_in_out, bhe.r_out_in, bhe.fluid),roundingAmount),stringFormat,floatFormat,bTabs=indentedAmount)
+
     oS += createDRow(allocatedWidth, "Effective Borehole Resistance, W/(m*K):", round(bhe.compute_effective_borehole_resistance(), roundingAmount),
           stringFormat, floatFormat, bTabs=indentedAmount)
 
@@ -278,7 +297,8 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
     oS += createDRow(allocatedWidth, "Fluid Mix:", bhe.fluid.fluid_mix.split("::")[-1], stringFormat, stringFormat,bTabs=indentedAmount)
     oS += createDRow(allocatedWidth, "Density, kg/m^3:", round(bhe.fluid.rho,roundingAmount), stringFormat, floatFormat,bTabs=indentedAmount)
     oS += createDRow(allocatedWidth, "Mass Flow Rate Per Borehole, kg/s:", round(bhe.m_flow_borehole,roundingAmount), stringFormat, floatFormat, bTabs=indentedAmount)
-    oS += createDRow(allocatedWidth, "Fluid Convection Coefficient, W/(m*K):", round(bhe.h_f, roundingAmount),
+    if hasattr(bhe,"h_f"):
+        oS += createDRow(allocatedWidth, "Fluid Convection Coefficient, W/(m*K):", round(bhe.h_f, roundingAmount),
                      stringFormat, floatFormat, bTabs=indentedAmount)
     oS  += emptyLine
 
