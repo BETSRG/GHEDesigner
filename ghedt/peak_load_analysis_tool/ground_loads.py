@@ -636,6 +636,9 @@ class HybridLoad:
         pass
         plastavghour = 0.0
         for i in range(self.startmonth, (self.endmonth + 1)):
+            #if i == 6:
+                #print("Fifth Month")
+                #pass
             # There may be a more sophisticated way to do this, but I will loop
             # through the lists mduration is the number of hours over which to
             # calculate the average value for the month
@@ -775,12 +778,57 @@ class HybridLoad:
                 plastavghour = lastavghour
             else:
                 # monthly peak heating day and cooling day are the same
-                # in this case, we are ignoring the peaks
-                # This is also used for the case where ipf[i] is False
-                # A more sophisticated default could be use, like placing the peaks on the 10th and 20th
-                lastavghour = lastmonthhour(i)
-                self.load = np.append(self.load, mrate)
-                self.hour = np.append(self.hour, lastavghour)
+                # Cooling Load placed before noon, and the heating load is placed after noon
+                # Currently the exact times of the heating and cooling peaks are not stored. If further work is done
+                #this default can be made to be more accurate.
+                if ipf[i]:
+                    # monthly average conditions before cooling peak
+                    if (self.monthly_peak_cl[i] > 0 and ipf[i]):
+                        # lastavghour = first_hour_cooling_peak - 1 JDS corrected 20200604
+                        lastavghour = first_hour_cooling_peak-self.monthly_peak_cl_duration[i]/2
+                        self.load = np.append(self.load, mrate)
+                        self.hour = np.append(self.hour, lastavghour)
+                        # cooling peak
+                        # self.load = np.append(self.load, -self.monthly_peak_cl[i]) JDS corrected 20200604
+                        self.load = np.append(self.load,
+                                              self.monthly_peak_cl[i])
+                        self.hour = np.append(self.hour, last_hour_cooling_peak-self.monthly_peak_cl_duration[i]/2)
+
+                        if (lastavghour - plastavghour < 0.0):
+                            print("time change: ", lastavghour - plastavghour)
+                            print("Month: ", i)
+                            print("IF: 0,0")
+                        plastavghour = lastavghour
+                    # monthly average conditions between cooling peak and heating peak
+                    if (self.monthly_peak_hl[i] > 0 and ipf[i]):
+
+                         # heating peak
+                        # self.load = np.append(self.load, self.monthly_peak_hl[i]) JDS corrected 20200604
+
+                        self.load = np.append(self.load,
+                                              -self.monthly_peak_hl[i])
+                        self.hour = np.append(self.hour, last_hour_heating_peak+self.monthly_peak_hl_duration[i]/2)
+
+                        if (lastavghour - plastavghour < 0.0):
+                            print("time change: ", lastavghour - plastavghour)
+                            print("Month: ", i)
+                            print("IF: 0,1")
+                        plastavghour = lastavghour
+                    # rest of month
+                    lastavghour = lastmonthhour(i)
+                    self.load = np.append(self.load, mrate)
+                    self.hour = np.append(self.hour, lastavghour)
+
+                    if (lastavghour - plastavghour < 0.0):
+                        print("time change: ", lastavghour - plastavghour)
+                        print("Month: ", i)
+                        print("IF: 0,-")
+                    plastavghour = lastavghour
+
+                else:
+                    lastavghour = lastmonthhour(i)
+                    self.load = np.append(self.load, mrate)
+                    self.hour = np.append(self.hour, lastavghour)
 
                 if (lastavghour - plastavghour < 0.0):
                     print("time change: ", lastavghour - plastavghour)

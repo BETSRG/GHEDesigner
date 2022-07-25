@@ -79,7 +79,7 @@ def main():
 
     # Simulation parameters
     start_month = 1
-    n_years = 20
+    n_years = 4
     end_month = n_years * 12
     max_EFT_allowable = 35  # degrees Celsius (HPEFT)
     min_EFT_allowable = 5  # degrees Celsius (HPEFT)
@@ -92,7 +92,7 @@ def main():
     # Process loads from file
     # read in the csv file and convert the loads to a list of length 8760
     hourly_extraction: dict = \
-        pd.read_csv('../Atlanta_Office_Building_Loads.csv').to_dict('list')
+        pd.read_csv('../Multiyear_Loading_Example.csv').to_dict('list')
     # Take only the first column in the dictionary
     hourly_extraction_ground_loads: list = \
         hourly_extraction[list(hourly_extraction.keys())[0]]
