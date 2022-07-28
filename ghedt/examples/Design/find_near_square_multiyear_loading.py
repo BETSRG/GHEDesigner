@@ -113,7 +113,7 @@ def main():
     design_single_u_tube = dt.design.Design(
         V_flow, borehole, single_u_tube, fluid, pipe_single, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        method='hybrid', flow=flow, routine='near-square',load_years=[2019,2019,2019,2019])
+        method='hybrid', flow=flow, routine='near-square',load_years=[2010,2011,2012,2013])
 
     # Find the near-square design for a single U-tube and size it.
     tic = clock()  # Clock Start Time
@@ -154,7 +154,7 @@ def main():
     design_double_u_tube = dt.design.Design(
         V_flow, borehole, double_u_tube, fluid, pipe_double, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        method='hybrid', flow=flow, routine='near-square',load_years=[2019,2019,2019,2019])
+        method='hybrid', flow=flow, routine='near-square',load_years=[2010,2011,2012,2013])
 
     # Find the near-square design for a single U-tube and size it.
     tic = clock()  # Clock Start Time
@@ -210,7 +210,7 @@ def main():
     design_coax_tube = dt.design.Design(
         V_flow, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        method='hybrid', flow=flow, routine='near-square',load_years=[2019,2019,2019,2019])
+        method='hybrid', flow=flow, routine='near-square',load_years=[2010,2011,2012,2013])
 
     # Find the near-square design for a single U-tube and size it.
     tic = clock()  # Clock Start Time

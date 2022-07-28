@@ -599,7 +599,7 @@ class HybridLoad:
         # First, begin array with zero load before simulation starts.
         self.load = np.append(self.load, 0)
         #        self.sfload = np.append(self.sfload,0)
-        lastzerohour = firstmonthhour(self.startmonth) - 1
+        lastzerohour = firstmonthhour(self.startmonth,self.years) - 1
         self.hour = np.append(self.hour, lastzerohour)
         if len(self.years) <= 1:
             # Second, replicate months. [if we want to add an option where all
@@ -636,14 +636,14 @@ class HybridLoad:
         pass
         plastavghour = 0.0
         for i in range(self.startmonth, (self.endmonth + 1)):
-            #if i == 6:
-                #print("Fifth Month")
+            #if i == 26:
+                #print("26th Month")
                 #pass
             # There may be a more sophisticated way to do this, but I will loop
             # through the lists mduration is the number of hours over which to
             # calculate the average value for the month
             if ipf[i]:
-                mduration = monthdays(i) * 24 - \
+                mduration = monthdays(i,self.years[(i-1)//12]) * 24 - \
                             self.monthly_peak_cl_duration[i] - \
                             self.monthly_peak_hl_duration[i]
                 mpeak_hl = self.monthly_peak_hl[i] * \
@@ -663,7 +663,7 @@ class HybridLoad:
                 # Catch the first and last peak hours to make sure they aren't 0
                 # Could only be 0 when the first month has no load.
                 first_hour_heating_peak = \
-                    firstmonthhour(i) + (self.monthly_peak_hl_day[i]) \
+                    firstmonthhour(i,self.years) + (self.monthly_peak_hl_day[i]) \
                     * 24 + 12 - (self.monthly_peak_hl_duration[i] / 2)
                 if first_hour_heating_peak < 0.:
                     first_hour_heating_peak = 1.0e-6
@@ -672,7 +672,7 @@ class HybridLoad:
                 if last_hour_heating_peak < 0.:
                     last_hour_heating_peak = 1.0e-6
                 first_hour_cooling_peak = \
-                    firstmonthhour(i) + (self.monthly_peak_cl_day[i]) * 24 \
+                    firstmonthhour(i,self.years) + (self.monthly_peak_cl_day[i]) * 24 \
                     + 12 - self.monthly_peak_cl_duration[i] / 2
                 if first_hour_cooling_peak < 0.:
                     first_hour_cooling_peak = 1.0e-06
@@ -681,7 +681,7 @@ class HybridLoad:
                 if last_hour_cooling_peak < 0.:
                     last_hour_cooling_peak = 1.0e-06
             else:  # peak load not used this month
-                mduration = monthdays(i) * 24
+                mduration = monthdays(i,self.years[(i-1)//12]) * 24
                 mload = self.monthly_cl[i] - self.monthly_hl[i]
                 mrate = mload / mduration
                 peak_day_diff = 0
@@ -724,7 +724,7 @@ class HybridLoad:
                         print("IF: 0,1")
                     plastavghour = lastavghour
                 # rest of month
-                lastavghour = lastmonthhour(i)
+                lastavghour = lastmonthhour(i,self.years)
                 self.load = np.append(self.load, mrate)
                 self.hour = np.append(self.hour, lastavghour)
 
@@ -767,7 +767,7 @@ class HybridLoad:
                         print("IF: 1,1")
                     plastavghour = lastavghour
                 # rest of month
-                lastavghour = lastmonthhour(i)
+                lastavghour = lastmonthhour(i,self.years)
                 self.load = np.append(self.load, mrate)
                 self.hour = np.append(self.hour, lastavghour)
 
@@ -815,7 +815,7 @@ class HybridLoad:
                             print("IF: 0,1")
                         plastavghour = lastavghour
                     # rest of month
-                    lastavghour = lastmonthhour(i)
+                    lastavghour = lastmonthhour(i,self.years)
                     self.load = np.append(self.load, mrate)
                     self.hour = np.append(self.hour, lastavghour)
 
@@ -826,7 +826,7 @@ class HybridLoad:
                     plastavghour = lastavghour
 
                 else:
-                    lastavghour = lastmonthhour(i)
+                    lastavghour = lastmonthhour(i,self.years)
                     self.load = np.append(self.load, mrate)
                     self.hour = np.append(self.hour, lastavghour)
 
@@ -1045,29 +1045,44 @@ def monthindex(mname):
     return mi
 
 
-def monthdays(month):
+def monthdays(month,year):
+    leap_year = year%4==0
     if month > 12:
         md = month % 12
     else:
         md = month
-    ndays = [31, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    ndays = []
+    if leap_year:
+        ndays = [31, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    else:
+        ndays = [31, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     monthdays = ndays[md]
     return monthdays
 
 
-def firstmonthhour(month):
+def firstmonthhour(month,years):
     fmh = 1
     if month > 1:
         for i in range(1,month):
+            currentYear = None
+            if len(years) > 1:
+                currentYear = years[(month - 1) // 12]
+            else:
+                currentYear = years[0]
             mi = i % 12
-            fmh = fmh + 24 * monthdays(mi)
+            fmh = fmh + 24 * monthdays(mi,currentYear)
     return fmh
 
 
-def lastmonthhour(month):
+def lastmonthhour(month,years):
     lmh = 0
     for i in range(1, month + 1):
-        lmh = lmh + monthdays(i) * 24
+        currentYear = None
+        if len(years) > 1:
+            currentYear = years[(month-1)//12]
+        else:
+            currentYear = years[0]
+        lmh = lmh + monthdays(i,currentYear) * 24
     if month == 1:
         lmh = 31 * 24
     return lmh
