@@ -310,9 +310,12 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
     pHL = ghe.hybrid_load.monthly_peak_hl
     dCL = ghe.hybrid_load.monthly_peak_cl_duration
     dHL = ghe.hybrid_load.monthly_peak_hl_duration
-    months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+    n_months = len(ghe.hybrid_load.monthly_cl)-1
+    n_years = int(n_months/12)
+    months = ["January","February","March","April","May","June","July","August","September","October","November","December"]*n_years
+
     startInd = 1
-    stopInd = 12
+    stopInd = n_months
     for i in range(startInd,stopInd+1):
         monthlyLoadValues.append([months[i-1],mHL[i],mCL[i],pHL[i],dHL[i],pCL[i],dCL[i]])
     monthHeader = [["Month","Total Heating","Total Cooling","Peak Heating","PH Duration","Peak Cooling","PC Duration"],
