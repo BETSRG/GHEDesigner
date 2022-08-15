@@ -1,5 +1,3 @@
-# Jack C. Cook
-# Tuesday, October 26, 2021
 
 
 def transpose_coordinates(coordinates):

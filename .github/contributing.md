@@ -15,7 +15,7 @@ Follow these steps when submitting a bug report:
 1. **Make sure the bug has not been already reported.** Run a quick search
 through the [issue tracker][#issue_tracker].
 If an open issue is related to your problem, consider adding your input to that
-issue. If you find a closed issue related to your problem, open an new issue
+issue. If you find a closed issue related to your problem, open a new issue
 and link to the closed issue.
 2. **Use a short and descriptive title** when creating a new issue.
 3. **Provide detailed steps to reproduce the problem.** Explain, in details,
@@ -36,7 +36,7 @@ repository.
    alter any of the code in your own repository but will only be able to modify 
    the code in my repository via pull requests.
 2. [Clone][#clone] the forked repository on your personal computer: `git clone https://github.com/YOUR-USERNAME/ghedt`
-3. [Configure][#Configure] my repository as a remote fork: `git remote add upstream https://github.com/j-c-cook/ghedt`.
+3. [Configure][#Configure] my repository as a remote fork: `git remote add upstream https://github.com/BETSRG/GHEDTOSU`.
    With my repository configured as a fork you will be able to keep your main 
    branch up to date with mine.
 
@@ -88,8 +88,8 @@ shows examples for how to create a branch from the command line.
 This contributing outline was originally taken from [pygfunction](https://github.com/MassimoCimmino/pygfunction/blob/master/CONTRIBUTING.md).
 
 
-[#issue_tracker]: https://github.com/j-c-cook/ghedt/issues
-[#pull_request]: https://github.com/j-c-cook/ghedt/pulls
+[#issue_tracker]: https://github.com/BETSRG/GHEDTOSU/issues
+[#pull_request]: https://github.com/BETSRG/GHEDTOSU/pulls
 [#pep]: https://www.python.org/dev/peps/pep-0008
 [#numpydoc]: https://github.com/numpy/numpy/blob/master/doc/example.py
 [#sphinx]: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html
