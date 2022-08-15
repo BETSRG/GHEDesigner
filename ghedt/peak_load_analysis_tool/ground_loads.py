@@ -1,17 +1,14 @@
-# Jack C. Cook
-# Wednesday, September 8, 2021
 import copy
-
+import math
 from calendar import monthrange
 
+import numpy as np
+import pandas as pd
+import pygfunction as gt
 import scipy.optimize.optimize
+from scipy import interpolate
 
 import ghedt.peak_load_analysis_tool as plat
-from scipy import interpolate
-import math
-import pandas as pd
-import numpy as np
-import pygfunction as gt
 
 
 def synthetic_load_function(
@@ -142,7 +139,7 @@ class HybridLoad:
         else:
             self.COP_extraction = COP_extraction
         if COP_rejection is None:
-            self.COP_rejection = 4.    # When the building is in cooling mode
+            self.COP_rejection = 4.  # When the building is in cooling mode
         else:
             self.COP_rejection = COP_rejection
 
@@ -276,10 +273,10 @@ class HybridLoad:
             # Slice the hours in this current month
             month_rejection_loads = \
                 self.hourly_rejection_loads[hours_in_previous_months:
-                                            hours_in_previous_months+hours_in_month]
+                                            hours_in_previous_months + hours_in_month]
             month_extraction_loads = \
                 self.hourly_extraction_loads[hours_in_previous_months:
-                                             hours_in_previous_months+hours_in_month]
+                                             hours_in_previous_months + hours_in_month]
 
             assert len(month_extraction_loads) == hours_in_month and \
                    len(month_rejection_loads) == hours_in_month
@@ -313,10 +310,10 @@ class HybridLoad:
             self.monthly_peak_hl_day[i] = \
                 math.floor(month_extraction_loads.index(
                     self.monthly_peak_hl[i]) / hours_in_day)
-            #print("Monthly Peak HL Hour",month_extraction_loads.index(
-                    #self.monthly_peak_hl[i]) / hours_in_day)
-            #print("Monthly Peak HL Day: ",self.monthly_peak_hl_day[i])
-            #print("")
+            # print("Monthly Peak HL Hour",month_extraction_loads.index(
+            # self.monthly_peak_hl[i]) / hours_in_day)
+            # print("Monthly Peak HL Day: ",self.monthly_peak_hl_day[i])
+            # print("")
 
             hours_in_previous_months += hours_in_month
 
@@ -335,9 +332,9 @@ class HybridLoad:
         # year
 
         hourly_rejection_loads = \
-            self.hourly_rejection_loads[hours_in_year-hours_in_day:hours_in_year] + self.hourly_rejection_loads
+            self.hourly_rejection_loads[hours_in_year - hours_in_day:hours_in_year] + self.hourly_rejection_loads
         hourly_extraction_loads = \
-            self.hourly_extraction_loads[hours_in_year-hours_in_day:hours_in_year] + self.hourly_extraction_loads
+            self.hourly_extraction_loads[hours_in_year - hours_in_day:hours_in_year] + self.hourly_extraction_loads
 
         # Keep track of how many hours are in
         # start at 24 since we added the last day of the year to the beginning
@@ -352,40 +349,40 @@ class HybridLoad:
             monthly_peak_hl_day = self.monthly_peak_hl_day[i]
             # Get the starting hour of the day before the peak cooling load day
             monthly_peak_cl_hour_start = \
-                hours_in_previous_months + (monthly_peak_cl_day-1) * hours_in_day
+                hours_in_previous_months + (monthly_peak_cl_day - 1) * hours_in_day
             # Get the starting hour of the day before the peak heating load day
             monthly_peak_hl_hour_start = \
-                hours_in_previous_months + (monthly_peak_hl_day-1) * hours_in_day
+                hours_in_previous_months + (monthly_peak_hl_day - 1) * hours_in_day
 
             # monthly cooling loads (or heat rejection) in kWh
             two_day_hourly_peak_cl_load = \
                 hourly_rejection_loads[monthly_peak_cl_hour_start:
-                                       monthly_peak_cl_hour_start+2*hours_in_day]
+                                       monthly_peak_cl_hour_start + 2 * hours_in_day]
             # monthly heating loads (or heat extraction) in kWh
             two_day_hourly_peak_hl_load = \
                 hourly_extraction_loads[monthly_peak_hl_hour_start:
-                                        monthly_peak_hl_hour_start+2*hours_in_day]
+                                        monthly_peak_hl_hour_start + 2 * hours_in_day]
 
-            assert len(two_day_hourly_peak_hl_load) == 2*hours_in_day and \
-                   len(two_day_hourly_peak_cl_load) == 2*hours_in_day
+            assert len(two_day_hourly_peak_hl_load) == 2 * hours_in_day and \
+                   len(two_day_hourly_peak_cl_load) == 2 * hours_in_day
 
             # Double check ourselves
             monthly_peak_cl_day_start = \
-                int((monthly_peak_cl_hour_start-hours_in_day) / hours_in_day)
+                int((monthly_peak_cl_hour_start - hours_in_day) / hours_in_day)
             monthly_peak_cl_hour_month = \
                 int(monthly_peak_cl_day_start - sum(self.days_in_month[0:i]))
             assert monthly_peak_cl_hour_month == monthly_peak_cl_day - 1
             monthly_peak_hl_day_start = \
-                (monthly_peak_hl_hour_start-hours_in_day) / hours_in_day
+                (monthly_peak_hl_hour_start - hours_in_day) / hours_in_day
             monthly_peak_hl_hour_month = int(
                 monthly_peak_hl_day_start - sum(self.days_in_month[0:i]))
             assert monthly_peak_hl_hour_month == monthly_peak_hl_day - 1
 
             # monthly cooling loads (or heat rejection) in kWh
-            self.\
+            self. \
                 two_day_hourly_peak_cl_loads.append(two_day_hourly_peak_cl_load)
             # monthly heating loads (or heat extraction) in kWh
-            self.\
+            self. \
                 two_day_hourly_peak_hl_loads.append(two_day_hourly_peak_hl_load)
 
             hours_in_previous_months += hours_in_month
@@ -533,8 +530,8 @@ class HybridLoad:
     def create_dataframe_of_peak_analysis(self) -> pd.DataFrame:
         # The fields are: sum, peak, avg, peak day, peak duration
         hybrid_time_step_fields = {'Total': {}, 'Peak': {},
-                  'Average': {}, 'Peak Day': {},
-                  'Peak Duration': {}}
+                                   'Average': {}, 'Peak Day': {},
+                                   'Peak Duration': {}}
 
         d: dict = {}
         # For all of the months, create dictionary of fields
@@ -889,7 +886,7 @@ class HybridLoad:
         ax = fig.add_subplot(111)
 
         hours_in_day = 24
-        two_day_hour_time = list(range(0, 2 * hours_in_day+1))
+        two_day_hour_time = list(range(0, 2 * hours_in_day + 1))
 
         def draw_horizontal(two_day_fluid_temps_nm, peak_duration):
             # Find the place where the peak occurs in two day fluid temp nominal
@@ -997,7 +994,7 @@ def monthdays(month):
 def firstmonthhour(month):
     fmh = 1
     if month > 1:
-        for i in range(1,month):
+        for i in range(1, month):
             mi = i % 12
             fmh = fmh + 24 * monthdays(mi)
     return fmh

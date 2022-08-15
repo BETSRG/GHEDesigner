@@ -1,10 +1,8 @@
-# Jack C. Cook
-# Friday, August 20, 2021
-
-import pygfunction as gt
-import ghedt.peak_load_analysis_tool as plat
 import numpy as np
+import pygfunction as gt
 from numpy import pi
+
+import ghedt.peak_load_analysis_tool as plat
 
 
 class BasePipe(object):
@@ -408,7 +406,7 @@ class CoaxialPipe(CoaxialBase, gt.pipes.Coaxial, BasePipe):
         R_fp = self.R_p_out + self.R_f_a_out
 
         gt.pipes.Coaxial.__init__(
-            self, pipe.pos, r_inner_p, r_outer_p,  borehole, self.soil.k,
+            self, pipe.pos, r_inner_p, r_outer_p, borehole, self.soil.k,
             self.grout.k, R_ff, R_fp, J=2)
 
     def update_thermal_resistance(self, m_flow_borehole=None, fluid=None):
@@ -464,12 +462,12 @@ class CoaxialPipe(CoaxialBase, gt.pipes.Coaxial, BasePipe):
 
 def compute_Reynolds(m_flow_pipe, r_in, epsilon, fluid):
     # Hydraulic diameter
-    D = 2.*r_in
+    D = 2. * r_in
     # Relative roughness
     E = epsilon / D
     # Fluid velocity
     V_flow = m_flow_pipe / fluid.rho
-    A_cs = pi * r_in**2
+    A_cs = pi * r_in ** 2
     V = V_flow / A_cs
     # Reynolds number
     Re = fluid.rho * V * D / fluid.mu

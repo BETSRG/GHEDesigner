@@ -1,11 +1,9 @@
-# Jack C. Cook
-# Monday, October 25, 2021
 import copy
 import warnings
 
-from scipy.interpolate import interp1d, lagrange
-import pygfunction as gt
 import numpy as np
+import pygfunction as gt
+from scipy.interpolate import interp1d, lagrange
 
 
 def calculate_g_function(
@@ -13,7 +11,6 @@ def calculate_g_function(
         fluid, pipe, grout, soil, nSegments=8, end_length_ratio=0.02,
         segments='unequal', solver='equivalent', boundary='MIFT',
         segment_ratios=None, disp=False):
-
     boreField = []
     BHEs = []
 
@@ -71,14 +68,12 @@ def calculate_g_function(
 
 def compute_live_g_function(
         B: float, H_values: list, r_b_values: list, D_values: list,
-        m_flow_borehole, bhe_object, log_time,  coordinates,
+        m_flow_borehole, bhe_object, log_time, coordinates,
         fluid, pipe, grout, soil, nSegments=8, segments='unequal',
         solver='equivalent', boundary='MIFT', segment_ratios=None, disp=False):
-
     d = {'g': {}, 'bore_locations': coordinates, 'logtime': log_time}
 
     for i in range(len(H_values)):
-
         H = H_values[i]
         r_b = r_b_values[i]
         D = D_values[i]
@@ -178,7 +173,7 @@ class GFunction:
             elif num_curves == 2:
                 kind = 'linear'
             else:
-                if (H_eq-height_values[0]) / height_values[0] < 0.001:
+                if (H_eq - height_values[0]) / height_values[0] < 0.001:
                     g_function = self.g_lts[height_values[0]]
                     rb = self.r_b_values[height_values[0]]
                     D = self.D_values[height_values[0]]
@@ -304,7 +299,7 @@ class GFunction:
             if _x == 0.0 and _y == 0.0:
                 new_locations.append([_x, _y])
             elif _x == 0.0:
-                new_locations.append([_x, _y*scale])
+                new_locations.append([_x, _y * scale])
             else:
                 x = _x * scale
                 y = _y * scale
@@ -340,7 +335,7 @@ class GFunction:
                             xy=(x_n - .4, y_n - 5))
             else:
                 ax.annotate(str(round(float(self.B) / float(key), 4)),
-                            xy=(x_n-.4, y_n+1))
+                            xy=(x_n - .4, y_n + 1))
 
         handles, labels = ax.get_legend_handles_labels()
 
@@ -486,7 +481,7 @@ class GFunction:
             Ds = {key: 2. for key in keys}
         r_bs = {key: r_bs_tmp[key] for key in keys}
         time = {key: t_tmp[key] for key in
-                     keys}  # fill the time array for yearly points
+                keys}  # fill the time array for yearly points
 
         geothermal_g_input = {}
         geothermal_g_input['B'] = B

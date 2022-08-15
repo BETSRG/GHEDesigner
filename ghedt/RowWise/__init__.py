@@ -1,3 +1,2 @@
-from . import Shape
 from . import RowWiseGeneration
-
+from . import Shape

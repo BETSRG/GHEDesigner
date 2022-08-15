@@ -1,18 +1,16 @@
-import matplotlib.pyplot as plt
-from RowWiseGeneration import fieldOptimizationWPSpac
-from RowWiseGeneration import plotField
-from RowWiseGeneration import fieldGenerator
-from RowWiseGeneration import genShape
-from RowWiseGeneration import genBoreHoleConfig
-import numpy as np
 import json
-from math import pi
+
+import numpy as np
+
+from RowWiseGeneration import genBoreHoleConfig
+from RowWiseGeneration import genShape
+from RowWiseGeneration import plotField
 
 
-def genFields(NBHUpperLim,nogos,MaxNumberOfFields = None,offsetIterator=5,XSpac=5,YSpac=5,SampleRate=0,outPutDir="",rotate=0):
-
+def genFields(NBHUpperLim, nogos, MaxNumberOfFields=None, offsetIterator=5, XSpac=5, YSpac=5, SampleRate=0,
+              outPutDir="", rotate=0):
     fields = []
-    NBHs=[]
+    NBHs = []
     lastNBH = 0
     numberOfFields = 0
     currentOffset = offsetIterator
@@ -20,13 +18,13 @@ def genFields(NBHUpperLim,nogos,MaxNumberOfFields = None,offsetIterator=5,XSpac=
     sel = SampleRate
     while lastNBH < NBHUpperLim:
         fieldVert = [
-            [0,0],
-            [nogoVert[1][0]+2*currentOffset, 0],
-            [nogoVert[1][0]+2*currentOffset,nogoVert[2][1]+2*currentOffset],
-            [0,nogoVert[2][1]+2*currentOffset]
+            [0, 0],
+            [nogoVert[1][0] + 2 * currentOffset, 0],
+            [nogoVert[1][0] + 2 * currentOffset, nogoVert[2][1] + 2 * currentOffset],
+            [0, nogoVert[2][1] + 2 * currentOffset]
         ]
         nogoVertC = [[
-            [nogoVert[0][0]+currentOffset,nogoVert[0][1]+currentOffset],
+            [nogoVert[0][0] + currentOffset, nogoVert[0][1] + currentOffset],
             [nogoVert[1][0] + currentOffset, nogoVert[1][1] + currentOffset],
             [nogoVert[2][0] + currentOffset, nogoVert[2][1] + currentOffset],
             [nogoVert[3][0] + currentOffset, nogoVert[3][1] + currentOffset]
@@ -34,21 +32,21 @@ def genFields(NBHUpperLim,nogos,MaxNumberOfFields = None,offsetIterator=5,XSpac=
         buildVert, nogoV = genShape(fieldVert, ngZones=nogoVertC)
         fieldCandidate = genBoreHoleConfig(buildVert, YSpac, XSpac, nogo=nogoV, rotate=rotate)
         fieldCandidate = np.array([fieldCandidate[element] for element in fieldCandidate])
-        #fieldCandidate = fieldGenerator(XSpac, YSpac, fieldVert, ngZones=nogos)
+        # fieldCandidate = fieldGenerator(XSpac, YSpac, fieldVert, ngZones=nogos)
 
         NBH = len(fieldCandidate)
 
         if NBH > lastNBH:
             NBHs.append(NBH)
             lastNBH = NBH
-            numberOfFields+=1
-            if SampleRate!=0 and numberOfFields == sel:
-                plotField(fieldCandidate,shape=buildVert,shapes=nogoV)
+            numberOfFields += 1
+            if SampleRate != 0 and numberOfFields == sel:
+                plotField(fieldCandidate, shape=buildVert, shapes=nogoV)
             l1 = list(fieldCandidate[:, 0])
             l2 = list(fieldCandidate[:, 1])
             fieldCandidate = {'x': l1, 'y': l2}
             fields.append(fieldCandidate)
-            print("NBH: "+str(NBH))
+            print("NBH: " + str(NBH))
         else:
             pass
 
@@ -57,11 +55,10 @@ def genFields(NBHUpperLim,nogos,MaxNumberOfFields = None,offsetIterator=5,XSpac=
         currentOffset += offsetIterator
     i = 0
     for field in fields:
-        with open (outPutDir + str(NBHs[i])+".json","w",newline="") as outPutFile:
-            json.dump(field,outPutFile)
+        with open(outPutDir + str(NBHs[i]) + ".json", "w", newline="") as outPutFile:
+            json.dump(field, outPutFile)
 
-        i+=1
-
+        i += 1
 
 
 def main():
@@ -71,9 +68,7 @@ def main():
         [60, 45],
         [0, 45]
     ]]
-    genFields(1000,nogoVert,outPutDir="FieldSizeOutput\\",SampleRate=10,offsetIterator=2)
-
-
+    genFields(1000, nogoVert, outPutDir="FieldSizeOutput\\", SampleRate=10, offsetIterator=2)
 
 
 if __name__ == "__main__":

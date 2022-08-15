@@ -1,12 +1,10 @@
-# Jack C. Cook
-# Monday, August 16, 2021
-
-import pygfunction as gt
 from copy import deepcopy
+
 from numpy import pi, log, sqrt
 from scipy.optimize import brentq
-from . import borehole_heat_exchangers
+
 import ghedt.peak_load_analysis_tool as plat
+from . import borehole_heat_exchangers
 
 
 def compute_equivalent(bhe):

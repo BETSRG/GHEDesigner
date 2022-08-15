@@ -1,14 +1,13 @@
-# Jack C. Cook
-# Thursday, September 16, 2021
 import copy
 import warnings
 
+import numpy as np
+import pygfunction as gt
 import scipy.interpolate
 import scipy.optimize
-import pygfunction as gt
-import ghedt.peak_load_analysis_tool as plat
+
 import ghedt as dt
-import numpy as np
+import ghedt.peak_load_analysis_tool as plat
 
 
 class BaseGHE:
@@ -19,7 +18,7 @@ class BaseGHE:
             pipe: plat.media.Pipe, grout: plat.media.Grout,
             soil: plat.media.Soil, GFunction: dt.gfunction.GFunction,
             sim_params: plat.media.SimulationParameters,
-            hourly_extraction_ground_loads: list,fieldType = "N/A",fieldSpecifier = "N/A"):
+            hourly_extraction_ground_loads: list, fieldType="N/A", fieldSpecifier="N/A"):
 
         self.fieldType = fieldType
         self.fieldSpecifier = fieldSpecifier
@@ -131,6 +130,7 @@ class BaseGHE:
             self.radial_numerical.g.tolist())
 
         return g
+
     def averageHeight(self):
         return self.bhe.b.H
 
@@ -169,7 +169,7 @@ class BaseGHE:
 
         HPEFT = []
         delta_Tb = []
-        for i in range(1, n+1):
+        for i in range(1, n + 1):
             # Take the last i elements of the reversed time array
             _time = time_values[i] - time_values[0:i]
             # _time = time_values_reversed[n - i:n]
@@ -219,11 +219,12 @@ class GHE(BaseGHE):
                  soil: plat.media.Soil,
                  GFunction: dt.gfunction.GFunction,
                  sim_params: plat.media.SimulationParameters,
-                 hourly_extraction_ground_loads: list,fieldType = "N/A",fieldSpecifier = "N/A"
+                 hourly_extraction_ground_loads: list, fieldType="N/A", fieldSpecifier="N/A"
                  ):
         BaseGHE.__init__(
             self, V_flow_system, B_spacing, bhe_object, fluid, borehole, pipe,
-            grout, soil, GFunction, sim_params, hourly_extraction_ground_loads,fieldType = fieldType,fieldSpecifier = fieldSpecifier)
+            grout, soil, GFunction, sim_params, hourly_extraction_ground_loads, fieldType=fieldType,
+            fieldSpecifier=fieldSpecifier)
 
         # Split the extraction loads into heating and cooling for input to
         # the HybridLoad object
@@ -320,7 +321,7 @@ class GHE(BaseGHE):
             n_years = int(np.ceil(n_hours / 8760))
             Q_dot = Q_dot * n_years
             Q_dot = -1. * np.array(Q_dot)  # Convert loads to rejection
-            #print("Times:",self.times)
+            # print("Times:",self.times)
             if len(self.times) == 0:
                 self.times = np.arange(1, n_hours + 1, 1)
             t = self.times
@@ -365,4 +366,3 @@ class GHE(BaseGHE):
                           'exchanger.')
 
         return
-

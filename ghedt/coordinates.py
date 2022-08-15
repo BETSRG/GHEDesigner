@@ -1,9 +1,7 @@
-
-
 def transpose_coordinates(coordinates):
     coordinates_transposed = []
     for i in range(len(coordinates)):
-        x,y = coordinates[i]
+        x, y = coordinates[i]
         coordinates_transposed.append((y, x))
     return coordinates_transposed
 
@@ -28,11 +26,11 @@ def open_rectangle(Nx, Ny, Bx, By):
         nbh = Ny * 2 + (Nx - 2) * 2
         for i in range(Nx):
             open_r.append((i * Bx, 0.))
-        for j in range(1, Ny-1):
+        for j in range(1, Ny - 1):
             open_r.append((0, j * By))
-            open_r.append(((Nx-1) * Bx, j * By))
+            open_r.append(((Nx - 1) * Bx, j * By))
         for i in range(Nx):
-            open_r.append((i * Bx, (Ny-1) * By))
+            open_r.append((i * Bx, (Ny - 1) * By))
     else:
         nbh = Nx * Ny
         open_r = rectangle(Nx, Ny, Bx, By)
@@ -51,8 +49,8 @@ def C_shape(Nx_1, Ny, Bx, By, Nx_2):
         c.append((0., j * By))
     for j in range(1, Ny):
         c.append((x_loc, j * By))
-    y_loc = (Ny-1) * By
-    for i in range(1, Nx_2+1):
+    y_loc = (Ny - 1) * By
+    for i in range(1, Nx_2 + 1):
         c.append((i * Bx, y_loc))
     assert len(c) == nbh
     return c
@@ -81,7 +79,7 @@ def lop_U(Nx, Ny_1, Bx, By, Ny_2):
         lop_u.append((i * Bx, 0.))
     for j in range(1, Ny_1):
         lop_u.append((0., j * By))
-    x_loc = (Nx-1)*Bx
+    x_loc = (Nx - 1) * Bx
     for j in range(1, Ny_2):
         lop_u.append((x_loc, j * By))
     assert len(lop_u) == nbh
