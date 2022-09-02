@@ -2,6 +2,7 @@ import numpy as np
 import pygfunction as gt
 from numpy import pi
 
+from pygfunction.pipes import _BasePipe as bp
 from ghedt.peak_load_analysis_tool import media
 
 
@@ -104,7 +105,7 @@ class BasePipe(object):
         else:
             self.fluid = fluid
 
-        R_b_star = gt.pipes.borehole_thermal_resistance(
+        R_b_star = bp.effective_borehole_thermal_resistance(
             self, m_flow_borehole, fluid.cp)
 
         return R_b_star
@@ -130,7 +131,7 @@ class SingleUTube(BasePipe, gt.pipes.SingleUTube):
 
         output = BasePipe.__repr__(self)
 
-        Rb_star = gt.pipes.borehole_thermal_resistance(
+        Rb_star = bp.effective_borehole_thermal_resistance(
             self, self.m_flow_borehole, self.fluid.cp)
 
         output += justify('Effective borehole resistance',
@@ -169,7 +170,7 @@ class SingleUTube(BasePipe, gt.pipes.SingleUTube):
         # R_b = 1 / np.trace(1 / self._Rd)
 
         # Compute and return effective borehole resistance
-        R_b_star = gt.pipes.borehole_thermal_resistance(
+        R_b_star = bp.effective_borehole_thermal_resistance(
             self, m_flow_borehole, fluid.cp)
 
         return R_b_star
@@ -230,7 +231,7 @@ class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
         # R_b = 1 / np.trace(1 / self._Rd)
 
         # Compute and return effective borehole resistance
-        R_b_star = gt.pipes.borehole_thermal_resistance(
+        R_b_star = bp.effective_borehole_thermal_resistance(
             self, m_flow_borehole, fluid.cp)
 
         return R_b_star
@@ -240,7 +241,7 @@ class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
 
         output = BasePipe.__repr__(self)
 
-        Rb_star = gt.pipes.borehole_thermal_resistance(
+        Rb_star = bp.effective_borehole_thermal_resistance(
             self, self.m_flow_borehole, self.fluid.cp)
 
         output += justify('Effective borehole resistance',
@@ -340,7 +341,7 @@ class CoaxialBase(object):
         output += justify('Fluid-to-pipe resistance',
                           str(round(self.R_fp, 4)) + ' (m.K/W)')
 
-        Rb_star = gt.pipes.borehole_thermal_resistance(
+        Rb_star = bp.effective_borehole_thermal_resistance(
             self, self.m_flow_borehole, self.fluid.cp)
 
         output += justify('Effective borehole resistance',
@@ -454,7 +455,7 @@ class CoaxialPipe(CoaxialBase, gt.pipes.Coaxial, BasePipe):
         # R_b = 1 / np.trace(1 / self._Rd)
 
         # Compute and return effective borehole resistance
-        R_b_star = gt.pipes.borehole_thermal_resistance(
+        R_b_star = bp.effective_borehole_thermal_resistance(
             self, m_flow_borehole, fluid.cp)
 
         return R_b_star
