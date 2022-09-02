@@ -636,14 +636,16 @@ class HybridLoad:
         pass
         plastavghour = 0.0
         for i in range(self.startmonth, (self.endmonth + 1)):
-            #if i == 26:
-                #print("26th Month")
-                #pass
             # There may be a more sophisticated way to do this, but I will loop
             # through the lists mduration is the number of hours over which to
             # calculate the average value for the month
             if ipf[i]:
-                mduration = monthdays(i,self.years[(i-1)//12]) * 24 - \
+                current_year = None
+                if len(self.years) <= 1:
+                    current_year = self.years[0]
+                else:
+                    current_year = self.years[(i-1)//12]
+                mduration = monthdays(i,current_year) * 24 - \
                             self.monthly_peak_cl_duration[i] - \
                             self.monthly_peak_hl_duration[i]
                 mpeak_hl = self.monthly_peak_hl[i] * \
@@ -681,7 +683,9 @@ class HybridLoad:
                 if last_hour_cooling_peak < 0.:
                     last_hour_cooling_peak = 1.0e-06
             else:  # peak load not used this month
-                mduration = monthdays(i,self.years[(i-1)//12]) * 24
+
+                mduration = monthdays(i, current_year) * 24
+
                 mload = self.monthly_cl[i] - self.monthly_hl[i]
                 mrate = mload / mduration
                 peak_day_diff = 0

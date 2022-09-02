@@ -163,3 +163,4 @@ cython_debug/
 
 #Example Output Files
 DesignExampleOutput/
+*.png
