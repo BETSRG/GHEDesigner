@@ -189,8 +189,8 @@ class TestGHE(unittest.TestCase):
 
         max_HP_EFT, min_HP_EFT = ghe.simulate(method='hybrid')
 
-        self.assertAlmostEqual(37.97229212228275, max_HP_EFT)
-        self.assertAlmostEqual(16.989189768401793, min_HP_EFT)
+        self.assertAlmostEqual(37.97229212228275, max_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(16.989189768401793, min_HP_EFT, delta=0.01)
 
         ghe.size(method='hybrid')
 

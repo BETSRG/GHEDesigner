@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 
-import ghedt.RowWise.Shape as Shape
 from ghedt.RowWise.Shape import Shapes
 
 '''
@@ -26,11 +25,11 @@ Functions:
 def genShape(propBound, ngZones=None):
     '''Returns an array of shapes objects representing the coordinates given '''
     rA = []
-    rA.append(Shape.Shapes(propBound))
+    rA.append(Shapes(propBound))
     if ngZones != None:
         rN = []
         for ngZone in ngZones:
-            rN.append(Shape.Shapes(ngZone))
+            rN.append(Shapes(ngZone))
         rA.append(rN)
     else:
         rA.append(None)
@@ -1091,7 +1090,7 @@ def ProcessRows(row, rowsx, rowex, nogo, rowspace, rA, rotate):
         sqrt((rowsx[0] - rowex[0]) * (rowsx[0] - rowex[0]) + (rowsx[1] - rowex[1]) * (rowsx[1] - rowex[1])) // rowspace)
 
     inters = [point for shape in nogo for point in shape.lineintersect(row, rotate=rotate)]
-    inters = Shape.sortIntersections(inters, rotate)
+    inters = Shapes.sortIntersections(inters, rotate)
     # print("Inters: ",inters)
     noin = len(inters)
     # if rowspace == 9.9:

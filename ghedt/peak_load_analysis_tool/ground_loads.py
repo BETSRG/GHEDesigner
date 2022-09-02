@@ -5,10 +5,11 @@ from calendar import monthrange
 import numpy as np
 import pandas as pd
 import pygfunction as gt
-import scipy.optimize.optimize
-from scipy import interpolate
+from scipy.interpolate import interp1d
 
-import ghedt.peak_load_analysis_tool as plat
+from ghedt.peak_load_analysis_tool.borehole_heat_exchangers import SingleUTube
+from ghedt.peak_load_analysis_tool.radial_numerical_borehole import RadialNumericalBH
+from ghedt.peak_load_analysis_tool.media import SimulationParameters
 
 
 def synthetic_load_function(
@@ -120,9 +121,9 @@ def create_synthetic_doubling_load_profile(units='W', year=2019) -> tuple:
 class HybridLoad:
     def __init__(self,
                  hourly_rejection_loads: list, hourly_extraction_loads: list,
-                 bhe: plat.borehole_heat_exchangers.SingleUTube,
-                 radial_numerical: plat.radial_numerical_borehole.RadialNumericalBH,
-                 sim_params: plat.media.SimulationParameters,
+                 bhe: SingleUTube,
+                 radial_numerical: RadialNumericalBH,
+                 sim_params: SimulationParameters,
                  COP_rejection=None, COP_extraction=None, year=2019):
         # Split the hourly loads into heating and cooling (kW)
         self.hourly_rejection_loads = hourly_rejection_loads
@@ -437,7 +438,7 @@ class HybridLoad:
         dT_fluid_nm_max = max(dT_fluid_nm)
 
         if dT_fluid_nm_max > 0.0:
-            f = scipy.interpolate.interp1d(dT_fluid_pk, hour_time)
+            f = interp1d(dT_fluid_pk, hour_time)
             peak_duration = f(dT_fluid_nm_max).tolist()
         else:
             peak_duration = 1.0e-6

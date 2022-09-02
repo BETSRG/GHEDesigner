@@ -2,9 +2,7 @@ import json
 
 import numpy as np
 
-from RowWiseGeneration import genBoreHoleConfig
-from RowWiseGeneration import genShape
-from RowWiseGeneration import plotField
+from ghedt.RowWise.RowWiseGeneration import genBoreHoleConfig, genShape, plotField
 
 
 def genFields(NBHUpperLim, nogos, MaxNumberOfFields=None, offsetIterator=5, XSpac=5, YSpac=5, SampleRate=0,

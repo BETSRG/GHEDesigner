@@ -2,9 +2,7 @@ import csv
 
 import numpy
 
-from RowWiseGeneration import fieldGenerator
-from RowWiseGeneration import genShape
-from RowWiseGeneration import plotField
+from ghedt.RowWise.RowWiseGeneration import fieldGenerator, genShape, plotField
 
 
 def main():

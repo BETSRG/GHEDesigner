@@ -1,17 +1,18 @@
 import ghedt as dt
-import ghedt.peak_load_analysis_tool as plat
 import numpy as np
 import pygfunction as gt
 import textwrap
+
+from ghedt.peak_load_analysis_tool.media import Pipe, Grout, Soil, SimulationParameters
 
 
 # Common design interface
 class Design:
     def __init__(self, V_flow: float, borehole: gt.boreholes.Borehole,
-                 bhe_object: plat.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.Grout, soil: plat.media.Soil,
-                 sim_params: plat.media.SimulationParameters,
+                 bhe_object,
+                 fluid: gt.media.Fluid, pipe: Pipe,
+                 grout: Grout, soil: Soil,
+                 sim_params: SimulationParameters,
                  geometric_constraints: dt.media.GeometricConstraints,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
                  routine: str = 'near-square', flow: str = 'borehole', property_boundary=None,

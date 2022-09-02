@@ -10,14 +10,15 @@ from ghedt.RowWise.RowWiseGeneration import fieldOptimizationWPSpac_FR
 from ghedt.RowWise.RowWiseGeneration import fieldOptimization_FR
 from ghedt.utilities import sign, check_bracket
 
+from ghedt.peak_load_analysis_tool.media import Pipe, Grout, Soil, SimulationParameters
 
 class Bisection1D:
     def __init__(self, coordinates_domain: list, fieldDescriptors: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
-                 bhe_object: plat.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.Grout, soil: plat.media.Soil,
-                 sim_params: plat.media.SimulationParameters,
+                 bhe_object,
+                 fluid: gt.media.Fluid, pipe: Pipe,
+                 grout: Grout, soil: Soil,
+                 sim_params: SimulationParameters,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
                  flow: str = 'borehole', max_iter=15, disp=False, search=True, fieldType="N/A"):
 
@@ -223,10 +224,10 @@ class Bisection1D:
 class RowWiseModifiedBisectionSearch:
     def __init__(self, V_flow: float,
                  borehole: gt.boreholes.Borehole,
-                 bhe_object: plat.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.Grout, soil: plat.media.Soil,
-                 sim_params: plat.media.SimulationParameters,
+                 bhe_object,
+                 fluid: gt.media.Fluid, pipe: Pipe,
+                 grout: Grout, soil: Soil,
+                 sim_params: SimulationParameters,
                  hourly_extraction_ground_loads: list, geometricConstraints, method: str = 'hybrid',
                  flow: str = 'borehole', max_iter=10, disp=False, search=True, advanced_tracking=True,
                  fieldType="RowWise"):
@@ -560,10 +561,10 @@ class RowWiseModifiedBisectionSearch:
 class Bisection1D_modified:
     def __init__(self, coordinates_domain: list, fieldDescriptors: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
-                 bhe_object: plat.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.Grout, soil: plat.media.Soil,
-                 sim_params: plat.media.SimulationParameters,
+                 bhe_object,
+                 fluid: gt.media.Fluid, pipe: Pipe,
+                 grout: Grout, soil: Soil,
+                 sim_params: SimulationParameters,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
                  flow: str = 'borehole', max_iter=15, disp=False, search=True, fieldType="N/A"):
 
@@ -773,10 +774,10 @@ class Bisection1D_modified:
 class Bisection2D(Bisection1D):
     def __init__(self, coordinates_domain_nested: list, fieldDescriptors: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
-                 bhe_object: plat.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.Grout, soil: plat.media.Soil,
-                 sim_params: plat.media.SimulationParameters,
+                 bhe_object,
+                 fluid: gt.media.Fluid, pipe: Pipe,
+                 grout: Grout, soil: Soil,
+                 sim_params: SimulationParameters,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
                  flow: str = 'borehole', max_iter=15, disp=False, fieldType="N/A"):
         if disp:
@@ -821,10 +822,10 @@ class Bisection2D(Bisection1D):
 class BisectionZD(Bisection1D):
     def __init__(self, coordinates_domain_nested: list, fieldDescriptors: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
-                 bhe_object: plat.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.Grout, soil: plat.media.Soil,
-                 sim_params: plat.media.SimulationParameters,
+                 bhe_object,
+                 fluid: gt.media.Fluid, pipe: Pipe,
+                 grout: Grout, soil: Soil,
+                 sim_params: SimulationParameters,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
                  flow: str = 'borehole', max_iter=15, disp=False, fieldType="N/A"):
         if disp:

@@ -2,8 +2,7 @@ import csv
 import os
 from math import pi
 
-from RowWiseGeneration import fieldOptimizationWPSpac
-from RowWiseGeneration import genShape
+from ghedt.RowWise.RowWiseGeneration import genShape, fieldOptimizationWPSpac
 
 
 def main():
