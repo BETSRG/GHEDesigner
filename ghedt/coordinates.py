@@ -1,3 +1,6 @@
+from typing import Union
+
+
 def transpose_coordinates(coordinates):
     coordinates_transposed = []
     for i in range(len(coordinates)):
@@ -6,36 +9,45 @@ def transpose_coordinates(coordinates):
     return coordinates_transposed
 
 
-def rectangle(Nx, Ny, Bx, By, origin=(0, 0)):
-    # Create a list of (x, y) pairs for a rectangle
+def rectangle(num_bh_x: int, num_bh_y: int,
+              spacing_x: Union[int, float], spacing_y: Union[int, float],
+              origin=(0, 0)):
+    """
+
+    Args:
+        num_bh_x: number of borehole rows in x-direction
+        num_bh_y: number of borehole rows in y-direction
+        spacing_x: spacing between borehole rows in x-direction
+        spacing_y: spacing between borehole rows in y-direction
+        origin: coordinates for origin at lower-left corner
+
+    Returns:
+        list of tuples (x, y)
+    """
+
     r = []
-    nbh = Nx * Ny
-    _x = origin[0]
-    _y = origin[1]
-    for i in range(Nx):
-        for j in range(Ny):
-            r.append((_x + i * Bx, _y + j * By))
-    assert len(r) == nbh
+    x_0 = origin[0]
+    y_0 = origin[1]
+    for i in range(num_bh_x):
+        for j in range(num_bh_y):
+            r.append((x_0 + i * spacing_x, y_0 + j * spacing_y))
     return r
 
 
-def open_rectangle(Nx, Ny, Bx, By):
+def open_rectangle(num_bh_x: int, num_bh_y: int,
+                   spacing_x: Union[int, float], spacing_y: Union[int, float]):
     # Create a list of (x, y) pairs for an open rectangle
     open_r = []
-    if Nx > 2 and Ny > 2:
-        nbh = Ny * 2 + (Nx - 2) * 2
-        for i in range(Nx):
-            open_r.append((i * Bx, 0.))
-        for j in range(1, Ny - 1):
-            open_r.append((0, j * By))
-            open_r.append(((Nx - 1) * Bx, j * By))
-        for i in range(Nx):
-            open_r.append((i * Bx, (Ny - 1) * By))
+    if num_bh_x > 2 and num_bh_y > 2:
+        for i in range(num_bh_x):
+            open_r.append((i * spacing_x, 0.))
+        for j in range(1, num_bh_y - 1):
+            open_r.append((0, j * spacing_y))
+            open_r.append(((num_bh_x - 1) * spacing_x, j * spacing_y))
+        for i in range(num_bh_x):
+            open_r.append((i * spacing_x, (num_bh_y - 1) * spacing_y))
     else:
-        nbh = Nx * Ny
-        open_r = rectangle(Nx, Ny, Bx, By)
-
-    assert len(open_r) == nbh
+        open_r = rectangle(num_bh_x, num_bh_y, spacing_x, spacing_y)
     return open_r
 
 
@@ -120,34 +132,3 @@ def zoned_rectangle(Nx, Ny, Bx, By, Nix, Niy):
     zoned.extend(rectangle(Nix, Niy, Bix, Biy, origin=(Bix, Biy)))
 
     return zoned
-
-
-def visualize_coordinates(coordinates):
-    """
-    Visualize the (x,y) coordinates.
-    Returns
-    -------
-    **fig, ax**
-        Figure and axes information.
-    """
-    import matplotlib.pyplot as plt
-    plt.rc('font', size=9)
-    plt.rc('xtick', labelsize=9)
-    plt.rc('ytick', labelsize=9)
-    plt.rc('lines', lw=1.5, markersize=5.0)
-    plt.rc('savefig', dpi=500)
-    # fig, ax = plt.subplots(figsize=(3.5, 5))
-    import pygfunction as gt
-    fig = gt.utilities._initialize_figure()
-    ax = fig.add_subplot(111)
-
-    x, y = list(zip(*coordinates))
-
-    ax.scatter(x, y)
-
-    ax.set_xlabel('x (m)')
-    ax.set_ylabel('y (m)')
-
-    ax.set_aspect('equal')
-
-    return fig, ax
