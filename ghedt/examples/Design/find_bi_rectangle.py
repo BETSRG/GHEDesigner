@@ -13,7 +13,7 @@ import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
 import pandas as pd
 from time import time as clock
-from ghedt import Output
+from ghedt.output import OutputDesignDetails
 
 
 def main():
@@ -136,7 +136,7 @@ def main():
     B_max_y = 12.  # m
 
     """ Geometric constraints for the `find_rectangle` routine.
-    Required geometric constraints for the uniform rectangle design: 
+    Required geometric constraints for the uniform rectangle design:
       - length
       - width
       - B_min
@@ -187,7 +187,7 @@ def main():
         perimeter, coordinates, no_go=no_go)
     # See Figure 4.19 on page 138 of Cook (2021)
     fig.savefig('bi-rectangular.png', bbox_inches='tight', pad_inches=0.1)
-    Output.OutputDesignDetails(bisection_search, toc - tic, pN, notes, author, mN)
+    OutputDesignDetails(bisection_search, toc - tic, pN, notes, author, mN)
     '''
     # Double U-tube
     # -------------

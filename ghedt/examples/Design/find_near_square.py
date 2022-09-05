@@ -11,7 +11,7 @@ import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
 import pandas as pd
 from time import time as clock
-from ghedt import Output
+from ghedt.output import OutputDesignDetails
 
 
 
@@ -166,7 +166,7 @@ def main():
     fig, ax = dt.gfunction.GFunction.visualize_area_and_constraints(
         [], coordinates, no_go=None)
     fig.savefig('near-square.png', bbox_inches='tight', pad_inches=0.1)
-    Output.OutputDesignDetails(bisection_search,toc-tic,pN,notes,author,mN)
+    OutputDesignDetails(bisection_search,toc-tic,pN,notes,author,mN)
 
 
 if __name__ == '__main__':

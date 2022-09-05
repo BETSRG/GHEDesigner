@@ -12,7 +12,7 @@ import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
 import pandas as pd
 from time import time as clock
-from ghedt import Output
+from ghedt.output import OutputDesignDetails
 
 
 def main():
@@ -135,7 +135,7 @@ def main():
     B_max_y = 12.  # m
 
     """ Geometric constraints for the `bi-zoned` routine.
-    Required geometric constraints for the bi-zoned design: 
+    Required geometric constraints for the bi-zoned design:
       - length
       - width
       - B_min
@@ -186,7 +186,7 @@ def main():
         perimeter, coordinates, no_go=no_go)
     # See Figure 4.24 on page 143 of Cook (2021)
     fig.savefig('bi-zoned.png', bbox_inches='tight', pad_inches=0.1)
-    Output.OutputDesignDetails(bisection_search, toc - tic, pN, notes, author, mN)
+    OutputDesignDetails(bisection_search, toc - tic, pN, notes, author, mN)
     '''
     # Double U-tube
     # -------------
