@@ -3,7 +3,7 @@ import unittest
 
 import matplotlib.pyplot as plt
 
-from ghedt.coordinates import rectangle, open_rectangle
+from ghedt.coordinates import rectangle, open_rectangle, c_shape
 
 if "PLOT_COORDINATES" in os.environ:
     show_plots = True
@@ -41,3 +41,9 @@ class TestCoordinates(unittest.TestCase):
 
         if show_plots:
             plot_coordinates(coords, "Open Rectangle")
+
+    def test_c_shape(self):
+        coords = c_shape(6, 6, 1, 1, 6)
+
+        if show_plots:
+            plot_coordinates(coords, "C-Shape")

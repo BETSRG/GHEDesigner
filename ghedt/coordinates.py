@@ -13,6 +13,12 @@ def rectangle(num_bh_x: int, num_bh_y: int,
               spacing_x: Union[int, float], spacing_y: Union[int, float],
               origin=(0, 0)):
     """
+    Creates a rectangular borehole field.
+
+    X   X   X   X
+    X   X   X   X
+    X   X   X   X
+    X   X   X   X
 
     Args:
         num_bh_x: number of borehole rows in x-direction
@@ -22,7 +28,7 @@ def rectangle(num_bh_x: int, num_bh_y: int,
         origin: coordinates for origin at lower-left corner
 
     Returns:
-        list of tuples (x, y)
+        list of tuples (x, y) containing borehole coordinates
     """
 
     r = []
@@ -31,12 +37,30 @@ def rectangle(num_bh_x: int, num_bh_y: int,
     for i in range(num_bh_x):
         for j in range(num_bh_y):
             r.append((x_0 + i * spacing_x, y_0 + j * spacing_y))
+    assert len(r) == num_bh_x * num_bh_y
     return r
 
 
 def open_rectangle(num_bh_x: int, num_bh_y: int,
                    spacing_x: Union[int, float], spacing_y: Union[int, float]):
-    # Create a list of (x, y) pairs for an open rectangle
+    """
+    Creates a rectangular borehole field without center boreholes.
+
+    X   X   X   X
+    X           X
+    X           X
+    X   X   X   X
+
+    Args:
+        num_bh_x: number of borehole rows in x-direction
+        num_bh_y: number of borehole rows in y-direction
+        spacing_x: spacing between borehole rows in x-direction
+        spacing_y: spacing between borehole rows in y-direction
+
+    Returns:
+        list of tuples (x, y) containing borehole coordinates
+    """
+
     open_r = []
     if num_bh_x > 2 and num_bh_y > 2:
         for i in range(num_bh_x):
@@ -46,12 +70,15 @@ def open_rectangle(num_bh_x: int, num_bh_y: int,
             open_r.append(((num_bh_x - 1) * spacing_x, j * spacing_y))
         for i in range(num_bh_x):
             open_r.append((i * spacing_x, (num_bh_y - 1) * spacing_y))
+        nbh = num_bh_y * 2 + (num_bh_x - 2) * 2
     else:
         open_r = rectangle(num_bh_x, num_bh_y, spacing_x, spacing_y)
+        nbh = num_bh_x * num_bh_y
+    assert len(open_r) == nbh
     return open_r
 
 
-def C_shape(Nx_1, Ny, Bx, By, Nx_2):
+def c_shape(Nx_1, Ny, Bx, By, Nx_2):
     nbh = Nx_1 + (Ny * 2) - 1 + Nx_2 - 1
     c = []
     for i in range(Nx_1):
@@ -68,7 +95,7 @@ def C_shape(Nx_1, Ny, Bx, By, Nx_2):
     return c
 
 
-def U_shape(Nx, Ny, Bx, By):
+def u_shape(Nx, Ny, Bx, By):
     # Create a list of (x, y) pairs for a U-shape
     U = []
     if Nx > 2 and Ny > 1:
@@ -84,7 +111,7 @@ def U_shape(Nx, Ny, Bx, By):
     return U
 
 
-def lop_U(Nx, Ny_1, Bx, By, Ny_2):
+def lop_u(Nx, Ny_1, Bx, By, Ny_2):
     nbh = Nx + Ny_1 - 1 + Ny_2 - 1
     lop_u = []
     for i in range(Nx):
@@ -98,7 +125,7 @@ def lop_U(Nx, Ny_1, Bx, By, Ny_2):
     return lop_u
 
 
-def L_shape(Nx, Ny, Bx, By):
+def l_shape(Nx, Ny, Bx, By):
     nbh = Nx + Ny - 1
     L = []
     for i in range(Nx):
