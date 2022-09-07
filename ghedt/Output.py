@@ -1,4 +1,3 @@
-
 from datetime import datetime
 import math
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers as BHE
@@ -147,7 +146,13 @@ def GHETimeConvert(hours):
     return monthInYear+1, dayInMonth, hourInDay
 def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocatedWidth = 100,roundingAmount=10,
                         summaryFile = "SimulationSummary.txt",csvF1="TimeDependentValues.csv",csvF2="BoreFieldData.csv"
-                        ,csvF3="Loadings.csv",csvF4="Gfunction.csv",loadMethod='hybrid',outputDirectory=""):
+                        ,csvF3="Loadings.csv",csvF4="Gfunction.csv",loadMethod='hybrid',outputDirectory="",create_directory=False):
+    if len(outputDirectory)>0 and not os.path.exists(outputDirectory):
+        if create_directory:
+            os.makedirs(outputDirectory)
+        else:
+            raise IOError
+
     try: ghe = design.ghe
     except: ghe = design
     bhe = ghe.bhe
@@ -406,7 +411,6 @@ def OutputDesignDetails(design,time,projectName,notes,author,modelName,allocated
 
     oS += createTable(EFTTableTitle, headerArray, outArray, allocatedWidth, EFTTableFormats,
                       fillerSymbol="-", centering="^")
-
 
 
 

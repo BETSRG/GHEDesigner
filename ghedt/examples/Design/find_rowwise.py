@@ -183,7 +183,7 @@ def main():
     Output.OutputDesignDetails(bisection_search,toc-tic,projectName
                                ,note,author,IterationName,outputDirectory=outputFileDirectory,
                                summaryFile="SummaryOfResults_SU_WOP.txt",csvF1="TimeDependentValues_SU_WOP.csv",
-                               csvF2="BorefieldData_SU_WOP.csv",csvF3="Loadings_SU_WOP.csv",csvF4="GFunction_SU_WOP.csv")
+                               csvF2="BorefieldData_SU_WOP.csv",csvF3="Loadings_SU_WOP.csv",csvF4="GFunction_SU_WOP.csv",create_directory=True)
 
     #*************************************************************************************************************
     #Perimeter Spacing Example

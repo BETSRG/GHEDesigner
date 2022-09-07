@@ -165,7 +165,7 @@ def main():
     Output.OutputDesignDetails(bisection_search,toc-tic,projectName
                                ,note,author,IterationName,outputDirectory=outputFileDirectory,
                                summaryFile="SummaryOfResults_SU.txt",csvF1="TimeDependentValues_SU.csv",
-                               csvF2="BorefieldData_SU.csv",csvF3="Loadings_SU.csv",csvF4="GFunction_SU.csv")
+                               csvF2="BorefieldData_SU.csv",csvF3="Loadings_SU.csv",csvF4="GFunction_SU.csv",create_directory=True)
 
     #*************************************************************************************************************
     #Double U-tube Example
