@@ -93,17 +93,12 @@ def fieldOptimizationWPSpac_FR(pSpacs,spacStart,rotateStep,propBound,ngZones=Non
 
             rt += rotateStep * (pi / 180)
 
-            # Ensures that there are no repeated boreholes
-            maxHole = np.array(remove_duplicates(maxHole, pSpac * xS))
-            # print("MaxHOle: ",maxHole)
+        # Ensures that there are no repeated boreholes
+        maxHole = np.array(remove_duplicates(maxHole, pSpac * xS))
 
-            # Reports removal of repeated boreholes
-            if maxL > len(maxHole):
-                print(maxL - len(maxHole), " holes removed")
-                maxL = len(maxHole)
-            field = (maxHole)
-            fieldName = ("P" + str(pSpac) + "_S" + str(spac) + "_rt" + str(maxrt))
-        return [field, fieldName]
+        field = (maxHole)
+        fieldName = ("P" + str(pSpac) + "_S" + str(spac) + "_rt" + str(maxrt))
+    return [field, fieldName]
 def fieldOptimization_FR(spacStart,rotateStep,propBound,ngZones=None,rotateStart=None,rotateStop=None,pdfOutputName = "Graphs.pdf",intersection_tolerance=1e-5):
     ''' Optimizes a Field by iterating over input values w/o perimeter spacing
 
@@ -159,17 +154,12 @@ def fieldOptimization_FR(spacStart,rotateStep,propBound,ngZones=None,rotateStart
 
         rt+=rotateStep*(pi/180)
 
-        #Ensures that there are no repeated boreholes
-        maxHole = np.array(remove_duplicates(maxHole, xS*1.2))
-        #print("MaxHOle: ",maxHole)
+    #Ensures that there are no repeated boreholes
+    maxHole = np.array(remove_duplicates(maxHole, xS*1.2))
 
-        #Reports removal of repeated boreholes
-        if maxL > len(maxHole):
-            print(maxL-len(maxHole)," holes removed")
-            maxL = len(maxHole)
-        field = (maxHole)
-        fieldName = ("S"+str(spac)+"_rt"+str(maxrt))
-        return [field,fieldName]
+    field = (maxHole)
+    fieldName = ("S"+str(spac)+"_rt"+str(maxrt))
+    return [field,fieldName]
 def fieldOptimizationWPSpac(pSpacs,spacStart,spacStop,spacStep,rotateStep,Directory,propBound,ngZones=None,rotateStart=None,rotateStop=None,pdfOutputName = "Graphs.pdf"):
     ''' Optimizes a Field by iterating over input values w/o perimeter spacing
 
@@ -438,7 +428,6 @@ def find_duplicates(boreField,spac, disp=False):
             else:
                 dist = sqDist(borehole_1,borehole_2)
             if abs(dist) < (spac*10**-1):
-                print(borehole_1)
                 duplicate_pairs.append((i, j))
     if disp:
         # pad with '-' align in center
