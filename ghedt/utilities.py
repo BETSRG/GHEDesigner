@@ -1,6 +1,3 @@
-# Jack C. Cook
-# Tuesday, October 26, 2021
-
 # utilities.py - this module contains general utility functions. The functions
 # are categorically grouped by their purpose. If any one of these categories
 # becomes substantial, then a module can be created that is dedicated to
@@ -9,11 +6,12 @@
 # deprecation warning until the next major release.
 
 import copy
-import numpy as np
 import json
-from matplotlib.ticker import Locator
 import pickle
 import warnings
+
+import numpy as np
+from matplotlib.ticker import Locator
 
 
 # Time functions
@@ -46,7 +44,7 @@ def borehole_spacing(borehole, coordinates):
 
 
 def polygonal_area(corners):
-    n = len(corners) # of corners
+    n = len(corners)  # of corners
     area = 0.0
     for i in range(n):
         j = (i + 1) % n
@@ -54,6 +52,7 @@ def polygonal_area(corners):
         area -= corners[j][0] * corners[i][1]
     area = abs(area) / 2.0
     return area
+
 
 # TODO: Add `set_shank` functionality to utilities.py
 # def set_shank(configuration: str, rb: float, r_in: float, r_out: float):
@@ -192,6 +191,7 @@ class MinorSymLogLocator(Locator):
     Dynamically find minor tick positions based on the positions of
     major ticks for a symlog scaling.
     """
+
     def __init__(self, linthresh, nints=10):
         """
         Ticks will be placed between the major ticks.
@@ -221,32 +221,32 @@ class MinorSymLogLocator(Locator):
                 ((majorlocs[0] != self.linthresh and
                   dmlower > self.linthresh) or
                  (dmlower == self.linthresh and majorlocs[0] < 0)):
-            majorlocs = np.insert(majorlocs, 0, majorlocs[0]*10.)
+            majorlocs = np.insert(majorlocs, 0, majorlocs[0] * 10.)
         else:
-            majorlocs = np.insert(majorlocs, 0, majorlocs[0]-self.linthresh)
+            majorlocs = np.insert(majorlocs, 0, majorlocs[0] - self.linthresh)
 
         # add temporary major tick location at the upper end
         if majorlocs[-1] != 0. and \
                 ((np.abs(majorlocs[-1]) != self.linthresh and
                   dmupper > self.linthresh) or
                  (dmupper == self.linthresh and majorlocs[-1] > 0)):
-            majorlocs = np.append(majorlocs, majorlocs[-1]*10.)
+            majorlocs = np.append(majorlocs, majorlocs[-1] * 10.)
         else:
-            majorlocs = np.append(majorlocs, majorlocs[-1]+self.linthresh)
+            majorlocs = np.append(majorlocs, majorlocs[-1] + self.linthresh)
 
         # iterate through minor locs
         minorlocs = []
 
         # handle the lowest part
         for i in range(1, len(majorlocs)):
-            majorstep = majorlocs[i] - majorlocs[i-1]
-            if abs(majorlocs[i-1] + majorstep/2) < self.linthresh:
+            majorstep = majorlocs[i] - majorlocs[i - 1]
+            if abs(majorlocs[i - 1] + majorstep / 2) < self.linthresh:
                 ndivs = self.nintervals
             else:
                 ndivs = self.nintervals - 1.
 
             minorstep = majorstep / ndivs
-            locs = np.arange(majorlocs[i-1], majorlocs[i], minorstep)[1:]
+            locs = np.arange(majorlocs[i - 1], majorlocs[i], minorstep)[1:]
             minorlocs.extend(locs)
 
         return self.raise_if_exceeds(np.array(minorlocs))
@@ -254,4 +254,3 @@ class MinorSymLogLocator(Locator):
     def tick_values(self, vmin, vmax):
         raise NotImplementedError('Cannot get tick locations for a '
                                   '%s type.' % type(self))
-

@@ -9,17 +9,14 @@ Functions:
     vectorintersect()->[[float]]
 
 '''
-import numpy as np
-from math import cos
-from math import sin
-from math import acos
 from math import atan
-from math  import sqrt
 from math import pi
-import numpy as np
-from ghedt.RowWise.Rectangle import rec
+from math import sin
+from math import sqrt
 import matplotlib.pyplot as plt
-import math
+import numpy as np
+
+
 class Shapes:
     '''
        a class to represent nogo zones
@@ -61,6 +58,7 @@ class Shapes:
        pointintersect(xy)
            determines whether the given point is inside of the rectangle
        '''
+
     def __init__(self, c):
         '''
          contructs a shape object
@@ -82,9 +80,9 @@ class Shapes:
             B,S,L,U,T,BL
         '''
         self.c = np.array(c)
-       # print(c)
-        xs = [0]*len(self.c)
-        ys = [0]*len(self.c)
+        # print(c)
+        xs = [0] * len(self.c)
+        ys = [0] * len(self.c)
         for i in range(len(self.c)):
             xs[i] = self.c[i][0]
             ys[i] = self.c[i][1]
@@ -152,31 +150,32 @@ class Shapes:
         '''
         x, y = xy
         if (x > self.maxx or x < self.minx) or (y > self.maxy or y < self.miny):
-            #print("Returning False b/c outside of box")
+            # print("Returning False b/c outside of box")
             return False
-        farX = self.minx-10
+        farX = self.minx - 10
         inters = self.lineintersect([farX, y, farX + 1, y])
-        #print(inters)
+        # print(inters)
         inters = [inter for inter in inters if inter[0] <= x]
-        #print("x: %f"%x,inters)
+        # print("x: %f"%x,inters)
         if len(inters) == 1:
-            #print("Returning True")
+            # print("Returning True")
             return True
-        i=0
-        while i< len(inters):
+        i = 0
+        while i < len(inters):
             for vert in self.c:
                 if inters[i][0] == vert[0] and inters[i][1] == vert[1]:
                     inters.pop(i)
                     i -= 1
                     break
-            i+=1
+            i += 1
         if len(inters) % 2 == 0:
-            #print(len(inters))
+            # print(len(inters))
             return False
         else:
-            #print("returning True")
+            # print("returning True")
             return True
-    def getArea (self):
+
+    def getArea(self):
         '''
         returns area of shape
         :return: float
@@ -184,21 +183,20 @@ class Shapes:
         '''
         sum = 0
         for i in range(len(self.c)):
-            if i == len(self.c)-1:
-                sum += self.c[len(self.c)-1][0]*self.c[0][1] - (self.c[len(self.c)-1][1]*self.c[0][0])
-            sum+= self.c[i][0]*self.c[i+1][1] - (self.c[i][1]*self.c[i+1][0])
-        return .5*sum
-
+            if i == len(self.c) - 1:
+                sum += self.c[len(self.c) - 1][0] * self.c[0][1] - (self.c[len(self.c) - 1][1] * self.c[0][0])
+            sum += self.c[i][0] * self.c[i + 1][1] - (self.c[i][1] * self.c[i + 1][0])
+        return .5 * sum
 
 def sortIntersections(rA,rotate):
     if len(rA) == 0:
         return rA
     vals = [0] * len(rA)
-    i=0
+    i = 0
     for inter in rA:
         phi = 0
-        if inter[0] ==0:
-            phi = pi/2
+        if inter[0] == 0:
+            phi = pi / 2
         else:
             phi = atan(inter[1] / inter[0])
         R = sqrt(inter[1] * inter[1] + inter[0] * inter[0])
@@ -236,12 +234,12 @@ def vectorintersect(l1, l2,intersection_tolerance):
     '''
     x11, y11, x12, y12 = l1
     x21, y21, x22, y22 = l2
-    if x12-x11 == 0:
+    if x12 - x11 == 0:
         a1 = float('inf')
     else:
-        a1 = (y12-y11)/(x12-x11)
-        c1 = y11 - x11*a1
-    if x22-x21 == 0:
+        a1 = (y12 - y11) / (x12 - x11)
+        c1 = y11 - x11 * a1
+    if x22 - x21 == 0:
         a2 = float('inf')
     else:
         a2 = (y22 - y21) / (x22 - x21)
@@ -267,8 +265,7 @@ def vectorintersect(l1, l2,intersection_tolerance):
     return [[rx,ry]]
 
 
-
-#Testing method
+# Testing method
 def main():
     '''
        tests shape class
@@ -277,22 +274,22 @@ def main():
         -----------
         :return: none
         '''
-    rect = Shapes(3.0,4.0,4.0,9.0,pi/5.0,"S")
-    xy = [-3,11,10,11]
+    rect = Shapes(3.0, 4.0, 4.0, 9.0, pi / 5.0, "S")
+    xy = [-3, 11, 10, 11]
     points = rect.lineintersect(xy)
     for i in range(len(rect.c)):
-        if i == len(rect.c)-1:
-            plt.plot([rect.c[i][0],rect.c[0][0]],[rect.c[i][1],rect.c[0][1]], "r")
+        if i == len(rect.c) - 1:
+            plt.plot([rect.c[i][0], rect.c[0][0]], [rect.c[i][1], rect.c[0][1]], "r")
         else:
-            plt.plot([rect.c[i][0], rect.c[i+1][0]], [rect.c[i][1], rect.c[i+1][1]], "r")
-    plt.plot([xy[0],xy[2]],[xy[1],xy[3]],"b")
-    plt.plot([-10,10],[rect.maxy,rect.maxy],"y")
+            plt.plot([rect.c[i][0], rect.c[i + 1][0]], [rect.c[i][1], rect.c[i + 1][1]], "r")
+    plt.plot([xy[0], xy[2]], [xy[1], xy[3]], "b")
+    plt.plot([-10, 10], [rect.maxy, rect.maxy], "y")
     X = np.zeros(len(points))
     Y = np.zeros(len(points))
     for i in range(len(points)):
         X[i] = points[i][0]
         Y[i] = points[i][1]
-    plt.plot(X,Y,"go")
+    plt.plot(X, Y, "go")
     plt.axis("equal")
     plt.show()
     for i in range(len(rect.rects)):
@@ -303,5 +300,7 @@ def main():
 
     plt.axis("equal")
     plt.show()
+
+
 if __name__ == "__main__":
     main()

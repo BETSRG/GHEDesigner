@@ -1,12 +1,9 @@
-# Jack C. Cook
-# Wednesday, September 8, 2021
-
 import numpy as np
 
 
 class ThermalProperty:
     def __init__(self, k, rhoCp):
-        self.k = k          # Thermal conductivity (W/m.K)
+        self.k = k  # Thermal conductivity (W/m.K)
         self.rhoCp = rhoCp  # Volumetric heat capacity (J/K.m3)
 
     def __repr__(self):
@@ -39,11 +36,11 @@ class Pipe(ThermalProperty):
         ThermalProperty.__init__(self, k, rhoCp)
 
         # Pipe specific parameters
-        self.pos = pos      # Pipe positions either a list of tuples or tuple
-        self.r_in = r_in    # Pipe inner radius (m) can be float or list
+        self.pos = pos  # Pipe positions either a list of tuples or tuple
+        self.r_in = r_in  # Pipe inner radius (m) can be float or list
         self.r_out = r_out  # Pipe outer radius (m) can be float or list
-        self.s = s          # Center pipe to center pipe shank spacing
-        self.eps = eps      # Pipe roughness (m)
+        self.s = s  # Center pipe to center pipe shank spacing
+        self.eps = eps  # Pipe roughness (m)
         if type(pos) is list:
             self.n_pipes = int(len(pos) / 2)  # Number of pipes
         else:

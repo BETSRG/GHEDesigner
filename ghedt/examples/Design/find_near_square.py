@@ -8,7 +8,7 @@ import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
 import pandas as pd
 from time import time as clock
-from ghedt import Output
+from ghedt.output import OutputDesignDetails
 
 
 
@@ -131,10 +131,10 @@ def main():
           format(bisection_search.ghe.bhe.b.H * nbh))
 
     #Generating Ouptut File
-    Output.OutputDesignDetails(bisection_search,toc-tic,projectName
-                               ,note,author,IterationName,outputDirectory=outputFileDirectory,
-                               summaryFile="SummaryOfResults_SU.txt",csvF1="TimeDependentValues_SU.csv",
-                               csvF2="BorefieldData_SU.csv",csvF3="Loadings_SU.csv",csvF4="GFunction_SU.csv")
+    OutputDesignDetails(bisection_search,toc-tic,projectName
+                               , note, author, IterationName, outputDirectory=outputFileDirectory,
+                               summaryFile="SummaryOfResults_SU.txt", csvF1="TimeDependentValues_SU.csv",
+                               csvF2="BorefieldData_SU.csv", csvF3="Loadings_SU.csv", csvF4="GFunction_SU.csv")
 
     #*************************************************************************************************************
     #Double U-tube Example
@@ -172,7 +172,7 @@ def main():
           format(bisection_search.ghe.bhe.b.H * nbh))
 
     # Generating Ouptut File
-    Output.OutputDesignDetails(bisection_search, toc - tic, projectName
+    OutputDesignDetails(bisection_search, toc - tic, projectName
                                , note, author, IterationName, outputDirectory=outputFileDirectory,
                                summaryFile="SummaryOfResults_DU.txt", csvF1="TimeDependentValues_DU.csv",
                                csvF2="BorefieldData_DU.csv", csvF3="Loadings_DU.csv", csvF4="GFunction_DU.csv")
@@ -226,9 +226,8 @@ def main():
     print('Number of boreholes: {}'.format(nbh))
     print('Total Drilling: {0:.1f} meters\n'.
           format(bisection_search.ghe.bhe.b.H * nbh))
-
-    # Generating Ouptut File
-    Output.OutputDesignDetails(bisection_search, toc - tic, projectName
+    #Generating Output File
+    OutputDesignDetails(bisection_search, toc - tic, projectName
                                , note, author, IterationName, outputDirectory=outputFileDirectory,
                                summaryFile="SummaryOfResults_C.txt", csvF1="TimeDependentValues_C.csv",
                                csvF2="BorefieldData_C.csv", csvF3="Loadings_C.csv", csvF4="GFunction_C.csv")

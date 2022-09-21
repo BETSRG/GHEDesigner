@@ -1,9 +1,7 @@
-# Jack C. Cook
-# Wednesday, January 15, 2020
 import copy
 
-import numpy as np
 import cv2
+import numpy as np
 
 
 def scale_coordinates(coordinates, scale):
@@ -74,7 +72,7 @@ def remove_cutout(coordinates, boundary=None, remove_inside=True,
             else:
                 new_coordinates.append(coordinates[i])
 
-    new_coordinates = scale_coordinates(new_coordinates, 1/scale)
+    new_coordinates = scale_coordinates(new_coordinates, 1 / scale)
 
     return new_coordinates
 

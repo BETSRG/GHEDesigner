@@ -8,7 +8,7 @@ import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
 import pandas as pd
 from time import time as clock
-from ghedt import Output
+from ghedt.output import OutputDesignDetails
 from math import pi
 from ghedt.RowWise.RowWiseGeneration import genShape
 import os
@@ -107,7 +107,7 @@ def main():
     spacStart  = 10.0 # in meters
     spacStop = 20.0 # in meters
     spacStep = .1 # in meters
-    rotateStep = .5 # in radians
+    rotateStep = .5 # in degrees
     rotateStart = -90.0*(pi/180.0) #in radians
     rotateStop = 0*(pi/180.0) #in radians
 
@@ -180,7 +180,7 @@ def main():
           format(bisection_search.ghe.bhe.b.H * nbh))
 
     #Generating Ouptut File
-    Output.OutputDesignDetails(bisection_search,toc-tic,projectName
+    OutputDesignDetails(bisection_search,toc-tic,projectName
                                ,note,author,IterationName,outputDirectory=outputFileDirectory,
                                summaryFile="SummaryOfResults_SU_WOP.txt",csvF1="TimeDependentValues_SU_WOP.csv",
                                csvF2="BorefieldData_SU_WOP.csv",csvF3="Loadings_SU_WOP.csv",csvF4="GFunction_SU_WOP.csv")
@@ -215,7 +215,7 @@ def main():
           format(bisection_search.ghe.bhe.b.H * nbh))
 
     # Generating Ouptut File
-    Output.OutputDesignDetails(bisection_search, toc - tic, projectName
+    OutputDesignDetails(bisection_search, toc - tic, projectName
                                , note, author, IterationName, outputDirectory=outputFileDirectory,
                                summaryFile="SummaryOfResults_SU_WP.txt", csvF1="TimeDependentValues_SU_WP.csv",
                                csvF2="BorefieldData_SU_WP.csv", csvF3="Loadings_SU_WP.csv", csvF4="GFunction_SU_WP.csv")

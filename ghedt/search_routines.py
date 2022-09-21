@@ -1,25 +1,26 @@
-# Jack C. Cook
-# Wednesday, October 27, 2021
-
-import ghedt as dt
-import pygfunction as gt
-import ghedt.peak_load_analysis_tool as plat
-from ghedt.utilities import sign, check_bracket
-import numpy as np
 import copy
-from ghedt.RowWise.RowWiseGeneration import fieldOptimizationWPSpac_FR
-from ghedt.RowWise.RowWiseGeneration import fieldOptimization_FR
 import math
 
+import numpy as np
+import pygfunction as gt
+
+import ghedt as dt
+import ghedt.peak_load_analysis_tool as plat
+from ghedt.RowWise.RowWiseGeneration import fieldOptimizationWPSpac_FR
+from ghedt.RowWise.RowWiseGeneration import fieldOptimization_FR
+from ghedt.utilities import sign, check_bracket
+
+from ghedt.peak_load_analysis_tool.media import Pipe, Grout, Soil, SimulationParameters
+
 class Bisection1D:
-    def __init__(self, coordinates_domain: list,fieldDescriptors: list, V_flow: float,
+    def __init__(self, coordinates_domain: list, fieldDescriptors: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
-                 bhe_object: plat.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.Grout, soil: plat.media.Soil,
-                 sim_params: plat.media.SimulationParameters,
+                 bhe_object,
+                 fluid: gt.media.Fluid, pipe: Pipe,
+                 grout: Grout, soil: Soil,
+                 sim_params: SimulationParameters,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
-                 flow: str = 'borehole', max_iter=15, disp=False, search=True,fieldType="N/A",load_years=[2019]):
+                 flow: str = 'borehole', max_iter=15, disp=False, search=True, fieldType="N/A", load_years=[2019]):
 
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
@@ -56,8 +57,8 @@ class Bisection1D:
         # Initialize the GHE object
         self.ghe = dt.ground_heat_exchangers.GHE(
             V_flow_system, B, bhe_object, fluid, borehole, pipe, grout,
-            soil, g_function, sim_params, hourly_extraction_ground_loads,fieldSpecifier=currentField,
-            fieldType=fieldType,load_years=load_years)
+            soil, g_function, sim_params, hourly_extraction_ground_loads, fieldSpecifier=currentField,
+            fieldType=fieldType, load_years=load_years)
 
         self.calculated_temperatures = {}
 
@@ -78,7 +79,7 @@ class Bisection1D:
                              'or `system`.')
         return V_flow_system, m_flow_borehole
 
-    def initialize_ghe(self, coordinates, H,fieldSpecifier="N/A"):
+    def initialize_ghe(self, coordinates, H, fieldSpecifier="N/A"):
         V_flow_system, m_flow_borehole = \
             self.retrieve_flow(coordinates, self.ghe.bhe.fluid.rho)
 
@@ -102,16 +103,16 @@ class Bisection1D:
         self.ghe = dt.ground_heat_exchangers.GHE(
             V_flow_system, B, self.bhe_object, fluid, borehole, pipe, grout,
             soil, g_function, self.sim_params,
-            self.hourly_extraction_ground_loads,fieldType=self.fieldType,fieldSpecifier=fieldSpecifier
-            ,load_years=self.load_years)
+            self.hourly_extraction_ground_loads, fieldType=self.fieldType, fieldSpecifier=fieldSpecifier,
+            load_years=self.load_years)
 
-    def calculate_excess(self, coordinates, H,fieldSpecifier="N/A"):
-        self.initialize_ghe(coordinates, H,fieldSpecifier=fieldSpecifier)
+    def calculate_excess(self, coordinates, H, fieldSpecifier="N/A"):
+        self.initialize_ghe(coordinates, H, fieldSpecifier=fieldSpecifier)
         # Simulate after computing just one g-function
         max_HP_EFT, min_HP_EFT = self.ghe.simulate(method=self.method)
         T_excess = self.ghe.cost(max_HP_EFT, min_HP_EFT)
-        self.searchTracker.append([fieldSpecifier, T_excess,max_HP_EFT
-                                      ,min_HP_EFT])
+        self.searchTracker.append([fieldSpecifier, T_excess, max_HP_EFT
+                                      , min_HP_EFT])
 
         # This is more of a debugging statement. May remove it in the future.
         # Perhaps there becomes a debug: bool option in the API.
@@ -129,13 +130,13 @@ class Bisection1D:
         # Get the lowest possible excess temperature from minimum height at the
         # smallest location in the domain
         T_0_lower = self.calculate_excess(self.coordinates_domain[xL_idx],
-                                          self.sim_params.min_Height,fieldSpecifier=self.fieldDescriptors[xL_idx])
+                                          self.sim_params.min_Height, fieldSpecifier=self.fieldDescriptors[xL_idx])
         T_0_upper = self.calculate_excess(self.coordinates_domain[xL_idx],
-                                          self.sim_params.max_Height,fieldSpecifier=self.fieldDescriptors[xL_idx])
+                                          self.sim_params.max_Height, fieldSpecifier=self.fieldDescriptors[xL_idx])
         T_m1 = \
             self.calculate_excess(
                 self.coordinates_domain[xR_idx],
-                self.sim_params.max_Height,fieldSpecifier=self.fieldDescriptors[xR_idx])
+                self.sim_params.max_Height, fieldSpecifier=self.fieldDescriptors[xR_idx])
 
         self.calculated_temperatures[xL_idx] = T_0_upper
         self.calculated_temperatures[xR_idx] = T_m1
@@ -175,7 +176,7 @@ class Bisection1D:
 
         xL_sign = sign(T_0_upper)
         xR_sign = sign(T_m1)
-        
+
         i = 0
 
         while i < self.max_iter:
@@ -185,7 +186,7 @@ class Bisection1D:
                 break
 
             c_T_excess = self.calculate_excess(self.coordinates_domain[c_idx],
-                                               self.sim_params.max_Height,fieldSpecifier=self.fieldDescriptors[c_idx])
+                                               self.sim_params.max_Height, fieldSpecifier=self.fieldDescriptors[c_idx])
 
             self.calculated_temperatures[c_idx] = c_T_excess
             c_sign = sign(c_T_excess)
@@ -201,7 +202,7 @@ class Bisection1D:
 
         H = self.sim_params.max_Height
 
-        self.calculate_excess(coordinates, H,fieldSpecifier=self.fieldDescriptors[i])
+        self.calculate_excess(coordinates, H, fieldSpecifier=self.fieldDescriptors[i])
         # Make sure the field being returned pertains to the index which is the
         # closest to 0 but also negative (the maximum of all 0 or negative
         # excess temperatures)
@@ -216,22 +217,24 @@ class Bisection1D:
         selection_key = keys[idx]
         selected_coordinates = self.coordinates_domain[selection_key]
 
-        self.initialize_ghe(selected_coordinates, H,fieldSpecifier=self.fieldDescriptors[selection_key])
+        self.initialize_ghe(selected_coordinates, H, fieldSpecifier=self.fieldDescriptors[selection_key])
 
         return selection_key, selected_coordinates
 
-#This is the search algorithm used for finding RowWise fields
+
+# This is the search algorithm used for finding RowWise fields
 class RowWiseModifiedBisectionSearch:
     def __init__(self, V_flow: float,
                  borehole: gt.boreholes.Borehole,
-                 bhe_object: plat.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.Grout, soil: plat.media.Soil,
-                 sim_params: plat.media.SimulationParameters,
-                 hourly_extraction_ground_loads: list,geometricConstraints, method: str = 'hybrid',
-                 flow: str = 'borehole', max_iter=10, disp=False, search=True,advanced_tracking=True,
-                 fieldType="RowWise",load_years = [2019],
-                 BRPoint=[0.0,0.0],BRRemovalMethod = "CloseToCorner",exhaustiveFieldsToCheck=10,usePerimeter=True):
+                 bhe_object,
+                 fluid: gt.media.Fluid, pipe: Pipe,
+                 grout: Grout, soil: Soil,
+                 sim_params: SimulationParameters,
+                 hourly_extraction_ground_loads: list, geometricConstraints, method: str = 'hybrid',
+                 flow: str = 'borehole', max_iter: int = 10, disp: bool = False, search: bool = True,
+                 advanced_tracking: bool =True, fieldType: str ="RowWise", load_years=[2019],
+                 eT: float = 1e-10, BRPoint = [0.0, 0.0], BRRemovalMethod: str = "CloseToCorner",
+                 exhaustiveFieldsToCheck: int = 10, usePerimeter: bool = True):
 
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
@@ -258,15 +261,15 @@ class RowWiseModifiedBisectionSearch:
         self.disp = disp
         self.ghe = None
         self.calculated_temperatures = {}
-        #self.advanced_tracking = advanced_tracking
+        # self.advanced_tracking = advanced_tracking
         if advanced_tracking:
-            self.advanced_tracking = [["TargetSpacing","Field Specifier","nbh","ExcessTemperature"]]
+            self.advanced_tracking = [["TargetSpacing", "Field Specifier", "nbh", "ExcessTemperature"]]
             self.checkedFields = []
         if search:
-            self.selected_coordinates,self.selected_specifier = self.search(BRPoint=BRPoint,
-                                BRRemovalMethod = BRRemovalMethod,exhaustiveFieldsToCheck=exhaustiveFieldsToCheck
-                                ,usePerimeter=usePerimeter)
-            self.initialize_ghe(self.selected_coordinates,self.sim_params.max_Height,
+            self.selected_coordinates, self.selected_specifier = self.search(
+                eT=eT, BRPoint=BRPoint, BRRemovalMethod=BRRemovalMethod,
+                exhaustiveFieldsToCheck=exhaustiveFieldsToCheck, usePerimeter=usePerimeter)
+            self.initialize_ghe(self.selected_coordinates, self.sim_params.max_Height,
                                 fieldSpecifier=self.selected_specifier)
 
     def retrieve_flow(self, coordinates, rho):
@@ -324,8 +327,9 @@ class RowWiseModifiedBisectionSearch:
 
         return T_excess
 
-    def search(self,eT = 1e-10,BRPoint=[0.0,0.0],BRRemovalMethod = "CloseToCorner",exhaustiveFieldsToCheck=10,usePerimeter=True):
-        #Copy all of the geometric constraints to local variables
+    def search(self, eT=1e-10, BRPoint=[0.0, 0.0], BRRemovalMethod="CloseToCorner", exhaustiveFieldsToCheck=10,
+               usePerimeter=True):
+        # Copy all of the geometric constraints to local variables
         spacStart = self.geometricConstraints.spacStart
         spacStop = self.geometricConstraints.spacStop
         spacStep = self.geometricConstraints.spacStep
@@ -341,69 +345,72 @@ class RowWiseModifiedBisectionSearch:
         selected_temp_excess = None
         selected_spacing = None
 
-        #Check The Upper and Lower Bounds
+        # Check The Upper and Lower Bounds
 
-        #Generate Fields
-        upperField,upperFieldSpecifier,lowerField,lowerFieldSpecifier = None,None,None,None
+        # Generate Fields
+        upperField, upperFieldSpecifier, lowerField, lowerFieldSpecifier = None, None, None, None
         if usePerimeter:
-            upperField,upperFieldSpecifier = fieldOptimizationWPSpac_FR([pSpac],spacStart,rotateStep,propBound,ngZones=ngZones
-                                                    ,rotateStart=rotateStart,rotateStop=rotateStop)
-            lowerField,lowerFieldSpecifier = fieldOptimizationWPSpac_FR([pSpac], spacStop, rotateStep, propBound, ngZones=ngZones,
-                                                    rotateStart=rotateStart, rotateStop=rotateStop)
-        else:
-            upperField, upperFieldSpecifier = fieldOptimization_FR(spacStart, rotateStep, propBound,
+            upperField, upperFieldSpecifier = fieldOptimizationWPSpac_FR(pSpac, spacStart, rotateStep, propBound,
                                                                          ngZones=ngZones
                                                                          , rotateStart=rotateStart,
                                                                          rotateStop=rotateStop)
-            lowerField, lowerFieldSpecifier = fieldOptimization_FR(spacStop, rotateStep, propBound,
+            lowerField, lowerFieldSpecifier = fieldOptimizationWPSpac_FR(pSpac, spacStop, rotateStep, propBound,
                                                                          ngZones=ngZones,
                                                                          rotateStart=rotateStart, rotateStop=rotateStop)
-        #Get Excess Temperatures
-        T_upper = self.calculate_excess(upperField,self.sim_params.max_Height,fieldSpecifier=upperFieldSpecifier)
-        T_lower = self.calculate_excess(lowerField,self.sim_params.max_Height,fieldSpecifier=lowerFieldSpecifier)
+        else:
+            upperField, upperFieldSpecifier = fieldOptimization_FR(spacStart, rotateStep, propBound,
+                                                                   ngZones=ngZones
+                                                                   , rotateStart=rotateStart,
+                                                                   rotateStop=rotateStop)
+            lowerField, lowerFieldSpecifier = fieldOptimization_FR(spacStop, rotateStep, propBound,
+                                                                   ngZones=ngZones,
+                                                                   rotateStart=rotateStart, rotateStop=rotateStop)
+        # Get Excess Temperatures
+        T_upper = self.calculate_excess(upperField, self.sim_params.max_Height, fieldSpecifier=upperFieldSpecifier)
+        T_lower = self.calculate_excess(lowerField, self.sim_params.max_Height, fieldSpecifier=lowerFieldSpecifier)
 
         if self.advanced_tracking:
-            self.advanced_tracking.append([spacStart,upperFieldSpecifier,len(upperField),T_upper])
-            self.advanced_tracking.append([spacStop,lowerFieldSpecifier,len(lowerField),T_lower])
+            self.advanced_tracking.append([spacStart, upperFieldSpecifier, len(upperField), T_upper])
+            self.advanced_tracking.append([spacStop, lowerFieldSpecifier, len(lowerField), T_lower])
             self.checkedFields.append(upperField)
             self.checkedFields.append(lowerField)
 
-        #If the excess temperature is >0 utilizing the largest field and largest depth, then notify the user that
-        #the given contrants cannot find a satisfactory field.
+        # If the excess temperature is >0 utilizing the largest field and largest depth, then notify the user that
+        # the given contrants cannot find a satisfactory field.
         if T_upper > 0.0 and T_lower > 0.0:
             msg = 'Based on the loads provided, the excess temperatures for the minimum and maximum number of boreholes' \
                   'fall above 0. This means that the loads are too large for the corresponding simulation parameters.' \
                   'Please double check the loadings or adjust those parameters.'
             raise ValueError(msg)
-        #If the excess temperature is > 0 when utilizing the largest field and depth but < 0 when using the largest
+        # If the excess temperature is > 0 when utilizing the largest field and depth but < 0 when using the largest
         # depth and smallest field, then fields should be searched between the two target depths.
         elif T_upper < 0.0 and T_lower > 0.0:
-            #This search currently works by doing a slightly modified bisection search where the "steps" are the set by the
-            #"spacStep" variable. The steps are used to check fields on either side of the field found by doing a normal
-            #bisection search. These extra fields are meant to help prevent falling into local minima (although this
+            # This search currently works by doing a slightly modified bisection search where the "steps" are the set by the
+            # "spacStep" variable. The steps are used to check fields on either side of the field found by doing a normal
+            # bisection search. These extra fields are meant to help prevent falling into local minima (although this
             # will still happen sometimes).
             i = 0
-            spacHigh= spacStart
+            spacHigh = spacStart
             spacLow = spacStop
             lowE = T_upper
             highE = T_lower
-            spacM = (spacStop+spacStart)*0.5
+            spacM = (spacStop + spacStart) * 0.5
             while (i < self.max_iter):
-                print("Bisection Search Iteration: ",i)
-                #Getting Three Middle Field
-                f1,f1Specifier = None,None
+                print("Bisection Search Iteration: ", i)
+                # Getting Three Middle Field
+                f1, f1Specifier = None, None
                 if usePerimeter:
-                    f1,f1Specifier = fieldOptimizationWPSpac_FR([pSpac],spacM,rotateStep,propBound,ngZones=ngZones
-                                                ,rotateStart=rotateStart,rotateStop=rotateStop)
+                    f1, f1Specifier = fieldOptimizationWPSpac_FR(pSpac, spacM, rotateStep, propBound, ngZones=ngZones
+                                                                 , rotateStart=rotateStart, rotateStop=rotateStop)
                 else:
                     f1, f1Specifier = fieldOptimization_FR(spacM, rotateStep, propBound, ngZones=ngZones
-                                                                 , rotateStart=rotateStart, rotateStop=rotateStop)
+                                                           , rotateStart=rotateStart, rotateStop=rotateStop)
 
-                #Getting the three field's excess temperature
-                T_e1 = self.calculate_excess(f1,self.sim_params.max_Height,fieldSpecifier=f1Specifier)
+                # Getting the three field's excess temperature
+                T_e1 = self.calculate_excess(f1, self.sim_params.max_Height, fieldSpecifier=f1Specifier)
 
                 if self.advanced_tracking:
-                    self.advanced_tracking.append([spacM,f1Specifier,len(f1),T_e1])
+                    self.advanced_tracking.append([spacM, f1Specifier, len(f1), T_e1])
                     self.checkedFields.append(f1)
                 if T_e1 <= 0.0:
                     spacHigh = spacM
@@ -416,17 +423,17 @@ class RowWiseModifiedBisectionSearch:
                     spacLow = spacM
                     lowE = T_e1
 
-                spacM = (spacLow+spacHigh)*0.5
-                if abs(lowE-highE) < eT:
+                spacM = (spacLow + spacHigh) * 0.5
+                if abs(lowE - highE) < eT:
                     break
 
                 i += 1
 
-            #Now Check fields that have a higher target spacing to double check that none of them would work:
-            spacL = spacStep+spacHigh
+            # Now Check fields that have a higher target spacing to double check that none of them would work:
+            spacL = spacStep + spacHigh
             targetSpacings = []
             currentSpacing = spacHigh
-            spacChange = (spacL-currentSpacing)/exhaustiveFieldsToCheck
+            spacChange = (spacL - currentSpacing) / exhaustiveFieldsToCheck
             while currentSpacing <= spacL:
                 targetSpacings.append(currentSpacing)
                 currentSpacing += spacChange
@@ -435,94 +442,99 @@ class RowWiseModifiedBisectionSearch:
             bestExcess = None
             bestSpacing = None
             for i in range(len(targetSpacings)):
-                field,fS = None,None
+                field, fS = None, None
                 if usePerimeter:
-                    field,fS = fieldOptimizationWPSpac_FR([pSpac],targetSpacings[i],rotateStep,propBound,ngZones=ngZones
-                                                    ,rotateStart=rotateStart,rotateStop=rotateStop)
-                else:
-                    field, fS = fieldOptimization_FR(targetSpacings[i], rotateStep, propBound,
+                    field, fS = fieldOptimizationWPSpac_FR(pSpac, targetSpacings[i], rotateStep, propBound,
                                                            ngZones=ngZones
                                                            , rotateStart=rotateStart, rotateStop=rotateStop)
-                T_e = self.calculate_excess(field,self.sim_params.max_Height,fieldSpecifier=fS)
+                else:
+                    field, fS = fieldOptimization_FR(targetSpacings[i], rotateStep, propBound,
+                                                     ngZones=ngZones
+                                                     , rotateStart=rotateStart, rotateStop=rotateStop)
+                T_e = self.calculate_excess(field, self.sim_params.max_Height, fieldSpecifier=fS)
 
                 if self.advanced_tracking:
                     self.advanced_tracking.append([targetSpacings[i], fS, len(field), T_e])
                     self.checkedFields.append(field)
-                if T_e <= 0.0:
-                    self.initialize_ghe(field,self.sim_params.max_Height,fieldSpecifier=fS)
-                    self.ghe.compute_g_functions()
-                    self.ghe.size()
-                    H = self.ghe.averageHeight()
-                    totalDrilling = H*len(field)
-                    if bestField is None:
-                        bestField = field
+
+                self.initialize_ghe(field, self.sim_params.max_Height, fieldSpecifier=fS)
+                self.ghe.compute_g_functions()
+                self.ghe.size()
+                H = self.ghe.averageHeight()
+                totalDrilling = H * len(field)
+                if bestField is None:
+                    bestField = field
+                    bestDrilling = totalDrilling
+                    bestExcess = T_e
+                    bestSpacing = targetSpacings[i]
+                else:
+                    if T_e <= 0.0 and totalDrilling < bestDrilling:
                         bestDrilling = totalDrilling
+                        bestField = field
                         bestExcess=T_e
                         bestSpacing = targetSpacings[i]
-                    else:
-                        if T_e <= 0.0 and totalDrilling<bestDrilling:
-                            bestDrilling = totalDrilling
-                            bestField = field
-                            bestExcess = T_e
             selected_coordinates = bestField
             selected_temp_excess = bestExcess
             selected_spacing = bestSpacing
 
-        #If the excess temperature is < 0 when utilizing the largest depth and the smallest field, it is most likely
+        # If the excess temperature is < 0 when utilizing the largest depth and the smallest field, it is most likely
         # in the user's best interest to return a field smaller than the smallest one. This is done by removing
-        #boreholes from the field.
+        # boreholes from the field.
         elif T_lower < 0.0 and T_upper < 0.0:
 
             originalCoordinates = copy.deepcopy(lowerField)
 
-            #Function For Sorting Boreholes Based on Proximity to a Point
-            def pointSort(targetPoint,otherPoints,method='ascending'):
+            # Function For Sorting Boreholes Based on Proximity to a Point
+            def pointSort(targetPoint, otherPoints, method='ascending'):
                 def dist(oP):
-                    return math.sqrt((targetPoint[0]-oP[0])*(targetPoint[0] \
-                                                             -oP[0])+(targetPoint[1]-oP[1])*(targetPoint[1]-oP[1]))
-                distances = map(dist,otherPoints)
+                    return math.sqrt((targetPoint[0] - oP[0]) * (targetPoint[0] \
+                                                                 - oP[0]) + (targetPoint[1] - oP[1]) * (
+                                                 targetPoint[1] - oP[1]))
+
+                distances = map(dist, otherPoints)
                 if method == 'ascending':
-                    return [x for _, x in sorted(zip(distances,otherPoints))]
+                    return [x for _, x in sorted(zip(distances, otherPoints))]
                 elif method == 'descending':
-                    return [x for _, x in sorted(zip(distances,otherPoints),reverse=True)]
+                    return [x for _, x in sorted(zip(distances, otherPoints), reverse=True)]
+
             startingField = None
             if BRRemovalMethod == 'CloseToCorner':
-                startingField = pointSort(originalCoordinates[0],lowerField,method='descending')
+                startingField = pointSort(originalCoordinates[0], lowerField, method='descending')
             elif BRRemovalMethod == 'CloseToPoint':
-                startingField = pointSort(BRPoint,lowerField,method='descending')
+                startingField = pointSort(BRPoint, lowerField, method='descending')
             elif BRRemovalMethod == 'FarFromPoint':
                 startingField = pointSort(BRPoint, lowerField, method='ascending')
             elif BRRemovalMethod == 'RowRemoval':
                 startingField = lowerField
             else:
-                msg = BRRemovalMethod +  ' is not a valid method for removing boreholes. The valid methods are: ' \
-                                         'CloseToCorner, CloseToPoint, FarFromPoint, and RowRemoval.'
+                msg = BRRemovalMethod + ' is not a valid method for removing boreholes. The valid methods are: ' \
+                                        'CloseToCorner, CloseToPoint, FarFromPoint, and RowRemoval.'
                 raise ValueError(msg)
 
-            #Check if a 1X1 field is satisfactory
+            # Check if a 1X1 field is satisfactory
             T_e_single = self.calculate_excess([[0, 0]], self.sim_params.max_Height, fieldSpecifier="1X1")
             if self.advanced_tracking:
-                self.advanced_tracking.append(["N/A","1X1", 1, T_e_single])
-                self.checkedFields.append([[0,0]])
+                self.advanced_tracking.append(["N/A", "1X1", 1, T_e_single])
+                self.checkedFields.append([[0, 0]])
             if T_e_single <= 0:
                 selected_temp_excess = T_e_single
                 selected_specifier = "1X1"
-                selected_coordinates =startingField[len(startingField)-1:]
+                selected_coordinates = startingField[len(startingField) - 1:]
                 selected_spacing = spacStop
             else:
-                #Perform a bisection search between nbh values to find the smallest satisfactory field
+                # Perform a bisection search between nbh values to find the smallest satisfactory field
                 nbhMax = len(startingField)
                 nbhMin = 1
-                nbh_start=nbhMax
+                nbh_start = nbhMax
                 continueLoop = True
                 highT_e = T_lower
                 selected_specifier = lowerFieldSpecifier
                 i = 0
                 while i < self.max_iter:
-                    nbh = (nbhMax+nbhMin)//2
-                    currentField = startingField[nbh_start-nbh:]
-                    fS = lowerFieldSpecifier + '_BR{}'.format(nbh_start-nbh)
-                    T_e = self.calculate_excess(currentField,self.sim_params.max_Height,fieldSpecifier=fS)
+                    nbh = (nbhMax + nbhMin) // 2
+                    currentField = startingField[nbh_start - nbh:]
+                    fS = lowerFieldSpecifier + '_BR{}'.format(nbh_start - nbh)
+                    T_e = self.calculate_excess(currentField, self.sim_params.max_Height, fieldSpecifier=fS)
                     if self.advanced_tracking:
                         self.advanced_tracking.append([spacStop, lowerFieldSpecifier + "_" + str(nbh), nbh, T_e])
                         self.checkedFields.append(currentField)
@@ -535,11 +547,11 @@ class RowWiseModifiedBisectionSearch:
                         selected_spacing = spacStop
                     else:
                         nbhMin = nbh
-                    if (nbhMax-nbhMin)<=1:
+                    if (nbhMax - nbhMin) <= 1:
                         break
-                    i+=1
-        #If none of the options above have been true, then there is most likely an issue with the excess temperature
-        #calculation.
+                    i += 1
+        # If none of the options above have been true, then there is most likely an issue with the excess temperature
+        # calculation.
         else:
             msg = 'There seems to be an issue calculating excess temperatures. Check that you have the correct' \
                   'package version. If this is a recurring issue, please contact the current package management for ' \
@@ -547,19 +559,21 @@ class RowWiseModifiedBisectionSearch:
             raise ValueError(msg)
         self.excess = selected_temp_excess
         if self.advanced_tracking:
-            self.advanced_tracking.append([selected_spacing, selected_specifier, len(selected_coordinates), selected_temp_excess])
+            self.advanced_tracking.append(
+                [selected_spacing, selected_specifier, len(selected_coordinates), selected_temp_excess])
             self.checkedFields.append(selected_coordinates)
-        return selected_coordinates,selected_specifier
+        return selected_coordinates, selected_specifier
 
-#This is a somewhat depreciated function for RowWise searching. It could still be used, but does not seem optimal based
-#on the current testing as of 5/30.
+
+# This is a somewhat depreciated function for RowWise searching. It could still be used, but does not seem optimal based
+# on the current testing as of 5/30.
 class Bisection1D_modified:
     def __init__(self, coordinates_domain: list, fieldDescriptors: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
-                 bhe_object: plat.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.Grout, soil: plat.media.Soil,
-                 sim_params: plat.media.SimulationParameters,
+                 bhe_object,
+                 fluid: gt.media.Fluid, pipe: Pipe,
+                 grout: Grout, soil: Soil,
+                 sim_params: SimulationParameters,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
                  flow: str = 'borehole', max_iter=15, disp=False, search=True, fieldType="N/A"):
 
@@ -735,8 +749,9 @@ class Bisection1D_modified:
 
             i += 1
 
-        self.calculated_temperatures[c_idx+1] = self.calculate_excess(self.coordinates_domain[c_idx+1],
-                                               self.sim_params.max_Height, fieldSpecifier=self.fieldDescriptors[c_idx+1])
+        self.calculated_temperatures[c_idx + 1] = self.calculate_excess(self.coordinates_domain[c_idx + 1],
+                                                                        self.sim_params.max_Height,
+                                                                        fieldSpecifier=self.fieldDescriptors[c_idx + 1])
         self.calculated_temperatures[c_idx - 1] = self.calculate_excess(self.coordinates_domain[c_idx - 1],
                                                                         self.sim_params.max_Height,
                                                                         fieldSpecifier=self.fieldDescriptors[c_idx - 1])
@@ -764,26 +779,27 @@ class Bisection1D_modified:
 
         return selection_key, selected_coordinates
 
+
 class Bisection2D(Bisection1D):
-    def __init__(self, coordinates_domain_nested: list,fieldDescriptors: list, V_flow: float,
+    def __init__(self, coordinates_domain_nested: list, fieldDescriptors: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
-                 bhe_object: plat.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.Grout, soil: plat.media.Soil,
-                 sim_params: plat.media.SimulationParameters,
+                 bhe_object,
+                 fluid: gt.media.Fluid, pipe: Pipe,
+                 grout: Grout, soil: Soil,
+                 sim_params: SimulationParameters,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
-                 flow: str = 'borehole', max_iter=15, disp=False,fieldType="N/A",load_years=[2019]):
+                 flow: str = 'borehole', max_iter=15, disp=False, fieldType="N/A", load_years=[2019]):
         if disp:
             print('Note: This routine requires a nested bisection search.')
         self.load_years = load_years
         # Get a coordinates domain for initialization
         coordinates_domain = coordinates_domain_nested[0]
-       # print("Coordinate Dimensions",len(coordinates_domain),len(coordinates_domain[0]))
+        # print("Coordinate Dimensions",len(coordinates_domain),len(coordinates_domain[0]))
         Bisection1D.__init__(
-            self, coordinates_domain,fieldDescriptors[0], V_flow, borehole, bhe_object,
+            self, coordinates_domain, fieldDescriptors[0], V_flow, borehole, bhe_object,
             fluid, pipe, grout, soil, sim_params,
             hourly_extraction_ground_loads, method=method, flow=flow,
-            max_iter=max_iter, disp=disp, search=False,fieldType=fieldType,load_years=load_years)
+            max_iter=max_iter, disp=disp, search=False, fieldType=fieldType, load_years=load_years)
 
         self.coordinates_domain_nested = []
         self.calculated_temperatures_nested = []
@@ -802,9 +818,9 @@ class Bisection2D(Bisection1D):
 
         # We tacked on one borehole to the beginning, so we need to subtract 1
         # on the index
-        inner_domain = coordinates_domain_nested[selection_key-1]
+        inner_domain = coordinates_domain_nested[selection_key - 1]
         self.coordinates_domain = inner_domain
-        self.fieldDescriptors = fieldDescriptors[selection_key-1]
+        self.fieldDescriptors = fieldDescriptors[selection_key - 1]
 
         # Reset calculated temperatures
         self.calculated_temperatures = {}
@@ -813,14 +829,14 @@ class Bisection2D(Bisection1D):
 
 
 class BisectionZD(Bisection1D):
-    def __init__(self, coordinates_domain_nested: list,fieldDescriptors: list, V_flow: float,
+    def __init__(self, coordinates_domain_nested: list, fieldDescriptors: list, V_flow: float,
                  borehole: gt.boreholes.Borehole,
-                 bhe_object: plat.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.Grout, soil: plat.media.Soil,
-                 sim_params: plat.media.SimulationParameters,
+                 bhe_object,
+                 fluid: gt.media.Fluid, pipe: Pipe,
+                 grout: Grout, soil: Soil,
+                 sim_params: SimulationParameters,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
-                 flow: str = 'borehole', max_iter=15, disp=False,fieldType="N/A",load_years=[2019]):
+                 flow: str = 'borehole', max_iter=15, disp=False, fieldType="N/A", load_years=[2019]):
         if disp:
             print('Note: This design routine currently requires several '
                   'bisection searches.')
@@ -828,10 +844,10 @@ class BisectionZD(Bisection1D):
         # Get a coordinates domain for initialization
         coordinates_domain = coordinates_domain_nested[0]
         Bisection1D.__init__(
-            self, coordinates_domain,fieldDescriptors[0], V_flow, borehole, bhe_object,
+            self, coordinates_domain, fieldDescriptors[0], V_flow, borehole, bhe_object,
             fluid, pipe, grout, soil, sim_params,
             hourly_extraction_ground_loads, method=method, flow=flow,
-            max_iter=max_iter, disp=disp, search=False,fieldType=fieldType,load_years=load_years)
+            max_iter=max_iter, disp=disp, search=False, fieldType=fieldType, load_years=load_years)
 
         self.coordinates_domain_nested = coordinates_domain_nested
         self.nested_fieldDescriptors = fieldDescriptors
@@ -911,7 +927,8 @@ class BisectionZD(Bisection1D):
         selected_coordinates = \
             self.coordinates_domain_nested[selection_key_outer][selection_key]
 
-        self.initialize_ghe(selected_coordinates, self.sim_params.max_Height,fieldSpecifier=self.nested_fieldDescriptors[selection_key_outer][selection_key])
+        self.initialize_ghe(selected_coordinates, self.sim_params.max_Height,
+                            fieldSpecifier=self.nested_fieldDescriptors[selection_key_outer][selection_key])
         self.ghe.compute_g_functions()
         self.ghe.size(method='hybrid')
 

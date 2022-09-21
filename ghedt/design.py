@@ -1,24 +1,23 @@
-# Jack C. Cook
-# Friday, December 10, 2021
-
 import ghedt as dt
-import ghedt.peak_load_analysis_tool as plat
-import pygfunction as gt
 import numpy as np
+import pygfunction as gt
 import textwrap
+
+from ghedt.peak_load_analysis_tool.media import Pipe, Grout, Soil, SimulationParameters
+
 
 
 # Common design interface
 class Design:
     def __init__(self, V_flow: float, borehole: gt.boreholes.Borehole,
-                 bhe_object: plat.borehole_heat_exchangers,
-                 fluid: gt.media.Fluid, pipe: plat.media.Pipe,
-                 grout: plat.media.Grout, soil: plat.media.Soil,
-                 sim_params: plat.media.SimulationParameters,
+                 bhe_object,
+                 fluid: gt.media.Fluid, pipe: Pipe,
+                 grout: Grout, soil: Soil,
+                 sim_params: SimulationParameters,
                  geometric_constraints: dt.media.GeometricConstraints,
                  hourly_extraction_ground_loads: list, method: str = 'hybrid',
-                 routine: str = 'near-square', flow: str = 'borehole',property_boundary=None,buildingDescriptions = None,
-                 load_years=[2019]):
+                 routine: str = 'near-square', flow: str = 'borehole', property_boundary=None,
+                 buildingDescriptions=None, load_years=[2019]):
         self.load_years = load_years
         self.V_flow = V_flow  # volumetric flow rate, m3/s
         self.borehole = borehole
@@ -49,7 +48,7 @@ class Design:
         # Check the routine parameter
         self.routine = routine
         available_routines = ['near-square', 'rectangle', 'bi-rectangle',
-                              'bi-zoned','bi-rectangle_constrained','row-wise']
+                              'bi-zoned', 'bi-rectangle_constrained', 'row-wise']
         self.geometric_constraints.check_inputs(self.routine)
         gc = self.geometric_constraints
         if routine in available_routines:
@@ -75,8 +74,9 @@ class Design:
                     gc.length, gc.width, gc.B_min, gc.B_max_x, gc.B_max_y,
                     disp=False)
             elif routine == 'bi-rectangle_constrained':
-                self.coordinates_domain_nested, self.fieldDescriptors = dt.domains.polygonal_land_constraint(property_boundary, gc.B_min, gc.B_max_x, gc.B_max_y,
-                              building_descriptions=buildingDescriptions)
+                self.coordinates_domain_nested, self.fieldDescriptors = dt.domains.polygonal_land_constraint(
+                    property_boundary, gc.B_min, gc.B_max_x, gc.B_max_y,
+                    building_descriptions=buildingDescriptions)
             elif routine == 'bi-zoned':
                 self.coordinates_domain_nested, self.fieldDescriptors = \
                     dt.domains.bi_rectangle_zoned_nested(
@@ -89,53 +89,54 @@ class Design:
                              '`near-square`.')
         self.flow = flow
 
-    def find_design(self, disp=False,BRPoint=[0.0,0.0],BRRemovalMethod = "CloseToCorner",exhaustiveFieldsToCheck=10,usePerimeter=True):
+    def find_design(self, disp=False,BRPoint=[0.0,0.0],BRRemovalMethod = "CloseToCorner",
+                    exhaustiveFieldsToCheck=10,usePerimeter=True):
         if disp:
             title = 'Find {}...'.format(self.routine)
             print(title + '\n' + len(title) * '=')
         # Find near-square
         if self.routine == 'near-square':
             bisection_search = dt.search_routines.Bisection1D(
-                self.coordinates_domain,self.fieldDescriptors, self.V_flow, self.borehole,
+                self.coordinates_domain, self.fieldDescriptors, self.V_flow, self.borehole,
                 self.bhe_object, self.fluid, self.pipe, self.grout,
                 self.soil, self.sim_params, self.hourly_extraction_ground_loads,
-                method=self.method, flow=self.flow, disp=disp,fieldType="near-square",load_years=self.load_years)
+                method=self.method, flow=self.flow, disp=disp, fieldType="near-square", load_years=self.load_years)
         # Find a rectangle
         elif self.routine == 'rectangle':
             bisection_search = dt.search_routines.Bisection1D(
-                self.coordinates_domain,self.fieldDescriptors, self.V_flow, self.borehole,
+                self.coordinates_domain, self.fieldDescriptors, self.V_flow, self.borehole,
                 self.bhe_object, self.fluid, self.pipe, self.grout, self.soil,
                 self.sim_params, self.hourly_extraction_ground_loads,
-                method=self.method, flow=self.flow, disp=disp,fieldType="rectangle",load_years=self.load_years)
+                method=self.method, flow=self.flow, disp=disp, fieldType="rectangle", load_years=self.load_years)
         # Find a bi-rectangle
         elif self.routine == 'bi-rectangle':
             bisection_search = dt.search_routines.Bisection2D(
-                self.coordinates_domain_nested,self.fieldDescriptors, self.V_flow,
+                self.coordinates_domain_nested, self.fieldDescriptors, self.V_flow,
                 self.borehole, self.bhe_object, self.fluid, self.pipe,
                 self.grout, self.soil, self.sim_params,
                 self.hourly_extraction_ground_loads, method=self.method,
-                flow=self.flow, disp=disp,fieldType="bi-rectangle",load_years=self.load_years)
+                flow=self.flow, disp=disp, fieldType="bi-rectangle", load_years=self.load_years)
         elif self.routine == 'bi-rectangle_constrained':
             bisection_search = dt.search_routines.Bisection2D(
-                self.coordinates_domain_nested,self.fieldDescriptors, self.V_flow,
+                self.coordinates_domain_nested, self.fieldDescriptors, self.V_flow,
                 self.borehole, self.bhe_object, self.fluid, self.pipe,
                 self.grout, self.soil, self.sim_params,
                 self.hourly_extraction_ground_loads, method=self.method,
-                flow=self.flow, disp=disp,fieldType="bi-rectangle_constrained",load_years=self.load_years)
+                flow=self.flow, disp=disp, fieldType="bi-rectangle_constrained", load_years=self.load_years)
         # Find bi-zoned rectangle
         elif self.routine == 'bi-zoned':
             bisection_search = dt.search_routines.BisectionZD(
-                self.coordinates_domain_nested,self.fieldDescriptors, self.V_flow, self.borehole,
+                self.coordinates_domain_nested, self.fieldDescriptors, self.V_flow, self.borehole,
                 self.bhe_object, self.fluid, self.pipe, self.grout, self.soil,
                 self.sim_params, self.hourly_extraction_ground_loads,
-                method=self.method, flow=self.flow, disp=disp,fieldType="bi-zoned",load_years=self.load_years)
+                method=self.method, flow=self.flow, disp=disp, fieldType="bi-zoned")
         elif self.routine == 'row-wise':
-            bisection_search = dt.search_routines.RowWiseModifiedBisectionSearch( self.V_flow, self.borehole,
-                self.bhe_object, self.fluid, self.pipe, self.grout,
-                self.soil, self.sim_params, self.hourly_extraction_ground_loads,self.geometric_constraints,
-                method=self.method, flow=self.flow, disp=disp,fieldType="row-wise",load_years=self.load_years,
-                BRPoint=BRPoint,BRRemovalMethod = BRRemovalMethod,exhaustiveFieldsToCheck=exhaustiveFieldsToCheck
-                                                                                  ,usePerimeter=usePerimeter)
+            bisection_search = dt.search_routines.RowWiseModifiedBisectionSearch(
+                        self.V_flow, self.borehole, self.bhe_object, self.fluid, self.pipe, self.grout,
+                        self.soil, self.sim_params, self.hourly_extraction_ground_loads, self.geometric_constraints,
+                        method=self.method, flow=self.flow, disp=disp, fieldType="row-wise", load_years=self.load_years,
+                        BRPoint=BRPoint,BRRemovalMethod=BRRemovalMethod,exhaustiveFieldsToCheck=exhaustiveFieldsToCheck,
+                        usePerimeter=usePerimeter)
         else:
             raise ValueError('The requested routine is not available. '
                              'The currently available routines are: '

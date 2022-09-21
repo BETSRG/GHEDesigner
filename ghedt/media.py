@@ -1,5 +1,3 @@
-# Jack C. Cook
-# Friday, December 10, 2021
 
 
 class GeometricConstraints:
@@ -8,7 +6,8 @@ class GeometricConstraints:
                  B_max_x: float = None, B_max_y: float = None,
                  outer_constraints: list = None, no_go: list = None, pSpac: float = None, spacStart: float = None
                  , spacStop: float = None, spacStep: float = None, rotateStep: float = None, propBound: list = None,
-                 ngZones: list = None, rotateStart: float = None, rotateStop: float = None,Directory = "",pdfOutputName="Graphs.pdf"):
+                 ngZones: list = None, rotateStart: float = None, rotateStop: float = None, Directory="",
+                 pdfOutputName="Graphs.pdf"):
         # Spacing parameters in meters
         self.B = B
         self.B_max_x = B_max_x
@@ -34,6 +33,7 @@ class GeometricConstraints:
         self.rotateStop = rotateStop
         self.Directory = Directory
         self.pdfOutputName = pdfOutputName
+
     def check_inputs(self, method):
         # The required instances for the near-square design is self.B
         if method == 'near-square':

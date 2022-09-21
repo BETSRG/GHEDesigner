@@ -4,14 +4,16 @@
 
 # This search is described in section 4.4.5 from pages 146-148 in Cook (2021).
 
-import ghedt as dt
+import ghedt.media as media
+import ghedt.design as design
 import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
 import pandas as pd
 from time import time as clock
-from ghedt import Output
+from ghedt.output import OutputDesignDetails
 import csv
 import os
+import ghedt as dt
 
 
 
@@ -135,11 +137,11 @@ def main():
       - B_max_x
       - B_max_y
     """
-    geometric_constraints = dt.media.GeometricConstraints(B_min=B_min, B_max_y=B_max_y, B_max_x=B_max_x)
+    geometric_constraints = media.GeometricConstraints(B_min=B_min, B_max_y=B_max_y, B_max_x=B_max_x)
 
     # Single U-tube
     # -------------
-    design_single_u_tube = dt.design.Design(
+    design_single_u_tube = design.Design(
         V_flow, borehole, single_u_tube, fluid, pipe_single, grout,
         soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
         method='hybrid', flow=flow, routine='bi-rectangle_constrained',property_boundary=propA,buildingDescriptions=ngA)
@@ -162,7 +164,7 @@ def main():
           format(bisection_search.ghe.bhe.b.H * nbh))
 
     #Generating Ouptut File
-    Output.OutputDesignDetails(bisection_search,toc-tic,projectName
+    OutputDesignDetails(bisection_search,toc-tic,projectName
                                ,note,author,IterationName,outputDirectory=outputFileDirectory,
                                summaryFile="SummaryOfResults_SU.txt",csvF1="TimeDependentValues_SU.csv",
                                csvF2="BorefieldData_SU.csv",csvF3="Loadings_SU.csv",csvF4="GFunction_SU.csv")
@@ -203,7 +205,7 @@ def main():
           format(bisection_search.ghe.bhe.b.H * nbh))
 
     # Generating Ouptut File
-    Output.OutputDesignDetails(bisection_search, toc - tic, projectName
+    OutputDesignDetails(bisection_search, toc - tic, projectName
                                , note, author, IterationName, outputDirectory=outputFileDirectory,
                                summaryFile="SummaryOfResults_DU.txt", csvF1="TimeDependentValues_DU.csv",
                                csvF2="BorefieldData_DU.csv", csvF3="Loadings_DU.csv", csvF4="GFunction_DU.csv")
@@ -259,7 +261,7 @@ def main():
           format(bisection_search.ghe.bhe.b.H * nbh))
 
     # Generating Ouptut File
-    Output.OutputDesignDetails(bisection_search, toc - tic, projectName
+    OutputDesignDetails(bisection_search, toc - tic, projectName
                                , note, author, IterationName, outputDirectory=outputFileDirectory,
                                summaryFile="SummaryOfResults_C.txt", csvF1="TimeDependentValues_C.csv",
                                csvF2="BorefieldData_C.csv", csvF3="Loadings_C.csv", csvF4="GFunction_C.csv")

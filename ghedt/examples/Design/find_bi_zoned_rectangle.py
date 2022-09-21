@@ -9,7 +9,7 @@ import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
 import pandas as pd
 from time import time as clock
-from ghedt import Output
+from ghedt.output import OutputDesignDetails
 
 
 
@@ -105,7 +105,7 @@ def main():
     B_max_y = 12.  # m
 
     """ Geometric constraints for the `bi-zoned` routine.
-    Required geometric constraints for the bi-zoned design: 
+    Required geometric constraints for the bi-zoned design:
       - length
       - width
       - B_min
@@ -138,24 +138,30 @@ def main():
     print('Number of boreholes: {}'.format(nbh))
     print('Total Drilling: {0:.1f} meters\n'.
           format(bisection_search.ghe.bhe.b.H * nbh))
-
-    #Generating Ouptut File
-    Output.OutputDesignDetails(bisection_search,toc-tic,projectName
-                               ,note,author,IterationName,outputDirectory=outputFileDirectory,
-                               summaryFile="SummaryOfResults_SU.txt",csvF1="TimeDependentValues_SU.csv",
-                               csvF2="BorefieldData_SU.csv",csvF3="Loadings_SU.csv",csvF4="GFunction_SU.csv")
-
-    #*************************************************************************************************************
-    #Double U-tube Example
-
-    note = "Bi-Rectangle Usage Example: Double U Tube"
-
-    # Double U-tube
-    pos_double = plat.media.Pipe.place_pipes(s, r_out, 2)
-    double_u_tube = plat.borehole_heat_exchangers.MultipleUTube
-    pipe_double = \
-        plat.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-
+    # Plot the selected borehole coordinates for the single U-tube
+    # Land constraints
+    l_x_perimeter = 85.
+    l_y_perimeter = 80.
+    perimeter = \
+        dt.utilities.make_rectangle_perimeter(l_x_perimeter, l_y_perimeter)
+    # Building "no-go" zone
+    l_x_building = 50
+    l_y_building = 33.3
+    origin_x, origin_y = (15, 36.5)
+    no_go = dt.utilities.make_rectangle_perimeter(
+        l_x_building, l_y_building, origin=(origin_x, origin_y))
+    # Plot go and no-go zone with borehole coordinates
+    ghe = bisection_search.ghe
+    coordinates = ghe.GFunction.bore_locations
+    fig, ax = dt.gfunction.GFunction.visualize_area_and_constraints(
+        perimeter, coordinates, no_go=no_go)
+    # See Figure 4.24 on page 143 of Cook (2021)
+    fig.savefig('bi-zoned.png', bbox_inches='tight', pad_inches=0.1)
+    OutputDesignDetails(bisection_search, toc-tic, projectName
+                               , note, author, IterationName, outputDirectory=outputFileDirectory,
+                               summaryFile="SummaryOfResults_SU.txt", csvF1="TimeDependentValues_SU.csv",
+                               csvF2="BorefieldData_SU.csv", csvF3="Loadings_SU.csv", csvF4="GFunction_SU.csv")
+    '''
     # Double U-tube
     # -------------
     design_double_u_tube = dt.design.Design(
@@ -242,6 +248,6 @@ def main():
                                summaryFile="SummaryOfResults_C.txt", csvF1="TimeDependentValues_C.csv",
                                csvF2="BorefieldData_C.csv", csvF3="Loadings_C.csv", csvF4="GFunction_C.csv")
 
-
+    '''
 if __name__ == '__main__':
     main()

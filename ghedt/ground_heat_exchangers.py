@@ -1,25 +1,26 @@
-# Jack C. Cook
-# Thursday, September 16, 2021
 import copy
 import warnings
 
+import numpy as np
+import pygfunction as gt
 import scipy.interpolate
 import scipy.optimize
-import pygfunction as gt
-import ghedt.peak_load_analysis_tool as plat
-import ghedt as dt
-import numpy as np
 
+import ghedt as dt
+from ghedt.peak_load_analysis_tool.media import Pipe, Grout, Soil, SimulationParameters
+from ghedt.peak_load_analysis_tool.equivalance import compute_equivalent, solve_root
+from ghedt.peak_load_analysis_tool.radial_numerical_borehole import RadialNumericalBH
+from ghedt.peak_load_analysis_tool.ground_loads import HybridLoad
 
 class BaseGHE:
     def __init__(
             self, V_flow_system: float, B_spacing: float,
-            bhe_function: plat.borehole_heat_exchangers,
+            bhe_function,
             fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
-            pipe: plat.media.Pipe, grout: plat.media.Grout,
-            soil: plat.media.Soil, GFunction: dt.gfunction.GFunction,
-            sim_params: plat.media.SimulationParameters,
-            hourly_extraction_ground_loads: list,fieldType = "N/A",fieldSpecifier = "N/A"):
+            pipe: Pipe, grout: Grout,
+            soil: Soil, GFunction: dt.gfunction.GFunction,
+            sim_params: SimulationParameters,
+            hourly_extraction_ground_loads: list, fieldType="N/A", fieldSpecifier="N/A"):
 
         self.fieldType = fieldType
         self.fieldSpecifier = fieldSpecifier
@@ -35,11 +36,10 @@ class BaseGHE:
         self.bhe = bhe_function(
             m_flow_borehole, fluid, borehole, pipe, grout, soil)
         # Equivalent borehole Heat Exchanger
-        self.bhe_eq = plat.equivalance.compute_equivalent(self.bhe)
+        self.bhe_eq = compute_equivalent(self.bhe)
 
         # Radial numerical short time step
-        self.radial_numerical = \
-            plat.radial_numerical_borehole.RadialNumericalBH(self.bhe_eq)
+        self.radial_numerical = RadialNumericalBH(self.bhe_eq)
         self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
 
         # GFunction object
@@ -131,6 +131,7 @@ class BaseGHE:
             self.radial_numerical.g.tolist())
 
         return g
+
     def averageHeight(self):
         return self.bhe.b.H
 
@@ -169,7 +170,7 @@ class BaseGHE:
 
         HPEFT = []
         delta_Tb = []
-        for i in range(1, n+1):
+        for i in range(1, n + 1):
             # Take the last i elements of the reversed time array
             _time = time_values[i] - time_values[0:i]
             # _time = time_values_reversed[n - i:n]
@@ -213,27 +214,25 @@ class BaseGHE:
 
 class GHE(BaseGHE):
     def __init__(self, V_flow_system: float, B_spacing: float,
-                 bhe_object: plat.borehole_heat_exchangers,
+                 bhe_object,
                  fluid: gt.media.Fluid, borehole: gt.boreholes.Borehole,
-                 pipe: plat.media.Pipe, grout: plat.media.Grout,
-                 soil: plat.media.Soil,
+                 pipe: Pipe, grout: Grout,
+                 soil: Soil,
                  GFunction: dt.gfunction.GFunction,
-                 sim_params: plat.media.SimulationParameters,
-                 hourly_extraction_ground_loads: list,fieldType = "N/A",fieldSpecifier = "N/A",load_years = [2019]
-                 ):
+                 sim_params: SimulationParameters,
+                 hourly_extraction_ground_loads: list, fieldType="N/A", fieldSpecifier="N/A", load_years=[2019]):
         BaseGHE.__init__(
             self, V_flow_system, B_spacing, bhe_object, fluid, borehole, pipe,
-            grout, soil, GFunction, sim_params, hourly_extraction_ground_loads,fieldType = fieldType,fieldSpecifier = fieldSpecifier)
+            grout, soil, GFunction, sim_params, hourly_extraction_ground_loads, fieldType=fieldType,
+            fieldSpecifier=fieldSpecifier)
 
         # Split the extraction loads into heating and cooling for input to
         # the HybridLoad object
-        hourly_rejection_loads, hourly_extraction_loads = \
-            plat.ground_loads.HybridLoad.split_heat_and_cool(
+        hourly_rejection_loads, hourly_extraction_loads = HybridLoad.split_heat_and_cool(
                 self.hourly_extraction_ground_loads)
 
-        hybrid_load = plat.ground_loads.HybridLoad(
-            hourly_rejection_loads, hourly_extraction_loads, self.bhe_eq,
-            self.radial_numerical, sim_params,years=load_years)
+        hybrid_load = HybridLoad(hourly_rejection_loads, hourly_extraction_loads, self.bhe_eq,
+            self.radial_numerical, sim_params, years=load_years)
 
         # hybrid load object
         self.hybrid_load = hybrid_load
@@ -297,7 +296,7 @@ class GHE(BaseGHE):
         self.bhe.update_thermal_resistance()
 
         # Solve for equivalent single U-tube
-        self.bhe_eq = plat.equivalance.compute_equivalent(self.bhe)
+        self.bhe_eq = compute_equivalent(self.bhe)
         # Update short time step object with equivalent single u-tube
         self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
         # Combine the short and long-term g-functions. The long term g-function
@@ -323,7 +322,7 @@ class GHE(BaseGHE):
             else:
                 n_hours = len(Q_dot)
             Q_dot = -1. * np.array(Q_dot)  # Convert loads to rejection
-            #print("Times:",self.times)
+            # print("Times:",self.times)
             if len(self.times) == 0:
                 self.times = np.arange(1, n_hours + 1, 1)
             t = self.times
@@ -352,7 +351,7 @@ class GHE(BaseGHE):
         self.bhe.b.H = \
             (self.sim_params.max_Height + self.sim_params.min_Height) / 2.
         # bhe.b.H is updated during sizing
-        returnedHeight =plat.equivalance.solve_root(
+        returnedHeight = solve_root(
             self.bhe.b.H, local_objective, lower=self.sim_params.min_Height,
             upper=self.sim_params.max_Height, xtol=1.0e-6, rtol=1.0e-6,
             maxiter=50)
@@ -368,4 +367,3 @@ class GHE(BaseGHE):
                           'exchanger.')
 
         return
-

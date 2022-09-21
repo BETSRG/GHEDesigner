@@ -1,17 +1,15 @@
-# Jack C. Cook
-# Wednesday, October 27, 2021
 import copy
 
-import ghedt as dt
+import matplotlib.pyplot as plt
 import numpy as np
 import pygfunction as gt
-import matplotlib.pyplot as plt
+
 import ghedt.RowWise.RowWiseGeneration as RW
+from ghedt.coordinates import rectangle, transpose_coordinates, zoned_rectangle, l_shape, c_shape, lop_u
+from ghedt.feature_recognition import remove_cutout, determine_largest_rectangle
 
 
-def square_and_near_square(lower: int,
-                           upper: int,
-                           B: float):
+def square_and_near_square(lower: int, upper: int, B: float):
     if lower < 1 or upper < 1:
         raise ValueError('The lower and upper arguments must be positive'
                          'integer values.')
@@ -21,22 +19,21 @@ def square_and_near_square(lower: int,
 
     fieldDescriptors = []
     coordinates_domain = []
-    coordinates_domain.append([[0,0]])
-    coordinates_domain.append([[0,0],[0,B]])
-    coordinates_domain.append([[0,0],[0,B],[0,2*B]])
+    coordinates_domain.append([[0, 0]])
+    coordinates_domain.append([[0, 0], [0, B]])
+    coordinates_domain.append([[0, 0], [0, B], [0, 2 * B]])
     fieldDescriptors.append("1X1")
     fieldDescriptors.append("1X2")
     fieldDescriptors.append("1X3")
 
-    for i in range(lower, upper+1):
+    for i in range(lower, upper + 1):
         for j in range(2):
-            coordinates = \
-                dt.coordinates.rectangle(i, i+j, B, B)
+            coordinates = rectangle(i, i + j, B, B)
 
             coordinates_domain.append(coordinates)
-            fieldDescriptors.append("{}X{}".format(i,i+j))
+            fieldDescriptors.append("{}X{}".format(i, i + j))
 
-    return coordinates_domain,fieldDescriptors
+    return coordinates_domain, fieldDescriptors
 
 
 def rectangular(length_x, length_y, B_min, B_max, disp=False):
@@ -68,41 +65,41 @@ def rectangular(length_x, length_y, B_min, B_max, disp=False):
 
     iter = 0
 
-    for N in range(N_min, N_max+1):
+    for N in range(N_min, N_max + 1):
         # Check to see if we bracket
         B = length_1 / (N - 1)
         n_2 = int(np.floor((length_2 / B) + 1))
 
         if iter == 0:
             for i in range(1, N_min):
-                r = dt.coordinates.rectangle(i, 1, B, B)
+                r = rectangle(i, 1, B, B)
                 if transpose:
-                    r = dt.coordinates.transpose_coordinates(r)
+                    r = transpose_coordinates(r)
                 rectangle_domain.append(r)
-                fieldDescriptors.append(fieldDescriptorFormatString.format(i,1,B))
+                fieldDescriptors.append(fieldDescriptorFormatString.format(i, 1, B))
             for j in range(1, n_2):
-                r = dt.coordinates.rectangle(N_min, j, B, B)
+                r = rectangle(N_min, j, B, B)
                 if transpose:
-                    r = dt.coordinates.transpose_coordinates(r)
+                    r = transpose_coordinates(r)
                 rectangle_domain.append(r)
-                fieldDescriptors.append(fieldDescriptorFormatString.format(N_min,j,B))
+                fieldDescriptors.append(fieldDescriptorFormatString.format(N_min, j, B))
 
             iter += 1
         if n_2_old == n_2:
             pass
         else:
-            r = dt.coordinates.rectangle(N, n_2, B, B)
+            r = rectangle(N, n_2, B, B)
             if disp:
                 print('{}\t{}\t{}\t{}'.format(N, n_2, B, B))
             if transpose:
-                r = dt.coordinates.transpose_coordinates(r)
+                r = transpose_coordinates(r)
             rectangle_domain.append(r)
-            fieldDescriptors.append(fieldDescriptorFormatString.format(N,n_2,B))
+            fieldDescriptors.append(fieldDescriptorFormatString.format(N, n_2, B))
             n_2_old = copy.deepcopy(n_2)
 
         N += 1
 
-    return rectangle_domain,fieldDescriptors
+    return rectangle_domain, fieldDescriptors
 
 
 def bi_rectangular(
@@ -146,35 +143,35 @@ def bi_rectangular(
 
         if iter == 0:
             for i in range(1, n_1):
-                coordinates = dt.coordinates.rectangle(i, 1, b_1, b_2)
+                coordinates = rectangle(i, 1, b_1, b_2)
                 if transpose:
                     coordinates = \
-                        dt.coordinates.transpose_coordinates(coordinates)
+                        transpose_coordinates(coordinates)
                 bi_rectangle_domain.append(coordinates)
-                fieldDescriptors.append(fieldDescriptorFormatString.format(i,1,b_1,b_2))
+                fieldDescriptors.append(fieldDescriptorFormatString.format(i, 1, b_1, b_2))
             for j in range(1, n_2):
-                coordinates = dt.coordinates.rectangle(n_1, j, b_1, b_2)
+                coordinates = rectangle(n_1, j, b_1, b_2)
                 if transpose:
                     coordinates = \
-                        dt.coordinates.transpose_coordinates(coordinates)
+                        transpose_coordinates(coordinates)
                 bi_rectangle_domain.append(coordinates)
-                fieldDescriptors.append(fieldDescriptorFormatString.format(n_1,j,b_1,b_2))
+                fieldDescriptors.append(fieldDescriptorFormatString.format(n_1, j, b_1, b_2))
 
             iter += 1
 
         if disp:
             print('{0}x{1} with {2:.1f}x{3:.1f}'.format(n_1, n_2, b_1, b_2))
 
-        coordinates = dt.coordinates.rectangle(n_1, n_2, b_1, b_2)
+        coordinates = rectangle(n_1, n_2, b_1, b_2)
         if transpose:
             coordinates = \
-                dt.coordinates.transpose_coordinates(coordinates)
+                transpose_coordinates(coordinates)
         bi_rectangle_domain.append(coordinates)
-        fieldDescriptors.append(fieldDescriptorFormatString.format(n_1,n_2,b_1,b_2))
+        fieldDescriptors.append(fieldDescriptorFormatString.format(n_1, n_2, b_1, b_2))
 
         n_1 += 1
 
-    return bi_rectangle_domain,fieldDescriptors
+    return bi_rectangle_domain, fieldDescriptors
 
 
 def bi_rectangle_nested(length_x, length_y, B_min, B_max_x, B_max_y,
@@ -205,15 +202,15 @@ def bi_rectangle_nested(length_x, length_y, B_min, B_max_x, B_max_y,
 
     for n_2 in range(N_min, N_max + 1):
         b_2 = length_2 / (n_2 - 1)
-        bi_rectangle_domain,fD = dt.domains.bi_rectangular(
+        bi_rectangle_domain, fD = bi_rectangular(
             length_1, length_2, B_min, B_max_1, b_2, transpose=transpose,
             disp=disp)
-        #print("Bi-Rectangular: ",bi_rectangle_domain)
+        # print("Bi-Rectangular: ",bi_rectangle_domain)
         bi_rectangle_nested_domain.append(bi_rectangle_domain)
-        #fieldDescriptors.append(str(length_1) + "X" + str(length_2) + "_" + str(B_min) + "_" + str(B_max_1)+"_"+str(b_2))
+        # fieldDescriptors.append(str(length_1) + "X" + str(length_2) + "_" + str(B_min) + "_" + str(B_max_1)+"_"+str(b_2))
         fieldDescriptors.append(fD)
 
-    return bi_rectangle_nested_domain,fieldDescriptors
+    return bi_rectangle_nested_domain, fieldDescriptors
 
 
 def zoned_rectangle_domain(length_x, length_y, n_x, n_y, transpose=False):
@@ -239,9 +236,9 @@ def zoned_rectangle_domain(length_x, length_y, n_x, n_y, transpose=False):
     n_i1 = 1
     n_i2 = 1
 
-    z = dt.coordinates.zoned_rectangle(n_1, n_2, b_1, b_2, n_i1, n_i2)
+    z = zoned_rectangle(n_1, n_2, b_1, b_2, n_i1, n_i2)
     zoned_rectangle_domain.append(z)
-    fieldDescriptors.append(fieldDescriptorFormatString.format(n_1,n_2,n_i1,n_i2,b_1,b_2))
+    fieldDescriptors.append(fieldDescriptorFormatString.format(n_1, n_2, n_i1, n_i2, b_1, b_2))
 
     while n_i1 < (n_1 - 2) or n_i2 < (n_2 - 2):
 
@@ -269,13 +266,13 @@ def zoned_rectangle_domain(length_x, length_y, n_x, n_y, transpose=False):
             raise ValueError('This function should not have ever made it to '
                              'this point, there may be a problem with the '
                              'inputs.')
-        z = dt.coordinates.zoned_rectangle(n_1, n_2, b_1, b_2, n_i1, n_i2)
+        z = zoned_rectangle(n_1, n_2, b_1, b_2, n_i1, n_i2)
         if transpose:
-            z = dt.coordinates.transpose_coordinates(z)
+            z = transpose_coordinates(z)
         zoned_rectangle_domain.append(z)
-        fieldDescriptors.append( fieldDescriptorFormatString.format(n_1,n_2,n_i1,n_i2,b_1,b_2))
+        fieldDescriptors.append(fieldDescriptorFormatString.format(n_1, n_2, n_i1, n_i2, b_1, b_2))
 
-    return zoned_rectangle_domain,fieldDescriptors
+    return zoned_rectangle_domain, fieldDescriptors
 
 
 def bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y):
@@ -310,14 +307,14 @@ def bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y):
     fieldDescriptorFormatString = "{}X{}_{:.2f}X{:.2f}"
     fieldDescriptors = []
 
-    n_1_values = list(range(N_min_1, N_max_1+1))
-    n_2_values = list(range(N_min_2, N_max_2+1))
+    n_1_values = list(range(N_min_1, N_max_1 + 1))
+    n_2_values = list(range(N_min_2, N_max_2 + 1))
 
     j = 0  # pertains to n_1_values
     k = 0  # pertains to n_2_values
     l = 0
 
-    for i in range(len(n_1_values) + len(n_2_values)-1):
+    for i in range(len(n_1_values) + len(n_2_values) - 1):
         domain = []
         fD = []
         if l == 0:
@@ -326,64 +323,62 @@ def bi_rectangle_zoned_nested(length_x, length_y, B_min, B_max_x, B_max_y):
 
             # go from one borehole to a line
             for l in range(1, N_min_1 + 1):
-                r = dt.coordinates.rectangle(l, 1, b_x, b_y)
+                r = rectangle(l, 1, b_x, b_y)
                 if transpose:
-                    r = dt.coordinates.transpose_coordinates(r)
+                    r = transpose_coordinates(r)
                 domain.append(r)
-                fD.append(fieldDescriptorFormatString.format(l,1,b_x,b_y))
+                fD.append(fieldDescriptorFormatString.format(l, 1, b_x, b_y))
 
             # go from a line to an L
             for l in range(2, N_min_2 + 1):
-                L = dt.coordinates.L_shape(N_min_1, l, b_x, b_y)
+                L = l_shape(N_min_1, l, b_x, b_y)
                 if transpose:
-                    L = dt.coordinates.transpose_coordinates(L)
+                    L = transpose_coordinates(L)
                 domain.append(L)
-                fD.append(fieldDescriptorFormatString.format(N_min_1,l,b_x,b_y))
+                fD.append(fieldDescriptorFormatString.format(N_min_1, l, b_x, b_y))
 
             # go from an L to a U
             for l in range(2, N_min_2 + 1):
-                lop_u = \
-                    dt.coordinates.lop_U(N_min_1, N_min_2, b_x, b_y, l)
+                lop_u_field = \
+                    lop_u(N_min_1, N_min_2, b_x, b_y, l)
                 if transpose:
-                    lop_u = dt.coordinates.transpose_coordinates(lop_u)
-                domain.append(lop_u)
-                fD.append(fieldDescriptorFormatString.format(N_min_1,N_min_2,b_x,b_y))
+                    lop_u_field = transpose_coordinates(lop_u_field)
+                domain.append(lop_u_field)
+                fD.append(fieldDescriptorFormatString.format(N_min_1, N_min_2, b_x, b_y))
 
             # go from a U to an open
             for l in range(1, N_min_1 - 1):
-                c = dt.coordinates.C_shape(N_min_1, N_min_2, b_x, b_y, l)
+                c = c_shape(N_min_1, N_min_2, b_x, b_y, l)
                 if transpose:
-                    c = dt.coordinates.transpose_coordinates(c)
+                    c = transpose_coordinates(c)
                 domain.append(c)
-                fD.append(fieldDescriptorFormatString.format(N_min_1,N_min_2,b_x,b_y))
+                fD.append(fieldDescriptorFormatString.format(N_min_1, N_min_2, b_x, b_y))
 
             l += 1
 
         if i % 2 == 0:
-            bi_rectangle_zoned_domain,fDs = \
-                zoned_rectangle_domain(length_1, length_2, n_1_values[j],
-                                       n_2_values[k], transpose=transpose)
+            bi_rectangle_zoned_domain, fDs = zoned_rectangle_domain(length_1, length_2, n_1_values[j],
+                                                                    n_2_values[k], transpose=transpose)
             domain.extend(bi_rectangle_zoned_domain)
             fD.extend(fDs)
-            if j < len(n_1_values)-1:
+            if j < len(n_1_values) - 1:
                 j += 1
             else:
                 k += 1
         else:
-            bi_rectangle_zoned_domain,fDs = \
-                zoned_rectangle_domain(length_1, length_2, n_1_values[j],
-                                       n_2_values[k], transpose=transpose)
+            bi_rectangle_zoned_domain, fDs = zoned_rectangle_domain(length_1, length_2, n_1_values[j],
+                                                                    n_2_values[k], transpose=transpose)
             domain.extend(bi_rectangle_zoned_domain)
             fD.extend(fDs)
-            if k < len(n_2_values)-1:
+            if k < len(n_2_values) - 1:
                 k += 1
             else:
                 j += 1
 
-        bi_rectangle_zoned_nested_domain.append(domain)
-        fieldDescriptors.append(fD)
+    bi_rectangle_zoned_nested_domain.append(domain)
+    fieldDescriptors.append(fD)
 
-    return bi_rectangle_zoned_nested_domain,fieldDescriptors
+    return bi_rectangle_zoned_nested_domain, fieldDescriptors
 
 
 def polygonal_land_constraint(property_boundary, B_min, B_max_x, B_max_y,
@@ -392,14 +387,14 @@ def polygonal_land_constraint(property_boundary, B_min, B_max_x, B_max_y,
         building_descriptions = []
 
     outer_rectangle = \
-        dt.feature_recognition.determine_largest_rectangle(property_boundary)
+        determine_largest_rectangle(property_boundary)
 
     x, y = list(zip(*outer_rectangle))
     length = max(x)
     width = max(y)
-    coordinates_domain_nested,fieldDescriptors = \
-            dt.domains.bi_rectangle_nested(length, width, B_min, B_max_x,
-                                              B_max_y)
+    coordinates_domain_nested, fieldDescriptors = \
+        bi_rectangle_nested(length, width, B_min, B_max_x,
+                            B_max_y)
 
     coordinates_domain_nested_cutout = []
 
@@ -408,13 +403,13 @@ def polygonal_land_constraint(property_boundary, B_min, B_max_x, B_max_y,
         for j in range(len(coordinates_domain_nested[i])):
             coordinates = coordinates_domain_nested[i][j]
             # Remove boreholes outside of property
-            new_coordinates = dt.feature_recognition.remove_cutout(
+            new_coordinates = remove_cutout(
                 coordinates, boundary=property_boundary, remove_inside=False)
             # Remove boreholes inside of building
             if len(new_coordinates) == 0:
                 continue
             for building_description in building_descriptions:
-                new_coordinates = dt.feature_recognition.remove_cutout(
+                new_coordinates = remove_cutout(
                     new_coordinates, boundary=building_description,
                     remove_inside=True, keep_contour=False)
             new_coordinates_domain.append(new_coordinates)
@@ -424,19 +419,23 @@ def polygonal_land_constraint(property_boundary, B_min, B_max_x, B_max_y,
     fieldDescriptors_reordered = []
     for i in range(len(coordinates_domain_nested_cutout)):
         domain = coordinates_domain_nested_cutout[i]
-        domain_reordered, fD_reordered = reorder_domain(domain,fieldDescriptors[i])
+        domain_reordered, fD_reordered = reorder_domain(domain, fieldDescriptors[i])
         coordinates_domain_nested_cutout_reordered.append(domain_reordered)
         fieldDescriptors_reordered.append(fD_reordered)
 
-    return coordinates_domain_nested_cutout_reordered,fieldDescriptors_reordered
+    return coordinates_domain_nested_cutout_reordered, fieldDescriptors_reordered
 
-def RowWise_Domain(pSpac,spacStart,spacStop,spacStep,rotateStep,propBound,ngZones,rotateStart,rotateStop,Directory = "",pdfOutputName="Graphs.pdf"):
-    domain,fieldDestriptors = RW.fieldOptimizationWPSpac_FR([pSpac],spacStart,spacStop,spacStep,rotateStep,Directory
-                                                            ,propBound,ngZones=ngZones,rotateStart=rotateStart
-                                                            ,rotateStop=rotateStop,pdfOutputName=pdfOutputName)
-    domain = [domain[i] for i in range(len(domain)-1,-1,-1)]
+
+def RowWise_Domain(pSpac, spacStart, spacStop, spacStep, rotateStep, propBound, ngZones, rotateStart, rotateStop,
+                   Directory="", pdfOutputName="Graphs.pdf"):
+    domain, fieldDestriptors = RW.fieldOptimizationWPSpac_FR([pSpac], spacStart, spacStop, spacStep, rotateStep,
+                                                             Directory
+                                                             , propBound, ngZones=ngZones, rotateStart=rotateStart
+                                                             , rotateStop=rotateStop, pdfOutputName=pdfOutputName)
+    domain = [domain[i] for i in range(len(domain) - 1, -1, -1)]
     fieldDestriptors = [fieldDestriptors[i] for i in range(len(fieldDestriptors) - 1, -1, -1)]
-    return [domain,fieldDestriptors]
+    return [domain, fieldDestriptors]
+
 
 # The following functions are utility functions specific to domains.py
 # ------------------------------------------------------------------------------
@@ -445,7 +444,7 @@ def verify_excess(domain):
     unimodal = True
     delta_T_values = []
     for i in range(1, len(domain)):
-        delta_T = domain[i] - domain[i-1]
+        delta_T = domain[i] - domain[i - 1]
         delta_T_values.append(delta_T)
         if delta_T > 0:
             unimodal = False
@@ -453,7 +452,7 @@ def verify_excess(domain):
     return delta_T_values, unimodal
 
 
-def reorder_domain(domain,descriptors):
+def reorder_domain(domain, descriptors):
     # Reorder the domain so that the number of boreholes successively grow
     numbers = {}
     for i in range(len(domain)):
@@ -471,7 +470,7 @@ def reorder_domain(domain,descriptors):
                 reordered_descriptors.append(descriptors[j])
                 break
 
-    return reordered_domain,reordered_descriptors
+    return reordered_domain, reordered_descriptors
 
 
 def visualize_domain(domain, output_folder_name):

@@ -1,49 +1,84 @@
-# Jack C. Cook
-# Tuesday, October 26, 2021
+from typing import Union
 
 
 def transpose_coordinates(coordinates):
     coordinates_transposed = []
     for i in range(len(coordinates)):
-        x,y = coordinates[i]
+        x, y = coordinates[i]
         coordinates_transposed.append((y, x))
     return coordinates_transposed
 
 
-def rectangle(Nx, Ny, Bx, By, origin=(0, 0)):
-    # Create a list of (x, y) pairs for a rectangle
+def rectangle(num_bh_x: int, num_bh_y: int,
+              spacing_x: Union[int, float], spacing_y: Union[int, float],
+              origin=(0, 0)):
+    """
+    Creates a rectangular borehole field.
+
+    X   X   X   X
+    X   X   X   X
+    X   X   X   X
+    X   X   X   X
+
+    Args:
+        num_bh_x: number of borehole rows in x-direction
+        num_bh_y: number of borehole rows in y-direction
+        spacing_x: spacing between borehole rows in x-direction
+        spacing_y: spacing between borehole rows in y-direction
+        origin: coordinates for origin at lower-left corner
+
+    Returns:
+        list of tuples (x, y) containing borehole coordinates
+    """
+
     r = []
-    nbh = Nx * Ny
-    _x = origin[0]
-    _y = origin[1]
-    for i in range(Nx):
-        for j in range(Ny):
-            r.append((_x + i * Bx, _y + j * By))
-    assert len(r) == nbh
+    x_0 = origin[0]
+    y_0 = origin[1]
+    for i in range(num_bh_x):
+        for j in range(num_bh_y):
+            r.append((x_0 + i * spacing_x, y_0 + j * spacing_y))
+    assert len(r) == num_bh_x * num_bh_y
     return r
 
 
-def open_rectangle(Nx, Ny, Bx, By):
-    # Create a list of (x, y) pairs for an open rectangle
-    open_r = []
-    if Nx > 2 and Ny > 2:
-        nbh = Ny * 2 + (Nx - 2) * 2
-        for i in range(Nx):
-            open_r.append((i * Bx, 0.))
-        for j in range(1, Ny-1):
-            open_r.append((0, j * By))
-            open_r.append(((Nx-1) * Bx, j * By))
-        for i in range(Nx):
-            open_r.append((i * Bx, (Ny-1) * By))
-    else:
-        nbh = Nx * Ny
-        open_r = rectangle(Nx, Ny, Bx, By)
+def open_rectangle(num_bh_x: int, num_bh_y: int,
+                   spacing_x: Union[int, float], spacing_y: Union[int, float]):
+    """
+    Creates a rectangular borehole field without center boreholes.
 
+    X   X   X   X
+    X           X
+    X           X
+    X   X   X   X
+
+    Args:
+        num_bh_x: number of borehole rows in x-direction
+        num_bh_y: number of borehole rows in y-direction
+        spacing_x: spacing between borehole rows in x-direction
+        spacing_y: spacing between borehole rows in y-direction
+
+    Returns:
+        list of tuples (x, y) containing borehole coordinates
+    """
+
+    open_r = []
+    if num_bh_x > 2 and num_bh_y > 2:
+        for i in range(num_bh_x):
+            open_r.append((i * spacing_x, 0.))
+        for j in range(1, num_bh_y - 1):
+            open_r.append((0, j * spacing_y))
+            open_r.append(((num_bh_x - 1) * spacing_x, j * spacing_y))
+        for i in range(num_bh_x):
+            open_r.append((i * spacing_x, (num_bh_y - 1) * spacing_y))
+        nbh = num_bh_y * 2 + (num_bh_x - 2) * 2
+    else:
+        open_r = rectangle(num_bh_x, num_bh_y, spacing_x, spacing_y)
+        nbh = num_bh_x * num_bh_y
     assert len(open_r) == nbh
     return open_r
 
 
-def C_shape(Nx_1, Ny, Bx, By, Nx_2):
+def c_shape(Nx_1, Ny, Bx, By, Nx_2):
     nbh = Nx_1 + (Ny * 2) - 1 + Nx_2 - 1
     c = []
     for i in range(Nx_1):
@@ -53,14 +88,14 @@ def C_shape(Nx_1, Ny, Bx, By, Nx_2):
         c.append((0., j * By))
     for j in range(1, Ny):
         c.append((x_loc, j * By))
-    y_loc = (Ny-1) * By
-    for i in range(1, Nx_2+1):
+    y_loc = (Ny - 1) * By
+    for i in range(1, Nx_2 + 1):
         c.append((i * Bx, y_loc))
     assert len(c) == nbh
     return c
 
 
-def U_shape(Nx, Ny, Bx, By):
+def u_shape(Nx, Ny, Bx, By):
     # Create a list of (x, y) pairs for a U-shape
     U = []
     if Nx > 2 and Ny > 1:
@@ -76,21 +111,21 @@ def U_shape(Nx, Ny, Bx, By):
     return U
 
 
-def lop_U(Nx, Ny_1, Bx, By, Ny_2):
+def lop_u(Nx, Ny_1, Bx, By, Ny_2):
     nbh = Nx + Ny_1 - 1 + Ny_2 - 1
     lop_u = []
     for i in range(Nx):
         lop_u.append((i * Bx, 0.))
     for j in range(1, Ny_1):
         lop_u.append((0., j * By))
-    x_loc = (Nx-1)*Bx
+    x_loc = (Nx - 1) * Bx
     for j in range(1, Ny_2):
         lop_u.append((x_loc, j * By))
     assert len(lop_u) == nbh
     return lop_u
 
 
-def L_shape(Nx, Ny, Bx, By):
+def l_shape(Nx, Ny, Bx, By):
     nbh = Nx + Ny - 1
     L = []
     for i in range(Nx):
@@ -124,34 +159,3 @@ def zoned_rectangle(Nx, Ny, Bx, By, Nix, Niy):
     zoned.extend(rectangle(Nix, Niy, Bix, Biy, origin=(Bix, Biy)))
 
     return zoned
-
-
-def visualize_coordinates(coordinates):
-    """
-    Visualize the (x,y) coordinates.
-    Returns
-    -------
-    **fig, ax**
-        Figure and axes information.
-    """
-    import matplotlib.pyplot as plt
-    plt.rc('font', size=9)
-    plt.rc('xtick', labelsize=9)
-    plt.rc('ytick', labelsize=9)
-    plt.rc('lines', lw=1.5, markersize=5.0)
-    plt.rc('savefig', dpi=500)
-    # fig, ax = plt.subplots(figsize=(3.5, 5))
-    import pygfunction as gt
-    fig = gt.utilities._initialize_figure()
-    ax = fig.add_subplot(111)
-
-    x, y = list(zip(*coordinates))
-
-    ax.scatter(x, y)
-
-    ax.set_xlabel('x (m)')
-    ax.set_ylabel('y (m)')
-
-    ax.set_aspect('equal')
-
-    return fig, ax

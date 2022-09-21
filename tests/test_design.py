@@ -1,5 +1,3 @@
-# Jack C. Cook
-# Thursday, January 6, 2021
 import copy
 import unittest
 import os
