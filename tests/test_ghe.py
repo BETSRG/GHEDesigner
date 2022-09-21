@@ -162,12 +162,12 @@ class TestGHE(unittest.TestCase):
 
         max_HP_EFT, min_HP_EFT = ghe.simulate(method='hybrid')
 
-        self.assertAlmostEqual(39.084419566119934, max_HP_EFT)
-        self.assertAlmostEqual(16.660966674440232, min_HP_EFT)
+        self.assertAlmostEqual(39.09, max_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(16.66, min_HP_EFT, delta=0.01)
 
         ghe.size(method='hybrid')
 
-        self.assertAlmostEqual(ghe.bhe.b.H, 130.13510780396268, places=2)
+        self.assertAlmostEqual(ghe.bhe.b.H, 130.22, places=2)
 
     def test_double_u_tube(self):
 
@@ -189,12 +189,12 @@ class TestGHE(unittest.TestCase):
 
         max_HP_EFT, min_HP_EFT = ghe.simulate(method='hybrid')
 
-        self.assertAlmostEqual(37.97229212228275, max_HP_EFT, delta=0.01)
-        self.assertAlmostEqual(16.989189768401793, min_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(37.98, max_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(16.98, min_HP_EFT, delta=0.01)
 
         ghe.size(method='hybrid')
 
-        self.assertAlmostEqual(ghe.bhe.b.H, 121.85659366084005, places=2)
+        self.assertAlmostEqual(ghe.bhe.b.H, 121.97, places=2)
 
     def test_coaxial_tube(self):
 
@@ -216,9 +216,9 @@ class TestGHE(unittest.TestCase):
 
         max_HP_EFT, min_HP_EFT = ghe.simulate(method='hybrid')
 
-        self.assertAlmostEqual(37.73503652828782, max_HP_EFT)
-        self.assertAlmostEqual(17.61422171583412, min_HP_EFT)
+        self.assertAlmostEqual(37.74, max_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(17.61, min_HP_EFT, delta=0.01)
 
         ghe.size(method='hybrid')
 
-        self.assertAlmostEqual(ghe.bhe.b.H, 120.89971616555863, places=2)
+        self.assertAlmostEqual(ghe.bhe.b.H, 121.02, delta=0.01)
