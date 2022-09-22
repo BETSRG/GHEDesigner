@@ -19,7 +19,6 @@ def plot_coordinates(coords, title):
 
 
 class TestCoordinates(unittest.TestCase):
-
     def test_rectangle(self):
         coords = rectangle(4, 4, 1, 1)
         self.assertEqual(len(coords), 16)
