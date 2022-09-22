@@ -1139,7 +1139,7 @@ class HybridLoad:
         ax.set_xticks(list(ax.get_xticks()) + new_ticks)
 
         ax.set_xlabel("Time (hours)")
-        ax.set_ylabel("Change in fluid temperature, $\Delta$T$_f$ ($\degree$C)")
+        ax.set_ylabel(r"Change in fluid temperature, $\Delta$T$_f$ ($\degree$C)")
 
         ax.set_xlim([-2, 50])
 

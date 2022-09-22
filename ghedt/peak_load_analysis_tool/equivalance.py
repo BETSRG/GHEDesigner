@@ -64,8 +64,8 @@ def equivalent_single_u_tube(bhe, V_fluid, V_pipe, R_conv, R_pipe):
     n = 2
     r_p_i_prime = sqrt(V_fluid / (n * pi))
     r_p_o_prime = sqrt((V_fluid + V_pipe) / (n * pi))
-    A_s_prime = n * pi * ((r_p_i_prime * 2) ** 2)
-    h_prime = 1 / (R_conv * A_s_prime)
+    # A_s_prime = n * pi * ((r_p_i_prime * 2) ** 2)
+    # h_prime = 1 / (R_conv * A_s_prime)
     k_p_prime = log(r_p_o_prime / r_p_i_prime) / (2 * pi * n * R_pipe)
 
     # Place single u-tubes at a B-spacing
@@ -132,7 +132,7 @@ def u_tube_volumes(u_tube):
     # Volumes
     V_fluid = n * pi * (u_tube.r_in**2)
     V_pipe = n * pi * (u_tube.r_out**2) - V_fluid
-    V_grout = pi * (u_tube.b.r_b**2) - V_pipe - V_fluid
+    # V_grout = pi * (u_tube.b.r_b**2) - V_pipe - V_fluid
     R_pipe = log(u_tube.r_out / u_tube.r_in) / (n * 2 * pi * u_tube.pipe.k)
     return V_fluid, V_pipe, R_conv, R_pipe
 
@@ -146,7 +146,7 @@ def concentric_tube_volumes(coaxial):
     V_pipe = pi * (
         (r_in_out**2) - (r_in_in**2) + (r_out_out**2) - (r_out_in**2)
     )
-    V_grout = pi * ((coaxial.b.r_b**2) - (r_out_out**2))
+    # V_grout = pi * ((coaxial.b.r_b**2) - (r_out_out**2))
     A_s = pi * 2 * r_out_in
     R_conv = 1 / (coaxial.h_fluid_a_in * A_s)
     R_pipe = log(r_out_out / r_out_in) / (2 * pi * coaxial.pipe.k[1])

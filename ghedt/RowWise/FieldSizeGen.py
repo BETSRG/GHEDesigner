@@ -63,7 +63,7 @@ def genFields(
         else:
             pass
 
-        if MaxNumberOfFields != None and numberOfFields > MaxNumberOfFields:
+        if MaxNumberOfFields is not None and numberOfFields > MaxNumberOfFields:
             break
         currentOffset += offsetIterator
     i = 0

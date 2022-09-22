@@ -190,7 +190,7 @@ def read_input_file(path_to_file):
 # Functions related to computing statistics.
 # ------------------------------------------
 def compute_mpe(actual: list, predicted: list) -> float:
-    """
+    r"""
     The following mean percentage error formula is used:
     .. math::
         MPE = \dfrac{100\%}{n}\sum_{i=0}^{n-1}\dfrac{a_t-p_t}{a_t}

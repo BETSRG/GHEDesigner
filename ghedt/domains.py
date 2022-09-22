@@ -258,13 +258,13 @@ def zoned_rectangle_domain(length_x, length_y, n_x, n_y, transpose=False):
         # general case where we can reduce in either direction
         # inner rectangular spacing
         bi_1 = (n_1 - 1) * b_1 / (n_i1 + 1)
-        bi_2 = (n_2 - 1) * b_2 / (n_i2 + 1)
+        # bi_2 = (n_2 - 1) * b_2 / (n_i2 + 1)
         # inner spacings for increasing each row
-        bi_1_p1 = (n_1 - 1) * b_1 / (n_i1 + 2)
+        # bi_1_p1 = (n_1 - 1) * b_1 / (n_i1 + 2)
         bi_2_p1 = (n_2 - 1) * b_2 / (n_i2 + 2)
 
         ratio_1 = bi_1 / bi_2_p1
-        ratio_2 = bi_2 / bi_1_p1
+        # ratio_2 = bi_2 / bi_1_p1
 
         # we only want to increase one at a time, and we want to increase
         # the one that will keep the inner rectangle furthest from the perimeter

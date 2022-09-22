@@ -360,11 +360,11 @@ class RadialNumericalBH(object):
         time = (1e-12) - 120
         time_step = 120
 
-        type_idx = self.cell_inputs["type"]
+        # type_idx = self.cell_inputs["type"]
         r_in_idx = self.cell_inputs["inner-radius"]
         r_center_idx = self.cell_inputs["center-radius"]
         r_out_idx = self.cell_inputs["outer-radius"]
-        thickness_idx = self.cell_inputs["thickness"]
+        # thickness_idx = self.cell_inputs["thickness"]
         k_idx = self.cell_inputs["conductivity"]
         rhoCp_idx = self.cell_inputs["heat-capacity"]
         temperature_idx = self.cell_inputs["initial-temperature"]

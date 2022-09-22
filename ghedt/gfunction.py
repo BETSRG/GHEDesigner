@@ -179,7 +179,7 @@ class GFunction:
         self.interpolation_table: dict = {}
 
     def g_function_interpolation(self, B_over_H: float, kind="default"):
-        """
+        r"""
         Interpolate a range of g-functions for a specific B/H ratio
         Parameters
         ----------
@@ -326,7 +326,7 @@ class GFunction:
 
     @staticmethod
     def borehole_radius_correction(g_function: list, rb: float, rb_star: float):
-        """
+        r"""
         Correct the borehole radius. From paper 3 of Eskilson 1987.
         .. math::
             g(\dfrac{t}{t_s}, \dfrac{r_b^*}{H}) =
@@ -553,9 +553,9 @@ class GFunction:
             # if there's no D provided, make it 2
             Ds = {key: 2.0 for key in keys}
         r_bs = {key: r_bs_tmp[key] for key in keys}
-        time = {
-            key: t_tmp[key] for key in keys
-        }  # fill the time array for yearly points
+        # time = {
+        #     key: t_tmp[key] for key in keys
+        # }  # fill the time array for yearly points
 
         geothermal_g_input = {}
         geothermal_g_input["B"] = B

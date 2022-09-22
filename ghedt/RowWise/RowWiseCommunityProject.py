@@ -29,7 +29,7 @@ def main():
 
     buildVert, nogoVert = genShape(prop, ngZones=ng)
     Directory = (
-        "D:\Work\GSHPResearch\RowWiseCoordGen\Row-wiseCoordinateGenerator\RowWise\\"
+        r"D:\Work\GSHPResearch\RowWiseCoordGen\Row-wiseCoordinateGenerator\RowWise\\"
     )
     pSpacs = [0.7]
     spacStart = 13.5

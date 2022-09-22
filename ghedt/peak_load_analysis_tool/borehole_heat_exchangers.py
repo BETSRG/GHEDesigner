@@ -556,7 +556,7 @@ def compute_Reynolds(m_flow_pipe, r_in, epsilon, fluid):
     # Hydraulic diameter
     D = 2.0 * r_in
     # Relative roughness
-    E = epsilon / D
+    # E = epsilon / D
     # Fluid velocity
     V_flow = m_flow_pipe / fluid.rho
     A_cs = pi * r_in**2
@@ -569,7 +569,7 @@ def compute_Reynolds(m_flow_pipe, r_in, epsilon, fluid):
 def compute_Reynolds_concentric(m_flow_pipe, r_a_in, r_a_out, fluid):
     # Hydraulic diameter and radius for concentric tube annulus region
     D_h = 2 * (r_a_out - r_a_in)
-    r_h = D_h / 2
+    # r_h = D_h / 2
     # Cross-sectional area of the annulus region
     A_c = pi * ((r_a_out**2) - (r_a_in**2))
     # Volume flow rate

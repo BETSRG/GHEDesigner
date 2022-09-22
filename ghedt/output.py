@@ -269,7 +269,7 @@ def OutputDesignDetails(
     oS += emptyLine
 
     """
-   
+
     """
 
     oS += "------ System parameters ------" + "\n"
@@ -658,21 +658,21 @@ def OutputDesignDetails(
 
     # Simulation Results
     EFTTableTitle = "Monthly Temperature Summary"
-    daysInYear = np.array([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
-    hoursInYear = 24 * daysInYear
+    # daysInYear = np.array([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
+    # hoursInYear = 24 * daysInYear
     timeVals = ghe.times
     EFTVals = []
     EFTVals.extend(ghe.HPEFT)
     dTbVals = []
     dTbVals.extend(ghe.dTb)
     nYears = 0
-    hTotalYear = np.sum(hoursInYear)
+    # hTotalYear = np.sum(hoursInYear)
     outArray = []
     lastMonth = -1
     monthTbVals = []
     monthEFTVals = []
     for i in range(len(timeVals)):
-        currentHourMonth = timeVals[i] - hTotalYear * nYears
+        # currentHourMonth = timeVals[i] - hTotalYear * nYears
         currentMonth = int(math.floor(hoursToMonth(timeVals[i])))
         # print(monthEFTVals)
         if currentMonth == lastMonth:

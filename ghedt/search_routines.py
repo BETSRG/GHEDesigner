@@ -5,7 +5,6 @@ import numpy as np
 import pygfunction as gt
 
 import ghedt as dt
-import ghedt.peak_load_analysis_tool as plat
 from ghedt.RowWise.RowWiseGeneration import fieldOptimizationWPSpac_FR
 from ghedt.RowWise.RowWiseGeneration import fieldOptimization_FR
 from ghedt.utilities import sign, check_bracket
@@ -242,7 +241,7 @@ class Bisection1D:
             print("Beginning bisection search...")
 
         xL_sign = sign(T_0_upper)
-        xR_sign = sign(T_m1)
+        # xR_sign = sign(T_m1)
 
         i = 0
 
@@ -727,8 +726,8 @@ class RowWiseModifiedBisectionSearch:
                 nbhMax = len(startingField)
                 nbhMin = 1
                 nbh_start = nbhMax
-                continueLoop = True
-                highT_e = T_lower
+                # continueLoop = True
+                # highT_e = T_lower
                 selected_specifier = lowerFieldSpecifier
                 i = 0
                 while i < self.max_iter:
@@ -744,7 +743,7 @@ class RowWiseModifiedBisectionSearch:
                         )
                         self.checkedFields.append(currentField)
                     if T_e <= 0.0:
-                        highT_e = T_e
+                        # highT_e = T_e
                         nbhMax = nbh
                         selected_coordinates = currentField
                         selected_specifier = fS
@@ -806,7 +805,7 @@ class Bisection1D_modified:
         # initial setup
         self.searchTracker = []
         coordinates = coordinates_domain[0]
-        currentField = fieldDescriptors[0]
+        # currentField = fieldDescriptors[0]
         self.fieldType = fieldType
         # Flow rate tracking
         self.V_flow = V_flow
@@ -1003,7 +1002,7 @@ class Bisection1D_modified:
             print("Beginning bisection search...")
 
         xL_sign = sign(T_0_upper)
-        xR_sign = sign(T_m1)
+        # xR_sign = sign(T_m1)
 
         i = 0
 

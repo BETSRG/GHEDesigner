@@ -27,7 +27,7 @@ def genShape(propBound, ngZones=None):
     """Returns an array of shapes objects representing the coordinates given"""
     rA = []
     rA.append(Shapes(propBound))
-    if ngZones != None:
+    if ngZones is not None:
         rN = []
         for ngZone in ngZones:
             rN.append(Shapes(ngZone))
@@ -66,9 +66,9 @@ def fieldOptimizationWPSpac_FR(
         CSV's containing the coordinates for the max field for each target spacing, their respective graphs, and their respective data
 
     """
-    if rotateStart == None:
+    if rotateStart is None:
         rotateStart = (-90.0 + rotateStep) * (pi / 180.0)
-    if rotateStop == None:
+    if rotateStop is None:
         rotateStop = pi / 2
     if (
         rotateStart > pi / 2
@@ -148,9 +148,9 @@ def fieldOptimization_FR(
         CSV's containing the coordinates for the max field for each target spacing, their respective graphs, and their respective data
 
     """
-    if rotateStart == None:
+    if rotateStart is None:
         rotateStart = (-90.0) * (pi / 180.0)
-    if rotateStop == None:
+    if rotateStop is None:
         rotateStop = pi / 2
     if (
         rotateStart > pi / 2
@@ -235,9 +235,9 @@ def fieldOptimizationWPSpac(
         CSV's containing the coordinates for the max field for each target spacing, their respective graphs, and their respective data
 
     """
-    if rotateStart == None:
+    if rotateStart is None:
         rotateStart = (-90.0 + rotateStep) * (pi / 180.0)
-    if rotateStop == None:
+    if rotateStop is None:
         rotateStop = pi / 2
     if (
         rotateStart >= pi / 2
@@ -319,7 +319,7 @@ def fieldOptimizationWPSpac(
 
                 # Export CSV's
                 with open(
-                    "".join([MDir, "\MaxData_Spac_", str(spac), ".csv"]),
+                    "".join([MDir, r"\MaxData_Spac_", str(spac), ".csv"]),
                     "w",
                     newline="",
                 ) as outputFile:
@@ -328,7 +328,7 @@ def fieldOptimizationWPSpac(
                         ["Rotation: ", maxrt, "Length: ", maxL, "Spacing: ", spac]
                     )
                 with open(
-                    "".join([PDir, "\MaxL_Spac_", str(spac), ".csv"]), "w", newline=""
+                    "".join([PDir, r"\MaxL_Spac_", str(spac), ".csv"]), "w", newline=""
                 ) as outputFile:
                     csvWriter = csv.writer(outputFile)
                     csvWriter.writerow(["x", "y"])
@@ -362,9 +362,9 @@ def fieldGenerator(
 
     """
     propBound, ngZones = genShape(propBound, ngZones=ngZones)
-    if rotateStart == None:
+    if rotateStart is None:
         rotateStart = (-90.0 + rotateStep) * (pi / 180.0)
-    if rotateStop == None:
+    if rotateStop is None:
         rotateStop = pi / 2
     if (
         rotateStart >= pi / 2
@@ -385,7 +385,7 @@ def fieldGenerator(
     while rt < rotateStop:
         # print("Current Rotation: ",rt)
         hole = None
-        if pSpac == None:
+        if pSpac is None:
             hole = genBoreHoleConfig(propBound, ySpac, xSpac, rotate=rt, nogo=ngZones)
         else:
             hole = twoSpacGenBHC(
@@ -400,7 +400,7 @@ def fieldGenerator(
         rt += rotateStep * (pi / 180)
 
     # Ensures that there are no repeated boreholes
-    if pSpac == None:
+    if pSpac is None:
         maxHole = np.array(remove_duplicates(maxHole, min(xSpac, ySpac)))
     else:
         maxHole = np.array(remove_duplicates(maxHole, min(pSpac, xSpac, ySpac)))
@@ -438,9 +438,9 @@ def fieldOptimization(
         CSV's containing the coordinates for the max field for each target spacing, their respective graphs, and their respective data
 
     """
-    if rotateStart == None:
+    if rotateStart is None:
         rotateStart = (-90.0 + rotateStep) * (pi / 180.0)
-    if rotateStop == None:
+    if rotateStop is None:
         rotateStop = pi / 2
     if (
         rotateStart >= pi / 2
@@ -517,14 +517,14 @@ def fieldOptimization(
 
             # Export CSV's
             with open(
-                "".join([MDir, "\MaxData_Spac_", str(spac), ".csv"]), "w", newline=""
+                "".join([MDir, r"\MaxData_Spac_", str(spac), ".csv"]), "w", newline=""
             ) as outputFile:
                 csvWriter = csv.writer(outputFile)
                 csvWriter.writerow(
                     ["Rotation: ", maxrt, "Length: ", maxL, "Spacing: ", spac]
                 )
             with open(
-                "".join([PDir, "\MaxL_Spac_", str(spac), ".csv"]), "w", newline=""
+                "".join([PDir, r"\MaxL_Spac_", str(spac), ".csv"]), "w", newline=""
             ) as outputFile:
                 csvWriter = csv.writer(outputFile)
                 csvWriter.writerow(["x", "y"])
@@ -650,9 +650,9 @@ def twoSpacGenBHC(
         ISpace: Min spacing required from all edges
 
     """
-    if PSpace == None:
+    if PSpace is None:
         PSpace = 0.9 * XSpac
-    if ISpace == None:
+    if ISpace is None:
         ISpace = XSpac
 
     # calls the standard row-wise coord generator w/ the adjusted vertices
@@ -673,7 +673,7 @@ def twoSpacGenBHC(
     # plotField(np.array(holes),shape=field,shapes=nogo)
     # places the boreholes along the perimeter of the property boundary and nogo zone(s)
     perimeterDistribute(field, PSpace, holes)
-    if nogo != None:
+    if nogo is not None:
         for ng in nogo:
             perimeterDistribute(ng, PSpace, holes)
     # plotField(np.array(holes),shape=field,shapes=nogo)
@@ -701,7 +701,7 @@ def removePointsToClose(field, holes, ISpace, nogos=None):
         else:
             p2 = field[i + 1]
         removePointsCloseToLine(p1, p2, holes, ISpace)
-    if nogos != None:
+    if nogos is not None:
         lNGS = len(nogos)
         for i in range(lNGS):
             ng = nogos[i].c
@@ -729,7 +729,7 @@ def removePointsCloseToLine(p1, p2, holes, ISpace):
     """
     lH = len(holes)
     i = 0
-    kRS = []
+    # kRS = []
     while i < lH:
         hole = holes[i]
         dp = distanceFromLine(p1, p2, hole, ISpace)
@@ -993,7 +993,7 @@ def genBoreHoleConfig(
         :return: [[float]] -> 2 col + n rows
     """
 
-    if nogo == None:
+    if nogo is None:
         nogo = []
     # Decides which vertex to start generating boreholes at by finding the "lowest" vertex relative to a rotated x-axis
     lowestVertVal = float("inf")
@@ -1244,7 +1244,7 @@ def plotField(
         fig = plt.figure(figsize=(10, 7))
     plt.rcParams.update({"font.size": 18})
     plt.title(title)
-    if shape != None:
+    if shape is not None:
         for i in range(len(shape.c)):
             if i == len(shape.c) - 1:
                 plt.plot(
@@ -1256,7 +1256,7 @@ def plotField(
                     [shape.c[i][1], shape.c[i + 1][1]],
                     "r",
                 )
-    if shapes != None:
+    if shapes is not None:
         for shape1 in shapes:
             for i in range(len(shape1.c)):
                 if i == len(shape1.c) - 1:
@@ -1313,11 +1313,11 @@ def ProcessRows(
         two dimensional array containing the x,y values of the bore holes for this row
     """
 
-    if nogo == None:
+    if nogo is None:
         # print("There is no nogo zone")
         distribute(rowsx, rowex, rowspace, rA, rotate)
         return rA
-    currentXP = rowsx
+    # currentXP = rowsx
     ncol = int(
         sqrt(
             (rowsx[0] - rowex[0]) * (rowsx[0] - rowex[0])
@@ -1636,7 +1636,7 @@ def distribute(x1, x2, spacing, r, rotate):
         # print([(x1[0]+x2[0])/2,(x1[1]+x2[1])/2])
         return
     currentX = x1
-    initialX = [x1[0], x1[1]]
+    # initialX = [x1[0], x1[1]]
     actncol = int(dx // spacing)
     actSpac = dx / actncol
     # i=0

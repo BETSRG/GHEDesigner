@@ -35,16 +35,16 @@ def main():
     field1 = numpy.array(fieldGenerator(xSpac, ySpac, propBound))
     plotField(field1,shape=buildVert)
     """
-    pB = [
-        [125.8, 197.1],
-        [129.1, 206.5],
-        [232.5, 176.0],
-        [232.1, 171.5],
-        [230.0, 150],
-        [210, 150],
-        [215, 160],
-        [182, 180],
-    ]
+    # pB = [
+    #     [125.8, 197.1],
+    #     [129.1, 206.5],
+    #     [232.5, 176.0],
+    #     [232.1, 171.5],
+    #     [230.0, 150],
+    #     [210, 150],
+    #     [215, 160],
+    #     [182, 180],
+    # ]
     pC = [
         [143, 7.5],
         [192, -5],
@@ -56,7 +56,7 @@ def main():
         [143, 7.5],
     ]
     nogoVert = []
-    xSpac, ySpac, propBound, ngZones = 7, 7, pC, nogoVert
+    xSpac, ySpac, propBound, _ = 7, 7, pC, nogoVert
 
     buildVert, nogoVert = genShape(propBound, ngZones=nogoVert)
     field1 = numpy.array(fieldGenerator(xSpac, ySpac, propBound))

@@ -116,7 +116,7 @@ class rec:
                 c1 = self.c[3]
                 c2 = self.c[0]
                 r = vectorintersect([c1[0], c1[1], c2[0], c2[1]], [x1, y1, x2, y2])
-                if r != None:
+                if r is not None:
                     rA.append(
                         rA,
                         r,
@@ -125,7 +125,7 @@ class rec:
                 c1 = self.c[i]
                 c2 = self.c[i + 1]
                 r = vectorintersect([c1[0], c1[1], c2[0], c2[1]], [x1, y1, x2, y2])
-                if r != None:
+                if r is not None:
                     rA.append(
                         rA,
                         r,
