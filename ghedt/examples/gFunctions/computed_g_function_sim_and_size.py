@@ -13,16 +13,16 @@ import ghedt as dt
 def main():
     # Borehole dimensions
     # -------------------
-    H = 100.  # Borehole length (m)
-    D = 2.  # Borehole buried depth (m)
-    r_b = 150. / 1000. / 2.  # Borehole radius]
-    B = 5.  # Borehole spacing (m)
+    H = 100.0  # Borehole length (m)
+    D = 2.0  # Borehole buried depth (m)
+    r_b = 150.0 / 1000.0 / 2.0  # Borehole radius]
+    B = 5.0  # Borehole spacing (m)
 
     # Pipe dimensions
     # ---------------
-    r_out = 26.67 / 1000. / 2.  # Pipe outer radius (m)
-    r_in = 21.6 / 1000. / 2.  # Pipe inner radius (m)
-    s = 32.3 / 1000.  # Inner-tube to inner-tube Shank spacing (m)
+    r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
+    r_in = 21.6 / 1000.0 / 2.0  # Pipe inner radius (m)
+    s = 32.3 / 1000.0  # Inner-tube to inner-tube Shank spacing (m)
     epsilon = 1.0e-6  # Pipe roughness (m)
 
     # Pipe positions
@@ -40,9 +40,9 @@ def main():
 
     # Volumetric heat capacities
     # --------------------------
-    rhoCp_p = 1542. * 1000.  # Pipe volumetric heat capacity (J/K.m3)
-    rhoCp_s = 2343.493 * 1000.  # Soil volumetric heat capacity (J/K.m3)
-    rhoCp_g = 3901. * 1000.  # Grout volumetric heat capacity (J/K.m3)
+    rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+    rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+    rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
     # Thermal properties
     # ------------------
@@ -55,12 +55,11 @@ def main():
     grout = plat.media.Grout(k_g, rhoCp_g)
 
     # Read in g-functions from GLHEPro
-    file = 'GLHEPRO_gFunctions_12x13.json'
+    file = "GLHEPRO_gFunctions_12x13.json"
     data = dt.utilities.js_load(file)
 
     # Configure the database data for input to the goethermal GFunction object
-    geothermal_g_input = \
-        dt.gfunction.GFunction.configure_database_file_for_usage(data)
+    geothermal_g_input = dt.gfunction.GFunction.configure_database_file_for_usage(data)
 
     # Initialize the GFunction object
     g_function = dt.gfunction.GFunction(**geothermal_g_input)
@@ -68,13 +67,13 @@ def main():
     # Inputs related to fluid
     # -----------------------
     V_flow_system = 31.2  # System volumetric flow rate (L/s)
-    mixer = 'MEG'  # Ethylene glycol mixed with water
-    percent = 0.  # Percentage of ethylene glycol added in
+    mixer = "MEG"  # Ethylene glycol mixed with water
+    percent = 0.0  # Percentage of ethylene glycol added in
     # Fluid properties
     fluid = gt.media.Fluid(mixer=mixer, percent=percent)
 
     # Define a borehole
-    borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
+    borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
 
     # Simulation start month and end month
     # --------------------------------
@@ -89,31 +88,48 @@ def main():
     max_Height = 200  # in meters
     min_Height = 60  # in meters
     sim_params = plat.media.SimulationParameters(
-        start_month, end_month, max_EFT_allowable, min_EFT_allowable,
-        max_Height, min_Height)
+        start_month,
+        end_month,
+        max_EFT_allowable,
+        min_EFT_allowable,
+        max_Height,
+        min_Height,
+    )
 
     # Process loads from file
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
-    hourly_extraction: dict = \
-        pd.read_csv('../Atlanta_Office_Building_Loads.csv').to_dict('list')
+    hourly_extraction: dict = pd.read_csv(
+        "../Atlanta_Office_Building_Loads.csv"
+    ).to_dict("list")
     # Take only the first column in the dictionary
-    hourly_extraction_ground_loads: list = \
-        hourly_extraction[list(hourly_extraction.keys())[0]]
+    hourly_extraction_ground_loads: list = hourly_extraction[
+        list(hourly_extraction.keys())[0]
+    ]
 
     # --------------------------------------------------------------------------
 
     # Initialize GHE object
     ghe = dt.ground_heat_exchangers.GHE(
-        V_flow_system, B, bhe_object, fluid, borehole, pipe, grout,
-        soil, g_function, sim_params, hourly_extraction_ground_loads)
+        V_flow_system,
+        B,
+        bhe_object,
+        fluid,
+        borehole,
+        pipe,
+        grout,
+        soil,
+        g_function,
+        sim_params,
+        hourly_extraction_ground_loads,
+    )
 
     ghe.size()
 
-    calculation_details = 'GLHEPRO_gFunctions_12x13.json'.split('.')[0]
+    calculation_details = "GLHEPRO_gFunctions_12x13.json".split(".")[0]
     print(calculation_details)
-    print('Height of boreholes: {0:.3f}'.format(ghe.bhe.b.H))
+    print("Height of boreholes: {0:.3f}".format(ghe.bhe.b.H))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

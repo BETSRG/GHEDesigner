@@ -16,28 +16,27 @@ from time import time as clock
 def main():
     # Borehole dimensions
     # -------------------
-    H = 96.  # Borehole length (m)
-    D = 2.  # Borehole buried depth (m)
+    H = 96.0  # Borehole length (m)
+    D = 2.0  # Borehole buried depth (m)
     r_b = 0.075  # Borehole radius (m)
 
     # Pipe dimensions
     # ---------------
     # Single and Multiple U-tubes
-    r_out = 26.67 / 1000. / 2.  # Pipe outer radius (m)
-    r_in = 21.6 / 1000. / 2.  # Pipe inner radius (m)
-    s = 32.3 / 1000.  # Inner-tube to inner-tube Shank spacing (m)
+    r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
+    r_in = 21.6 / 1000.0 / 2.0  # Pipe inner radius (m)
+    s = 32.3 / 1000.0  # Inner-tube to inner-tube Shank spacing (m)
     epsilon = 1.0e-6  # Pipe roughness (m)
     # Coaxial tube
-    r_in_in = 44.2 / 1000. / 2.
-    r_in_out = 50. / 1000. / 2.
+    r_in_in = 44.2 / 1000.0 / 2.0
+    r_in_out = 50.0 / 1000.0 / 2.0
     # Outer pipe radii
-    r_out_in = 97.4 / 1000. / 2.
-    r_out_out = 110. / 1000. / 2.
+    r_out_in = 97.4 / 1000.0 / 2.0
+    r_out_out = 110.0 / 1000.0 / 2.0
     # Pipe radii
     # Note: This convention is different from pygfunction
     r_inner = [r_in_in, r_in_out]  # The radii of the inner pipe from in to out
-    r_outer = [r_out_in,
-               r_out_out]  # The radii of the outer pipe from in to out
+    r_outer = [r_out_in, r_out_out]  # The radii of the outer pipe from in to out
 
     # Pipe positions
     # --------------
@@ -61,20 +60,18 @@ def main():
 
     # Volumetric heat capacities
     # --------------------------
-    rhoCp_p = 1542. * 1000.  # Pipe volumetric heat capacity (J/K.m3)
-    rhoCp_s = 2343.493 * 1000.  # Soil volumetric heat capacity (J/K.m3)
-    rhoCp_g = 3901. * 1000.  # Grout volumetric heat capacity (J/K.m3)
+    rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+    rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+    rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
     # Thermal properties
     # ------------------
     # Pipe
-    pipe_single = \
-        plat.media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-    pipe_double = \
-        plat.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-    pipe_coaxial = \
-        plat.media.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax,
-                        rhoCp_p)
+    pipe_single = plat.media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe_double = plat.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe_coaxial = plat.media.Pipe(
+        pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rhoCp_p
+    )
     # Soil
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
     soil = plat.media.Soil(k_s, rhoCp_s, ugt)
@@ -84,17 +81,17 @@ def main():
     # Inputs related to fluid
     # -----------------------
     # Fluid properties
-    mixer = 'MEG'  # Ethylene glycol mixed with water
-    percent = 0.  # Percentage of ethylene glycol added in
+    mixer = "MEG"  # Ethylene glycol mixed with water
+    percent = 0.0  # Percentage of ethylene glycol added in
     fluid = gt.media.Fluid(mixer=mixer, percent=percent)
 
     # Fluid properties
     V_flow = 0.2  # Volumetric flow rate (L/s)
     # Note: The flow parameter can be borehole or system.
-    flow = 'borehole'
+    flow = "borehole"
 
     # Define a borehole
-    borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
+    borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
 
     # Simulation start month and end month
     # --------------------------------
@@ -106,126 +103,162 @@ def main():
     max_EFT_allowable = 35  # degrees Celsius
     min_EFT_allowable = 5  # degrees Celsius
     # Maximum and minimum allowable heights
-    max_Height = 135.  # in meters
+    max_Height = 135.0  # in meters
     min_Height = 60  # in meters
     sim_params = plat.media.SimulationParameters(
-        start_month, end_month, max_EFT_allowable, min_EFT_allowable,
-        max_Height, min_Height)
+        start_month,
+        end_month,
+        max_EFT_allowable,
+        min_EFT_allowable,
+        max_Height,
+        min_Height,
+    )
 
     # Process loads from file
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
-    hourly_extraction: dict = \
-        pd.read_csv('../Atlanta_Office_Building_Loads.csv').to_dict('list')
+    hourly_extraction: dict = pd.read_csv(
+        "../Atlanta_Office_Building_Loads.csv"
+    ).to_dict("list")
     # Take only the first column in the dictionary
-    hourly_extraction_ground_loads: list = \
-        hourly_extraction[list(hourly_extraction.keys())[0]]
+    hourly_extraction_ground_loads: list = hourly_extraction[
+        list(hourly_extraction.keys())[0]
+    ]
 
     # Rectangular design constraints are the land and range of B-spacing
-    length = 85.  # m
+    length = 85.0  # m
     width = 36.5  # m
-    B_min = 3.  # m
-    B_max = 10.  # m
+    B_min = 3.0  # m
+    B_max = 10.0  # m
 
     """ Geometric constraints for the `find_rectangle` routine.
-    Required geometric constraints for the uniform rectangle design: 
+    Required geometric constraints for the uniform rectangle design:
       - length
-      - width 
+      - width
       - B_min
       - B_max
     """
     geometric_constraints = dt.media.GeometricConstraints(
-        length=length, width=width, B_min=B_min, B_max_x=B_max)
+        length=length, width=width, B_min=B_min, B_max_x=B_max
+    )
 
-    title = 'Find rectangle...'
-    print(title + '\n' + len(title) * '=')
+    title = "Find rectangle..."
+    print(title + "\n" + len(title) * "=")
 
     # Single U-tube
     # -------------
     design_single_u_tube = dt.design.Design(
-        V_flow, borehole, single_u_tube, fluid, pipe_single, grout,
-        soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        flow=flow, routine='rectangle')
+        V_flow,
+        borehole,
+        single_u_tube,
+        fluid,
+        pipe_single,
+        grout,
+        soil,
+        sim_params,
+        geometric_constraints,
+        hourly_extraction_ground_loads,
+        flow=flow,
+        routine="rectangle",
+    )
 
     # Find a constrained rectangular design for a single U-tube and size it.
     tic = clock()
     bisection_search = design_single_u_tube.find_design()
     bisection_search.ghe.compute_g_functions()
-    bisection_search.ghe.size(method='hybrid')
+    bisection_search.ghe.size(method="hybrid")
     toc = clock()
-    subtitle = '* Single U-tube'
-    print(subtitle + '\n' + len(subtitle) * '-')
-    print('Calculation time: {0:.2f} seconds'.format(toc - tic))
-    print('Height: {0:.4f} meters'.format(bisection_search.ghe.bhe.b.H))
+    subtitle = "* Single U-tube"
+    print(subtitle + "\n" + len(subtitle) * "-")
+    print("Calculation time: {0:.2f} seconds".format(toc - tic))
+    print("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
     nbh = len(bisection_search.ghe.GFunction.bore_locations)
-    print('Number of boreholes: {}'.format(nbh))
-    print('Total Drilling: {0:.1f} meters\n'.
-          format(bisection_search.ghe.bhe.b.H * nbh))
+    print("Number of boreholes: {}".format(nbh))
+    print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
     # Plot the selected borehole coordinates for the single U-tube
     # Land constraints
-    l_x_perimeter = 85.
-    l_y_perimeter = 80.
-    perimeter = \
-        dt.utilities.make_rectangle_perimeter(l_x_perimeter, l_y_perimeter)
+    l_x_perimeter = 85.0
+    l_y_perimeter = 80.0
+    perimeter = dt.utilities.make_rectangle_perimeter(l_x_perimeter, l_y_perimeter)
     # Building "no-go" zone
     l_x_building = 50
     l_y_building = 33.3
     origin_x, origin_y = (15, 36.5)
     no_go = dt.utilities.make_rectangle_perimeter(
-        l_x_building, l_y_building, origin=(origin_x, origin_y))
+        l_x_building, l_y_building, origin=(origin_x, origin_y)
+    )
     # Plot go and no-go zone with borehole coordinates
     ghe = bisection_search.ghe
     coordinates = ghe.GFunction.bore_locations
     fig, ax = dt.gfunction.GFunction.visualize_area_and_constraints(
-        perimeter, coordinates, no_go=no_go)
+        perimeter, coordinates, no_go=no_go
+    )
     # See Figure 4.16 on page 133 of Cook (2021)
-    fig.savefig('rectangular.png', bbox_inches='tight', pad_inches=0.1)
+    fig.savefig("rectangular.png", bbox_inches="tight", pad_inches=0.1)
 
     # Double U-tube
     # -------------
     design_double_u_tube = dt.design.Design(
-        V_flow, borehole, double_u_tube, fluid, pipe_double, grout,
-        soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        flow=flow, routine='rectangle')
+        V_flow,
+        borehole,
+        double_u_tube,
+        fluid,
+        pipe_double,
+        grout,
+        soil,
+        sim_params,
+        geometric_constraints,
+        hourly_extraction_ground_loads,
+        flow=flow,
+        routine="rectangle",
+    )
 
     # Find a constrained rectangular design for a double U-tube and size it.
     tic = clock()
     bisection_search = design_double_u_tube.find_design()
     bisection_search.ghe.compute_g_functions()
-    bisection_search.ghe.size(method='hybrid')
+    bisection_search.ghe.size(method="hybrid")
     toc = clock()
-    subtitle = '* Double U-tube'
-    print(subtitle + '\n' + len(subtitle) * '-')
-    print('Calculation time: {0:.2f} seconds'.format(toc - tic))
-    print('Height: {0:.4f} meters'.format(bisection_search.ghe.bhe.b.H))
+    subtitle = "* Double U-tube"
+    print(subtitle + "\n" + len(subtitle) * "-")
+    print("Calculation time: {0:.2f} seconds".format(toc - tic))
+    print("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
     nbh = len(bisection_search.ghe.GFunction.bore_locations)
-    print('Number of boreholes: {}'.format(nbh))
-    print('Total Drilling: {0:.1f} meters\n'.
-          format(bisection_search.ghe.bhe.b.H * nbh))
+    print("Number of boreholes: {}".format(nbh))
+    print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
     # Coaxial tube
     # -------------
     design_coaxial_u_tube = dt.design.Design(
-        V_flow, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
-        soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        flow=flow, routine='rectangle')
+        V_flow,
+        borehole,
+        coaxial_tube,
+        fluid,
+        pipe_coaxial,
+        grout,
+        soil,
+        sim_params,
+        geometric_constraints,
+        hourly_extraction_ground_loads,
+        flow=flow,
+        routine="rectangle",
+    )
 
     # Find a constrained rectangular design for a coaxial tube and size it.
     tic = clock()
     bisection_search = design_coaxial_u_tube.find_design()
     bisection_search.ghe.compute_g_functions()
-    bisection_search.ghe.size(method='hybrid')
+    bisection_search.ghe.size(method="hybrid")
     toc = clock()
-    subtitle = '* Coaxial tube'
-    print(subtitle + '\n' + len(subtitle) * '-')
-    print('Calculation time: {0:.2f} seconds'.format(toc - tic))
-    print('Height: {0:.4f} meters'.format(bisection_search.ghe.bhe.b.H))
+    subtitle = "* Coaxial tube"
+    print(subtitle + "\n" + len(subtitle) * "-")
+    print("Calculation time: {0:.2f} seconds".format(toc - tic))
+    print("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
     nbh = len(bisection_search.ghe.GFunction.bore_locations)
-    print('Number of boreholes: {}'.format(nbh))
-    print('Total Drilling: {0:.1f} meters\n'.
-          format(bisection_search.ghe.bhe.b.H * nbh))
+    print("Number of boreholes: {}".format(nbh))
+    print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

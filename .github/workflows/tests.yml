@@ -26,8 +26,8 @@ jobs:
           flake8 . --count --exit-zero --statistics
       - name: Unit tests
         run: |
-          python3 setup.py nosetests
-      # - name: Coveralls
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: coveralls
+          nosetests
+      - name: coverage
+        run: |
+          coverage run --source=ghedt -m unittest
+          coverage report -m
