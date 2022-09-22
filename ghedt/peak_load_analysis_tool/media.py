@@ -8,18 +8,19 @@ class ThermalProperty:
 
     def __repr__(self):
         def justify(category, value):
-            return category.ljust(40) + '= ' + value + '\n'
+            return category.ljust(40) + "= " + value + "\n"
 
-        output = str(self.__class__) + '\n'
+        output = str(self.__class__) + "\n"
 
         if type(self.k) == float:
-            output += justify('Thermal conductivity',
-                              str(round(self.k, 4)) + ' (W/m.K)')
+            output += justify(
+                "Thermal conductivity", str(round(self.k, 4)) + " (W/m.K)"
+            )
         else:
-            output += justify('Thermal conductivity',
-                              str(self.k) + ' (W/m.K)')
-        output += justify('Volumetric heat capacity',
-                          str(round(self.rhoCp, 4)) + ' (J/K.m3)')
+            output += justify("Thermal conductivity", str(self.k) + " (W/m.K)")
+        output += justify(
+            "Volumetric heat capacity", str(round(self.rhoCp, 4)) + " (J/K.m3)"
+        )
 
         return output
 
@@ -48,41 +49,41 @@ class Pipe(ThermalProperty):
 
     def __repr__(self):
         def justify(category, value):
-            return category.ljust(40) + '= ' + value + '\n'
+            return category.ljust(40) + "= " + value + "\n"
 
         output = ThermalProperty.__repr__(self)
 
-        output += justify('Pipe Positions (Center of pipes)', str(self.pos))
+        output += justify("Pipe Positions (Center of pipes)", str(self.pos))
         if type(self.r_in) == float:
-            output += justify('Pipe inner radius',
-                              str(round(self.r_in, 4)) + ' (m)')
-            output += justify('Pipe outer radius',
-                              str(round(self.r_out, 4)) + ' (m)')
+            output += justify("Pipe inner radius", str(round(self.r_in, 4)) + " (m)")
+            output += justify("Pipe outer radius", str(round(self.r_out, 4)) + " (m)")
         else:
-            output += justify('Pipe inner radii',
-                              str(self.r_in) + ' (m)')
-            output += justify('Pipe outer radii',
-                              str(self.r_out) + ' (m)')
-        output += justify('Shank spacing (pipe to pipe)',
-                          str(round(self.s, 4)) + ' (m)')
-        output += justify('Pipe roughness', str(self.eps) + ' (m)')
-        output += justify('Number of pipes', str(self.n_pipes))
+            output += justify("Pipe inner radii", str(self.r_in) + " (m)")
+            output += justify("Pipe outer radii", str(self.r_out) + " (m)")
+        output += justify(
+            "Shank spacing (pipe to pipe)", str(round(self.s, 4)) + " (m)"
+        )
+        output += justify("Pipe roughness", str(self.eps) + " (m)")
+        output += justify("Number of pipes", str(self.n_pipes))
 
         return output
 
     @staticmethod
     def place_pipes(s, r_out, n_pipes):
-        """ Positions pipes in an axisymetric configuration."""
+        """Positions pipes in an axisymetric configuration."""
         D_s = s / 2 + r_out
         pi = np.pi
         dt = pi / float(n_pipes)
-        pos = [(0., 0.) for i in range(2 * n_pipes)]
+        pos = [(0.0, 0.0) for i in range(2 * n_pipes)]
         for i in range(n_pipes):
             pos[2 * i] = (
                 D_s * np.cos(2.0 * i * dt + pi),
-                D_s * np.sin(2.0 * i * dt + pi))
-            pos[2 * i + 1] = (D_s * np.cos(2.0 * i * dt + pi + dt),
-                              D_s * np.sin(2.0 * i * dt + pi + dt))
+                D_s * np.sin(2.0 * i * dt + pi),
+            )
+            pos[2 * i + 1] = (
+                D_s * np.cos(2.0 * i * dt + pi + dt),
+                D_s * np.sin(2.0 * i * dt + pi + dt),
+            )
         return pos
 
 
@@ -96,19 +97,28 @@ class Soil(ThermalProperty):
 
     def __repr__(self):
         def justify(category, value):
-            return category.ljust(40) + '= ' + value + '\n'
+            return category.ljust(40) + "= " + value + "\n"
 
         output = ThermalProperty.__repr__(self)
 
-        output += justify('Undisturbed ground temperature',
-                          str(round(self.ugt, 4)) + ' (degrees Celsius)')
+        output += justify(
+            "Undisturbed ground temperature",
+            str(round(self.ugt, 4)) + " (degrees Celsius)",
+        )
 
         return output
 
 
 class SimulationParameters:
-    def __init__(self, start_month, end_month, max_EFT_allowable,
-                 min_EFT_allowable, max_Height, min_Height):
+    def __init__(
+        self,
+        start_month,
+        end_month,
+        max_EFT_allowable,
+        min_EFT_allowable,
+        max_Height,
+        min_Height,
+    ):
         # Simulation parameters not found in other objects
         # ------------------------------------------------
         # Simulation start month and end month
@@ -123,17 +133,19 @@ class SimulationParameters:
 
     def __repr__(self):
         def justify(category, value):
-            return category.ljust(40) + '= ' + value + '\n'
+            return category.ljust(40) + "= " + value + "\n"
 
-        output = str(self.__class__) + '\n'
+        output = str(self.__class__) + "\n"
 
-        output += justify('Start month', str(self.start_month) + ' (months)')
-        output += justify('End month', str(self.end_month) + '(months)')
-        output += justify('Max EFT Allowable',
-                          str(self.max_EFT_allowable) + ' (degrees Celsius)')
-        output += justify('Min EFT Allowable',
-                          str(self.min_EFT_allowable) + ' (degrees Celsius)')
-        output += justify('Maximum height', str(self.max_Height) + ' (m)')
-        output += justify('Minimum height', str(self.min_Height) + ' (m)')
+        output += justify("Start month", str(self.start_month) + " (months)")
+        output += justify("End month", str(self.end_month) + "(months)")
+        output += justify(
+            "Max EFT Allowable", str(self.max_EFT_allowable) + " (degrees Celsius)"
+        )
+        output += justify(
+            "Min EFT Allowable", str(self.min_EFT_allowable) + " (degrees Celsius)"
+        )
+        output += justify("Maximum height", str(self.max_Height) + " (m)")
+        output += justify("Minimum height", str(self.min_Height) + " (m)")
 
         return output

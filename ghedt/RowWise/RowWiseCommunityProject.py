@@ -28,15 +28,27 @@ def main():
                 ng[-1].append(L)
 
     buildVert, nogoVert = genShape(prop, ngZones=ng)
-    Directory = "D:\Work\GSHPResearch\RowWiseCoordGen\Row-wiseCoordinateGenerator\RowWise\\"
-    pSpacs = [.7]
+    Directory = (
+        "D:\Work\GSHPResearch\RowWiseCoordGen\Row-wiseCoordinateGenerator\RowWise\\"
+    )
+    pSpacs = [0.7]
     spacStart = 13.5
     spacStop = 13.7
-    spacStep = .1
+    spacStep = 0.1
     rotateStep = 1
-    fieldOptimizationWPSpac(pSpacs, spacStart, spacStop, spacStep, rotateStep, Directory, buildVert, ngZones=nogoVert,
-                            rotateStart=-pi / 2 + 1 / 10000.0, rotateStop=pi / 2 - 1 / 10000.0,
-                            pdfOutputName="Graphs.pdf")
+    fieldOptimizationWPSpac(
+        pSpacs,
+        spacStart,
+        spacStop,
+        spacStep,
+        rotateStep,
+        Directory,
+        buildVert,
+        ngZones=nogoVert,
+        rotateStart=-pi / 2 + 1 / 10000.0,
+        rotateStop=pi / 2 - 1 / 10000.0,
+        pdfOutputName="Graphs.pdf",
+    )
 
 
 if __name__ == "__main__":

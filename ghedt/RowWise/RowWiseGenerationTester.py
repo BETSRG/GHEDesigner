@@ -6,7 +6,7 @@ from ghedt.RowWise.RowWiseGeneration import fieldGenerator, genShape, plotField
 
 
 def main():
-    '''
+    """
     buildVert = [
         [0, 0],
         [70.104, 0],
@@ -34,7 +34,7 @@ def main():
 
     field1 = numpy.array(fieldGenerator(xSpac, ySpac, propBound))
     plotField(field1,shape=buildVert)
-    '''
+    """
     pB = [
         [125.8, 197.1],
         [129.1, 206.5],
@@ -43,7 +43,7 @@ def main():
         [230.0, 150],
         [210, 150],
         [215, 160],
-        [182, 180]
+        [182, 180],
     ]
     pC = [
         [143, 7.5],
@@ -53,7 +53,7 @@ def main():
         [216.9476649, 37.55276038],
         [209.4772373, -11.17091042],
         [134.5, -11.9829716],
-        [143, 7.5]
+        [143, 7.5],
     ]
     nogoVert = []
     xSpac, ySpac, propBound, ngZones = 7, 7, pC, nogoVert

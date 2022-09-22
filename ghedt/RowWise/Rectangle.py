@@ -1,4 +1,4 @@
-'''
+"""
 creates and handles rectangular nogo zones
 
 Classes:
@@ -8,7 +8,7 @@ Functions:
     angleBetween(float,float,float) - > float
     vectorintersect()->[[float]]
 
-'''
+"""
 from math import acos
 from math import cos
 from math import pi
@@ -19,7 +19,7 @@ import numpy as np
 
 
 class rec:
-    '''
+    """
     a class to represent rectangular nogo zones
 
     Attributes
@@ -58,10 +58,10 @@ class rec:
         determines the intersection of this shape and the given line segment
     pointintersect(xy)
         determines whether the given point is inside of the rectangle
-    '''
+    """
 
     def __init__(self, cx, cy, xw, yw, theta=0):
-        '''
+        """
         contructs a rectangle object
 
         Parameters
@@ -76,16 +76,16 @@ class rec:
             the width in the y dir
         :param theta: float
             the amount of rotation in radians
-        '''
+        """
         self.cx = cx
         self.cy = cy
         self.xw = xw
         self.yw = yw
         self.theta = theta
-        hxwc = .5 * xw * cos(theta)
-        hywc = .5 * yw * cos(theta)
-        hxws = .5 * xw * sin(theta)
-        hyws = .5 * yw * sin(theta)
+        hxwc = 0.5 * xw * cos(theta)
+        hywc = 0.5 * yw * cos(theta)
+        hxws = 0.5 * xw * sin(theta)
+        hyws = 0.5 * yw * sin(theta)
         self.c00 = [cx - hxwc + hyws, cy - hxws - hywc]
         self.c10 = [cx + hxwc + hyws, cy + hxws - hywc]
         self.c01 = [cx - hxwc - hyws, cy - hxws + hywc]
@@ -97,7 +97,7 @@ class rec:
         self.minx = min(self.c00[0], self.c10[0], self.c01[0], self.c11[0])
 
     def lineintersect(self, xy):
-        '''
+        """
         returns the intersections between a line segment and the rectanlge
 
         Parameters
@@ -106,7 +106,7 @@ class rec:
             the x,y values of both endpoints of the line segment
         :return: [[float]]
             the x,y values of the intersections
-        '''
+        """
         x1, y1, x2, y2 = xy
         if (y1 > self.maxy and y2 > self.maxy) or (y1 < self.miny and y2 < self.miny):
             return []
@@ -117,17 +117,23 @@ class rec:
                 c2 = self.c[0]
                 r = vectorintersect([c1[0], c1[1], c2[0], c2[1]], [x1, y1, x2, y2])
                 if r != None:
-                    rA.append(rA, r, )
+                    rA.append(
+                        rA,
+                        r,
+                    )
             else:
                 c1 = self.c[i]
                 c2 = self.c[i + 1]
                 r = vectorintersect([c1[0], c1[1], c2[0], c2[1]], [x1, y1, x2, y2])
                 if r != None:
-                    rA.append(rA, r, )
+                    rA.append(
+                        rA,
+                        r,
+                    )
         return rA
 
     def pointintersect(self, xy):
-        '''
+        """
         returns whether the given point is inside of the rectangle
 
         Parameters
@@ -136,7 +142,7 @@ class rec:
             x,y value of point
         :return: boolean
             true if inside, false if not
-        '''
+        """
         x, y = xy
         if (x > self.maxx or x < self.minx) or (y > self.maxy or y < self.miny):
             return False
@@ -155,7 +161,7 @@ class rec:
 
 
 def angleBetween(a, b, c):
-    '''
+    """
      gives the angle opposite of side a
 
     Parameters
@@ -168,7 +174,7 @@ def angleBetween(a, b, c):
         length of side c
     :return: double
         angle across from a in triangle
-    '''
+    """
     if a == 0 or b == 0 or c == 0:
         return 0
     r = (a * a + b * b - c * c) / (2 * a * b)
@@ -179,7 +185,7 @@ def angleBetween(a, b, c):
 
 
 def vectorintersect(l1, l2):
-    '''
+    """
      gives the intersection between two line segments
 
     Parameters
@@ -190,7 +196,7 @@ def vectorintersect(l1, l2):
         endpoints of the second line segment
     :return: [float,float]
         x,y values of intersection (returns None if there is none)
-    '''
+    """
     x11, y11, x12, y12 = l1
     x21, y21, x22, y22 = l2
 
@@ -210,13 +216,13 @@ def vectorintersect(l1, l2):
 
 
 def main():
-    '''
-   tests rectangle class
+    """
+    tests rectangle class
 
-    Parameters
-    -----------
-    :return: none
-    '''
+     Parameters
+     -----------
+     :return: none
+    """
     rect = rec(3.0, 4.0, 7.0, 9.0, pi / 5.0)
     print("Should be True: ", rect.pointintersect([4.0, 5.0]))
     print("Should be False: ", rect.pointintersect([-3.0, 9.0]))
