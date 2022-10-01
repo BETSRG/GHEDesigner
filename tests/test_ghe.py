@@ -1,6 +1,3 @@
-# Jack C. Cook
-# Monday, October 11, 2021
-
 import unittest
 import os
 
@@ -11,7 +8,7 @@ import pygfunction as gt
 import pandas as pd
 
 TESTDATA_FILENAME = os.path.join(
-    os.path.dirname(__file__), "Atlanta_Office_Building_Loads.csv"
+    os.path.dirname(__file__), "test_data", "Atlanta_Office_Building_Loads.csv"
 )
 
 

@@ -1,19 +1,9 @@
 """
-creates and handles rectangular nogo zones
-
-Classes:
-    rec
-Functions:
-
-    angleBetween(float,float,float) - > float
-    vectorintersect()->[[float]]
-
 """
 from math import atan
 from math import pi
 from math import sin
 from math import sqrt
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -199,6 +189,7 @@ class Shapes:
                 sum += self.c[len(self.c) - 1][0] * self.c[0][1] - (
                     self.c[len(self.c) - 1][1] * self.c[0][0]
                 )
+                continue
             sum += self.c[i][0] * self.c[i + 1][1] - (self.c[i][1] * self.c[i + 1][0])
         return 0.5 * sum
 
@@ -279,62 +270,3 @@ def vectorintersect(l1, l2, intersection_tolerance):
     rx = (c2 - c1) / (a1 - a2)
     ry = a1 * (c2 - c1) / (a1 - a2) + c1
     return [[rx, ry]]
-
-
-# Testing method
-def main():
-    """
-    tests shape class
-
-     Parameters
-     -----------
-     :return: none
-    """
-    rect = Shapes(3.0, 4.0, 4.0, 9.0, pi / 5.0, "S")
-    xy = [-3, 11, 10, 11]
-    points = rect.lineintersect(xy)
-    for i in range(len(rect.c)):
-        if i == len(rect.c) - 1:
-            plt.plot([rect.c[i][0], rect.c[0][0]], [rect.c[i][1], rect.c[0][1]], "r")
-        else:
-            plt.plot(
-                [rect.c[i][0], rect.c[i + 1][0]], [rect.c[i][1], rect.c[i + 1][1]], "r"
-            )
-    plt.plot([xy[0], xy[2]], [xy[1], xy[3]], "b")
-    plt.plot([-10, 10], [rect.maxy, rect.maxy], "y")
-    X = np.zeros(len(points))
-    Y = np.zeros(len(points))
-    for i in range(len(points)):
-        X[i] = points[i][0]
-        Y[i] = points[i][1]
-    plt.plot(X, Y, "go")
-    plt.axis("equal")
-    plt.show()
-    for i in range(len(rect.rects)):
-        plt.plot(
-            [rect.rects[i].c00[0], rect.rects[i].c01[0]],
-            [rect.rects[i].c00[1], rect.rects[i].c01[1]],
-            "r",
-        )
-        plt.plot(
-            [rect.rects[i].c01[0], rect.rects[i].c11[0]],
-            [rect.rects[i].c01[1], rect.rects[i].c11[1]],
-            "r",
-        )
-        plt.plot(
-            [rect.rects[i].c11[0], rect.rects[i].c10[0]],
-            [rect.rects[i].c11[1], rect.rects[i].c10[1]],
-            "r",
-        )
-        plt.plot(
-            [rect.rects[i].c10[0], rect.rects[i].c00[0]],
-            [rect.rects[i].c10[1], rect.rects[i].c00[1]],
-            "r",
-        )
-
-    plt.axis("equal")
-    plt.show()
-
-
-if __name__ == "__main__":
-    main()
