@@ -1,8 +1,10 @@
 import csv
-import os
 import math
+import os
 from datetime import datetime
+
 import numpy as np
+
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers as BHE
 
 

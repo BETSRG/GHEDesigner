@@ -7,10 +7,10 @@ import scipy.interpolate
 import scipy.optimize
 
 import ghedt as dt
-from ghedt.peak_load_analysis_tool.media import Pipe, Grout, Soil, SimulationParameters
 from ghedt.peak_load_analysis_tool.equivalance import compute_equivalent, solve_root
-from ghedt.peak_load_analysis_tool.radial_numerical_borehole import RadialNumericalBH
 from ghedt.peak_load_analysis_tool.ground_loads import HybridLoad
+from ghedt.peak_load_analysis_tool.media import Grout, Pipe, SimulationParameters, Soil
+from ghedt.peak_load_analysis_tool.radial_numerical_borehole import RadialNumericalBH
 
 
 class BaseGHE:

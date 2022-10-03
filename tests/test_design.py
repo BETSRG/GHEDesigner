@@ -1,13 +1,11 @@
 import copy
-import unittest
 import os
+import unittest
 
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
-import pygfunction as gt
-
 import pandas as pd
-
+import pygfunction as gt
 
 TESTDATA_FILENAME = os.path.join(
     os.path.dirname(__file__), "test_data", "Atlanta_Office_Building_Loads.csv"

@@ -5,11 +5,12 @@ import numpy as np
 import pygfunction as gt
 
 import ghedt as dt
-from ghedt.RowWise.RowWiseGeneration import fieldOptimizationWPSpac_FR
-from ghedt.RowWise.RowWiseGeneration import fieldOptimization_FR
-from ghedt.utilities import sign, check_bracket
-
-from ghedt.peak_load_analysis_tool.media import Pipe, Grout, Soil, SimulationParameters
+from ghedt.peak_load_analysis_tool.media import Grout, Pipe, SimulationParameters, Soil
+from ghedt.RowWise.RowWiseGeneration import (
+    fieldOptimization_FR,
+    fieldOptimizationWPSpac_FR,
+)
+from ghedt.utilities import check_bracket, sign
 
 
 class Bisection1D:

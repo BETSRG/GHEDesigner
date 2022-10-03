@@ -1,9 +1,10 @@
-import ghedt as dt
-import numpy as np
-import pygfunction as gt
 import textwrap
 
-from ghedt.peak_load_analysis_tool.media import Pipe, Grout, Soil, SimulationParameters
+import numpy as np
+import pygfunction as gt
+
+import ghedt as dt
+from ghedt.peak_load_analysis_tool.media import Grout, Pipe, SimulationParameters, Soil
 
 
 # Common design interface

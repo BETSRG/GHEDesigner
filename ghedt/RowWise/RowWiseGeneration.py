@@ -1,13 +1,7 @@
-import csv
-import os
 from math import atan, cos, pi, sin, sqrt
 
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.backends.backend_pdf import PdfPages
-
-from ghedt.RowWise.Shape import Shapes
-from ghedt.RowWise.Shape import sortIntersections
+from ghedt.RowWise.Shape import Shapes, sortIntersections
 
 """
 Used to create an instance of a borefield

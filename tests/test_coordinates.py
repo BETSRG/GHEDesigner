@@ -2,8 +2,7 @@ import os
 import unittest
 
 import matplotlib.pyplot as plt
-
-from ghedt.coordinates import rectangle, open_rectangle, c_shape
+from ghedt.coordinates import c_shape, open_rectangle, rectangle
 
 if "PLOT_COORDINATES" in os.environ:
     show_plots = True

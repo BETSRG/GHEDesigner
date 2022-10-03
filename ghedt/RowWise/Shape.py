@@ -1,9 +1,5 @@
-"""
-"""
-from math import atan
-from math import pi
-from math import sin
-from math import sqrt
+from math import atan, pi, sin, sqrt
+
 import numpy as np
 
 
