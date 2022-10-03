@@ -27,7 +27,3 @@ jobs:
       - name: Unit tests
         run: |
           nosetests
-      - name: coverage
-        run: |
-          coverage run --source=ghedt -m unittest
-          coverage report -m
