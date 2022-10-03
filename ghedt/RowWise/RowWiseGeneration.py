@@ -44,7 +44,7 @@ def fieldOptimizationWPSpac_FR(
     propBound,
     ngZones=None,
     rotateStart=None,
-    rotateStop=None
+    rotateStop=None,
 ):
     """Optimizes a Field by iterating over input values w/o perimeter spacing
 
