@@ -868,7 +868,6 @@ def OutputDesignDetails(
 
     gfunctionData = []
     csv4Array = [["ln(t/ts)", "H:{:.2f}".format(bhe.b.H)]]
-    # gheGF = gfunction.g_function_interpolation(float(ghe.B_spacing) / bH.H)[0]
     gheGFAdjusted = ghe.grab_g_function(ghe.B_spacing / float(ghe.averageHeight()))
     gfunctionLogVals = gheGFAdjusted.x
     gfunctionGVals = gheGFAdjusted.y

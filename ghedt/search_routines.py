@@ -4,13 +4,14 @@ import math
 import numpy as np
 import pygfunction as gt
 
-import ghedt as dt
-from ghedt.peak_load_analysis_tool.media import Grout, Pipe, SimulationParameters, Soil
-from ghedt.RowWise.RowWiseGeneration import (
-    fieldOptimization_FR,
-    fieldOptimizationWPSpac_FR,
-)
-from ghedt.utilities import check_bracket, sign
+from ghedt.gfunction import compute_live_g_function
+from ghedt.ground_heat_exchangers import GHE
+from ghedt.peak_load_analysis_tool.media import (Grout, Pipe,
+                                                 SimulationParameters, Soil)
+from ghedt.RowWise.RowWiseGeneration import (fieldOptimization_FR,
+                                             fieldOptimizationWPSpac_FR)
+from ghedt.utilities import (Eskilson_log_times, borehole_spacing,
+                             check_bracket, sign, js_dump)
 
 
 class Bisection1D:
@@ -49,7 +50,7 @@ class Bisection1D:
         V_flow_system, m_flow_borehole = self.retrieve_flow(coordinates, fluid.rho)
         self.method = method
 
-        self.log_time = dt.utilities.Eskilson_log_times()
+        self.log_time = Eskilson_log_times()
         self.bhe_object = bhe_object
         self.sim_params = sim_params
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
@@ -58,11 +59,11 @@ class Bisection1D:
         self.max_iter = max_iter
         self.disp = disp
 
-        B = dt.utilities.borehole_spacing(borehole, coordinates)
+        B = borehole_spacing(borehole, coordinates)
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
-        g_function = dt.gfunction.compute_live_g_function(
+        g_function = compute_live_g_function(
             B,
             [borehole.H],
             [borehole.r_b],
@@ -78,7 +79,7 @@ class Bisection1D:
         )
 
         # Initialize the GHE object
-        self.ghe = dt.ground_heat_exchangers.GHE(
+        self.ghe = GHE(
             V_flow_system,
             B,
             bhe_object,
@@ -127,11 +128,11 @@ class Bisection1D:
         grout = self.ghe.bhe.grout
         soil = self.ghe.bhe.soil
 
-        B = dt.utilities.borehole_spacing(borehole, coordinates)
+        B = borehole_spacing(borehole, coordinates)
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
-        g_function = dt.gfunction.compute_live_g_function(
+        g_function = compute_live_g_function(
             B,
             [borehole.H],
             [borehole.r_b],
@@ -147,7 +148,7 @@ class Bisection1D:
         )
 
         # Initialize the GHE object
-        self.ghe = dt.ground_heat_exchangers.GHE(
+        self.ghe = GHE(
             V_flow_system,
             B,
             self.bhe_object,
@@ -222,7 +223,7 @@ class Bisection1D:
                     "for the minimum and maximum number of boreholes falls "
                     'below 0. This means that the loads are "miniscule" or '
                     "that the lower end of the domain needs to contain "
-                    "less boreholes.".format()
+                    "less boreholes."
                 )
                 raise ValueError(msg)
             if T_0_upper > 0.0 and T_m1 > 0.0:
@@ -341,7 +342,7 @@ class RowWiseModifiedBisectionSearch:
         self.V_flow = V_flow
         self.flow = flow
         self.method = method
-        self.log_time = dt.utilities.Eskilson_log_times()
+        self.log_time = Eskilson_log_times()
         self.bhe_object = bhe_object
         self.sim_params = sim_params
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
@@ -394,11 +395,11 @@ class RowWiseModifiedBisectionSearch:
         grout = self.grout
         soil = self.soil
 
-        B = dt.utilities.borehole_spacing(borehole, coordinates)
+        B = borehole_spacing(borehole, coordinates)
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
-        g_function = dt.gfunction.compute_live_g_function(
+        g_function = compute_live_g_function(
             B,
             [borehole.H],
             [borehole.r_b],
@@ -414,7 +415,7 @@ class RowWiseModifiedBisectionSearch:
         )
 
         # Initialize the GHE object
-        self.ghe = dt.ground_heat_exchangers.GHE(
+        self.ghe = GHE(
             V_flow_system,
             B,
             self.bhe_object,
@@ -806,7 +807,6 @@ class Bisection1D_modified:
         # initial setup
         self.searchTracker = []
         coordinates = coordinates_domain[0]
-        # currentField = fieldDescriptors[0]
         self.fieldType = fieldType
         # Flow rate tracking
         self.V_flow = V_flow
@@ -814,7 +814,7 @@ class Bisection1D_modified:
         V_flow_system, m_flow_borehole = self.retrieve_flow(coordinates, fluid.rho)
         self.method = method
 
-        self.log_time = dt.utilities.Eskilson_log_times()
+        self.log_time = Eskilson_log_times()
         self.bhe_object = bhe_object
         self.sim_params = sim_params
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
@@ -823,11 +823,11 @@ class Bisection1D_modified:
         self.max_iter = max_iter
         self.disp = disp
 
-        B = dt.utilities.borehole_spacing(borehole, coordinates)
+        B = borehole_spacing(borehole, coordinates)
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
-        g_function = dt.gfunction.compute_live_g_function(
+        g_function = compute_live_g_function(
             B,
             [borehole.H],
             [borehole.r_b],
@@ -843,7 +843,7 @@ class Bisection1D_modified:
         )
 
         # Initialize the GHE object
-        self.ghe = dt.ground_heat_exchangers.GHE(
+        self.ghe = GHE(
             V_flow_system,
             B,
             bhe_object,
@@ -889,11 +889,11 @@ class Bisection1D_modified:
         grout = self.ghe.bhe.grout
         soil = self.ghe.bhe.soil
 
-        B = dt.utilities.borehole_spacing(borehole, coordinates)
+        B = borehole_spacing(borehole, coordinates)
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
-        g_function = dt.gfunction.compute_live_g_function(
+        g_function = compute_live_g_function(
             B,
             [borehole.H],
             [borehole.r_b],
@@ -909,7 +909,7 @@ class Bisection1D_modified:
         )
 
         # Initialize the GHE object
-        self.ghe = dt.ground_heat_exchangers.GHE(
+        self.ghe = GHE(
             V_flow_system,
             B,
             self.bhe_object,
@@ -1126,7 +1126,7 @@ class Bisection2D(Bisection1D):
 
         self.coordinates_domain = outer_domain
 
-        selection_key, selected_coordinates = self.search()
+        selection_key, _ = self.search()
 
         self.calculated_temperatures_nested.append(
             copy.deepcopy(self.calculated_temperatures)
@@ -1333,9 +1333,7 @@ def oak_ridge_export(bisection_search, file_name="ghedt_output"):
     lntts += g.x[total_g_values - number_lts_g_values : total_g_values].tolist()
     g_values += g.y[total_g_values - number_lts_g_values : total_g_values].tolist()
 
-    for i in range(len(lntts)):
-        d["g_function_pairs"].append({"ln_tts": lntts[i], "g_value": g_values[i]})
+    for (lntts_val, g_val) in zip(lntts, g_values):
+        d["g_function_pairs"].append({"ln_tts": lntts_val, "g_value": g_values[i]})
 
-    dt.utilities.js_dump(file_name, d, indent=4)
-
-    return
+    js_dump(file_name, d, indent=4)

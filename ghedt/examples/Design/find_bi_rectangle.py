@@ -158,22 +158,7 @@ def main():
     # Land constraints
     l_x_perimeter = 85.0
     l_y_perimeter = 80.0
-    perimeter = dt.utilities.make_rectangle_perimeter(l_x_perimeter, l_y_perimeter)
-    # Building "no-go" zone
-    l_x_building = 50
-    l_y_building = 33.3
-    origin_x, origin_y = (15, 36.5)
-    no_go = dt.utilities.make_rectangle_perimeter(
-        l_x_building, l_y_building, origin=(origin_x, origin_y)
-    )
-    # Plot go and no-go zone with borehole coordinates
-    ghe = bisection_search.ghe
-    coordinates = ghe.GFunction.bore_locations
-    fig, ax = dt.gfunction.GFunction.visualize_area_and_constraints(
-        perimeter, coordinates, no_go=no_go
-    )
-    # See Figure 4.19 on page 138 of Cook (2021)
-    fig.savefig("bi-rectangular.png", bbox_inches="tight", pad_inches=0.1)
+
     OutputDesignDetails(
         bisection_search,
         toc - tic,
