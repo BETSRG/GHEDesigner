@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ 3.8, 3.9, 3.10, 3.11 ]
+        python-version: [ 3.8 ]
 
     steps:
       - uses: actions/checkout@v2
@@ -26,8 +26,4 @@ jobs:
           flake8 . --count --exit-zero --statistics
       - name: Unit tests
         run: |
-          python3 setup.py nosetests
-      # - name: Coveralls
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: coveralls
+          nosetests

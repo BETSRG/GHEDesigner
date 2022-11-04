@@ -13,16 +13,17 @@ from ghedt.output import OutputDesignDetails
 
 def main():
 
-    # This file contains three examples utilizing the square-near-square design algorithm for a single U, double U, and
-    # coaxial tube design. The results from these examples are exported to the "DesignExampleOutput" folder.
+    # This file contains three examples utilizing the square-near-square design algorithm
+    # (utilizing a mulit-year loading) for a single U, double U, and coaxial tube design. The
+    # results from these examples are exported to the "DesignExampleOutput" folder.
 
     # Single U-tube Example
 
     # Output File Configuration
     projectName = "Atlanta Office Building: Design Example"
-    note = "Square-Near-Square Usage Example: Single U Tube"
-    author = "John Doe"
-    IterationName = "Example 1"
+    note = "Square-Near-Square w/ Multi-year Loading Usage Example: Single U Tube"
+    author = "Jane Doe"
+    IterationName = "Example 2"
     outputFileDirectory = "DesignExampleOutput"
 
     # Borehole dimensions
@@ -74,7 +75,7 @@ def main():
 
     # Simulation parameters
     start_month = 1
-    n_years = 20
+    n_years = 4
     end_month = n_years * 12
     max_EFT_allowable = 35  # degrees Celsius (HPEFT)
     min_EFT_allowable = 5  # degrees Celsius (HPEFT)
@@ -91,9 +92,9 @@ def main():
 
     # Process loads from file
     # read in the csv file and convert the loads to a list of length 8760
-    hourly_extraction: dict = pd.read_csv(
-        "../Atlanta_Office_Building_Loads.csv"
-    ).to_dict("list")
+    hourly_extraction: dict = pd.read_csv("../Multiyear_Loading_Example.csv").to_dict(
+        "list"
+    )
     # Take only the first column in the dictionary
     hourly_extraction_ground_loads: list = hourly_extraction[
         list(hourly_extraction.keys())[0]
@@ -111,6 +112,7 @@ def main():
 
     # Single U-tube
     # -------------
+    # load_years optional parameter is used to determine if there are leap years in the given loads/where they fall
     design_single_u_tube = dt.design.Design(
         V_flow,
         borehole,
@@ -125,6 +127,7 @@ def main():
         method="hybrid",
         flow=flow,
         routine="near-square",
+        load_years=[2010, 2011, 2012, 2013],
     )
 
     # Find the near-square design for a single U-tube and size it.
@@ -164,7 +167,7 @@ def main():
     # *************************************************************************************************************
     # Double U-tube Example
 
-    note = "Square-Near-Square Usage Example: Double U Tube"
+    note = "Square-Near-Square w/ Multi-year Loading Usage Example: Double U Tube"
 
     # Double U-tube
     pos_double = plat.media.Pipe.place_pipes(s, r_out, 2)
@@ -187,6 +190,7 @@ def main():
         method="hybrid",
         flow=flow,
         routine="near-square",
+        load_years=[2010, 2011, 2012, 2013],
     )
 
     # Find the near-square design for a single U-tube and size it.
@@ -226,7 +230,7 @@ def main():
     # *************************************************************************************************************
     # Coaxial Tube Example
 
-    note = "Square-Near-Square Usage Example: Coaxial Tube"
+    note = "Square-Near-Square w/ Multi-year Loading Usage Example:Coaxial Tube"
 
     # Coaxial tube
     r_in_in = 44.2 / 1000.0 / 2.0
@@ -264,6 +268,7 @@ def main():
         method="hybrid",
         flow=flow,
         routine="near-square",
+        load_years=[2010, 2011, 2012, 2013],
     )
 
     # Find the near-square design for a single U-tube and size it.
@@ -283,7 +288,8 @@ def main():
     nbh = len(bisection_search.ghe.GFunction.bore_locations)
     print("Number of boreholes: {}".format(nbh))
     print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
-    # Generating Output File
+
+    # Generating Ouptut File
     OutputDesignDetails(
         bisection_search,
         toc - tic,

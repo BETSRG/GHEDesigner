@@ -13,28 +13,28 @@ import pandas as pd
 def main():
     # Borehole dimensions
     # -------------------
-    H = 96.  # Borehole length (m)
-    D = 2.  # Borehole buried depth (m)
+    H = 96.0  # Borehole length (m)
+    D = 2.0  # Borehole buried depth (m)
     r_b = 0.075  # Borehole radius (m)
-    B = 5.  # Borehole spacing (m)
+    B = 5.0  # Borehole spacing (m)
 
     # Pipe dimensions
     # ---------------
     # Single and Multiple U-tubes
-    r_out = 26.67 / 1000. / 2.  # Pipe outer radius (m)
-    r_in = 21.6 / 1000. / 2.  # Pipe inner radius (m)
-    s = 32.3 / 1000.  # Inner-tube to inner-tube Shank spacing (m)
+    r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
+    r_in = 21.6 / 1000.0 / 2.0  # Pipe inner radius (m)
+    s = 32.3 / 1000.0  # Inner-tube to inner-tube Shank spacing (m)
     epsilon = 1.0e-6  # Pipe roughness (m)
     # Coaxial tube
-    r_in_in = 44.2/1000./2.
-    r_in_out = 50./1000./2.
+    r_in_in = 44.2 / 1000.0 / 2.0
+    r_in_out = 50.0 / 1000.0 / 2.0
     # Outer pipe radii
-    r_out_in = 97.4 / 1000. / 2.
-    r_out_out = 110./1000./2.
+    r_out_in = 97.4 / 1000.0 / 2.0
+    r_out_out = 110.0 / 1000.0 / 2.0
     # Pipe radii
     # Note: This convention is different from pygfunction
-    r_inner = [r_in_in, r_in_out]   # The radii of the inner pipe from in to out
-    r_outer = [r_out_in, r_out_out] # The radii of the outer pipe from in to out
+    r_inner = [r_in_in, r_in_out]  # The radii of the inner pipe from in to out
+    r_outer = [r_out_in, r_out_out]  # The radii of the outer pipe from in to out
 
     # Pipe positions
     # --------------
@@ -57,19 +57,18 @@ def main():
 
     # Volumetric heat capacities
     # --------------------------
-    rhoCp_p = 1542. * 1000.  # Pipe volumetric heat capacity (J/K.m3)
-    rhoCp_s = 2343.493 * 1000.  # Soil volumetric heat capacity (J/K.m3)
-    rhoCp_g = 3901. * 1000.  # Grout volumetric heat capacity (J/K.m3)
+    rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+    rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+    rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
     # Thermal properties
     # ------------------
     # Pipe
-    pipe_single = \
-        plat.media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-    pipe_double = \
-        plat.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-    pipe_coaxial = \
-        plat.media.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p, rhoCp_p)
+    pipe_single = plat.media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe_double = plat.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe_coaxial = plat.media.Pipe(
+        pos_coaxial, r_inner, r_outer, 0, epsilon, k_p, rhoCp_p
+    )
     # Soil
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
     soil = plat.media.Soil(k_s, rhoCp_s, ugt)
@@ -79,15 +78,13 @@ def main():
     # Inputs related to fluid
     # -----------------------
     # Fluid properties
-    mixer = 'MEG'  # Ethylene glycol mixed with water
-    percent = 0.  # Percentage of ethylene glycol added in
-    fluid = gt.media.Fluid(mixer=mixer, percent=percent)
+    fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
 
     # Fluid properties
     V_flow_borehole = 0.2  # Borehole volumetric flow rate (L/s)
 
     # Define a borehole
-    borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
+    borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
 
     # Simulation parameters
     # ---------------------
@@ -99,24 +96,30 @@ def main():
     max_EFT_allowable = 35  # degrees Celsius
     min_EFT_allowable = 5  # degrees Celsius
     # Maximum and minimum allowable heights
-    max_Height = 135.  # in meters
+    max_Height = 135.0  # in meters
     min_Height = 60  # in meters
     sim_params = plat.media.SimulationParameters(
-        start_month, end_month, max_EFT_allowable, min_EFT_allowable,
-        max_Height, min_Height)
+        start_month,
+        end_month,
+        max_EFT_allowable,
+        min_EFT_allowable,
+        max_Height,
+        min_Height,
+    )
 
     # Process loads from file
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
-    hourly_extraction: dict = \
-        pd.read_csv('../../Atlanta_Office_Building_Loads.csv').to_dict('list')
+    hourly_extraction: dict = pd.read_csv(
+        "../../Atlanta_Office_Building_Loads.csv"
+    ).to_dict("list")
     # Take only the first column in the dictionary
-    hourly_extraction_ground_loads: list = \
-        hourly_extraction[list(hourly_extraction.keys())[0]]
+    hourly_extraction_ground_loads: list = hourly_extraction[
+        list(hourly_extraction.keys())[0]
+    ]
 
     # Geometric constraints for the `near-square` routine
-    geometric_constraints = dt.media.GeometricConstraints(
-        B_max_x=B, unconstrained=True)
+    geometric_constraints = dt.media.GeometricConstraints(B_max_x=B, unconstrained=True)
 
     # Note: Flow functionality is currently only on a borehole basis. Future
     # development will include the ability to change the flow rate to be on a
@@ -125,34 +128,58 @@ def main():
     # Single U-tube
     # -------------
     design_single_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, single_u_tube, fluid, pipe_single, grout,
-        soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square')
+        V_flow_borehole,
+        borehole,
+        single_u_tube,
+        fluid,
+        pipe_single,
+        grout,
+        soil,
+        sim_params,
+        geometric_constraints,
+        hourly_extraction_ground_loads,
+        routine="near-square",
+    )
 
     # Output the design interface object to a json file so it can be reused
-    dt.utilities.create_input_file(
-        design_single_u_tube, file_name='ghedt_input')
+    dt.utilities.create_input_file(design_single_u_tube, file_name="ghedt_input")
 
     # Double U-tube
     # -------------
     design_double_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, double_u_tube, fluid, pipe_double, grout,
-        soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square')
+        V_flow_borehole,
+        borehole,
+        double_u_tube,
+        fluid,
+        pipe_double,
+        grout,
+        soil,
+        sim_params,
+        geometric_constraints,
+        hourly_extraction_ground_loads,
+        routine="near-square",
+    )
 
-    dt.utilities.create_input_file(
-        design_double_u_tube, file_name='double_u_tube')
+    dt.utilities.create_input_file(design_double_u_tube, file_name="double_u_tube")
 
     # Coaxial tube
     # ------------
     design_coaxial_u_tube = dt.design.Design(
-        V_flow_borehole, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
-        soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-        routine='near-square')
+        V_flow_borehole,
+        borehole,
+        coaxial_tube,
+        fluid,
+        pipe_coaxial,
+        grout,
+        soil,
+        sim_params,
+        geometric_constraints,
+        hourly_extraction_ground_loads,
+        routine="near-square",
+    )
 
-    dt.utilities.create_input_file(
-        design_coaxial_u_tube, file_name='coaxial_tube')
+    dt.utilities.create_input_file(design_coaxial_u_tube, file_name="coaxial_tube")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

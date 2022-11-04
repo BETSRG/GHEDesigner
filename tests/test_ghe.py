@@ -1,48 +1,42 @@
-# Jack C. Cook
-# Monday, October 11, 2021
-
-import unittest
 import os
+import unittest
 
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
+import pandas as pd
 import pygfunction as gt
 
-import pandas as pd
-
-TESTDATA_FILENAME = os.path.join(os.path.dirname(__file__),
-                                 'Atlanta_Office_Building_Loads.csv')
+TESTDATA_FILENAME = os.path.join(
+    os.path.dirname(__file__), "test_data", "Atlanta_Office_Building_Loads.csv"
+)
 
 
 class TestGHE(unittest.TestCase):
-
     def setUp(self) -> None:
         # Borehole dimensions
         # -------------------
-        self.H = 100.  # Borehole length (m)
-        self.D = 2.  # Borehole buried depth (m)
+        self.H = 100.0  # Borehole length (m)
+        self.D = 2.0  # Borehole buried depth (m)
         self.r_b = 0.075  # Borehole radius]
-        self.B = 5.  # Borehole spacing (m)
+        self.B = 5.0  # Borehole spacing (m)
 
         # Pipe dimensions
         # ---------------
         # U-tubes
-        r_out = 26.67 / 1000. / 2.  # Pipe outer radius (m)
-        r_in = 21.6 / 1000. / 2.  # Pipe inner radius (m)
-        s = 32.3 / 1000.  # Inner-tube to inner-tube Shank spacing (m)
+        r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
+        r_in = 21.6 / 1000.0 / 2.0  # Pipe inner radius (m)
+        s = 32.3 / 1000.0  # Inner-tube to inner-tube Shank spacing (m)
         # Coaxial
         # Inner pipe radii
-        r_in_in = 44.2 / 1000. / 2.
-        r_in_out = 50. / 1000. / 2.
+        r_in_in = 44.2 / 1000.0 / 2.0
+        r_in_out = 50.0 / 1000.0 / 2.0
         # Outer pipe radii
-        r_out_in = 97.4 / 1000. / 2.
-        r_out_out = 110. / 1000. / 2.
+        r_out_in = 97.4 / 1000.0 / 2.0
+        r_out_out = 110.0 / 1000.0 / 2.0
         # Pipe radii
         # Note: This convention is different from pygfunction
-        r_inner = [r_in_in,
-                   r_in_out]  # The radii of the inner pipe from in to out
-        r_outer = [r_out_in,
-                   r_out_out]  # The radii of the outer pipe from in to out
+        r_inner = [r_in_in, r_in_out]  # The radii of the inner pipe from in to out
+        r_outer = [r_out_in, r_out_out]  # The radii of the outer pipe from in to out
 
         epsilon = 1.0e-6  # Pipe roughness (m)
 
@@ -65,19 +59,18 @@ class TestGHE(unittest.TestCase):
 
         # Volumetric heat capacities
         # --------------------------
-        rhoCp_p = 1542. * 1000.  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901. * 1000.  # Grout volumetric heat capacity (J/K.m3)
+        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # ------------------
         # Pipe
-        self.pipe_s = \
-            plat.media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-        self.pipe_d = \
-            plat.media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-        self.pipe_c = \
-            plat.media.Pipe(pos_c, r_inner, r_outer, s, epsilon, k_p_c, rhoCp_p)
+        self.pipe_s = plat.media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        self.pipe_d = plat.media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        self.pipe_c = plat.media.Pipe(
+            pos_c, r_inner, r_outer, s, epsilon, k_p_c, rhoCp_p
+        )
 
         # Single U-tube BHE object
         self.SingleUTube = plat.borehole_heat_exchangers.SingleUTube
@@ -99,23 +92,22 @@ class TestGHE(unittest.TestCase):
 
         # Compute a range of g-functions for interpolation
         self.log_time = dt.utilities.Eskilson_log_times()
-        self.H_values = [24., 48., 96., 192., 384.]
+        self.H_values = [24.0, 48.0, 96.0, 192.0, 384.0]
         self.r_b_values = [self.r_b] * len(self.H_values)
-        self.D_values = [2.] * len(self.H_values)
+        self.D_values = [2.0] * len(self.H_values)
 
         # Inputs related to fluid
         # -----------------------
         V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
-        mixer = 'MEG'  # Ethylene glycol mixed with water
-        percent = 0.  # Percentage of ethylene glycol added in
 
         # -----------------------
         # Fluid properties
-        self.fluid = gt.media.Fluid(mixer=mixer, percent=percent)
+        self.fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
         self.V_flow_system = V_flow_borehole * float(
-            Nx * Ny)  # System volumetric flow rate (L/s)
+            Nx * Ny
+        )  # System volumetric flow rate (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
-        self.m_flow_borehole = V_flow_borehole / 1000. * self.fluid.rho
+        self.m_flow_borehole = V_flow_borehole / 1000.0 * self.fluid.rho
 
         # Simulation start month and end month
         # --------------------------------
@@ -130,95 +122,154 @@ class TestGHE(unittest.TestCase):
         max_Height = 384  # in meters
         min_Height = 24  # in meters
         self.sim_params = plat.media.SimulationParameters(
-            start_month, end_month, max_EFT_allowable, min_EFT_allowable,
-            max_Height, min_Height)
+            start_month,
+            end_month,
+            max_EFT_allowable,
+            min_EFT_allowable,
+            max_Height,
+            min_Height,
+        )
 
         # Process loads from file
         # -----------------------
         # read in the csv file and convert the loads to a list of length 8760
-        hourly_extraction: dict = \
-            pd.read_csv(TESTDATA_FILENAME).to_dict('list')
+        hourly_extraction: dict = pd.read_csv(TESTDATA_FILENAME).to_dict("list")
         # Take only the first column in the dictionary
-        self.hourly_extraction_ground_loads: list = \
-            hourly_extraction[list(hourly_extraction.keys())[0]]
+        self.hourly_extraction_ground_loads: list = hourly_extraction[
+            list(hourly_extraction.keys())[0]
+        ]
 
     def test_single_u_tube(self):
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
+        borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
         g_function = dt.gfunction.compute_live_g_function(
-            self.B, self.H_values, self.r_b_values, self.D_values,
-            self.m_flow_borehole, self.SingleUTube,
-            self.log_time, self.coordinates, self.fluid, self.pipe_s,
-            self.grout, self.soil)
+            self.B,
+            self.H_values,
+            self.r_b_values,
+            self.D_values,
+            self.m_flow_borehole,
+            self.SingleUTube,
+            self.log_time,
+            self.coordinates,
+            self.fluid,
+            self.pipe_s,
+            self.grout,
+            self.soil,
+        )
 
         # Initialize the GHE object
         ghe = dt.ground_heat_exchangers.GHE(
-            self.V_flow_system, self.B, self.SingleUTube, self.fluid,
-            borehole, self.pipe_s, self.grout, self.soil,
-            g_function, self.sim_params, self.hourly_extraction_ground_loads)
+            self.V_flow_system,
+            self.B,
+            self.SingleUTube,
+            self.fluid,
+            borehole,
+            self.pipe_s,
+            self.grout,
+            self.soil,
+            g_function,
+            self.sim_params,
+            self.hourly_extraction_ground_loads,
+        )
 
-        max_HP_EFT, min_HP_EFT = ghe.simulate(method='hybrid')
+        max_HP_EFT, min_HP_EFT = ghe.simulate(method="hybrid")
 
-        self.assertAlmostEqual(39.084419566119934, max_HP_EFT)
-        self.assertAlmostEqual(16.660966674440232, min_HP_EFT)
+        self.assertAlmostEqual(39.09, max_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(16.66, min_HP_EFT, delta=0.01)
 
-        ghe.size(method='hybrid')
+        ghe.size(method="hybrid")
 
-        self.assertAlmostEqual(ghe.bhe.b.H, 130.13510780396268, places=2)
+        self.assertAlmostEqual(ghe.bhe.b.H, 130.22, places=2)
 
     def test_double_u_tube(self):
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
+        borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
         g_function = dt.gfunction.compute_live_g_function(
-            self.B, self.H_values, self.r_b_values, self.D_values,
-            self.m_flow_borehole, self.DoubleUTube,
-            self.log_time, self.coordinates, self.fluid, self.pipe_d,
-            self.grout, self.soil)
+            self.B,
+            self.H_values,
+            self.r_b_values,
+            self.D_values,
+            self.m_flow_borehole,
+            self.DoubleUTube,
+            self.log_time,
+            self.coordinates,
+            self.fluid,
+            self.pipe_d,
+            self.grout,
+            self.soil,
+        )
 
         # Initialize the GHE object
         ghe = dt.ground_heat_exchangers.GHE(
-            self.V_flow_system, self.B, self.DoubleUTube, self.fluid,
-            borehole, self.pipe_d, self.grout, self.soil,
-            g_function, self.sim_params, self.hourly_extraction_ground_loads)
+            self.V_flow_system,
+            self.B,
+            self.DoubleUTube,
+            self.fluid,
+            borehole,
+            self.pipe_d,
+            self.grout,
+            self.soil,
+            g_function,
+            self.sim_params,
+            self.hourly_extraction_ground_loads,
+        )
 
-        max_HP_EFT, min_HP_EFT = ghe.simulate(method='hybrid')
+        max_HP_EFT, min_HP_EFT = ghe.simulate(method="hybrid")
 
-        self.assertAlmostEqual(37.97229212228275, max_HP_EFT, delta=0.01)
-        self.assertAlmostEqual(16.989189768401793, min_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(37.98, max_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(16.98, min_HP_EFT, delta=0.01)
 
-        ghe.size(method='hybrid')
+        ghe.size(method="hybrid")
 
-        self.assertAlmostEqual(ghe.bhe.b.H, 121.85659366084005, places=2)
+        self.assertAlmostEqual(ghe.bhe.b.H, 121.96, places=2)
 
     def test_coaxial_tube(self):
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0., y=0.)
+        borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
         g_function = dt.gfunction.compute_live_g_function(
-            self.B, self.H_values, self.r_b_values, self.D_values,
-            self.m_flow_borehole, self.CoaxialTube,
-            self.log_time, self.coordinates, self.fluid, self.pipe_c,
-            self.grout, self.soil)
+            self.B,
+            self.H_values,
+            self.r_b_values,
+            self.D_values,
+            self.m_flow_borehole,
+            self.CoaxialTube,
+            self.log_time,
+            self.coordinates,
+            self.fluid,
+            self.pipe_c,
+            self.grout,
+            self.soil,
+        )
 
         # Re-Initialize the GHE object
         ghe = dt.ground_heat_exchangers.GHE(
-            self.V_flow_system, self.B, self.CoaxialTube, self.fluid,
-            borehole, self.pipe_c, self.grout, self.soil,
-            g_function, self.sim_params, self.hourly_extraction_ground_loads)
+            self.V_flow_system,
+            self.B,
+            self.CoaxialTube,
+            self.fluid,
+            borehole,
+            self.pipe_c,
+            self.grout,
+            self.soil,
+            g_function,
+            self.sim_params,
+            self.hourly_extraction_ground_loads,
+        )
 
-        max_HP_EFT, min_HP_EFT = ghe.simulate(method='hybrid')
+        max_HP_EFT, min_HP_EFT = ghe.simulate(method="hybrid")
 
-        self.assertAlmostEqual(37.73503652828782, max_HP_EFT)
-        self.assertAlmostEqual(17.61422171583412, min_HP_EFT)
+        self.assertAlmostEqual(37.74, max_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(17.61, min_HP_EFT, delta=0.01)
 
-        ghe.size(method='hybrid')
+        ghe.size(method="hybrid")
 
-        self.assertAlmostEqual(ghe.bhe.b.H, 120.89971616555863, places=2)
+        self.assertAlmostEqual(ghe.bhe.b.H, 121.03, delta=0.01)

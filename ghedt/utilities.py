@@ -18,10 +18,35 @@ from matplotlib.ticker import Locator
 # --------------
 def Eskilson_log_times():
     # Return a list of Eskilson's original 27 dimensionless points in time
-    log_time = [-8.5, -7.8, -7.2, -6.5, -5.9, -5.2, -4.5, -3.963, -3.27,
-                -2.864, -2.577, -2.171, -1.884,
-                -1.191, -0.497, -0.274, -0.051, 0.196, 0.419,
-                0.642, 0.873, 1.112, 1.335, 1.679, 2.028, 2.275, 3.003]
+    log_time = [
+        -8.5,
+        -7.8,
+        -7.2,
+        -6.5,
+        -5.9,
+        -5.2,
+        -4.5,
+        -3.963,
+        -3.27,
+        -2.864,
+        -2.577,
+        -2.171,
+        -1.884,
+        -1.191,
+        -0.497,
+        -0.274,
+        -0.051,
+        0.196,
+        0.419,
+        0.642,
+        0.873,
+        1.112,
+        1.335,
+        1.679,
+        2.028,
+        2.275,
+        3.003,
+    ]
     return log_time
 
 
@@ -35,11 +60,12 @@ def borehole_spacing(borehole, coordinates):
         B = copy.deepcopy(borehole.r_b)
     elif len(coordinates) > 1:
         x_1, y_1 = coordinates[1]
-        B = max(borehole.r_b,
-                np.sqrt((x_1 - x_0) ** 2 + (y_1 - y_0) ** 2))
+        B = max(borehole.r_b, np.sqrt((x_1 - x_0) ** 2 + (y_1 - y_0) ** 2))
     else:
-        raise ValueError('The coordinates_domain needs to contain a positive'
-                         'number of (x, y) pairs.')
+        raise ValueError(
+            "The coordinates_domain needs to contain a positive"
+            "number of (x, y) pairs."
+        )
     return B
 
 
@@ -71,10 +97,12 @@ def make_rectangle_perimeter(length_x, length_y, origin=(0, 0)):
     # Create an outer rectangular perimeter given an origin and side lengths.
     origin_x = origin[0]
     origin_y = origin[1]
-    rectangle_perimeter = \
-        [[origin_x, origin_y], [origin_x + length_x, origin_y],
-         [origin_x + length_x, origin_y + length_y],
-         [origin_x, origin_y + length_y]]
+    rectangle_perimeter = [
+        [origin_x, origin_y],
+        [origin_x + length_x, origin_y],
+        [origin_x + length_x, origin_y + length_y],
+        [origin_x, origin_y + length_y],
+    ]
     return rectangle_perimeter
 
 
@@ -107,8 +135,10 @@ def sign(x: float) -> int:
 
 def check_bracket(sign_xL, sign_xR, disp=None) -> bool:
     if disp is not None:
-        warnings.warn('The disp option in check_bracket will be removed in '
-                      'the ghedt 0.2 release.')
+        warnings.warn(
+            "The disp option in check_bracket will be removed in "
+            "the ghedt 0.2 release."
+        )
     if sign_xL < 0 < sign_xR:
         # Bracketed the root
         return True
@@ -123,7 +153,7 @@ def check_bracket(sign_xL, sign_xR, disp=None) -> bool:
 # File input/output or file path handling functions.
 # --------------------------------------------------
 def js_dump(file_name, d, indent=4):
-    with open(file_name + '.json', 'w') as fp:
+    with open(file_name + ".json", "w") as fp:
         json.dump(d, fp, indent=indent)
 
 
@@ -134,13 +164,14 @@ def js_load(filename: str):
 
 def create_if_not(directory):
     import os
+
     if not os.path.exists(directory):
         os.makedirs(directory)
 
 
-def create_input_file(self, file_name='ghedt_input'):
+def create_input_file(self, file_name="ghedt_input"):
     # Store an object in a file using pickle.
-    file_handler = open(file_name + '.obj', 'wb')
+    file_handler = open(file_name + ".obj", "wb")
     pickle.dump(self, file_handler)
     file_handler.close()
 
@@ -149,7 +180,7 @@ def create_input_file(self, file_name='ghedt_input'):
 
 def read_input_file(path_to_file):
     # Open a .obj file and return the ghedt object.
-    file = open(path_to_file, 'rb')
+    file = open(path_to_file, "rb")
     object_file = pickle.load(file)
     file.close()
 
@@ -159,7 +190,7 @@ def read_input_file(path_to_file):
 # Functions related to computing statistics.
 # ------------------------------------------
 def compute_mpe(actual: list, predicted: list) -> float:
-    """
+    r"""
     The following mean percentage error formula is used:
     .. math::
         MPE = \dfrac{100\%}{n}\sum_{i=0}^{n-1}\dfrac{a_t-p_t}{a_t}
@@ -177,7 +208,7 @@ def compute_mpe(actual: list, predicted: list) -> float:
     # the lengths of the two lists should be the same
     assert len(actual) == len(predicted)
     # create a summation variable
-    summation: float = 0.
+    summation: float = 0.0
     for i in range(len(actual)):
         summation += (predicted[i] - actual[i]) / actual[i]
     mean_percent_error = summation * 100 / len(actual)
@@ -217,20 +248,20 @@ class MinorSymLogLocator(Locator):
         dmupper = majorlocs[-1] - majorlocs[-2]
 
         # add temporary major tick location at the lower end
-        if majorlocs[0] != 0. and \
-                ((majorlocs[0] != self.linthresh and
-                  dmlower > self.linthresh) or
-                 (dmlower == self.linthresh and majorlocs[0] < 0)):
-            majorlocs = np.insert(majorlocs, 0, majorlocs[0] * 10.)
+        if majorlocs[0] != 0.0 and (
+            (majorlocs[0] != self.linthresh and dmlower > self.linthresh)
+            or (dmlower == self.linthresh and majorlocs[0] < 0)
+        ):
+            majorlocs = np.insert(majorlocs, 0, majorlocs[0] * 10.0)
         else:
             majorlocs = np.insert(majorlocs, 0, majorlocs[0] - self.linthresh)
 
         # add temporary major tick location at the upper end
-        if majorlocs[-1] != 0. and \
-                ((np.abs(majorlocs[-1]) != self.linthresh and
-                  dmupper > self.linthresh) or
-                 (dmupper == self.linthresh and majorlocs[-1] > 0)):
-            majorlocs = np.append(majorlocs, majorlocs[-1] * 10.)
+        if majorlocs[-1] != 0.0 and (
+            (np.abs(majorlocs[-1]) != self.linthresh and dmupper > self.linthresh)
+            or (dmupper == self.linthresh and majorlocs[-1] > 0)
+        ):
+            majorlocs = np.append(majorlocs, majorlocs[-1] * 10.0)
         else:
             majorlocs = np.append(majorlocs, majorlocs[-1] + self.linthresh)
 
@@ -243,7 +274,7 @@ class MinorSymLogLocator(Locator):
             if abs(majorlocs[i - 1] + majorstep / 2) < self.linthresh:
                 ndivs = self.nintervals
             else:
-                ndivs = self.nintervals - 1.
+                ndivs = self.nintervals - 1.0
 
             minorstep = majorstep / ndivs
             locs = np.arange(majorlocs[i - 1], majorlocs[i], minorstep)[1:]
@@ -252,5 +283,6 @@ class MinorSymLogLocator(Locator):
         return self.raise_if_exceeds(np.array(minorlocs))
 
     def tick_values(self, vmin, vmax):
-        raise NotImplementedError('Cannot get tick locations for a '
-                                  '%s type.' % type(self))
+        raise NotImplementedError(
+            "Cannot get tick locations for a " "%s type." % type(self)
+        )

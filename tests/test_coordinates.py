@@ -2,8 +2,7 @@ import os
 import unittest
 
 import matplotlib.pyplot as plt
-
-from ghedt.coordinates import rectangle, open_rectangle, c_shape
+from ghedt.coordinates import c_shape, open_rectangle, rectangle
 
 if "PLOT_COORDINATES" in os.environ:
     show_plots = True
@@ -19,7 +18,6 @@ def plot_coordinates(coords, title):
 
 
 class TestCoordinates(unittest.TestCase):
-
     def test_rectangle(self):
         coords = rectangle(4, 4, 1, 1)
         self.assertEqual(len(coords), 16)

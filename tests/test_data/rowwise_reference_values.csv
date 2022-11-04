@@ -1,0 +1,12 @@
+﻿test_borehole_config_rotations,test_borehole_config_lengths,test_normal_spacing_target_spacings,test_normal_spacing_lengths,test_perimeter_spacing_target_spacings,test_perimeter_spacing_lengths,test_shape_methods_Area,test_shape_methods_point_intersections,test_shape_methods_Shape_1_r1_x,test_shape_methods_Shape_1_r1_y,test_shape_methods_Shape_1_r2_x,test_shape_methods_Shape_1_r2_y,test_shape_methods_Shape_1_r3_x,test_shape_methods_Shape_1_r3_y,test_shape_methods_Shape_2_r1_x,test_shape_methods_Shape_2_r1_y,test_shape_methods_Shape_2_r2_x,test_shape_methods_Shape_2_r2_y,test_shape_methods_Shape_2_r3_x,test_shape_methods_Shape_2_r3_y
+-1.57079633,47,10,108,10,120,11075.15429,TRUE,66.3691141,42.73822819,36.70176684,57.32982332,79.35346667,40,95.6468648,101.2937296,73.33041912,53.66695809,,
+-1.04719755,47,11,93,11,103,1495.25016,FALSE,102.6805286,115.3610571,169.5586907,44.04413093,169.894687,40,100,110,78.62297819,53.13770218,,
+-0.52359878,45,12,81,12,91,,TRUE,,,,,,,,,,,,
+0,39,13,69,13,78,,FALSE,,,,,,,,,,,,
+0.52359878,46,14,60,14,65,,,,,,,,,,,,,,
+1.04719755,49,15,54,15,57,,,,,,,,,,,,,,
+1.57079633,47,16,47,16,54,,,,,,,,,,,,,,
+,,17,40,17,48,,,,,,,,,,,,,,
+,,18,38,18,46,,,,,,,,,,,,,,
+,,19,33,19,41,,,,,,,,,,,,,,
+,,20,30,20,37,,,,,,,,,,,,,,

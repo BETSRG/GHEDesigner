@@ -13,16 +13,16 @@ import pandas as pd
 def main():
     # Borehole dimensions
     # -------------------
-    H = 96.  # Borehole length (m)
-    D = 2.  # Borehole buried depth (m)
+    H = 96.0  # Borehole length (m)
+    D = 2.0  # Borehole buried depth (m)
     r_b = 0.075  # Borehole radius]
-    B = 5.  # Borehole spacing (m)
+    B = 5.0  # Borehole spacing (m)
 
     # Pipe dimensions
     # ---------------
-    r_out = 26.67 / 1000. / 2.  # Pipe outer radius (m)
-    r_in = 21.6 / 1000. / 2.  # Pipe inner radius (m)
-    s = 32.3 / 1000.  # Inner-tube to inner-tube Shank spacing (m)
+    r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
+    r_in = 21.6 / 1000.0 / 2.0  # Pipe inner radius (m)
+    s = 32.3 / 1000.0  # Inner-tube to inner-tube Shank spacing (m)
     epsilon = 1.0e-6  # Pipe roughness (m)
 
     # Pipe positions
@@ -40,9 +40,9 @@ def main():
 
     # Volumetric heat capacities
     # --------------------------
-    rhoCp_p = 1542. * 1000.  # Pipe volumetric heat capacity (J/K.m3)
-    rhoCp_s = 2343.493 * 1000.  # Soil volumetric heat capacity (J/K.m3)
-    rhoCp_g = 3901. * 1000.  # Grout volumetric heat capacity (J/K.m3)
+    rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+    rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+    rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
     # Thermal properties
     # ------------------
@@ -60,9 +60,7 @@ def main():
     # Inputs related to fluid
     # -----------------------
     # Fluid properties
-    mixer = 'MEG'  # Ethylene glycol mixed with water
-    percent = 0.  # Percentage of ethylene glycol added in
-    fluid = gt.media.Fluid(mixer=mixer, percent=percent)
+    fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
 
     # Coordinates
     Nx = 12
@@ -73,10 +71,10 @@ def main():
     V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
     V_flow_system = V_flow_borehole * float(Nx * Ny)
     # Total fluid mass flow rate per borehole (kg/s)
-    m_flow_borehole = V_flow_borehole / 1000. * fluid.rho
+    m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho
 
     # Define a borehole
-    borehole = gt.boreholes.Borehole(H, D, r_b, x=0., y=0.)
+    borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
 
     # Simulation start month and end month
     # --------------------------------
@@ -91,63 +89,116 @@ def main():
     max_Height = 150  # in meters
     min_Height = 60  # in meters
     sim_params = plat.media.SimulationParameters(
-        start_month, end_month, max_EFT_allowable, min_EFT_allowable,
-        max_Height, min_Height)
+        start_month,
+        end_month,
+        max_EFT_allowable,
+        min_EFT_allowable,
+        max_Height,
+        min_Height,
+    )
 
     # Process loads from file
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
-    hourly_extraction: dict = \
-        pd.read_csv('../Atlanta_Office_Building_Loads.csv').to_dict('list')
+    hourly_extraction: dict = pd.read_csv(
+        "../Atlanta_Office_Building_Loads.csv"
+    ).to_dict("list")
     # Take only the first column in the dictionary
-    hourly_extraction_ground_loads: list = \
-        hourly_extraction[list(hourly_extraction.keys())[0]]
+    hourly_extraction_ground_loads: list = hourly_extraction[
+        list(hourly_extraction.keys())[0]
+    ]
 
     # Calculate a g-function for uniform inlet fluid temperature with
     # 8 unequal segments using the equivalent solver
     nSegments = 8
-    segments = 'unequal'
-    solver = 'equivalent'
-    boundary = 'MIFT'
+    segments = "unequal"
+    solver = "equivalent"
+    boundary = "MIFT"
     end_length_ratio = 0.02
     segment_ratios = gt.utilities.segment_ratios(
-        nSegments, end_length_ratio=end_length_ratio)
+        nSegments, end_length_ratio=end_length_ratio
+    )
     g_function = dt.gfunction.compute_live_g_function(
-        B, [H], [r_b], [D], m_flow_borehole, bhe_object, log_time,
-        coordinates, fluid, pipe, grout, soil, nSegments=nSegments,
-        segments=segments, solver=solver, boundary=boundary,
-        segment_ratios=segment_ratios)
+        B,
+        [H],
+        [r_b],
+        [D],
+        m_flow_borehole,
+        bhe_object,
+        log_time,
+        coordinates,
+        fluid,
+        pipe,
+        grout,
+        soil,
+        nSegments=nSegments,
+        segments=segments,
+        solver=solver,
+        boundary=boundary,
+        segment_ratios=segment_ratios,
+    )
 
     # --------------------------------------------------------------------------
 
     # Initialize the GHE object
     ghe = dt.ground_heat_exchangers.GHE(
-        V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
-        g_function, sim_params, hourly_extraction_ground_loads)
+        V_flow_system,
+        B,
+        bhe_object,
+        fluid,
+        borehole,
+        pipe,
+        grout,
+        soil,
+        g_function,
+        sim_params,
+        hourly_extraction_ground_loads,
+    )
 
     # Simulate after computing just one g-function
     max_HP_EFT, min_HP_EFT = ghe.simulate()
 
-    print('Min EFT: {0:.3f}\nMax EFT: {1:.3f}'.format(min_HP_EFT, max_HP_EFT))
+    print("Min EFT: {0:.3f}\nMax EFT: {1:.3f}".format(min_HP_EFT, max_HP_EFT))
 
     # Compute a range of g-functions for interpolation
-    H_values = [24., 48., 96., 192., 384.]
+    H_values = [24.0, 48.0, 96.0, 192.0, 384.0]
     r_b_values = [r_b] * len(H_values)
-    D_values = [2.] * len(H_values)
+    D_values = [2.0] * len(H_values)
 
     g_function = dt.gfunction.compute_live_g_function(
-        B, H_values, r_b_values, D_values, m_flow_borehole, bhe_object,
-        log_time, coordinates, fluid, pipe, grout, soil)
+        B,
+        H_values,
+        r_b_values,
+        D_values,
+        m_flow_borehole,
+        bhe_object,
+        log_time,
+        coordinates,
+        fluid,
+        pipe,
+        grout,
+        soil,
+    )
 
     # Re-Initialize the GHE object
     ghe = dt.ground_heat_exchangers.GHE(
-        V_flow_system, B, bhe_object, fluid, borehole, pipe, grout, soil,
-        g_function, sim_params, hourly_extraction_ground_loads)
+        V_flow_system,
+        B,
+        bhe_object,
+        fluid,
+        borehole,
+        pipe,
+        grout,
+        soil,
+        g_function,
+        sim_params,
+        hourly_extraction_ground_loads,
+    )
 
-    ghe.size(method='hybrid')
+    ghe.size(method="hybrid")
 
-    print('Height of boreholes: {0:.4f}'.format(ghe.bhe.b.H))
+    print("Height of boreholes: {0:.4f}".format(ghe.bhe.b.H))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

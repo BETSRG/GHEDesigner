@@ -9,9 +9,13 @@ def transpose_coordinates(coordinates):
     return coordinates_transposed
 
 
-def rectangle(num_bh_x: int, num_bh_y: int,
-              spacing_x: Union[int, float], spacing_y: Union[int, float],
-              origin=(0, 0)):
+def rectangle(
+    num_bh_x: int,
+    num_bh_y: int,
+    spacing_x: Union[int, float],
+    spacing_y: Union[int, float],
+    origin=(0, 0),
+):
     """
     Creates a rectangular borehole field.
 
@@ -41,8 +45,12 @@ def rectangle(num_bh_x: int, num_bh_y: int,
     return r
 
 
-def open_rectangle(num_bh_x: int, num_bh_y: int,
-                   spacing_x: Union[int, float], spacing_y: Union[int, float]):
+def open_rectangle(
+    num_bh_x: int,
+    num_bh_y: int,
+    spacing_x: Union[int, float],
+    spacing_y: Union[int, float],
+):
     """
     Creates a rectangular borehole field without center boreholes.
 
@@ -64,7 +72,7 @@ def open_rectangle(num_bh_x: int, num_bh_y: int,
     open_r = []
     if num_bh_x > 2 and num_bh_y > 2:
         for i in range(num_bh_x):
-            open_r.append((i * spacing_x, 0.))
+            open_r.append((i * spacing_x, 0.0))
         for j in range(1, num_bh_y - 1):
             open_r.append((0, j * spacing_y))
             open_r.append(((num_bh_x - 1) * spacing_x, j * spacing_y))
@@ -82,10 +90,10 @@ def c_shape(Nx_1, Ny, Bx, By, Nx_2):
     nbh = Nx_1 + (Ny * 2) - 1 + Nx_2 - 1
     c = []
     for i in range(Nx_1):
-        c.append((i * Bx, 0.))
+        c.append((i * Bx, 0.0))
     x_loc = (Nx_1 - 1) * Bx
     for j in range(1, Ny):
-        c.append((0., j * By))
+        c.append((0.0, j * By))
     for j in range(1, Ny):
         c.append((x_loc, j * By))
     y_loc = (Ny - 1) * By
@@ -101,9 +109,9 @@ def u_shape(Nx, Ny, Bx, By):
     if Nx > 2 and Ny > 1:
         nbh = 2 * Ny + (Nx - 2)
         for i in range(Nx):
-            U.append((i * Bx, 0.))
+            U.append((i * Bx, 0.0))
         for j in range(1, Ny):
-            U.append((0., j * By))
+            U.append((0.0, j * By))
     else:
         nbh = Nx * Ny
         U = rectangle(Nx, Ny, Bx, By)
@@ -115,9 +123,9 @@ def lop_u(Nx, Ny_1, Bx, By, Ny_2):
     nbh = Nx + Ny_1 - 1 + Ny_2 - 1
     lop_u = []
     for i in range(Nx):
-        lop_u.append((i * Bx, 0.))
+        lop_u.append((i * Bx, 0.0))
     for j in range(1, Ny_1):
-        lop_u.append((0., j * By))
+        lop_u.append((0.0, j * By))
     x_loc = (Nx - 1) * Bx
     for j in range(1, Ny_2):
         lop_u.append((x_loc, j * By))
@@ -129,9 +137,9 @@ def l_shape(Nx, Ny, Bx, By):
     nbh = Nx + Ny - 1
     L = []
     for i in range(Nx):
-        L.append((i * Bx, 0.))
+        L.append((i * Bx, 0.0))
     for j in range(1, Ny):
-        L.append((0., j * By))
+        L.append((0.0, j * By))
     assert len(L) == nbh
     return L
 
@@ -142,9 +150,9 @@ def zoned_rectangle(Nx, Ny, Bx, By, Nix, Niy):
     # Dr. Jeffrey D. Spitler
 
     if Nix > (Nx - 2):
-        raise ValueError('To many interior x boreholes.')
+        raise ValueError("To many interior x boreholes.")
     if Niy > (Ny - 2):
-        raise ValueError('Too many interior y boreholes.')
+        raise ValueError("Too many interior y boreholes.")
 
     # Create a list of (x, y) coordinates
     zoned = []

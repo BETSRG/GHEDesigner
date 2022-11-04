@@ -160,3 +160,7 @@ cython_debug/
 .idea/
 
 .vscode/
+
+#Example Output Files
+DesignExampleOutput/
+*.png

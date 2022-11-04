@@ -14,14 +14,13 @@ def scale_coordinates(coordinates, scale):
     return new_coordinates
 
 
-def remove_cutout(coordinates, boundary=None, remove_inside=True,
-                  keep_contour=True):
+def remove_cutout(coordinates, boundary=None, remove_inside=True, keep_contour=True):
     if boundary is None:
         boundary = []
 
     # cv2.pointPolygonTest only takes integers, so we scale by 10000 and then
     # scale back to keep precision
-    scale = 10000.
+    scale = 10000.0
     coordinates = scale_coordinates(coordinates, scale)
     boundary = scale_coordinates(boundary, scale)
 
@@ -87,10 +86,6 @@ def determine_largest_rectangle(property_boundary):
         if y > y_max:
             y_max = copy.deepcopy(y)
 
-    rectangle = [[0, 0],
-                 [x_max, 0],
-                 [x_max, y_max],
-                 [0, y_max],
-                 [0, 0]]
+    rectangle = [[0, 0], [x_max, 0], [x_max, y_max], [0, y_max], [0, 0]]
 
     return rectangle

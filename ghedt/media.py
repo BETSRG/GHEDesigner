@@ -1,13 +1,26 @@
-
-
 class GeometricConstraints:
-    def __init__(self, length: float = None, width: float = None,
-                 B: float = None, B_min: float = None,
-                 B_max_x: float = None, B_max_y: float = None,
-                 outer_constraints: list = None, no_go: list = None, pSpac: float = None, spacStart: float = None
-                 , spacStop: float = None, spacStep: float = None, rotateStep: float = None, propBound: list = None,
-                 ngZones: list = None, rotateStart: float = None, rotateStop: float = None, Directory="",
-                 pdfOutputName="Graphs.pdf"):
+    def __init__(
+        self,
+        length: float = None,
+        width: float = None,
+        B: float = None,
+        B_min: float = None,
+        B_max_x: float = None,
+        B_max_y: float = None,
+        outer_constraints: list = None,
+        no_go: list = None,
+        pSpac: float = None,
+        spacStart: float = None,
+        spacStop: float = None,
+        spacStep: float = None,
+        rotateStep: float = None,
+        propBound: list = None,
+        ngZones: list = None,
+        rotateStart: float = None,
+        rotateStop: float = None,
+        Directory="",
+        pdfOutputName="Graphs.pdf",
+    ):
         # Spacing parameters in meters
         self.B = B
         self.B_max_x = B_max_x
@@ -36,21 +49,21 @@ class GeometricConstraints:
 
     def check_inputs(self, method):
         # The required instances for the near-square design is self.B
-        if method == 'near-square':
+        if method == "near-square":
             assert self.B is not None
             assert self.length is not None
-        elif method == 'rectangle':
+        elif method == "rectangle":
             assert self.width is not None
             assert self.length is not None
             assert self.B_min is not None
             assert self.B_max_x is not None
-        elif method == 'bi-rectangle' or method == 'bi-zoned':
+        elif method == "bi-rectangle" or method == "bi-zoned":
             assert self.width is not None
             assert self.length is not None
             assert self.B_min is not None
             assert self.B_max_x is not None
             assert self.B_max_y is not None
-        elif method == 'row-wise':
+        elif method == "row-wise":
             assert self.pSpac is not None
             assert self.spacStart is not None
             assert self.spacStop is not None
