@@ -1,6 +1,3 @@
-# Jack C. Cook
-# Monday, August 16, 2021
-
 import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
 import matplotlib.pyplot as plt

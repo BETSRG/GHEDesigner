@@ -1,9 +1,3 @@
-# Jack C. Cook
-# Tuesday, October 26, 2021
-
-# Purpose: Show how to compute a live-time g-function that can be simulated and
-# sized.
-
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt

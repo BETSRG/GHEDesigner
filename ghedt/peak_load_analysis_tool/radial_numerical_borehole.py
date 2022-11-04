@@ -1,37 +1,3 @@
-# Note: This was originally pulled out of Matt Mitchell's GLHE repository,
-# https://github.com/mitchute/GLHE. The file has been heavily edited. Namely,
-# this object takes in a borehole heat exchanger object from plat. This code
-# has also been vectorized, which resulted in a 20x speed increase. It is likely
-# that Mitchell did not have the code vectorized using numpy because the
-# implementation was going to be placed in C++. Upon vectorizing the code, the
-# three tests ran all had root mean square errors less than 1.0e-10 difference.
-# The MIT License for Matt Mitchell remains, out of respect for his time and
-# effort placed into the the initial implementation. - Jack C. Cook 2021.09.10
-
-"""
-MIT License
-
-Copyright (c) 2018 Matt Mitchell
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 from math import log, sqrt, exp
 from math import pi
 

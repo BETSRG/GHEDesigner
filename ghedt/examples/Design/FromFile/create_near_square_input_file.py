@@ -1,9 +1,3 @@
-# Jack C. Cook
-# Friday, December 10, 2021
-
-# Purpose: Show how to export the common design interface to an external file
-# that can then be loaded up and used in design later on.
-
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt

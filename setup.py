@@ -1,6 +1,3 @@
-# Jack C. Cook
-# Tuesday, September 28, 2021
-
 from setuptools import setup, find_packages
 
 from os import path

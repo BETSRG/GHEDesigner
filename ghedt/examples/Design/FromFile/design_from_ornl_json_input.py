@@ -1,9 +1,3 @@
-# Jack C. Cook
-# December, Wednesday 29, 2021
-
-# Purpose: Show how to select and size a ground heat exchanging utilizing the
-# current ORNL parameters json file that OpenStudio creates
-
 import ghedt as dt
 import ghedt.peak_load_analysis_tool as plat
 import pandas as pd

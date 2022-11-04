@@ -1,6 +1,3 @@
-# Jack C. Cook
-# Monday, December 13, 2021
-
 import ghedt as dt
 
 
