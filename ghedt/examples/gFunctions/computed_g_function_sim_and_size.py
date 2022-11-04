@@ -67,10 +67,8 @@ def main():
     # Inputs related to fluid
     # -----------------------
     V_flow_system = 31.2  # System volumetric flow rate (L/s)
-    mixer = "MEG"  # Ethylene glycol mixed with water
-    percent = 0.0  # Percentage of ethylene glycol added in
     # Fluid properties
-    fluid = gt.media.Fluid(mixer=mixer, percent=percent)
+    fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
 
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)

@@ -49,7 +49,7 @@ def main():
     grout = plat.media.Grout(k_g, rhoCp_g)
 
     # Fluid properties
-    fluid = gt.media.Fluid(mixer="MEG", percent=0.0)
+    fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
     V_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
     # Total fluid mass flow rate per borehole (kg/s)
     m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho

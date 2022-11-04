@@ -48,7 +48,7 @@ def main():
     grout = plat.media.Grout(k_g, rhoCp_g)
 
     # Fluid properties
-    fluid = gt.media.Fluid(mixer="MEG", percent=0.0)
+    fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
 
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)

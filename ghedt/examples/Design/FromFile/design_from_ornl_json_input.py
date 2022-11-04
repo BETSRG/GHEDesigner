@@ -70,9 +70,7 @@ def main():
     # Inputs related to fluid
     # -----------------------
     # Fluid properties
-    mixer = "MEG"  # Ethylene glycol mixed with water
-    percent = 0.0  # Percentage of ethylene glycol added in
-    fluid = gt.media.Fluid(mixer=mixer, percent=percent)
+    fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
 
     # Fluid properties
     # Volumetric flow rate (L/s)

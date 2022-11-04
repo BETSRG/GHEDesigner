@@ -99,12 +99,10 @@ class TestGHE(unittest.TestCase):
         # Inputs related to fluid
         # -----------------------
         V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
-        mixer = "MEG"  # Ethylene glycol mixed with water
-        percent = 0.0  # Percentage of ethylene glycol added in
 
         # -----------------------
         # Fluid properties
-        self.fluid = gt.media.Fluid(mixer=mixer, percent=percent)
+        self.fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
         self.V_flow_system = V_flow_borehole * float(
             Nx * Ny
         )  # System volumetric flow rate (L/s)
@@ -229,7 +227,7 @@ class TestGHE(unittest.TestCase):
 
         ghe.size(method="hybrid")
 
-        self.assertAlmostEqual(ghe.bhe.b.H, 121.97, places=2)
+        self.assertAlmostEqual(ghe.bhe.b.H, 121.96, places=2)
 
     def test_coaxial_tube(self):
 
@@ -274,4 +272,4 @@ class TestGHE(unittest.TestCase):
 
         ghe.size(method="hybrid")
 
-        self.assertAlmostEqual(ghe.bhe.b.H, 121.02, delta=0.01)
+        self.assertAlmostEqual(ghe.bhe.b.H, 121.03, delta=0.01)
