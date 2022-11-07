@@ -4,7 +4,7 @@ from math import pi
 
 import numpy as np
 import pandas as pd
-from ghedt.RowWise.rowwise_generation import (
+from ghedt.rowwise.rowwise_generation import (
     field_optimization_fr,
     field_optimization_wp_space_fr,
     gen_borehole_config,

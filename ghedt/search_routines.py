@@ -8,7 +8,7 @@ from ghedt.gfunction import compute_live_g_function
 from ghedt.ground_heat_exchangers import GHE
 from ghedt.peak_load_analysis_tool.media import (Grout, Pipe,
                                                  SimulationParameters, Soil)
-from ghedt.RowWise.rowwise_generation import (field_optimization_fr,
+from ghedt.rowwise.rowwise_generation import (field_optimization_fr,
                                               field_optimization_wp_space_fr)
 from ghedt.utilities import (eskilson_log_times, borehole_spacing,
                              check_bracket, sign, js_dump)
@@ -296,7 +296,7 @@ class Bisection1D:
         return selection_key, selected_coordinates
 
 
-# This is the search algorithm used for finding RowWise fields
+# This is the search algorithm used for finding rowwise fields
 class RowWiseModifiedBisectionSearch:
     def __init__(
         self,
@@ -316,7 +316,7 @@ class RowWiseModifiedBisectionSearch:
         disp: bool = False,
         search: bool = True,
         advanced_tracking: bool = True,
-        field_type: str = "RowWise",
+        field_type: str = "rowwise",
         load_years=None,
         e_t: float = 1e-10,
         b_r_point=None,

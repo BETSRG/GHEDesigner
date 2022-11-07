@@ -1,4 +1,4 @@
-# Purpose: Design a constrained RowWise field using the common
+# Purpose: Design a constrained rowwise field using the common
 # design interface with a single U-tube borehole heat exchanger.
 
 # This search is described in <placeholder>.
@@ -10,14 +10,14 @@ import pandas as pd
 from time import time as clock
 from ghedt.output import output_design_details
 from math import pi
-from ghedt.RowWise.rowwise_generation import gen_shape
+from ghedt.rowwise.rowwise_generation import gen_shape
 import os
 import csv
 
 
 def main():
 
-    # This file contains two examples utilizing the RowWise design algorithm for a single U tube design.
+    # This file contains two examples utilizing the rowwise design algorithm for a single U tube design.
     # The first example does not treat perimeter boreholes differently, and the second one maintains a perimeter target-
     # spacing to interior target-spacing ratio of .8.
     # The results from these examples are exported to the "DesignExampleOutput" folder.
@@ -26,7 +26,7 @@ def main():
 
     # Output File Configuration
     projectName = "Atlanta Office Building: Design Example"
-    note = "RowWise Usage Example w/o Perimeter Spacing: Single U Tube"
+    note = "rowwise Usage Example w/o Perimeter Spacing: Single U Tube"
     author = "John Doe"
     IterationName = "Example 5"
     outputFileDirectory = "DesignExampleOutput"
@@ -104,7 +104,7 @@ def main():
         list(hourly_extraction.keys())[0]
     ]
 
-    # RowWise Design Constraints
+    # rowwise Design Constraints
 
     pSpacs = 0.8  # Unitless
     spacStart = 10.0  # in meters
@@ -220,7 +220,7 @@ def main():
     # *************************************************************************************************************
     # Perimeter Spacing Example
 
-    note = "RowWise Usage Example w/o Perimeter Spacing: Single U Tube"
+    note = "rowwise Usage Example w/o Perimeter Spacing: Single U Tube"
 
     # Single U-tube
     # -------------
