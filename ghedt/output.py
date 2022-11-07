@@ -394,7 +394,7 @@ def output_design_details(
     o_s += create_d_row(
         allocated_width,
         "Pipe Roughness, m:",
-        round(bhe.pipe.eps, rounding_amount),
+        round(bhe.pipe.roughness, rounding_amount),
         string_format,
         sci_format,
         b_tabs=indented_amount,

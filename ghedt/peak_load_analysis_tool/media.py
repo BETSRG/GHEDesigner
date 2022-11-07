@@ -32,7 +32,7 @@ class Grout(ThermalProperty):
 
 
 class Pipe(ThermalProperty):
-    def __init__(self, pos, r_in, r_out, s, eps, k, rho_cp):
+    def __init__(self, pos, r_in, r_out, s, roughness, k, rho_cp):
         # Make variables from ThermalProperty available to Pipe
         ThermalProperty.__init__(self, k, rho_cp)
 
@@ -41,7 +41,7 @@ class Pipe(ThermalProperty):
         self.r_in = r_in  # Pipe inner radius (m) can be a float or list
         self.r_out = r_out  # Pipe outer radius (m) can be a float or list
         self.s = s  # Center pipe to center pipe shank spacing
-        self.eps = eps  # Pipe roughness (m)
+        self.roughness = roughness  # Pipe roughness (m)
         if type(pos) is list:
             self.n_pipes = int(len(pos) / 2)  # Number of pipes
         else:
@@ -63,7 +63,7 @@ class Pipe(ThermalProperty):
         output += justify(
             "Shank spacing (pipe to pipe)", str(round(self.s, 4)) + " (m)"
         )
-        output += justify("Pipe roughness", str(self.eps) + " (m)")
+        output += justify("Pipe roughness", str(self.roughness) + " (m)")
         output += justify("Number of pipes", str(self.n_pipes))
 
         return output

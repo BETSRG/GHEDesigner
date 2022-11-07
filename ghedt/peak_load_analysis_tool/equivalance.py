@@ -81,9 +81,9 @@ def equivalent_single_u_tube(bhe, vol_fluid, vol_pipe, resist_conv, resist_pipe)
     pos = media.Pipe.place_pipes(s, r_p_o_prime, 1)  # Place single u-tube pipe
 
     # New pipe geometry
-    eps = deepcopy(bhe.pipe.eps)
+    roughness = deepcopy(bhe.pipe.roughness)
     rho_cp = deepcopy(bhe.pipe.rhoCp)
-    pipe = media.Pipe(pos, r_p_i_prime, r_p_o_prime, s, eps, k_p_prime, rho_cp)
+    pipe = media.Pipe(pos, r_p_i_prime, r_p_o_prime, s, roughness, k_p_prime, rho_cp)
 
     # Don't tie together the original and equivalent BHEs
     m_flow_borehole = deepcopy(bhe.m_flow_borehole)

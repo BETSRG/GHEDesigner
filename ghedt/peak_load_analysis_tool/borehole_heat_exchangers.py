@@ -52,7 +52,7 @@ class BasePipe(object):
         output += "\n"
 
         reynold_no = compute_reynolds_concentric(
-            self.m_flow_pipe, self.pipe.r_in, self.pipe.eps, self.fluid
+            self.m_flow_pipe, self.pipe.r_in, self.pipe.roughness, self.fluid
         )
 
         output += justify("Reynolds number", str(round(reynold_no, 4)))
@@ -73,7 +73,7 @@ class BasePipe(object):
             self.fluid.rho,
             self.fluid.k,
             self.fluid.cp,
-            self.pipe.eps,
+            self.pipe.roughness,
         )
 
         # Single pipe thermal resistance
@@ -295,7 +295,7 @@ class CoaxialBase(object):
         # Store fluid properties
         self.fluid = fluid
         # Store pipe roughness
-        self.eps = self.pipe.eps
+        self.roughness = self.pipe.roughness
 
         self.r_inner = pipe.r_in
         self.r_outer = pipe.r_out
@@ -369,7 +369,7 @@ class CoaxialBase(object):
         output += justify(
             "Outer annulus resistance", str(round(self.R_f_a_out, 4)) + " (m.K/W)"
         )
-        reynolds = compute_reynolds(self.m_flow_pipe, self.r_in_in, self.eps, self.fluid)
+        reynolds = compute_reynolds(self.m_flow_pipe, self.r_in_in, self.roughness, self.fluid)
         output += justify("Reynolds inner", str(round(reynolds, 4)))
         output += justify(
             "Inner Convection coefficient", str(round(self.h_fluid_in, 4)) + " (W/m2.K)"
@@ -416,7 +416,7 @@ class CoaxialBase(object):
             self.fluid.rho,
             self.fluid.k,
             self.fluid.cp,
-            self.eps,
+            self.roughness,
         )
 
         self.h_fluid_a_in = h_fluid_a_in
@@ -433,7 +433,7 @@ class CoaxialBase(object):
             self.fluid.rho,
             self.fluid.k,
             self.fluid.cp,
-            self.eps,
+            self.roughness,
         )
         self.R_f_in = 1.0 / (self.h_fluid_in * 2 * pi * self.r_in_in)
 
