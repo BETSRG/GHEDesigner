@@ -5,7 +5,7 @@ import numpy as np
 
 class Shapes:
     """
-    a class to represent nogo zones
+    a class to represent no_go zones
 
     Attributes
     ----------
@@ -129,10 +129,10 @@ class Shapes:
                         continue
                     rA.append(r)
         # print("x value: %f, r values:"%x1)
-        # print(rA)
+        # print(r_a)
 
         rA = sortIntersections(rA, rotate)
-        # print(rA)
+        # print(r_a)
         return rA
 
     def pointintersect(self, xy):

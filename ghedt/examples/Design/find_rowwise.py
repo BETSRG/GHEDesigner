@@ -10,7 +10,7 @@ import pandas as pd
 from time import time as clock
 from ghedt.output import output_design_details
 from math import pi
-from ghedt.RowWise.RowWiseGeneration import genShape
+from ghedt.RowWise.RowWiseGeneration import gen_shape
 import os
 import csv
 
@@ -139,10 +139,10 @@ def main():
                     L.append(float(row))
                 ngA[-1].append(L)
 
-    buildVert, nogoVert = genShape(propA, ngZones=ngA)
+    buildVert, nogoVert = gen_shape(propA, ng_zones=ngA)
 
     """ Geometric constraints for the `row-wise` routine:
-      - list of vertices for the nogo zones (nogoVert)
+      - list of vertices for the no_go zones (nogoVert)
       - perimeter target-spacing to interior target-spacing ratio
       - the lower bound target-spacing (spacStart)
       - the upper bound target-spacing (spacStop)

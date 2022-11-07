@@ -5,10 +5,10 @@ from math import pi
 import numpy as np
 import pandas as pd
 from ghedt.RowWise.RowWiseGeneration import (
-    fieldOptimization_FR,
-    fieldOptimizationWPSpac_FR,
-    genBoreHoleConfig,
-    genShape,
+    field_optimization_fr,
+    field_optimization_wp_space_fr,
+    gen_borehole_config,
+    gen_shape,
 )
 
 REFERENCE_DATA_FILE = os.path.join(
@@ -59,8 +59,8 @@ class TestRowWise(unittest.TestCase):
             int((self.rotation_stop - self.rotation_start) / (self.rotation_step * 0.5))
             + 1
         )
-        self.property, self.buildings = genShape(
-            self.prop_polygon_ar, ngZones=[self.building_polygon_ar]
+        self.property, self.buildings = gen_shape(
+            self.prop_polygon_ar, ng_zones=[self.building_polygon_ar]
         )
 
     def test_shape_methods(self):
@@ -162,11 +162,11 @@ class TestRowWise(unittest.TestCase):
         )
         nbhs = [
             len(
-                genBoreHoleConfig(
+                gen_borehole_config(
                     self.property,
                     target_spacing,
                     target_spacing,
-                    nogo=self.buildings,
+                    no_go=self.buildings,
                     rotate=rotation,
                 )
             )
@@ -187,13 +187,13 @@ class TestRowWise(unittest.TestCase):
         )
         nbhs = [
             len(
-                fieldOptimization_FR(
+                field_optimization_fr(
                     ts,
                     self.rotation_step,
                     self.property,
-                    ngZones=self.buildings,
-                    rotateStart=self.rotation_start,
-                    rotateStop=self.rotation_stop,
+                    ng_zones=self.buildings,
+                    rotate_start=self.rotation_start,
+                    rotate_stop=self.rotation_stop,
                 )[0]
             )
             for ts in target_spacings
@@ -213,14 +213,14 @@ class TestRowWise(unittest.TestCase):
         )
         nbhs = [
             len(
-                fieldOptimizationWPSpac_FR(
+                field_optimization_wp_space_fr(
                     self.perimeter_spac_ratio,
                     ts,
                     self.rotation_step,
                     self.property,
-                    ngZones=self.buildings,
-                    rotateStart=self.rotation_start,
-                    rotateStop=self.rotation_stop,
+                    ng_zones=self.buildings,
+                    rotate_start=self.rotation_start,
+                    rotate_stop=self.rotation_stop,
                 )[0]
             )
             for ts in target_spacings
