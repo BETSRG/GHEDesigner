@@ -103,22 +103,6 @@ def c_shape(Nx_1, Ny, Bx, By, Nx_2):
     return c
 
 
-def u_shape(Nx, Ny, Bx, By):
-    # Create a list of (x, y) pairs for a U-shape
-    U = []
-    if Nx > 2 and Ny > 1:
-        nbh = 2 * Ny + (Nx - 2)
-        for i in range(Nx):
-            U.append((i * Bx, 0.0))
-        for j in range(1, Ny):
-            U.append((0.0, j * By))
-    else:
-        nbh = Nx * Ny
-        U = rectangle(Nx, Ny, Bx, By)
-    assert len(U) == nbh
-    return U
-
-
 def lop_u(Nx, Ny_1, Bx, By, Ny_2):
     nbh = Nx + Ny_1 - 1 + Ny_2 - 1
     lop_u = []

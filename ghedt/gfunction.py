@@ -349,25 +349,6 @@ class GFunction:
             g_function_corrected.append(g_function[i] - np.log(rb_star / rb))
         return g_function_corrected
 
-    def correct_coordinates(self, B: float):
-        # scale the field by the ratio
-        scale = B / self.B
-
-        new_locations = []
-        for i in range(len(self.bore_locations)):
-            _x = self.bore_locations[i][0]
-            _y = self.bore_locations[i][1]
-            if _x == 0.0 and _y == 0.0:
-                new_locations.append([_x, _y])
-            elif _x == 0.0:
-                new_locations.append([_x, _y * scale])
-            else:
-                x = _x * scale
-                y = _y * scale
-                new_locations.append([x, y])
-
-        return new_locations
-
     @staticmethod
     def configure_database_file_for_usage(data) -> dict:
         """

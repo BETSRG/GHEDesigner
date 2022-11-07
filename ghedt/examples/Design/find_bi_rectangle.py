@@ -156,8 +156,8 @@ def main():
 
     # Plot the selected borehole coordinates for the single U-tube
     # Land constraints
-    l_x_perimeter = 85.0
-    l_y_perimeter = 80.0
+    # l_x_perimeter = 85.0
+    # l_y_perimeter = 80.0
 
     OutputDesignDetails(
         bisection_search,

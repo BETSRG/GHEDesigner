@@ -195,18 +195,6 @@ class SingleUTube(BasePipe, gt.pipes.SingleUTube):
 
         return R_b_star
 
-    def compute_convection_coefficient(self, m_flow_borehole):
-        h = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
-            m_flow_borehole,
-            self.pipe.r_in,
-            self.fluid.mu,
-            self.fluid.rho,
-            self.fluid.k,
-            self.fluid.cp,
-            self.pipe.eps,
-        )
-        return h
-
 
 class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
     def __init__(

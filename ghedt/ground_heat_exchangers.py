@@ -62,9 +62,6 @@ class BaseGHE:
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.times = []
         self.loading = None
-        self.combinedGFunctionVals = None
-        self.combinedGFunctionLogTimes = None
-        self.excessTemperature = None
 
     @staticmethod
     def header(text):
@@ -152,7 +149,6 @@ class BaseGHE:
         delta_T_min = self.sim_params.min_EFT_allowable - min_EFT
 
         T_excess = max([delta_T_max, delta_T_min])
-        self.excessTemperature = T_excess
         return T_excess
 
     def _simulate_detailed(

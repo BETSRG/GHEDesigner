@@ -328,7 +328,6 @@ class RowWiseModifiedBisectionSearch:
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
         self.load_years = load_years
-        self.excess = None
         self.fluid = fluid
         self.pipe = pipe
         self.grout = grout
@@ -336,7 +335,6 @@ class RowWiseModifiedBisectionSearch:
         self.borehole = borehole
         self.geometricConstraints = geometricConstraints
         self.searchTracker = []
-        self.RowWiseTracking = []
         self.fieldType = fieldType
         # Flow rate tracking
         self.V_flow = V_flow
@@ -765,7 +763,6 @@ class RowWiseModifiedBisectionSearch:
                 "assistance."
             )
             raise ValueError(msg)
-        self.excess = selected_temp_excess
         if self.advanced_tracking:
             self.advanced_tracking.append(
                 [
@@ -777,294 +774,6 @@ class RowWiseModifiedBisectionSearch:
             )
             self.checkedFields.append(selected_coordinates)
         return selected_coordinates, selected_specifier
-
-
-# This is a somewhat depreciated function for RowWise searching. It could still be used, but does not seem optimal based
-# on the current testing as of 5/30.
-class Bisection1D_modified:
-    def __init__(
-        self,
-        coordinates_domain: list,
-        fieldDescriptors: list,
-        V_flow: float,
-        borehole: gt.boreholes.Borehole,
-        bhe_object,
-        fluid: gt.media.Fluid,
-        pipe: Pipe,
-        grout: Grout,
-        soil: Soil,
-        sim_params: SimulationParameters,
-        hourly_extraction_ground_loads: list,
-        method: str = "hybrid",
-        flow: str = "borehole",
-        max_iter=15,
-        disp=False,
-        search=True,
-        fieldType="N/A",
-    ):
-
-        # Take the lowest part of the coordinates domain to be used for the
-        # initial setup
-        self.searchTracker = []
-        coordinates = coordinates_domain[0]
-        self.fieldType = fieldType
-        # Flow rate tracking
-        self.V_flow = V_flow
-        self.flow = flow
-        V_flow_system, m_flow_borehole = self.retrieve_flow(coordinates, fluid.rho)
-        self.method = method
-
-        self.log_time = Eskilson_log_times()
-        self.bhe_object = bhe_object
-        self.sim_params = sim_params
-        self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
-        self.coordinates_domain = coordinates_domain
-        self.fieldDescriptors = fieldDescriptors
-        self.max_iter = max_iter
-        self.disp = disp
-
-        B = borehole_spacing(borehole, coordinates)
-
-        # Calculate a g-function for uniform inlet fluid temperature with
-        # 8 unequal segments using the equivalent solver
-        g_function = compute_live_g_function(
-            B,
-            [borehole.H],
-            [borehole.r_b],
-            [borehole.D],
-            m_flow_borehole,
-            self.bhe_object,
-            self.log_time,
-            coordinates,
-            fluid,
-            pipe,
-            grout,
-            soil,
-        )
-
-        # Initialize the GHE object
-        self.ghe = GHE(
-            V_flow_system,
-            B,
-            bhe_object,
-            fluid,
-            borehole,
-            pipe,
-            grout,
-            soil,
-            g_function,
-            sim_params,
-            hourly_extraction_ground_loads,
-        )
-
-        self.calculated_temperatures = {}
-
-        if search:
-            self.selection_key, self.selected_coordinates = self.search()
-
-    def retrieve_flow(self, coordinates, rho):
-        if self.flow == "borehole":
-            V_flow_system = self.V_flow * float(len(coordinates))
-            # Total fluid mass flow rate per borehole (kg/s)
-            m_flow_borehole = self.V_flow / 1000.0 * rho
-        elif self.flow == "system":
-            V_flow_system = self.V_flow
-            V_flow_borehole = self.V_flow / float(len(coordinates))
-            m_flow_borehole = V_flow_borehole / 1000.0 * rho
-        else:
-            raise ValueError(
-                "The flow argument should be either `borehole`" "or `system`."
-            )
-        return V_flow_system, m_flow_borehole
-
-    def initialize_ghe(self, coordinates, H, fieldSpecifier="N/A"):
-        V_flow_system, m_flow_borehole = self.retrieve_flow(
-            coordinates, self.ghe.bhe.fluid.rho
-        )
-
-        self.ghe.bhe.b.H = H
-        borehole = self.ghe.bhe.b
-        fluid = self.ghe.bhe.fluid
-        pipe = self.ghe.bhe.pipe
-        grout = self.ghe.bhe.grout
-        soil = self.ghe.bhe.soil
-
-        B = borehole_spacing(borehole, coordinates)
-
-        # Calculate a g-function for uniform inlet fluid temperature with
-        # 8 unequal segments using the equivalent solver
-        g_function = compute_live_g_function(
-            B,
-            [borehole.H],
-            [borehole.r_b],
-            [borehole.D],
-            m_flow_borehole,
-            self.bhe_object,
-            self.log_time,
-            coordinates,
-            fluid,
-            pipe,
-            grout,
-            soil,
-        )
-
-        # Initialize the GHE object
-        self.ghe = GHE(
-            V_flow_system,
-            B,
-            self.bhe_object,
-            fluid,
-            borehole,
-            pipe,
-            grout,
-            soil,
-            g_function,
-            self.sim_params,
-            self.hourly_extraction_ground_loads,
-            fieldType=self.fieldType,
-            fieldSpecifier=fieldSpecifier,
-        )
-
-    def calculate_excess(self, coordinates, H, fieldSpecifier="N/A"):
-        self.initialize_ghe(coordinates, H, fieldSpecifier=fieldSpecifier)
-        # Simulate after computing just one g-function
-        max_HP_EFT, min_HP_EFT = self.ghe.simulate(method=self.method)
-        T_excess = self.ghe.cost(max_HP_EFT, min_HP_EFT)
-        self.searchTracker.append([fieldSpecifier, T_excess, max_HP_EFT, min_HP_EFT])
-
-        # This is more of a debugging statement. May remove it in the future.
-        # Perhaps there becomes a debug: bool option in the API.
-        # if self.disp:
-        #     print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
-
-        return T_excess
-
-    def search(self):
-
-        xL_idx = 0
-        xR_idx = len(self.coordinates_domain) - 1
-        if self.disp:
-            print("Do some initial checks before searching.")
-        # Get the lowest possible excess temperature from minimum height at the
-        # smallest location in the domain
-        T_0_lower = self.calculate_excess(
-            self.coordinates_domain[xL_idx],
-            self.sim_params.min_Height,
-            fieldSpecifier=self.fieldDescriptors[xL_idx],
-        )
-        T_0_upper = self.calculate_excess(
-            self.coordinates_domain[xL_idx],
-            self.sim_params.max_Height,
-            fieldSpecifier=self.fieldDescriptors[xL_idx],
-        )
-        T_m1 = self.calculate_excess(
-            self.coordinates_domain[xR_idx],
-            self.sim_params.max_Height,
-            fieldSpecifier=self.fieldDescriptors[xR_idx],
-        )
-
-        self.calculated_temperatures[xL_idx] = T_0_upper
-        self.calculated_temperatures[xR_idx] = T_m1
-
-        if check_bracket(sign(T_0_lower), sign(T_0_upper)):
-            if self.disp:
-                print("Size between min and max of lower bound in domain.")
-            self.initialize_ghe(self.coordinates_domain[0], self.sim_params.max_Height)
-            return 0, self.coordinates_domain[0]
-        elif check_bracket(sign(T_0_upper), sign(T_m1)):
-            if self.disp:
-                print("Perform the integer bisection search routine.")
-            pass
-        else:
-            # This domain does not bracked the solution
-            if T_0_upper < 0.0 and T_m1 < 0.0:
-                msg = (
-                    "Based on the loads provided, the excess temperatures "
-                    "for the minimum and maximum number of boreholes falls "
-                    'below 0. This means that the loads are "miniscule" or '
-                    "that the lower end of the domain needs to contain "
-                    "less boreholes.".format()
-                )
-                raise ValueError(msg)
-            if T_0_upper > 0.0 and T_m1 > 0.0:
-                msg = (
-                    "Based on the loads provided, the excess temperatures "
-                    "for the minimum and maximum number of boreholes falls "
-                    'above 0. This means that the loads are "astronomical" '
-                    "or that the higher end of the domain needs to contain "
-                    "more boreholes. Consider increasing the available land"
-                    " area, or decreasing the minimum allowable borehole "
-                    "spacing."
-                )
-                raise ValueError(msg)
-            return None, None
-
-        if self.disp:
-            print("Beginning bisection search...")
-
-        xL_sign = sign(T_0_upper)
-        # xR_sign = sign(T_m1)
-
-        i = 0
-
-        while i < self.max_iter:
-            c_idx = int(np.ceil((xL_idx + xR_idx) / 2))
-            # if the solution is no longer making progress break the while
-            if c_idx == xL_idx or c_idx == xR_idx:
-                break
-
-            c_T_excess = self.calculate_excess(
-                self.coordinates_domain[c_idx],
-                self.sim_params.max_Height,
-                fieldSpecifier=self.fieldDescriptors[c_idx],
-            )
-
-            self.calculated_temperatures[c_idx] = c_T_excess
-            c_sign = sign(c_T_excess)
-
-            if c_sign == xL_sign:
-                xL_idx = copy.deepcopy(c_idx)
-            else:
-                xR_idx = copy.deepcopy(c_idx)
-
-            i += 1
-
-        self.calculated_temperatures[c_idx + 1] = self.calculate_excess(
-            self.coordinates_domain[c_idx + 1],
-            self.sim_params.max_Height,
-            fieldSpecifier=self.fieldDescriptors[c_idx + 1],
-        )
-        self.calculated_temperatures[c_idx - 1] = self.calculate_excess(
-            self.coordinates_domain[c_idx - 1],
-            self.sim_params.max_Height,
-            fieldSpecifier=self.fieldDescriptors[c_idx - 1],
-        )
-
-        coordinates = self.coordinates_domain[i]
-
-        H = self.sim_params.max_Height
-
-        self.calculate_excess(coordinates, H, fieldSpecifier=self.fieldDescriptors[i])
-        # Make sure the field being returned pertains to the index which is the
-        # closest to 0 but also negative (the maximum of all 0 or negative
-        # excess temperatures)
-        keys = list(self.calculated_temperatures.keys())
-        values = list(self.calculated_temperatures.values())
-
-        negative_excess_values = [
-            values[i] for i in range(len(values)) if values[i] <= 0.0
-        ]
-
-        excess_of_interest = max(negative_excess_values)
-        idx = values.index(excess_of_interest)
-        selection_key = keys[idx]
-        selected_coordinates = self.coordinates_domain[selection_key]
-
-        self.initialize_ghe(
-            selected_coordinates, H, fieldSpecifier=self.fieldDescriptors[selection_key]
-        )
-
-        return selection_key, selected_coordinates
 
 
 class Bisection2D(Bisection1D):
@@ -1209,7 +918,7 @@ class BisectionZD(Bisection1D):
         self.coordinates_domain = outer_domain
         self.fieldDescriptors = outerDescriptors
 
-        self.selection_key_outer, self.selected_coordinates_outer = self.search()
+        self.selection_key_outer, _ = self.search()
         if self.selection_key_outer > 0:
             self.selection_key_outer -= 1
         self.calculated_heights = {}
@@ -1333,7 +1042,7 @@ def oak_ridge_export(bisection_search, file_name="ghedt_output"):
     lntts += g.x[total_g_values - number_lts_g_values : total_g_values].tolist()
     g_values += g.y[total_g_values - number_lts_g_values : total_g_values].tolist()
 
-    for (lntts_val, g_val) in zip(lntts, g_values):
-        d["g_function_pairs"].append({"ln_tts": lntts_val, "g_value": g_values[i]})
+    for lntts_val, g_val in zip(lntts, g_values):
+        d["g_function_pairs"].append({"ln_tts": lntts_val, "g_value": g_val})
 
     js_dump(file_name, d, indent=4)

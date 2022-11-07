@@ -7,17 +7,6 @@ from scipy.linalg.lapack import dgtsv
 
 import ghedt.peak_load_analysis_tool as plat
 
-# Time constants
-DAYS_IN_YEAR = 365
-HOURS_IN_DAY = 24
-MIN_IN_HOUR = 60
-SEC_IN_MIN = 60
-SEC_IN_HOUR = SEC_IN_MIN * MIN_IN_HOUR
-SEC_IN_DAY = SEC_IN_HOUR * HOURS_IN_DAY
-SEC_IN_YEAR = SEC_IN_DAY * DAYS_IN_YEAR
-
-gamma_const = 1.781072  # exp(Euler's constant)
-
 
 class RadialCellType(object):
     FLUID = 1
@@ -423,38 +412,38 @@ class RadialNumericalBH(object):
                     "This portion of the code does not currently run with this "
                     "vectorized radial numerical implementation."
                 )
-                bh_wall_temp = 0
-
-                # calculate bh wall temp
-                for idx, this_cell in enumerate(self.cells):
-                    west_cell = self.cells[idx]
-                    east_cell = self.cells[idx + 1]
-
-                    if (
-                        west_cell.type == RadialCellType.GROUT
-                        and east_cell.type == RadialCellType.SOIL
-                    ):
-                        west_conductance_num = 2 * pi * west_cell.conductivity
-                        west_conductance_den = log(
-                            west_cell.outer_radius / west_cell.inner_radius
-                        )
-                        west_conductance = west_conductance_num / west_conductance_den
-
-                        east_conductance_num = 2 * pi * east_cell.conductivity
-                        east_conductance_den = log(
-                            east_cell.center_radius / west_cell.inner_radius
-                        )
-                        east_conductance = east_conductance_num / east_conductance_den
-
-                        bh_wall_temp_num_1 = west_conductance * west_cell.temperature
-                        bh_wall_temp_num_2 = east_conductance * east_cell.temperature
-                        bh_wall_temp_num = bh_wall_temp_num_1 + bh_wall_temp_num_2
-                        bh_wall_temp_den = west_conductance + east_conductance
-                        bh_wall_temp = bh_wall_temp_num / bh_wall_temp_den
-
-                        break
-
-                g.append(self.c_0 * ((bh_wall_temp - init_temp) / heat_flux))
+                # bh_wall_temp = 0
+                #
+                # # calculate bh wall temp
+                # for idx, _ in enumerate(self.cells):
+                #     west_cell = self.cells[idx]
+                #     east_cell = self.cells[idx + 1]
+                #
+                #     if (
+                #         west_cell.type == RadialCellType.GROUT
+                #         and east_cell.type == RadialCellType.SOIL
+                #     ):
+                #         west_conductance_num = 2 * pi * west_cell.conductivity
+                #         west_conductance_den = log(
+                #             west_cell.outer_radius / west_cell.inner_radius
+                #         )
+                #         west_conductance = west_conductance_num / west_conductance_den
+                #
+                #         east_conductance_num = 2 * pi * east_cell.conductivity
+                #         east_conductance_den = log(
+                #             east_cell.center_radius / west_cell.inner_radius
+                #         )
+                #         east_conductance = east_conductance_num / east_conductance_den
+                #
+                #         bh_wall_temp_num_1 = west_conductance * west_cell.temperature
+                #         bh_wall_temp_num_2 = east_conductance * east_cell.temperature
+                #         bh_wall_temp_num = bh_wall_temp_num_1 + bh_wall_temp_num_2
+                #         bh_wall_temp_den = west_conductance + east_conductance
+                #         bh_wall_temp = bh_wall_temp_num / bh_wall_temp_den
+                #
+                #         break
+                #
+                # g.append(self.c_0 * ((bh_wall_temp - init_temp) / heat_flux))
             else:
                 g.append(
                     self.c_0

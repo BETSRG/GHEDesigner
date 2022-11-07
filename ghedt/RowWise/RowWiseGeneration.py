@@ -69,7 +69,7 @@ def fieldOptimizationWPSpac_FR(
         or rotateStop < -pi / 2
     ):
         raise ValueError("Invalid Rotation")
-        return
+
     field = None
     fieldName = None
 
@@ -149,7 +149,7 @@ def fieldOptimization_FR(
         or rotateStop < -pi / 2
     ):
         raise ValueError("Invalid Rotation")
-        return
+
     field = None
     fieldName = None
 
@@ -575,7 +575,7 @@ def genBoreHoleConfig(
     # This is just a value that is combined with the slope of the row's to establish two points defining a row (could be any value)
     pointShift = 1000.0
 
-    for ri in range(nrows + 1):
+    for _ in range(nrows + 1):
 
         # Row Defined by two points
         if rowspace[1] == 0:
@@ -1055,24 +1055,6 @@ def lessThan(p1, p2, rotate=0, intersection_tolerance=1e-5):
                 return False
         else:
             raise ValueError("Slope between points does not match field orientation.")
-
-
-def Between(x1, x2, x3):
-    """
-    Function determines whenther x1 lies between x2 and x3
-    Parameters
-    -------------
-    :param x1: [float,float]
-        point 1
-    :param x2: [float,float]
-        point 2
-    :param x3: [float,float]
-        point 3
-    :return:
-    """
-    if x1 >= x2 and x1 <= x3:
-        return True
-    return False
 
 
 def distribute(x1, x2, spacing, r, rotate):

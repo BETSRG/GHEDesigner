@@ -11,7 +11,6 @@ import pickle
 import warnings
 
 import numpy as np
-from matplotlib.ticker import Locator
 
 
 # Time functions
@@ -69,41 +68,7 @@ def borehole_spacing(borehole, coordinates):
     return B
 
 
-def polygonal_area(corners):
-    n = len(corners)  # of corners
-    area = 0.0
-    for i in range(n):
-        j = (i + 1) % n
-        area += corners[i][0] * corners[j][1]
-        area -= corners[j][0] * corners[i][1]
-    area = abs(area) / 2.0
-    return area
-
-
 # TODO: Add `set_shank` functionality to utilities.py
-# def set_shank(configuration: str, rb: float, r_in: float, r_out: float):
-#     raise ValueError('This function is incomplete.')
-#     if configuration == 'A':
-#         a = 1
-#     elif configuration == 'B':
-#         a = 1
-#     elif configuration == 'C':
-#         a = 1
-#     else:
-#         raise ValueError('Only configurations A, B, or C are valid.')
-
-
-def make_rectangle_perimeter(length_x, length_y, origin=(0, 0)):
-    # Create an outer rectangular perimeter given an origin and side lengths.
-    origin_x = origin[0]
-    origin_y = origin[1]
-    rectangle_perimeter = [
-        [origin_x, origin_y],
-        [origin_x + length_x, origin_y],
-        [origin_x + length_x, origin_y + length_y],
-        [origin_x, origin_y + length_y],
-    ]
-    return rectangle_perimeter
 
 
 def number_of_boreholes(length, B, func=np.ceil):
@@ -114,11 +79,6 @@ def number_of_boreholes(length, B, func=np.ceil):
 def length_of_side(N, B):
     L = (N - 1) * B
     return L
-
-
-def spacing_along_length(L, N):
-    B = L / (N - 1)
-    return B
 
 
 # Design oriented functions
@@ -162,13 +122,6 @@ def js_load(filename: str):
         return json.load(f_in)
 
 
-def create_if_not(directory):
-    import os
-
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-
 def create_input_file(self, file_name="ghedt_input"):
     # Store an object in a file using pickle.
     file_handler = open(file_name + ".obj", "wb")
@@ -186,103 +139,3 @@ def read_input_file(path_to_file):
 
     return object_file
 
-
-# Functions related to computing statistics.
-# ------------------------------------------
-def compute_mpe(actual: list, predicted: list) -> float:
-    r"""
-    The following mean percentage error formula is used:
-    .. math::
-        MPE = \dfrac{100\%}{n}\sum_{i=0}^{n-1}\dfrac{a_t-p_t}{a_t}
-    Parameters
-    ----------
-    actual: list
-        The actual computed g-function values
-    predicted: list
-        The predicted g-function values
-    Returns
-    -------
-    **mean_percent_error: float**
-        The mean percentage error in percent
-    """
-    # the lengths of the two lists should be the same
-    assert len(actual) == len(predicted)
-    # create a summation variable
-    summation: float = 0.0
-    for i in range(len(actual)):
-        summation += (predicted[i] - actual[i]) / actual[i]
-    mean_percent_error = summation * 100 / len(actual)
-    return mean_percent_error
-
-
-# Functions related to plotting.
-# ------------------------------
-class MinorSymLogLocator(Locator):
-    """
-    Dynamically find minor tick positions based on the positions of
-    major ticks for a symlog scaling.
-    """
-
-    def __init__(self, linthresh, nints=10):
-        """
-        Ticks will be placed between the major ticks.
-        The placement is linear for x between -linthresh and linthresh,
-        otherwise its logarithmically. nints gives the number of
-        intervals that will be bounded by the minor ticks.
-        """
-        self.linthresh = linthresh
-        self.nintervals = nints
-
-    def __call__(self):
-        # Return the locations of the ticks
-        majorlocs = self.axis.get_majorticklocs()
-
-        if len(majorlocs) == 1:
-            return self.raise_if_exceeds(np.array([]))
-
-        # add temporary major tick locs at either end of the current range
-        # to fill in minor tick gaps
-        # major tick difference at lower end
-        dmlower = majorlocs[1] - majorlocs[0]
-        # major tick difference at upper end
-        dmupper = majorlocs[-1] - majorlocs[-2]
-
-        # add temporary major tick location at the lower end
-        if majorlocs[0] != 0.0 and (
-            (majorlocs[0] != self.linthresh and dmlower > self.linthresh)
-            or (dmlower == self.linthresh and majorlocs[0] < 0)
-        ):
-            majorlocs = np.insert(majorlocs, 0, majorlocs[0] * 10.0)
-        else:
-            majorlocs = np.insert(majorlocs, 0, majorlocs[0] - self.linthresh)
-
-        # add temporary major tick location at the upper end
-        if majorlocs[-1] != 0.0 and (
-            (np.abs(majorlocs[-1]) != self.linthresh and dmupper > self.linthresh)
-            or (dmupper == self.linthresh and majorlocs[-1] > 0)
-        ):
-            majorlocs = np.append(majorlocs, majorlocs[-1] * 10.0)
-        else:
-            majorlocs = np.append(majorlocs, majorlocs[-1] + self.linthresh)
-
-        # iterate through minor locs
-        minorlocs = []
-
-        # handle the lowest part
-        for i in range(1, len(majorlocs)):
-            majorstep = majorlocs[i] - majorlocs[i - 1]
-            if abs(majorlocs[i - 1] + majorstep / 2) < self.linthresh:
-                ndivs = self.nintervals
-            else:
-                ndivs = self.nintervals - 1.0
-
-            minorstep = majorstep / ndivs
-            locs = np.arange(majorlocs[i - 1], majorlocs[i], minorstep)[1:]
-            minorlocs.extend(locs)
-
-        return self.raise_if_exceeds(np.array(minorlocs))
-
-    def tick_values(self, vmin, vmax):
-        raise NotImplementedError(
-            "Cannot get tick locations for a " "%s type." % type(self)
-        )

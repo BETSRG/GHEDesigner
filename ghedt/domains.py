@@ -1,10 +1,7 @@
 import copy
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pygfunction as gt
 
-import ghedt.RowWise.RowWiseGeneration as RW
 from ghedt.coordinates import (
     rectangle,
     transpose_coordinates,
@@ -450,54 +447,6 @@ def polygonal_land_constraint(
     return coordinates_domain_nested_cutout_reordered, fieldDescriptors_reordered
 
 
-def RowWise_Domain(
-    pSpac,
-    spacStart,
-    spacStop,
-    spacStep,
-    rotateStep,
-    propBound,
-    ngZones,
-    rotateStart,
-    rotateStop,
-    Directory="",
-    pdfOutputName="Graphs.pdf",
-):
-    domain, fieldDestriptors = RW.fieldOptimizationWPSpac_FR(
-        [pSpac],
-        spacStart,
-        spacStop,
-        spacStep,
-        rotateStep,
-        Directory,
-        propBound,
-        ngZones=ngZones,
-        rotateStart=rotateStart,
-        rotateStop=rotateStop,
-        pdfOutputName=pdfOutputName,
-    )
-    domain = [domain[i] for i in range(len(domain) - 1, -1, -1)]
-    fieldDestriptors = [
-        fieldDestriptors[i] for i in range(len(fieldDestriptors) - 1, -1, -1)
-    ]
-    return [domain, fieldDestriptors]
-
-
-# The following functions are utility functions specific to domains.py
-# ------------------------------------------------------------------------------
-def verify_excess(domain):
-    # Verify that the domain is unimodal
-    unimodal = True
-    delta_T_values = []
-    for i in range(1, len(domain)):
-        delta_T = domain[i] - domain[i - 1]
-        delta_T_values.append(delta_T)
-        if delta_T > 0:
-            unimodal = False
-
-    return delta_T_values, unimodal
-
-
 def reorder_domain(domain, descriptors):
     # Reorder the domain so that the number of boreholes successively grow
     numbers = {}
@@ -517,29 +466,3 @@ def reorder_domain(domain, descriptors):
                 break
 
     return reordered_domain, reordered_descriptors
-
-
-def visualize_domain(domain, output_folder_name):
-    import os
-
-    if not os.path.exists(output_folder_name):
-        os.makedirs(output_folder_name)
-
-    for i in range(len(domain)):
-        fig = gt.utilities._initialize_figure()
-        ax = fig.add_subplot(111)
-
-        coordinates = domain[i]
-        x, y = list(zip(*coordinates))
-
-        ax.scatter(x, y)
-
-        ax.set_xlabel("x (m)")
-        ax.set_ylabel("y (m)")
-
-        fig.tight_layout()
-
-        name = output_folder_name + "/" + str(i).zfill(3)
-
-        fig.savefig(name)
-        plt.close(fig)
