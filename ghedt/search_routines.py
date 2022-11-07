@@ -8,8 +8,8 @@ from ghedt.gfunction import compute_live_g_function
 from ghedt.ground_heat_exchangers import GHE
 from ghedt.peak_load_analysis_tool.media import (Grout, Pipe,
                                                  SimulationParameters, Soil)
-from ghedt.RowWise.RowWiseGeneration import (field_optimization_fr,
-                                             field_optimization_wp_space_fr)
+from ghedt.RowWise.rowwise_generation import (field_optimization_fr,
+                                              field_optimization_wp_space_fr)
 from ghedt.utilities import (eskilson_log_times, borehole_spacing,
                              check_bracket, sign, js_dump)
 

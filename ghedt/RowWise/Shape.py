@@ -4,66 +4,10 @@ import numpy as np
 
 
 class Shapes:
-    """
-    a class to represent no_go zones
-
-    Attributes
-    ----------
-    cx : float
-        the x value of the centroid
-    cy : float
-        the y value of the centroid
-    xw: float
-        the xwidth
-    yw : float
-        the ywidth
-    theta: float
-        the rotation of the shape
-    c00: [float,float]
-        x,y location of 1 vertex
-    c01: [float,float]
-        x,y location of 2nd vertex
-    c10: [float,float]
-        x,y location of 3rd vertex
-    c11: [float,float]
-        x,y location of 4th vertex
-    c: [[float]]
-        array containing x,y locations of vertices
-    maxy : float
-        maximum y value of shape
-    miny: float
-        minimum y value of shape
-    maxx: float
-        maximum x value of shape
-    minx: float
-        minimum x value of shape
-    Methods
-    -------
-    lineintersect(xy)
-        determines the intersection of this shape and the given line segment
-    pointintersect(xy)
-        determines whether the given point is inside of the rectangle
-    """
 
     def __init__(self, c):
         """
-         contructs a shape object
-
-        Parameters
-        ----------
-        :param cx: float
-            the x location of the centroid
-        :param cy: float
-            the y location of the centroid
-        :param xw: float
-            the width in the x dir
-        :param yw: float
-            the width in the y dir
-        :param theta: float
-            the amount of rotation in radians
-        :param sh: string
-            string specifying the desired shape supports:
-            B,S,L,U,T,BL
+         constructs a shape object
         """
         self.c = np.array(c)
         # print(c)
@@ -72,12 +16,12 @@ class Shapes:
         for i in range(len(self.c)):
             xs[i] = self.c[i][0]
             ys[i] = self.c[i][1]
-        self.maxx = max(xs)
-        self.minx = min(xs)
-        self.maxy = max(ys)
-        self.miny = min(ys)
+        self.max_x = max(xs)
+        self.min_x = min(xs)
+        self.max_y = max(ys)
+        self.min_y = min(ys)
 
-    def lineintersect(self, xy, rotate=0, intersection_tolerance=1e-6):
+    def line_intersect(self, xy, rotate=0, intersection_tolerance=1e-6):
         """
         returns the intersections between a line segment and the shape
 
@@ -85,16 +29,19 @@ class Shapes:
         -----------
         :param xy: [float,float,float,float]
             the x,y values of both endpoints of the line segment
+        :param rotate:
+        :param intersection_tolerance:
+
         :return: [[float]]
             the x,y values of the intersections
         """
         x1, y1, x2, y2 = xy
-        rA = []
+        r_a = []
         for i in range(len(self.c)):
             if i == len(self.c) - 1:
                 c1 = self.c[len(self.c) - 1]
                 c2 = self.c[0]
-                r = vectorintersect(
+                r = vector_intersect(
                     [c1[0], c1[1], c2[0], c2[1]],
                     [x1, y1, x2, y2],
                     intersection_tolerance,
@@ -109,11 +56,11 @@ class Shapes:
                         or (r[1] - min(c2[1], c1[1])) < -1 * intersection_tolerance
                     ):
                         continue
-                    rA.append(r)
+                    r_a.append(r)
             else:
                 c1 = self.c[i]
                 c2 = self.c[i + 1]
-                r = vectorintersect(
+                r = vector_intersect(
                     [c1[0], c1[1], c2[0], c2[1]],
                     [x1, y1, x2, y2],
                     intersection_tolerance,
@@ -127,31 +74,32 @@ class Shapes:
                         or (r[1] - min(c2[1], c1[1])) < -1 * intersection_tolerance
                     ):
                         continue
-                    rA.append(r)
+                    r_a.append(r)
         # print("x value: %f, r values:"%x1)
         # print(r_a)
 
-        rA = sortIntersections(rA, rotate)
+        r_a = sort_intersections(r_a, rotate)
         # print(r_a)
-        return rA
+        return r_a
 
-    def pointintersect(self, xy):
+    def point_intersect(self, xy):
         """
-        returns whether the given point is inside of the rectangle
+        returns whether the given point is inside the rectangle
 
         Parameters
         -----------
         :param xy: [float,float]
             x,y value of point
+
         :return: boolean
             true if inside, false if not
         """
         x, y = xy
-        if (x > self.maxx or x < self.minx) or (y > self.maxy or y < self.miny):
+        if (x > self.max_x or x < self.min_x) or (y > self.max_y or y < self.min_y):
             # print("Returning False b/c outside of box")
             return False
-        farX = self.minx - 10
-        inters = self.lineintersect([farX, y, farX + 1, y])
+        far_x = self.min_x - 10
+        inters = self.line_intersect([far_x, y, far_x + 1, y])
         # print(inters)
         inters = [inter for inter in inters if inter[0] <= x]
         # print("x: %f"%x,inters)
@@ -173,55 +121,56 @@ class Shapes:
             # print("returning True")
             return True
 
-    def getArea(self):
+    def get_area(self):
         """
         returns area of shape
+
         :return: float
             area of shape
         """
-        sum = 0
+        area_sum = 0
         for i in range(len(self.c)):
             if i == len(self.c) - 1:
-                sum += self.c[len(self.c) - 1][0] * self.c[0][1] - (
+                area_sum += self.c[len(self.c) - 1][0] * self.c[0][1] - (
                     self.c[len(self.c) - 1][1] * self.c[0][0]
                 )
                 continue
-            sum += self.c[i][0] * self.c[i + 1][1] - (self.c[i][1] * self.c[i + 1][0])
-        return 0.5 * sum
+            area_sum += self.c[i][0] * self.c[i + 1][1] - (self.c[i][1] * self.c[i + 1][0])
+        return 0.5 * area_sum
 
-def sortIntersections(rA, rotate):
-    if len(rA) == 0:
-        return rA
-    vals = [0] * len(rA)
+
+def sort_intersections(r_a, rotate):
+    if len(r_a) == 0:
+        return r_a
+    vals = [0] * len(r_a)
     i = 0
-    for inter in rA:
-        phi = 0
+    for inter in r_a:
         if inter[0] == 0:
             phi = pi / 2
         else:
             phi = atan(inter[1] / inter[0])
-        R = sqrt(inter[1] * inter[1] + inter[0] * inter[0])
-        refang = pi / 2 - phi
+        dist_inter = sqrt(inter[1] ** 2 + inter[0] ** 2)
+        ref_ang = pi / 2 - phi
         # sign = 1
         if phi > pi / 2:
             if phi > pi:
                 if phi > 3 * pi / 2.0:
-                    refang = 2 * pi - phi
+                    ref_ang = 2 * pi - phi
                 else:
-                    refang = 3.0 * pi / 2.0 - phi
+                    ref_ang = 3.0 * pi / 2.0 - phi
             else:
-                refang = pi - phi
+                ref_ang = pi - phi
         # if phi > pi/2 + rotate and phi < 3*pi/2 + rotate:
         # sign = -1
-        vals[i] = R * sin(refang + rotate)
+        vals[i] = dist_inter * sin(ref_ang + rotate)
         i += 1
-    zipped = zip(vals, rA)
+    zipped = zip(vals, r_a)
     zipped = sorted(zipped)
-    rA = [row for _, row in zipped]
-    return rA
+    r_a = [row for _, row in zipped]
+    return r_a
 
 
-def vectorintersect(l1, l2, intersection_tolerance):
+def vector_intersect(l1, l2, intersection_tolerance):
     """
      gives the intersection between two line segments
 
@@ -231,6 +180,8 @@ def vectorintersect(l1, l2, intersection_tolerance):
         endpoints of first line segment
     :param l2: [[float]]
         endpoints of the second line segment
+    :param intersection_tolerance:
+
     :return: [float,float]
         x,y values of intersection (returns None if there is none)
     """
