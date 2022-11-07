@@ -8,7 +8,7 @@ from ghedt.peak_load_analysis_tool import media
 
 class BasePipe(object):
     def __init__(
-        self, m_flow_borehole, fluid, borehole, soil, grout, pipe, config=None
+            self, m_flow_borehole, fluid, borehole, soil, grout, pipe, config=None
     ):
         # borehole mass flow rate
         self.m_flow_borehole = m_flow_borehole
@@ -119,13 +119,13 @@ class BasePipe(object):
 
 class SingleUTube(BasePipe, gt.pipes.SingleUTube):
     def __init__(
-        self,
-        m_flow_borehole: float,
-        fluid: gt.media.Fluid,
-        borehole: gt.boreholes.Borehole,
-        pipe: media.Pipe,
-        grout: media.Grout,
-        soil: media.Soil,
+            self,
+            m_flow_borehole: float,
+            fluid: gt.media.Fluid,
+            borehole: gt.boreholes.Borehole,
+            pipe: media.Pipe,
+            grout: media.Grout,
+            soil: media.Soil,
     ):
         # Initialize base pipe class
         BasePipe.__init__(self, m_flow_borehole, fluid, borehole, soil, grout, pipe)
@@ -198,14 +198,14 @@ class SingleUTube(BasePipe, gt.pipes.SingleUTube):
 
 class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
     def __init__(
-        self,
-        m_flow_borehole: float,
-        fluid: gt.media.Fluid,
-        borehole: gt.boreholes.Borehole,
-        pipe: media.Pipe,
-        grout: media.Grout,
-        soil: media.Soil,
-        config="parallel",
+            self,
+            m_flow_borehole: float,
+            fluid: gt.media.Fluid,
+            borehole: gt.boreholes.Borehole,
+            pipe: media.Pipe,
+            grout: media.Grout,
+            soil: media.Soil,
+            config="parallel",
     ):
         # Initialize base pipe class
         BasePipe.__init__(
@@ -442,13 +442,13 @@ class CoaxialBase(object):
 
 class CoaxialPipe(CoaxialBase, gt.pipes.Coaxial, BasePipe):
     def __init__(
-        self,
-        m_flow_borehole: float,
-        fluid: gt.media.Fluid,
-        borehole: gt.boreholes.Borehole,
-        pipe: media.Pipe,
-        grout: media.Grout,
-        soil: media.Soil
+            self,
+            m_flow_borehole: float,
+            fluid: gt.media.Fluid,
+            borehole: gt.boreholes.Borehole,
+            pipe: media.Pipe,
+            grout: media.Grout,
+            soil: media.Soil
     ):
         CoaxialBase.__init__(
             self, m_flow_borehole, fluid, borehole, pipe, soil, grout)
@@ -541,7 +541,7 @@ def compute_reynolds(m_flow_pipe, r_in, fluid):
     dia_hydraulic = 2.0 * r_in
     # Fluid velocity
     vol_flow_rate = m_flow_pipe / fluid.rho
-    area_cr_inner = pi * r_in**2
+    area_cr_inner = pi * r_in ** 2
     velocity = vol_flow_rate / area_cr_inner
     # Reynolds number
     return fluid.rho * velocity * dia_hydraulic / fluid.mu
@@ -552,7 +552,7 @@ def compute_reynolds_concentric(m_flow_pipe, r_a_in, r_a_out, fluid):
     dia_hydraulic = 2 * (r_a_out - r_a_in)
     # r_h = dia_hydraulic / 2
     # Cross-sectional area of the annulus region
-    area_cr_annular = pi * ((r_a_out**2) - (r_a_in**2))
+    area_cr_annular = pi * ((r_a_out ** 2) - (r_a_in ** 2))
     # Volume flow rate
     vol_flow_rate = m_flow_pipe / fluid.rho
     # Average velocity
