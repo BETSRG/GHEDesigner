@@ -5,6 +5,7 @@
 # This search is described in section 4.4.5 from pages 146-148 in Cook (2021).
 
 import csv
+import tempfile
 from pathlib import Path
 from sys import path
 from time import time as clock
@@ -40,7 +41,7 @@ def main():
     note = "Bi-Uniform Polygon Usage Example: Single U Tube"
     author = "Jane Doe"
     IterationName = "Example 6"
-    outputFileDirectory = "DesignExampleOutput"
+    outputFileDirectory = tempfile.mkdtemp()
 
     # Borehole dimensions
     H = 96.0  # Borehole length (m)
