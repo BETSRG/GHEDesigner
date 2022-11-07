@@ -27,7 +27,7 @@ def create_row(allocated_width, row_data, data_formats, centering=">"):
         try:
             r_s += "{:{c}{w}{fm}}".format(data, c=centering, w=width, fm=d_f)
         except:
-            print("Ouput Row creation error: ", d_f)
+            print("Output Row creation error: ", d_f)
             raise ValueError
 
     r_s += "\n"
