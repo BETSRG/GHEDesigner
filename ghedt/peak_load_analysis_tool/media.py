@@ -2,9 +2,9 @@ import numpy as np
 
 
 class ThermalProperty:
-    def __init__(self, k, rhoCp):
+    def __init__(self, k, rho_cp):
         self.k = k  # Thermal conductivity (W/m.K)
-        self.rhoCp = rhoCp  # Volumetric heat capacity (J/K.m3)
+        self.rhoCp = rho_cp  # Volumetric heat capacity (J/K.m3)
 
     def __repr__(self):
         def justify(category, value):
@@ -32,9 +32,9 @@ class Grout(ThermalProperty):
 
 
 class Pipe(ThermalProperty):
-    def __init__(self, pos, r_in, r_out, s, eps, k, rhoCp):
+    def __init__(self, pos, r_in, r_out, s, eps, k, rho_cp):
         # Make variables from ThermalProperty available to Pipe
-        ThermalProperty.__init__(self, k, rhoCp)
+        ThermalProperty.__init__(self, k, rho_cp)
 
         # Pipe specific parameters
         self.pos = pos  # Pipe positions either a list of tuples or tuple
@@ -71,18 +71,18 @@ class Pipe(ThermalProperty):
     @staticmethod
     def place_pipes(s, r_out, n_pipes):
         """Positions pipes in an axisymetric configuration."""
-        D_s = s / 2 + r_out
+        shank_space = s / 2 + r_out
         pi = np.pi
         dt = pi / float(n_pipes)
         pos = [(0.0, 0.0) for i in range(2 * n_pipes)]
         for i in range(n_pipes):
             pos[2 * i] = (
-                D_s * np.cos(2.0 * i * dt + pi),
-                D_s * np.sin(2.0 * i * dt + pi),
+                shank_space * np.cos(2.0 * i * dt + pi),
+                shank_space * np.sin(2.0 * i * dt + pi),
             )
             pos[2 * i + 1] = (
-                D_s * np.cos(2.0 * i * dt + pi + dt),
-                D_s * np.sin(2.0 * i * dt + pi + dt),
+                shank_space * np.cos(2.0 * i * dt + pi + dt),
+                shank_space * np.sin(2.0 * i * dt + pi + dt),
             )
         return pos
 
