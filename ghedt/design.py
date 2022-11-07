@@ -3,7 +3,7 @@ import textwrap
 import numpy as np
 import pygfunction as gt
 
-import ghedt as dt
+from ghedt import domains, geometry, search_routines, utilities
 from ghedt.peak_load_analysis_tool.media import Grout, Pipe, SimulationParameters, Soil
 
 
@@ -19,7 +19,7 @@ class Design:
         grout: Grout,
         soil: Soil,
         sim_params: SimulationParameters,
-        geometric_constraints: dt.media.GeometricConstraints,
+        geometric_constraints: geometry.GeometricConstraints,
         hourly_extraction_ground_loads: list,
         method: str = "hybrid",
         routine: str = "near-square",
@@ -77,31 +77,31 @@ class Design:
             # different lower range. The upper number of boreholes range is
             # calculated based on the spacing and length provided.
             if routine == "near-square":
-                number_of_boreholes = dt.utilities.number_of_boreholes(
+                number_of_boreholes = utilities.number_of_boreholes(
                     gc.length, gc.B, func=np.floor
                 )
                 (
                     self.coordinates_domain,
                     self.fieldDescriptors,
-                ) = dt.domains.square_and_near_square(
+                ) = domains.square_and_near_square(
                     1, number_of_boreholes, self.geometric_constraints.B
                 )
             elif routine == "rectangle":
-                self.coordinates_domain, self.fieldDescriptors = dt.domains.rectangular(
+                self.coordinates_domain, self.fieldDescriptors = domains.rectangular(
                     gc.length, gc.width, gc.B_min, gc.B_max_x, disp=False
                 )
             elif routine == "bi-rectangle":
                 (
                     self.coordinates_domain_nested,
                     self.fieldDescriptors,
-                ) = dt.domains.bi_rectangle_nested(
+                ) = domains.bi_rectangle_nested(
                     gc.length, gc.width, gc.B_min, gc.B_max_x, gc.B_max_y, disp=False
                 )
             elif routine == "bi-rectangle_constrained":
                 (
                     self.coordinates_domain_nested,
                     self.fieldDescriptors,
-                ) = dt.domains.polygonal_land_constraint(
+                ) = domains.polygonal_land_constraint(
                     property_boundary,
                     gc.B_min,
                     gc.B_max_x,
@@ -112,7 +112,7 @@ class Design:
                 (
                     self.coordinates_domain_nested,
                     self.fieldDescriptors,
-                ) = dt.domains.bi_rectangle_zoned_nested(
+                ) = domains.bi_rectangle_zoned_nested(
                     gc.length, gc.width, gc.B_min, gc.B_max_x, gc.B_max_y
                 )
             elif routine == "row-wise":
@@ -138,7 +138,7 @@ class Design:
             print(title + "\n" + len(title) * "=")
         # Find near-square
         if self.routine == "near-square":
-            bisection_search = dt.search_routines.Bisection1D(
+            bisection_search = search_routines.Bisection1D(
                 self.coordinates_domain,
                 self.fieldDescriptors,
                 self.V_flow,
@@ -158,7 +158,7 @@ class Design:
             )
         # Find a rectangle
         elif self.routine == "rectangle":
-            bisection_search = dt.search_routines.Bisection1D(
+            bisection_search = search_routines.Bisection1D(
                 self.coordinates_domain,
                 self.fieldDescriptors,
                 self.V_flow,
@@ -178,7 +178,7 @@ class Design:
             )
         # Find a bi-rectangle
         elif self.routine == "bi-rectangle":
-            bisection_search = dt.search_routines.Bisection2D(
+            bisection_search = search_routines.Bisection2D(
                 self.coordinates_domain_nested,
                 self.fieldDescriptors,
                 self.V_flow,
@@ -197,7 +197,7 @@ class Design:
                 load_years=self.load_years,
             )
         elif self.routine == "bi-rectangle_constrained":
-            bisection_search = dt.search_routines.Bisection2D(
+            bisection_search = search_routines.Bisection2D(
                 self.coordinates_domain_nested,
                 self.fieldDescriptors,
                 self.V_flow,
@@ -217,7 +217,7 @@ class Design:
             )
         # Find bi-zoned rectangle
         elif self.routine == "bi-zoned":
-            bisection_search = dt.search_routines.BisectionZD(
+            bisection_search = search_routines.BisectionZD(
                 self.coordinates_domain_nested,
                 self.fieldDescriptors,
                 self.V_flow,
@@ -235,7 +235,7 @@ class Design:
                 fieldType="bi-zoned",
             )
         elif self.routine == "row-wise":
-            bisection_search = dt.search_routines.RowWiseModifiedBisectionSearch(
+            bisection_search = search_routines.RowWiseModifiedBisectionSearch(
                 self.V_flow,
                 self.borehole,
                 self.bhe_object,

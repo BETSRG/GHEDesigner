@@ -2,8 +2,8 @@ import copy
 import os
 import unittest
 
-import ghedt as dt
-import ghedt.peak_load_analysis_tool as plat
+from ghedt import design, utilities, geometry
+from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
 import pandas as pd
 import pygfunction as gt
 
@@ -41,9 +41,9 @@ class DesignBase:
         # Pipe positions
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos_single = plat.media.Pipe.place_pipes(s, r_out, 1)
+        pos_single = media.Pipe.place_pipes(s, r_out, 1)
         # Single U-tube BHE object
-        self.single_u_tube = plat.borehole_heat_exchangers.SingleUTube
+        self.single_u_tube = borehole_heat_exchangers.SingleUTube
         # Double U-tube
         # pos_double = plat.media.Pipe.place_pipes(s, r_out, 2)
         # double_u_tube = plat.borehole_heat_exchangers.MultipleUTube
@@ -67,16 +67,16 @@ class DesignBase:
         # Thermal properties
         # ------------------
         # Pipe
-        self.pipe_single = plat.media.Pipe(
+        self.pipe_single = media.Pipe(
             pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p
         )
         # pipe_double = plat.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
         # pipe_coaxial = plat.media.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rhoCp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        self.soil = plat.media.Soil(k_s, rhoCp_s, ugt)
+        self.soil = media.Soil(k_s, rhoCp_s, ugt)
         # Grout
-        self.grout = plat.media.Grout(k_g, rhoCp_g)
+        self.grout = media.Grout(k_g, rhoCp_g)
 
         # Inputs related to fluid
         # -----------------------
@@ -102,7 +102,7 @@ class DesignBase:
         # Maximum and minimum allowable heights
         max_Height = 135.0  # in meters
         min_Height = 60  # in meters
-        self.sim_params = plat.media.SimulationParameters(
+        self.sim_params = media.SimulationParameters(
             start_month,
             end_month,
             max_EFT_allowable,
@@ -133,14 +133,14 @@ class TestNearSquare(unittest.TestCase, DesignBase):
         # Required geometric constraints for the uniform rectangle design: B
         B = 5.0  # Borehole spacing (m)
         number_of_boreholes = 32
-        length = dt.utilities.length_of_side(number_of_boreholes, B)
-        self.geometric_constraints = dt.media.GeometricConstraints(B=B, length=length)
+        length = utilities.length_of_side(number_of_boreholes, B)
+        self.geometric_constraints = geometry.GeometricConstraints(B=B, length=length)
 
     def test_design_selection(self):
         # Single U-tube
         # -------------
         # Design a single U-tube with a system volumetric flow rate
-        design_single_u_tube_a = dt.design.Design(
+        design_single_u_tube_a = design.Design(
             self.V_flow_system,
             self.borehole,
             self.single_u_tube,
@@ -160,7 +160,7 @@ class TestNearSquare(unittest.TestCase, DesignBase):
         bisection_search.ghe.size(method="hybrid")
         H_single_u_tube_a = bisection_search.ghe.bhe.b.H
 
-        design_single_u_tube_b = dt.design.Design(
+        design_single_u_tube_b = design.Design(
             self.V_flow_borehole,
             self.borehole,
             self.single_u_tube,

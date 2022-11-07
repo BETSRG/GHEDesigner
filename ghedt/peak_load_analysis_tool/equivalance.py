@@ -3,17 +3,16 @@ from copy import deepcopy
 from numpy import pi, log, sqrt
 from scipy.optimize import brentq
 
-import ghedt.peak_load_analysis_tool as plat
-from . import borehole_heat_exchangers
+from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
 
 
 def compute_equivalent(bhe):
     # Compute an equivalent borehole heat exchanger based on the type
-    if type(bhe) == plat.borehole_heat_exchangers.SingleUTube:
+    if type(bhe) == borehole_heat_exchangers.SingleUTube:
         _bhe = bhe
-    elif type(bhe) == plat.borehole_heat_exchangers.MultipleUTube:
+    elif type(bhe) == borehole_heat_exchangers.MultipleUTube:
         _bhe = multiple_to_single(bhe)
-    elif type(bhe) == plat.borehole_heat_exchangers.CoaxialPipe:
+    elif type(bhe) == borehole_heat_exchangers.CoaxialPipe:
         _bhe = coaxial_to_single(bhe)
     else:
         raise ValueError("Not an acceptable BHE.")
@@ -79,12 +78,12 @@ def equivalent_single_u_tube(bhe, V_fluid, V_pipe, R_conv, R_pipe):
         spacing = (borehole.r_b * 2.0) / 10.0  # make spacing 1/10th of diameter
         borehole.r_b += spacing
     s = spacing / 3  # outer tube-to-tube shank spacing (m)
-    pos = plat.media.Pipe.place_pipes(s, r_p_o_prime, 1)  # Place single u-tube pipe
+    pos = media.Pipe.place_pipes(s, r_p_o_prime, 1)  # Place single u-tube pipe
 
     # New pipe geometry
     eps = deepcopy(bhe.pipe.eps)
     rhoCp = deepcopy(bhe.pipe.rhoCp)
-    pipe = plat.media.Pipe(pos, r_p_i_prime, r_p_o_prime, s, eps, k_p_prime, rhoCp)
+    pipe = media.Pipe(pos, r_p_i_prime, r_p_o_prime, s, eps, k_p_prime, rhoCp)
 
     # Don't tie together the original and equivalent BHE's
     m_flow_borehole = deepcopy(bhe.m_flow_borehole)

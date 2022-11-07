@@ -1,10 +1,10 @@
 # library dependencies
-numpy>=1.23.4
-opencv-python==4.6.0.66
+numpy
+opencv-python
 # openpyxl>=3.0.8
-pandas>=1.5.1
+pandas
 git+https://github.com/MassimoCimmino/pygfunction@5465044309c1193514f64574680cd430249aef29
-# scipy>=1.6.2
+scipy
 
 # testing dependencies
 black

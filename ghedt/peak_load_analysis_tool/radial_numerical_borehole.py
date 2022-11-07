@@ -5,7 +5,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
 
-import ghedt.peak_load_analysis_tool as plat
+from ghedt.peak_load_analysis_tool import borehole_heat_exchangers
 
 
 class RadialCellType(object):
@@ -26,7 +26,7 @@ class RadialNumericalBH(object):
 
     def __init__(
         self,
-        single_u_tube: plat.borehole_heat_exchangers.SingleUTube,
+        single_u_tube: borehole_heat_exchangers.SingleUTube,
         ground_init_temp: float = 20.0,
         dtype: np.dtype = np.double,
     ):

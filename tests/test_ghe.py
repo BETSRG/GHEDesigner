@@ -1,8 +1,8 @@
 import os
 import unittest
 
-import ghedt as dt
-import ghedt.peak_load_analysis_tool as plat
+from ghedt import utilities, coordinates, ground_heat_exchangers, gfunction
+from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
 import pandas as pd
 import pygfunction as gt
 
@@ -43,9 +43,9 @@ class TestGHE(unittest.TestCase):
         # Pipe positions
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos_s = plat.media.Pipe.place_pipes(s, r_out, 1)
+        pos_s = media.Pipe.place_pipes(s, r_out, 1)
         # Double U-tube
-        pos_d = plat.media.Pipe.place_pipes(s, r_out, 2)
+        pos_d = media.Pipe.place_pipes(s, r_out, 2)
         # Coaxial
         pos_c = (0, 0)
 
@@ -66,32 +66,32 @@ class TestGHE(unittest.TestCase):
         # Thermal properties
         # ------------------
         # Pipe
-        self.pipe_s = plat.media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-        self.pipe_d = plat.media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-        self.pipe_c = plat.media.Pipe(
+        self.pipe_s = media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        self.pipe_d = media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        self.pipe_c = media.Pipe(
             pos_c, r_inner, r_outer, s, epsilon, k_p_c, rhoCp_p
         )
 
         # Single U-tube BHE object
-        self.SingleUTube = plat.borehole_heat_exchangers.SingleUTube
+        self.SingleUTube = borehole_heat_exchangers.SingleUTube
         # Double U-tube bhe object
-        self.DoubleUTube = plat.borehole_heat_exchangers.MultipleUTube
+        self.DoubleUTube = borehole_heat_exchangers.MultipleUTube
         # Coaxial tube bhe object
-        self.CoaxialTube = plat.borehole_heat_exchangers.CoaxialPipe
+        self.CoaxialTube = borehole_heat_exchangers.CoaxialPipe
 
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        self.soil = plat.media.Soil(k_s, rhoCp_s, ugt)
+        self.soil = media.Soil(k_s, rhoCp_s, ugt)
         # Grout
-        self.grout = plat.media.Grout(k_g, rhoCp_g)
+        self.grout = media.Grout(k_g, rhoCp_g)
 
         # Coordinates
         Nx = 12
         Ny = 13
-        self.coordinates = dt.coordinates.rectangle(Nx, Ny, self.B, self.B)
+        self.coordinates = coordinates.rectangle(Nx, Ny, self.B, self.B)
 
         # Compute a range of g-functions for interpolation
-        self.log_time = dt.utilities.Eskilson_log_times()
+        self.log_time = utilities.Eskilson_log_times()
         self.H_values = [24.0, 48.0, 96.0, 192.0, 384.0]
         self.r_b_values = [self.r_b] * len(self.H_values)
         self.D_values = [2.0] * len(self.H_values)
@@ -121,7 +121,7 @@ class TestGHE(unittest.TestCase):
         # Maximum and minimum allowable heights
         max_Height = 384  # in meters
         min_Height = 24  # in meters
-        self.sim_params = plat.media.SimulationParameters(
+        self.sim_params = media.SimulationParameters(
             start_month,
             end_month,
             max_EFT_allowable,
@@ -145,7 +145,7 @@ class TestGHE(unittest.TestCase):
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
-        g_function = dt.gfunction.compute_live_g_function(
+        g_function = gfunction.compute_live_g_function(
             self.B,
             self.H_values,
             self.r_b_values,
@@ -161,7 +161,7 @@ class TestGHE(unittest.TestCase):
         )
 
         # Initialize the GHE object
-        ghe = dt.ground_heat_exchangers.GHE(
+        ghe = ground_heat_exchangers.GHE(
             self.V_flow_system,
             self.B,
             self.SingleUTube,
@@ -190,7 +190,7 @@ class TestGHE(unittest.TestCase):
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
-        g_function = dt.gfunction.compute_live_g_function(
+        g_function = gfunction.compute_live_g_function(
             self.B,
             self.H_values,
             self.r_b_values,
@@ -206,7 +206,7 @@ class TestGHE(unittest.TestCase):
         )
 
         # Initialize the GHE object
-        ghe = dt.ground_heat_exchangers.GHE(
+        ghe = ground_heat_exchangers.GHE(
             self.V_flow_system,
             self.B,
             self.DoubleUTube,
@@ -235,7 +235,7 @@ class TestGHE(unittest.TestCase):
         borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
-        g_function = dt.gfunction.compute_live_g_function(
+        g_function = gfunction.compute_live_g_function(
             self.B,
             self.H_values,
             self.r_b_values,
@@ -251,7 +251,7 @@ class TestGHE(unittest.TestCase):
         )
 
         # Re-Initialize the GHE object
-        ghe = dt.ground_heat_exchangers.GHE(
+        ghe = ground_heat_exchangers.GHE(
             self.V_flow_system,
             self.B,
             self.CoaxialTube,

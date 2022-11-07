@@ -6,7 +6,7 @@ import pygfunction as gt
 import scipy.interpolate
 import scipy.optimize
 
-import ghedt as dt
+from ghedt import gfunction
 from ghedt.peak_load_analysis_tool.equivalance import (compute_equivalent,
                                                        solve_root)
 from ghedt.peak_load_analysis_tool.ground_loads import HybridLoad
@@ -27,7 +27,7 @@ class BaseGHE:
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
-        GFunction: dt.gfunction.GFunction,
+        GFunction: gfunction.GFunction,
         sim_params: SimulationParameters,
         hourly_extraction_ground_loads: list,
         fieldType="N/A",
@@ -210,7 +210,7 @@ class BaseGHE:
         coordinates = self.GFunction.bore_locations
         log_time = self.GFunction.log_time
 
-        g_function = dt.gfunction.compute_live_g_function(
+        g_function = gfunction.compute_live_g_function(
             self.B_spacing,
             H_values,
             r_b_values,
@@ -241,7 +241,7 @@ class GHE(BaseGHE):
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
-        GFunction: dt.gfunction.GFunction,
+        GFunction: gfunction.GFunction,
         sim_params: SimulationParameters,
         hourly_extraction_ground_loads: list,
         fieldType="N/A",

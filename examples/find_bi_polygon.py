@@ -24,7 +24,7 @@ except ImportError:
 
 import ghedt as dt
 import ghedt.design as design
-import ghedt.media as media
+import ghedt.geometry as media
 import ghedt.peak_load_analysis_tool as plat
 from ghedt.output import OutputDesignDetails
 
