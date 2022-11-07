@@ -60,7 +60,7 @@ def main():
     R_B_parallel = double_u_tube_parallel.compute_effective_borehole_resistance()
 
     # Intermediate variables
-    Re = plat.borehole_heat_exchangers.compute_Reynolds(
+    Re = plat.borehole_heat_exchangers.compute_reynolds(
         double_u_tube_parallel.m_flow_pipe, r_in, epsilon, fluid
     )
 

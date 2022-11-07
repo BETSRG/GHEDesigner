@@ -64,7 +64,7 @@ def main():
 
     val = "Intermediate variables"
     print(val + "\n" + len(val) * "-")
-    Re = plat.borehole_heat_exchangers.compute_Reynolds(
+    Re = plat.borehole_heat_exchangers.compute_reynolds(
         Coaxial.m_flow_pipe, Coaxial.pipe.r_out[1], epsilon, fluid
     )
     print("Reynolds number: {}".format(Re))

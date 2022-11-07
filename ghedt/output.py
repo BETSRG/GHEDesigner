@@ -428,8 +428,8 @@ def output_design_details(
             allocated_width,
             "Reynold's Number:",
             round(
-                borehole_heat_exchangers.compute_Reynolds(
-                    bhe.m_flow_borehole, bhe.pipe.r_in, bhe.pipe.eps, bhe.fluid
+                borehole_heat_exchangers.compute_reynolds(
+                    bhe.m_flow_borehole, bhe.pipe.r_in, bhe.fluid
                 ),
                 rounding_amount,
             ),
@@ -443,7 +443,7 @@ def output_design_details(
             allocated_width,
             "Reynold's Number:",
             round(
-                borehole_heat_exchangers.compute_Reynolds_concentric(
+                borehole_heat_exchangers.compute_reynolds_concentric(
                     bhe.m_flow_pipe, bhe.r_in_out, bhe.r_out_in, bhe.fluid
                 ),
                 rounding_amount,
