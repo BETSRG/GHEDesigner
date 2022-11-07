@@ -173,6 +173,21 @@ class Shapes:
             # print("returning True")
             return True
 
+    def getArea(self):
+        """
+        returns area of shape
+        :return: float
+            area of shape
+        """
+        sum = 0
+        for i in range(len(self.c)):
+            if i == len(self.c) - 1:
+                sum += self.c[len(self.c) - 1][0] * self.c[0][1] - (
+                    self.c[len(self.c) - 1][1] * self.c[0][0]
+                )
+                continue
+            sum += self.c[i][0] * self.c[i + 1][1] - (self.c[i][1] * self.c[i + 1][0])
+        return 0.5 * sum
 
 def sortIntersections(rA, rotate):
     if len(rA) == 0:
