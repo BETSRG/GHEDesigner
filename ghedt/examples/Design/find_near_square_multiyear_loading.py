@@ -8,7 +8,7 @@ import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
 import pandas as pd
 from time import time as clock
-from ghedt.output import OutputDesignDetails
+from ghedt.output import output_design_details
 
 
 def main():
@@ -108,7 +108,7 @@ def main():
     # B is already defined above
     number_of_boreholes = 32
     length = dt.utilities.length_of_side(number_of_boreholes, B)
-    geometric_constraints = dt.media.GeometricConstraints(B=B, length=length)
+    geometric_constraints = dt.media.GeometricConstraints(b=B, length=length)
 
     # Single U-tube
     # -------------
@@ -149,19 +149,19 @@ def main():
     print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
     # Generating Ouptut File
-    OutputDesignDetails(
+    output_design_details(
         bisection_search,
         toc - tic,
         projectName,
         note,
         author,
         IterationName,
-        outputDirectory=outputFileDirectory,
-        summaryFile="SummaryOfResults_SU.txt",
-        csvF1="TimeDependentValues_SU.csv",
-        csvF2="BorefieldData_SU.csv",
-        csvF3="Loadings_SU.csv",
-        csvF4="GFunction_SU.csv",
+        output_directory=outputFileDirectory,
+        summary_file="SummaryOfResults_SU.txt",
+        csv_f_1="TimeDependentValues_SU.csv",
+        csv_f_2="BorefieldData_SU.csv",
+        csv_f_3="Loadings_SU.csv",
+        csv_f_4="GFunction_SU.csv",
     )
 
     # *************************************************************************************************************
@@ -212,19 +212,19 @@ def main():
     print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
     # Generating Ouptut File
-    OutputDesignDetails(
+    output_design_details(
         bisection_search,
         toc - tic,
         projectName,
         note,
         author,
         IterationName,
-        outputDirectory=outputFileDirectory,
-        summaryFile="SummaryOfResults_DU.txt",
-        csvF1="TimeDependentValues_DU.csv",
-        csvF2="BorefieldData_DU.csv",
-        csvF3="Loadings_DU.csv",
-        csvF4="GFunction_DU.csv",
+        output_directory=outputFileDirectory,
+        summary_file="SummaryOfResults_DU.txt",
+        csv_f_1="TimeDependentValues_DU.csv",
+        csv_f_2="BorefieldData_DU.csv",
+        csv_f_3="Loadings_DU.csv",
+        csv_f_4="GFunction_DU.csv",
     )
 
     # *************************************************************************************************************
@@ -290,19 +290,19 @@ def main():
     print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
     # Generating Ouptut File
-    OutputDesignDetails(
+    output_design_details(
         bisection_search,
         toc - tic,
         projectName,
         note,
         author,
         IterationName,
-        outputDirectory=outputFileDirectory,
-        summaryFile="SummaryOfResults_C.txt",
-        csvF1="TimeDependentValues_C.csv",
-        csvF2="BorefieldData_C.csv",
-        csvF3="Loadings_C.csv",
-        csvF4="GFunction_C.csv",
+        output_directory=outputFileDirectory,
+        summary_file="SummaryOfResults_C.txt",
+        csv_f_1="TimeDependentValues_C.csv",
+        csv_f_2="BorefieldData_C.csv",
+        csv_f_3="Loadings_C.csv",
+        csv_f_4="GFunction_C.csv",
     )
 
 

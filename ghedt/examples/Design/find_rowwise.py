@@ -8,7 +8,7 @@ import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
 import pandas as pd
 from time import time as clock
-from ghedt.output import OutputDesignDetails
+from ghedt.output import output_design_details
 from math import pi
 from ghedt.RowWise.RowWiseGeneration import genShape
 import os
@@ -152,15 +152,15 @@ def main():
       - list of vertices for the property boundary (buildVert)
     """
     geometric_constraints = dt.media.GeometricConstraints(
-        ngZones=nogoVert,
-        pSpac=pSpacs,
-        spacStart=spacStart,
-        spacStop=spacStop,
-        spacStep=spacStep,
-        rotateStart=rotateStart,
-        rotateStop=rotateStop,
-        rotateStep=rotateStep,
-        propBound=buildVert,
+        ng_zones=nogoVert,
+        p_spacing=pSpacs,
+        spacing_start=spacStart,
+        spacing_stop=spacStop,
+        spacing_step=spacStep,
+        rotate_start=rotateStart,
+        rotate_stop=rotateStop,
+        rotate_step=rotateStep,
+        prop_bound=buildVert,
     )
 
     # Single U-tube
@@ -184,7 +184,7 @@ def main():
     # Find the near-square design for a single U-tube and size it.
     tic = clock()  # Clock Start Time
     bisection_search = design_single_u_tube.find_design(
-        disp=True, usePerimeter=False
+        disp=True, use_perimeter=False
     )  # Finding GHE Design
     bisection_search.ghe.compute_g_functions()  # Calculating Gfunctions for Chosen Design
     bisection_search.ghe.size(
@@ -202,19 +202,19 @@ def main():
     print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
     # Generating Ouptut File
-    OutputDesignDetails(
+    output_design_details(
         bisection_search,
         toc - tic,
         projectName,
         note,
         author,
         IterationName,
-        outputDirectory=outputFileDirectory,
-        summaryFile="SummaryOfResults_SU_WOP.txt",
-        csvF1="TimeDependentValues_SU_WOP.csv",
-        csvF2="BorefieldData_SU_WOP.csv",
-        csvF3="Loadings_SU_WOP.csv",
-        csvF4="GFunction_SU_WOP.csv",
+        output_directory=outputFileDirectory,
+        summary_file="SummaryOfResults_SU_WOP.txt",
+        csv_f_1="TimeDependentValues_SU_WOP.csv",
+        csv_f_2="BorefieldData_SU_WOP.csv",
+        csv_f_3="Loadings_SU_WOP.csv",
+        csv_f_4="GFunction_SU_WOP.csv",
     )
 
     # *************************************************************************************************************
@@ -243,7 +243,7 @@ def main():
     # Find the near-square design for a single U-tube and size it.
     tic = clock()  # Clock Start Time
     bisection_search = design_single_u_tube.find_design(
-        disp=True, usePerimeter=True
+        disp=True, use_perimeter=True
     )  # Finding GHE Design
     bisection_search.ghe.compute_g_functions()  # Calculating Gfunctions for Chosen Design
     bisection_search.ghe.size(
@@ -261,19 +261,19 @@ def main():
     print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
     # Generating Ouptut File
-    OutputDesignDetails(
+    output_design_details(
         bisection_search,
         toc - tic,
         projectName,
         note,
         author,
         IterationName,
-        outputDirectory=outputFileDirectory,
-        summaryFile="SummaryOfResults_SU_WP.txt",
-        csvF1="TimeDependentValues_SU_WP.csv",
-        csvF2="BorefieldData_SU_WP.csv",
-        csvF3="Loadings_SU_WP.csv",
-        csvF4="GFunction_SU_WP.csv",
+        output_directory=outputFileDirectory,
+        summary_file="SummaryOfResults_SU_WP.txt",
+        csv_f_1="TimeDependentValues_SU_WP.csv",
+        csv_f_2="BorefieldData_SU_WP.csv",
+        csv_f_3="Loadings_SU_WP.csv",
+        csv_f_4="GFunction_SU_WP.csv",
     )
 
 

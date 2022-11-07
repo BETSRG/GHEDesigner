@@ -131,7 +131,7 @@ def main():
       - B_max
     """
     geometric_constraints = dt.media.GeometricConstraints(
-        length=length, width=width, B_min=B_min, B_max_x=B_max
+        length=length, width=width, b_min=B_min, b_max_x=B_max
     )
 
     title = "Find rectangle..."

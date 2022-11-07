@@ -9,7 +9,7 @@ import ghedt.peak_load_analysis_tool as plat
 import pygfunction as gt
 import pandas as pd
 from time import time as clock
-from ghedt.output import OutputDesignDetails
+from ghedt.output import output_design_details
 
 
 def main():
@@ -115,7 +115,7 @@ def main():
       - B_max
     """
     geometric_constraints = dt.media.GeometricConstraints(
-        length=length, width=width, B_min=B_min, B_max_x=B_max_x, B_max_y=B_max_y
+        length=length, width=width, b_min=B_min, b_max_x=B_max_x, b_max_y=B_max_y
     )
 
     # Single U-tube
@@ -154,19 +154,19 @@ def main():
     print("Number of boreholes: {}".format(nbh))
     print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
-    OutputDesignDetails(
+    output_design_details(
         bisection_search,
         toc - tic,
         projectName,
         note,
         author,
         IterationName,
-        outputDirectory=outputFileDirectory,
-        summaryFile="SummaryOfResults_SU.txt",
-        csvF1="TimeDependentValues_SU.csv",
-        csvF2="BorefieldData_SU.csv",
-        csvF3="Loadings_SU.csv",
-        csvF4="GFunction_SU.csv",
+        output_directory=outputFileDirectory,
+        summary_file="SummaryOfResults_SU.txt",
+        csv_f_1="TimeDependentValues_SU.csv",
+        csv_f_2="BorefieldData_SU.csv",
+        csv_f_3="Loadings_SU.csv",
+        csv_f_4="GFunction_SU.csv",
     )
     """
     # Double U-tube

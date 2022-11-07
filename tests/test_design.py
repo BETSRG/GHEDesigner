@@ -134,7 +134,7 @@ class TestNearSquare(unittest.TestCase, DesignBase):
         B = 5.0  # Borehole spacing (m)
         number_of_boreholes = 32
         length = utilities.length_of_side(number_of_boreholes, B)
-        self.geometric_constraints = geometry.GeometricConstraints(B=B, length=length)
+        self.geometric_constraints = geometry.GeometricConstraints(b=B, length=length)
 
     def test_design_selection(self):
         # Single U-tube

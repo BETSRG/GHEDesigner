@@ -49,7 +49,7 @@ def main():
     grout = plat.media.Grout(k_g, rhoCp_g)
 
     # Eskilson's original ln(t/ts) values
-    log_time = dt.utilities.Eskilson_log_times()
+    log_time = dt.utilities.eskilson_log_times()
 
     # Inputs related to fluid
     # -----------------------
@@ -125,7 +125,7 @@ def main():
         pipe,
         grout,
         soil,
-        nSegments=nSegments,
+        n_segments=nSegments,
         segments=segments,
         solver=solver,
         boundary=boundary,

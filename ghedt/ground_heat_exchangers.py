@@ -3,8 +3,7 @@ import warnings
 
 import numpy as np
 import pygfunction as gt
-import scipy.interpolate
-import scipy.optimize
+from scipy.interpolate import interp1d
 
 from ghedt import gfunction
 from ghedt.peak_load_analysis_tool.equivalance import (compute_equivalent,
@@ -19,26 +18,26 @@ from ghedt.peak_load_analysis_tool.radial_numerical_borehole import \
 class BaseGHE:
     def __init__(
         self,
-        V_flow_system: float,
-        B_spacing: float,
+        v_flow_system: float,
+        b_spacing: float,
         bhe_function,
         fluid: gt.media.Fluid,
         borehole: gt.boreholes.Borehole,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
-        GFunction: gfunction.GFunction,
+        g_function: gfunction.GFunction,
         sim_params: SimulationParameters,
         hourly_extraction_ground_loads: list,
-        fieldType="N/A",
-        fieldSpecifier="N/A",
+        field_type="N/A",
+        field_specifier="N/A",
     ):
 
-        self.fieldType = fieldType
-        self.fieldSpecifier = fieldSpecifier
-        self.V_flow_system = V_flow_system
-        self.B_spacing = B_spacing
-        self.nbh = float(len(GFunction.bore_locations))
+        self.fieldType = field_type
+        self.fieldSpecifier = field_specifier
+        self.V_flow_system = v_flow_system
+        self.B_spacing = b_spacing
+        self.nbh = float(len(g_function.bore_locations))
         self.V_flow_borehole = self.V_flow_system / self.nbh
         m_flow_borehole = self.V_flow_borehole / 1000.0 * fluid.rho
         self.m_flow_borehole = m_flow_borehole
@@ -54,7 +53,7 @@ class BaseGHE:
         self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
 
         # GFunction object
-        self.GFunction = GFunction
+        self.GFunction = g_function
         # Additional simulation parameters
         self.sim_params = sim_params
         # Hourly ground extraction loads
@@ -83,7 +82,7 @@ class BaseGHE:
 
         # Detailed information
         output += justify(
-            "Number of borheoles", str(len(self.GFunction.bore_locations))
+            "Number of boreholes", str(len(self.GFunction.bore_locations))
         )
         output += justify("Depth of the borehole", str(round(self.bhe.b.H, 4)) + " (m)")
         output += justify("Bore hole spacing", str(round(self.B_spacing, 4)) + " (m)")
@@ -99,7 +98,7 @@ class BaseGHE:
     @staticmethod
     def combine_sts_lts(
         log_time_lts: list, g_lts: list, log_time_sts: list, g_sts: list
-    ) -> scipy.interpolate.interp1d:
+    ) -> interp1d:
         # make sure the short time step doesn't overlap with the long time step
         max_log_time_sts = max(log_time_sts)
         min_log_time_lts = min(log_time_lts)
@@ -116,21 +115,21 @@ class BaseGHE:
                 value = log_time_sts[i]
             log_time = log_time_sts[0:i] + log_time_lts
             g = g_sts[0:i] + g_lts
-        g = scipy.interpolate.interp1d(log_time, g)
+        g = interp1d(log_time, g)
 
         return g
 
-    def grab_g_function(self, B_over_H):
+    def grab_g_function(self, b_over_h):
         # interpolate for the Long time step g-function
-        g_function, rb_value, D_value, H_eq = self.GFunction.g_function_interpolation(
-            B_over_H
+        g_function, rb_value, d_value, h_eq = self.GFunction.g_function_interpolation(
+            b_over_h
         )
         # correct the long time step for borehole radius
         g_function_corrected = self.GFunction.borehole_radius_correction(
             g_function, rb_value, self.bhe.b.r_b
         )
         # Don't Update the HybridLoad (its dependent on the STS) because
-        # it doesn't change the results much and it slows things down a lot
+        # it doesn't change the results much, and it slows things down a lot
         # combine the short and long time step g-function
         g = self.combine_sts_lts(
             self.GFunction.log_time,
@@ -141,61 +140,61 @@ class BaseGHE:
 
         return g
 
-    def averageHeight(self):
+    def average_height(self):
         return self.bhe.b.H
 
-    def cost(self, max_EFT, min_EFT):
-        delta_T_max = max_EFT - self.sim_params.max_EFT_allowable
-        delta_T_min = self.sim_params.min_EFT_allowable - min_EFT
+    def cost(self, max_eft, min_eft):
+        delta_t_max = max_eft - self.sim_params.max_EFT_allowable
+        delta_t_min = self.sim_params.min_EFT_allowable - min_eft
 
-        T_excess = max([delta_T_max, delta_T_min])
-        return T_excess
+        t_excess = max([delta_t_max, delta_t_min])
+        return t_excess
 
     def _simulate_detailed(
-        self, Q_dot: np.ndarray, time_values: np.ndarray, g: scipy.interpolate.interp1d
+        self, q_dot: np.ndarray, time_values: np.ndarray, g: interp1d
     ):
         # Perform a detailed simulation based on a numpy array of heat rejection
         # rates, Q_dot (Watts) where each load is applied at the time_value
-        # (seconds). The g-function can interpolated.
+        # (seconds). The g-function can interpolate.
         # Source: Chapter 2 of Advances in Ground Source Heat Pumps
 
-        n = Q_dot.size
+        n = q_dot.size
 
         # Convert the total load applied to the field to the average over
         # borehole wall rejection rate
         # At time t=0, make the heat rejection rate 0.
-        Q_dot_b = np.hstack((0.0, Q_dot / float(self.nbh)))
+        q_dot_b = np.hstack((0.0, q_dot / float(self.nbh)))
         time_values = np.hstack((0.0, time_values))
 
-        Q_dot_b_dt = np.hstack((Q_dot_b[1:] - Q_dot_b[:-1]))
+        q_dot_b_dt = np.hstack((q_dot_b[1:] - q_dot_b[:-1]))
 
         ts = self.radial_numerical.t_s  # (-)
         two_pi_k = 2.0 * np.pi * self.bhe.soil.k  # (W/m.K)
-        H = self.bhe.b.H  # (meters)
-        Tg = self.bhe.soil.ugt  # (Celsius)
-        Rb = self.bhe.compute_effective_borehole_resistance()  # (m.K/W)
+        h = self.bhe.b.H  # (meters)
+        tg = self.bhe.soil.ugt  # (Celsius)
+        rb = self.bhe.compute_effective_borehole_resistance()  # (m.K/W)
         m_dot = self.bhe.m_flow_borehole  # (kg/s)
         cp = self.bhe.fluid.cp  # (J/kg.s)
 
-        HPEFT = []
-        delta_Tb = []
+        hp_eft = []
+        delta_tb = []
         for i in range(1, n + 1):
             # Take the last i elements of the reversed time array
             _time = time_values[i] - time_values[0:i]
             # _time = time_values_reversed[n - i:n]
             g_values = g(np.log((_time * 3600.0) / ts))
             # Tb = Tg + (q_dt * g)  (Equation 2.12)
-            delta_Tb_i = (Q_dot_b_dt[0:i] / H / two_pi_k).dot(g_values)
+            delta_tb_i = (q_dot_b_dt[0:i] / h / two_pi_k).dot(g_values)
             # Tf = Tb + q_i * R_b^* (Equation 2.13)
-            Tb = Tg + delta_Tb_i
+            tb = tg + delta_tb_i
             # Bulk fluid temperature
-            Tf_bulk = Tb + Q_dot_b[i] / H * Rb
-            # T_out = T_f - Q / (2 * mdot cp)  (Equation 2.14)
-            Tf_out = Tf_bulk - Q_dot_b[i] / (2 * m_dot * cp)
-            HPEFT.append(Tf_out)
-            delta_Tb.append(delta_Tb_i)
+            tf_bulk = tb + q_dot_b[i] / h * rb
+            # T_out = T_f - Q / (2 * m_dot cp)  (Equation 2.14)
+            tf_out = tf_bulk - q_dot_b[i] / (2 * m_dot * cp)
+            hp_eft.append(tf_out)
+            delta_tb.append(delta_tb_i)
 
-        return HPEFT, delta_Tb
+        return hp_eft, delta_tb
 
     def compute_g_functions(self):
         # Compute g-functions for a bracketed solution, based on min and max
@@ -203,18 +202,18 @@ class BaseGHE:
         min_height = self.sim_params.min_Height
         max_height = self.sim_params.max_Height
         avg_height = (min_height + max_height) / 2.0
-        H_values = [min_height, avg_height, max_height]
-        r_b_values = [self.bhe.b.r_b] * len(H_values)
-        D_values = [self.bhe.b.D] * len(H_values)
+        h_values = [min_height, avg_height, max_height]
+        r_b_values = [self.bhe.b.r_b] * len(h_values)
+        d_values = [self.bhe.b.D] * len(h_values)
 
         coordinates = self.GFunction.bore_locations
         log_time = self.GFunction.log_time
 
         g_function = gfunction.compute_live_g_function(
             self.B_spacing,
-            H_values,
+            h_values,
             r_b_values,
-            D_values,
+            d_values,
             self.bhe.m_flow_borehole,
             self.bhe_object,
             log_time,
@@ -233,40 +232,42 @@ class BaseGHE:
 class GHE(BaseGHE):
     def __init__(
         self,
-        V_flow_system: float,
-        B_spacing: float,
+        v_flow_system: float,
+        b_spacing: float,
         bhe_object,
         fluid: gt.media.Fluid,
         borehole: gt.boreholes.Borehole,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
-        GFunction: gfunction.GFunction,
+        g_function: gfunction.GFunction,
         sim_params: SimulationParameters,
         hourly_extraction_ground_loads: list,
-        fieldType="N/A",
-        fieldSpecifier="N/A",
-        load_years=[2019],
+        field_type="N/A",
+        field_specifier="N/A",
+            load_years=None,
     ):
         BaseGHE.__init__(
             self,
-            V_flow_system,
-            B_spacing,
+            v_flow_system,
+            b_spacing,
             bhe_object,
             fluid,
             borehole,
             pipe,
             grout,
             soil,
-            GFunction,
+            g_function,
             sim_params,
             hourly_extraction_ground_loads,
-            fieldType=fieldType,
-            fieldSpecifier=fieldSpecifier,
+            field_type=field_type,
+            field_specifier=field_specifier,
         )
 
         # Split the extraction loads into heating and cooling for input to
         # the HybridLoad object
+        if load_years is None:
+            load_years = [2019]
         (
             hourly_rejection_loads,
             hourly_extraction_loads,
@@ -294,18 +295,18 @@ class GHE(BaseGHE):
 
         self.header("Simulation Results")
         if len(self.HPEFT) > 0:
-            max_HP_EFT = max(self.HPEFT)
-            min_HP_EFT = min(self.HPEFT)
+            max_hp_eft = max(self.HPEFT)
+            min_hp_eft = min(self.HPEFT)
             output += self.justify(
-                "Max HP entering temp", str(round(max_HP_EFT, 4)) + " (degrees Celsius)"
+                "Max HP entering temp", str(round(max_hp_eft, 4)) + " (degrees Celsius)"
             )
             output += self.justify(
-                "Min HP entering temp", str(round(min_HP_EFT, 4)) + " (degrees Celsius)"
+                "Min HP entering temp", str(round(min_hp_eft, 4)) + " (degrees Celsius)"
             )
-            T_excess = self.cost(max_HP_EFT, min_HP_EFT)
+            t_excess = self.cost(max_hp_eft, min_hp_eft)
             output += self.justify(
                 "Excess fluid temperature",
-                str(round(T_excess, 4)) + " (degrees Celsius)",
+                str(round(t_excess, 4)) + " (degrees Celsius)",
             )
         output += self.header("Peak Load Analysis")
         output += self.hybrid_load.__repr__() + "\n"
@@ -315,8 +316,8 @@ class GHE(BaseGHE):
             x, y = self.GFunction.bore_locations[i]
             output += str(x) + "\t" + str(y) + "\n"
         output += "G-Function\nln(t/ts)\tg\n"
-        B_over_H = self.B_spacing / self.bhe.b.H
-        g = self.grab_g_function(B_over_H)
+        b_over_h = self.B_spacing / self.bhe.b.H
+        g = self.grab_g_function(b_over_h)
         total_g_values = g.x.size
         number_lts_g_values = 27
         number_sts_g_values = 50
@@ -330,15 +331,15 @@ class GHE(BaseGHE):
         for i in range(0, (total_g_values - number_lts_g_values), sts_step_size):
             lntts.append(g.x[i].tolist())
             g_values.append(g.y[i].tolist())
-        lntts += g.x[total_g_values - number_lts_g_values : total_g_values].tolist()
-        g_values += g.y[total_g_values - number_lts_g_values : total_g_values].tolist()
+        lntts += g.x[total_g_values - number_lts_g_values: total_g_values].tolist()
+        g_values += g.y[total_g_values - number_lts_g_values: total_g_values].tolist()
         for i in range(len(lntts)):
             output += str(round(lntts[i], 4)) + "\t" + str(round(g_values[i], 4)) + "\n"
         return output
 
     def simulate(self, method="hybrid"):
-        B = self.B_spacing
-        B_over_H = B / self.bhe.b.H
+        b = self.B_spacing
+        b_over_h = b / self.bhe.b.H
 
         self.bhe.update_thermal_resistance()
 
@@ -348,55 +349,55 @@ class GHE(BaseGHE):
         self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
         # Combine the short and long-term g-functions. The long term g-function
         # is interpolated for specific B/H and rb/H values.
-        g = self.grab_g_function(B_over_H)
+        g = self.grab_g_function(b_over_h)
 
         if method == "hybrid":
-            Q_dot = self.hybrid_load.load[2:] * 1000.0  # convert to Watts
+            q_dot = self.hybrid_load.load[2:] * 1000.0  # convert to Watts
             time_values = self.hybrid_load.hour[2:]  # convert to seconds
             self.times = time_values
-            self.loading = Q_dot
+            self.loading = q_dot
 
-            HPEFT, dTb = self._simulate_detailed(Q_dot, time_values, g)
+            hp_eft, d_tb = self._simulate_detailed(q_dot, time_values, g)
         elif method == "hourly":
             n_months = self.sim_params.end_month - self.sim_params.start_month + 1
             n_hours = int(n_months / 12.0 * 8760.0)
-            Q_dot = copy.deepcopy(self.hourly_extraction_ground_loads)
+            q_dot = copy.deepcopy(self.hourly_extraction_ground_loads)
             # How many times does q need to be repeated?
             n_years = int(np.ceil(n_hours / 8760))
-            if len(Q_dot) // 8760 < n_years:
-                Q_dot = Q_dot * n_years
+            if len(q_dot) // 8760 < n_years:
+                q_dot = q_dot * n_years
             else:
-                n_hours = len(Q_dot)
-            Q_dot = -1.0 * np.array(Q_dot)  # Convert loads to rejection
+                n_hours = len(q_dot)
+            q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
             # print("Times:",self.times)
             if len(self.times) == 0:
                 self.times = np.arange(1, n_hours + 1, 1)
             t = self.times
-            self.loading = Q_dot
+            self.loading = q_dot
 
-            HPEFT, dTb = self._simulate_detailed(Q_dot, t, g)
+            hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
         else:
             raise ValueError("Only hybrid or hourly methods available.")
 
-        self.HPEFT = HPEFT
-        self.dTb = dTb
+        self.HPEFT = hp_eft
+        self.dTb = d_tb
 
-        max_HP_EFT = float(max(HPEFT))
-        min_HP_EFT = float(min(HPEFT))
-        return max_HP_EFT, min_HP_EFT
+        max_hp_eft = float(max(hp_eft))
+        min_hp_eft = float(min(hp_eft))
+        return max_hp_eft, min_hp_eft
 
     def size(self, method="hybrid") -> None:
         # Size the ground heat exchanger
-        def local_objective(H):
-            self.bhe.b.H = H
-            max_HP_EFT, min_HP_EFT = self.simulate(method=method)
-            T_excess = self.cost(max_HP_EFT, min_HP_EFT)
-            return T_excess
+        def local_objective(h):
+            self.bhe.b.H = h
+            max_hp_eft, min_hp_eft = self.simulate(method=method)
+            t_excess = self.cost(max_hp_eft, min_hp_eft)
+            return t_excess
 
         # Make the initial guess variable the average of the heights given
         self.bhe.b.H = (self.sim_params.max_Height + self.sim_params.min_Height) / 2.0
         # bhe.b.H is updated during sizing
-        returnedHeight = solve_root(
+        returned_height = solve_root(
             self.bhe.b.H,
             local_objective,
             lower=self.sim_params.min_Height,
@@ -405,14 +406,14 @@ class GHE(BaseGHE):
             rtol=1.0e-6,
             maxiter=50,
         )
-        if returnedHeight == self.sim_params.min_Height:
+        if returned_height == self.sim_params.min_Height:
             warnings.warn(
                 "The minimum height provided to size this ground heat"
                 " exchanger is not shallow enough. Provide a "
                 "shallower allowable depth or decrease the size of "
                 "the heat exchanger."
             )
-        if returnedHeight == self.sim_params.max_Height:
+        if returned_height == self.sim_params.max_Height:
             warnings.warn(
                 "The maximum height provided to size this ground "
                 "heat exchanger is not deep enough. Provide a deeper "

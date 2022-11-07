@@ -16,7 +16,7 @@ def calculate_g_function(
     pipe,
     grout,
     soil,
-    nSegments=8,
+    n_segments=8,
     end_length_ratio=0.02,
     segments="unequal",
     solver="equivalent",
@@ -24,39 +24,39 @@ def calculate_g_function(
     segment_ratios=None,
     disp=False,
 ):
-    boreField = []
-    BHEs = []
+    bore_field = []
+    bhe_objects = []
 
-    H = copy.deepcopy(borehole.H)
+    h = copy.deepcopy(borehole.H)
     r_b = copy.deepcopy(borehole.r_b)
-    D = copy.deepcopy(borehole.D)
+    d = copy.deepcopy(borehole.D)
     tilt = copy.deepcopy(borehole.tilt)
     orientation = copy.deepcopy(borehole.orientation)
 
     for i in range(len(coordinates)):
         x, y = coordinates[i]
-        _borehole = gt.boreholes.Borehole(H, D, r_b, x, y, tilt, orientation)
-        boreField.append(_borehole)
+        _borehole = gt.boreholes.Borehole(h, d, r_b, x, y, tilt, orientation)
+        bore_field.append(_borehole)
         # Initialize pipe model
         if boundary == "MIFT":
             bhe = bhe_object(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
-            BHEs.append(bhe)
+            bhe_objects.append(bhe)
 
     alpha = soil.k / soil.rhoCp
 
     # setup options
     segments = segments.lower()
     if segments == "equal":
-        options = {"nSegments": nSegments, "disp": disp}
+        options = {"nSegments": n_segments, "disp": disp}
     elif segments == "unequal":
         if segment_ratios is None:
             segment_ratios = gt.utilities.segment_ratios(
-                nSegments, end_length_ratio=end_length_ratio
+                n_segments, end_length_ratio=end_length_ratio
             )
         else:
             segment_ratios = segment_ratios
         options = {
-            "nSegments": nSegments,
+            "nSegments": n_segments,
             "segment_ratios": segment_ratios,
             "disp": disp,
         }
@@ -65,7 +65,7 @@ def calculate_g_function(
 
     if boundary == "UHTR" or boundary == "UBWT":
         gfunc = gt.gfunction.gFunction(
-            boreField,
+            bore_field,
             alpha,
             time=time_values,
             boundary_condition=boundary,
@@ -73,9 +73,9 @@ def calculate_g_function(
             method=solver,
         )
     elif boundary == "MIFT":
-        m_flow_network = len(boreField) * m_flow_borehole
+        m_flow_network = len(bore_field) * m_flow_borehole
         network = gt.networks.Network(
-            boreField, BHEs, m_flow_network=m_flow_network, cp_f=fluid.cp
+            bore_field, bhe_objects, m_flow_network=m_flow_network, cp_f=fluid.cp
         )
         gfunc = gt.gfunction.gFunction(
             network,
@@ -92,10 +92,10 @@ def calculate_g_function(
 
 
 def compute_live_g_function(
-    B: float,
-    H_values: list,
+    b: float,
+    h_values: list,
     r_b_values: list,
-    D_values: list,
+    d_values: list,
     m_flow_borehole,
     bhe_object,
     log_time,
@@ -104,7 +104,7 @@ def compute_live_g_function(
     pipe,
     grout,
     soil,
-    nSegments=8,
+    n_segments=8,
     segments="unequal",
     solver="equivalent",
     boundary="MIFT",
@@ -113,15 +113,15 @@ def compute_live_g_function(
 ):
     d = {"g": {}, "bore_locations": coordinates, "logtime": log_time}
 
-    for i in range(len(H_values)):
-        H = H_values[i]
+    for i in range(len(h_values)):
+        h = h_values[i]
         r_b = r_b_values[i]
-        D = D_values[i]
-        _borehole = gt.boreholes.Borehole(H, D, r_b, 0.0, 0.0)
+        depth = d_values[i]
+        _borehole = gt.boreholes.Borehole(h, depth, r_b, 0.0, 0.0)
 
         alpha = soil.k / soil.rhoCp
 
-        ts = H**2 / (9.0 * alpha)  # Bore field characteristic time
+        ts = h**2 / (9.0 * alpha)  # Bore field characteristic time
         time_values = np.exp(log_time) * ts
 
         gfunc = calculate_g_function(
@@ -134,7 +134,7 @@ def compute_live_g_function(
             pipe,
             grout,
             soil,
-            nSegments=nSegments,
+            n_segments=n_segments,
             segments=segments,
             solver=solver,
             boundary=boundary,
@@ -142,7 +142,7 @@ def compute_live_g_function(
             disp=disp,
         )
 
-        key = "{}_{}_{}_{}".format(B, H, r_b, D)
+        key = "{}_{}_{}_{}".format(b, h, r_b, d)
 
         d["g"][key] = gfunc.gFunc.tolist()
 
@@ -156,17 +156,17 @@ def compute_live_g_function(
 class GFunction:
     def __init__(
         self,
-        B: float,
+        b: float,
         r_b_values: dict,
-        D_values: dict,
+        d_values: dict,
         g_lts: dict,
         log_time: list,
         bore_locations: list,
     ):
-        self.B: float = B  # a B spacing in the borefield
+        self.B: float = b  # a B spacing in the borefield
         # r_b (borehole radius) value keyed by height
         self.r_b_values: dict = r_b_values
-        self.D_values: dict = D_values  # D (burial depth) value keyed by height
+        self.D_values: dict = d_values  # D (burial depth) value keyed by height
         self.g_lts: dict = g_lts  # g-functions (LTS) keyed by height
         # ln(t/ts) values that apply to all the heights
         self.log_time: list = log_time
@@ -178,12 +178,12 @@ class GFunction:
         # g_function_interpolation)
         self.interpolation_table: dict = {}
 
-    def g_function_interpolation(self, B_over_H: float, kind="default"):
+    def g_function_interpolation(self, b_over_h: float, kind="default"):
         r"""
         Interpolate a range of g-functions for a specific B/H ratio
         Parameters
         ----------
-        B_over_H: float
+        b_over_h: float
             A B/H ratio
         kind: str
             Could be 'linear', 'quadratic', 'cubic', etc.
@@ -203,19 +203,19 @@ class GFunction:
         """
         # the g-functions are stored in a dictionary based on heights, so an
         # equivalent height can be found
-        H_eq = 1 / B_over_H * self.B
+        h_eq = 1 / b_over_h * self.B
 
         # Determine if we are out of range and need to extrapolate
         height_values = list(self.g_lts.keys())
         # If we are close to the outer bounds, then set H_eq as outer bounds
-        if abs(H_eq - max(height_values)) < 1.0e-6:
-            H_eq = max(height_values)
-        if abs(H_eq - min(height_values)) < 1.0e-6:
-            H_eq = min(height_values)
+        if abs(h_eq - max(height_values)) < 1.0e-6:
+            h_eq = max(height_values)
+        if abs(h_eq - min(height_values)) < 1.0e-6:
+            h_eq = min(height_values)
 
-        if min(height_values) <= H_eq <= max(height_values):
+        if min(height_values) <= h_eq <= max(height_values):
             fill_value = ""
-        elif abs(min(height_values) - H_eq) < 0.001:
+        elif abs(min(height_values) - h_eq) < 0.001:
             fill_value = ""
         else:
             fill_value = "extrapolate"
@@ -232,16 +232,16 @@ class GFunction:
             elif num_curves == 2:
                 kind = "linear"
             else:
-                if (H_eq - height_values[0]) / height_values[0] < 0.001:
+                if (h_eq - height_values[0]) / height_values[0] < 0.001:
                     g_function = self.g_lts[height_values[0]]
                     rb = self.r_b_values[height_values[0]]
-                    D = self.D_values[height_values[0]]
-                    return g_function, rb, D, H_eq
-                elif min(height_values) - H_eq < 0.001:
+                    d = self.D_values[height_values[0]]
+                    return g_function, rb, d, h_eq
+                elif min(height_values) - h_eq < 0.001:
                     g_function = self.g_lts[height_values[0]]
                     rb = self.r_b_values[height_values[0]]
-                    D = self.D_values[height_values[0]]
-                    return g_function, rb, D, H_eq
+                    d = self.D_values[height_values[0]]
+                    return g_function, rb, d, h_eq
                 else:
                     raise ValueError(
                         "The interpolation requires two g-function curves if "
@@ -284,12 +284,12 @@ class GFunction:
             keys = list(self.r_b_values.keys())
             height_values: list = []
             rb_values: list = []
-            D_values: list = []
+            d_values: list = []
             for h in keys:
                 height_values.append(float(h))
                 rb_values.append(self.r_b_values[h])
                 try:
-                    D_values.append(self.D_values[h])
+                    d_values.append(self.D_values[h])
                 except:
                     pass
             if kind == "lagrange":
@@ -302,27 +302,27 @@ class GFunction:
             self.interpolation_table["rb"] = rb_f
             try:
                 if kind == "lagrange":
-                    D_f = lagrange(height_values, D_values)
+                    d_f = lagrange(height_values, d_values)
                 else:
-                    D_f = interp1d(
-                        height_values, D_values, kind=kind, fill_value=fill_value
+                    d_f = interp1d(
+                        height_values, d_values, kind=kind, fill_value=fill_value
                     )
-                self.interpolation_table["D"] = D_f
+                self.interpolation_table["D"] = d_f
             except:
                 pass
 
         # create the g-function by interpolating at each ln(t/ts) value
-        rb_value = self.interpolation_table["rb"](H_eq)
+        rb_value = self.interpolation_table["rb"](h_eq)
         try:
-            D_value = self.interpolation_table["D"](H_eq)
+            d_value = self.interpolation_table["D"](h_eq)
         except:
-            D_value = None
+            d_value = None
         g_function: list = []
         for i in range(len(self.log_time)):
             f = self.interpolation_table["g"][i]
-            g = f(H_eq).tolist()
+            g = f(h_eq).tolist()
             g_function.append(g)
-        return g_function, rb_value, D_value, H_eq
+        return g_function, rb_value, d_value, h_eq
 
     @staticmethod
     def borehole_radius_correction(g_function: list, rb: float, rb_star: float):
@@ -372,7 +372,7 @@ class GFunction:
         # a temporary g-function dictionary that might be out of order
         g_tmp: dict = {}
         # a temporary burial depth dictionary that may be out of order
-        Ds_tmp: dict = {}
+        ds_tmp: dict = {}
         # the borehole radius dictionary that may be out of order
         r_bs_tmp: dict = {}
         t_tmp: dict = {}
@@ -389,8 +389,8 @@ class GFunction:
             # the D value is recently added to the key value for the saved
             # g-functions computed
             try:
-                D = float(key_split[3])
-                Ds_tmp[height] = D
+                d = float(key_split[3])
+                ds_tmp[height] = d
             except:
                 pass
 
@@ -403,28 +403,29 @@ class GFunction:
                 time_arr.append(t_year)
             t_tmp[height] = time_arr
         # every B-spacing should be the same for each file
-        B = float(list(g_values.keys())[0].split("_")[0])
+        b = float(list(g_values.keys())[0].split("_")[0])
 
         keys = sorted(list(g_tmp.keys()), key=int)  # sort the heights in order
         # fill the g-function dictionary with sorted heights
         g = {key: g_tmp[key] for key in keys}
         # fill the burial depth dictionary with sorted heights
         try:
-            Ds = {key: Ds_tmp[key] for key in keys}
+            ds = {key: ds_tmp[key] for key in keys}
         except:
             # if there's no D provided, make it 2
-            Ds = {key: 2.0 for key in keys}
+            ds = {key: 2.0 for key in keys}
         r_bs = {key: r_bs_tmp[key] for key in keys}
         # time = {
         #     key: t_tmp[key] for key in keys
         # }  # fill the time array for yearly points
 
-        geothermal_g_input = {}
-        geothermal_g_input["B"] = B
-        geothermal_g_input["r_b_values"] = r_bs
-        geothermal_g_input["D_values"] = Ds
-        geothermal_g_input["g_lts"] = g
-        geothermal_g_input["log_time"] = log_time
-        geothermal_g_input["bore_locations"] = bore_locations
+        geothermal_g_input = {
+            "b": b,
+            "r_b_values": r_bs,
+            "d_values": ds,
+            "g_lts": g,
+            "log_time": log_time,
+            "bore_locations": bore_locations
+        }
 
         return geothermal_g_input

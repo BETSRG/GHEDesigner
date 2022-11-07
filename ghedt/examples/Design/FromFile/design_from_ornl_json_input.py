@@ -108,7 +108,7 @@ def main():
     ]
 
     # Geometric constraints for the `near-square` routine
-    geometric_constraints = dt.media.GeometricConstraints(B=B)
+    geometric_constraints = dt.media.GeometricConstraints(b=B)
 
     # Single U-tube
     # -------------

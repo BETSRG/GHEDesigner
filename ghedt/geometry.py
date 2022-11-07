@@ -3,29 +3,29 @@ class GeometricConstraints:
             self,
             length: float = None,
             width: float = None,
-            B: float = None,
-            B_min: float = None,
-            B_max_x: float = None,
-            B_max_y: float = None,
+            b: float = None,
+            b_min: float = None,
+            b_max_x: float = None,
+            b_max_y: float = None,
             outer_constraints: list = None,
             no_go: list = None,
-            pSpac: float = None,
-            spacStart: float = None,
-            spacStop: float = None,
-            spacStep: float = None,
-            rotateStep: float = None,
-            propBound: list = None,
-            ngZones: list = None,
-            rotateStart: float = None,
-            rotateStop: float = None,
-            Directory="",
-            pdfOutputName="Graphs.pdf",
+            p_spacing: float = None,
+            spacing_start: float = None,
+            spacing_stop: float = None,
+            spacing_step: float = None,
+            rotate_step: float = None,
+            prop_bound: list = None,
+            ng_zones: list = None,
+            rotate_start: float = None,
+            rotate_stop: float = None,
+            directory="",
+            pdf_output_name="Graphs.pdf",
     ):
         # Spacing parameters in meters
-        self.B = B
-        self.B_max_x = B_max_x
-        self.B_max_y = B_max_y
-        self.B_min = B_min
+        self.B = b
+        self.B_max_x = b_max_x
+        self.B_max_y = b_max_y
+        self.B_min = b_min
         # Length and width constraints
         self.length = length
         self.width = width
@@ -35,17 +35,17 @@ class GeometricConstraints:
         # Note: the entirety of the no-go zone should fall inside the
         # outer_constraints
         self.no_go = no_go
-        self.pSpac = pSpac
-        self.spacStart = spacStart
-        self.spacStop = spacStop
-        self.spacStep = spacStep
-        self.rotateStep = rotateStep
-        self.propBound = propBound
-        self.ngZones = ngZones
-        self.rotateStart = rotateStart
-        self.rotateStop = rotateStop
-        self.Directory = Directory
-        self.pdfOutputName = pdfOutputName
+        self.pSpac = p_spacing
+        self.spacStart = spacing_start
+        self.spacStop = spacing_stop
+        self.spacStep = spacing_step
+        self.rotateStep = rotate_step
+        self.propBound = prop_bound
+        self.ngZones = ng_zones
+        self.rotateStart = rotate_start
+        self.rotateStop = rotate_stop
+        self.Directory = directory
+        self.pdfOutputName = pdf_output_name
 
     def check_inputs(self, method):
         # The required instances for the near-square design is self.B

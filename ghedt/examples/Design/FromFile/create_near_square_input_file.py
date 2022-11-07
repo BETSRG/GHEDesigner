@@ -113,7 +113,7 @@ def main():
     ]
 
     # Geometric constraints for the `near-square` routine
-    geometric_constraints = dt.media.GeometricConstraints(B_max_x=B, unconstrained=True)
+    geometric_constraints = dt.media.GeometricConstraints(b_max_x=B, unconstrained=True)
 
     # Note: Flow functionality is currently only on a borehole basis. Future
     # development will include the ability to change the flow rate to be on a

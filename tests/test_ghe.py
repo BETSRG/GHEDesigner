@@ -91,7 +91,7 @@ class TestGHE(unittest.TestCase):
         self.coordinates = coordinates.rectangle(Nx, Ny, self.B, self.B)
 
         # Compute a range of g-functions for interpolation
-        self.log_time = utilities.Eskilson_log_times()
+        self.log_time = utilities.eskilson_log_times()
         self.H_values = [24.0, 48.0, 96.0, 192.0, 384.0]
         self.r_b_values = [self.r_b] * len(self.H_values)
         self.D_values = [2.0] * len(self.H_values)

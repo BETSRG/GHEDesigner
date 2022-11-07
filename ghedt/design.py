@@ -3,7 +3,7 @@ import textwrap
 import numpy as np
 import pygfunction as gt
 
-from ghedt import domains, geometry, search_routines, utilities
+from ghedt import domains, geometry, search_routines
 from ghedt.peak_load_analysis_tool.media import Grout, Pipe, SimulationParameters, Soil
 
 
@@ -11,7 +11,7 @@ from ghedt.peak_load_analysis_tool.media import Grout, Pipe, SimulationParameter
 class Design:
     def __init__(
         self,
-        V_flow: float,
+        v_flow: float,
         borehole: gt.boreholes.Borehole,
         bhe_object,
         fluid: gt.media.Fluid,
@@ -25,11 +25,13 @@ class Design:
         routine: str = "near-square",
         flow: str = "borehole",
         property_boundary=None,
-        buildingDescriptions=None,
-        load_years=[2019],
+        building_descriptions=None,
+        load_years=None,
     ):
+        if load_years is None:
+            load_years = [2019]
         self.load_years = load_years
-        self.V_flow = V_flow  # volumetric flow rate, m3/s
+        self.V_flow = v_flow  # volumetric flow rate, m3/s
         self.borehole = borehole
         self.bhe_object = bhe_object  # a borehole heat exchanger object
         self.fluid = fluid  # a fluid object
@@ -77,9 +79,8 @@ class Design:
             # different lower range. The upper number of boreholes range is
             # calculated based on the spacing and length provided.
             if routine == "near-square":
-                number_of_boreholes = utilities.number_of_boreholes(
-                    gc.length, gc.B, func=np.floor
-                )
+                n = np.floor(gc.length / gc.B) + 1
+                number_of_boreholes = int(n)
                 (
                     self.coordinates_domain,
                     self.fieldDescriptors,
@@ -106,7 +107,7 @@ class Design:
                     gc.B_min,
                     gc.B_max_x,
                     gc.B_max_y,
-                    building_descriptions=buildingDescriptions,
+                    building_descriptions=building_descriptions,
                 )
             elif routine == "bi-zoned":
                 (
@@ -128,11 +129,13 @@ class Design:
     def find_design(
         self,
         disp=False,
-        BRPoint=[0.0, 0.0],
-        BRRemovalMethod="CloseToCorner",
-        exhaustiveFieldsToCheck=10,
-        usePerimeter=True,
+        b_r_point=None,
+        b_r_removal_method="CloseToCorner",
+        exhaustive_fields_to_check=10,
+        use_perimeter=True,
     ):
+        if b_r_point is None:
+            b_r_point = [0.0, 0.0]
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
@@ -153,7 +156,7 @@ class Design:
                 method=self.method,
                 flow=self.flow,
                 disp=disp,
-                fieldType="near-square",
+                field_type="near-square",
                 load_years=self.load_years,
             )
         # Find a rectangle
@@ -173,7 +176,7 @@ class Design:
                 method=self.method,
                 flow=self.flow,
                 disp=disp,
-                fieldType="rectangle",
+                field_type="rectangle",
                 load_years=self.load_years,
             )
         # Find a bi-rectangle
@@ -193,7 +196,7 @@ class Design:
                 method=self.method,
                 flow=self.flow,
                 disp=disp,
-                fieldType="bi-rectangle",
+                field_type="bi-rectangle",
                 load_years=self.load_years,
             )
         elif self.routine == "bi-rectangle_constrained":
@@ -212,7 +215,7 @@ class Design:
                 method=self.method,
                 flow=self.flow,
                 disp=disp,
-                fieldType="bi-rectangle_constrained",
+                field_type="bi-rectangle_constrained",
                 load_years=self.load_years,
             )
         # Find bi-zoned rectangle
@@ -232,7 +235,7 @@ class Design:
                 method=self.method,
                 flow=self.flow,
                 disp=disp,
-                fieldType="bi-zoned",
+                field_type="bi-zoned",
             )
         elif self.routine == "row-wise":
             bisection_search = search_routines.RowWiseModifiedBisectionSearch(
@@ -249,12 +252,12 @@ class Design:
                 method=self.method,
                 flow=self.flow,
                 disp=disp,
-                fieldType="row-wise",
+                field_type="row-wise",
                 load_years=self.load_years,
-                BRPoint=BRPoint,
-                BRRemovalMethod=BRRemovalMethod,
-                exhaustiveFieldsToCheck=exhaustiveFieldsToCheck,
-                usePerimeter=usePerimeter,
+                b_r_point=b_r_point,
+                b_r_removal_method=b_r_removal_method,
+                exhaustive_fields_to_check=exhaustive_fields_to_check,
+                use_perimeter=use_perimeter,
             )
         else:
             raise ValueError(

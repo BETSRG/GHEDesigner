@@ -86,68 +86,68 @@ def open_rectangle(
     return open_r
 
 
-def c_shape(Nx_1, Ny, Bx, By, Nx_2):
-    nbh = Nx_1 + (Ny * 2) - 1 + Nx_2 - 1
+def c_shape(n_x_1, n_y, b_x, b_y, n_x_2):
+    nbh = n_x_1 + (n_y * 2) - 1 + n_x_2 - 1
     c = []
-    for i in range(Nx_1):
-        c.append((i * Bx, 0.0))
-    x_loc = (Nx_1 - 1) * Bx
-    for j in range(1, Ny):
-        c.append((0.0, j * By))
-    for j in range(1, Ny):
-        c.append((x_loc, j * By))
-    y_loc = (Ny - 1) * By
-    for i in range(1, Nx_2 + 1):
-        c.append((i * Bx, y_loc))
+    for i in range(n_x_1):
+        c.append((i * b_x, 0.0))
+    x_loc = (n_x_1 - 1) * b_x
+    for j in range(1, n_y):
+        c.append((0.0, j * b_y))
+    for j in range(1, n_y):
+        c.append((x_loc, j * b_y))
+    y_loc = (n_y - 1) * b_y
+    for i in range(1, n_x_2 + 1):
+        c.append((i * b_x, y_loc))
     assert len(c) == nbh
     return c
 
 
-def lop_u(Nx, Ny_1, Bx, By, Ny_2):
-    nbh = Nx + Ny_1 - 1 + Ny_2 - 1
-    lop_u = []
-    for i in range(Nx):
-        lop_u.append((i * Bx, 0.0))
-    for j in range(1, Ny_1):
-        lop_u.append((0.0, j * By))
-    x_loc = (Nx - 1) * Bx
-    for j in range(1, Ny_2):
-        lop_u.append((x_loc, j * By))
-    assert len(lop_u) == nbh
-    return lop_u
+def lop_u(n_x, n_y_1, b_x, b_y, n_y_2):
+    nbh = n_x + n_y_1 - 1 + n_y_2 - 1
+    _lop_u = []
+    for i in range(n_x):
+        _lop_u.append((i * b_x, 0.0))
+    for j in range(1, n_y_1):
+        _lop_u.append((0.0, j * b_y))
+    x_loc = (n_x - 1) * b_x
+    for j in range(1, n_y_2):
+        _lop_u.append((x_loc, j * b_y))
+    assert len(_lop_u) == nbh
+    return _lop_u
 
 
-def l_shape(Nx, Ny, Bx, By):
-    nbh = Nx + Ny - 1
-    L = []
-    for i in range(Nx):
-        L.append((i * Bx, 0.0))
-    for j in range(1, Ny):
-        L.append((0.0, j * By))
-    assert len(L) == nbh
-    return L
+def l_shape(n_x, n_y, b_x, b_y):
+    nbh = n_x + n_y - 1
+    l_shape_object = []
+    for i in range(n_x):
+        l_shape_object.append((i * b_x, 0.0))
+    for j in range(1, n_y):
+        l_shape_object.append((0.0, j * b_y))
+    assert len(l_shape_object) == nbh
+    return l_shape_object
 
 
-def zoned_rectangle(Nx, Ny, Bx, By, Nix, Niy):
+def zoned_rectangle(n_x, n_y, b_x, b_y, n_ix, n_iy):
     # Create a zoned rectangle
     # The creator of the idea behind the "zoned rectangle" is
     # Dr. Jeffrey D. Spitler
 
-    if Nix > (Nx - 2):
+    if n_ix > (n_x - 2):
         raise ValueError("To many interior x boreholes.")
-    if Niy > (Ny - 2):
+    if n_iy > (n_y - 2):
         raise ValueError("Too many interior y boreholes.")
 
     # Create a list of (x, y) coordinates
     zoned = []
 
     # Boreholes on the perimeter
-    zoned.extend(open_rectangle(Nx, Ny, Bx, By))
+    zoned.extend(open_rectangle(n_x, n_y, b_x, b_y))
 
     # Create the interior coordinates
-    Bix = (Nx - 1) * Bx / (Nix + 1)
-    Biy = (Ny - 1) * By / (Niy + 1)
+    bix = (n_x - 1) * b_x / (n_ix + 1)
+    biy = (n_y - 1) * b_y / (n_iy + 1)
 
-    zoned.extend(rectangle(Nix, Niy, Bix, Biy, origin=(Bix, Biy)))
+    zoned.extend(rectangle(n_ix, n_iy, bix, biy, origin=(bix, biy)))
 
     return zoned

@@ -15,7 +15,7 @@ import numpy as np
 
 # Time functions
 # --------------
-def Eskilson_log_times():
+def eskilson_log_times():
     # Return a list of Eskilson's original 27 dimensionless points in time
     log_time = [
         -8.5,
@@ -56,29 +56,22 @@ def borehole_spacing(borehole, coordinates):
     x_0, y_0 = coordinates[0]
     if len(coordinates) == 1:
         # Set the spacing to be the borehole radius if there's just one borehole
-        B = copy.deepcopy(borehole.r_b)
+        return copy.deepcopy(borehole.r_b)
     elif len(coordinates) > 1:
         x_1, y_1 = coordinates[1]
-        B = max(borehole.r_b, np.sqrt((x_1 - x_0) ** 2 + (y_1 - y_0) ** 2))
+        return max(borehole.r_b, np.sqrt((x_1 - x_0) ** 2 + (y_1 - y_0) ** 2))
     else:
         raise ValueError(
             "The coordinates_domain needs to contain a positive"
             "number of (x, y) pairs."
         )
-    return B
 
 
 # TODO: Add `set_shank` functionality to utilities.py
 
 
-def number_of_boreholes(length, B, func=np.ceil):
-    N = func(length / B) + 1
-    return int(N)
-
-
-def length_of_side(N, B):
-    L = (N - 1) * B
-    return L
+def length_of_side(n, b):
+    return (n - 1) * b
 
 
 # Design oriented functions
@@ -93,16 +86,16 @@ def sign(x: float) -> int:
     return int(abs(x) / x)
 
 
-def check_bracket(sign_xL, sign_xR, disp=None) -> bool:
+def check_bracket(sign_x_l, sign_x_r, disp=None) -> bool:
     if disp is not None:
         warnings.warn(
             "The disp option in check_bracket will be removed in "
             "the ghedt 0.2 release."
         )
-    if sign_xL < 0 < sign_xR:
+    if sign_x_l < 0 < sign_x_r:
         # Bracketed the root
         return True
-    elif sign_xR < 0 < sign_xL:
+    elif sign_x_r < 0 < sign_x_l:
         # Bracketed the root
         return True
     else:
@@ -138,4 +131,3 @@ def read_input_file(path_to_file):
     file.close()
 
     return object_file
-
