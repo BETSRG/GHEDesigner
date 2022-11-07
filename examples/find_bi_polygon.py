@@ -4,16 +4,28 @@
 
 # This search is described in section 4.4.5 from pages 146-148 in Cook (2021).
 
-import ghedt.media as media
-import ghedt.design as design
-import ghedt.peak_load_analysis_tool as plat
-import pygfunction as gt
-import pandas as pd
-from time import time as clock
-from ghedt.output import OutputDesignDetails
 import csv
-import os
+from pathlib import Path
+from sys import path
+from time import time as clock
+
+import pandas as pd
+import pygfunction as gt
+
+# use the ghedt import as a flag for determining whether we need to add to path
+try:
+    import ghedt  # noqa: F401
+except ImportError:
+    # we are probably in VSCode or some other development setup
+    # just add the root of the repo to path just like it will be in deployment
+    root_dir = Path(__file__).parent.parent.resolve()
+    path.insert(0, str(root_dir))
+
 import ghedt as dt
+import ghedt.design as design
+import ghedt.media as media
+import ghedt.peak_load_analysis_tool as plat
+from ghedt.output import OutputDesignDetails
 
 
 def main():
@@ -96,9 +108,7 @@ def main():
 
     # Process loads from file
     # read in the csv file and convert the loads to a list of length 8760
-    hourly_extraction: dict = pd.read_csv(
-        "../Atlanta_Office_Building_Loads.csv"
-    ).to_dict("list")
+    hourly_extraction: dict = pd.read_csv(Path(__file__).parent / "data" / "Atlanta_Office_Building_Loads.csv").to_dict("list")
     # Take only the first column in the dictionary
     hourly_extraction_ground_loads: list = hourly_extraction[
         list(hourly_extraction.keys())[0]
@@ -110,8 +120,8 @@ def main():
     B_max_y = B_max_x  # in m
 
     # Building Description
-    propertyBoundaryFile = "PropertyDescriptions/PropBound.csv"
-    NogoZoneDirectory = "PropertyDescriptions/NogoZones"
+    propertyBoundaryFile = Path(__file__).parent / "data" / "PropBound.csv"
+    NogoZoneFile = Path(__file__).parent / "data" / "NogoZone1.csv"
 
     propA = []  # in meters
     ngA = []  # in meters
@@ -124,15 +134,14 @@ def main():
                 L.append(float(row))
             propA.append(L)
 
-    for file in os.listdir(NogoZoneDirectory):
-        with open(os.path.join(NogoZoneDirectory, file), "r", newline="") as ngF:
-            cR = csv.reader(ngF)
-            ngA.append([])
-            for line in cR:
-                L = []
-                for row in line:
-                    L.append(float(row))
-                ngA[-1].append(L)
+    with open(NogoZoneFile, "r", newline="") as ngF:
+        cR = csv.reader(ngF)
+        ngA.append([])
+        for line in cR:
+            L = []
+            for row in line:
+                L.append(float(row))
+            ngA[-1].append(L)
 
     """ Geometric constraints for the `bi-rectangle_constrained` routine:
       - B_min

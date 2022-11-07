@@ -509,7 +509,7 @@ def OutputDesignDetails(
     oS += createDRow(
         allocatedWidth,
         "Fluid Mix:",
-        bhe.fluid.fluid_mix.split("::")[-1],
+        bhe.fluid.fluid.fluid_name,
         stringFormat,
         stringFormat,
         bTabs=indentedAmount,
