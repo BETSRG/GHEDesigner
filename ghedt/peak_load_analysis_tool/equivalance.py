@@ -126,14 +126,14 @@ def u_tube_volumes(u_tube):
     # Effective parameters
     n = int(u_tube.nPipes * 2)  # Total number of tubes
     # Total inside surface area (m^2)
-    A_s = n * pi * (u_tube.r_in * 2.0) ** 2
-    R_conv = 1 / (u_tube.h_f * A_s)  # Convection resistance (m.K/W)
+    area_surf_inner = n * pi * (u_tube.r_in * 2.0) ** 2
+    resist_conv = 1 / (u_tube.h_f * area_surf_inner)  # Convection resistance (m.K/W)
     # Volumes
     V_fluid = n * pi * (u_tube.r_in**2)
     V_pipe = n * pi * (u_tube.r_out**2) - V_fluid
     # V_grout = pi * (u_tube.b.r_b**2) - V_pipe - V_fluid
-    R_pipe = log(u_tube.r_out / u_tube.r_in) / (n * 2 * pi * u_tube.pipe.k)
-    return V_fluid, V_pipe, R_conv, R_pipe
+    resist_pipe = log(u_tube.r_out / u_tube.r_in) / (n * 2 * pi * u_tube.pipe.k)
+    return V_fluid, V_pipe, resist_conv, resist_pipe
 
 
 def concentric_tube_volumes(coaxial):
@@ -141,15 +141,15 @@ def concentric_tube_volumes(coaxial):
     r_in_in, r_in_out = coaxial.r_inner
     r_out_in, r_out_out = coaxial.r_outer
     # Compute volumes for concentric ghe geometry
-    V_fluid = pi * ((r_in_in**2) + (r_out_in**2) - (r_in_out**2))
-    V_pipe = pi * (
+    vol_fluid = pi * ((r_in_in**2) + (r_out_in**2) - (r_in_out**2))
+    vol_pipe = pi * (
         (r_in_out**2) - (r_in_in**2) + (r_out_out**2) - (r_out_in**2)
     )
     # V_grout = pi * ((coaxial.b.r_b**2) - (r_out_out**2))
-    A_s = pi * 2 * r_out_in
-    R_conv = 1 / (coaxial.h_fluid_a_in * A_s)
-    R_pipe = log(r_out_out / r_out_in) / (2 * pi * coaxial.pipe.k[1])
-    return V_fluid, V_pipe, R_conv, R_pipe
+    area_surf_outer = pi * 2 * r_out_in
+    resist_conv = 1 / (coaxial.h_fluid_a_in * area_surf_outer)
+    resist_pipe = log(r_out_out / r_out_in) / (2 * pi * coaxial.pipe.k[1])
+    return vol_fluid, vol_pipe, resist_conv, resist_pipe
 
 
 def match_effective_borehole_resistance(tube_ref, new_tube):
@@ -162,9 +162,9 @@ def match_effective_borehole_resistance(tube_ref, new_tube):
         new_tube.grout.k = k_g
         # Update Delta-circuit thermal resistances
         # Initialize stored_coefficients
-        Rb_prime = new_tube.update_thermal_resistance(m_flow_borehole=None, fluid=None)
-        Rb = tube_ref.compute_effective_borehole_resistance()
-        return Rb - Rb_prime
+        resist_bh_prime = new_tube.update_thermal_resistance(m_flow_borehole=None, fluid=None)
+        resist_bh = tube_ref.compute_effective_borehole_resistance()
+        return resist_bh - resist_bh_prime
 
     # Use Brent Quadratic to find the root
     # Define a lower and upper for thermal conductivities
@@ -185,10 +185,10 @@ def multiple_to_single(multiple_u_tube):
     # Find an equivalent single U-tube given multiple U-tube geometry
 
     # Get effective parameters for the multiple u-tube
-    V_fluid, V_pipe, R_conv, R_pipe = u_tube_volumes(multiple_u_tube)
+    vol_fluid, vol_pipe, resist_conv, resist_pipe = u_tube_volumes(multiple_u_tube)
 
     single_u_tube = equivalent_single_u_tube(
-        multiple_u_tube, V_fluid, V_pipe, R_conv, R_pipe
+        multiple_u_tube, vol_fluid, vol_pipe, resist_conv, resist_pipe
     )
 
     # Vary grout thermal conductivity to match effective borehole thermal
@@ -200,10 +200,10 @@ def multiple_to_single(multiple_u_tube):
 
 def coaxial_to_single(coaxial_tube):
     # Find an equivalent single U-tube given a coaxial heat exchanger
-    V_fluid, V_pipe, R_conv, R_pipe = concentric_tube_volumes(coaxial_tube)
+    vol_fluid, vol_pipe, resist_conv, resist_pipe = concentric_tube_volumes(coaxial_tube)
 
     single_u_tube = equivalent_single_u_tube(
-        coaxial_tube, V_fluid, V_pipe, R_conv, R_pipe
+        coaxial_tube, vol_fluid, vol_pipe, resist_conv, resist_pipe
     )
 
     # Vary grout thermal conductivity to match effective borehole thermal

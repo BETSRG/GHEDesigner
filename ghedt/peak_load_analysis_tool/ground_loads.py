@@ -19,8 +19,8 @@ class HybridLoad:
         bhe: SingleUTube,
         radial_numerical: RadialNumericalBH,
         sim_params: SimulationParameters,
-        COP_rejection=None,
-        COP_extraction=None,
+        cop_rejection=None,
+        cop_extraction=None,
         years=[2019],
     ):
         # Split the hourly loads into heating and cooling (kW)
@@ -43,14 +43,14 @@ class HybridLoad:
         # Note: this is intended to be a scipy.interp1d object
         self.radial_numerical = radial_numerical
         self.years = years
-        if COP_extraction is None:
+        if cop_extraction is None:
             self.COP_extraction = 2.5  # When the building is heating mode
         else:
-            self.COP_extraction = COP_extraction
-        if COP_rejection is None:
+            self.COP_extraction = cop_extraction
+        if cop_rejection is None:
             self.COP_rejection = 4.0  # When the building is in cooling mode
         else:
-            self.COP_rejection = COP_rejection
+            self.COP_rejection = cop_rejection
 
         # Get the number of days in each month for a given year (make 0 NULL)
         self.days_in_month = [0]
