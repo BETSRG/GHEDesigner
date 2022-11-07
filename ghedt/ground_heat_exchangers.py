@@ -401,9 +401,9 @@ class GHE(BaseGHE):
             local_objective,
             lower=self.sim_params.min_Height,
             upper=self.sim_params.max_Height,
-            xtol=1.0e-6,
-            rtol=1.0e-6,
-            maxiter=50,
+            abs_tol=1.0e-6,
+            rel_tol=1.0e-6,
+            max_iter=50,
         )
         if returnedHeight == self.sim_params.min_Height:
             warnings.warn(

@@ -21,7 +21,7 @@ def compute_equivalent(bhe):
 
 
 def solve_root(
-    x, objective_function, lower=None, upper=None, xtol=1.0e-6, rtol=1.0e-6, maxiter=50
+    x, objective_function, lower=None, upper=None, abs_tol=1.0e-6, rel_tol=1.0e-6, max_iter=50
 ):
     # Vary flow rate to match the convective resistance
 
@@ -46,7 +46,7 @@ def solve_root(
     # Solve the root if we can, if not, take the higher value
     if kg_plus_sign != kg_minus_sign:
         x = brentq(
-            objective_function, lower, upper, xtol=xtol, rtol=rtol, maxiter=maxiter
+            objective_function, lower, upper, xtol=abs_tol, rtol=rel_tol, maxiter=max_iter
         )
     elif kg_plus_sign == -1 and kg_minus_sign == -1:
         x = lower
@@ -56,16 +56,16 @@ def solve_root(
     return x
 
 
-def equivalent_single_u_tube(bhe, V_fluid, V_pipe, R_conv, R_pipe):
+def equivalent_single_u_tube(bhe, vol_fluid, vol_pipe, resist_conv, resist_pipe):
     # Note: BHE can be double U-tube or coaxial heat exchanger
 
     # Compute equivalent single U-tube geometry
     n = 2
-    r_p_i_prime = sqrt(V_fluid / (n * pi))
-    r_p_o_prime = sqrt((V_fluid + V_pipe) / (n * pi))
+    r_p_i_prime = sqrt(vol_fluid / (n * pi))
+    r_p_o_prime = sqrt((vol_fluid + vol_pipe) / (n * pi))
     # A_s_prime = n * pi * ((r_p_i_prime * 2) ** 2)
     # h_prime = 1 / (R_conv * A_s_prime)
-    k_p_prime = log(r_p_o_prime / r_p_i_prime) / (2 * pi * n * R_pipe)
+    k_p_prime = log(r_p_o_prime / r_p_i_prime) / (2 * pi * n * resist_pipe)
 
     # Place single u-tubes at a B-spacing
     # Total horizontal space (m)
@@ -82,10 +82,10 @@ def equivalent_single_u_tube(bhe, V_fluid, V_pipe, R_conv, R_pipe):
 
     # New pipe geometry
     eps = deepcopy(bhe.pipe.eps)
-    rhoCp = deepcopy(bhe.pipe.rhoCp)
-    pipe = media.Pipe(pos, r_p_i_prime, r_p_o_prime, s, eps, k_p_prime, rhoCp)
+    rho_cp = deepcopy(bhe.pipe.rhoCp)
+    pipe = media.Pipe(pos, r_p_i_prime, r_p_o_prime, s, eps, k_p_prime, rho_cp)
 
-    # Don't tie together the original and equivalent BHE's
+    # Don't tie together the original and equivalent BHEs
     m_flow_borehole = deepcopy(bhe.m_flow_borehole)
     fluid = deepcopy(bhe.fluid)
     grout = deepcopy(bhe.grout)
@@ -101,7 +101,7 @@ def equivalent_single_u_tube(bhe, V_fluid, V_pipe, R_conv, R_pipe):
     def objective_pipe_conductivity(pipe_k):
         eq_single_u_tube.pipe.k = pipe_k
         eq_single_u_tube.update_thermal_resistance()
-        return eq_single_u_tube.R_fp - (R_conv + R_pipe)
+        return eq_single_u_tube.R_fp - (resist_conv + resist_pipe)
 
     # Use Brent Quadratic to find the root
     # Define a lower and upper for pipe thermal conductivities
@@ -129,11 +129,11 @@ def u_tube_volumes(u_tube):
     area_surf_inner = n * pi * (u_tube.r_in * 2.0) ** 2
     resist_conv = 1 / (u_tube.h_f * area_surf_inner)  # Convection resistance (m.K/W)
     # Volumes
-    V_fluid = n * pi * (u_tube.r_in**2)
-    V_pipe = n * pi * (u_tube.r_out**2) - V_fluid
-    # V_grout = pi * (u_tube.b.r_b**2) - V_pipe - V_fluid
+    vol_fluid = n * pi * (u_tube.r_in**2)
+    vol_pipe = n * pi * (u_tube.r_out**2) - vol_fluid
+    # V_grout = pi * (u_tube.b.r_b**2) - vol_pipe - vol_fluid
     resist_pipe = log(u_tube.r_out / u_tube.r_in) / (n * 2 * pi * u_tube.pipe.k)
-    return V_fluid, V_pipe, resist_conv, resist_pipe
+    return vol_fluid, vol_pipe, resist_conv, resist_pipe
 
 
 def concentric_tube_volumes(coaxial):
@@ -156,10 +156,10 @@ def match_effective_borehole_resistance(tube_ref, new_tube):
     # Find the thermal conductivity that makes the borehole resistances equal
 
     # Define objective function for varying the grout thermal conductivity
-    def objective_resistance(k_g):
+    def objective_resistance(k_g_in):
         # update new tubes grout thermal conductivity and relevant parameters
-        new_tube.k_g = k_g
-        new_tube.grout.k = k_g
+        new_tube.k_g = k_g_in
+        new_tube.grout.k = k_g_in
         # Update Delta-circuit thermal resistances
         # Initialize stored_coefficients
         resist_bh_prime = new_tube.update_thermal_resistance(m_flow_borehole=None, fluid=None)

@@ -73,7 +73,7 @@ def main():
             m_flow_borehole, fluid, borehole, pipe_s, grout, soil
         )
 
-        Re = plat.borehole_heat_exchangers.compute_Reynolds(
+        Re = plat.borehole_heat_exchangers.compute_reynolds(
             single_u_tube.m_flow_pipe, r_in, epsilon, fluid
         )
         borehole_values["Single U-tube"]["Re"].append(Re)
@@ -82,7 +82,7 @@ def main():
             m_flow_borehole, fluid, borehole, pipe_d, grout, soil, config="parallel"
         )
 
-        Re = plat.borehole_heat_exchangers.compute_Reynolds(
+        Re = plat.borehole_heat_exchangers.compute_reynolds(
             double_u_tube_parallel.m_flow_pipe, r_in, epsilon, fluid
         )
         borehole_values["Double U-tube"]["Re"].append(Re)
@@ -143,7 +143,7 @@ def main():
             m_flow_borehole, fluid, borehole, pipe, grout, soil
         )
 
-        Re = plat.borehole_heat_exchangers.compute_Reynolds_concentric(
+        Re = plat.borehole_heat_exchangers.compute_reynolds_concentric(
             Coaxial.m_flow_pipe, r_in_out, r_out_in, fluid
         )
         borehole_values["Coaxial"]["Re"].append(Re)

@@ -26,9 +26,9 @@ class ThermalProperty:
 
 
 class Grout(ThermalProperty):
-    def __init__(self, k, rhoCp):
+    def __init__(self, k, rho_cp):
         # Make variables from ThermalProperty available to Grout
-        ThermalProperty.__init__(self, k, rhoCp)
+        ThermalProperty.__init__(self, k, rho_cp)
 
 
 class Pipe(ThermalProperty):
@@ -38,8 +38,8 @@ class Pipe(ThermalProperty):
 
         # Pipe specific parameters
         self.pos = pos  # Pipe positions either a list of tuples or tuple
-        self.r_in = r_in  # Pipe inner radius (m) can be float or list
-        self.r_out = r_out  # Pipe outer radius (m) can be float or list
+        self.r_in = r_in  # Pipe inner radius (m) can be a float or list
+        self.r_out = r_out  # Pipe outer radius (m) can be a float or list
         self.s = s  # Center pipe to center pipe shank spacing
         self.eps = eps  # Pipe roughness (m)
         if type(pos) is list:
@@ -70,11 +70,11 @@ class Pipe(ThermalProperty):
 
     @staticmethod
     def place_pipes(s, r_out, n_pipes):
-        """Positions pipes in an axisymetric configuration."""
+        """Positions pipes in an axis-symmetric configuration."""
         shank_space = s / 2 + r_out
         pi = np.pi
         dt = pi / float(n_pipes)
-        pos = [(0.0, 0.0) for i in range(2 * n_pipes)]
+        pos = [(0.0, 0.0) for _ in range(2 * n_pipes)]
         for i in range(n_pipes):
             pos[2 * i] = (
                 shank_space * np.cos(2.0 * i * dt + pi),
@@ -88,9 +88,9 @@ class Pipe(ThermalProperty):
 
 
 class Soil(ThermalProperty):
-    def __init__(self, k, rhoCp, ugt):
+    def __init__(self, k, rho_cp, ugt):
         # Make variables from ThermalProperty available to Pipe
-        ThermalProperty.__init__(self, k, rhoCp)
+        ThermalProperty.__init__(self, k, rho_cp)
 
         # Soil specific parameters
         self.ugt = ugt
@@ -114,10 +114,10 @@ class SimulationParameters:
         self,
         start_month,
         end_month,
-        max_EFT_allowable,
-        min_EFT_allowable,
-        max_Height,
-        min_Height,
+        max_entering_fluid_temp_allow,
+        min_entering_fluid_temp_allow,
+        max_height,
+        min_height,
     ):
         # Simulation parameters not found in other objects
         # ------------------------------------------------
@@ -125,11 +125,11 @@ class SimulationParameters:
         self.start_month = start_month
         self.end_month = end_month
         # Maximum and minimum allowable fluid temperatures
-        self.max_EFT_allowable = max_EFT_allowable  # degrees Celsius
-        self.min_EFT_allowable = min_EFT_allowable  # degrees Celsius
+        self.max_EFT_allowable = max_entering_fluid_temp_allow  # degrees Celsius
+        self.min_EFT_allowable = min_entering_fluid_temp_allow  # degrees Celsius
         # Maximum and minimum allowable heights
-        self.max_Height = max_Height  # in meters
-        self.min_Height = min_Height  # in meters
+        self.max_Height = max_height  # in meters
+        self.min_Height = min_height  # in meters
 
     def __repr__(self):
         def justify(category, value):

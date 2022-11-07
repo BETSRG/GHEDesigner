@@ -53,7 +53,7 @@ def main():
     print(single_u_tube)
 
     # Intermediate variables
-    Re = plat.borehole_heat_exchangers.compute_Reynolds(
+    Re = plat.borehole_heat_exchangers.compute_reynolds(
         single_u_tube.m_flow_pipe, r_in, epsilon, fluid
     )
     print("Reynolds number: {}".format(Re))
