@@ -1,10 +1,12 @@
 # library dependencies
 numpy
 opencv-python
-# openpyxl>=3.0.8
-pandas
 git+https://github.com/MassimoCimmino/pygfunction@5465044309c1193514f64574680cd430249aef29
 scipy
+
+# optional dependencies that can unlock extra testing/functionality
+# pandas
+# openpyxl
 
 # testing dependencies
 black

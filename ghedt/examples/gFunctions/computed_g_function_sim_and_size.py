@@ -1,7 +1,7 @@
-import ghedt.peak_load_analysis_tool as plat
-import pandas as pd
+from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
+from pathlib import Path
 import pygfunction as gt
-import ghedt as dt
+from ghedt import utilities, gfunction, ground_heat_exchangers
 
 
 def main():
@@ -22,9 +22,9 @@ def main():
     # Pipe positions
     # --------------
     # Single U-tube [(x_in, y_in), (x_out, y_out)]
-    pos = plat.media.Pipe.place_pipes(s, r_out, 1)
+    pos = media.Pipe.place_pipes(s, r_out, 1)
     # Single U-tube BHE object
-    bhe_object = plat.borehole_heat_exchangers.SingleUTube
+    bhe_object = borehole_heat_exchangers.SingleUTube
 
     # Thermal conductivities
     # ----------------------
@@ -41,22 +41,22 @@ def main():
     # Thermal properties
     # ------------------
     # Pipe
-    pipe = plat.media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
     # Soil
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-    soil = plat.media.Soil(k_s, rhoCp_s, ugt)
+    soil = media.Soil(k_s, rhoCp_s, ugt)
     # Grout
-    grout = plat.media.Grout(k_g, rhoCp_g)
+    grout = media.Grout(k_g, rhoCp_g)
 
     # Read in g-functions from GLHEPro
     file = "GLHEPRO_gFunctions_12x13.json"
-    data = dt.utilities.js_load(file)
+    data = utilities.js_load(file)
 
     # Configure the database data for input to the goethermal GFunction object
-    geothermal_g_input = dt.gfunction.GFunction.configure_database_file_for_usage(data)
+    geothermal_g_input = gfunction.GFunction.configure_database_file_for_usage(data)
 
     # Initialize the GFunction object
-    g_function = dt.gfunction.GFunction(**geothermal_g_input)
+    g_function = gfunction.GFunction(**geothermal_g_input)
 
     # Inputs related to fluid
     # -----------------------
@@ -79,7 +79,7 @@ def main():
     # Maximum and minimum allowable heights
     max_Height = 200  # in meters
     min_Height = 60  # in meters
-    sim_params = plat.media.SimulationParameters(
+    sim_params = media.SimulationParameters(
         start_month,
         end_month,
         max_EFT_allowable,
@@ -91,18 +91,15 @@ def main():
     # Process loads from file
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
-    hourly_extraction: dict = pd.read_csv(
-        "../Atlanta_Office_Building_Loads.csv"
-    ).to_dict("list")
-    # Take only the first column in the dictionary
-    hourly_extraction_ground_loads: list = hourly_extraction[
-        list(hourly_extraction.keys())[0]
-    ]
+    project_root = Path(__file__).resolve().parent.parent.parent.parent
+    csv_file = project_root / 'examples' / 'data' / 'Atlanta_Office_Building_Loads.csv'
+    raw_lines = csv_file.read_text().split('\n')
+    hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
 
     # --------------------------------------------------------------------------
 
     # Initialize GHE object
-    ghe = dt.ground_heat_exchangers.GHE(
+    ghe = ground_heat_exchangers.GHE(
         V_flow_system,
         B,
         bhe_object,

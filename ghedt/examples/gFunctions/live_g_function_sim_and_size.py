@@ -1,7 +1,8 @@
-import ghedt as dt
-import ghedt.peak_load_analysis_tool as plat
+from ghedt import ground_heat_exchangers, gfunction, utilities
+from ghedt.coordinates import rectangle
+from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
 import pygfunction as gt
-import pandas as pd
+from pathlib import Path
 
 
 def main():
@@ -22,9 +23,9 @@ def main():
     # Pipe positions
     # --------------
     # Single U-tube [(x_in, y_in), (x_out, y_out)]
-    pos = plat.media.Pipe.place_pipes(s, r_out, 1)
+    pos = media.Pipe.place_pipes(s, r_out, 1)
     # Single U-tube BHE object
-    bhe_object = plat.borehole_heat_exchangers.SingleUTube
+    bhe_object = borehole_heat_exchangers.SingleUTube
 
     # Thermal conductivities
     # ----------------------
@@ -41,15 +42,15 @@ def main():
     # Thermal properties
     # ------------------
     # Pipe
-    pipe = plat.media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
     # Soil
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-    soil = plat.media.Soil(k_s, rhoCp_s, ugt)
+    soil = media.Soil(k_s, rhoCp_s, ugt)
     # Grout
-    grout = plat.media.Grout(k_g, rhoCp_g)
+    grout = media.Grout(k_g, rhoCp_g)
 
     # Eskilson's original ln(t/ts) values
-    log_time = dt.utilities.eskilson_log_times()
+    log_time = utilities.eskilson_log_times()
 
     # Inputs related to fluid
     # -----------------------
@@ -59,7 +60,7 @@ def main():
     # Coordinates
     Nx = 12
     Ny = 13
-    coordinates = dt.coordinates.rectangle(Nx, Ny, B, B)
+    coordinates = rectangle(Nx, Ny, B, B)
 
     # Fluid properties
     V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
@@ -82,7 +83,7 @@ def main():
     # Maximum and minimum allowable heights
     max_Height = 150  # in meters
     min_Height = 60  # in meters
-    sim_params = plat.media.SimulationParameters(
+    sim_params = media.SimulationParameters(
         start_month,
         end_month,
         max_EFT_allowable,
@@ -94,13 +95,10 @@ def main():
     # Process loads from file
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
-    hourly_extraction: dict = pd.read_csv(
-        "../Atlanta_Office_Building_Loads.csv"
-    ).to_dict("list")
-    # Take only the first column in the dictionary
-    hourly_extraction_ground_loads: list = hourly_extraction[
-        list(hourly_extraction.keys())[0]
-    ]
+    project_root = Path(__file__).resolve().parent.parent.parent.parent
+    csv_file = project_root / 'examples' / 'data' / 'Atlanta_Office_Building_Loads.csv'
+    raw_lines = csv_file.read_text().split('\n')
+    hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
 
     # Calculate a g-function for uniform inlet fluid temperature with
     # 8 unequal segments using the equivalent solver
@@ -112,7 +110,7 @@ def main():
     segment_ratios = gt.utilities.segment_ratios(
         nSegments, end_length_ratio=end_length_ratio
     )
-    g_function = dt.gfunction.compute_live_g_function(
+    g_function = gfunction.compute_live_g_function(
         B,
         [H],
         [r_b],
@@ -135,7 +133,7 @@ def main():
     # --------------------------------------------------------------------------
 
     # Initialize the GHE object
-    ghe = dt.ground_heat_exchangers.GHE(
+    ghe = ground_heat_exchangers.GHE(
         V_flow_system,
         B,
         bhe_object,
@@ -159,7 +157,7 @@ def main():
     r_b_values = [r_b] * len(H_values)
     D_values = [2.0] * len(H_values)
 
-    g_function = dt.gfunction.compute_live_g_function(
+    g_function = gfunction.compute_live_g_function(
         B,
         H_values,
         r_b_values,
@@ -175,7 +173,7 @@ def main():
     )
 
     # Re-Initialize the GHE object
-    ghe = dt.ground_heat_exchangers.GHE(
+    ghe = ground_heat_exchangers.GHE(
         V_flow_system,
         B,
         bhe_object,

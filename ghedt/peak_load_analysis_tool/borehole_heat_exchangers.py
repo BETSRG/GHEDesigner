@@ -369,7 +369,7 @@ class CoaxialBase(object):
         output += justify(
             "Outer annulus resistance", str(round(self.R_f_a_out, 4)) + " (m.K/W)"
         )
-        reynolds = compute_reynolds(self.m_flow_pipe, self.r_in_in, self.eps, self.fluid)
+        reynolds = compute_reynolds(self.m_flow_pipe, self.r_in_in, self.fluid)
         output += justify("Reynolds inner", str(round(reynolds, 4)))
         output += justify(
             "Inner Convection coefficient", str(round(self.h_fluid_in, 4)) + " (W/m2.K)"

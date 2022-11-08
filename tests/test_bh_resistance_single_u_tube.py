@@ -1,5 +1,5 @@
 import pygfunction as gt
-import ghedt.peak_load_analysis_tool as plat
+from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 
 
 def main():
@@ -14,6 +14,10 @@ def main():
     s = 32.3 / 1000.0  # Inner-tube to inner-tube Shank spacing (m)
     epsilon = 1.0e-6  # Pipe roughness (m)
 
+    # Pipe positions
+    # Single U-tube [(x_in, y_in), (x_out, y_out)]
+    pos = media.Pipe.place_pipes(s, r_out, 1)
+
     # Thermal conductivities
     k_p = 0.4  # Pipe thermal conductivity (W/m.K)
     k_s = 2.0  # Ground thermal conductivity (W/m.K)
@@ -24,18 +28,14 @@ def main():
     rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
     rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
-    # Pipe positions
-    # Double U-tube [(x_in, y_in), (x_out, y_out), (x_in, y_in), (x_out, y_out)]
-    pos = plat.media.Pipe.place_pipes(s, r_out, 2)
-
     # Thermal properties
     # Pipe
-    pipe = plat.media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
     # Soil
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-    soil = plat.media.Soil(k_s, rhoCp_s, ugt)
+    soil = media.Soil(k_s, rhoCp_s, ugt)
     # Grout
-    grout = plat.media.Grout(k_g, rhoCp_g)
+    grout = media.Grout(k_g, rhoCp_g)
 
     # Fluid properties
     fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
@@ -46,46 +46,33 @@ def main():
     # Define a borehole
     borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
 
-    double_u_tube_series = plat.borehole_heat_exchangers.MultipleUTube(
-        m_flow_borehole, fluid, borehole, pipe, grout, soil, config="series"
+    single_u_tube = borehole_heat_exchangers.SingleUTube(
+        m_flow_borehole, fluid, borehole, pipe, grout, soil
     )
 
-    double_u_tube_parallel = plat.borehole_heat_exchangers.MultipleUTube(
-        m_flow_borehole, fluid, borehole, pipe, grout, soil, config="parallel"
-    )
-
-    print(double_u_tube_parallel)
-
-    R_b_series = double_u_tube_series.compute_effective_borehole_resistance()
-    R_B_parallel = double_u_tube_parallel.compute_effective_borehole_resistance()
+    print(single_u_tube)
 
     # Intermediate variables
-    Re = plat.borehole_heat_exchangers.compute_reynolds(
-        double_u_tube_parallel.m_flow_pipe, r_in, epsilon, fluid
+    Re = borehole_heat_exchangers.compute_reynolds(
+        single_u_tube.m_flow_pipe, r_in, fluid
     )
-
     print("Reynolds number: {}".format(Re))
-    R_p = double_u_tube_parallel.R_p
+    R_p = single_u_tube.R_p
     print("Pipe resistance (K/(W/m)) : {}".format(R_p))
-    h_f = double_u_tube_parallel.h_f
+    h_f = single_u_tube.h_f
     print("Convection coefficient (W/m2.K): {}".format(h_f))
-    R_fp = double_u_tube_parallel.R_fp
+    R_fp = single_u_tube.R_fp
     print("Convective resistance (K/(W/m)): {}".format(R_fp))
 
-    print("Borehole thermal resistance (series): {0:.4f} m.K/W".format(R_b_series))
-    print("Borehole thermal resistance (parallel): {0:.4f} m.K/W".format(R_B_parallel))
+    R_b = single_u_tube.compute_effective_borehole_resistance()
+
+    print("Borehole thermal resistance: {0:.4f} m.K/W".format(R_b))
 
     # Create a borehole top view
-    fig = double_u_tube_series.visualize_pipes()
+    fig = single_u_tube.visualize_pipes()
 
     # Save the figure as a png
-    fig.savefig("double_u_tube_series.png")
-
-    # Create a borehole top view
-    fig = double_u_tube_parallel.visualize_pipes()
-
-    # Save the figure as a png
-    fig.savefig("double_u_tube_parallel.png")
+    fig.savefig("single_u_tube.png")
 
 
 # Main function

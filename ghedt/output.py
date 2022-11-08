@@ -302,7 +302,7 @@ def output_design_details(
 
     indented_amount = 2
 
-    o_s += "Field Geomtetry: " + "\n"
+    o_s += "Field Geometry: " + "\n"
     # rightAd = rightOffset-indentedAmount*tabOffset+math.ceil(indentedAmount/2)
     # leftAd = leftColLength-tabOffset*indentedAmount+math.floor(indentedAmount/2)
     o_s += create_d_row(
@@ -755,6 +755,8 @@ def output_design_details(
         centering="^",
     )
 
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
     with open(os.path.join(output_directory, summary_file), "w", newline="") as txtF:
         txtF.write(o_s)
 

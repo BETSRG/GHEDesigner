@@ -1,9 +1,9 @@
 import copy
 import math
+from json import dumps
 from calendar import monthrange
 
 import numpy as np
-import pandas as pd
 from scipy.interpolate import interp1d
 
 from ghedt.peak_load_analysis_tool.borehole_heat_exchangers import SingleUTube
@@ -21,9 +21,11 @@ class HybridLoad:
         sim_params: SimulationParameters,
         cop_rejection=None,
         cop_extraction=None,
-        years=[2019],
+            years=None,
     ):
         # Split the hourly loads into heating and cooling (kW)
+        if years is None:
+            years = [2019]
         self.hourly_rejection_loads = hourly_rejection_loads
         self.hourly_extraction_loads = hourly_extraction_loads
 
@@ -60,9 +62,7 @@ class HybridLoad:
             len(hourly_rejection_loads) == sum(self.days_in_month) * 24.0
             and len(hourly_extraction_loads) == sum(self.days_in_month) * 24.0
         ), (
-            "The total number of hours in "
-            "the year are not equal. Is "
-            "this a leap year?"
+            "The total number of hours in the year are not equal. Is this a leap year?"
         )
 
         # This block of data holds the compact monthly representation of the
@@ -130,12 +130,10 @@ class HybridLoad:
         self.step_func_load = np.array(0)  # holds the load in terms of step functions
         self.process_month_loads()
 
-    def __repr__(self):
-        output = str(self.__class__) + "\n"
-
-        output += self.create_dataframe_of_peak_analysis().to_string()
-
-        return output
+    # def __repr__(self):
+    #     output = str(self.__class__) + "\n"
+    #     output += self.create_dataframe_of_peak_analysis().to_string()
+    #     return output
 
     @staticmethod
     def split_heat_and_cool(hourly_heat_extraction, units="W"):
@@ -467,7 +465,7 @@ class HybridLoad:
 
         return
 
-    def create_dataframe_of_peak_analysis(self) -> pd.DataFrame:
+    def create_dataframe_of_peak_analysis(self) -> str:
         # The fields are: sum, peak, avg, peak day, peak duration
         hybrid_time_step_fields = {
             "Total": {},
@@ -480,51 +478,49 @@ class HybridLoad:
         d: dict = {}
         # For all the months, create dictionary of fields
         for i in range(1, 13):
-            month_name = number_to_month(i)
-            d[month_name] = copy.deepcopy(hybrid_time_step_fields)
+            m_n = number_to_month(i)
+            d[m_n] = copy.deepcopy(hybrid_time_step_fields)
 
             # set total
-            d[month_name]["Total"]["rejection"] = self.monthly_cl[i]
-            d[month_name]["Total"]["extraction"] = self.monthly_hl[i]
+            d[m_n]["Total"]["rejection"] = self.monthly_cl[i]
+            d[m_n]["Total"]["extraction"] = self.monthly_hl[i]
             # set peak
-            d[month_name]["Peak"]["rejection"] = self.monthly_peak_cl[i]
-            d[month_name]["Peak"]["extraction"] = self.monthly_peak_hl[i]
+            d[m_n]["Peak"]["rejection"] = self.monthly_peak_cl[i]
+            d[m_n]["Peak"]["extraction"] = self.monthly_peak_hl[i]
             # set average
-            d[month_name]["Average"]["rejection"] = self.monthly_avg_cl[i]
-            d[month_name]["Average"]["extraction"] = self.monthly_avg_hl[i]
+            d[m_n]["Average"]["rejection"] = self.monthly_avg_cl[i]
+            d[m_n]["Average"]["extraction"] = self.monthly_avg_hl[i]
             # set peak day
-            d[month_name]["Peak Day"]["rejection"] = self.monthly_peak_cl_day[i]
-            d[month_name]["Peak Day"]["extraction"] = self.monthly_peak_hl_day[i]
+            d[m_n]["Peak Day"]["rejection"] = self.monthly_peak_cl_day[i]
+            d[m_n]["Peak Day"]["extraction"] = self.monthly_peak_hl_day[i]
             # set peak duration
-            d[month_name]["Peak Duration"]["rejection"] = self.monthly_peak_cl_duration[
-                i
-            ]
-            d[month_name]["Peak Duration"][
-                "extraction"
-            ] = self.monthly_peak_hl_duration[i]
+            d[m_n]["Peak Duration"]["rejection"] = self.monthly_peak_cl_duration[i]
+            d[m_n]["Peak Duration"]["extraction"] = self.monthly_peak_hl_duration[i]
+
+        return dumps(d, indent=2)
 
         # Convert the dictionary into a multi-indexed pandas dataframe
-        arrays = [[], []]
-        for field in hybrid_time_step_fields:
-            arrays[0].append(field)
-            arrays[0].append(field)
-            arrays[1].append("rejection")
-            arrays[1].append("extraction")
-        tuples = list(zip(*arrays))
-        index = pd.MultiIndex.from_tuples(tuples, names=["Fields", "Load Type"])
+        # arrays = [[], []]
+        # for field in hybrid_time_step_fields:
+        #     arrays[0].append(field)
+        #     arrays[0].append(field)
+        #     arrays[1].append("rejection")
+        #     arrays[1].append("extraction")
+        # tuples = list(zip(*arrays))
+        # index = pd.MultiIndex.from_tuples(tuples, names=["Fields", "Load Type"])
 
-        res = []
-        for month in d:
-            tmp = []
-            for field in d[month]:
-                for load_type in d[month][field]:
-                    tmp.append(d[month][field][load_type])
-            res.append(tmp)
-        res = np.array(res)
+        # res = []
+        # for month in d:
+        #     tmp = []
+        #     for field in d[month]:
+        #         for load_type in d[month][field]:
+        #             tmp.append(d[month][field][load_type])
+        #     res.append(tmp)
+        # res = np.array(res)
 
-        df = pd.DataFrame(res, index=list(d.keys()), columns=index)
-
-        return df
+        # df = pd.DataFrame(res, index=list(d.keys()), columns=index)
+        #
+        # return df
 
     def process_month_loads(self):
         # Converts monthly load format to sequence of loads needed for
@@ -807,6 +803,7 @@ class HybridLoad:
             step_load = self.load[i] - self.load[i - 1]
             self.step_func_load = np.append(self.step_func_load, step_load)
         pass
+
 
 def number_to_month(x):
     # Convert a numeric 1-12 to a month name

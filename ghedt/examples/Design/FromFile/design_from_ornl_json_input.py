@@ -1,6 +1,6 @@
 from ghedt import utilities, geometry, design, search_routines
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
-import pandas as pd
+from pathlib import Path
 import pygfunction as gt
 
 
@@ -99,13 +99,10 @@ def main():
     # Process loads from file
     # -----------------------
     # read in the csv file and convert the loads to a list of length 8760
-    hourly_extraction: dict = pd.read_csv(
-        "../../Atlanta_Office_Building_Loads.csv"
-    ).to_dict("list")
-    # Take only the first column in the dictionary
-    hourly_extraction_ground_loads: list = hourly_extraction[
-        list(hourly_extraction.keys())[0]
-    ]
+    project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+    csv_file = project_root / 'examples' / 'data' / 'Atlanta_Office_Building_Loads.csv'
+    raw_lines = csv_file.read_text().split('\n')
+    hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
 
     # Geometric constraints for the `near-square` routine
     geometric_constraints = geometry.GeometricConstraints(b=B)

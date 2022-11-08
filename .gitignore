@@ -163,4 +163,12 @@ cython_debug/
 
 #Example Output Files
 DesignExampleOutput/
-*.png
+tests/Coaxial.png
+tests/coaxial_to_single_equivalent.png
+tests/double_to_single_equivalent.png
+tests/double_u_tube_parallel.png
+tests/double_u_tube_series.png
+tests/near-square.png
+tests/single_u_tube.png
+ghedt_input.obj
+ghedt_output.json

@@ -1,7 +1,19 @@
-import ghedt.peak_load_analysis_tool as plat
+from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 import pygfunction as gt
-import matplotlib.pyplot as plt
-import pandas as pd
+from pathlib import Path
+
+try:
+    # noinspection PyPackageRequirements
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    glhe_file = Path(__file__).resolve().parent / 'GLHEPRO.xlsx'
+    pd.ExcelFile(glhe_file)
+    run = True
+except ImportError:
+    plt = None
+    pd = None
+    run = False
+    print("Skipping test_bh_resistance_validation.py test, to run it, pip install openpyxl matplotlib pandas")
 
 
 def main():
@@ -20,9 +32,9 @@ def main():
 
     # Pipe positions
     # Single U-tube [(x_in, y_in), (x_out, y_out)]
-    pos_s = plat.media.Pipe.place_pipes(s, r_out, 1)
+    pos_s = media.Pipe.place_pipes(s, r_out, 1)
     # Pipe positions
-    pos_d = plat.media.Pipe.place_pipes(s, r_out, 2)
+    pos_d = media.Pipe.place_pipes(s, r_out, 2)
 
     # Thermal conductivities
     k_p = 0.4  # Pipe thermal conductivity (W/m.K)
@@ -36,13 +48,13 @@ def main():
 
     # Thermal properties
     # Pipe
-    pipe_s = plat.media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-    pipe_d = plat.media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe_s = media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe_d = media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rhoCp_p)
     # Soil
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-    soil = plat.media.Soil(k_s, rhoCp_s, ugt)
+    soil = media.Soil(k_s, rhoCp_s, ugt)
     # Grout
-    grout = plat.media.Grout(k_g, rhoCp_g)
+    grout = media.Grout(k_g, rhoCp_g)
 
     # Fluid properties
     fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
@@ -69,21 +81,21 @@ def main():
         # Define a borehole
         borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
 
-        single_u_tube = plat.borehole_heat_exchangers.SingleUTube(
+        single_u_tube = borehole_heat_exchangers.SingleUTube(
             m_flow_borehole, fluid, borehole, pipe_s, grout, soil
         )
 
-        Re = plat.borehole_heat_exchangers.compute_reynolds(
-            single_u_tube.m_flow_pipe, r_in, epsilon, fluid
+        Re = borehole_heat_exchangers.compute_reynolds(
+            single_u_tube.m_flow_pipe, r_in, fluid
         )
         borehole_values["Single U-tube"]["Re"].append(Re)
 
-        double_u_tube_parallel = plat.borehole_heat_exchangers.MultipleUTube(
+        double_u_tube_parallel = borehole_heat_exchangers.MultipleUTube(
             m_flow_borehole, fluid, borehole, pipe_d, grout, soil, config="parallel"
         )
 
-        Re = plat.borehole_heat_exchangers.compute_reynolds(
-            double_u_tube_parallel.m_flow_pipe, r_in, epsilon, fluid
+        Re = borehole_heat_exchangers.compute_reynolds(
+            double_u_tube_parallel.m_flow_pipe, r_in, fluid
         )
         borehole_values["Double U-tube"]["Re"].append(Re)
 
@@ -121,12 +133,12 @@ def main():
 
     # Thermal properties
     # Pipe
-    pipe = plat.media.Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rhoCp_p)
+    pipe = media.Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rhoCp_p)
     # Soil
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-    soil = plat.media.Soil(k_s, rhoCp_s, ugt)
+    soil = media.Soil(k_s, rhoCp_s, ugt)
     # Grout
-    grout = plat.media.Grout(k_g, rhoCp_g)
+    grout = media.Grout(k_g, rhoCp_g)
 
     V_flow_rates = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.29, 0.28, 0.27, 0.26]
 
@@ -139,11 +151,11 @@ def main():
         # Define a borehole
         borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
 
-        Coaxial = plat.borehole_heat_exchangers.CoaxialPipe(
+        Coaxial = borehole_heat_exchangers.CoaxialPipe(
             m_flow_borehole, fluid, borehole, pipe, grout, soil
         )
 
-        Re = plat.borehole_heat_exchangers.compute_reynolds_concentric(
+        Re = borehole_heat_exchangers.compute_reynolds_concentric(
             Coaxial.m_flow_pipe, r_in_out, r_out_in, fluid
         )
         borehole_values["Coaxial"]["Re"].append(Re)
@@ -211,4 +223,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if run:
+        main()
