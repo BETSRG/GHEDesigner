@@ -1,5 +1,5 @@
-import ghedt as dt
-import ghedt.peak_load_analysis_tool as plat
+from ghedt import design, geometry, utilities
+from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
 import pygfunction as gt
 import pandas as pd
 
@@ -33,15 +33,15 @@ def main():
     # Pipe positions
     # --------------
     # Single U-tube [(x_in, y_in), (x_out, y_out)]
-    pos_single = plat.media.Pipe.place_pipes(s, r_out, 1)
+    pos_single = media.Pipe.place_pipes(s, r_out, 1)
     # Single U-tube BHE object
-    single_u_tube = plat.borehole_heat_exchangers.SingleUTube
+    single_u_tube = borehole_heat_exchangers.SingleUTube
     # Double U-tube
-    pos_double = plat.media.Pipe.place_pipes(s, r_out, 2)
-    double_u_tube = plat.borehole_heat_exchangers.MultipleUTube
+    pos_double = media.Pipe.place_pipes(s, r_out, 2)
+    double_u_tube = borehole_heat_exchangers.MultipleUTube
     # Coaxial tube
     pos_coaxial = (0, 0)
-    coaxial_tube = plat.borehole_heat_exchangers.CoaxialPipe
+    coaxial_tube = borehole_heat_exchangers.CoaxialPipe
 
     # Thermal conductivities
     # ----------------------
@@ -58,16 +58,16 @@ def main():
     # Thermal properties
     # ------------------
     # Pipe
-    pipe_single = plat.media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-    pipe_double = plat.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-    pipe_coaxial = plat.media.Pipe(
+    pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe_double = media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe_coaxial = media.Pipe(
         pos_coaxial, r_inner, r_outer, 0, epsilon, k_p, rhoCp_p
     )
     # Soil
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-    soil = plat.media.Soil(k_s, rhoCp_s, ugt)
+    soil = media.Soil(k_s, rhoCp_s, ugt)
     # Grout
-    grout = plat.media.Grout(k_g, rhoCp_g)
+    grout = media.Grout(k_g, rhoCp_g)
 
     # Inputs related to fluid
     # -----------------------
@@ -92,7 +92,7 @@ def main():
     # Maximum and minimum allowable heights
     max_Height = 135.0  # in meters
     min_Height = 60  # in meters
-    sim_params = plat.media.SimulationParameters(
+    sim_params = media.SimulationParameters(
         start_month,
         end_month,
         max_EFT_allowable,
@@ -113,7 +113,7 @@ def main():
     ]
 
     # Geometric constraints for the `near-square` routine
-    geometric_constraints = dt.media.GeometricConstraints(b_max_x=B, unconstrained=True)
+    geometric_constraints = geometry.GeometricConstraints(b_max_x=B, unconstrained=True)
 
     # Note: Flow functionality is currently only on a borehole basis. Future
     # development will include the ability to change the flow rate to be on a
@@ -121,7 +121,7 @@ def main():
 
     # Single U-tube
     # -------------
-    design_single_u_tube = dt.design.Design(
+    design_single_u_tube = design.DesignNearSquare(
         V_flow_borehole,
         borehole,
         single_u_tube,
@@ -132,15 +132,14 @@ def main():
         sim_params,
         geometric_constraints,
         hourly_extraction_ground_loads,
-        routine="near-square",
     )
 
     # Output the design interface object to a json file so it can be reused
-    dt.utilities.create_input_file(design_single_u_tube, file_name="ghedt_input")
+    utilities.create_input_file(design_single_u_tube, file_name="ghedt_input")
 
     # Double U-tube
     # -------------
-    design_double_u_tube = dt.design.Design(
+    design_double_u_tube = design.DesignNearSquare(
         V_flow_borehole,
         borehole,
         double_u_tube,
@@ -151,14 +150,13 @@ def main():
         sim_params,
         geometric_constraints,
         hourly_extraction_ground_loads,
-        routine="near-square",
     )
 
-    dt.utilities.create_input_file(design_double_u_tube, file_name="double_u_tube")
+    utilities.create_input_file(design_double_u_tube, file_name="double_u_tube")
 
     # Coaxial tube
     # ------------
-    design_coaxial_u_tube = dt.design.Design(
+    design_coaxial_u_tube = design.DesignNearSquare(
         V_flow_borehole,
         borehole,
         coaxial_tube,
@@ -169,10 +167,9 @@ def main():
         sim_params,
         geometric_constraints,
         hourly_extraction_ground_loads,
-        routine="near-square",
     )
 
-    dt.utilities.create_input_file(design_coaxial_u_tube, file_name="coaxial_tube")
+    utilities.create_input_file(design_coaxial_u_tube, file_name="coaxial_tube")
 
 
 if __name__ == "__main__":
