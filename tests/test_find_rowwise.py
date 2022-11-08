@@ -10,7 +10,7 @@ from pathlib import Path
 from time import time as clock
 from ghedt.output import output_design_details
 from math import pi
-from ghedt.RowWise.rowwise_generation import gen_shape
+from ghedt.rowwise.rowwise_generation import gen_shape
 from unittest import TestCase
 import csv
 
