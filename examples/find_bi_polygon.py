@@ -155,7 +155,7 @@ def main():
 
     # Single U-tube
     # -------------
-    design_single_u_tube = design.Design(
+    design_single_u_tube = design.DesignBiRectangleConstrained(
         v_flow,
         borehole,
         single_u_tube,
@@ -168,7 +168,6 @@ def main():
         hourly_extraction_ground_loads,
         method="hybrid",
         flow=flow,
-        routine="bi-rectangle_constrained",
         property_boundary=prop_a,
         building_descriptions=ng_a,
     )
@@ -219,7 +218,7 @@ def main():
 
     # Double U-tube
     # -------------
-    design_double_u_tube = design.Design(
+    design_double_u_tube = design.DesignBiRectangleConstrained(
         v_flow,
         borehole,
         double_u_tube,
@@ -232,7 +231,6 @@ def main():
         hourly_extraction_ground_loads,
         method="hybrid",
         flow=flow,
-        routine="bi-rectangle_constrained",
         property_boundary=prop_a,
         building_descriptions=ng_a,
     )
@@ -298,7 +296,7 @@ def main():
 
     # Coaxial Tube
     # -------------
-    design_coax_tube = design.Design(
+    design_coax_tube = design.DesignBiRectangleConstrained(
         v_flow,
         borehole,
         coaxial_tube,
@@ -311,7 +309,6 @@ def main():
         hourly_extraction_ground_loads,
         method="hybrid",
         flow=flow,
-        routine="bi-rectangle_constrained",
         property_boundary=prop_a,
         building_descriptions=ng_a,
     )

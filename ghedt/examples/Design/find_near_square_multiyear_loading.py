@@ -3,8 +3,8 @@
 
 # This search is described in section 4.3.2 of Cook (2021) from pages 123-129.
 
-import ghedt as dt
-import ghedt.peak_load_analysis_tool as plat
+from ghedt import design, geometry, utilities
+from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 import pygfunction as gt
 import pandas as pd
 from time import time as clock
@@ -39,8 +39,8 @@ def main():
     epsilon = 1.0e-6  # Pipe roughness (m)
 
     # Single U Tube Pipe Positions
-    pos_single = plat.media.Pipe.place_pipes(s, r_out, 1)
-    single_u_tube = plat.borehole_heat_exchangers.SingleUTube
+    pos_single = media.Pipe.place_pipes(s, r_out, 1)
+    single_u_tube = borehole_heat_exchangers.SingleUTube
 
     # Thermal conductivities
     k_p = 0.4  # Pipe thermal conductivity (W/m.K)
@@ -53,14 +53,14 @@ def main():
     rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
     # Instantiating Pipe
-    pipe_single = plat.media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
 
     # Instantiating Soil Properties
     ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-    soil = plat.media.Soil(k_s, rhoCp_s, ugt)
+    soil = media.Soil(k_s, rhoCp_s, ugt)
 
     # Instantiating Grout Properties
-    grout = plat.media.Grout(k_g, rhoCp_g)
+    grout = media.Grout(k_g, rhoCp_g)
 
     # Fluid properties
     fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
@@ -81,7 +81,7 @@ def main():
     min_EFT_allowable = 5  # degrees Celsius (HPEFT)
     max_Height = 135.0  # in meters
     min_Height = 60  # in meters
-    sim_params = plat.media.SimulationParameters(
+    sim_params = media.SimulationParameters(
         start_month,
         end_month,
         max_EFT_allowable,
@@ -107,13 +107,13 @@ def main():
     """
     # B is already defined above
     number_of_boreholes = 32
-    length = dt.utilities.length_of_side(number_of_boreholes, B)
-    geometric_constraints = dt.media.GeometricConstraints(b=B, length=length)
+    length = utilities.length_of_side(number_of_boreholes, B)
+    geometric_constraints = geometry.GeometricConstraints(b=B, length=length)
 
     # Single U-tube
     # -------------
     # load_years optional parameter is used to determine if there are leap years in the given loads/where they fall
-    design_single_u_tube = dt.design.Design(
+    design_single_u_tube = design.DesignNearSquare(
         V_flow,
         borehole,
         single_u_tube,
@@ -126,7 +126,6 @@ def main():
         hourly_extraction_ground_loads,
         method="hybrid",
         flow=flow,
-        routine="near-square",
         load_years=[2010, 2011, 2012, 2013],
     )
 
@@ -170,13 +169,13 @@ def main():
     note = "Square-Near-Square w/ Multi-year Loading Usage Example: Double U Tube"
 
     # Double U-tube
-    pos_double = plat.media.Pipe.place_pipes(s, r_out, 2)
-    double_u_tube = plat.borehole_heat_exchangers.MultipleUTube
-    pipe_double = plat.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+    pos_double = media.Pipe.place_pipes(s, r_out, 2)
+    double_u_tube = borehole_heat_exchangers.MultipleUTube
+    pipe_double = media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
 
     # Double U-tube
     # -------------
-    design_double_u_tube = dt.design.Design(
+    design_double_u_tube = design.DesignNearSquare(
         V_flow,
         borehole,
         double_u_tube,
@@ -189,7 +188,6 @@ def main():
         hourly_extraction_ground_loads,
         method="hybrid",
         flow=flow,
-        routine="near-square",
         load_years=[2010, 2011, 2012, 2013],
     )
 
@@ -247,14 +245,14 @@ def main():
 
     # Coaxial tube
     pos_coaxial = (0, 0)
-    coaxial_tube = plat.borehole_heat_exchangers.CoaxialPipe
-    pipe_coaxial = plat.media.Pipe(
+    coaxial_tube = borehole_heat_exchangers.CoaxialPipe
+    pipe_coaxial = media.Pipe(
         pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rhoCp_p
     )
 
     # Coaxial Tube
     # -------------
-    design_coax_tube = dt.design.Design(
+    design_coax_tube = design.DesignNearSquare(
         V_flow,
         borehole,
         coaxial_tube,
@@ -267,7 +265,6 @@ def main():
         hourly_extraction_ground_loads,
         method="hybrid",
         flow=flow,
-        routine="near-square",
         load_years=[2010, 2011, 2012, 2013],
     )
 

@@ -140,7 +140,7 @@ class TestNearSquare(unittest.TestCase, DesignBase):
         # Single U-tube
         # -------------
         # Design a single U-tube with a system volumetric flow rate
-        design_single_u_tube_a = design.Design(
+        design_single_u_tube_a = design.DesignNearSquare(
             self.V_flow_system,
             self.borehole,
             self.single_u_tube,
@@ -152,7 +152,6 @@ class TestNearSquare(unittest.TestCase, DesignBase):
             self.geometric_constraints,
             self.hourly_extraction_ground_loads,
             flow="system",
-            routine="near-square",
         )
         # Find the near-square design for a single U-tube and size it.
         bisection_search = design_single_u_tube_a.find_design()
@@ -160,7 +159,7 @@ class TestNearSquare(unittest.TestCase, DesignBase):
         bisection_search.ghe.size(method="hybrid")
         H_single_u_tube_a = bisection_search.ghe.bhe.b.H
 
-        design_single_u_tube_b = design.Design(
+        design_single_u_tube_b = design.DesignNearSquare(
             self.V_flow_borehole,
             self.borehole,
             self.single_u_tube,
@@ -172,7 +171,6 @@ class TestNearSquare(unittest.TestCase, DesignBase):
             self.geometric_constraints,
             self.hourly_extraction_ground_loads,
             flow="borehole",
-            routine="near-square",
         )
         # Find the near-square design for a single U-tube and size it.
         bisection_search = design_single_u_tube_b.find_design()
