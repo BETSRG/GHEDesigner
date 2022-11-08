@@ -8,8 +8,8 @@ from ghedt.gfunction import compute_live_g_function
 from ghedt.ground_heat_exchangers import GHE
 from ghedt.peak_load_analysis_tool.media import (Grout, Pipe,
                                                  SimulationParameters, Soil)
-from ghedt.RowWise.RowWiseGeneration import (fieldOptimization_FR,
-                                             fieldOptimizationWPSpac_FR)
+from ghedt.RowWise.rowwise_generation import (field_optimization_fr,
+                                              field_optimization_wp_space_fr)
 from ghedt.utilities import (eskilson_log_times, borehole_spacing,
                              check_bracket, sign, js_dump)
 
@@ -296,7 +296,7 @@ class Bisection1D:
         return selection_key, selected_coordinates
 
 
-# This is the search algorithm used for finding RowWise fields
+# This is the search algorithm used for finding rowwise fields
 class RowWiseModifiedBisectionSearch:
     def __init__(
         self,
@@ -316,7 +316,7 @@ class RowWiseModifiedBisectionSearch:
         disp: bool = False,
         search: bool = True,
         advanced_tracking: bool = True,
-        field_type: str = "RowWise",
+        field_type: str = "rowwise",
         load_years=None,
         e_t: float = 1e-10,
         b_r_point=None,
@@ -478,40 +478,40 @@ class RowWiseModifiedBisectionSearch:
 
         # Generate Fields
         if use_perimeter:
-            upper_field, upper_field_specifier = fieldOptimizationWPSpac_FR(
+            upper_field, upper_field_specifier = field_optimization_wp_space_fr(
                 p_spacing,
                 spacing_start,
                 rotate_step,
                 prop_bound,
-                ngZones=ng_zones,
-                rotateStart=rotate_start,
-                rotateStop=rotate_stop,
+                ng_zones=ng_zones,
+                rotate_start=rotate_start,
+                rotate_stop=rotate_stop,
             )
-            lower_field, lower_field_specifier = fieldOptimizationWPSpac_FR(
+            lower_field, lower_field_specifier = field_optimization_wp_space_fr(
                 p_spacing,
                 spacing_stop,
                 rotate_step,
                 prop_bound,
-                ngZones=ng_zones,
-                rotateStart=rotate_start,
-                rotateStop=rotate_stop,
+                ng_zones=ng_zones,
+                rotate_start=rotate_start,
+                rotate_stop=rotate_stop,
             )
         else:
-            upper_field, upper_field_specifier = fieldOptimization_FR(
+            upper_field, upper_field_specifier = field_optimization_fr(
                 spacing_start,
                 rotate_step,
                 prop_bound,
-                ngZones=ng_zones,
-                rotateStart=rotate_start,
-                rotateStop=rotate_stop,
+                ng_zones=ng_zones,
+                rotate_start=rotate_start,
+                rotate_stop=rotate_stop,
             )
-            lower_field, lower_field_specifier = fieldOptimization_FR(
+            lower_field, lower_field_specifier = field_optimization_fr(
                 spacing_stop,
                 rotate_step,
                 prop_bound,
-                ngZones=ng_zones,
-                rotateStart=rotate_start,
-                rotateStop=rotate_stop,
+                ng_zones=ng_zones,
+                rotate_start=rotate_start,
+                rotate_stop=rotate_stop,
             )
         # Get Excess Temperatures
         t_upper = self.calculate_excess(
@@ -557,23 +557,23 @@ class RowWiseModifiedBisectionSearch:
                 print("Bisection Search Iteration: ", i)
                 # Getting Three Middle Field
                 if use_perimeter:
-                    f1, f1_specifier = fieldOptimizationWPSpac_FR(
+                    f1, f1_specifier = field_optimization_wp_space_fr(
                         p_spacing,
                         spacing_m,
                         rotate_step,
                         prop_bound,
-                        ngZones=ng_zones,
-                        rotateStart=rotate_start,
-                        rotateStop=rotate_stop,
+                        ng_zones=ng_zones,
+                        rotate_start=rotate_start,
+                        rotate_stop=rotate_stop,
                     )
                 else:
-                    f1, f1_specifier = fieldOptimization_FR(
+                    f1, f1_specifier = field_optimization_fr(
                         spacing_m,
                         rotate_step,
                         prop_bound,
-                        ngZones=ng_zones,
-                        rotateStart=rotate_start,
-                        rotateStop=rotate_stop,
+                        ng_zones=ng_zones,
+                        rotate_start=rotate_start,
+                        rotate_stop=rotate_stop,
                     )
 
                 # Getting the three field's excess temperature
@@ -612,23 +612,23 @@ class RowWiseModifiedBisectionSearch:
             best_spacing = None
             for i in range(len(target_spacings)):
                 if use_perimeter:
-                    field, f_s = fieldOptimizationWPSpac_FR(
+                    field, f_s = field_optimization_wp_space_fr(
                         p_spacing,
                         target_spacings[i],
                         rotate_step,
                         prop_bound,
-                        ngZones=ng_zones,
-                        rotateStart=rotate_start,
-                        rotateStop=rotate_stop,
+                        ng_zones=ng_zones,
+                        rotate_start=rotate_start,
+                        rotate_stop=rotate_stop,
                     )
                 else:
-                    field, f_s = fieldOptimization_FR(
+                    field, f_s = field_optimization_fr(
                         target_spacings[i],
                         rotate_step,
                         prop_bound,
-                        ngZones=ng_zones,
-                        rotateStart=rotate_start,
-                        rotateStop=rotate_stop,
+                        ng_zones=ng_zones,
+                        rotate_start=rotate_start,
+                        rotate_stop=rotate_stop,
                     )
                 t_e = self.calculate_excess(
                     field, self.sim_params.max_Height, field_specifier=f_s

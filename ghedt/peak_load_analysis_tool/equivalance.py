@@ -21,7 +21,7 @@ def compute_equivalent(bhe):
 
 
 def solve_root(
-    x, objective_function, lower=None, upper=None, abs_tol=1.0e-6, rel_tol=1.0e-6, max_iter=50
+        x, objective_function, lower=None, upper=None, abs_tol=1.0e-6, rel_tol=1.0e-6, max_iter=50
 ):
     # Vary flow rate to match the convective resistance
 
@@ -81,9 +81,9 @@ def equivalent_single_u_tube(bhe, vol_fluid, vol_pipe, resist_conv, resist_pipe)
     pos = media.Pipe.place_pipes(s, r_p_o_prime, 1)  # Place single u-tube pipe
 
     # New pipe geometry
-    eps = deepcopy(bhe.pipe.eps)
+    roughness = deepcopy(bhe.pipe.roughness)
     rho_cp = deepcopy(bhe.pipe.rhoCp)
-    pipe = media.Pipe(pos, r_p_i_prime, r_p_o_prime, s, eps, k_p_prime, rho_cp)
+    pipe = media.Pipe(pos, r_p_i_prime, r_p_o_prime, s, roughness, k_p_prime, rho_cp)
 
     # Don't tie together the original and equivalent BHEs
     m_flow_borehole = deepcopy(bhe.m_flow_borehole)
@@ -129,8 +129,8 @@ def u_tube_volumes(u_tube):
     area_surf_inner = n * pi * (u_tube.r_in * 2.0) ** 2
     resist_conv = 1 / (u_tube.h_f * area_surf_inner)  # Convection resistance (m.K/W)
     # Volumes
-    vol_fluid = n * pi * (u_tube.r_in**2)
-    vol_pipe = n * pi * (u_tube.r_out**2) - vol_fluid
+    vol_fluid = n * pi * (u_tube.r_in ** 2)
+    vol_pipe = n * pi * (u_tube.r_out ** 2) - vol_fluid
     # V_grout = pi * (u_tube.b.r_b**2) - vol_pipe - vol_fluid
     resist_pipe = log(u_tube.r_out / u_tube.r_in) / (n * 2 * pi * u_tube.pipe.k)
     return vol_fluid, vol_pipe, resist_conv, resist_pipe
@@ -141,9 +141,9 @@ def concentric_tube_volumes(coaxial):
     r_in_in, r_in_out = coaxial.r_inner
     r_out_in, r_out_out = coaxial.r_outer
     # Compute volumes for concentric ghe geometry
-    vol_fluid = pi * ((r_in_in**2) + (r_out_in**2) - (r_in_out**2))
+    vol_fluid = pi * ((r_in_in ** 2) + (r_out_in ** 2) - (r_in_out ** 2))
     vol_pipe = pi * (
-        (r_in_out**2) - (r_in_in**2) + (r_out_out**2) - (r_out_in**2)
+            (r_in_out ** 2) - (r_in_in ** 2) + (r_out_out ** 2) - (r_out_in ** 2)
     )
     # V_grout = pi * ((coaxial.b.r_b**2) - (r_out_out**2))
     area_surf_outer = pi * 2 * r_out_in
@@ -162,7 +162,7 @@ def match_effective_borehole_resistance(tube_ref, new_tube):
         new_tube.grout.k = k_g_in
         # Update Delta-circuit thermal resistances
         # Initialize stored_coefficients
-        resist_bh_prime = new_tube.update_thermal_resistance(m_flow_borehole=None, fluid=None)
+        resist_bh_prime = new_tube.update_thermal_resistance(m_flow_borehole=None)
         resist_bh = tube_ref.compute_effective_borehole_resistance()
         return resist_bh - resist_bh_prime
 

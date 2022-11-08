@@ -4,11 +4,11 @@ from math import pi
 
 import numpy as np
 import pandas as pd
-from ghedt.RowWise.RowWiseGeneration import (
-    fieldOptimization_FR,
-    fieldOptimizationWPSpac_FR,
-    genBoreHoleConfig,
-    genShape,
+from ghedt.rowwise.rowwise_generation import (
+    field_optimization_fr,
+    field_optimization_wp_space_fr,
+    gen_borehole_config,
+    gen_shape,
 )
 
 REFERENCE_DATA_FILE = os.path.join(
@@ -59,15 +59,15 @@ class TestRowWise(unittest.TestCase):
             int((self.rotation_stop - self.rotation_start) / (self.rotation_step * 0.5))
             + 1
         )
-        self.property, self.buildings = genShape(
-            self.prop_polygon_ar, ngZones=[self.building_polygon_ar]
+        self.property, self.buildings = gen_shape(
+            self.prop_polygon_ar, ng_zones=[self.building_polygon_ar]
         )
 
     def test_shape_methods(self):
 
         reference_values = self.reference_values
-        area_1 = self.property.getArea()
-        area_2 = self.buildings[0].getArea()
+        area_1 = self.property.get_area()
+        area_2 = self.buildings[0].get_area()
         self.assertAlmostEqual(
             area_1, reference_values["test_shape_methods_Area"][0], delta=0.001
         )
@@ -75,8 +75,8 @@ class TestRowWise(unittest.TestCase):
             area_2, reference_values["test_shape_methods_Area"][1], delta=0.001
         )
 
-        pint_11 = self.property.pointintersect([100.0, 70.0])
-        pint_12 = self.property.pointintersect([20.0, 80.0])
+        pint_11 = self.property.point_intersect([100.0, 70.0])
+        pint_12 = self.property.point_intersect([20.0, 80.0])
         self.assertEqual(
             pint_11, reference_values["test_shape_methods_point_intersections"][0]
         )
@@ -84,8 +84,8 @@ class TestRowWise(unittest.TestCase):
             pint_12, reference_values["test_shape_methods_point_intersections"][1]
         )
 
-        pint_21 = self.buildings[0].pointintersect([100.0, 70.0])
-        pint_22 = self.buildings[0].pointintersect([20.0, 80.0])
+        pint_21 = self.buildings[0].point_intersect([100.0, 70.0])
+        pint_22 = self.buildings[0].point_intersect([20.0, 80.0])
         self.assertEqual(
             pint_21, reference_values["test_shape_methods_point_intersections"][2]
         )
@@ -93,9 +93,9 @@ class TestRowWise(unittest.TestCase):
             pint_22, reference_values["test_shape_methods_point_intersections"][3]
         )
 
-        shape_1_ex_1 = self.property.lineintersect([60.0, 30.0, 110.0, 130.0])
-        shape_1_ex_2 = self.property.lineintersect([60.0, 55.0, 110.0, 50.0])
-        shape_1_ex_3 = self.property.lineintersect([20.0, 40.0, 60.0, 40.0])
+        shape_1_ex_1 = self.property.line_intersect([60.0, 30.0, 110.0, 130.0])
+        shape_1_ex_2 = self.property.line_intersect([60.0, 55.0, 110.0, 50.0])
+        shape_1_ex_3 = self.property.line_intersect([20.0, 40.0, 60.0, 40.0])
 
         def split_points(point_array):
             if len(point_array) > 0:
@@ -132,9 +132,9 @@ class TestRowWise(unittest.TestCase):
         check_intersections(s1e3_ref_x, shape_1_ex_3_x)
         check_intersections(s1e3_ref_y, shape_1_ex_3_y)
 
-        shape_2_ex_1 = self.buildings[0].lineintersect([60.0, 30.0, 110.0, 130.0])
-        shape_2_ex_2 = self.buildings[0].lineintersect([60.0, 55.0, 110.0, 50.0])
-        shape_2_ex_3 = self.buildings[0].lineintersect([20.0, 40.0, 60.0, 40.0])
+        shape_2_ex_1 = self.buildings[0].line_intersect([60.0, 30.0, 110.0, 130.0])
+        shape_2_ex_2 = self.buildings[0].line_intersect([60.0, 55.0, 110.0, 50.0])
+        shape_2_ex_3 = self.buildings[0].line_intersect([20.0, 40.0, 60.0, 40.0])
 
         shape_2_ex_1_x, shape_2_ex_1_y = split_points(shape_2_ex_1)
         shape_2_ex_2_x, shape_2_ex_2_y = split_points(shape_2_ex_2)
@@ -162,11 +162,11 @@ class TestRowWise(unittest.TestCase):
         )
         nbhs = [
             len(
-                genBoreHoleConfig(
+                gen_borehole_config(
                     self.property,
                     target_spacing,
                     target_spacing,
-                    nogo=self.buildings,
+                    no_go=self.buildings,
                     rotate=rotation,
                 )
             )
@@ -187,13 +187,13 @@ class TestRowWise(unittest.TestCase):
         )
         nbhs = [
             len(
-                fieldOptimization_FR(
+                field_optimization_fr(
                     ts,
                     self.rotation_step,
                     self.property,
-                    ngZones=self.buildings,
-                    rotateStart=self.rotation_start,
-                    rotateStop=self.rotation_stop,
+                    ng_zones=self.buildings,
+                    rotate_start=self.rotation_start,
+                    rotate_stop=self.rotation_stop,
                 )[0]
             )
             for ts in target_spacings
@@ -213,14 +213,14 @@ class TestRowWise(unittest.TestCase):
         )
         nbhs = [
             len(
-                fieldOptimizationWPSpac_FR(
+                field_optimization_wp_space_fr(
                     self.perimeter_spac_ratio,
                     ts,
                     self.rotation_step,
                     self.property,
-                    ngZones=self.buildings,
-                    rotateStart=self.rotation_start,
-                    rotateStop=self.rotation_stop,
+                    ng_zones=self.buildings,
+                    rotate_start=self.rotation_start,
+                    rotate_stop=self.rotation_stop,
                 )[0]
             )
             for ts in target_spacings

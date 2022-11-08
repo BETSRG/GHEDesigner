@@ -10,7 +10,7 @@ from pathlib import Path
 from time import time as clock
 from ghedt.output import output_design_details
 from math import pi
-from ghedt.RowWise.RowWiseGeneration import genShape
+from ghedt.RowWise.rowwise_generation import gen_shape
 from unittest import TestCase
 import csv
 
@@ -137,7 +137,7 @@ class TestFindRowWise(TestCase):
                     L.append(float(row))
                 ngA[-1].append(L)
 
-        buildVert, nogoVert = genShape(propA, ngZones=ngA)
+        buildVert, nogoVert = gen_shape(propA, ng_zones=ngA)
 
         """ Geometric constraints for the `row-wise` routine:
           - list of vertices for the nogo zones (nogoVert)
