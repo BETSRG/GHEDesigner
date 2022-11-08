@@ -130,8 +130,12 @@ class SingleUTube(gt.pipes.SingleUTube):
 
         self.R_p = 0.0
         self.R_f = 0.0
+        self.h_f = 0.0
         self.fluid = fluid
         self.m_flow_borehole = m_flow_borehole
+
+        # TODO: May need to revisit this for series/parallel connections
+        self.m_flow_pipe = m_flow_borehole
         self.borehole = borehole
         self.pipe = pipe
         self.soil = soil
@@ -153,14 +157,14 @@ class SingleUTube(gt.pipes.SingleUTube):
         self.resist_delta = self.update_thermal_resistance(m_flow_borehole)
 
     def update_pipe_fluid_resist(self, m_flow_borehole):
-        h_conv = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(m_flow_borehole,
-                                                                             self.pipe.r_in,
-                                                                             self.fluid.mu,
-                                                                             self.fluid.rho,
-                                                                             self.fluid.k,
-                                                                             self.fluid.cp,
-                                                                             self.pipe.roughness)
-        self.R_f = compute_fluid_resistance(h_conv, self.pipe.r_in)
+        self.h_f = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(m_flow_borehole,
+                                                                               self.pipe.r_in,
+                                                                               self.fluid.mu,
+                                                                               self.fluid.rho,
+                                                                               self.fluid.k,
+                                                                               self.fluid.cp,
+                                                                               self.pipe.roughness)
+        self.R_f = compute_fluid_resistance(self.h_f, self.pipe.r_in)
         self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(self.pipe.r_in, self.pipe.r_out, self.pipe.k)
         self.R_fp = self.R_f + self.R_p
 
