@@ -162,7 +162,7 @@ def match_effective_borehole_resistance(tube_ref, new_tube):
         new_tube.grout.k = k_g_in
         # Update Delta-circuit thermal resistances
         # Initialize stored_coefficients
-        resist_bh_prime = new_tube.update_thermal_resistance(m_flow_borehole=None, fluid=None)
+        resist_bh_prime = new_tube.update_thermal_resistance(m_flow_borehole=None)
         resist_bh = tube_ref.compute_effective_borehole_resistance()
         return resist_bh - resist_bh_prime
 

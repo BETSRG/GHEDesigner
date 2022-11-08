@@ -117,7 +117,7 @@ class BasePipe(object):
         return resist_bh_effective
 
 
-class SingleUTube(BasePipe, gt.pipes.SingleUTube):
+class SingleUTube(gt.pipes.SingleUTube):
     def __init__(
             self,
             m_flow_borehole: float,
@@ -127,38 +127,44 @@ class SingleUTube(BasePipe, gt.pipes.SingleUTube):
             grout: media.Grout,
             soil: media.Soil,
     ):
-        # Initialize base pipe class
-        BasePipe.__init__(self, m_flow_borehole, fluid, borehole, soil, grout, pipe)
+
+        self.R_p = 0.0
+        self.R_f = 0.0
+        self.fluid = fluid
+        self.m_flow_borehole = m_flow_borehole
+        self.borehole = borehole
+        self.pipe = pipe
+        self.soil = soil
+        self.grout = grout
+
         # Compute Single pipe and fluid thermal resistance
-        resist_fluid_pipe = self.R_f + self.R_p
+        self.update_pipe_fluid_resist(m_flow_borehole)
         # Initialize pygfunction SingleUTube base class
-        gt.pipes.SingleUTube.__init__(
-            self,
-            pipe.pos,
-            pipe.r_in,
-            pipe.r_out,
-            borehole,
+        super().__init__(
+            self.pipe.pos,
+            self.pipe.r_in,
+            self.pipe.r_out,
+            self.borehole,
             self.soil.k,
             self.grout.k,
-            resist_fluid_pipe,
+            self.R_fp,
         )
 
-    def __repr__(self):
-        justify = self.justify
+        self.resist_delta = self.update_thermal_resistance(m_flow_borehole)
 
-        output = BasePipe.__repr__(self)
+    def update_pipe_fluid_resist(self, m_flow_borehole):
+        h_conv = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(m_flow_borehole,
+                                                                             self.pipe.r_in,
+                                                                             self.fluid.mu,
+                                                                             self.fluid.rho,
+                                                                             self.fluid.k,
+                                                                             self.fluid.cp,
+                                                                             self.pipe.roughness)
+        self.R_f = compute_fluid_resistance(h_conv, self.pipe.r_in)
+        self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(self.pipe.r_in, self.pipe.r_out, self.pipe.k)
+        self.R_fp = self.R_f + self.R_p
 
-        resist_bh_effective = bp.effective_borehole_thermal_resistance(
-            self, self.m_flow_borehole, self.fluid.cp
-        )
-
-        output += justify(
-            "Effective borehole resistance", str(round(resist_bh_effective, 4)) + " (m.K/W)"
-        )
-
-        return output
-
-    def update_thermal_resistance(self, m_flow_borehole=None, fluid=None):
+    def update_thermal_resistance(self, m_flow_borehole=None):
 
         # if the mass flow rate has changed, then update it and use new value
         if m_flow_borehole is None:
@@ -166,34 +172,30 @@ class SingleUTube(BasePipe, gt.pipes.SingleUTube):
         else:
             self.m_flow_borehole = m_flow_borehole
 
-        # if the mass flow rate has changed, then update it and use new value
-        if fluid is None:
-            fluid = self.fluid
-        else:
-            self.fluid = fluid
-
-        self.compute_resistances()
-
-        self.R_fp = self.R_f + self.R_p
+        self.update_pipe_fluid_resist(self.m_flow_borehole)
 
         # Delta-circuit thermal resistances
-        self._Rd = gt.pipes.thermal_resistances(
-            self.pos, self.r_out, self.b.r_b, self.k_s, self.k_g, self.R_fp, J=self.J
-        )[1]
+        self.resist_delta = gt.pipes.thermal_resistances(
+            self.pipe.pos, self.pipe.r_out, self.borehole.r_b, self.soil.k, self.grout.k, self.R_fp)[1]
 
         # Initialize stored_coefficients
+        # TODO: Figure out why this is here...
         self._initialize_stored_coefficients()
 
         # Note: This is the local borehole resistance
         # # Evaluate borehole thermal resistance
-        # R_b = 1 / np.trace(1 / self._Rd)
+        # R_b = 1 / np.trace(1 / self.resist_delta)
 
         # Compute and return effective borehole resistance
-        resist_bh_effective = bp.effective_borehole_thermal_resistance(
-            self, m_flow_borehole, fluid.cp
-        )
+        resist_bh_effective = self.effective_borehole_thermal_resistance(m_flow_borehole, self.fluid.cp)
 
         return resist_bh_effective
+
+    def compute_effective_borehole_resistance(self, m_flow_borehole=None):
+        """
+        super dumbness
+        """
+        return self.update_thermal_resistance(m_flow_borehole)
 
 
 class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
@@ -213,6 +215,7 @@ class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
         )
 
         # Get number of pipes from positions
+        self.resist_delta = None
         self.n_pipes = int(len(pipe.pos) / 2)
         # Compute Single pipe and fluid thermal resistance
         resist_fp = self.R_f + self.R_p
@@ -248,7 +251,7 @@ class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
         self.R_fp = self.R_f + self.R_p
 
         # Delta-circuit thermal resistances
-        self._Rd = gt.pipes.thermal_resistances(
+        self.resist_delta = gt.pipes.thermal_resistances(
             self.pos, self.r_out, self.b.r_b, self.k_s, self.k_g, self.R_fp, J=self.J
         )[1]
 
@@ -257,7 +260,7 @@ class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
 
         # Note: This is the local borehole resistance
         # # Evaluate borehole thermal resistance
-        # R_b = 1 / np.trace(1 / self._Rd)
+        # R_b = 1 / np.trace(1 / self.resist_delta)
 
         # Compute and return effective borehole resistance
         resist_bh_effective = bp.effective_borehole_thermal_resistance(
@@ -369,7 +372,7 @@ class CoaxialBase(object):
         output += justify(
             "Outer annulus resistance", str(round(self.R_f_a_out, 4)) + " (m.K/W)"
         )
-        reynolds = compute_reynolds(self.m_flow_pipe, self.r_in_in, self.roughness, self.fluid)
+        reynolds = compute_reynolds(self.m_flow_pipe, self.r_in_in, self.fluid)
         output += justify("Reynolds inner", str(round(reynolds, 4)))
         output += justify(
             "Inner Convection coefficient", str(round(self.h_fluid_in, 4)) + " (W/m2.K)"
@@ -456,6 +459,7 @@ class CoaxialPipe(CoaxialBase, gt.pipes.Coaxial, BasePipe):
         # Vectors of inner and outer pipe radii
         # Note : The dimensions of the inlet pipe are the first elements of
         #       the vectors. In this example, the inlet pipe is the inside pipe.
+        self.resist_delta = None
         r_inner_p = np.array([pipe.r_in[0], pipe.r_out[0]])  # Inner pipe radii (m)
         r_outer_p = np.array([pipe.r_in[1], pipe.r_out[1]])  # Outer pip radii (m)
 
@@ -515,18 +519,18 @@ class CoaxialPipe(CoaxialBase, gt.pipes.Coaxial, BasePipe):
         )[1][0]
 
         # Delta-circuit thermal resistances
-        self._Rd = np.zeros((2 * self.nPipes, 2 * self.nPipes))
-        self._Rd[idx_inner, idx_inner] = np.inf
-        self._Rd[idx_inner, idx_outer] = self.R_ff
-        self._Rd[idx_outer, idx_inner] = self.R_ff
-        self._Rd[idx_outer, idx_outer] = resist_fg
+        self.resist_delta = np.zeros((2 * self.nPipes, 2 * self.nPipes))
+        self.resist_delta[idx_inner, idx_inner] = np.inf
+        self.resist_delta[idx_inner, idx_outer] = self.R_ff
+        self.resist_delta[idx_outer, idx_inner] = self.R_ff
+        self.resist_delta[idx_outer, idx_outer] = resist_fg
 
         # Initialize stored_coefficients
         self._initialize_stored_coefficients()
 
         # Note: This is the local borehole resistance
         # # Evaluate borehole thermal resistance
-        # R_b = 1 / np.trace(1 / self._Rd)
+        # R_b = 1 / np.trace(1 / self.resist_delta)
 
         # Compute and return effective borehole resistance
         resist_bh_effective = bp.effective_borehole_thermal_resistance(
@@ -534,6 +538,10 @@ class CoaxialPipe(CoaxialBase, gt.pipes.Coaxial, BasePipe):
         )
 
         return resist_bh_effective
+
+
+def compute_fluid_resistance(h_conv, radius):
+    return 1 / (h_conv * 2 * pi * radius)
 
 
 def compute_reynolds(m_flow_pipe, r_in, fluid):
