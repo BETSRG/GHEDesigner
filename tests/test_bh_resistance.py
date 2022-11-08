@@ -93,7 +93,7 @@ class TestBHResistance(TestCase):
 
         fig = Coaxial.visualize_pipes()
 
-        fig.savefig("Coaxial.png")
+        fig.savefig("tests/Coaxial.png")
 
     def test_bh_resistance_double_u_tube(self):
         # Borehole dimensions
@@ -172,13 +172,13 @@ class TestBHResistance(TestCase):
         fig = double_u_tube_series.visualize_pipes()
 
         # Save the figure as a png
-        fig.savefig("double_u_tube_series.png")
+        fig.savefig("tests/double_u_tube_series.png")
 
         # Create a borehole top view
         fig = double_u_tube_parallel.visualize_pipes()
 
         # Save the figure as a png
-        fig.savefig("double_u_tube_parallel.png")
+        fig.savefig("tests/double_u_tube_parallel.png")
 
     def test_bh_resistance_single_u_tube(self):
         # Borehole dimensions
@@ -232,7 +232,7 @@ class TestBHResistance(TestCase):
 
         # Intermediate variables
         Re = borehole_heat_exchangers.compute_reynolds(
-            single_u_tube.m_flow_pipe, r_in, fluid
+            single_u_tube.m_flow_borehole, r_in, fluid
         )
         print("Reynolds number: {}".format(Re))
         R_p = single_u_tube.R_p

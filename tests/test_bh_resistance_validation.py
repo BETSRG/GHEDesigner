@@ -9,7 +9,7 @@ try:
     glhe_file = Path(__file__).resolve().parent / 'GLHEPRO.xlsx'
     pd.ExcelFile(glhe_file)
     run = True
-except ImportError:
+except (ImportError, FileNotFoundError):
     plt = None
     pd = None
     run = False
