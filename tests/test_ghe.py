@@ -125,11 +125,7 @@ class TestGHE(GHEBaseTest):
         )
 
         # Process loads from file
-        # -----------------------
-        # read in the csv file and convert the loads to a list of length 8760
-        csv_file = self.test_data_directory / 'Atlanta_Office_Building_Loads.csv'
-        raw_lines = csv_file.read_text().split('\n')
-        self.hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
+        self.hourly_extraction_ground_loads = self.get_atlanta_loads()
 
     def test_single_u_tube(self):
 

@@ -115,11 +115,7 @@ class TestNearSquare(GHEBaseTest):
         self.V_flow_system = self.V_flow_borehole * 156.0
 
         # Process loads from file
-        # -----------------------
-        # read in the csv file and convert the loads to a list of length 8760
-        csv_file = self.test_data_directory / 'Atlanta_Office_Building_Loads.csv'
-        raw_lines = csv_file.read_text().split('\n')
-        self.hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
+        hourly_extraction_ground_loads = self.get_atlanta_loads()
 
         # Geometric constraints for the `near-square` routine
         # Required geometric constraints for the uniform rectangle design: B

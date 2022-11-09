@@ -90,14 +90,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
             min_height,
         )
 
-        # Process loads from file
-        # -----------------------
-        # read in the csv file and convert the loads to a list of length 8760
-        glhe_json_data = self.test_data_directory / 'Atlanta_Office_Building_Loads.csv'
-        raw_lines = glhe_json_data.read_text().split('\n')
-        hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
-
-        # --------------------------------------------------------------------------
+        hourly_extraction_ground_loads = self.get_atlanta_loads()
 
         # Initialize GHE object
         ghe = ground_heat_exchangers.GHE(
