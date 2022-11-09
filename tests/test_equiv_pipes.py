@@ -60,35 +60,35 @@ class TestEquivalentPipes(GHEBaseTest):
         )
 
         var = "Intermediate variables"
-        print(var)
-        print(len(var) * "-")
+        self.log(var)
+        self.log(len(var) * "-")
         v_fluid, v_pipe, r_conv, r_pipe = equivalance.concentric_tube_volumes(coaxial)
-        print("Fluid volume per meter (m^2): {0:.8f}".format(v_fluid))
-        print("Pipe volume per meter (m^2): {0:.8f}".format(v_pipe))
-        print("Total Convective Resistance (K/(W/m)): {0:.8f}".format(r_conv))
-        print("Total Pipe Resistance (K/(W/m)): {0:.8f}".format(r_pipe))
-        print("\n")
+        self.log("Fluid volume per meter (m^2): {0:.8f}".format(v_fluid))
+        self.log("Pipe volume per meter (m^2): {0:.8f}".format(v_pipe))
+        self.log("Total Convective Resistance (K/(W/m)): {0:.8f}".format(r_conv))
+        self.log("Total Pipe Resistance (K/(W/m)): {0:.8f}".format(r_pipe))
+        self.log("\n")
 
         single_u_tube = equivalance.compute_equivalent(coaxial)
 
         val = "Single U-tube equivalent parameters"
-        print("\n" + val + "\n" + len(val) * "-")
-        print(
+        self.log("\n" + val + "\n" + len(val) * "-")
+        self.log(
             "Fluid volumetric flow rate (L/s): {0:.8f}".format(
                 single_u_tube.m_flow_pipe * 1000.0 / single_u_tube.fluid.rho
             )
         )
-        print("Radius of inner pipe (m): {0:.8f}".format(single_u_tube.r_in))
-        print("Radius of outer pipe (m): {0:.8f}".format(single_u_tube.r_out))
-        print("Shank spacing (m): {0:.8f}".format(single_u_tube.pipe.s))
-        print("Convection coefficient (): {0:.8f}".format(single_u_tube.h_f))
-        print("Pipe thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.pipe.k))
-        print("Grout thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.grout.k))
+        self.log("Radius of inner pipe (m): {0:.8f}".format(single_u_tube.r_in))
+        self.log("Radius of outer pipe (m): {0:.8f}".format(single_u_tube.r_out))
+        self.log("Shank spacing (m): {0:.8f}".format(single_u_tube.pipe.s))
+        self.log("Convection coefficient (): {0:.8f}".format(single_u_tube.h_f))
+        self.log("Pipe thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.pipe.k))
+        self.log("Grout thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.grout.k))
 
         rb = single_u_tube.compute_effective_borehole_resistance()
-        print("Effective borehole resistance (m.K/W): {0:.8f}".format(rb))
+        self.log("Effective borehole resistance (m.K/W): {0:.8f}".format(rb))
 
-        print(single_u_tube.__repr__())
+        self.log(single_u_tube.__repr__())
 
         # Plot equivalent single U-tube
         fig = single_u_tube.visualize_pipes()
@@ -147,33 +147,33 @@ class TestEquivalentPipes(GHEBaseTest):
         )
 
         val = "Intermediate variables"
-        print(val + "\n" + len(val) * "-")
+        self.log(val + "\n" + len(val) * "-")
         # Intermediate variables
         v_fluid, v_pipe, r_conv, r_pipe = equivalance.u_tube_volumes(double_u_tube)
-        print("Fluid volume per meter (m^2): {0:.8f}".format(v_fluid))
-        print("Pipe volume per meter (m^2): {0:.8f}".format(v_pipe))
-        print("Total Convective Resistance (K/(W/m)): {0:.8f}".format(r_conv))
-        print("Total Pipe Resistance (K/(W/m)): {0:.8f}".format(r_pipe))
+        self.log("Fluid volume per meter (m^2): {0:.8f}".format(v_fluid))
+        self.log("Pipe volume per meter (m^2): {0:.8f}".format(v_pipe))
+        self.log("Total Convective Resistance (K/(W/m)): {0:.8f}".format(r_conv))
+        self.log("Total Pipe Resistance (K/(W/m)): {0:.8f}".format(r_pipe))
 
         single_u_tube = equivalance.compute_equivalent(double_u_tube)
         val = "Single U-tube equivalent parameters"
-        print("\n" + val + "\n" + len(val) * "-")
-        print(
+        self.log("\n" + val + "\n" + len(val) * "-")
+        self.log(
             "Fluid volumetric flow rate (L/s): {0:.8f}".format(
                 single_u_tube.m_flow_pipe * 1000.0 / single_u_tube.fluid.rho
             )
         )
-        print("Radius of inner pipe (m): {0:.8f}".format(single_u_tube.r_in))
-        print("Radius of outer pipe (m): {0:.8f}".format(single_u_tube.r_out))
-        print("Shank spacing (m): {0:.8f}".format(single_u_tube.pipe.s))
-        print("Convection coefficient (): {0:.8f}".format(single_u_tube.h_f))
-        print("Pipe thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.pipe.k))
-        print("Grout thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.grout.k))
+        self.log("Radius of inner pipe (m): {0:.8f}".format(single_u_tube.r_in))
+        self.log("Radius of outer pipe (m): {0:.8f}".format(single_u_tube.r_out))
+        self.log("Shank spacing (m): {0:.8f}".format(single_u_tube.pipe.s))
+        self.log("Convection coefficient (): {0:.8f}".format(single_u_tube.h_f))
+        self.log("Pipe thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.pipe.k))
+        self.log("Grout thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.grout.k))
 
         rb = single_u_tube.compute_effective_borehole_resistance()
-        print("Effective borehole resistance (m.K/W): {0:.8f}".format(rb))
+        self.log("Effective borehole resistance (m.K/W): {0:.8f}".format(rb))
 
-        print(single_u_tube.__repr__())
+        self.log(single_u_tube.__repr__())
 
         # Plot equivalent single U-tube
         fig = single_u_tube.visualize_pipes()

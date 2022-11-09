@@ -131,7 +131,7 @@ class TestFindRectangle(GHEBaseTest):
         )
 
         title = "Find rectangle..."
-        print(title + "\n" + len(title) * "=")
+        self.log(title + "\n" + len(title) * "=")
 
         # Single U-tube
         # -------------
@@ -156,12 +156,12 @@ class TestFindRectangle(GHEBaseTest):
         bisection_search.ghe.size(method="hybrid")
         toc = clock()
         subtitle = "* Single U-tube"
-        print(subtitle + "\n" + len(subtitle) * "-")
-        print("Calculation time: {0:.2f} seconds".format(toc - tic))
-        print("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
+        self.log(subtitle + "\n" + len(subtitle) * "-")
+        self.log("Calculation time: {0:.2f} seconds".format(toc - tic))
+        self.log("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
         nbh = len(bisection_search.ghe.GFunction.bore_locations)
-        print("Number of boreholes: {}".format(nbh))
-        print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
+        self.log("Number of boreholes: {}".format(nbh))
+        self.log("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
         # Double U-tube
         # -------------
@@ -186,12 +186,12 @@ class TestFindRectangle(GHEBaseTest):
         bisection_search.ghe.size(method="hybrid")
         toc = clock()
         subtitle = "* Double U-tube"
-        print(subtitle + "\n" + len(subtitle) * "-")
-        print("Calculation time: {0:.2f} seconds".format(toc - tic))
-        print("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
+        self.log(subtitle + "\n" + len(subtitle) * "-")
+        self.log("Calculation time: {0:.2f} seconds".format(toc - tic))
+        self.log("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
         nbh = len(bisection_search.ghe.GFunction.bore_locations)
-        print("Number of boreholes: {}".format(nbh))
-        print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
+        self.log("Number of boreholes: {}".format(nbh))
+        self.log("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
         # Coaxial tube
         # -------------
@@ -216,9 +216,9 @@ class TestFindRectangle(GHEBaseTest):
         bisection_search.ghe.size(method="hybrid")
         toc = clock()
         subtitle = "* Coaxial tube"
-        print(subtitle + "\n" + len(subtitle) * "-")
-        print("Calculation time: {0:.2f} seconds".format(toc - tic))
-        print("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
+        self.log(subtitle + "\n" + len(subtitle) * "-")
+        self.log("Calculation time: {0:.2f} seconds".format(toc - tic))
+        self.log("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
         nbh = len(bisection_search.ghe.GFunction.bore_locations)
-        print("Number of boreholes: {}".format(nbh))
-        print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
+        self.log("Number of boreholes: {}".format(nbh))
+        self.log("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))

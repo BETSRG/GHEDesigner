@@ -61,23 +61,23 @@ class TestBHResistance(GHEBaseTest):
             m_flow_borehole, fluid, borehole, pipe, grout, soil
         )
 
-        print(coaxial)
+        self.log(coaxial)
 
         r_b = coaxial.compute_effective_borehole_resistance()
 
         val = "Intermediate variables"
-        print(val + "\n" + len(val) * "-")
+        self.log(val + "\n" + len(val) * "-")
         re = borehole_heat_exchangers.compute_reynolds(
             coaxial.m_flow_pipe, coaxial.pipe.r_out[1], fluid
         )
-        print("Reynolds number: {}".format(re))
+        self.log("Reynolds number: {}".format(re))
         # R_p = Coaxial.R_p
-        # print('Pipe resistance (K/(W/m)) : {}'.format(R_p))
+        # self.log('Pipe resistance (K/(W/m)) : {}'.format(R_p))
         h_f = coaxial.h_fluid_a_out
-        print("Convection coefficient (W/m2.K): {}".format(h_f))
+        self.log("Convection coefficient (W/m2.K): {}".format(h_f))
         r_fp = coaxial.R_fp
-        print("Convective resistance (K/(W/m)): {}".format(r_fp))
-        print("Borehole thermal resistance: {0:4f} m.K/W".format(r_b))
+        self.log("Convective resistance (K/(W/m)): {}".format(r_fp))
+        self.log("Borehole thermal resistance: {0:4f} m.K/W".format(r_b))
 
         fig = coaxial.visualize_pipes()
 
@@ -136,7 +136,7 @@ class TestBHResistance(GHEBaseTest):
             m_flow_borehole, fluid, borehole, pipe, grout, soil, config="parallel"
         )
 
-        print(double_u_tube_parallel)
+        self.log(double_u_tube_parallel)
 
         r_b_series = double_u_tube_series.compute_effective_borehole_resistance()
         r_b_parallel = double_u_tube_parallel.compute_effective_borehole_resistance()
@@ -146,16 +146,16 @@ class TestBHResistance(GHEBaseTest):
             double_u_tube_parallel.m_flow_pipe, r_in, fluid
         )
 
-        print("Reynolds number: {}".format(re))
+        self.log("Reynolds number: {}".format(re))
         r_p = double_u_tube_parallel.R_p
-        print("Pipe resistance (K/(W/m)) : {}".format(r_p))
+        self.log("Pipe resistance (K/(W/m)) : {}".format(r_p))
         h_f = double_u_tube_parallel.h_f
-        print("Convection coefficient (W/m2.K): {}".format(h_f))
+        self.log("Convection coefficient (W/m2.K): {}".format(h_f))
         r_fp = double_u_tube_parallel.R_fp
-        print("Convective resistance (K/(W/m)): {}".format(r_fp))
+        self.log("Convective resistance (K/(W/m)): {}".format(r_fp))
 
-        print("Borehole thermal resistance (series): {0:.4f} m.K/W".format(r_b_series))
-        print("Borehole thermal resistance (parallel): {0:.4f} m.K/W".format(r_b_parallel))
+        self.log("Borehole thermal resistance (series): {0:.4f} m.K/W".format(r_b_series))
+        self.log("Borehole thermal resistance (parallel): {0:.4f} m.K/W".format(r_b_parallel))
 
         # Create a borehole top view
         fig = double_u_tube_series.visualize_pipes()
@@ -219,23 +219,23 @@ class TestBHResistance(GHEBaseTest):
             m_flow_borehole, fluid, borehole, pipe, grout, soil
         )
 
-        print(single_u_tube)
+        self.log(single_u_tube)
 
         # Intermediate variables
         re = borehole_heat_exchangers.compute_reynolds(
             single_u_tube.m_flow_borehole, r_in, fluid
         )
-        print("Reynolds number: {}".format(re))
+        self.log("Reynolds number: {}".format(re))
         r_p = single_u_tube.R_p
-        print("Pipe resistance (K/(W/m)) : {}".format(r_p))
+        self.log("Pipe resistance (K/(W/m)) : {}".format(r_p))
         h_f = single_u_tube.h_f
-        print("Convection coefficient (W/m2.K): {}".format(h_f))
+        self.log("Convection coefficient (W/m2.K): {}".format(h_f))
         r_fp = single_u_tube.R_fp
-        print("Convective resistance (K/(W/m)): {}".format(r_fp))
+        self.log("Convective resistance (K/(W/m)): {}".format(r_fp))
 
         r_b = single_u_tube.compute_effective_borehole_resistance()
 
-        print("Borehole thermal resistance: {0:.4f} m.K/W".format(r_b))
+        self.log("Borehole thermal resistance: {0:.4f} m.K/W".format(r_b))
 
         # Create a borehole top view
         fig = single_u_tube.visualize_pipes()
