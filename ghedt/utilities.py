@@ -6,7 +6,6 @@
 # deprecation warning until the next major release.
 
 import copy
-import json
 import pickle
 import warnings
 from pathlib import Path

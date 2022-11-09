@@ -3,15 +3,17 @@
 
 # This search is described in <placeholder>.
 
-from ghedt import geometry, design
-from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
-import pygfunction as gt
-from time import time as clock
-from ghedt.output import output_design_details
+import csv
 from math import pi
+from time import time as clock
+
+import pygfunction as gt
+
+from ghedt import geometry, design
+from ghedt.output import output_design_details
+from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 from ghedt.rowwise.rowwise_generation import gen_shape
 from .ghe_base_case import GHEBaseTest
-import csv
 
 
 class TestFindRowWise(GHEBaseTest):

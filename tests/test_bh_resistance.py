@@ -1,6 +1,7 @@
-from pandas import ExcelFile, read_excel
-from matplotlib import pyplot
 import pygfunction as gt
+from matplotlib import pyplot
+from pandas import ExcelFile, read_excel
+
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 from .ghe_base_case import GHEBaseTest
 

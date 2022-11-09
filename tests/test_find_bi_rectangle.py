@@ -4,12 +4,14 @@
 
 # This search is described in section 4.4.2 of Cook (2021) from pages 134-138.
 
-from ghedt import design, geometry
-from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
-import pygfunction as gt
-from .ghe_base_case import GHEBaseTest
 from time import time as clock
+
+import pygfunction as gt
+
+from ghedt import design, geometry
 from ghedt.output import output_design_details
+from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
+from .ghe_base_case import GHEBaseTest
 
 
 class TestFindBiRectangle(GHEBaseTest):

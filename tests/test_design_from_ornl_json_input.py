@@ -1,7 +1,9 @@
 from json import loads
+
+import pygfunction as gt
+
 from ghedt import geometry, design, search_routines
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
-import pygfunction as gt
 from .ghe_base_case import GHEBaseTest
 
 

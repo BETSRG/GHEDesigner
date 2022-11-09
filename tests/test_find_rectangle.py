@@ -1,9 +1,10 @@
 from time import time as clock
+
 import pygfunction as gt
-from .ghe_base_case import GHEBaseTest
 
 from ghedt import geometry, design
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
+from .ghe_base_case import GHEBaseTest
 
 
 class TestFindRectangle(GHEBaseTest):

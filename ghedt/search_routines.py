@@ -1,7 +1,8 @@
 import copy
-from json import dumps
 import math
+from json import dumps
 from pathlib import Path
+
 import numpy as np
 import pygfunction as gt
 

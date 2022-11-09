@@ -21,7 +21,7 @@ def compute_equivalent(bhe):
 
 
 def solve_root(
-        x, objective_function, lower=None, upper=None, abs_tol=1.0e-6, rel_tol=1.0e-6, max_iter=50
+    x, objective_function, lower=None, upper=None, abs_tol=1.0e-6, rel_tol=1.0e-6, max_iter=50
 ):
     # Vary flow rate to match the convective resistance
 
@@ -129,8 +129,8 @@ def u_tube_volumes(u_tube):
     area_surf_inner = n * pi * (u_tube.r_in * 2.0) ** 2
     resist_conv = 1 / (u_tube.h_f * area_surf_inner)  # Convection resistance (m.K/W)
     # Volumes
-    vol_fluid = n * pi * (u_tube.r_in ** 2)
-    vol_pipe = n * pi * (u_tube.r_out ** 2) - vol_fluid
+    vol_fluid = n * pi * (u_tube.r_in**2)
+    vol_pipe = n * pi * (u_tube.r_out**2) - vol_fluid
     # V_grout = pi * (u_tube.b.r_b**2) - vol_pipe - vol_fluid
     resist_pipe = log(u_tube.r_out / u_tube.r_in) / (n * 2 * pi * u_tube.pipe.k)
     return vol_fluid, vol_pipe, resist_conv, resist_pipe
@@ -141,9 +141,9 @@ def concentric_tube_volumes(coaxial):
     r_in_in, r_in_out = coaxial.r_inner
     r_out_in, r_out_out = coaxial.r_outer
     # Compute volumes for concentric ghe geometry
-    vol_fluid = pi * ((r_in_in ** 2) + (r_out_in ** 2) - (r_in_out ** 2))
+    vol_fluid = pi * ((r_in_in**2) + (r_out_in**2) - (r_in_out**2))
     vol_pipe = pi * (
-            (r_in_out ** 2) - (r_in_in ** 2) + (r_out_out ** 2) - (r_out_in ** 2)
+        (r_in_out**2) - (r_in_in**2) + (r_out_out**2) - (r_out_in**2)
     )
     # V_grout = pi * ((coaxial.b.r_b**2) - (r_out_out**2))
     area_surf_outer = pi * 2 * r_out_in

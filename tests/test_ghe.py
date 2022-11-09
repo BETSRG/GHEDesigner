@@ -1,7 +1,8 @@
-from .ghe_base_case import GHEBaseTest
+import pygfunction as gt
+
 from ghedt import utilities, coordinates, ground_heat_exchangers, gfunction
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
-import pygfunction as gt
+from .ghe_base_case import GHEBaseTest
 
 
 class TestGHE(GHEBaseTest):

@@ -1,8 +1,9 @@
 import copy
 
+import pygfunction as gt
+
 from ghedt import design, utilities, geometry
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
-import pygfunction as gt
 from .ghe_base_case import GHEBaseTest
 
 
@@ -115,7 +116,7 @@ class TestNearSquare(GHEBaseTest):
         self.V_flow_system = self.V_flow_borehole * 156.0
 
         # Process loads from file
-        hourly_extraction_ground_loads = self.get_atlanta_loads()
+        self.hourly_extraction_ground_loads = self.get_atlanta_loads()
 
         # Geometric constraints for the `near-square` routine
         # Required geometric constraints for the uniform rectangle design: B

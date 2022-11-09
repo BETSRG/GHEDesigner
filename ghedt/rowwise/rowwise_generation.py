@@ -1,6 +1,7 @@
 from math import atan, cos, pi, sin, sqrt
 
 import numpy as np
+
 from ghedt.rowwise.shape import Shapes, sort_intersections
 
 

@@ -3,12 +3,14 @@
 
 # This search is described in section 4.3.2 of Cook (2021) from pages 123-129.
 
-from ghedt import design, geometry, utilities
-from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
-import pygfunction as gt
 from time import time as clock
-from .ghe_base_case import GHEBaseTest
+
+import pygfunction as gt
+
+from ghedt import design, geometry, utilities
 from ghedt.output import output_design_details
+from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
+from .ghe_base_case import GHEBaseTest
 
 
 class TestFindNearSquare(GHEBaseTest):

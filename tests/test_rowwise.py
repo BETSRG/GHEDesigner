@@ -1,13 +1,15 @@
-from .ghe_base_case import GHEBaseTest
 from math import pi
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
 from ghedt.rowwise.rowwise_generation import (
     field_optimization_fr,
     field_optimization_wp_space_fr,
     gen_borehole_config,
     gen_shape,
 )
+from .ghe_base_case import GHEBaseTest
 
 
 class TestRowWise(GHEBaseTest):

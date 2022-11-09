@@ -1,5 +1,6 @@
-from ghedt.peak_load_analysis_tool import media, equivalance, borehole_heat_exchangers
 import pygfunction as gt
+
+from ghedt.peak_load_analysis_tool import media, equivalance, borehole_heat_exchangers
 from .ghe_base_case import GHEBaseTest
 
 
