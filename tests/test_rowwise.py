@@ -2,8 +2,16 @@ import os
 import unittest
 from math import pi
 
+try:
+    # noinspection PyPackageRequirements
+    import pandas as pd
+    skip_validation = False
+except ImportError:
+    pd = None
+    skip_validation = True
+   
 import numpy as np
-import pandas as pd
+
 from ghedt.rowwise.rowwise_generation import (
     field_optimization_fr,
     field_optimization_wp_space_fr,
@@ -24,6 +32,7 @@ BUILDING_FILE = os.path.join(
 )
 
 
+@unittest.skipIf(skip_validation, "To run these tests, pip install pandas")
 class TestRowWise(unittest.TestCase):
     def setUp(self) -> None:
 

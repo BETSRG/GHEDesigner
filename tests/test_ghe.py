@@ -1,9 +1,16 @@
 import os
 import unittest
 
+try:
+    # noinspection PyPackageRequirements
+    import pandas as pd
+    skip_validation = False
+except ImportError:
+    pd = None
+    skip_validation = True
+    
 from ghedt import utilities, coordinates, ground_heat_exchangers, gfunction
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
-import pandas as pd
 import pygfunction as gt
 
 TESTDATA_FILENAME = os.path.join(
@@ -139,6 +146,7 @@ class TestGHE(unittest.TestCase):
             list(hourly_extraction.keys())[0]
         ]
 
+    @unittest.skipIf(skip_validation, "To run this test, pip install pandas")
     def test_single_u_tube(self):
 
         # Define a borehole
@@ -184,6 +192,7 @@ class TestGHE(unittest.TestCase):
 
         self.assertAlmostEqual(ghe.bhe.b.H, 130.22, places=2)
 
+    @unittest.skipIf(skip_validation, "To run this test, pip install pandas")
     def test_double_u_tube(self):
 
         # Define a borehole
@@ -229,6 +238,7 @@ class TestGHE(unittest.TestCase):
 
         self.assertAlmostEqual(ghe.bhe.b.H, 120.40, places=2)
 
+    @unittest.skipIf(skip_validation, "To run this test, pip install pandas")
     def test_coaxial_tube(self):
 
         # Define a borehole
