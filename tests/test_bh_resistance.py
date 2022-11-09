@@ -250,7 +250,7 @@ class TestBHResistance(TestCase):
         fig = single_u_tube.visualize_pipes()
 
         # Save the figure as a png
-        fig.savefig("single_u_tube.png")
+        fig.savefig("tests/single_u_tube.png")
 
     @skipIf(skip_validation, "Skipping test_bh_resistance_validation, to run: pip install openpyxl matplotlib pandas")
     def test_bh_resistance_validation(self):
@@ -453,7 +453,7 @@ class TestBHResistance(TestCase):
         fig_1.tight_layout()
         fig_2.tight_layout()
 
-        fig_1.savefig("Rb_vs_Re.png")
-        fig_2.savefig("Rb_vs_Vdot.png")
+        fig_1.savefig("tests/Rb_vs_Re.png")
+        fig_2.savefig("tests/Rb_vs_Vdot.png")
         plt.close(fig_1)
         plt.close(fig_2)

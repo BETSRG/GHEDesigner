@@ -2,9 +2,16 @@ import copy
 import os
 import unittest
 
+try:
+    # noinspection PyPackageRequirements
+    import pandas as pd
+    skip_validation = False
+except ImportError:
+    pd = None
+    skip_validation = True
+
 from ghedt import design, utilities, geometry
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
-import pandas as pd
 import pygfunction as gt
 
 TESTDATA_FILENAME = os.path.join(
@@ -136,6 +143,7 @@ class TestNearSquare(unittest.TestCase, DesignBase):
         length = utilities.length_of_side(number_of_boreholes, B)
         self.geometric_constraints = geometry.GeometricConstraints(b=B, length=length)
 
+    @unittest.skipIf(skip_validation, "To run this test, pip install pandas")
     def test_design_selection(self):
         # Single U-tube
         # -------------

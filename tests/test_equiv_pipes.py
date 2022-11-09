@@ -94,7 +94,7 @@ class TestEquivalentPipes(TestCase):
         fig = single_u_tube.visualize_pipes()
 
         # save equivalent
-        fig.savefig("coaxial_to_single_equivalent.png")
+        fig.savefig("tests/coaxial_to_single_equivalent.png")
 
     def test_equiv_pipes_double_to_single_u_tube(self):
         # Borehole dimensions
@@ -178,4 +178,4 @@ class TestEquivalentPipes(TestCase):
         fig = single_u_tube.visualize_pipes()
 
         # save equivalent
-        fig.savefig("double_to_single_equivalent.png")
+        fig.savefig("tests/double_to_single_equivalent.png")
