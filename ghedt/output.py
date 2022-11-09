@@ -2,6 +2,7 @@ import csv
 import math
 import os
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 
@@ -159,6 +160,7 @@ def output_design_details(
     notes,
     author,
     model_name,
+    output_directory: Path,
     allocated_width=100,
     rounding_amount=10,
     summary_file="SimulationSummary.txt",
@@ -167,7 +169,6 @@ def output_design_details(
     csv_f_3="Loadings.csv",
     csv_f_4="Gfunction.csv",
     load_method="hybrid",
-    output_directory="",
 ):
     try:
         ghe = design.ghe
@@ -755,9 +756,8 @@ def output_design_details(
         centering="^",
     )
 
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
-    with open(os.path.join(output_directory, summary_file), "w", newline="") as txtF:
+    output_directory.mkdir(exist_ok=True)
+    with open(str(output_directory / summary_file), "w", newline="") as txtF:
         txtF.write(o_s)
 
     csv1_array = []

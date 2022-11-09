@@ -26,7 +26,7 @@ class TestFindNearSquareMultiyearLoading(GHEBaseTest):
         note = "Square-Near-Square w/ Multi-year Loading Usage Example: Single U Tube"
         author = "Jane Doe"
         iteration_name = "Example 2"
-        output_file_directory = "DesignExampleOutput"
+        output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
 
         # Borehole dimensions
         h = 96.0  # Borehole length (m)

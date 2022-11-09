@@ -5,7 +5,8 @@ import pygfunction as gt
 
 
 class TestGHE(GHEBaseTest):
-    def setUp(self) -> None:
+    def setUp(self):
+        super().setUp()
         # Borehole dimensions
         # -------------------
         self.H = 100.0  # Borehole length (m)

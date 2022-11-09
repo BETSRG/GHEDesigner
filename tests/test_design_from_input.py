@@ -18,6 +18,6 @@ class TestDesignFromInput(GHEBaseTest):
         ghe = bisection_search.ghe
         ghe.compute_g_functions()
         ghe.size(method="hybrid")
-        # Export the g-function to a file named `ghedt_output`. A json file will be created.
+        # Export the g-function to a json file
         output_file = self.test_outputs_directory / "ghedt_output_from_input.json"
         search_routines.oak_ridge_export(bisection_search, output_file)

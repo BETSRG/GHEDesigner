@@ -24,7 +24,7 @@ class TestFindNearSquare(GHEBaseTest):
         note = "Square-Near-Square Usage Example: Single U Tube"
         author = "John Doe"
         iteration_name = "Example 1"
-        output_file_directory = "DesignExampleOutput"
+        output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
 
         # Borehole dimensions
         h = 96.0  # Borehole length (m)

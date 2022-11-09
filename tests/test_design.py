@@ -6,8 +6,13 @@ import pygfunction as gt
 from .ghe_base_case import GHEBaseTest
 
 
-class DesignBase(GHEBaseTest):
-    def setUp(self):
+class TestNearSquare(GHEBaseTest):
+
+    def test_design_selection(self):
+        # Single U-tube
+        # -------------
+        # Design a single U-tube with a system volumetric flow rate
+
         # Borehole dimensions
         # -------------------
         h = 96.0  # Borehole length (m)
@@ -105,11 +110,6 @@ class DesignBase(GHEBaseTest):
             min_height,
         )
 
-
-class TestNearSquare(DesignBase):
-    def setUp(self) -> None:
-
-        DesignBase.__init__(self)
         # Note: Based on these inputs, the resulting near-square test will
         # determine a system with 156 boreholes.
         self.V_flow_system = self.V_flow_borehole * 156.0
@@ -128,10 +128,6 @@ class TestNearSquare(DesignBase):
         length = utilities.length_of_side(number_of_boreholes, b)
         self.geometric_constraints = geometry.GeometricConstraints(b=b, length=length)
 
-    def test_design_selection(self):
-        # Single U-tube
-        # -------------
-        # Design a single U-tube with a system volumetric flow rate
         design_single_u_tube_a = design.DesignNearSquare(
             self.V_flow_system,
             self.borehole,

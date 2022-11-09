@@ -12,7 +12,7 @@ from ghedt.rowwise.rowwise_generation import (
 
 class TestRowWise(GHEBaseTest):
     def setUp(self) -> None:
-
+        super().setUp()
         # Reference Values
         reference_data_file = self.test_data_directory / 'rowwise_reference_values.csv'
         self.reference_values = pd.read_csv(str(reference_data_file))

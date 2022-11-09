@@ -29,7 +29,7 @@ class TestFindRowWise(GHEBaseTest):
         note = "RowWise Usage Example w/o Perimeter Spacing: Single U Tube"
         author = "John Doe"
         iteration_name = "Example 5"
-        output_file_directory = "DesignExampleOutput"
+        output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
 
         # Borehole dimensions
         h = 96.0  # Borehole length (m)
@@ -83,7 +83,7 @@ class TestFindRowWise(GHEBaseTest):
         end_month = n_years * 12
         max_eft_allowable = 35  # degrees Celsius (HP EFT)
         min_eft_allowable = 5  # degrees Celsius (HP EFT)
-        max_height = 135.0  # in meters
+        max_height = 135.0  # in meters  # TODO: This is causing a warning, need to be higher?
         min_height = 60  # in meters
         sim_params = media.SimulationParameters(
             start_month,
