@@ -93,7 +93,7 @@ class TestBHResistance(TestCase):
 
         fig = Coaxial.visualize_pipes()
 
-        fig.savefig("tests/Coaxial.png")
+        fig.savefig("Coaxial.png")
 
     def test_bh_resistance_double_u_tube(self):
         # Borehole dimensions
@@ -172,13 +172,13 @@ class TestBHResistance(TestCase):
         fig = double_u_tube_series.visualize_pipes()
 
         # Save the figure as a png
-        fig.savefig("tests/double_u_tube_series.png")
+        fig.savefig("double_u_tube_series.png")
 
         # Create a borehole top view
         fig = double_u_tube_parallel.visualize_pipes()
 
         # Save the figure as a png
-        fig.savefig("tests/double_u_tube_parallel.png")
+        fig.savefig("double_u_tube_parallel.png")
 
     def test_bh_resistance_single_u_tube(self):
         # Borehole dimensions
@@ -250,7 +250,7 @@ class TestBHResistance(TestCase):
         fig = single_u_tube.visualize_pipes()
 
         # Save the figure as a png
-        fig.savefig("tests/single_u_tube.png")
+        fig.savefig("single_u_tube.png")
 
     @skipIf(skip_validation, "Skipping test_bh_resistance_validation, to run: pip install openpyxl matplotlib pandas")
     def test_bh_resistance_validation(self):
@@ -401,7 +401,8 @@ class TestBHResistance(TestCase):
             borehole_values["Coaxial"]["Rb"].append(R_b)
 
         # Open GLHEPRO xlsx file
-        GLHEPRO_file = "GLHEPRO.xlsx"
+        test_data_dir = Path(__file__).resolve().parent / 'test_data'
+        GLHEPRO_file = str(test_data_dir / 'GLHEPRO.xlsx')
         xlsx = pd.ExcelFile(GLHEPRO_file)
         sheet_names = xlsx.sheet_names
         borehole_validation_values = {}
@@ -453,7 +454,7 @@ class TestBHResistance(TestCase):
         fig_1.tight_layout()
         fig_2.tight_layout()
 
-        fig_1.savefig("tests/Rb_vs_Re.png")
-        fig_2.savefig("tests/Rb_vs_Vdot.png")
+        fig_1.savefig("Rb_vs_Re.png")
+        fig_2.savefig("Rb_vs_Vdot.png")
         plt.close(fig_1)
         plt.close(fig_2)

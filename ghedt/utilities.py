@@ -9,6 +9,7 @@ import copy
 import json
 import pickle
 import warnings
+from pathlib import Path
 
 import numpy as np
 
@@ -115,19 +116,19 @@ def js_load(filename: str):
         return json.load(f_in)
 
 
-def create_input_file(self, file_name="ghedt_input"):
+def create_input_file(self, file_path_obj: Path):
     # Store an object in a file using pickle.
-    file_handler = open(file_name + ".obj", "wb")
-    pickle.dump(self, file_handler)
-    file_handler.close()
-
+    with open(str(file_path_obj), "wb") as file_handler:
+        pickle.dump(self, file_handler)
     return
 
 
-def read_input_file(path_to_file):
+def read_input_file(path_file_obj: Path):
     # Open a .obj file and return the ghedt object.
-    file = open(path_to_file, "rb")
-    object_file = pickle.load(file)
-    file.close()
-
+    with open(path_file_obj, "rb") as file:
+        object_file = pickle.load(file)
     return object_file
+
+
+def dummy_entry_point():
+    print("Hello, GHE world!")
