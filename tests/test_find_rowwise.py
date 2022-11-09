@@ -182,7 +182,7 @@ class TestFindRowWise(GHEBaseTest):
         )  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
-            method="hybrid"
+            method=utilities.DesignMethod.Hybrid
         )  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
@@ -241,7 +241,7 @@ class TestFindRowWise(GHEBaseTest):
         )  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
-            method="hybrid"
+            method=utilities.DesignMethod.Hybrid
         )  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 

@@ -151,7 +151,7 @@ class TestFindRectangle(GHEBaseTest):
         tic = clock()
         bisection_search = design_single_u_tube.find_design()
         bisection_search.ghe.compute_g_functions()
-        bisection_search.ghe.size(method="hybrid")
+        bisection_search.ghe.size(method=utilities.DesignMethod.Hybrid)
         toc = clock()
         subtitle = "* Single U-tube"
         self.log(subtitle + "\n" + len(subtitle) * "-")
@@ -182,7 +182,7 @@ class TestFindRectangle(GHEBaseTest):
         tic = clock()
         bisection_search = design_double_u_tube.find_design()
         bisection_search.ghe.compute_g_functions()
-        bisection_search.ghe.size(method="hybrid")
+        bisection_search.ghe.size(method=utilities.DesignMethod.Hybrid)
         toc = clock()
         subtitle = "* Double U-tube"
         self.log(subtitle + "\n" + len(subtitle) * "-")
@@ -213,7 +213,7 @@ class TestFindRectangle(GHEBaseTest):
         tic = clock()
         bisection_search = design_coaxial_u_tube.find_design()
         bisection_search.ghe.compute_g_functions()
-        bisection_search.ghe.size(method="hybrid")
+        bisection_search.ghe.size(method=utilities.DesignMethod.Hybrid)
         toc = clock()
         subtitle = "* Coaxial tube"
         self.log(subtitle + "\n" + len(subtitle) * "-")

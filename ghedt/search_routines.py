@@ -2,6 +2,7 @@ import copy
 import math
 from json import dumps
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import pygfunction as gt
@@ -352,7 +353,7 @@ class RowWiseModifiedBisectionSearch:
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.max_iter = max_iter
         self.disp = disp
-        self.ghe = None
+        self.ghe: Optional[GHE] = None
         self.calculated_temperatures = {}
         # self.advanced_tracking = advanced_tracking
         if advanced_tracking:
@@ -646,7 +647,7 @@ class RowWiseModifiedBisectionSearch:
                     field, self.sim_params.max_Height, field_specifier=f_s
                 )
                 self.ghe.compute_g_functions()
-                self.ghe.size()
+                self.ghe.size(method=DesignMethod.Hybrid)
                 h = self.ghe.average_height()
                 total_drilling = h * len(field)
                 if best_field is None:
