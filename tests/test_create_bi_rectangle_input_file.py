@@ -130,6 +130,7 @@ class TestCreateBiRectangleInputFile(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
+            utilities.DesignMethod.Hybrid,
         )
 
         # Output the design interface object to a json file, so it can be reused

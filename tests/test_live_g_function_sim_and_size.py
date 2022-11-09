@@ -145,7 +145,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         )
 
         # Simulate after computing just one g-function
-        max_hp_eft, min_hp_eft = ghe.simulate()
+        max_hp_eft, min_hp_eft = ghe.simulate(method=utilities.DesignMethod.Hybrid)
 
         self.log("Min EFT: {0:.3f}\nMax EFT: {1:.3f}".format(min_hp_eft, max_hp_eft))
 
@@ -184,6 +184,6 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             hourly_extraction_ground_loads,
         )
 
-        ghe.size(method="hybrid")
+        ghe.size(method=utilities.DesignMethod.Hybrid)
 
         self.log("Height of boreholes: {0:.4f}".format(ghe.bhe.b.H))

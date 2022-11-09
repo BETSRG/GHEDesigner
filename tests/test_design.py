@@ -137,11 +137,12 @@ class TestNearSquare(GHEBaseTest):
             self.geometric_constraints,
             self.hourly_extraction_ground_loads,
             flow="system",
+            method=utilities.DesignMethod.Hybrid,
         )
         # Find the near-square design for a single U-tube and size it.
         bisection_search = design_single_u_tube_a.find_design()
         bisection_search.ghe.compute_g_functions()
-        bisection_search.ghe.size(method="hybrid")
+        bisection_search.ghe.size(method=utilities.DesignMethod.Hybrid)
         h_single_u_tube_a = bisection_search.ghe.bhe.b.H
 
         design_single_u_tube_b = design.DesignNearSquare(
@@ -156,11 +157,12 @@ class TestNearSquare(GHEBaseTest):
             self.geometric_constraints,
             self.hourly_extraction_ground_loads,
             flow="borehole",
+            method=utilities.DesignMethod.Hybrid,
         )
         # Find the near-square design for a single U-tube and size it.
         bisection_search = design_single_u_tube_b.find_design()
         bisection_search.ghe.compute_g_functions()
-        bisection_search.ghe.size(method="hybrid")
+        bisection_search.ghe.size(method=utilities.DesignMethod.Hybrid)
         h_single_u_tube_b = bisection_search.ghe.bhe.b.H
 
         # Verify that the `flow` toggle is properly working

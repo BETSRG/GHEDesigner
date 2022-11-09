@@ -13,7 +13,7 @@ from ghedt.peak_load_analysis_tool.media import (Grout, Pipe,
 from ghedt.rowwise.rowwise_generation import (field_optimization_fr,
                                               field_optimization_wp_space_fr)
 from ghedt.utilities import (eskilson_log_times, borehole_spacing,
-                             check_bracket, sign)
+                             check_bracket, sign, DesignMethod)
 
 
 class Bisection1D:
@@ -30,7 +30,7 @@ class Bisection1D:
         soil: Soil,
         sim_params: SimulationParameters,
         hourly_extraction_ground_loads: list,
-        method: str = "hybrid",
+        method: DesignMethod,
         flow: str = "borehole",
         max_iter=15,
         disp=False,
@@ -312,7 +312,7 @@ class RowWiseModifiedBisectionSearch:
         sim_params: SimulationParameters,
         hourly_extraction_ground_loads: list,
         geometric_constraints,
-        method: str = "hybrid",
+        method: DesignMethod,
         flow: str = "borehole",
         max_iter: int = 10,
         disp: bool = False,
@@ -786,7 +786,7 @@ class Bisection2D(Bisection1D):
         soil: Soil,
         sim_params: SimulationParameters,
         hourly_extraction_ground_loads: list,
-        method: str = "hybrid",
+        method: DesignMethod,
         flow: str = "borehole",
         max_iter=15,
         disp=False,
@@ -865,7 +865,7 @@ class BisectionZD(Bisection1D):
         soil: Soil,
         sim_params: SimulationParameters,
         hourly_extraction_ground_loads: list,
-        method: str = "hybrid",
+        method: DesignMethod,
         flow: str = "borehole",
         max_iter=15,
         disp=False,
@@ -947,7 +947,7 @@ class BisectionZD(Bisection1D):
             )
 
             self.ghe.compute_g_functions()
-            self.ghe.size(method="hybrid")
+            self.ghe.size(method=DesignMethod.Hybrid)
 
             nbh = len(selected_coordinates)
             total_drilling = float(nbh) * self.ghe.bhe.b.H
@@ -992,7 +992,7 @@ class BisectionZD(Bisection1D):
             ],
         )
         self.ghe.compute_g_functions()
-        self.ghe.size(method="hybrid")
+        self.ghe.size(method=DesignMethod.Hybrid)
 
         return selection_key, selected_coordinates
 

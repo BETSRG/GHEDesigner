@@ -2,7 +2,7 @@ from json import loads
 
 import pygfunction as gt
 
-from ghedt import geometry, design, search_routines
+from ghedt import geometry, design, search_routines, utilities
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 from .ghe_base_case import GHEBaseTest
 
@@ -121,12 +121,13 @@ class TestDesignFromORNLJsonInput(GHEBaseTest):
             geometric_constraints,
             hourly_extraction_ground_loads,
             flow=flow,
+            method=utilities.DesignMethod.Hybrid,
         )
 
         # Find the near-square design for a single U-tube and size it.
         bisection_search = design_single_u_tube.find_design()
         bisection_search.ghe.compute_g_functions()
-        bisection_search.ghe.size(method="hybrid")
+        bisection_search.ghe.size(method=utilities.DesignMethod.Hybrid)
 
         # Export the g-function to a json file
         output_file_path = self.test_outputs_directory / 'ghedt_output_design_from_ornl_json_input.json'

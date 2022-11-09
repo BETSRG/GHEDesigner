@@ -126,6 +126,7 @@ class TestCreateNearSquareInputFile(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
+            utilities.DesignMethod.Hybrid,
         )
 
         # Output the design interface object to a json file, so it can be reused
@@ -145,6 +146,7 @@ class TestCreateNearSquareInputFile(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
+            utilities.DesignMethod.Hybrid,
         )
 
         input_file_path = self.test_outputs_directory / 'ghedt_input_near_square_double_u_tube.obj'
@@ -163,6 +165,7 @@ class TestCreateNearSquareInputFile(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
+            utilities.DesignMethod.Hybrid,
         )
 
         input_file_path = self.test_outputs_directory / 'ghedt_input_near_square_coaxial_tube.obj'

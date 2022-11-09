@@ -2,7 +2,7 @@ from json import loads
 
 import pygfunction as gt
 
-from ghedt import gfunction, ground_heat_exchangers
+from ghedt import gfunction, ground_heat_exchangers, utilities
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 from .ghe_base_case import GHEBaseTest
 
@@ -109,7 +109,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
             hourly_extraction_ground_loads,
         )
 
-        ghe.size()
+        ghe.size(utilities.DesignMethod.Hybrid)
 
         calculation_details = "GLHEPRO_gFunctions_12x13.json".split(".")[0]
         self.log(calculation_details)

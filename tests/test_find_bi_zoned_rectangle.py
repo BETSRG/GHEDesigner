@@ -8,7 +8,7 @@ from time import time as clock
 
 import pygfunction as gt
 
-from ghedt import geometry, design
+from ghedt import geometry, design, utilities
 from ghedt.output import output_design_details
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 from .ghe_base_case import GHEBaseTest
@@ -127,7 +127,7 @@ class TestFindBiZonedRectangle(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method="hybrid",
+            method=utilities.DesignMethod.Hybrid,
             flow=flow,
         )
 
@@ -162,6 +162,7 @@ class TestFindBiZonedRectangle(GHEBaseTest):
             csv_f_2="BorefieldData_SU.csv",
             csv_f_3="Loadings_SU.csv",
             csv_f_4="GFunction_SU.csv",
+            load_method=utilities.DesignMethod.Hybrid,
         )
         """
         # Double U-tube

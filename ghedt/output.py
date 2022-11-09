@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers
-
+from ghedt.utilities import DesignMethod
 
 def create_title(allocated_width, title, filler_symbol=" "):
     return "{:{fS}^{L}s}\n".format(" " + title + " ", L=allocated_width, fS=filler_symbol)
@@ -160,6 +160,7 @@ def output_design_details(
     notes,
     author,
     model_name,
+    load_method: DesignMethod,
     output_directory: Path,
     allocated_width=100,
     rounding_amount=10,
@@ -168,7 +169,7 @@ def output_design_details(
     csv_f_2="BoreFieldData.csv",
     csv_f_3="Loadings.csv",
     csv_f_4="Gfunction.csv",
-    load_method="hybrid",
+
 ):
     try:
         ghe = design.ghe
@@ -645,10 +646,11 @@ def output_design_details(
         string_format,
         int_format,
     )
+    load_method_string = "hybrid" if load_method == DesignMethod.Hybrid else "hourly"  # TODO: Use a method in the enum
     o_s += create_d_row(
         allocated_width,
         "Simulation Loading Type: ",
-        load_method,
+        load_method_string,
         string_format,
         string_format,
     )

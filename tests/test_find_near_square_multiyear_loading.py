@@ -124,7 +124,7 @@ class TestFindNearSquareMultiyearLoading(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method="hybrid",
+            method=utilities.DesignMethod.Hybrid,
             flow=flow,
             load_years=[2010, 2011, 2012, 2013],
         )
@@ -161,6 +161,7 @@ class TestFindNearSquareMultiyearLoading(GHEBaseTest):
             csv_f_2="BorefieldData_SU.csv",
             csv_f_3="Loadings_SU.csv",
             csv_f_4="GFunction_SU.csv",
+            load_method=utilities.DesignMethod.Hybrid
         )
 
         # *************************************************************************************************************
@@ -186,7 +187,7 @@ class TestFindNearSquareMultiyearLoading(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method="hybrid",
+            method=utilities.DesignMethod.Hybrid,
             flow=flow,
             load_years=[2010, 2011, 2012, 2013],
         )
@@ -223,6 +224,7 @@ class TestFindNearSquareMultiyearLoading(GHEBaseTest):
             csv_f_2="BorefieldData_DU.csv",
             csv_f_3="Loadings_DU.csv",
             csv_f_4="GFunction_DU.csv",
+            load_method=utilities.DesignMethod.Hybrid,
         )
 
         # *************************************************************************************************************
@@ -263,7 +265,7 @@ class TestFindNearSquareMultiyearLoading(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method="hybrid",
+            method=utilities.DesignMethod.Hybrid,
             flow=flow,
             load_years=[2010, 2011, 2012, 2013],
         )
@@ -300,4 +302,5 @@ class TestFindNearSquareMultiyearLoading(GHEBaseTest):
             csv_f_2="BorefieldData_C.csv",
             csv_f_3="Loadings_C.csv",
             csv_f_4="GFunction_C.csv",
+            load_method=utilities.DesignMethod.Hybrid
         )

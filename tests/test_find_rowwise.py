@@ -9,7 +9,7 @@ from time import time as clock
 
 import pygfunction as gt
 
-from ghedt import geometry, design
+from ghedt import geometry, design, utilities
 from ghedt.output import output_design_details
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 from ghedt.rowwise.rowwise_generation import gen_shape
@@ -171,7 +171,7 @@ class TestFindRowWise(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method="hybrid",
+            method=utilities.DesignMethod.Hybrid,
             flow=flow,
         )
 
@@ -209,6 +209,7 @@ class TestFindRowWise(GHEBaseTest):
             csv_f_2="BorefieldData_SU_WOP.csv",
             csv_f_3="Loadings_SU_WOP.csv",
             csv_f_4="GFunction_SU_WOP.csv",
+            load_method=utilities.DesignMethod.Hybrid,
         )
 
         # *************************************************************************************************************
@@ -229,7 +230,7 @@ class TestFindRowWise(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method="hybrid",
+            method=utilities.DesignMethod.Hybrid,
             flow=flow,
         )
 
@@ -267,4 +268,5 @@ class TestFindRowWise(GHEBaseTest):
             csv_f_2="BorefieldData_SU_WP.csv",
             csv_f_3="Loadings_SU_WP.csv",
             csv_f_4="GFunction_SU_WP.csv",
+            load_method=utilities.DesignMethod.Hybrid,
         )

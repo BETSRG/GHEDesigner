@@ -17,7 +17,7 @@ class TestDesignFromInput(GHEBaseTest):
         # Perform sizing in between the min and max bounds.
         ghe = bisection_search.ghe
         ghe.compute_g_functions()
-        ghe.size(method="hybrid")
+        ghe.size(method=utilities.DesignMethod.Hybrid)
         # Export the g-function to a json file
         output_file = self.test_outputs_directory / "ghedt_output_from_input.json"
         search_routines.oak_ridge_export(bisection_search, output_file)

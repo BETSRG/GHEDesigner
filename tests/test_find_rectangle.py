@@ -2,7 +2,7 @@ from time import time as clock
 
 import pygfunction as gt
 
-from ghedt import geometry, design
+from ghedt import geometry, design, utilities
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 from .ghe_base_case import GHEBaseTest
 
@@ -144,6 +144,7 @@ class TestFindRectangle(GHEBaseTest):
             geometric_constraints,
             hourly_extraction_ground_loads,
             flow=flow,
+            method=utilities.DesignMethod.Hybrid,
         )
 
         # Find a constrained rectangular design for a single U-tube and size it.
@@ -174,6 +175,7 @@ class TestFindRectangle(GHEBaseTest):
             geometric_constraints,
             hourly_extraction_ground_loads,
             flow=flow,
+            method=utilities.DesignMethod.Hybrid,
         )
 
         # Find a constrained rectangular design for a double U-tube and size it.
@@ -204,6 +206,7 @@ class TestFindRectangle(GHEBaseTest):
             geometric_constraints,
             hourly_extraction_ground_loads,
             flow=flow,
+            method=utilities.DesignMethod.Hybrid,
         )
 
         # Find a constrained rectangular design for a coaxial tube and size it.

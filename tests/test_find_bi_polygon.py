@@ -11,7 +11,7 @@ from time import time as clock
 
 import pygfunction as gt
 
-from ghedt import design, geometry
+from ghedt import design, geometry, utilities
 from ghedt.output import output_design_details
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 from .ghe_base_case import GHEBaseTest
@@ -151,7 +151,7 @@ class TestFindBiPolygon(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method="hybrid",
+            method=utilities.DesignMethod.Hybrid,
             flow=flow,
             property_boundary=prop_a,
             building_descriptions=ng_a,
@@ -189,6 +189,7 @@ class TestFindBiPolygon(GHEBaseTest):
             csv_f_2="BorefieldData_SU.csv",
             csv_f_3="Loadings_SU.csv",
             csv_f_4="GFunction_SU.csv",
+            load_method=utilities.DesignMethod.Hybrid,
         )
 
         # *************************************************************************************************************
@@ -214,7 +215,7 @@ class TestFindBiPolygon(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method="hybrid",
+            method=utilities.DesignMethod.Hybrid,
             flow=flow,
             property_boundary=prop_a,
             building_descriptions=ng_a,
@@ -252,6 +253,7 @@ class TestFindBiPolygon(GHEBaseTest):
             csv_f_2="BorefieldData_DU.csv",
             csv_f_3="Loadings_DU.csv",
             csv_f_4="GFunction_DU.csv",
+            load_method=utilities.DesignMethod.Hybrid,
         )
 
         # *************************************************************************************************************
@@ -292,7 +294,7 @@ class TestFindBiPolygon(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method="hybrid",
+            method=utilities.DesignMethod.Hybrid,
             flow=flow,
             property_boundary=prop_a,
             building_descriptions=ng_a,
@@ -330,4 +332,5 @@ class TestFindBiPolygon(GHEBaseTest):
             csv_f_2="BorefieldData_C.csv",
             csv_f_3="Loadings_C.csv",
             csv_f_4="GFunction_C.csv",
+            load_method=utilities.DesignMethod.Hybrid,
         )

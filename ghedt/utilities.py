@@ -6,11 +6,18 @@
 # deprecation warning until the next major release.
 
 import copy
+from enum import auto, Enum
 import pickle
 import warnings
 from pathlib import Path
 
 import numpy as np
+
+
+# TODO: Move this class to a centralized place with other enumerations
+class DesignMethod(Enum):
+    Hybrid = auto()
+    Hourly = auto()
 
 
 # Time functions

@@ -6,6 +6,7 @@ import pygfunction as gt
 from scipy.interpolate import interp1d
 
 from ghedt import gfunction
+from ghedt.utilities import DesignMethod
 from ghedt.peak_load_analysis_tool.equivalance import (compute_equivalent,
                                                        solve_root)
 from ghedt.peak_load_analysis_tool.ground_loads import HybridLoad
@@ -337,7 +338,7 @@ class GHE(BaseGHE):
             output += str(round(lntts[i], 4)) + "\t" + str(round(g_values[i], 4)) + "\n"
         return output
 
-    def simulate(self, method="hybrid"):
+    def simulate(self, method: DesignMethod):
         b = self.B_spacing
         b_over_h = b / self.bhe.b.H
 
@@ -351,14 +352,14 @@ class GHE(BaseGHE):
         # is interpolated for specific B/H and rb/H values.
         g = self.grab_g_function(b_over_h)
 
-        if method == "hybrid":
+        if method == DesignMethod.Hybrid:
             q_dot = self.hybrid_load.load[2:] * 1000.0  # convert to Watts
             time_values = self.hybrid_load.hour[2:]  # convert to seconds
             self.times = time_values
             self.loading = q_dot
 
             hp_eft, d_tb = self._simulate_detailed(q_dot, time_values, g)
-        elif method == "hourly":
+        elif method == DesignMethod.Hourly:
             n_months = self.sim_params.end_month - self.sim_params.start_month + 1
             n_hours = int(n_months / 12.0 * 8760.0)
             q_dot = copy.deepcopy(self.hourly_extraction_ground_loads)
@@ -386,7 +387,7 @@ class GHE(BaseGHE):
         min_hp_eft = float(min(hp_eft))
         return max_hp_eft, min_hp_eft
 
-    def size(self, method="hybrid") -> None:
+    def size(self, method: DesignMethod) -> None:
         # Size the ground heat exchanger
         def local_objective(h):
             self.bhe.b.H = h
