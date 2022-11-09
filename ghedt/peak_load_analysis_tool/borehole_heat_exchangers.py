@@ -130,6 +130,7 @@ class SingleUTube(gt.pipes.SingleUTube):
 
         self.R_p = 0.0
         self.R_f = 0.0
+        self.R_fp = 0.0
         self.h_f = 0.0
         self.fluid = fluid
         self.m_flow_borehole = m_flow_borehole
@@ -143,6 +144,7 @@ class SingleUTube(gt.pipes.SingleUTube):
 
         # Compute Single pipe and fluid thermal resistance
         self.update_pipe_fluid_resist(m_flow_borehole)
+
         # Initialize pygfunction SingleUTube base class
         super().__init__(
             self.pipe.pos,
@@ -202,7 +204,7 @@ class SingleUTube(gt.pipes.SingleUTube):
         return self.update_thermal_resistance(m_flow_borehole)
 
 
-class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
+class MultipleUTube(gt.pipes.MultipleUTube):
     def __init__(
             self,
             m_flow_borehole: float,
@@ -213,30 +215,53 @@ class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
             soil: media.Soil,
             config="parallel",
     ):
-        # Initialize base pipe class
-        BasePipe.__init__(
-            self, m_flow_borehole, fluid, borehole, soil, grout, pipe, config=config
-        )
+
+        self.R_p = 0.0
+        self.R_f = 0.0
+        self.R_fp = 0.0
+        self.h_f = 0.0
+        self.fluid = fluid
+        self.m_flow_borehole = m_flow_borehole
+
+        # TODO: May need to revisit this for series/parallel connections
+        self.m_flow_pipe = m_flow_borehole
+        self.borehole = borehole
+        self.pipe = pipe
+        self.soil = soil
+        self.grout = grout
 
         # Get number of pipes from positions
         self.resist_delta = None
         self.n_pipes = int(len(pipe.pos) / 2)
+
         # Compute Single pipe and fluid thermal resistance
-        resist_fp = self.R_f + self.R_p
-        gt.pipes.MultipleUTube.__init__(
-            self,
-            pipe.pos,
-            pipe.r_in,
-            pipe.r_out,
-            borehole,
+        self.update_pipe_fluid_resist(m_flow_borehole)
+
+        super().__init__(
+            self.pipe.pos,
+            self.pipe.r_in,
+            self.pipe.r_out,
+            self.borehole,
             self.soil.k,
             self.grout.k,
-            resist_fp,
-            pipe.n_pipes,
+            self.R_fp,
+            self.pipe.n_pipes,
             config=config,
         )
 
-    def update_thermal_resistance(self, m_flow_borehole=None, fluid=None):
+    def update_pipe_fluid_resist(self, m_flow_borehole):
+        self.h_f = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(m_flow_borehole,
+                                                                               self.pipe.r_in,
+                                                                               self.fluid.mu,
+                                                                               self.fluid.rho,
+                                                                               self.fluid.k,
+                                                                               self.fluid.cp,
+                                                                               self.pipe.roughness)
+        self.R_f = compute_fluid_resistance(self.h_f, self.pipe.r_in)
+        self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(self.pipe.r_in, self.pipe.r_out, self.pipe.k)
+        self.R_fp = self.R_f + self.R_p
+
+    def update_thermal_resistance(self, m_flow_borehole=None):
 
         # if the mass flow rate has changed, then update it and use new value
         if m_flow_borehole is None:
@@ -244,15 +269,7 @@ class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
         else:
             self.m_flow_borehole = m_flow_borehole
 
-        # if the mass flow rate has changed, then update it and use new value
-        if fluid is None:
-            fluid = self.fluid
-        else:
-            self.fluid = fluid
-
-        self.compute_resistances()
-
-        self.R_fp = self.R_f + self.R_p
+        self.update_pipe_fluid_resist(self.m_flow_borehole)
 
         # Delta-circuit thermal resistances
         self.resist_delta = gt.pipes.thermal_resistances(
@@ -267,28 +284,15 @@ class MultipleUTube(BasePipe, gt.pipes.MultipleUTube):
         # R_b = 1 / np.trace(1 / self.resist_delta)
 
         # Compute and return effective borehole resistance
-        resist_bh_effective = bp.effective_borehole_thermal_resistance(
-            self, m_flow_borehole, fluid.cp
-        )
+        resist_bh_effective = self.effective_borehole_thermal_resistance(m_flow_borehole, self.fluid.cp)
 
         return resist_bh_effective
 
-    def __repr__(self):
-        justify = self.justify
-
-        output = BasePipe.__repr__(self)
-
-        resist_bh_effective = bp.effective_borehole_thermal_resistance(
-            self, self.m_flow_borehole, self.fluid.cp
-        )
-
-        output += justify(
-            "Effective borehole resistance", str(round(resist_bh_effective, 4)) + " (m.K/W)"
-        )
-
-        output += justify("Config", self.config)
-
-        return output
+    def compute_effective_borehole_resistance(self, m_flow_borehole=None):
+        """
+        super dumbness
+        """
+        return self.update_thermal_resistance(m_flow_borehole)
 
 
 class CoaxialBase(object):

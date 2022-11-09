@@ -231,12 +231,12 @@ class TestGHE(unittest.TestCase):
 
         max_HP_EFT, min_HP_EFT = ghe.simulate(method="hybrid")
 
-        self.assertAlmostEqual(37.99, max_HP_EFT, delta=0.01)
-        self.assertAlmostEqual(16.96, min_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(37.76, max_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(17.09, min_HP_EFT, delta=0.01)
 
         ghe.size(method="hybrid")
 
-        self.assertAlmostEqual(ghe.bhe.b.H, 122.14, places=2)
+        self.assertAlmostEqual(ghe.bhe.b.H, 120.40, places=2)
 
     @unittest.skipIf(skip_validation, "To run this test, pip install pandas")
     def test_coaxial_tube(self):
