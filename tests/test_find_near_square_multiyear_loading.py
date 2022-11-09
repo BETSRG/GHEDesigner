@@ -6,34 +6,33 @@
 from ghedt import design, geometry, utilities
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 import pygfunction as gt
-from pathlib import Path
 from time import time as clock
-from unittest import TestCase
+from .ghe_base_case import GHEBaseTest
 from ghedt.output import output_design_details
 
 
-class TestFindNearSquareMultiyearLoading(TestCase):
+class TestFindNearSquareMultiyearLoading(GHEBaseTest):
 
     def test_find_near_square_multiyear_loading(self):
 
         # This file contains three examples utilizing the square-near-square design algorithm
-        # (utilizing a mulit-year loading) for a single U, double U, and coaxial tube design. The
+        # (utilizing a multi-year loading) for a single U, double U, and coaxial tube design. The
         # results from these examples are exported to the "DesignExampleOutput" folder.
 
         # Single U-tube Example
 
         # Output File Configuration
-        projectName = "Atlanta Office Building: Design Example"
+        project_name = "Atlanta Office Building: Design Example"
         note = "Square-Near-Square w/ Multi-year Loading Usage Example: Single U Tube"
         author = "Jane Doe"
-        IterationName = "Example 2"
-        outputFileDirectory = "DesignExampleOutput"
+        iteration_name = "Example 2"
+        output_file_directory = "DesignExampleOutput"
 
         # Borehole dimensions
-        H = 96.0  # Borehole length (m)
-        D = 2.0  # Borehole buried depth (m)
+        h = 96.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
         r_b = 0.075  # Borehole radius (m)
-        B = 5.0  # Borehole spacing (m)
+        b = 5.0  # Borehole spacing (m)
 
         # Single and Multiple U-tube Pipe Dimensions
         r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
@@ -51,52 +50,51 @@ class TestFindNearSquareMultiyearLoading(TestCase):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Instantiating Pipe
-        pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
 
         # Instantiating Soil Properties
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rhoCp_s, ugt)
+        soil = media.Soil(k_s, rho_cp_s, ugt)
 
         # Instantiating Grout Properties
-        grout = media.Grout(k_g, rhoCp_g)
+        grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
         fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
 
         # Fluid Flow Properties
-        V_flow = 0.2  # Volumetric flow rate (L/s)
+        v_flow = 0.2  # Volumetric flow rate (L/s)
         # Note: The flow parameter can be borehole or system.
         flow = "borehole"
 
         # Instantiate a Borehole
-        borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
         # Simulation parameters
         start_month = 1
         n_years = 4
         end_month = n_years * 12
-        max_EFT_allowable = 35  # degrees Celsius (HPEFT)
-        min_EFT_allowable = 5  # degrees Celsius (HPEFT)
-        max_Height = 135.0  # in meters
-        min_Height = 60  # in meters
+        max_eft_allowable = 35  # degrees Celsius (HP EFT)
+        min_eft_allowable = 5  # degrees Celsius (HP EFT)
+        max_height = 135.0  # in meters
+        min_height = 60  # in meters
         sim_params = media.SimulationParameters(
             start_month,
             end_month,
-            max_EFT_allowable,
-            min_EFT_allowable,
-            max_Height,
-            min_Height,
+            max_eft_allowable,
+            min_eft_allowable,
+            max_height,
+            min_height,
         )
 
         # Process loads from file
         # read in the csv file and convert the loads to a list of length 8760
-        test_data_dir = Path(__file__).resolve().parent / 'test_data'
-        csv_file = test_data_dir / 'Multiyear_Loading_Example.csv'
+        csv_file = self.test_data_directory / 'Multiyear_Loading_Example.csv'
         raw_lines = csv_file.read_text().split('\n')
         hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
 
@@ -107,14 +105,14 @@ class TestFindNearSquareMultiyearLoading(TestCase):
         """
         # B is already defined above
         number_of_boreholes = 32
-        length = utilities.length_of_side(number_of_boreholes, B)
-        geometric_constraints = geometry.GeometricConstraints(b=B, length=length)
+        length = utilities.length_of_side(number_of_boreholes, b)
+        geometric_constraints = geometry.GeometricConstraints(b=b, length=length)
 
         # Single U-tube
         # -------------
         # load_years optional parameter is used to determine if there are leap years in the given loads/where they fall
         design_single_u_tube = design.DesignNearSquare(
-            V_flow,
+            v_flow,
             borehole,
             single_u_tube,
             fluid,
@@ -132,7 +130,7 @@ class TestFindNearSquareMultiyearLoading(TestCase):
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating Gfunctions for Chosen Design
+        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
             method="hybrid"
         )  # Calculating the Final Height for the Chosen Design
@@ -147,15 +145,15 @@ class TestFindNearSquareMultiyearLoading(TestCase):
         print("Number of boreholes: {}".format(nbh))
         print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
-        # Generating Ouptut File
+        # Generating Output File
         output_design_details(
             bisection_search,
             toc - tic,
-            projectName,
+            project_name,
             note,
             author,
-            IterationName,
-            output_directory=outputFileDirectory,
+            iteration_name,
+            output_directory=output_file_directory,
             summary_file="SummaryOfResults_SU.txt",
             csv_f_1="TimeDependentValues_SU.csv",
             csv_f_2="BorefieldData_SU.csv",
@@ -171,12 +169,12 @@ class TestFindNearSquareMultiyearLoading(TestCase):
         # Double U-tube
         pos_double = media.Pipe.place_pipes(s, r_out, 2)
         double_u_tube = borehole_heat_exchangers.MultipleUTube
-        pipe_double = media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        pipe_double = media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rho_cp_p)
 
         # Double U-tube
         # -------------
         design_double_u_tube = design.DesignNearSquare(
-            V_flow,
+            v_flow,
             borehole,
             double_u_tube,
             fluid,
@@ -194,7 +192,7 @@ class TestFindNearSquareMultiyearLoading(TestCase):
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
         bisection_search = design_double_u_tube.find_design(disp=True)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating Gfunctions for Chosen Design
+        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
             method="hybrid"
         )  # Calculating the Final Height for the Chosen Design
@@ -209,15 +207,15 @@ class TestFindNearSquareMultiyearLoading(TestCase):
         print("Number of boreholes: {}".format(nbh))
         print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
-        # Generating Ouptut File
+        # Generating Output File
         output_design_details(
             bisection_search,
             toc - tic,
-            projectName,
+            project_name,
             note,
             author,
-            IterationName,
-            output_directory=outputFileDirectory,
+            iteration_name,
+            output_directory=output_file_directory,
             summary_file="SummaryOfResults_DU.txt",
             csv_f_1="TimeDependentValues_DU.csv",
             csv_f_2="BorefieldData_DU.csv",
@@ -247,13 +245,13 @@ class TestFindNearSquareMultiyearLoading(TestCase):
         pos_coaxial = (0, 0)
         coaxial_tube = borehole_heat_exchangers.CoaxialPipe
         pipe_coaxial = media.Pipe(
-            pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rhoCp_p
+            pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rho_cp_p
         )
 
         # Coaxial Tube
         # -------------
         design_coax_tube = design.DesignNearSquare(
-            V_flow,
+            v_flow,
             borehole,
             coaxial_tube,
             fluid,
@@ -271,7 +269,7 @@ class TestFindNearSquareMultiyearLoading(TestCase):
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
         bisection_search = design_coax_tube.find_design(disp=True)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating Gfunctions for Chosen Design
+        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
             method="hybrid"
         )  # Calculating the Final Height for the Chosen Design
@@ -286,15 +284,15 @@ class TestFindNearSquareMultiyearLoading(TestCase):
         print("Number of boreholes: {}".format(nbh))
         print("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
-        # Generating Ouptut File
+        # Generating Output File
         output_design_details(
             bisection_search,
             toc - tic,
-            projectName,
+            project_name,
             note,
             author,
-            IterationName,
-            output_directory=outputFileDirectory,
+            iteration_name,
+            output_directory=output_file_directory,
             summary_file="SummaryOfResults_C.txt",
             csv_f_1="TimeDependentValues_C.csv",
             csv_f_2="BorefieldData_C.csv",

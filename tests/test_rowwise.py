@@ -1,17 +1,7 @@
-import os
-import unittest
+from .ghe_base_case import GHEBaseTest
 from math import pi
-
-try:
-    # noinspection PyPackageRequirements
-    import pandas as pd
-    skip_validation = False
-except ImportError:
-    pd = None
-    skip_validation = True
-   
+import pandas as pd
 import numpy as np
-
 from ghedt.rowwise.rowwise_generation import (
     field_optimization_fr,
     field_optimization_wp_space_fr,
@@ -19,38 +9,28 @@ from ghedt.rowwise.rowwise_generation import (
     gen_shape,
 )
 
-REFERENCE_DATA_FILE = os.path.join(
-    os.path.dirname(__file__), "test_data", "rowwise_reference_values.csv"
-)
 
-PROPERTY_BOUNDARY_FILE = os.path.join(
-    os.path.dirname(__file__), "test_data", "property_polygons", "property_boundary.csv"
-)
-
-BUILDING_FILE = os.path.join(
-    os.path.dirname(__file__), "test_data", "property_polygons", "building.csv"
-)
-
-
-@unittest.skipIf(skip_validation, "To run these tests, pip install pandas")
-class TestRowWise(unittest.TestCase):
+class TestRowWise(GHEBaseTest):
     def setUp(self) -> None:
 
         # Reference Values
-        self.reference_values = pd.read_csv(REFERENCE_DATA_FILE)
+        reference_data_file = self.test_data_directory / 'rowwise_reference_values.csv'
+        self.reference_values = pd.read_csv(str(reference_data_file))
 
         # Load Property Boundary
-        prop_polygon_df: pd.DataFrame = pd.read_csv(PROPERTY_BOUNDARY_FILE)
+        property_boundary_file = self.test_data_directory / 'polygon_property_boundary.csv'
+        prop_polygon_df: pd.DataFrame = pd.read_csv(str(property_boundary_file))
         self.prop_polygon_ar: list = prop_polygon_df.values.tolist()
 
         # Load Building
-        build_polygon_df: pd.DataFrame = pd.read_csv(BUILDING_FILE)
+        building_file = self.test_data_directory / 'polygon_building.csv'
+        build_polygon_df: pd.DataFrame = pd.read_csv(str(building_file))
         self.building_polygon_ar: list = build_polygon_df.values.tolist()
 
         # Establish Properties
         self.buildings = None
         self.property = None
-        self.perimeter_spac_ratio = 0.7
+        self.perimeter_spacing_ratio = 0.7
         self.target_spacing_start = 10.0  # in meters
         self.target_spacing_stop = 20.0  # in meters
         self.target_spacing_step = 1  # in meters
@@ -169,7 +149,7 @@ class TestRowWise(unittest.TestCase):
         rotations = np.linspace(
             self.rotation_start, self.rotation_stop, num=self.number_of_rotations
         )
-        nbhs = [
+        num_bhs = [
             len(
                 gen_borehole_config(
                     self.property,
@@ -184,8 +164,8 @@ class TestRowWise(unittest.TestCase):
         reference_values = self.reference_values[
             "test_borehole_config_lengths"
         ].to_list()
-        for i in range(len(nbhs)):
-            self.assertAlmostEqual(reference_values[i], nbhs[i], delta=0.001)
+        for i in range(len(num_bhs)):
+            self.assertAlmostEqual(reference_values[i], num_bhs[i], delta=0.001)
 
     def test_normal_spacing(self):
 
@@ -194,7 +174,7 @@ class TestRowWise(unittest.TestCase):
             self.target_spacing_stop,
             num=self.target_spacing_number,
         )
-        nbhs = [
+        num_bhs = [
             len(
                 field_optimization_fr(
                     ts,
@@ -210,8 +190,8 @@ class TestRowWise(unittest.TestCase):
         reference_values = self.reference_values[
             "test_normal_spacing_lengths"
         ].to_list()
-        for i in range(len(nbhs)):
-            self.assertAlmostEqual(reference_values[i], nbhs[i], delta=0.001)
+        for i in range(len(num_bhs)):
+            self.assertAlmostEqual(reference_values[i], num_bhs[i], delta=0.001)
 
     def test_perimeter_spacing(self):
 
@@ -220,10 +200,10 @@ class TestRowWise(unittest.TestCase):
             self.target_spacing_stop,
             num=self.target_spacing_number,
         )
-        nbhs = [
+        num_bhs = [
             len(
                 field_optimization_wp_space_fr(
-                    self.perimeter_spac_ratio,
+                    self.perimeter_spacing_ratio,
                     ts,
                     self.rotation_step,
                     self.property,
@@ -237,5 +217,5 @@ class TestRowWise(unittest.TestCase):
         reference_values = self.reference_values[
             "test_perimeter_spacing_lengths"
         ].to_list()
-        for i in range(len(nbhs)):
-            self.assertAlmostEqual(reference_values[i], nbhs[i], delta=0.001)
+        for i in range(len(num_bhs)):
+            self.assertAlmostEqual(reference_values[i], num_bhs[i], delta=0.001)

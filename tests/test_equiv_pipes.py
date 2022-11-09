@@ -1,13 +1,13 @@
-from unittest import TestCase
 from ghedt.peak_load_analysis_tool import media, equivalance, borehole_heat_exchangers
 import pygfunction as gt
+from .ghe_base_case import GHEBaseTest
 
 
-class TestEquivalentPipes(TestCase):
+class TestEquivalentPipes(GHEBaseTest):
     def test_equiv_pipes_coaxial_to_single_u_tube(self):
         # Borehole dimensions
-        H = 100.0  # Borehole length (m)
-        D = 2.0  # Borehole buried depth (m)
+        h = 100.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
         r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
 
         # Pipe dimensions
@@ -33,43 +33,43 @@ class TestEquivalentPipes(TestCase):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # Pipe
-        pipe = media.Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rhoCp_p)
+        pipe = media.Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rhoCp_s, ugt)
+        soil = media.Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rhoCp_g)
+        grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
         fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
-        V_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
+        v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
-        m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho
+        m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
-        Coaxial = borehole_heat_exchangers.CoaxialPipe(
+        coaxial = borehole_heat_exchangers.CoaxialPipe(
             m_flow_borehole, fluid, borehole, pipe, grout, soil
         )
 
         var = "Intermediate variables"
         print(var)
         print(len(var) * "-")
-        V_fluid, V_pipe, R_conv, R_pipe = equivalance.concentric_tube_volumes(Coaxial)
-        print("Fluid volume per meter (m^2): {0:.8f}".format(V_fluid))
-        print("Pipe volume per meter (m^2): {0:.8f}".format(V_pipe))
-        print("Total Convective Resistance (K/(W/m)): {0:.8f}".format(R_conv))
-        print("Total Pipe Resistance (K/(W/m)): {0:.8f}".format(R_pipe))
+        v_fluid, v_pipe, r_conv, r_pipe = equivalance.concentric_tube_volumes(coaxial)
+        print("Fluid volume per meter (m^2): {0:.8f}".format(v_fluid))
+        print("Pipe volume per meter (m^2): {0:.8f}".format(v_pipe))
+        print("Total Convective Resistance (K/(W/m)): {0:.8f}".format(r_conv))
+        print("Total Pipe Resistance (K/(W/m)): {0:.8f}".format(r_pipe))
         print("\n")
 
-        single_u_tube = equivalance.compute_equivalent(Coaxial)
+        single_u_tube = equivalance.compute_equivalent(coaxial)
 
         val = "Single U-tube equivalent parameters"
         print("\n" + val + "\n" + len(val) * "-")
@@ -85,8 +85,8 @@ class TestEquivalentPipes(TestCase):
         print("Pipe thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.pipe.k))
         print("Grout thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.grout.k))
 
-        Rb = single_u_tube.compute_effective_borehole_resistance()
-        print("Effective borehole resistance (m.K/W): {0:.8f}".format(Rb))
+        rb = single_u_tube.compute_effective_borehole_resistance()
+        print("Effective borehole resistance (m.K/W): {0:.8f}".format(rb))
 
         print(single_u_tube.__repr__())
 
@@ -94,12 +94,13 @@ class TestEquivalentPipes(TestCase):
         fig = single_u_tube.visualize_pipes()
 
         # save equivalent
-        fig.savefig("tests/coaxial_to_single_equivalent.png")
+        output_plot = self.test_outputs_directory / 'coaxial_to_single_equivalent.png'
+        fig.savefig(str(output_plot))
 
     def test_equiv_pipes_double_to_single_u_tube(self):
         # Borehole dimensions
-        H = 100.0  # Borehole length (m)
-        D = 2.0  # Borehole buried depth (m)
+        h = 100.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
         r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
 
         # Pipe dimensions
@@ -114,9 +115,9 @@ class TestEquivalentPipes(TestCase):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Pipe positions
         # Double U-tube [(x_in, y_in), (x_out, y_out), (x_in, y_in), (x_out, y_out)]
@@ -124,21 +125,21 @@ class TestEquivalentPipes(TestCase):
 
         # Thermal properties
         # Pipe
-        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rhoCp_s, ugt)
+        soil = media.Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rhoCp_g)
+        grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
         fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
-        V_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
+        v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
-        m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho
+        m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
         # Double U-tube defaults to parallel
         double_u_tube = borehole_heat_exchangers.MultipleUTube(
@@ -148,11 +149,11 @@ class TestEquivalentPipes(TestCase):
         val = "Intermediate variables"
         print(val + "\n" + len(val) * "-")
         # Intermediate variables
-        V_fluid, V_pipe, R_conv, R_pipe = equivalance.u_tube_volumes(double_u_tube)
-        print("Fluid volume per meter (m^2): {0:.8f}".format(V_fluid))
-        print("Pipe volume per meter (m^2): {0:.8f}".format(V_pipe))
-        print("Total Convective Resistance (K/(W/m)): {0:.8f}".format(R_conv))
-        print("Total Pipe Resistance (K/(W/m)): {0:.8f}".format(R_pipe))
+        v_fluid, v_pipe, r_conv, r_pipe = equivalance.u_tube_volumes(double_u_tube)
+        print("Fluid volume per meter (m^2): {0:.8f}".format(v_fluid))
+        print("Pipe volume per meter (m^2): {0:.8f}".format(v_pipe))
+        print("Total Convective Resistance (K/(W/m)): {0:.8f}".format(r_conv))
+        print("Total Pipe Resistance (K/(W/m)): {0:.8f}".format(r_pipe))
 
         single_u_tube = equivalance.compute_equivalent(double_u_tube)
         val = "Single U-tube equivalent parameters"
@@ -169,8 +170,8 @@ class TestEquivalentPipes(TestCase):
         print("Pipe thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.pipe.k))
         print("Grout thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.grout.k))
 
-        Rb = single_u_tube.compute_effective_borehole_resistance()
-        print("Effective borehole resistance (m.K/W): {0:.8f}".format(Rb))
+        rb = single_u_tube.compute_effective_borehole_resistance()
+        print("Effective borehole resistance (m.K/W): {0:.8f}".format(rb))
 
         print(single_u_tube.__repr__())
 
@@ -178,4 +179,5 @@ class TestEquivalentPipes(TestCase):
         fig = single_u_tube.visualize_pipes()
 
         # save equivalent
-        fig.savefig("tests/double_to_single_equivalent.png")
+        output_plot = self.test_outputs_directory / 'double_to_single_equivalent.png'
+        fig.savefig(str(output_plot))

@@ -106,15 +106,6 @@ def check_bracket(sign_x_l, sign_x_r, disp=None) -> bool:
 
 # File input/output or file path handling functions.
 # --------------------------------------------------
-def js_dump(file_name, d, indent=4):
-    with open(file_name + ".json", "w") as fp:
-        json.dump(d, fp, indent=indent)
-
-
-def js_load(filename: str):
-    with open(filename) as f_in:
-        return json.load(f_in)
-
 
 def create_input_file(self, file_path_obj: Path):
     # Store an object in a file using pickle.

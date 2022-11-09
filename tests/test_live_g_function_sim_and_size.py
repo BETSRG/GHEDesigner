@@ -2,18 +2,17 @@ from ghedt import ground_heat_exchangers, gfunction, utilities
 from ghedt.coordinates import rectangle
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
 import pygfunction as gt
-from pathlib import Path
-from unittest import TestCase
+from .ghe_base_case import GHEBaseTest
 
 
-class TestLiveGFunctionSimAndSize(TestCase):
+class TestLiveGFunctionSimAndSize(GHEBaseTest):
     def test_live_g_function_sim_and_size(self):
         # Borehole dimensions
         # -------------------
-        H = 96.0  # Borehole length (m)
-        D = 2.0  # Borehole buried depth (m)
+        h = 96.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
         r_b = 0.075  # Borehole radius]
-        B = 5.0  # Borehole spacing (m)
+        b = 5.0  # Borehole spacing (m)
 
         # Pipe dimensions
         # ---------------
@@ -37,19 +36,19 @@ class TestLiveGFunctionSimAndSize(TestCase):
 
         # Volumetric heat capacities
         # --------------------------
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # ------------------
         # Pipe
-        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rhoCp_s, ugt)
+        soil = media.Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rhoCp_g)
+        grout = media.Grout(k_g, rho_cp_g)
 
         # Eskilson's original ln(t/ts) values
         log_time = utilities.eskilson_log_times()
@@ -60,18 +59,18 @@ class TestLiveGFunctionSimAndSize(TestCase):
         fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
 
         # Coordinates
-        Nx = 12
-        Ny = 13
-        coordinates = rectangle(Nx, Ny, B, B)
+        nx = 12
+        ny = 13
+        coordinates = rectangle(nx, ny, b, b)
 
         # Fluid properties
-        V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
-        V_flow_system = V_flow_borehole * float(Nx * Ny)
+        v_flow_borehole = 0.2  # System volumetric flow rate (L/s)
+        v_flow_system = v_flow_borehole * float(nx * ny)
         # Total fluid mass flow rate per borehole (kg/s)
-        m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho
+        m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
         # Simulation start month and end month
         # --------------------------------
@@ -80,43 +79,42 @@ class TestLiveGFunctionSimAndSize(TestCase):
         n_years = 20
         end_month = n_years * 12
         # Maximum and minimum allowable fluid temperatures
-        max_EFT_allowable = 35  # degrees Celsius
-        min_EFT_allowable = 5  # degrees Celsius
+        max_eft_allowable = 35  # degrees Celsius
+        min_eft_allowable = 5  # degrees Celsius
         # Maximum and minimum allowable heights
-        max_Height = 150  # in meters
-        min_Height = 60  # in meters
+        max_height = 150  # in meters
+        min_height = 60  # in meters
         sim_params = media.SimulationParameters(
             start_month,
             end_month,
-            max_EFT_allowable,
-            min_EFT_allowable,
-            max_Height,
-            min_Height,
+            max_eft_allowable,
+            min_eft_allowable,
+            max_height,
+            min_height,
         )
 
         # Process loads from file
         # -----------------------
         # read in the csv file and convert the loads to a list of length 8760
-        test_data_dir = Path(__file__).resolve().parent / 'test_data'
-        csv_file = test_data_dir / 'Atlanta_Office_Building_Loads.csv'
+        csv_file = self.test_data_directory / 'Atlanta_Office_Building_Loads.csv'
         raw_lines = csv_file.read_text().split('\n')
         hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
-        nSegments = 8
+        n_segments = 8
         segments = "unequal"
         solver = "equivalent"
         boundary = "MIFT"
         end_length_ratio = 0.02
         segment_ratios = gt.utilities.segment_ratios(
-            nSegments, end_length_ratio=end_length_ratio
+            n_segments, end_length_ratio=end_length_ratio
         )
         g_function = gfunction.compute_live_g_function(
-            B,
-            [H],
+            b,
+            [h],
             [r_b],
-            [D],
+            [d],
             m_flow_borehole,
             bhe_object,
             log_time,
@@ -125,7 +123,7 @@ class TestLiveGFunctionSimAndSize(TestCase):
             pipe,
             grout,
             soil,
-            n_segments=nSegments,
+            n_segments=n_segments,
             segments=segments,
             solver=solver,
             boundary=boundary,
@@ -136,8 +134,8 @@ class TestLiveGFunctionSimAndSize(TestCase):
 
         # Initialize the GHE object
         ghe = ground_heat_exchangers.GHE(
-            V_flow_system,
-            B,
+            v_flow_system,
+            b,
             bhe_object,
             fluid,
             borehole,
@@ -150,20 +148,20 @@ class TestLiveGFunctionSimAndSize(TestCase):
         )
 
         # Simulate after computing just one g-function
-        max_HP_EFT, min_HP_EFT = ghe.simulate()
+        max_hp_eft, min_hp_eft = ghe.simulate()
 
-        print("Min EFT: {0:.3f}\nMax EFT: {1:.3f}".format(min_HP_EFT, max_HP_EFT))
+        print("Min EFT: {0:.3f}\nMax EFT: {1:.3f}".format(min_hp_eft, max_hp_eft))
 
         # Compute a range of g-functions for interpolation
-        H_values = [24.0, 48.0, 96.0, 192.0, 384.0]
-        r_b_values = [r_b] * len(H_values)
-        D_values = [2.0] * len(H_values)
+        h_values = [24.0, 48.0, 96.0, 192.0, 384.0]
+        r_b_values = [r_b] * len(h_values)
+        d_values = [2.0] * len(h_values)
 
         g_function = gfunction.compute_live_g_function(
-            B,
-            H_values,
+            b,
+            h_values,
             r_b_values,
-            D_values,
+            d_values,
             m_flow_borehole,
             bhe_object,
             log_time,
@@ -176,8 +174,8 @@ class TestLiveGFunctionSimAndSize(TestCase):
 
         # Re-Initialize the GHE object
         ghe = ground_heat_exchangers.GHE(
-            V_flow_system,
-            B,
+            v_flow_system,
+            b,
             bhe_object,
             fluid,
             borehole,

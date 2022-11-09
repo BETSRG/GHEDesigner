@@ -1,30 +1,17 @@
 import copy
-import os
-import unittest
-
-try:
-    # noinspection PyPackageRequirements
-    import pandas as pd
-    skip_validation = False
-except ImportError:
-    pd = None
-    skip_validation = True
 
 from ghedt import design, utilities, geometry
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
 import pygfunction as gt
-
-TESTDATA_FILENAME = os.path.join(
-    os.path.dirname(__file__), "test_data", "Atlanta_Office_Building_Loads.csv"
-)
+from .ghe_base_case import GHEBaseTest
 
 
-class DesignBase:
-    def __init__(self):
+class DesignBase(GHEBaseTest):
+    def setUp(self):
         # Borehole dimensions
         # -------------------
-        H = 96.0  # Borehole length (m)
-        D = 2.0  # Borehole buried depth (m)
+        h = 96.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
         r_b = 0.075  # Borehole radius (m)
 
         # Pipe dimensions
@@ -67,23 +54,23 @@ class DesignBase:
 
         # Volumetric heat capacities
         # --------------------------
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # ------------------
         # Pipe
         self.pipe_single = media.Pipe(
-            pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p
+            pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p
         )
         # pipe_double = plat.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
         # pipe_coaxial = plat.media.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rhoCp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        self.soil = media.Soil(k_s, rhoCp_s, ugt)
+        self.soil = media.Soil(k_s, rho_cp_s, ugt)
         # Grout
-        self.grout = media.Grout(k_g, rhoCp_g)
+        self.grout = media.Grout(k_g, rho_cp_g)
 
         # Inputs related to fluid
         # -----------------------
@@ -91,11 +78,11 @@ class DesignBase:
         self.fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
 
         # Fluid flow rate
-        V_flow = 0.2  # Borehole volumetric flow rate (L/s)
-        self.V_flow_borehole = copy.deepcopy(V_flow)
+        v_flow = 0.2  # Borehole volumetric flow rate (L/s)
+        self.V_flow_borehole = copy.deepcopy(v_flow)
 
         # Define a borehole
-        self.borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+        self.borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
         # Simulation parameters
         # ---------------------
@@ -104,22 +91,22 @@ class DesignBase:
         n_years = 20
         end_month = n_years * 12
         # Maximum and minimum allowable fluid temperatures
-        max_EFT_allowable = 35  # degrees Celsius
-        min_EFT_allowable = 5  # degrees Celsius
+        max_eft_allowable = 35  # degrees Celsius
+        min_eft_allowable = 5  # degrees Celsius
         # Maximum and minimum allowable heights
-        max_Height = 135.0  # in meters
-        min_Height = 60  # in meters
+        max_height = 135.0  # in meters
+        min_height = 60  # in meters
         self.sim_params = media.SimulationParameters(
             start_month,
             end_month,
-            max_EFT_allowable,
-            min_EFT_allowable,
-            max_Height,
-            min_Height,
+            max_eft_allowable,
+            min_eft_allowable,
+            max_height,
+            min_height,
         )
 
 
-class TestNearSquare(unittest.TestCase, DesignBase):
+class TestNearSquare(DesignBase):
     def setUp(self) -> None:
 
         DesignBase.__init__(self)
@@ -130,20 +117,17 @@ class TestNearSquare(unittest.TestCase, DesignBase):
         # Process loads from file
         # -----------------------
         # read in the csv file and convert the loads to a list of length 8760
-        hourly_extraction: dict = pd.read_csv(TESTDATA_FILENAME).to_dict("list")
-        # Take only the first column in the dictionary
-        self.hourly_extraction_ground_loads: list = hourly_extraction[
-            list(hourly_extraction.keys())[0]
-        ]
+        csv_file = self.test_data_directory / 'Atlanta_Office_Building_Loads.csv'
+        raw_lines = csv_file.read_text().split('\n')
+        self.hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
 
         # Geometric constraints for the `near-square` routine
         # Required geometric constraints for the uniform rectangle design: B
-        B = 5.0  # Borehole spacing (m)
+        b = 5.0  # Borehole spacing (m)
         number_of_boreholes = 32
-        length = utilities.length_of_side(number_of_boreholes, B)
-        self.geometric_constraints = geometry.GeometricConstraints(b=B, length=length)
+        length = utilities.length_of_side(number_of_boreholes, b)
+        self.geometric_constraints = geometry.GeometricConstraints(b=b, length=length)
 
-    @unittest.skipIf(skip_validation, "To run this test, pip install pandas")
     def test_design_selection(self):
         # Single U-tube
         # -------------
@@ -165,7 +149,7 @@ class TestNearSquare(unittest.TestCase, DesignBase):
         bisection_search = design_single_u_tube_a.find_design()
         bisection_search.ghe.compute_g_functions()
         bisection_search.ghe.size(method="hybrid")
-        H_single_u_tube_a = bisection_search.ghe.bhe.b.H
+        h_single_u_tube_a = bisection_search.ghe.bhe.b.H
 
         design_single_u_tube_b = design.DesignNearSquare(
             self.V_flow_borehole,
@@ -184,12 +168,12 @@ class TestNearSquare(unittest.TestCase, DesignBase):
         bisection_search = design_single_u_tube_b.find_design()
         bisection_search.ghe.compute_g_functions()
         bisection_search.ghe.size(method="hybrid")
-        H_single_u_tube_b = bisection_search.ghe.bhe.b.H
+        h_single_u_tube_b = bisection_search.ghe.bhe.b.H
 
         # Verify that the `flow` toggle is properly working
-        self.assertAlmostEqual(H_single_u_tube_a, H_single_u_tube_b, places=8)
+        self.assertAlmostEqual(h_single_u_tube_a, h_single_u_tube_b, places=8)
         # Verify that the proper height as been found
-        # Note: This reference was calculated on MacOS. It seems that on Linux
+        # Note: This reference was calculated on macOS. It seems that on Linux
         # the values are not equal starting around the 9th decimal place.
-        H_reference = 130.27
-        self.assertAlmostEqual(H_reference, H_single_u_tube_a, delta=0.01)
+        h_reference = 130.27
+        self.assertAlmostEqual(h_reference, h_single_u_tube_a, delta=0.01)

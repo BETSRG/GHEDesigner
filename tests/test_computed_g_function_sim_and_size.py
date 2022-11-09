@@ -1,18 +1,18 @@
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
-from pathlib import Path
 import pygfunction as gt
-from ghedt import utilities, gfunction, ground_heat_exchangers
-from unittest import TestCase
+from ghedt import gfunction, ground_heat_exchangers
+from json import loads
+from .ghe_base_case import GHEBaseTest
 
 
-class TestComputedGFunctionSimAndSize(TestCase):
+class TestComputedGFunctionSimAndSize(GHEBaseTest):
     def test_computed_g_function_sim_and_size(self):
         # Borehole dimensions
         # -------------------
-        H = 100.0  # Borehole length (m)
-        D = 2.0  # Borehole buried depth (m)
+        h = 100.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
         r_b = 150.0 / 1000.0 / 2.0  # Borehole radius]
-        B = 5.0  # Borehole spacing (m)
+        b = 5.0  # Borehole spacing (m)
 
         # Pipe dimensions
         # ---------------
@@ -36,25 +36,23 @@ class TestComputedGFunctionSimAndSize(TestCase):
 
         # Volumetric heat capacities
         # --------------------------
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # ------------------
         # Pipe
-        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rhoCp_s, ugt)
+        soil = media.Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rhoCp_g)
+        grout = media.Grout(k_g, rho_cp_g)
 
         # Read in g-functions from GLHEPro
-        test_data_dir = Path(__file__).resolve().parent / 'test_data'
-        csv_file = test_data_dir / 'GLHEPRO_gFunctions_12x13.json'
-        file = str(csv_file)
-        data = utilities.js_load(file)
+        glhe_json_data = self.test_data_directory / 'GLHEPRO_gFunctions_12x13.json'
+        data = loads(glhe_json_data.read_text())
 
         # Configure the database data for input to the goethermal GFunction object
         geothermal_g_input = gfunction.GFunction.configure_database_file_for_usage(data)
@@ -64,12 +62,12 @@ class TestComputedGFunctionSimAndSize(TestCase):
 
         # Inputs related to fluid
         # -----------------------
-        V_flow_system = 31.2  # System volumetric flow rate (L/s)
+        v_flow_system = 31.2  # System volumetric flow rate (L/s)
         # Fluid properties
         fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
         # Simulation start month and end month
         # --------------------------------
@@ -78,34 +76,33 @@ class TestComputedGFunctionSimAndSize(TestCase):
         n_years = 20
         end_month = n_years * 12
         # Maximum and minimum allowable fluid temperatures
-        max_EFT_allowable = 35  # degrees Celsius
-        min_EFT_allowable = 5  # degrees Celsius
+        max_eft_allowable = 35  # degrees Celsius
+        min_eft_allowable = 5  # degrees Celsius
         # Maximum and minimum allowable heights
-        max_Height = 200  # in meters
-        min_Height = 60  # in meters
+        max_height = 200  # in meters
+        min_height = 60  # in meters
         sim_params = media.SimulationParameters(
             start_month,
             end_month,
-            max_EFT_allowable,
-            min_EFT_allowable,
-            max_Height,
-            min_Height,
+            max_eft_allowable,
+            min_eft_allowable,
+            max_height,
+            min_height,
         )
 
         # Process loads from file
         # -----------------------
         # read in the csv file and convert the loads to a list of length 8760
-        test_data_dir = Path(__file__).resolve().parent / 'test_data'
-        csv_file = test_data_dir / 'Atlanta_Office_Building_Loads.csv'
-        raw_lines = csv_file.read_text().split('\n')
+        glhe_json_data = self.test_data_directory / 'Atlanta_Office_Building_Loads.csv'
+        raw_lines = glhe_json_data.read_text().split('\n')
         hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
 
         # --------------------------------------------------------------------------
 
         # Initialize GHE object
         ghe = ground_heat_exchangers.GHE(
-            V_flow_system,
-            B,
+            v_flow_system,
+            b,
             bhe_object,
             fluid,
             borehole,

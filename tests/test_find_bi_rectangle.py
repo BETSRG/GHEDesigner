@@ -7,13 +7,12 @@
 from ghedt import design, geometry
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 import pygfunction as gt
-from pathlib import Path
-from unittest import TestCase
+from .ghe_base_case import GHEBaseTest
 from time import time as clock
 from ghedt.output import output_design_details
 
 
-class TestFindBiRectangle(TestCase):
+class TestFindBiRectangle(GHEBaseTest):
     def test_find_bi_rectangle(self):
 
         # This file contains three examples utilizing the bi-rectangle design algorithm for a single U, double U, and
@@ -22,15 +21,15 @@ class TestFindBiRectangle(TestCase):
         # Single U-tube Example
 
         # Output File Configuration
-        projectName = "Atlanta Office Building: Design Example"
+        project_name = "Atlanta Office Building: Design Example"
         note = "Bi-Rectangle Usage Example: Single U Tube"
         author = "John Doe"
-        IterationName = "Example 3"
-        outputFileDirectory = "DesignExampleOutput"
+        iteration_name = "Example 3"
+        output_file_directory = "DesignExampleOutput"
 
         # Borehole dimensions
-        H = 96.0  # Borehole length (m)
-        D = 2.0  # Borehole buried depth (m)
+        h = 96.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
         r_b = 0.075  # Borehole radius (m)
         # B = 5.0  # Borehole spacing (m)
 
@@ -50,61 +49,60 @@ class TestFindBiRectangle(TestCase):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Instantiating Pipe
-        pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
 
         # Instantiating Soil Properties
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rhoCp_s, ugt)
+        soil = media.Soil(k_s, rho_cp_s, ugt)
 
         # Instantiating Grout Properties
-        grout = media.Grout(k_g, rhoCp_g)
+        grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
         fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
 
         # Fluid Flow Properties
-        V_flow = 0.2  # Volumetric flow rate (L/s)
+        v_flow = 0.2  # Volumetric flow rate (L/s)
         # Note: The flow parameter can be borehole or system.
         flow = "borehole"
 
         # Instantiate a Borehole
-        borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
         # Simulation parameters
         start_month = 1
         n_years = 20
         end_month = n_years * 12
-        max_EFT_allowable = 35  # degrees Celsius (HPEFT)
-        min_EFT_allowable = 5  # degrees Celsius (HPEFT)
-        max_Height = 135.0  # in meters
-        min_Height = 60  # in meters
+        max_eft_allowable = 35  # degrees Celsius (HP EFT)
+        min_eft_allowable = 5  # degrees Celsius (HP EFT)
+        max_height = 135.0  # in meters
+        min_height = 60  # in meters
         sim_params = media.SimulationParameters(
             start_month,
             end_month,
-            max_EFT_allowable,
-            min_EFT_allowable,
-            max_Height,
-            min_Height,
+            max_eft_allowable,
+            min_eft_allowable,
+            max_height,
+            min_height,
         )
 
         # Process loads from file
         # read in the csv file and convert the loads to a list of length 8760
-        test_data_dir = Path(__file__).resolve().parent / 'test_data'
-        csv_file = test_data_dir / 'Atlanta_Office_Building_Loads.csv'
+        csv_file = self.test_data_directory / 'Atlanta_Office_Building_Loads.csv'
         raw_lines = csv_file.read_text().split('\n')
         hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
 
         # Rectangular design constraints are the land and range of B-spacing
         length = 85.0  # m
         width = 36.5  # m
-        B_min = 4.45  # m
-        B_max_x = 10.0  # m
-        B_max_y = 12.0  # m
+        b_min = 4.45  # m
+        b_max_x = 10.0  # m
+        b_max_y = 12.0  # m
 
         """ Geometric constraints for the `find_rectangle` routine.
         Required geometric constraints for the uniform rectangle design:
@@ -114,13 +112,13 @@ class TestFindBiRectangle(TestCase):
           - B_max
         """
         geometric_constraints = geometry.GeometricConstraints(
-            length=length, width=width, b_min=B_min, b_max_x=B_max_x, b_max_y=B_max_y
+            length=length, width=width, b_min=b_min, b_max_x=b_max_x, b_max_y=b_max_y
         )
 
         # Single U-tube
         # -------------
         design_single_u_tube = design.DesignBiRectangle(
-            V_flow,
+            v_flow,
             borehole,
             single_u_tube,
             fluid,
@@ -137,7 +135,7 @@ class TestFindBiRectangle(TestCase):
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating Gfunctions for Chosen Design
+        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
             method="hybrid"
         )  # Calculating the Final Height for the Chosen Design
@@ -160,11 +158,11 @@ class TestFindBiRectangle(TestCase):
         output_design_details(
             bisection_search,
             toc - tic,
-            projectName,
+            project_name,
             note,
             author,
-            IterationName,
-            output_directory=outputFileDirectory,
+            iteration_name,
+            output_directory=output_file_directory,
             summary_file="SummaryOfResults_SU.txt",
             csv_f_1="TimeDependentValues_SU.txt",
             csv_f_2="BorefieldData_SU.csv",
@@ -182,7 +180,7 @@ class TestFindBiRectangle(TestCase):
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
         bisection_search = design_double_u_tube.find_design(disp=True)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating Gfunctions for Chosen Design
+        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(method='hybrid')  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
     
@@ -196,7 +194,7 @@ class TestFindBiRectangle(TestCase):
         print('Total Drilling: {0:.1f} meters\n'.
               format(bisection_search.ghe.bhe.b.H * nbh))
     
-        # Generating Ouptut File
+        # Generating Output File
         Output.OutputDesignDetails(bisection_search, toc - tic, projectName
                                    , note, author, IterationName, outputDirectory=outputFileDirectory,
                                    summaryFile="SummaryOfResults_DU.txt", csvF1="TimeDependentValues_DU.csv",
@@ -238,7 +236,7 @@ class TestFindBiRectangle(TestCase):
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
         bisection_search = design_coax_tube.find_design(disp=True)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating Gfunctions for Chosen Design
+        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(method='hybrid')  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
     
@@ -252,7 +250,7 @@ class TestFindBiRectangle(TestCase):
         print('Total Drilling: {0:.1f} meters\n'.
               format(bisection_search.ghe.bhe.b.H * nbh))
     
-        # Generating Ouptut File
+        # Generating Output File
         Output.OutputDesignDetails(bisection_search, toc - tic, projectName
                                    , note, author, IterationName, outputDirectory=outputFileDirectory,
                                    summaryFile="SummaryOfResults_C.txt", csvF1="TimeDependentValues_C.csv",

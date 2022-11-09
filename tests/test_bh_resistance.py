@@ -1,27 +1,15 @@
-from unittest import TestCase, skipIf
-from pathlib import Path
+from pandas import ExcelFile, read_excel
+from matplotlib import pyplot
 import pygfunction as gt
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
+from .ghe_base_case import GHEBaseTest
 
 
-try:
-    # noinspection PyPackageRequirements
-    import matplotlib.pyplot as plt
-    import pandas as pd
-    glhe_file = Path(__file__).resolve().parent / 'test_data' / 'GLHEPRO.xlsx'
-    pd.ExcelFile(glhe_file)
-    skip_validation = False
-except ImportError:
-    plt = None
-    pd = None
-    skip_validation = True
-
-
-class TestBHResistance(TestCase):
+class TestBHResistance(GHEBaseTest):
     def test_bh_resistance_coaxial(self):
         # Borehole dimensions
-        H = 100.0  # Borehole length (m)
-        D = 2.0  # Borehole buried depth (m)
+        h = 100.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
         r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
 
         # Pipe dimensions
@@ -47,58 +35,59 @@ class TestBHResistance(TestCase):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # Pipe
-        pipe = media.Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rhoCp_p)
+        pipe = media.Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rhoCp_s, ugt)
+        soil = media.Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rhoCp_g)
+        grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
         fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
-        V_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
+        v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
-        m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho
+        m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
-        Coaxial = borehole_heat_exchangers.CoaxialPipe(
+        coaxial = borehole_heat_exchangers.CoaxialPipe(
             m_flow_borehole, fluid, borehole, pipe, grout, soil
         )
 
-        print(Coaxial)
+        print(coaxial)
 
-        R_b = Coaxial.compute_effective_borehole_resistance()
+        r_b = coaxial.compute_effective_borehole_resistance()
 
         val = "Intermediate variables"
         print(val + "\n" + len(val) * "-")
-        Re = borehole_heat_exchangers.compute_reynolds(
-            Coaxial.m_flow_pipe, Coaxial.pipe.r_out[1], fluid
+        re = borehole_heat_exchangers.compute_reynolds(
+            coaxial.m_flow_pipe, coaxial.pipe.r_out[1], fluid
         )
-        print("Reynolds number: {}".format(Re))
+        print("Reynolds number: {}".format(re))
         # R_p = Coaxial.R_p
         # print('Pipe resistance (K/(W/m)) : {}'.format(R_p))
-        h_f = Coaxial.h_fluid_a_out
+        h_f = coaxial.h_fluid_a_out
         print("Convection coefficient (W/m2.K): {}".format(h_f))
-        R_fp = Coaxial.R_fp
-        print("Convective resistance (K/(W/m)): {}".format(R_fp))
-        print("Borehole thermal resistance: {0:4f} m.K/W".format(R_b))
+        r_fp = coaxial.R_fp
+        print("Convective resistance (K/(W/m)): {}".format(r_fp))
+        print("Borehole thermal resistance: {0:4f} m.K/W".format(r_b))
 
-        fig = Coaxial.visualize_pipes()
+        fig = coaxial.visualize_pipes()
 
-        fig.savefig("Coaxial.png")
+        output_plot = self.test_outputs_directory / 'Coaxial.png'
+        fig.savefig(str(output_plot))
 
     def test_bh_resistance_double_u_tube(self):
         # Borehole dimensions
-        H = 100.0  # Borehole length (m)
-        D = 2.0  # Borehole buried depth (m)
+        h = 100.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
         r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
 
         # Pipe dimensions
@@ -113,9 +102,9 @@ class TestBHResistance(TestCase):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Pipe positions
         # Double U-tube [(x_in, y_in), (x_out, y_out), (x_in, y_in), (x_out, y_out)]
@@ -123,21 +112,21 @@ class TestBHResistance(TestCase):
 
         # Thermal properties
         # Pipe
-        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rhoCp_s, ugt)
+        soil = media.Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rhoCp_g)
+        grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
         fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
-        V_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
+        v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
-        m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho
+        m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
         double_u_tube_series = borehole_heat_exchangers.MultipleUTube(
             m_flow_borehole, fluid, borehole, pipe, grout, soil, config="series"
@@ -149,41 +138,43 @@ class TestBHResistance(TestCase):
 
         print(double_u_tube_parallel)
 
-        R_b_series = double_u_tube_series.compute_effective_borehole_resistance()
-        R_B_parallel = double_u_tube_parallel.compute_effective_borehole_resistance()
+        r_b_series = double_u_tube_series.compute_effective_borehole_resistance()
+        r_b_parallel = double_u_tube_parallel.compute_effective_borehole_resistance()
 
         # Intermediate variables
-        Re = borehole_heat_exchangers.compute_reynolds(
+        re = borehole_heat_exchangers.compute_reynolds(
             double_u_tube_parallel.m_flow_pipe, r_in, fluid
         )
 
-        print("Reynolds number: {}".format(Re))
-        R_p = double_u_tube_parallel.R_p
-        print("Pipe resistance (K/(W/m)) : {}".format(R_p))
+        print("Reynolds number: {}".format(re))
+        r_p = double_u_tube_parallel.R_p
+        print("Pipe resistance (K/(W/m)) : {}".format(r_p))
         h_f = double_u_tube_parallel.h_f
         print("Convection coefficient (W/m2.K): {}".format(h_f))
-        R_fp = double_u_tube_parallel.R_fp
-        print("Convective resistance (K/(W/m)): {}".format(R_fp))
+        r_fp = double_u_tube_parallel.R_fp
+        print("Convective resistance (K/(W/m)): {}".format(r_fp))
 
-        print("Borehole thermal resistance (series): {0:.4f} m.K/W".format(R_b_series))
-        print("Borehole thermal resistance (parallel): {0:.4f} m.K/W".format(R_B_parallel))
+        print("Borehole thermal resistance (series): {0:.4f} m.K/W".format(r_b_series))
+        print("Borehole thermal resistance (parallel): {0:.4f} m.K/W".format(r_b_parallel))
 
         # Create a borehole top view
         fig = double_u_tube_series.visualize_pipes()
 
         # Save the figure as a png
-        fig.savefig("double_u_tube_series.png")
+        output_plot = self.test_outputs_directory / 'double_u_tube_series.png'
+        fig.savefig(str(output_plot))
 
         # Create a borehole top view
         fig = double_u_tube_parallel.visualize_pipes()
 
         # Save the figure as a png
-        fig.savefig("double_u_tube_parallel.png")
+        output_plot = self.test_outputs_directory / 'double_u_tube_parallel.png'
+        fig.savefig(str(output_plot))
 
     def test_bh_resistance_single_u_tube(self):
         # Borehole dimensions
-        H = 100.0  # Borehole length (m)
-        D = 2.0  # Borehole buried depth (m)
+        h = 100.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
         r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
 
         # Pipe dimensions
@@ -202,27 +193,27 @@ class TestBHResistance(TestCase):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # Pipe
-        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rhoCp_s, ugt)
+        soil = media.Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rhoCp_g)
+        grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
         fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
-        V_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
+        v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
-        m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho
+        m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
         single_u_tube = borehole_heat_exchangers.SingleUTube(
             m_flow_borehole, fluid, borehole, pipe, grout, soil
@@ -231,34 +222,34 @@ class TestBHResistance(TestCase):
         print(single_u_tube)
 
         # Intermediate variables
-        Re = borehole_heat_exchangers.compute_reynolds(
+        re = borehole_heat_exchangers.compute_reynolds(
             single_u_tube.m_flow_borehole, r_in, fluid
         )
-        print("Reynolds number: {}".format(Re))
-        R_p = single_u_tube.R_p
-        print("Pipe resistance (K/(W/m)) : {}".format(R_p))
+        print("Reynolds number: {}".format(re))
+        r_p = single_u_tube.R_p
+        print("Pipe resistance (K/(W/m)) : {}".format(r_p))
         h_f = single_u_tube.h_f
         print("Convection coefficient (W/m2.K): {}".format(h_f))
-        R_fp = single_u_tube.R_fp
-        print("Convective resistance (K/(W/m)): {}".format(R_fp))
+        r_fp = single_u_tube.R_fp
+        print("Convective resistance (K/(W/m)): {}".format(r_fp))
 
-        R_b = single_u_tube.compute_effective_borehole_resistance()
+        r_b = single_u_tube.compute_effective_borehole_resistance()
 
-        print("Borehole thermal resistance: {0:.4f} m.K/W".format(R_b))
+        print("Borehole thermal resistance: {0:.4f} m.K/W".format(r_b))
 
         # Create a borehole top view
         fig = single_u_tube.visualize_pipes()
 
         # Save the figure as a png
-        fig.savefig("single_u_tube.png")
+        output_plot = self.test_outputs_directory / 'single_u_tube.png'
+        fig.savefig(str(output_plot))
 
-    @skipIf(skip_validation, "Skipping test_bh_resistance_validation, to run: pip install openpyxl matplotlib pandas")
     def test_bh_resistance_validation(self):
         # Dictionary for storing PLAT variations
         borehole_values = {"Single U-tube": {}, "Double U-tube": {}, "Coaxial": {}}
         # Borehole dimensions
-        H = 100.0  # Borehole length (m)
-        D = 2.0  # Borehole buried depth (m)
+        h = 100.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
         r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
 
         # Pipe dimensions
@@ -279,35 +270,31 @@ class TestBHResistance(TestCase):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # Pipe
-        pipe_s = media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-        pipe_d = media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        pipe_s = media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe_d = media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rhoCp_s, ugt)
+        soil = media.Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rhoCp_g)
+        grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
         fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
 
-        # Define a borehole
-        borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
-
-        # A list of volumetric flow rates to check borehole resistances for
-        # (L/s)
-        V_flow_rates = [0.3, 0.2, 0.18, 0.15, 0.12, 0.1, 0.08, 0.07, 0.06, 0.05]
+        # A list of volumetric flow rates to check borehole resistances for (L/s)
+        v_flow_rates = [0.3, 0.2, 0.18, 0.15, 0.12, 0.1, 0.08, 0.07, 0.06, 0.05]
 
         # Single and Double U-tubes
         borehole_values["Single U-tube"] = {"V_dot": [], "Rb": [], "Re": []}
         borehole_values["Double U-tube"] = {"V_dot": [], "Rb": [], "Re": []}
 
-        for V_flow_borehole in V_flow_rates:
+        for V_flow_borehole in v_flow_rates:
             # Store volumetric flow rates in (L/s)
             borehole_values["Single U-tube"]["V_dot"].append(V_flow_borehole)
             borehole_values["Double U-tube"]["V_dot"].append(V_flow_borehole)
@@ -316,30 +303,30 @@ class TestBHResistance(TestCase):
             m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho
 
             # Define a borehole
-            borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+            borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
             single_u_tube = borehole_heat_exchangers.SingleUTube(
                 m_flow_borehole, fluid, borehole, pipe_s, grout, soil
             )
 
-            Re = borehole_heat_exchangers.compute_reynolds(
+            re = borehole_heat_exchangers.compute_reynolds(
                 single_u_tube.m_flow_pipe, r_in, fluid
             )
-            borehole_values["Single U-tube"]["Re"].append(Re)
+            borehole_values["Single U-tube"]["Re"].append(re)
 
             double_u_tube_parallel = borehole_heat_exchangers.MultipleUTube(
                 m_flow_borehole, fluid, borehole, pipe_d, grout, soil, config="parallel"
             )
 
-            Re = borehole_heat_exchangers.compute_reynolds(
+            re = borehole_heat_exchangers.compute_reynolds(
                 double_u_tube_parallel.m_flow_pipe, r_in, fluid
             )
-            borehole_values["Double U-tube"]["Re"].append(Re)
+            borehole_values["Double U-tube"]["Re"].append(re)
 
-            R_b = single_u_tube.compute_effective_borehole_resistance()
-            borehole_values["Single U-tube"]["Rb"].append(R_b)
-            R_b = double_u_tube_parallel.compute_effective_borehole_resistance()
-            borehole_values["Double U-tube"]["Rb"].append(R_b)
+            r_b = single_u_tube.compute_effective_borehole_resistance()
+            borehole_values["Single U-tube"]["Rb"].append(r_b)
+            r_b = double_u_tube_parallel.compute_effective_borehole_resistance()
+            borehole_values["Double U-tube"]["Rb"].append(r_b)
 
         # Pipe dimensions
         # Inner pipe radii
@@ -364,61 +351,60 @@ class TestBHResistance(TestCase):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # Pipe
-        pipe = media.Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rhoCp_p)
+        pipe = media.Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rhoCp_s, ugt)
+        soil = media.Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rhoCp_g)
+        grout = media.Grout(k_g, rho_cp_g)
 
-        V_flow_rates = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.29, 0.28, 0.27, 0.26]
+        v_flow_rates = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.29, 0.28, 0.27, 0.26]
 
         borehole_values["Coaxial"] = {"V_dot": [], "Rb": [], "Re": []}
-        for V_flow_borehole in V_flow_rates:
+        for V_flow_borehole in v_flow_rates:
             # Total fluid mass flow rate per borehole (kg/s)
             m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho
             borehole_values["Coaxial"]["V_dot"].append(V_flow_borehole)
 
             # Define a borehole
-            borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+            borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
-            Coaxial = borehole_heat_exchangers.CoaxialPipe(
+            coaxial = borehole_heat_exchangers.CoaxialPipe(
                 m_flow_borehole, fluid, borehole, pipe, grout, soil
             )
 
-            Re = borehole_heat_exchangers.compute_reynolds_concentric(
-                Coaxial.m_flow_pipe, r_in_out, r_out_in, fluid
+            re = borehole_heat_exchangers.compute_reynolds_concentric(
+                coaxial.m_flow_pipe, r_in_out, r_out_in, fluid
             )
-            borehole_values["Coaxial"]["Re"].append(Re)
+            borehole_values["Coaxial"]["Re"].append(re)
 
-            R_b = Coaxial.compute_effective_borehole_resistance()
-            borehole_values["Coaxial"]["Rb"].append(R_b)
+            r_b = coaxial.compute_effective_borehole_resistance()
+            borehole_values["Coaxial"]["Rb"].append(r_b)
 
         # Open GLHEPRO xlsx file
-        test_data_dir = Path(__file__).resolve().parent / 'test_data'
-        GLHEPRO_file = str(test_data_dir / 'GLHEPRO.xlsx')
-        xlsx = pd.ExcelFile(GLHEPRO_file)
+        glhepro_file = str(self.test_data_directory / 'GLHEPRO.xlsx')
+        xlsx = ExcelFile(glhepro_file)
         sheet_names = xlsx.sheet_names
         borehole_validation_values = {}
         for sheet in sheet_names:
-            d = pd.read_excel(xlsx, sheet_name=sheet).to_dict("list")
+            d = read_excel(xlsx, sheet_name=sheet).to_dict("list")
             borehole_validation_values[sheet] = d
 
         # Comparison plots
-        fig_1, ax_1 = plt.subplots(3, sharex=True, sharey=False)
-        fig_2, ax_2 = plt.subplots(3, sharex=True, sharey=False)
+        fig_1, ax_1 = pyplot.subplots(3, sharex='all', sharey='none')
+        fig_2, ax_2 = pyplot.subplots(3, sharex='all', sharey='none')
 
         for i, tube in enumerate(borehole_values):
             ax_1[i].scatter(
                 borehole_values[tube]["Re"],
                 borehole_values[tube]["Rb"],
-                label=tube + " (GLHEDT)",
+                label=tube + " (GHEDT)",
             )
             ax_1[i].scatter(
                 borehole_validation_values[tube]["Re"],
@@ -454,7 +440,9 @@ class TestBHResistance(TestCase):
         fig_1.tight_layout()
         fig_2.tight_layout()
 
-        fig_1.savefig("Rb_vs_Re.png")
-        fig_2.savefig("Rb_vs_Vdot.png")
-        plt.close(fig_1)
-        plt.close(fig_2)
+        output_plot = self.test_outputs_directory / 'Rb_vs_Re.png'
+        fig_1.savefig(str(output_plot))
+        output_plot = self.test_outputs_directory / 'Rb_vs_v_dot.png'
+        fig_2.savefig(str(output_plot))
+        pyplot.close(fig_1)
+        pyplot.close(fig_2)

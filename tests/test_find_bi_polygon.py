@@ -6,9 +6,8 @@
 
 import csv
 import tempfile
-from pathlib import Path
 from time import time as clock
-from unittest import TestCase
+from .ghe_base_case import GHEBaseTest
 
 import pygfunction as gt
 
@@ -17,7 +16,7 @@ from ghedt.output import output_design_details
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 
 
-class TestFindBiPolygon(TestCase):
+class TestFindBiPolygon(GHEBaseTest):
 
     def test_find_bi_polygon(self):
 
@@ -99,8 +98,7 @@ class TestFindBiPolygon(TestCase):
 
         # Process loads from file
         # read in the csv file and convert the loads to a list of length 8760
-        test_data_dir = Path(__file__).resolve().parent / 'test_data'
-        csv_file = test_data_dir / 'Atlanta_Office_Building_Loads.csv'
+        csv_file = self.test_data_directory / 'Atlanta_Office_Building_Loads.csv'
         raw_lines = csv_file.read_text().split('\n')
         hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
 
@@ -110,8 +108,8 @@ class TestFindBiPolygon(TestCase):
         b_max_y = b_max_x  # in m
 
         # Building Description
-        property_boundary_file = test_data_dir / 'property_polygons' / "property_boundary.csv"
-        no_go_zone_file = test_data_dir / 'property_polygons' / "NogoZone1.csv"
+        property_boundary_file = self.test_data_directory / "polygon_property_boundary.csv"
+        no_go_zone_file = self.test_data_directory / "polygon_no_go_zone1.csv"
 
         prop_a = []  # in meters
         ng_a = []  # in meters

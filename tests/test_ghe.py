@@ -1,24 +1,10 @@
-import os
-import unittest
-
-try:
-    # noinspection PyPackageRequirements
-    import pandas as pd
-    skip_validation = False
-except ImportError:
-    pd = None
-    skip_validation = True
-    
+from .ghe_base_case import GHEBaseTest
 from ghedt import utilities, coordinates, ground_heat_exchangers, gfunction
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
 import pygfunction as gt
 
-TESTDATA_FILENAME = os.path.join(
-    os.path.dirname(__file__), "test_data", "Atlanta_Office_Building_Loads.csv"
-)
 
-
-class TestGHE(unittest.TestCase):
+class TestGHE(GHEBaseTest):
     def setUp(self) -> None:
         # Borehole dimensions
         # -------------------
@@ -66,17 +52,17 @@ class TestGHE(unittest.TestCase):
 
         # Volumetric heat capacities
         # --------------------------
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # ------------------
         # Pipe
-        self.pipe_s = media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-        self.pipe_d = media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        self.pipe_s = media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        self.pipe_d = media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         self.pipe_c = media.Pipe(
-            pos_c, r_inner, r_outer, s, epsilon, k_p_c, rhoCp_p
+            pos_c, r_inner, r_outer, s, epsilon, k_p_c, rho_cp_p
         )
 
         # Single U-tube BHE object
@@ -88,14 +74,14 @@ class TestGHE(unittest.TestCase):
 
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        self.soil = media.Soil(k_s, rhoCp_s, ugt)
+        self.soil = media.Soil(k_s, rho_cp_s, ugt)
         # Grout
-        self.grout = media.Grout(k_g, rhoCp_g)
+        self.grout = media.Grout(k_g, rho_cp_g)
 
         # Coordinates
-        Nx = 12
-        Ny = 13
-        self.coordinates = coordinates.rectangle(Nx, Ny, self.B, self.B)
+        nx = 12
+        ny = 13
+        self.coordinates = coordinates.rectangle(nx, ny, self.B, self.B)
 
         # Compute a range of g-functions for interpolation
         self.log_time = utilities.eskilson_log_times()
@@ -105,16 +91,16 @@ class TestGHE(unittest.TestCase):
 
         # Inputs related to fluid
         # -----------------------
-        V_flow_borehole = 0.2  # System volumetric flow rate (L/s)
+        v_flow_borehole = 0.2  # System volumetric flow rate (L/s)
 
         # -----------------------
         # Fluid properties
         self.fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
-        self.V_flow_system = V_flow_borehole * float(
-            Nx * Ny
+        self.V_flow_system = v_flow_borehole * float(
+            nx * ny
         )  # System volumetric flow rate (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
-        self.m_flow_borehole = V_flow_borehole / 1000.0 * self.fluid.rho
+        self.m_flow_borehole = v_flow_borehole / 1000.0 * self.fluid.rho
 
         # Simulation start month and end month
         # --------------------------------
@@ -123,30 +109,27 @@ class TestGHE(unittest.TestCase):
         n_years = 20
         end_month = n_years * 12
         # Maximum and minimum allowable fluid temperatures
-        max_EFT_allowable = 35  # degrees Celsius
-        min_EFT_allowable = 5  # degrees Celsius
+        max_eft_allowable = 35  # degrees Celsius
+        min_eft_allowable = 5  # degrees Celsius
         # Maximum and minimum allowable heights
-        max_Height = 384  # in meters
-        min_Height = 24  # in meters
+        max_height = 384  # in meters
+        min_height = 24  # in meters
         self.sim_params = media.SimulationParameters(
             start_month,
             end_month,
-            max_EFT_allowable,
-            min_EFT_allowable,
-            max_Height,
-            min_Height,
+            max_eft_allowable,
+            min_eft_allowable,
+            max_height,
+            min_height,
         )
 
         # Process loads from file
         # -----------------------
         # read in the csv file and convert the loads to a list of length 8760
-        hourly_extraction: dict = pd.read_csv(TESTDATA_FILENAME).to_dict("list")
-        # Take only the first column in the dictionary
-        self.hourly_extraction_ground_loads: list = hourly_extraction[
-            list(hourly_extraction.keys())[0]
-        ]
+        csv_file = self.test_data_directory / 'Atlanta_Office_Building_Loads.csv'
+        raw_lines = csv_file.read_text().split('\n')
+        self.hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
 
-    @unittest.skipIf(skip_validation, "To run this test, pip install pandas")
     def test_single_u_tube(self):
 
         # Define a borehole
@@ -183,16 +166,15 @@ class TestGHE(unittest.TestCase):
             self.hourly_extraction_ground_loads,
         )
 
-        max_HP_EFT, min_HP_EFT = ghe.simulate(method="hybrid")
+        max_hp_eft, min_hp_eft = ghe.simulate(method="hybrid")
 
-        self.assertAlmostEqual(39.09, max_HP_EFT, delta=0.01)
-        self.assertAlmostEqual(16.66, min_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(39.09, max_hp_eft, delta=0.01)
+        self.assertAlmostEqual(16.66, min_hp_eft, delta=0.01)
 
         ghe.size(method="hybrid")
 
         self.assertAlmostEqual(ghe.bhe.b.H, 130.22, places=2)
 
-    @unittest.skipIf(skip_validation, "To run this test, pip install pandas")
     def test_double_u_tube(self):
 
         # Define a borehole
@@ -229,16 +211,15 @@ class TestGHE(unittest.TestCase):
             self.hourly_extraction_ground_loads,
         )
 
-        max_HP_EFT, min_HP_EFT = ghe.simulate(method="hybrid")
+        max_hp_eft, min_hp_eft = ghe.simulate(method="hybrid")
 
-        self.assertAlmostEqual(37.76, max_HP_EFT, delta=0.01)
-        self.assertAlmostEqual(17.09, min_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(37.76, max_hp_eft, delta=0.01)
+        self.assertAlmostEqual(17.09, min_hp_eft, delta=0.01)
 
         ghe.size(method="hybrid")
 
         self.assertAlmostEqual(ghe.bhe.b.H, 120.40, places=2)
 
-    @unittest.skipIf(skip_validation, "To run this test, pip install pandas")
     def test_coaxial_tube(self):
 
         # Define a borehole
@@ -275,10 +256,10 @@ class TestGHE(unittest.TestCase):
             self.hourly_extraction_ground_loads,
         )
 
-        max_HP_EFT, min_HP_EFT = ghe.simulate(method="hybrid")
+        max_hp_eft, min_hp_eft = ghe.simulate(method="hybrid")
 
-        self.assertAlmostEqual(38.06, max_HP_EFT, delta=0.01)
-        self.assertAlmostEqual(17.22, min_HP_EFT, delta=0.01)
+        self.assertAlmostEqual(38.06, max_hp_eft, delta=0.01)
+        self.assertAlmostEqual(17.22, min_hp_eft, delta=0.01)
 
         ghe.size(method="hybrid")
 

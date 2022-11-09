@@ -1,18 +1,17 @@
 from time import time as clock
-from pathlib import Path
 import pygfunction as gt
-from unittest import TestCase
+from .ghe_base_case import GHEBaseTest
 
 from ghedt import geometry, design
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 
 
-class TestFindRectangle(TestCase):
+class TestFindRectangle(GHEBaseTest):
     def test_find_rectangle(self):
         # Borehole dimensions
         # -------------------
-        H = 96.0  # Borehole length (m)
-        D = 2.0  # Borehole buried depth (m)
+        h = 96.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
         r_b = 0.075  # Borehole radius (m)
 
         # Pipe dimensions
@@ -55,23 +54,23 @@ class TestFindRectangle(TestCase):
 
         # Volumetric heat capacities
         # --------------------------
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # ------------------
         # Pipe
-        pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-        pipe_double = media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe_double = media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         pipe_coaxial = media.Pipe(
-            pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rhoCp_p
+            pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rho_cp_p
         )
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rhoCp_s, ugt)
+        soil = media.Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rhoCp_g)
+        grout = media.Grout(k_g, rho_cp_g)
 
         # Inputs related to fluid
         # -----------------------
@@ -79,12 +78,12 @@ class TestFindRectangle(TestCase):
         fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
 
         # Fluid properties
-        V_flow = 0.2  # Volumetric flow rate (L/s)
+        v_flow = 0.2  # Volumetric flow rate (L/s)
         # Note: The flow parameter can be borehole or system.
         flow = "borehole"
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
         # Simulation start month and end month
         # --------------------------------
@@ -93,33 +92,32 @@ class TestFindRectangle(TestCase):
         n_years = 20
         end_month = n_years * 12
         # Maximum and minimum allowable fluid temperatures
-        max_EFT_allowable = 35  # degrees Celsius
-        min_EFT_allowable = 5  # degrees Celsius
+        max_eft_allowable = 35  # degrees Celsius
+        min_eft_allowable = 5  # degrees Celsius
         # Maximum and minimum allowable heights
-        max_Height = 135.0  # in meters
-        min_Height = 60  # in meters
+        max_height = 135.0  # in meters
+        min_height = 60  # in meters
         sim_params = media.SimulationParameters(
             start_month,
             end_month,
-            max_EFT_allowable,
-            min_EFT_allowable,
-            max_Height,
-            min_Height,
+            max_eft_allowable,
+            min_eft_allowable,
+            max_height,
+            min_height,
         )
 
         # Process loads from file
         # -----------------------
         # read in the csv file and convert the loads to a list of length 8760
-        test_data_dir = Path(__file__).resolve().parent / 'test_data'
-        csv_file = test_data_dir / 'Atlanta_Office_Building_Loads.csv'
+        csv_file = self.test_data_directory / 'Atlanta_Office_Building_Loads.csv'
         raw_lines = csv_file.read_text().split('\n')
         hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
 
         # Rectangular design constraints are the land and range of B-spacing
         length = 85.0  # m
         width = 36.5  # m
-        B_min = 3.0  # m
-        B_max = 10.0  # m
+        b_min = 3.0  # m
+        b_max = 10.0  # m
 
         """ Geometric constraints for the `find_rectangle` routine.
         Required geometric constraints for the uniform rectangle design:
@@ -129,7 +127,7 @@ class TestFindRectangle(TestCase):
           - B_max
         """
         geometric_constraints = geometry.GeometricConstraints(
-            length=length, width=width, b_min=B_min, b_max_x=B_max
+            length=length, width=width, b_min=b_min, b_max_x=b_max
         )
 
         title = "Find rectangle..."
@@ -138,7 +136,7 @@ class TestFindRectangle(TestCase):
         # Single U-tube
         # -------------
         design_single_u_tube = design.DesignRectangle(
-            V_flow,
+            v_flow,
             borehole,
             single_u_tube,
             fluid,
@@ -168,7 +166,7 @@ class TestFindRectangle(TestCase):
         # Double U-tube
         # -------------
         design_double_u_tube = design.DesignRectangle(
-            V_flow,
+            v_flow,
             borehole,
             double_u_tube,
             fluid,
@@ -198,7 +196,7 @@ class TestFindRectangle(TestCase):
         # Coaxial tube
         # -------------
         design_coaxial_u_tube = design.DesignRectangle(
-            V_flow,
+            v_flow,
             borehole,
             coaxial_tube,
             fluid,

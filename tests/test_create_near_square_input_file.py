@@ -1,18 +1,17 @@
 from ghedt import design, geometry, utilities
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
 import pygfunction as gt
-from pathlib import Path
-from unittest import TestCase
+from .ghe_base_case import GHEBaseTest
 
 
-class TestCreateNearSquareInputFile(TestCase):
+class TestCreateNearSquareInputFile(GHEBaseTest):
     def test_create_near_square_input_file(self):
         # Borehole dimensions
         # -------------------
-        H = 96.0  # Borehole length (m)
-        D = 2.0  # Borehole buried depth (m)
+        h = 96.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
         r_b = 0.075  # Borehole radius (m)
-        B = 5.0  # Borehole spacing (m)
+        b = 5.0  # Borehole spacing (m)
 
         # Pipe dimensions
         # ---------------
@@ -53,23 +52,23 @@ class TestCreateNearSquareInputFile(TestCase):
 
         # Volumetric heat capacities
         # --------------------------
-        rhoCp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rhoCp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rhoCp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # ------------------
         # Pipe
-        pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-        pipe_double = media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe_double = media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         pipe_coaxial = media.Pipe(
-            pos_coaxial, r_inner, r_outer, 0, epsilon, k_p, rhoCp_p
+            pos_coaxial, r_inner, r_outer, 0, epsilon, k_p, rho_cp_p
         )
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rhoCp_s, ugt)
+        soil = media.Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rhoCp_g)
+        grout = media.Grout(k_g, rho_cp_g)
 
         # Inputs related to fluid
         # -----------------------
@@ -77,10 +76,10 @@ class TestCreateNearSquareInputFile(TestCase):
         fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
 
         # Fluid properties
-        V_flow_borehole = 0.2  # Borehole volumetric flow rate (L/s)
+        v_flow_borehole = 0.2  # Borehole volumetric flow rate (L/s)
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(H, D, r_b, x=0.0, y=0.0)
+        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
 
         # Simulation parameters
         # ---------------------
@@ -89,30 +88,29 @@ class TestCreateNearSquareInputFile(TestCase):
         n_years = 20
         end_month = n_years * 12
         # Maximum and minimum allowable fluid temperatures
-        max_EFT_allowable = 35  # degrees Celsius
-        min_EFT_allowable = 5  # degrees Celsius
+        max_eft_allowable = 35  # degrees Celsius
+        min_eft_allowable = 5  # degrees Celsius
         # Maximum and minimum allowable heights
-        max_Height = 135.0  # in meters
-        min_Height = 60  # in meters
+        max_height = 135.0  # in meters
+        min_height = 60  # in meters
         sim_params = media.SimulationParameters(
             start_month,
             end_month,
-            max_EFT_allowable,
-            min_EFT_allowable,
-            max_Height,
-            min_Height,
+            max_eft_allowable,
+            min_eft_allowable,
+            max_height,
+            min_height,
         )
 
         # Process loads from file
         # -----------------------
         # read in the csv file and convert the loads to a list of length 8760
-        test_data_dir = Path(__file__).resolve().parent / 'test_data'
-        csv_file = test_data_dir / 'Atlanta_Office_Building_Loads.csv'
+        csv_file = self.test_data_directory / 'Atlanta_Office_Building_Loads.csv'
         raw_lines = csv_file.read_text().split('\n')
         hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
 
         # Geometric constraints for the `near-square` routine
-        geometric_constraints = geometry.GeometricConstraints(b_max_x=B, b=5, length=300)  # , unconstrained=True)
+        geometric_constraints = geometry.GeometricConstraints(b_max_x=b, b=5, length=300)  # , unconstrained=True)
         # TODO: b and length were not specified above, so I made up 5 and 300
 
         # Note: Flow functionality is currently only on a borehole basis. Future
@@ -122,7 +120,7 @@ class TestCreateNearSquareInputFile(TestCase):
         # Single U-tube
         # -------------
         design_single_u_tube = design.DesignNearSquare(
-            V_flow_borehole,
+            v_flow_borehole,
             borehole,
             single_u_tube,
             fluid,
@@ -134,14 +132,14 @@ class TestCreateNearSquareInputFile(TestCase):
             hourly_extraction_ground_loads,
         )
 
-        # Output the design interface object to a json file so it can be reused
-        input_file_path = test_data_dir / 'ghedt_input.obj'
+        # Output the design interface object to a json file, so it can be reused
+        input_file_path = self.test_outputs_directory / 'ghedt_input_near_square_single_u_tube.obj'
         utilities.create_input_file(design_single_u_tube, input_file_path)
 
         # Double U-tube
         # -------------
         design_double_u_tube = design.DesignNearSquare(
-            V_flow_borehole,
+            v_flow_borehole,
             borehole,
             double_u_tube,
             fluid,
@@ -153,13 +151,13 @@ class TestCreateNearSquareInputFile(TestCase):
             hourly_extraction_ground_loads,
         )
 
-        input_file_path = test_data_dir / 'double_u_tube.obj'
+        input_file_path = self.test_outputs_directory / 'ghedt_input_near_square_double_u_tube.obj'
         utilities.create_input_file(design_double_u_tube, input_file_path)
 
         # Coaxial tube
         # ------------
         design_coaxial_u_tube = design.DesignNearSquare(
-            V_flow_borehole,
+            v_flow_borehole,
             borehole,
             coaxial_tube,
             fluid,
@@ -171,5 +169,5 @@ class TestCreateNearSquareInputFile(TestCase):
             hourly_extraction_ground_loads,
         )
 
-        input_file_path = test_data_dir / 'coaxial_tube.obj'
+        input_file_path = self.test_outputs_directory / 'ghedt_input_near_square_coaxial_tube.obj'
         utilities.create_input_file(design_coaxial_u_tube, input_file_path)

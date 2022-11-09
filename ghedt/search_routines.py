@@ -1,6 +1,7 @@
 import copy
+from json import dumps
 import math
-
+from pathlib import Path
 import numpy as np
 import pygfunction as gt
 
@@ -11,7 +12,7 @@ from ghedt.peak_load_analysis_tool.media import (Grout, Pipe,
 from ghedt.rowwise.rowwise_generation import (field_optimization_fr,
                                               field_optimization_wp_space_fr)
 from ghedt.utilities import (eskilson_log_times, borehole_spacing,
-                             check_bracket, sign, js_dump)
+                             check_bracket, sign)
 
 
 class Bisection1D:
@@ -296,7 +297,7 @@ class Bisection1D:
         return selection_key, selected_coordinates
 
 
-# This is the search algorithm used for finding rowwise fields
+# This is the search algorithm used for finding row-wise fields
 class RowWiseModifiedBisectionSearch:
     def __init__(
         self,
@@ -997,7 +998,7 @@ class BisectionZD(Bisection1D):
 
 # The following functions are utility functions specific to search_routines.py
 # ------------------------------------------------------------------------------
-def oak_ridge_export(bisection_search, file_name="ghedt_output"):
+def oak_ridge_export(bisection_search, file_path: Path):
     # Dictionary for export
     d = dict()
     d["borehole_length"] = bisection_search.ghe.bhe.b.H
@@ -1043,4 +1044,4 @@ def oak_ridge_export(bisection_search, file_name="ghedt_output"):
     for lntts_val, g_val in zip(lntts, g_values):
         d["g_function_pairs"].append({"ln_tts": lntts_val, "g_value": g_val})
 
-    js_dump(file_name, d, indent=4)
+    file_path.write_text(dumps(d, indent=4))
