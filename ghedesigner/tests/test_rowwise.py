@@ -35,13 +35,8 @@ class TestRowWise(GHEBaseTest):
         self.target_spacing_start = 10.0  # in meters
         self.target_spacing_stop = 20.0  # in meters
         self.target_spacing_step = 1  # in meters
-        self.target_spacing_number = (
-                int(
-                    (self.target_spacing_stop - self.target_spacing_start)
-                    / self.target_spacing_step
-                )
-                + 1
-        )
+        self.target_spacing_number = \
+            int((self.target_spacing_stop - self.target_spacing_start) / self.target_spacing_step) + 1
         self.rotation_step = 1  # in degrees
         self.rotation_start = -90 * (pi / 180)  # in radians
         self.rotation_stop = 90 * (pi / 180)  # in radians

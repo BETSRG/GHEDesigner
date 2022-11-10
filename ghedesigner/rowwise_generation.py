@@ -617,30 +617,23 @@ def gen_borehole_config(
 
                 # Checks if there is enough distance between this point and another and then will offset the point if
                 # there is not enough room
-                if (i > 0 and (
-                        dls := sqrt(
-                            (f_inters[i][0] - f_inters[i - 1][0])
-                            * (f_inters[i][0] - f_inters[i - 1][0])
-                            + (f_inters[i][1] - f_inters[i - 1][1])
-                            * (f_inters[i][1] - f_inters[i - 1][1])
-                        )
+                dls_check = sqrt(
+                    (f_inters[i][0] - f_inters[i - 1][0])
+                    * (f_inters[i][0] - f_inters[i - 1][0])
+                    + (f_inters[i][1] - f_inters[i - 1][1])
+                    * (f_inters[i][1] - f_inters[i - 1][1])
                 )
-                        < x_space
-                ):
-                    left_offset = [dls * cos(rotate), dls * sin(rotate)]
 
-                elif (
-                        i < len_f_inters - 1
-                        and (
-                                drs := sqrt(
-                                    (f_inters[i][0] - f_inters[i + 1][0])
-                                    * (f_inters[i][0] - f_inters[i + 1][0])
-                                    + (f_inters[i][1] - f_inters[i + 1][1])
-                                    * (f_inters[i][1] - f_inters[i + 1][1])
-                                )
-                        )
-                        < x_space
-                ):
+                drs_check = sqrt(
+                    (f_inters[i][0] - f_inters[i + 1][0])
+                    * (f_inters[i][0] - f_inters[i + 1][0])
+                    + (f_inters[i][1] - f_inters[i + 1][1])
+                    * (f_inters[i][1] - f_inters[i + 1][1])
+                )
+
+                if i > 0 and (dls := dls_check) < x_space:
+                    left_offset = [dls * cos(rotate), dls * sin(rotate)]
+                elif i < len_f_inters - 1 and (drs := drs_check) < x_space:
                     right_offset = [-drs * cos(rotate), -drs * sin(rotate)]
 
                 process_rows(
