@@ -3,7 +3,7 @@ from time import time as clock
 from ghedesigner import geometry, design, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.fluid import GHEFluid
-from .ghe_base_case import GHEBaseTest
+from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
 class TestFindRectangle(GHEBaseTest):

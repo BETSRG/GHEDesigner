@@ -4,7 +4,7 @@ from pandas import ExcelFile, read_excel
 from ghedesigner import borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.fluid import GHEFluid
-from .ghe_base_case import GHEBaseTest
+from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
 class TestBHResistance(GHEBaseTest):

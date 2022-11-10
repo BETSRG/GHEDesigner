@@ -13,7 +13,7 @@ from ghedesigner.borehole import GHEBorehole
 from ghedesigner.fluid import GHEFluid
 from ghedesigner.output import output_design_details
 from ghedesigner.rowwise_generation import gen_shape
-from .ghe_base_case import GHEBaseTest
+from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
 class TestFindRowWise(GHEBaseTest):

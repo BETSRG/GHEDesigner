@@ -3,7 +3,7 @@ from json import loads
 from ghedesigner import geometry, design, search_routines, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.fluid import GHEFluid
-from .ghe_base_case import GHEBaseTest
+from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
 class TestDesignFromORNLJsonInput(GHEBaseTest):

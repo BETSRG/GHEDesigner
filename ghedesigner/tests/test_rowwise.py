@@ -8,7 +8,7 @@ from ghedesigner.rowwise_generation import (
     gen_borehole_config,
     gen_shape,
 )
-from .ghe_base_case import GHEBaseTest
+from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
 class TestRowWise(GHEBaseTest):

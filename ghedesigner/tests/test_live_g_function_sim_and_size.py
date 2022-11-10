@@ -2,7 +2,7 @@ from ghedesigner import ground_heat_exchangers, gfunction, utilities, borehole_h
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.coordinates import rectangle
 from ghedesigner.fluid import GHEFluid
-from .ghe_base_case import GHEBaseTest
+from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
 class TestLiveGFunctionSimAndSize(GHEBaseTest):

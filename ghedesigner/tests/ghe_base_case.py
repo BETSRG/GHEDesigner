@@ -57,3 +57,8 @@ class GHEBaseTest(TestCase):
         glhe_json_data = self.test_data_directory / 'Atlanta_Office_Building_Loads.csv'
         raw_lines = glhe_json_data.read_text().split('\n')
         return [float(x) for x in raw_lines[1:] if x.strip() != '']
+
+    # def get_polygon_building_csv_list(self):
+    #     building_file = self.test_data_directory / 'polygon_building.csv'
+    #     build_polygon_df: pd.DataFrame = pd.read_csv(str(building_file))
+    #     self.building_polygon_ar: list = build_polygon_df.values.tolist()

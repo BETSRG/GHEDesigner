@@ -13,7 +13,7 @@ from ghedesigner import design, geometry, utilities, borehole_heat_exchangers, m
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.fluid import GHEFluid
 from ghedesigner.output import output_design_details
-from .ghe_base_case import GHEBaseTest
+from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
 class TestFindBiPolygon(GHEBaseTest):
