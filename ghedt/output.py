@@ -9,6 +9,7 @@ import numpy as np
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers
 from ghedt.utilities import DesignMethod
 
+
 def create_title(allocated_width, title, filler_symbol=" "):
     return "{:{fS}^{L}s}\n".format(" " + title + " ", L=allocated_width, fS=filler_symbol)
 

@@ -1,6 +1,6 @@
-import pygfunction as gt
-
 from ghedt import design, geometry, utilities
+from ghedt.borehole import GHEBorehole
+from ghedt.fluid import GHEFluid
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
 from .ghe_base_case import GHEBaseTest
 
@@ -74,13 +74,13 @@ class TestCreateNearSquareInputFile(GHEBaseTest):
         # Inputs related to fluid
         # -----------------------
         # Fluid properties
-        fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Fluid properties
         v_flow_borehole = 0.2  # Borehole volumetric flow rate (L/s)
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
         # Simulation parameters
         # ---------------------

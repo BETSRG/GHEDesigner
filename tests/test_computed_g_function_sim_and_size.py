@@ -1,8 +1,8 @@
 from json import loads
 
-import pygfunction as gt
-
 from ghedt import gfunction, ground_heat_exchangers, utilities
+from ghedt.borehole import GHEBorehole
+from ghedt.fluid import GHEFluid
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 from .ghe_base_case import GHEBaseTest
 
@@ -66,10 +66,10 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         # -----------------------
         v_flow_system = 31.2  # System volumetric flow rate (L/s)
         # Fluid properties
-        fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
         # Simulation start month and end month
         # --------------------------------

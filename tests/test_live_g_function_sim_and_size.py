@@ -1,7 +1,7 @@
-import pygfunction as gt
-
 from ghedt import ground_heat_exchangers, gfunction, utilities
+from ghedt.borehole import GHEBorehole
 from ghedt.coordinates import rectangle
+from ghedt.fluid import GHEFluid
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
 from .ghe_base_case import GHEBaseTest
 
@@ -57,7 +57,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # Inputs related to fluid
         # -----------------------
         # Fluid properties
-        fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Coordinates
         nx = 12
@@ -71,7 +71,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
         # Simulation start month and end month
         # --------------------------------
@@ -104,7 +104,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         solver = "equivalent"
         boundary = "MIFT"
         end_length_ratio = 0.02
-        segment_ratios = gt.utilities.segment_ratios(
+        segment_ratios = utilities.segment_ratios(
             n_segments, end_length_ratio=end_length_ratio
         )
         g_function = gfunction.compute_live_g_function(

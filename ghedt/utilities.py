@@ -6,12 +6,13 @@
 # deprecation warning until the next major release.
 
 import copy
-from enum import auto, Enum
 import pickle
 import warnings
+from enum import auto, Enum
 from pathlib import Path
 
 import numpy as np
+from pygfunction.utilities import segment_ratios
 
 
 # TODO: Move this class to a centralized place with other enumerations
@@ -129,3 +130,7 @@ def read_input_file(path_file_obj: Path):
 
 def dummy_entry_point():
     print("Hello, GHE world!")
+
+
+def ghe_segment_ratios(nSegments, end_length_ratio=0.02):
+    return segment_ratios(nSegments, end_length_ratio)

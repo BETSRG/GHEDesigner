@@ -5,9 +5,9 @@
 
 from time import time as clock
 
-import pygfunction as gt
-
 from ghedt import design, geometry, utilities
+from ghedt.borehole import GHEBorehole
+from ghedt.fluid import GHEFluid
 from ghedt.output import output_design_details
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 from .ghe_base_case import GHEBaseTest
@@ -16,7 +16,6 @@ from .ghe_base_case import GHEBaseTest
 class TestFindNearSquareMultiyearLoading(GHEBaseTest):
 
     def test_find_near_square_multiyear_loading(self):
-
         # This file contains three examples utilizing the square-near-square design algorithm
         # (utilizing a multi-year loading) for a single U, double U, and coaxial tube design. The
         # results from these examples are exported to the "DesignExampleOutput" folder.
@@ -67,7 +66,7 @@ class TestFindNearSquareMultiyearLoading(GHEBaseTest):
         grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Fluid Flow Properties
         v_flow = 0.2  # Volumetric flow rate (L/s)
@@ -75,7 +74,7 @@ class TestFindNearSquareMultiyearLoading(GHEBaseTest):
         flow = "borehole"
 
         # Instantiate a Borehole
-        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
         # Simulation parameters
         start_month = 1

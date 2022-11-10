@@ -1,8 +1,8 @@
 from json import loads
 
-import pygfunction as gt
-
 from ghedt import geometry, design, search_routines, utilities
+from ghedt.borehole import GHEBorehole
+from ghedt.fluid import GHEFluid
 from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 from .ghe_base_case import GHEBaseTest
 
@@ -68,7 +68,7 @@ class TestDesignFromORNLJsonInput(GHEBaseTest):
         # Inputs related to fluid
         # -----------------------
         # Fluid properties
-        fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Fluid properties
         # Volumetric flow rate (L/s)
@@ -77,7 +77,7 @@ class TestDesignFromORNLJsonInput(GHEBaseTest):
         flow = "system"
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
         # Simulation parameters
         # ---------------------

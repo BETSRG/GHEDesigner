@@ -1,6 +1,6 @@
-import pygfunction as gt
-
 from ghedt import utilities, coordinates, ground_heat_exchangers, gfunction
+from ghedt.borehole import GHEBorehole
+from ghedt.fluid import GHEFluid
 from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
 from .ghe_base_case import GHEBaseTest
 
@@ -97,7 +97,7 @@ class TestGHE(GHEBaseTest):
 
         # -----------------------
         # Fluid properties
-        self.fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
+        self.fluid = GHEFluid(fluid_str="Water", percent=0.0)
         self.V_flow_system = v_flow_borehole * float(
             nx * ny
         )  # System volumetric flow rate (L/s)
@@ -129,9 +129,8 @@ class TestGHE(GHEBaseTest):
         self.hourly_extraction_ground_loads = self.get_atlanta_loads()
 
     def test_single_u_tube(self):
-
         # Define a borehole
-        borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
         g_function = gfunction.compute_live_g_function(
@@ -174,9 +173,8 @@ class TestGHE(GHEBaseTest):
         self.assertAlmostEqual(ghe.bhe.b.H, 130.22, places=2)
 
     def test_double_u_tube(self):
-
         # Define a borehole
-        borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
         g_function = gfunction.compute_live_g_function(
@@ -219,9 +217,8 @@ class TestGHE(GHEBaseTest):
         self.assertAlmostEqual(ghe.bhe.b.H, 120.40, places=2)
 
     def test_coaxial_tube(self):
-
         # Define a borehole
-        borehole = gt.boreholes.Borehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
         g_function = gfunction.compute_live_g_function(

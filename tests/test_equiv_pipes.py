@@ -1,5 +1,5 @@
-import pygfunction as gt
-
+from ghedt.borehole import GHEBorehole
+from ghedt.fluid import GHEFluid
 from ghedt.peak_load_analysis_tool import media, equivalance, borehole_heat_exchangers
 from .ghe_base_case import GHEBaseTest
 
@@ -48,13 +48,13 @@ class TestEquivalentPipes(GHEBaseTest):
         grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
         v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
         coaxial = borehole_heat_exchangers.CoaxialPipe(
             m_flow_borehole, fluid, borehole, pipe, grout, soil
@@ -134,13 +134,13 @@ class TestEquivalentPipes(GHEBaseTest):
         grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = gt.media.Fluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
         v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = gt.boreholes.Borehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
         # Double U-tube defaults to parallel
         double_u_tube = borehole_heat_exchangers.MultipleUTube(
