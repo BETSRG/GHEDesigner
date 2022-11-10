@@ -553,20 +553,20 @@ def output_design_details(
     d_hl = ghe.hybrid_load.monthly_peak_hl_duration
     n_months = len(ghe.hybrid_load.monthly_cl) - 1
     n_years = int(n_months / 12)
-    months = [
-                 "January",
-                 "February",
-                 "March",
-                 "April",
-                 "May",
-                 "June",
-                 "July",
-                 "August",
-                 "September",
-                 "October",
-                 "November",
-                 "December",
-             ] * n_years
+    months = n_years * [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ]
 
     start_ind = 1
     stop_ind = n_months

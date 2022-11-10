@@ -56,12 +56,7 @@ class RadialNumericalBH(object):
         self.num_soil_cells = 500
 
         self.num_cells = (
-                self.num_fluid_cells
-                + self.num_conv_cells
-                + self.num_fluid_cells
-                + self.num_grout_cells
-                + self.num_soil_cells
-                + 1
+                self.num_fluid_cells + self.num_conv_cells + self.num_fluid_cells + self.num_grout_cells + self.num_soil_cells + 1
         )
 
         # Geometry and grid procedure
@@ -394,9 +389,7 @@ class RadialNumericalBH(object):
             _dl[0: self.num_cells - 2] = -_aw / _ad
             _d[1: self.num_cells - 1] = _aw / _ad - _ae / _ad - 1.0
             _du[1: self.num_cells - 1] = _ae / _ad
-            _b[1: self.num_cells - 1] = -radial_cell[
-                                         previous_temperature_idx, 1: self.num_cells - 1
-                                         ]
+            _b[1: self.num_cells - 1] = -radial_cell[previous_temperature_idx, 1: self.num_cells - 1]
 
             # Tri-diagonal matrix solver
             # High level interface to LAPACK routine

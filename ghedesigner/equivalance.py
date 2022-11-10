@@ -142,9 +142,7 @@ def concentric_tube_volumes(coaxial):
     r_out_in, r_out_out = coaxial.r_outer
     # Compute volumes for concentric ghe geometry
     vol_fluid = pi * ((r_in_in ** 2) + (r_out_in ** 2) - (r_in_out ** 2))
-    vol_pipe = pi * (
-            (r_in_out ** 2) - (r_in_in ** 2) + (r_out_out ** 2) - (r_out_in ** 2)
-    )
+    vol_pipe = pi * ((r_in_out ** 2) - (r_in_in ** 2) + (r_out_out ** 2) - (r_out_in ** 2))
     # V_grout = pi * ((coaxial.b.r_b**2) - (r_out_out**2))
     area_surf_outer = pi * 2 * r_out_in
     resist_conv = 1 / (coaxial.h_fluid_a_in * area_surf_outer)

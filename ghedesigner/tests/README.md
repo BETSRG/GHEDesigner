@@ -37,15 +37,15 @@ is contained here. See below for a description of what is contained in the
 current levels documents and folders.
 
 ```angular2html
-├── Atlanta_Office_Building_Loads.csv   
+├── Atlanta_Office_Building_Loads.csv
 ├── BHE
-│   ├── BoreholeResistance 
+│   ├── BoreholeResistance
 │   │   ├── Coaxial.py
 │   │   ├── DoubleUTube.py
 │   │   ├── GLHEPRO.xlsx
 │   │   ├── SingleUTube.py
 │   │   └── validation.py
-│   └── EquivalentPipes 
+│   └── EquivalentPipes
 │       ├── coaxial_to_single_u_tube.py
 │       └── double_to_single_u_tube.py
 ├── Design
@@ -79,13 +79,13 @@ properties. The multiple u-tubes can be configured with serial or parallel flow.
 
 ```angular2html
 ├── BHE - Borehole Heat Exchanger
-│   ├── BoreholeResistance - These examples show how to compute effective borehole thermal resistances with various geometries. 
+│   ├── BoreholeResistance - These examples show how to compute effective borehole thermal resistances with various geometries.
 │   │   ├── Coaxial.py
 │   │   ├── DoubleUTube.py
 │   │   ├── GLHEPRO.xlsx
 │   │   ├── SingleUTube.py
 │   │   └── validation.py
-│   └── EquivalentPipes - Equivalent pipes are currently necessary for EnergyPlus to simulate non-single U-tube BHEs. 
+│   └── EquivalentPipes - Equivalent pipes are currently necessary for EnergyPlus to simulate non-single U-tube BHEs.
 │       ├── coaxial_to_single_u_tube.py
 │       └── double_to_single_u_tube.py
 ```

@@ -10,7 +10,6 @@ pandas
 openpyxl
 
 # testing dependencies
-black
 coverage
 flake8
 nose

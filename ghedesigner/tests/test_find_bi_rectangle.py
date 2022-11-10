@@ -174,14 +174,14 @@ class TestFindBiRectangle(GHEBaseTest):
             V_flow, borehole, double_u_tube, fluid, pipe_double, grout,
             soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
             method='hybrid', flow=flow, routine='bi-rectangle')
-    
+
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
         bisection_search = design_double_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(method='hybrid')  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
-    
+
         # Print Summary of Findings
         subtitle = '* Double U-tube'  # Subtitle for the printed summary
         self.log(subtitle + '\n' + len(subtitle) * '-')
@@ -191,18 +191,18 @@ class TestFindBiRectangle(GHEBaseTest):
         self.log('Number of boreholes: {}'.format(nbh))
         self.log('Total Drilling: {0:.1f} meters\n'.
               format(bisection_search.ghe.bhe.b.H * nbh))
-    
+
         # Generating Output File
         Output.OutputDesignDetails(bisection_search, toc - tic, projectName
                                    , note, author, IterationName, outputDirectory=outputFileDirectory,
                                    summaryFile="SummaryOfResults_DU.txt", csvF1="TimeDependentValues_DU.csv",
                                    csvF2="BorefieldData_DU.csv", csvF3="Loadings_DU.csv", csvF4="GFunction_DU.csv")
-    
+
         # *************************************************************************************************************
         #Coaxial Tube Example
-    
+
         note = "Bi-Rectangle Usage Example: Coaxial Tube"
-    
+
         # Coaxial tube
         r_in_in = 44.2 / 1000. / 2.
         r_in_out = 50. / 1000. / 2.
@@ -214,30 +214,30 @@ class TestFindBiRectangle(GHEBaseTest):
         r_inner = [r_in_in, r_in_out]  # The radii of the inner pipe from in to out
         r_outer = [r_out_in,
                    r_out_out]  # The radii of the outer pipe from in to out
-    
+
         k_p_coax = [0.4, 0.4]  # Pipes thermal conductivity (W/m.K)
-    
+
         # Coaxial tube
         pos_coaxial = (0, 0)
         coaxial_tube = plat.borehole_heat_exchangers.CoaxialPipe
         pipe_coaxial = \
             plat.media.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax,
                             rhoCp_p)
-    
+
         # Coaxial Tube
         # -------------
         design_coax_tube = dt.design.Design(
             V_flow, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
             soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
             method='hybrid', flow=flow, routine='bi-rectangle')
-    
+
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
         bisection_search = design_coax_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(method='hybrid')  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
-    
+
         # Print Summary of Findings
         subtitle = '* Coaxial Tube'  # Subtitle for the printed summary
         self.log(subtitle + '\n' + len(subtitle) * '-')
@@ -247,7 +247,7 @@ class TestFindBiRectangle(GHEBaseTest):
         self.log('Number of boreholes: {}'.format(nbh))
         self.log('Total Drilling: {0:.1f} meters\n'.
               format(bisection_search.ghe.bhe.b.H * nbh))
-    
+
         # Generating Output File
         Output.OutputDesignDetails(bisection_search, toc - tic, projectName
                                    , note, author, IterationName, outputDirectory=outputFileDirectory,

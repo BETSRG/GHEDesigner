@@ -179,16 +179,11 @@ class HybridLoad:
             hours_in_month = hours_in_day * self.days_in_month[i]
             # Slice the hours in this current month
             month_rejection_loads = self.hourly_rejection_loads[
-                                    hours_in_previous_months: hours_in_previous_months + hours_in_month
-                                    ]
+                                    hours_in_previous_months: hours_in_previous_months + hours_in_month]
             month_extraction_loads = self.hourly_extraction_loads[
-                                     hours_in_previous_months: hours_in_previous_months + hours_in_month
-                                     ]
+                                     hours_in_previous_months: hours_in_previous_months + hours_in_month]
 
-            assert (
-                    len(month_extraction_loads) == hours_in_month
-                    and len(month_rejection_loads) == hours_in_month
-            )
+            assert (len(month_extraction_loads) == hours_in_month and len(month_rejection_loads) == hours_in_month)
 
             # Sum
             # monthly cooling loads (or heat rejection) in kWh
@@ -269,14 +264,10 @@ class HybridLoad:
 
             # monthly cooling loads (or heat rejection) in kWh
             two_day_hourly_peak_cl_load = hourly_rejection_loads[
-                                          monthly_peak_cl_hour_start: monthly_peak_cl_hour_start
-                                                                      + 2 * hours_in_day
-                                          ]
+                                          monthly_peak_cl_hour_start: monthly_peak_cl_hour_start + 2 * hours_in_day]
             # monthly heating loads (or heat extraction) in kWh
             two_day_hourly_peak_hl_load = hourly_extraction_loads[
-                                          monthly_peak_hl_hour_start: monthly_peak_hl_hour_start
-                                                                      + 2 * hours_in_day
-                                          ]
+                                          monthly_peak_hl_hour_start: monthly_peak_hl_hour_start + 2 * hours_in_day]
 
             assert (
                     len(two_day_hourly_peak_hl_load) == 2 * hours_in_day

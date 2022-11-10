@@ -696,11 +696,8 @@ class RowWiseModifiedBisectionSearch:
             elif b_r_removal_method == "RowRemoval":
                 starting_field = lower_field
             else:
-                msg = (
-                        b_r_removal_method
-                        + " is not a valid method for removing boreholes. The valid methods are: "
-                          "CloseToCorner, CloseToPoint, FarFromPoint, and RowRemoval."
-                )
+                msg = b_r_removal_method + " is not a valid method for removing boreholes."
+                msg += "The valid methods are: CloseToCorner, CloseToPoint, FarFromPoint, and RowRemoval."
                 raise ValueError(msg)
 
             # Check if a 1X1 field is satisfactory

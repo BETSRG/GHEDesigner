@@ -84,7 +84,6 @@ def field_optimization_wp_space_fr(
 
     # Ensures that there are no repeated boreholes
     max_hole = np.array(remove_duplicates(max_hole, p_space * x_s))
-    # print("MaxHOle: ",max_hole)
 
     field = max_hole
     field_name = "P" + str(p_space) + "_S" + str(space) + "_rt" + str(max_rt)
@@ -580,9 +579,9 @@ def gen_borehole_config(
         if len_f_inters == 0 and ri == num_rows:
             ins = False
 
-            # Checks if the predicted point (ghost point that was expected but not found) is inside one of the no_go 
-            zones for shape in no_go: if shape.point_intersect(highest_vert): ins = True if not ins: #Double checks 
-            that this borehole has not already been included if len(boreholes)==0 or not (boreholes[len(boreholes) - 
+            # Checks if the predicted point (ghost point that was expected but not found) is inside one of the no_go
+            zones for shape in no_go: if shape.point_intersect(highest_vert): ins = True if not ins: #Double checks
+            that this borehole has not already been included if len(boreholes)==0 or not (boreholes[len(boreholes) -
             1][0] == highest_vert[0] and boreholes[len(boreholes) - 1][1] ==highest_vert[1]): boreholes[len(
             boreholes)] = highest_vert """
         # Handles cases with odd number of intersections
@@ -618,9 +617,7 @@ def gen_borehole_config(
 
                 # Checks if there is enough distance between this point and another and then will offset the point if
                 # there is not enough room
-                if (
-                        i > 0
-                        and (
+                if (i > 0 and (
                         dls := sqrt(
                             (f_inters[i][0] - f_inters[i - 1][0])
                             * (f_inters[i][0] - f_inters[i - 1][0])
@@ -787,24 +784,12 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
                 if point_in:
                     return []
     inters = np.array(inters)
-    indices = [
-        j
-        for j in range(num_inters)
-        if not (
-                less_than(
-                    row_ex,
-                    inters[j],
-                    rotate=rotate,
-                    intersection_tolerance=intersection_tolerance,
-                )
-                or less_than(
-            inters[j],
-            row_sx,
-            rotate=rotate,
-            intersection_tolerance=intersection_tolerance,
-        )
-        )
-    ]
+    indices = []
+    for j in range(num_inters):
+        less_than_1 = less_than(row_ex, inters[j], rotate=rotate, intersection_tolerance=intersection_tolerance)
+        less_than_2 = less_than(inters[j], row_sx, rotate=rotate, intersection_tolerance=intersection_tolerance)
+        if not (less_than_1 or less_than_2):
+            indices.append(j)
     inters = inters[indices]
     # print(inters)
     num_inters = len(inters)

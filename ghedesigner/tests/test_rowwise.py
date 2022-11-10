@@ -45,13 +45,8 @@ class TestRowWise(GHEBaseTest):
         self.rotation_step = 1  # in degrees
         self.rotation_start = -90 * (pi / 180)  # in radians
         self.rotation_stop = 90 * (pi / 180)  # in radians
-        self.number_of_rotations = (
-                int((self.rotation_stop - self.rotation_start) / (self.rotation_step * 0.5))
-                + 1
-        )
-        self.property, self.buildings = gen_shape(
-            self.prop_polygon_ar, ng_zones=[self.building_polygon_ar]
-        )
+        self.number_of_rotations = (int((self.rotation_stop - self.rotation_start) / (self.rotation_step * 0.5)) + 1)
+        self.property, self.buildings = gen_shape(self.prop_polygon_ar, ng_zones=[self.building_polygon_ar])
 
     def test_shape_methods(self):
 

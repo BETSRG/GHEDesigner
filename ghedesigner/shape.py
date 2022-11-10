@@ -130,9 +130,7 @@ class Shapes:
         area_sum = 0
         for i in range(len(self.c)):
             if i == len(self.c) - 1:
-                area_sum += self.c[len(self.c) - 1][0] * self.c[0][1] - (
-                        self.c[len(self.c) - 1][1] * self.c[0][0]
-                )
+                area_sum += self.c[len(self.c) - 1][0] * self.c[0][1] - (self.c[len(self.c) - 1][1] * self.c[0][0])
                 continue
             area_sum += self.c[i][0] * self.c[i + 1][1] - (self.c[i][1] * self.c[i + 1][0])
         return 0.5 * area_sum
