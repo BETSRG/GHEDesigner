@@ -412,11 +412,12 @@ class GHE(BaseGHE):
                 "the heat exchanger."
             )
         if returned_height == self.sim_params.max_Height:
-            warnings.warn(
-                "The maximum height provided to size this ground "
-                "heat exchanger is not deep enough. Provide a deeper "
-                "allowable depth or increase the size of the heat "
-                "exchanger."
-            )
+            pass  # TODO: Handle warnings in a nicer way
+            # warnings.warn(
+            #     "The maximum height provided to size this ground "
+            #     "heat exchanger is not deep enough. Provide a deeper "
+            #     "allowable depth or increase the size of the heat "
+            #     "exchanger."
+            # )
 
         return
