@@ -85,7 +85,7 @@ class TestFindRowWise(GHEBaseTest):
         end_month = n_years * 12
         max_eft_allowable = 35  # degrees Celsius (HP EFT)
         min_eft_allowable = 5  # degrees Celsius (HP EFT)
-        max_height = 135.0  # in meters  # TODO: This is causing a warning, need to be higher?
+        max_height = 135  # 135.0  # in meters  # At 135, this causes a max height warning, at 240 it fails, at 245 pass
         min_height = 60  # in meters
         sim_params = media.SimulationParameters(
             start_month,

@@ -127,9 +127,10 @@ class HybridLoad:
         self.step_func_load = np.array(0)  # holds the load in terms of step functions
         self.process_month_loads()
 
-    # def __repr__(self):
-    #     output = str(self.__class__) + "\n"
-    #     output += self.create_dataframe_of_peak_analysis().to_string()
+    # def as_dict(self) -> dict:
+    #     output = dict()
+    #     output['type'] = str(self.__class__)
+    #     output['results'] = self.create_dataframe_of_peak_analysis().to_string()
     #     return output
 
     @staticmethod

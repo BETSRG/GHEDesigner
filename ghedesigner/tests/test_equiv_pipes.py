@@ -89,7 +89,7 @@ class TestEquivalentPipes(GHEBaseTest):
         rb = single_u_tube.compute_effective_borehole_resistance()
         self.log("Effective borehole resistance (m.K/W): {0:.8f}".format(rb))
 
-        self.log(single_u_tube.__repr__())
+        self.log(single_u_tube.as_dict())
 
         # Plot equivalent single U-tube
         fig = single_u_tube.visualize_pipes()
@@ -174,7 +174,7 @@ class TestEquivalentPipes(GHEBaseTest):
         rb = single_u_tube.compute_effective_borehole_resistance()
         self.log("Effective borehole resistance (m.K/W): {0:.8f}".format(rb))
 
-        self.log(single_u_tube.__repr__())
+        self.log(single_u_tube.as_dict())
 
         # Plot equivalent single U-tube
         fig = single_u_tube.visualize_pipes()

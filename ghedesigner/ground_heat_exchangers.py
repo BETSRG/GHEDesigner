@@ -5,6 +5,7 @@ import numpy as np
 import pygfunction as gt
 from scipy.interpolate import interp1d
 
+from ghedesigner import VERSION
 from ghedesigner import gfunction
 from ghedesigner.equivalance import compute_equivalent, solve_root
 from ghedesigner.ground_loads import HybridLoad
@@ -60,37 +61,15 @@ class BaseGHE:
         self.times = []
         self.loading = None
 
-    @staticmethod
-    def header(text):
-        return 50 * "-" + "\n" + "|" + text.center(48) + "|\n" + 50 * "-" + "\n"
-
-    @staticmethod
-    def justify(category, value):
-        return category.ljust(40) + "= " + value + "\n"
-
-    def __repr__(self):
-        header = self.header
-        # Header
-        output = 50 * "-" + "\n"
-        output += header("GHEDT GHE Output - Version 0.1")
-        output += 50 * "-" + "\n"
-
-        def justify(category, value):
-            return category.ljust(40) + "= " + value + "\n"
-
-        # Detailed information
-        output += justify(
-            "Number of boreholes", str(len(self.GFunction.bore_locations))
-        )
-        output += justify("Depth of the borehole", str(round(self.bhe.b.H, 4)) + " (m)")
-        output += justify("Bore hole spacing", str(round(self.B_spacing, 4)) + " (m)")
-        output += header("Borehole Heat Exchanger")
-        output += self.bhe.__repr__()
-        output += header("Equivalent Borehole Heat Exchanger")
-        output += self.bhe_eq.__repr__()
-        output += header("Simulation parameters")
-        output += self.sim_params.__repr__()
-
+    def as_dict(self) -> dict:
+        output = dict()
+        output['title'] = f"GHEDT GHE Output - Version {VERSION}"
+        output['number_of_boreholes'] = len(self.GFunction.bore_locations)
+        output['borehole_depth'] = {'value': self.bhe.b.H, 'units': 'm'}
+        output['borehole_spacing'] = {'value': self.B_spacing, 'units': 'm'}
+        output['borehole_heat_exchanger'] = self.bhe.as_dict()
+        output['equivalent_borehole_heat_exchanger'] = self.bhe_eq.as_dict()
+        output['simulation_parameters'] = self.sim_params.as_dict()
         return output
 
     @staticmethod
@@ -288,42 +267,28 @@ class GHE(BaseGHE):
         # list of change in borehole wall temperatures
         self.dTb = []
 
-    def __repr__(self):
-        output = BaseGHE.__repr__(self)
+    def as_dict(self) -> dict:
+        output = dict()
+        output['base'] = super().as_dict()
 
-        self.header("Simulation Results")
+        results = dict()
         if len(self.HPEFT) > 0:
             max_hp_eft = max(self.HPEFT)
             min_hp_eft = min(self.HPEFT)
-            output += self.justify(
-                "Max HP entering temp", str(round(max_hp_eft, 4)) + " (degrees Celsius)"
-            )
-            output += self.justify(
-                "Min HP entering temp", str(round(min_hp_eft, 4)) + " (degrees Celsius)"
-            )
+            results['max_hp_entering_temp'] = {'value': max_hp_eft, 'units': 'C'}
+            results['min_hp_entering_temp'] = {'value': min_hp_eft, 'units': 'C'}
             t_excess = self.cost(max_hp_eft, min_hp_eft)
-            output += self.justify(
-                "Excess fluid temperature",
-                str(round(t_excess, 4)) + " (degrees Celsius)",
-            )
-        output += self.header("Peak Load Analysis")
-        output += self.hybrid_load.__repr__() + "\n"
-        output += self.header("GFunction Information")
-        output += "Coordinates\nx(m)\ty(m)\n"
-        for i in range(len(self.GFunction.bore_locations)):
-            x, y = self.GFunction.bore_locations[i]
-            output += str(x) + "\t" + str(y) + "\n"
-        output += "G-Function\nln(t/ts)\tg\n"
+            results['excess_fluid_temperature'] = {'value': t_excess, 'units': 'C'}
+        results['peak_load_analysis'] = self.hybrid_load.as_dict()
+
+        g_function = dict()
+        g_function['coordinates (x[m], y[m])'] = [(x, y) for x, y in self.GFunction.bore_locations]  # TODO: Verify form
         b_over_h = self.B_spacing / self.bhe.b.H
         g = self.grab_g_function(b_over_h)
         total_g_values = g.x.size
         number_lts_g_values = 27
         number_sts_g_values = 50
-        sts_step_size = int(
-            np.floor(
-                (total_g_values - number_lts_g_values) / number_sts_g_values
-            ).tolist()
-        )
+        sts_step_size = int(np.floor((total_g_values - number_lts_g_values) / number_sts_g_values).tolist())
         lntts = []
         g_values = []
         for i in range(0, (total_g_values - number_lts_g_values), sts_step_size):
@@ -333,6 +298,11 @@ class GHE(BaseGHE):
         g_values += g.y[total_g_values - number_lts_g_values: total_g_values].tolist()
         for i in range(len(lntts)):
             output += str(round(lntts[i], 4)) + "\t" + str(round(g_values[i], 4)) + "\n"
+        g_function['lntts, g'] = [(lntts[i], g_values[i]) for i in range(len(lntts))]
+
+        results['g_function_information'] = g_function
+        output['simulation_results'] = results
+
         return output
 
     def simulate(self, method: DesignMethod):
@@ -412,11 +382,12 @@ class GHE(BaseGHE):
                 "the heat exchanger."
             )
         if returned_height == self.sim_params.max_Height:
-            warnings.warn(
-                "The maximum height provided to size this ground "
-                "heat exchanger is not deep enough. Provide a deeper "
-                "allowable depth or increase the size of the heat "
-                "exchanger."
-            )
+            pass  # TODO: Handle warnings in a nicer way
+            # warnings.warn(
+            #     "The maximum height provided to size this ground "
+            #     "heat exchanger is not deep enough. Provide a deeper "
+            #     "allowable depth or increase the size of the heat "
+            #     "exchanger."
+            # )
 
         return
