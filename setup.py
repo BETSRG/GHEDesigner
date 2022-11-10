@@ -26,8 +26,9 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     version=VERSION,
-    packages=find_packages(),
-    include_package_data=True,
+    packages=['ghedesigner'],  # , 'ghedesigner.tests'],
+    # package_data={"ghedesigner.tests": ["test_data/*"]},
+    # include_package_data=True,
     author='Jack C. Cook',
     author_email='jack.cook@okstate.edu',
     entry_points={

@@ -44,7 +44,7 @@ def remove_cutout(coordinates, boundary=None, remove_inside=True, keep_contour=T
             boundary_points_idx.append(i)
 
     new_coordinates = []
-    for idx, _ in enumerate(coordinates):
+    for i in range(len(coordinates)):
         # if we want to remove inside points and keep contour points
         if remove_inside and keep_contour:
             if i in inside_points_idx:

@@ -133,5 +133,5 @@ class TestCreateRectangularInputFile(GHEBaseTest):
         )
 
         # Output the design interface object to a json file, so it can be reused
-        input_file_path = self.test_data_directory / 'ghedt_input_rectangular.obj'
+        input_file_path = self.test_outputs_directory / 'ghedt_input_rectangular.obj'
         utilities.create_input_file(design_single_u_tube, input_file_path)

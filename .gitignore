@@ -162,5 +162,5 @@ cython_debug/
 .vscode/
 
 #Example Output Files
-tests/test_outputs
-tests/test_logs
+ghedesigner/tests/test_outputs
+ghedesigner/tests/test_logs
