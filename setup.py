@@ -2,6 +2,8 @@ from setuptools import setup, find_packages
 
 from os import path
 
+from ghedesigner import VERSION
+
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
@@ -23,7 +25,7 @@ setup(
     description=short_description,
     long_description=long_description,
     long_description_content_type='text/markdown',
-    version='0.2',
+    version=VERSION,
     packages=find_packages(),
     include_package_data=True,
     author='Jack C. Cook',
