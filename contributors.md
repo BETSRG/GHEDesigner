@@ -1,11 +1,13 @@
 # Contributors
 
-Jack Cook
+Jack Cook, jack-c-cook@protonmail.com
 
-Matt Mitchell
+Edwin Lee, edwin.lee@nrel.gov
 
-Timothy West
+Xiaobing Liu, liux2@ornl.gov
 
-Edwin Lee
+Matt Mitchell, matt.mitchell@nrel.gov
 
-Jeffrey Spitler
+Jeffrey Spitler, spitler@okstate.edu
+
+Timothy West, timothy.west.okstate.edu
