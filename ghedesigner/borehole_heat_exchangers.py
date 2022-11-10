@@ -30,39 +30,24 @@ class BasePipe(object):
 
         self.compute_resistances()
 
-    @staticmethod
-    def justify(category, value):
-        return category.ljust(40) + "= " + value + "\n"
-
-    def __repr__(self):
-        justify = self.justify
-
-        output = str(self.__class__) + "\n"
-        output += 50 * "-" + "\n"
-
-        output += justify(
-            "Mass flow borehole", str(round(self.m_flow_borehole, 4)) + " (kg/s)"
-        )
-        output += justify("Mass flow pipe", str(round(self.m_flow_pipe, 4)) + " (kg/s)")
-        output += self.borehole.__repr__() + "\n"
-        output += self.soil.__repr__()
-        output += self.grout.__repr__()
-        output += self.pipe.__repr__()
-        output += self.fluid.__repr__()
-        output += "\n"
-
+    def as_dict(self) -> dict:
+        blob = dict()
+        blob['type'] = str(self.__class__)
+        blob['mass_flow_borehole'] = {'value': self.m_flow_borehole, 'units': 'kg/s'}
+        blob['mass_flow_pipe'] = {'value': self.m_flow_pipe, 'units': 'kg/s'}
+        blob['borehole'] = self.borehole.as_dict()
+        blob['soil'] = self.soil.as_dict()
+        blob['grout'] = self.grout.as_dict()
+        blob['pipe'] = self.pipe.as_dict()
+        blob['fluid'] = self.fluid.as_dict()
         reynold_no = compute_reynolds_concentric(
             self.m_flow_pipe, self.pipe.r_in, self.pipe.roughness, self.fluid
         )
-
-        output += justify("Reynolds number", str(round(reynold_no, 4)))
-        output += justify(
-            "Convection coefficient", str(round(self.h_f, 4)) + " (W/m2.K)"
-        )
-        output += justify("Pipe resistance", str(round(self.R_p, 4)) + " (m.K/W)")
-        output += justify("Fluid resistance", str(round(self.R_f, 4)) + " (m.K/W)")
-
-        return output
+        blob['reynolds'] = {'value': reynold_no, 'units': ''}
+        blob['convection_coefficient'] = {'value': self.h_f, 'units': 'W/m2-K'}
+        blob['pipe_resistance'] = {'value': self.R_p, 'units': 'm-K/W'}
+        blob['fluid_resistance'] = {'value': self.R_f, 'units': 'm-K/W'}
+        return blob
 
     def compute_resistances(self):
         # Convection heat transfer coefficient of a single pipe
@@ -203,6 +188,9 @@ class SingleUTube(gt.pipes.SingleUTube):
         """
         return self.update_thermal_resistance(m_flow_borehole)
 
+    def as_dict(self) -> dict:
+        return {'type': str(self.__class__)}
+
 
 class MultipleUTube(gt.pipes.MultipleUTube):
     def __init__(
@@ -334,72 +322,36 @@ class CoaxialBase(object):
 
         return
 
-    @staticmethod
-    def justify(category, value):
-        return category.ljust(40) + "= " + value + "\n"
-
-    def __repr__(self):
-        justify = self.justify
-
-        output = str(self.__class__) + "\n"
-        output += 50 * "-" + "\n"
-
-        output += justify(
-            "Mass flow borehole", str(round(self.m_flow_borehole, 4)) + " (kg/s)"
-        )
-        output += justify("Mass flow pipe", str(round(self.m_flow_pipe, 4)) + " (kg/s)")
-        output += self.b.__repr__() + "\n"
-        output += self.soil.__repr__()
-        output += self.grout.__repr__()
-        output += self.pipe.__repr__()
-        output += self.fluid.__repr__()
-        output += "\n"
-
-        output += justify(
-            "Inner pipe resistance", str(round(self.R_p_in, 4)) + " (m.K/W)"
-        )
-        output += justify(
-            "Outer pipe resistance", str(round(self.R_p_out, 4)) + " (m.K/W)"
-        )
-        output += justify("Grout resistance", str(round(self.R_grout, 4)) + " (m.K/W)")
+    def as_dict(self) -> dict:
+        output = dict()
+        output['type'] = str(self.__class__)
+        output['mass_flow_borehole'] = {'value': self.m_flow_borehole, 'units': 'kg/s'}
+        output['mass_flow_pipe'] = {'value': self.m_flow_pipe, 'units': 'kg/s'}
+        output['b'] = self.b.as_dict()
+        output['soil'] = self.soil.as_dict()
+        output['grout'] = self.grout.as_dict()
+        output['pipe'] = self.pipe.as_dict()
+        output['fluid'] = self.fluid.as_dict()
+        output['inner_pipe_resistance'] = {'value': self.R_p_in, 'units': 'm-K/W'}
+        output['outer_pipe_resistance'] = {'value': self.R_p_out, 'units': 'm-K/W'}
+        output['grout_resistance'] = {'value': self.R_grout, 'units': 'm-K/W'}
         reynolds_annulus = compute_reynolds_concentric(
             self.m_flow_pipe, self.r_in_out, self.r_out_in, self.fluid
         )
-        output += justify("Reynolds annulus", str(round(reynolds_annulus, 4)))
-        output += justify(
-            "Inner annulus convection coefficient",
-            str(round(self.h_fluid_a_in, 4)) + " (W/m2.K)",
-        )
-        output += justify(
-            "Outer annulus convection coefficient",
-            str(round(self.h_fluid_a_out, 4)) + " (W/m2.K)",
-        )
-        output += justify(
-            "Inner annulus resistance", str(round(self.R_f_a_in, 4)) + " (m.K/W)"
-        )
-        output += justify(
-            "Outer annulus resistance", str(round(self.R_f_a_out, 4)) + " (m.K/W)"
-        )
+        output['reynolds_annulus'] = {'value': reynolds_annulus, 'units': ''}
+        output['inner_annulus_convection_coefficient'] = {'value': self.h_fluid_a_in, 'units': 'W/m2-K'}
+        output['outer_annulus_convection_coefficient'] = {'value': self.h_fluid_a_out, 'units': 'W/m2-K'}
+        output['inner_annulus_resistance'] = {'value': self.R_f_a_in, 'units': 'm-K/W'}
+        output['outer_annulus_resistance'] = {'value': self.R_f_a_out, 'units': 'm-K/W'}
         reynolds = compute_reynolds(self.m_flow_pipe, self.r_in_in, self.fluid)
-        output += justify("Reynolds inner", str(round(reynolds, 4)))
-        output += justify(
-            "Inner Convection coefficient", str(round(self.h_fluid_in, 4)) + " (W/m2.K)"
-        )
-        output += justify(
-            "Fluid-to-fluid resistance", str(round(self.R_ff, 4)) + " (m.K/W)"
-        )
-        output += justify(
-            "Fluid-to-pipe resistance", str(round(self.R_fp, 4)) + " (m.K/W)"
-        )
-
+        output['reynolds_inner'] = {'value': reynolds, 'units': ''}
+        output['inner_convection_coefficient'] = {'value': self.h_fluid_in, 'units': 'W/m2-K'}
+        output['fluid_to_fluid_resistance'] = {'value': self.R_ff, 'units': 'm-K/W'}
+        output['fluid_to_pipe_resistance'] = {'value': self.R_fp, 'units': 'm-K/W'}
         resit_bh_effective = bp.effective_borehole_thermal_resistance(
             self, self.m_flow_borehole, self.fluid.cp
         )
-
-        output += justify(
-            "Effective borehole resistance", str(round(resit_bh_effective, 4)) + " (m.K/W)"
-        )
-
+        output['effective_borehole_resistance'] = {'value': resit_bh_effective, 'units': 'm-K/W'}
         return output
 
     def compute_resistances(self):

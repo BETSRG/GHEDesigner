@@ -6,35 +6,22 @@ class ThermalProperty:
         self.k = k  # Thermal conductivity (W/m.K)
         self.rhoCp = rho_cp  # Volumetric heat capacity (J/K.m3)
 
-    def __repr__(self):
-        def justify(category, value):
-            return category.ljust(40) + "= " + value + "\n"
-
-        output = str(self.__class__) + "\n"
-
-        if type(self.k) == float:
-            output += justify(
-                "Thermal conductivity", str(round(self.k, 4)) + " (W/m.K)"
-            )
-        else:
-            output += justify("Thermal conductivity", str(self.k) + " (W/m.K)")
-        output += justify(
-            "Volumetric heat capacity", str(round(self.rhoCp, 4)) + " (J/K.m3)"
-        )
-
+    def as_dict(self) -> dict:
+        output = dict()
+        output['type'] = str(self.__class__)
+        output['thermal_conductivity'] = {'value': self.k, 'units': 'W/m-K'}
+        output['volumetric_heat_capacity'] = {'value': self.rhoCp, 'units': 'J/K-m3'}
         return output
 
 
 class Grout(ThermalProperty):
-    def __init__(self, k, rho_cp):
-        # Make variables from ThermalProperty available to Grout
-        ThermalProperty.__init__(self, k, rho_cp)
+    pass
 
 
 class Pipe(ThermalProperty):
     def __init__(self, pos, r_in, r_out, s, roughness, k, rho_cp):
         # Make variables from ThermalProperty available to Pipe
-        ThermalProperty.__init__(self, k, rho_cp)
+        super().__init__(k, rho_cp)
 
         # Pipe specific parameters
         self.pos = pos  # Pipe positions either a list of tuples or tuple
@@ -47,25 +34,16 @@ class Pipe(ThermalProperty):
         else:
             self.n_pipes = 1
 
-    def __repr__(self):
-        def justify(category, value):
-            return category.ljust(40) + "= " + value + "\n"
-
-        output = ThermalProperty.__repr__(self)
-
-        output += justify("Pipe Positions (Center of pipes)", str(self.pos))
-        if type(self.r_in) == float:
-            output += justify("Pipe inner radius", str(round(self.r_in, 4)) + " (m)")
-            output += justify("Pipe outer radius", str(round(self.r_out, 4)) + " (m)")
-        else:
-            output += justify("Pipe inner radii", str(self.r_in) + " (m)")
-            output += justify("Pipe outer radii", str(self.r_out) + " (m)")
-        output += justify(
-            "Shank spacing (pipe to pipe)", str(round(self.s, 4)) + " (m)"
-        )
-        output += justify("Pipe roughness", str(self.roughness) + " (m)")
-        output += justify("Number of pipes", str(self.n_pipes))
-
+    def as_dict(self) -> dict:
+        output = dict()
+        output['base'] = super().as_dict()
+        output['pipe_center_positions'] = str(self.pos)
+        radius = 'radius' if type(self.r_in) is float else 'radii'
+        output[f"pipe_inner_{radius}"] = str(self.r_in)
+        output[f"pipe_outer_{radius}"] = str(self.r_out)
+        output['shank_spacing_pipe_to_pipe'] = {'value': self.s, 'units': 'm'}
+        output['pipe_roughness'] = {'value': self.roughness, 'units': 'm'}
+        output['number_of_pipes'] = self.n_pipes
         return output
 
     @staticmethod
@@ -95,17 +73,9 @@ class Soil(ThermalProperty):
         # Soil specific parameters
         self.ugt = ugt
 
-    def __repr__(self):
-        def justify(category, value):
-            return category.ljust(40) + "= " + value + "\n"
-
-        output = ThermalProperty.__repr__(self)
-
-        output += justify(
-            "Undisturbed ground temperature",
-            str(round(self.ugt, 4)) + " (degrees Celsius)",
-        )
-
+    def as_dict(self) -> dict:
+        output = super().as_dict()
+        output['undisturbed_ground_temperature'] = {'value': self.ugt, 'units': 'C'}
         return output
 
 
@@ -131,21 +101,13 @@ class SimulationParameters:
         self.max_Height = max_height  # in meters
         self.min_Height = min_height  # in meters
 
-    def __repr__(self):
-        def justify(category, value):
-            return category.ljust(40) + "= " + value + "\n"
-
-        output = str(self.__class__) + "\n"
-
-        output += justify("Start month", str(self.start_month) + " (months)")
-        output += justify("End month", str(self.end_month) + "(months)")
-        output += justify(
-            "Max EFT Allowable", str(self.max_EFT_allowable) + " (degrees Celsius)"
-        )
-        output += justify(
-            "Min EFT Allowable", str(self.min_EFT_allowable) + " (degrees Celsius)"
-        )
-        output += justify("Maximum height", str(self.max_Height) + " (m)")
-        output += justify("Minimum height", str(self.min_Height) + " (m)")
-
+    def as_dict(self) -> dict:
+        output = dict()
+        output['type'] = str(self.__class__)
+        output['start_month'] = self.start_month
+        output['end_month'] = self.end_month
+        output['max_eft_allowable'] = {'value': self.max_EFT_allowable, 'units': 'C'}
+        output['min_eft_allowable'] = {'value': self.min_EFT_allowable, 'units': 'C'}
+        output['maximum_height'] = {'value': self.max_Height, 'units': 'm'}
+        output['minimum_height'] = {'value': self.min_Height, 'units': 'm'}
         return output

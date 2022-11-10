@@ -6,7 +6,7 @@ from scipy.optimize import brentq
 from ghedesigner import borehole_heat_exchangers, media
 
 
-def compute_equivalent(bhe):
+def compute_equivalent(bhe) -> borehole_heat_exchangers.SingleUTube:
     # Compute an equivalent borehole heat exchanger based on the type
     if type(bhe) == borehole_heat_exchangers.SingleUTube:
         _bhe = bhe
@@ -179,7 +179,7 @@ def match_effective_borehole_resistance(tube_ref, new_tube):
     return
 
 
-def multiple_to_single(multiple_u_tube):
+def multiple_to_single(multiple_u_tube) -> borehole_heat_exchangers.SingleUTube:
     # Find an equivalent single U-tube given multiple U-tube geometry
 
     # Get effective parameters for the multiple u-tube
@@ -196,7 +196,7 @@ def multiple_to_single(multiple_u_tube):
     return single_u_tube
 
 
-def coaxial_to_single(coaxial_tube):
+def coaxial_to_single(coaxial_tube) -> borehole_heat_exchangers.SingleUTube:
     # Find an equivalent single U-tube given a coaxial heat exchanger
     vol_fluid, vol_pipe, resist_conv, resist_pipe = concentric_tube_volumes(coaxial_tube)
 
