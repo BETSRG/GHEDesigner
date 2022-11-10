@@ -1,8 +1,7 @@
-from ghedt import ground_heat_exchangers, gfunction, utilities
+from ghedt import ground_heat_exchangers, gfunction, utilities, borehole_heat_exchangers, media
 from ghedt.borehole import GHEBorehole
 from ghedt.coordinates import rectangle
 from ghedt.fluid import GHEFluid
-from ghedt.peak_load_analysis_tool import borehole_heat_exchangers, media
 from .ghe_base_case import GHEBaseTest
 
 

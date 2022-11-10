@@ -1,11 +1,10 @@
+import numpy as np
 from math import log, sqrt, exp
 from math import pi
-
-import numpy as np
 from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
 
-from ghedt.peak_load_analysis_tool import borehole_heat_exchangers
+from ghedt import borehole_heat_exchangers
 
 
 class RadialCellType(object):

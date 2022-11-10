@@ -1,8 +1,7 @@
+import numpy as np
 from math import atan, cos, pi, sin, sqrt
 
-import numpy as np
-
-from ghedt.rowwise.shape import Shapes, sort_intersections
+from ghedt.shape import Shapes, sort_intersections
 
 
 def gen_shape(prop_bound, ng_zones=None):

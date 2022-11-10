@@ -1,6 +1,5 @@
-from math import atan, pi, sin, sqrt
-
 import numpy as np
+from math import atan, pi, sin, sqrt
 
 
 class Shapes:
@@ -50,10 +49,10 @@ class Shapes:
                 if len(r) == 1:
                     r = r[0]
                     if (
-                        (r[0] - max(c2[0], c1[0])) > intersection_tolerance
-                        or (r[0] - min(c2[0], c1[0])) < -1 * intersection_tolerance
-                        or (r[1] - max(c2[1], c1[1])) > intersection_tolerance
-                        or (r[1] - min(c2[1], c1[1])) < -1 * intersection_tolerance
+                            (r[0] - max(c2[0], c1[0])) > intersection_tolerance
+                            or (r[0] - min(c2[0], c1[0])) < -1 * intersection_tolerance
+                            or (r[1] - max(c2[1], c1[1])) > intersection_tolerance
+                            or (r[1] - min(c2[1], c1[1])) < -1 * intersection_tolerance
                     ):
                         continue
                     r_a.append(r)
@@ -68,10 +67,10 @@ class Shapes:
                 if len(r) == 1:
                     r = r[0]
                     if (
-                        (r[0] - max(c2[0], c1[0])) > intersection_tolerance
-                        or (r[0] - min(c2[0], c1[0])) < -1 * intersection_tolerance
-                        or (r[1] - max(c2[1], c1[1])) > intersection_tolerance
-                        or (r[1] - min(c2[1], c1[1])) < -1 * intersection_tolerance
+                            (r[0] - max(c2[0], c1[0])) > intersection_tolerance
+                            or (r[0] - min(c2[0], c1[0])) < -1 * intersection_tolerance
+                            or (r[1] - max(c2[1], c1[1])) > intersection_tolerance
+                            or (r[1] - min(c2[1], c1[1])) < -1 * intersection_tolerance
                     ):
                         continue
                     r_a.append(r)
@@ -132,7 +131,7 @@ class Shapes:
         for i in range(len(self.c)):
             if i == len(self.c) - 1:
                 area_sum += self.c[len(self.c) - 1][0] * self.c[0][1] - (
-                    self.c[len(self.c) - 1][1] * self.c[0][0]
+                        self.c[len(self.c) - 1][1] * self.c[0][0]
                 )
                 continue
             area_sum += self.c[i][0] * self.c[i + 1][1] - (self.c[i][1] * self.c[i + 1][0])

@@ -1,27 +1,27 @@
 import copy
-import math
 from calendar import monthrange
 from json import dumps
 
+import math
 import numpy as np
 from scipy.interpolate import interp1d
 
-from ghedt.peak_load_analysis_tool.borehole_heat_exchangers import SingleUTube
-from ghedt.peak_load_analysis_tool.media import SimulationParameters
-from ghedt.peak_load_analysis_tool.radial_numerical_borehole import RadialNumericalBH
+from ghedt.borehole_heat_exchangers import SingleUTube
+from ghedt.media import SimulationParameters
+from ghedt.radial_numerical_borehole import RadialNumericalBH
 
 
 class HybridLoad:
     def __init__(
-        self,
-        hourly_rejection_loads: list,
-        hourly_extraction_loads: list,
-        bhe: SingleUTube,
-        radial_numerical: RadialNumericalBH,
-        sim_params: SimulationParameters,
-        cop_rejection=None,
-        cop_extraction=None,
-        years=None,
+            self,
+            hourly_rejection_loads: list,
+            hourly_extraction_loads: list,
+            bhe: SingleUTube,
+            radial_numerical: RadialNumericalBH,
+            sim_params: SimulationParameters,
+            cop_rejection=None,
+            cop_extraction=None,
+            years=None,
     ):
         # Split the hourly loads into heating and cooling (kW)
         if years is None:

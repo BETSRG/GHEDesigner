@@ -3,7 +3,7 @@ import pygfunction as gt
 from numpy import pi
 from pygfunction.pipes import _BasePipe as bp
 
-from ghedt.peak_load_analysis_tool import media
+from ghedt import media
 
 
 class BasePipe(object):

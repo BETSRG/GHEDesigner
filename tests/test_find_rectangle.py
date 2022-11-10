@@ -1,9 +1,8 @@
 from time import time as clock
 
-from ghedt import geometry, design, utilities
+from ghedt import geometry, design, utilities, borehole_heat_exchangers, media
 from ghedt.borehole import GHEBorehole
 from ghedt.fluid import GHEFluid
-from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 from .ghe_base_case import GHEBaseTest
 
 

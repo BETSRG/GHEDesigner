@@ -4,7 +4,7 @@ import numpy as np
 import pygfunction as gt
 
 from ghedt import domains, geometry, search_routines
-from ghedt.peak_load_analysis_tool.media import Grout, Pipe, SimulationParameters, Soil
+from ghedt.media import Grout, Pipe, SimulationParameters, Soil
 from ghedt.utilities import DesignMethod
 
 

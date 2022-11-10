@@ -3,7 +3,7 @@ from pandas import ExcelFile, read_excel
 
 from ghedt.borehole import GHEBorehole
 from ghedt.fluid import GHEFluid
-from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
+from ghedt import borehole_heat_exchangers, media
 from .ghe_base_case import GHEBaseTest
 
 

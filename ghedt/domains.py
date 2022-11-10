@@ -2,14 +2,7 @@ import copy
 
 import numpy as np
 
-from ghedt.coordinates import (
-    rectangle,
-    transpose_coordinates,
-    zoned_rectangle,
-    l_shape,
-    c_shape,
-    lop_u,
-)
+from ghedt.coordinates import rectangle, transpose_coordinates, zoned_rectangle, l_shape, c_shape, lop_u
 from ghedt.feature_recognition import remove_cutout, determine_largest_rectangle
 
 
@@ -107,7 +100,7 @@ def rectangular(length_x, length_y, b_min, b_max, disp=False):
 
 
 def bi_rectangular(
-    length_x, length_y, b_min, b_max_x, b_max_y, transpose=False, disp=False
+        length_x, length_y, b_min, b_max_x, b_max_y, transpose=False, disp=False
 ):
     # Make this work for the transpose
     if length_x >= length_y:
@@ -395,7 +388,7 @@ def bi_rectangle_zoned_nested(length_x, length_y, b_min, b_max_x, b_max_y):
 
 
 def polygonal_land_constraint(
-    property_boundary, b_min, b_max_x, b_max_y, building_descriptions=None
+        property_boundary, b_min, b_max_x, b_max_y, building_descriptions=None
 ):
     if building_descriptions is None:
         building_descriptions = []

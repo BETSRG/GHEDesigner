@@ -7,22 +7,22 @@ from scipy.interpolate import interp1d, lagrange
 
 
 def calculate_g_function(
-    m_flow_borehole,
-    bhe_object,
-    time_values,
-    coordinates,
-    borehole,
-    fluid,
-    pipe,
-    grout,
-    soil,
-    n_segments=8,
-    end_length_ratio=0.02,
-    segments="unequal",
-    solver="equivalent",
-    boundary="MIFT",
-    segment_ratios=None,
-    disp=False,
+        m_flow_borehole,
+        bhe_object,
+        time_values,
+        coordinates,
+        borehole,
+        fluid,
+        pipe,
+        grout,
+        soil,
+        n_segments=8,
+        end_length_ratio=0.02,
+        segments="unequal",
+        solver="equivalent",
+        boundary="MIFT",
+        segment_ratios=None,
+        disp=False,
 ):
     bore_field = []
     bhe_objects = []
@@ -92,24 +92,24 @@ def calculate_g_function(
 
 
 def compute_live_g_function(
-    b: float,
-    h_values: list,
-    r_b_values: list,
-    d_values: list,
-    m_flow_borehole,
-    bhe_object,
-    log_time,
-    coordinates,
-    fluid,
-    pipe,
-    grout,
-    soil,
-    n_segments=8,
-    segments="unequal",
-    solver="equivalent",
-    boundary="MIFT",
-    segment_ratios=None,
-    disp=False,
+        b: float,
+        h_values: list,
+        r_b_values: list,
+        d_values: list,
+        m_flow_borehole,
+        bhe_object,
+        log_time,
+        coordinates,
+        fluid,
+        pipe,
+        grout,
+        soil,
+        n_segments=8,
+        segments="unequal",
+        solver="equivalent",
+        boundary="MIFT",
+        segment_ratios=None,
+        disp=False,
 ):
     d = {"g": {}, "bore_locations": coordinates, "logtime": log_time}
 
@@ -121,7 +121,7 @@ def compute_live_g_function(
 
         alpha = soil.k / soil.rhoCp
 
-        ts = h**2 / (9.0 * alpha)  # Bore field characteristic time
+        ts = h ** 2 / (9.0 * alpha)  # Bore field characteristic time
         time_values = np.exp(log_time) * ts
 
         gfunc = calculate_g_function(
@@ -155,13 +155,13 @@ def compute_live_g_function(
 
 class GFunction:
     def __init__(
-        self,
-        b: float,
-        r_b_values: dict,
-        d_values: dict,
-        g_lts: dict,
-        log_time: list,
-        bore_locations: list,
+            self,
+            b: float,
+            r_b_values: dict,
+            d_values: dict,
+            g_lts: dict,
+            log_time: list,
+            bore_locations: list,
     ):
         self.B: float = b  # a B spacing in the borefield
         # r_b (borehole radius) value keyed by height
@@ -398,7 +398,7 @@ class GFunction:
             time_arr: list = []
             for _, lntts in enumerate(log_time):
                 alpha = 1.0e-06
-                t_seconds = height**2 / 9 / alpha * np.exp(lntts)
+                t_seconds = height ** 2 / 9 / alpha * np.exp(lntts)
                 t_year = t_seconds / 60 / 24 / 365
                 time_arr.append(t_year)
             t_tmp[height] = time_arr

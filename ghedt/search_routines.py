@@ -1,43 +1,40 @@
 import copy
-import math
 from json import dumps
 from pathlib import Path
 from typing import Optional
 
+import math
 import numpy as np
 import pygfunction as gt
 
 from ghedt.gfunction import compute_live_g_function
 from ghedt.ground_heat_exchangers import GHE
-from ghedt.peak_load_analysis_tool.media import (Grout, Pipe,
-                                                 SimulationParameters, Soil)
-from ghedt.rowwise.rowwise_generation import (field_optimization_fr,
-                                              field_optimization_wp_space_fr)
-from ghedt.utilities import (eskilson_log_times, borehole_spacing,
-                             check_bracket, sign, DesignMethod)
+from ghedt.media import Grout, Pipe, SimulationParameters, Soil
+from ghedt.rowwise_generation import field_optimization_fr, field_optimization_wp_space_fr
+from ghedt.utilities import eskilson_log_times, borehole_spacing, check_bracket, sign, DesignMethod
 
 
 class Bisection1D:
     def __init__(
-        self,
-        coordinates_domain: list,
-        field_descriptors: list,
-        v_flow: float,
-        borehole: gt.boreholes.Borehole,
-        bhe_object,
-        fluid: gt.media.Fluid,
-        pipe: Pipe,
-        grout: Grout,
-        soil: Soil,
-        sim_params: SimulationParameters,
-        hourly_extraction_ground_loads: list,
-        method: DesignMethod,
-        flow: str = "borehole",
-        max_iter=15,
-        disp=False,
-        search=True,
-        field_type="N/A",
-        load_years=None,
+            self,
+            coordinates_domain: list,
+            field_descriptors: list,
+            v_flow: float,
+            borehole: gt.boreholes.Borehole,
+            bhe_object,
+            fluid: gt.media.Fluid,
+            pipe: Pipe,
+            grout: Grout,
+            soil: Soil,
+            sim_params: SimulationParameters,
+            hourly_extraction_ground_loads: list,
+            method: DesignMethod,
+            flow: str = "borehole",
+            max_iter=15,
+            disp=False,
+            search=True,
+            field_type="N/A",
+            load_years=None,
     ):
 
         # Take the lowest part of the coordinates domain to be used for the
@@ -302,30 +299,30 @@ class Bisection1D:
 # This is the search algorithm used for finding row-wise fields
 class RowWiseModifiedBisectionSearch:
     def __init__(
-        self,
-        v_flow: float,
-        borehole: gt.boreholes.Borehole,
-        bhe_object,
-        fluid: gt.media.Fluid,
-        pipe: Pipe,
-        grout: Grout,
-        soil: Soil,
-        sim_params: SimulationParameters,
-        hourly_extraction_ground_loads: list,
-        geometric_constraints,
-        method: DesignMethod,
-        flow: str = "borehole",
-        max_iter: int = 10,
-        disp: bool = False,
-        search: bool = True,
-        advanced_tracking: bool = True,
-        field_type: str = "rowwise",
-        load_years=None,
-        e_t: float = 1e-10,
-        b_r_point=None,
-        b_r_removal_method: str = "CloseToCorner",
-        exhaustive_fields_to_check: int = 10,
-        use_perimeter: bool = True,
+            self,
+            v_flow: float,
+            borehole: gt.boreholes.Borehole,
+            bhe_object,
+            fluid: gt.media.Fluid,
+            pipe: Pipe,
+            grout: Grout,
+            soil: Soil,
+            sim_params: SimulationParameters,
+            hourly_extraction_ground_loads: list,
+            geometric_constraints,
+            method: DesignMethod,
+            flow: str = "borehole",
+            max_iter: int = 10,
+            disp: bool = False,
+            search: bool = True,
+            advanced_tracking: bool = True,
+            field_type: str = "rowwise",
+            load_years=None,
+            e_t: float = 1e-10,
+            b_r_point=None,
+            b_r_removal_method: str = "CloseToCorner",
+            exhaustive_fields_to_check: int = 10,
+            use_perimeter: bool = True,
     ):
 
         # Take the lowest part of the coordinates domain to be used for the
@@ -452,12 +449,12 @@ class RowWiseModifiedBisectionSearch:
         return t_excess
 
     def search(
-        self,
-        e_t=1e-10,
-        b_r_point=None,
-        b_r_removal_method="CloseToCorner",
-        exhaustive_fields_to_check=10,
-        use_perimeter=True,
+            self,
+            e_t=1e-10,
+            b_r_point=None,
+            b_r_removal_method="CloseToCorner",
+            exhaustive_fields_to_check=10,
+            use_perimeter=True,
     ):
         # Copy all the geometric constraints to local variables
         if b_r_point is None:
@@ -700,9 +697,9 @@ class RowWiseModifiedBisectionSearch:
                 starting_field = lower_field
             else:
                 msg = (
-                    b_r_removal_method
-                    + " is not a valid method for removing boreholes. The valid methods are: "
-                    "CloseToCorner, CloseToPoint, FarFromPoint, and RowRemoval."
+                        b_r_removal_method
+                        + " is not a valid method for removing boreholes. The valid methods are: "
+                          "CloseToCorner, CloseToPoint, FarFromPoint, and RowRemoval."
                 )
                 raise ValueError(msg)
 
@@ -775,24 +772,24 @@ class RowWiseModifiedBisectionSearch:
 
 class Bisection2D(Bisection1D):
     def __init__(
-        self,
-        coordinates_domain_nested: list,
-        field_descriptors: list,
-        v_flow: float,
-        borehole: gt.boreholes.Borehole,
-        bhe_object,
-        fluid: gt.media.Fluid,
-        pipe: Pipe,
-        grout: Grout,
-        soil: Soil,
-        sim_params: SimulationParameters,
-        hourly_extraction_ground_loads: list,
-        method: DesignMethod,
-        flow: str = "borehole",
-        max_iter=15,
-        disp=False,
-        field_type="N/A",
-        load_years=None,
+            self,
+            coordinates_domain_nested: list,
+            field_descriptors: list,
+            v_flow: float,
+            borehole: gt.boreholes.Borehole,
+            bhe_object,
+            fluid: gt.media.Fluid,
+            pipe: Pipe,
+            grout: Grout,
+            soil: Soil,
+            sim_params: SimulationParameters,
+            hourly_extraction_ground_loads: list,
+            method: DesignMethod,
+            flow: str = "borehole",
+            max_iter=15,
+            disp=False,
+            field_type="N/A",
+            load_years=None,
     ):
         if load_years is None:
             load_years = [2019]
@@ -854,24 +851,24 @@ class Bisection2D(Bisection1D):
 
 class BisectionZD(Bisection1D):
     def __init__(
-        self,
-        coordinates_domain_nested: list,
-        field_descriptors: list,
-        v_flow: float,
-        borehole: gt.boreholes.Borehole,
-        bhe_object,
-        fluid: gt.media.Fluid,
-        pipe: Pipe,
-        grout: Grout,
-        soil: Soil,
-        sim_params: SimulationParameters,
-        hourly_extraction_ground_loads: list,
-        method: DesignMethod,
-        flow: str = "borehole",
-        max_iter=15,
-        disp=False,
-        field_type="N/A",
-        load_years=None,
+            self,
+            coordinates_domain_nested: list,
+            field_descriptors: list,
+            v_flow: float,
+            borehole: gt.boreholes.Borehole,
+            bhe_object,
+            fluid: gt.media.Fluid,
+            pipe: Pipe,
+            grout: Grout,
+            soil: Soil,
+            sim_params: SimulationParameters,
+            hourly_extraction_ground_loads: list,
+            method: DesignMethod,
+            flow: str = "borehole",
+            max_iter=15,
+            disp=False,
+            field_type="N/A",
+            load_years=None,
     ):
         if load_years is None:
             load_years = [2019]

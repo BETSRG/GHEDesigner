@@ -1,9 +1,8 @@
 from json import loads
 
-from ghedt import gfunction, ground_heat_exchangers, utilities
+from ghedt import gfunction, ground_heat_exchangers, utilities, borehole_heat_exchangers, media
 from ghedt.borehole import GHEBorehole
 from ghedt.fluid import GHEFluid
-from ghedt.peak_load_analysis_tool import media, borehole_heat_exchangers
 from .ghe_base_case import GHEBaseTest
 
 

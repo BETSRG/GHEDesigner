@@ -6,32 +6,29 @@ import pygfunction as gt
 from scipy.interpolate import interp1d
 
 from ghedt import gfunction
+from ghedt.equivalance import compute_equivalent, solve_root
+from ghedt.ground_loads import HybridLoad
+from ghedt.media import Grout, Pipe, SimulationParameters, Soil
+from ghedt.radial_numerical_borehole import RadialNumericalBH
 from ghedt.utilities import DesignMethod
-from ghedt.peak_load_analysis_tool.equivalance import (compute_equivalent,
-                                                       solve_root)
-from ghedt.peak_load_analysis_tool.ground_loads import HybridLoad
-from ghedt.peak_load_analysis_tool.media import (Grout, Pipe,
-                                                 SimulationParameters, Soil)
-from ghedt.peak_load_analysis_tool.radial_numerical_borehole import \
-    RadialNumericalBH
 
 
 class BaseGHE:
     def __init__(
-        self,
-        v_flow_system: float,
-        b_spacing: float,
-        bhe_function,
-        fluid: gt.media.Fluid,
-        borehole: gt.boreholes.Borehole,
-        pipe: Pipe,
-        grout: Grout,
-        soil: Soil,
-        g_function: gfunction.GFunction,
-        sim_params: SimulationParameters,
-        hourly_extraction_ground_loads: list,
-        field_type="N/A",
-        field_specifier="N/A",
+            self,
+            v_flow_system: float,
+            b_spacing: float,
+            bhe_function,
+            fluid: gt.media.Fluid,
+            borehole: gt.boreholes.Borehole,
+            pipe: Pipe,
+            grout: Grout,
+            soil: Soil,
+            g_function: gfunction.GFunction,
+            sim_params: SimulationParameters,
+            hourly_extraction_ground_loads: list,
+            field_type="N/A",
+            field_specifier="N/A",
     ):
 
         self.fieldType = field_type
@@ -98,7 +95,7 @@ class BaseGHE:
 
     @staticmethod
     def combine_sts_lts(
-        log_time_lts: list, g_lts: list, log_time_sts: list, g_sts: list
+            log_time_lts: list, g_lts: list, log_time_sts: list, g_sts: list
     ) -> interp1d:
         # make sure the short time step doesn't overlap with the long time step
         max_log_time_sts = max(log_time_sts)
@@ -152,7 +149,7 @@ class BaseGHE:
         return t_excess
 
     def _simulate_detailed(
-        self, q_dot: np.ndarray, time_values: np.ndarray, g: interp1d
+            self, q_dot: np.ndarray, time_values: np.ndarray, g: interp1d
     ):
         # Perform a detailed simulation based on a numpy array of heat rejection
         # rates, Q_dot (Watts) where each load is applied at the time_value
@@ -232,20 +229,20 @@ class BaseGHE:
 
 class GHE(BaseGHE):
     def __init__(
-        self,
-        v_flow_system: float,
-        b_spacing: float,
-        bhe_object,
-        fluid: gt.media.Fluid,
-        borehole: gt.boreholes.Borehole,
-        pipe: Pipe,
-        grout: Grout,
-        soil: Soil,
-        g_function: gfunction.GFunction,
-        sim_params: SimulationParameters,
-        hourly_extraction_ground_loads: list,
-        field_type="N/A",
-        field_specifier="N/A",
+            self,
+            v_flow_system: float,
+            b_spacing: float,
+            bhe_object,
+            fluid: gt.media.Fluid,
+            borehole: gt.boreholes.Borehole,
+            pipe: Pipe,
+            grout: Grout,
+            soil: Soil,
+            g_function: gfunction.GFunction,
+            sim_params: SimulationParameters,
+            hourly_extraction_ground_loads: list,
+            field_type="N/A",
+            field_specifier="N/A",
             load_years=None,
     ):
         BaseGHE.__init__(

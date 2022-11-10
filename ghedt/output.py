@@ -1,12 +1,12 @@
 import csv
-import math
 import os
 from datetime import datetime
 from pathlib import Path
 
+import math
 import numpy as np
 
-from ghedt.peak_load_analysis_tool import borehole_heat_exchangers
+from ghedt import borehole_heat_exchangers
 from ghedt.utilities import DesignMethod
 
 
@@ -37,7 +37,7 @@ def create_row(allocated_width, row_data, data_formats, centering=">"):
 
 
 def create_table(
-    title, col_titles, rows, allocated_width, col_formats, filler_symbol=" ", centering=">"
+        title, col_titles, rows, allocated_width, col_formats, filler_symbol=" ", centering=">"
 ):
     n_cols = len(col_titles[0])
     r_s = ""
@@ -155,21 +155,21 @@ def ghe_time_convert(hours):
 
 
 def output_design_details(
-    design,
-    time,
-    project_name,
-    notes,
-    author,
-    model_name,
-    load_method: DesignMethod,
-    output_directory: Path,
-    allocated_width=100,
-    rounding_amount=10,
-    summary_file="SimulationSummary.txt",
-    csv_f_1="TimeDependentValues.csv",
-    csv_f_2="BoreFieldData.csv",
-    csv_f_3="Loadings.csv",
-    csv_f_4="Gfunction.csv",
+        design,
+        time,
+        project_name,
+        notes,
+        author,
+        model_name,
+        load_method: DesignMethod,
+        output_directory: Path,
+        allocated_width=100,
+        rounding_amount=10,
+        summary_file="SimulationSummary.txt",
+        csv_f_1="TimeDependentValues.csv",
+        csv_f_2="BoreFieldData.csv",
+        csv_f_3="Loadings.csv",
+        csv_f_4="Gfunction.csv",
 
 ):
     try:
@@ -554,19 +554,19 @@ def output_design_details(
     n_months = len(ghe.hybrid_load.monthly_cl) - 1
     n_years = int(n_months / 12)
     months = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-    ] * n_years
+                 "January",
+                 "February",
+                 "March",
+                 "April",
+                 "May",
+                 "June",
+                 "July",
+                 "August",
+                 "September",
+                 "October",
+                 "November",
+                 "December",
+             ] * n_years
 
     start_ind = 1
     stop_ind = n_months
