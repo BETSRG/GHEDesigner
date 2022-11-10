@@ -427,9 +427,8 @@ def polygonal_land_constraint(
 
     coordinates_domain_nested_cutout_reordered = []
     field_descriptors_reordered = []
-    for i in range(len(coordinates_domain_nested_cutout)):
-        domain = coordinates_domain_nested_cutout[i]
-        domain_reordered, f_d_reordered = reorder_domain(domain, field_descriptors[i])
+    for idx, domain in enumerate(coordinates_domain_nested_cutout):
+        domain_reordered, f_d_reordered = reorder_domain(domain, field_descriptors[idx])
         coordinates_domain_nested_cutout_reordered.append(domain_reordered)
         field_descriptors_reordered.append(f_d_reordered)
 

@@ -3,8 +3,7 @@ from typing import List, Tuple, Union
 
 def transpose_coordinates(coordinates) -> List[Tuple[float, float]]:
     coordinates_transposed = []
-    for i in range(len(coordinates)):
-        x, y = coordinates[i]
+    for x, y in coordinates:
         coordinates_transposed.append((y, x))
     return coordinates_transposed
 

@@ -6,8 +6,7 @@ import numpy as np
 
 def scale_coordinates(coordinates, scale):
     new_coordinates = []
-    for i in range(len(coordinates)):
-        x, y = coordinates[i]
+    for x, y in coordinates:
         x *= scale
         y *= scale
         new_coordinates.append((x, y))
@@ -45,7 +44,7 @@ def remove_cutout(coordinates, boundary=None, remove_inside=True, keep_contour=T
             boundary_points_idx.append(i)
 
     new_coordinates = []
-    for i in range(len(coordinates)):
+    for idx, _ in enumerate(coordinates):
         # if we want to remove inside points and keep contour points
         if remove_inside and keep_contour:
             if i in inside_points_idx:
@@ -79,8 +78,7 @@ def remove_cutout(coordinates, boundary=None, remove_inside=True, keep_contour=T
 def determine_largest_rectangle(property_boundary):
     x_max = 0
     y_max = 0
-    for i in range(len(property_boundary)):
-        x, y = property_boundary[i]
+    for x, y in property_boundary:
         if x > x_max:
             x_max = copy.deepcopy(x)
         if y > y_max:

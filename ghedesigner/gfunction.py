@@ -264,7 +264,7 @@ class GFunction:
         # if the interpolation table is not yet know, build it
         if len(self.interpolation_table) == 0:
             # create an interpolation for the g-function which takes the height
-            # (or equivilant height) as an input the g-function needs to be
+            # (or equivalent height) as an input the g-function needs to be
             # interpolated at each point in dimensionless time
             self.interpolation_table["g"] = []
             for i, lntts in enumerate(self.log_time):
