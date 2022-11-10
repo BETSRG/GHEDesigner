@@ -1,105 +1,11 @@
+from math import log
 import numpy as np
 import pygfunction as gt
 from numpy import pi
 from pygfunction.pipes import _BasePipe as bp
 
 from ghedesigner import media
-
-
-class BasePipe(object):
-    def __init__(
-            self, m_flow_borehole, fluid, borehole, soil, grout, pipe, config=None
-    ):
-        # borehole mass flow rate
-        self.m_flow_borehole = m_flow_borehole
-        # mass flow rate to each pipe
-        self.m_flow_pipe = self.compute_mass_flow_rate_pipe(m_flow_borehole, config)
-        # Store Thermal properties
-        self.soil = soil
-        self.grout = grout
-        self.pipe = pipe
-        # Store fluid properties
-        self.fluid = fluid
-        # Store borehole
-        self.borehole = borehole
-
-        # Declare variables that are computed in compute_resistance()
-        self.h_f = None
-        self.R_p = None
-        self.R_f = None
-
-        self.compute_resistances()
-
-    def as_dict(self) -> dict:
-        blob = dict()
-        blob['type'] = str(self.__class__)
-        blob['mass_flow_borehole'] = {'value': self.m_flow_borehole, 'units': 'kg/s'}
-        blob['mass_flow_pipe'] = {'value': self.m_flow_pipe, 'units': 'kg/s'}
-        blob['borehole'] = self.borehole.as_dict()
-        blob['soil'] = self.soil.as_dict()
-        blob['grout'] = self.grout.as_dict()
-        blob['pipe'] = self.pipe.as_dict()
-        blob['fluid'] = self.fluid.as_dict()
-        reynold_no = compute_reynolds_concentric(
-            self.m_flow_pipe, self.pipe.r_in, self.pipe.roughness, self.fluid
-        )
-        blob['reynolds'] = {'value': reynold_no, 'units': ''}
-        blob['convection_coefficient'] = {'value': self.h_f, 'units': 'W/m2-K'}
-        blob['pipe_resistance'] = {'value': self.R_p, 'units': 'm-K/W'}
-        blob['fluid_resistance'] = {'value': self.R_f, 'units': 'm-K/W'}
-        return blob
-
-    def compute_resistances(self):
-        # Convection heat transfer coefficient of a single pipe
-        self.h_f = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
-            self.m_flow_pipe,
-            self.pipe.r_in,
-            self.fluid.mu,
-            self.fluid.rho,
-            self.fluid.k,
-            self.fluid.cp,
-            self.pipe.roughness,
-        )
-
-        # Single pipe thermal resistance
-        self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(
-            self.pipe.r_in, self.pipe.r_out, self.pipe.k
-        )
-        # Single pipe fluid thermal resistance
-        self.R_f = 1.0 / (self.h_f * 2 * pi * self.pipe.r_in)
-
-        return
-
-    @staticmethod
-    def compute_mass_flow_rate_pipe(m_flow_borehole, config):
-        if config == "series" or config is None:
-            m_flow_pipe = m_flow_borehole
-        elif config == "parallel":
-            m_flow_pipe = m_flow_borehole / 2.0
-        else:
-            raise ValueError("No such configuration exists.")
-        return m_flow_pipe
-
-    def compute_effective_borehole_resistance(self, m_flow_borehole=None, fluid=None):
-        # Compute the effective borehole thermal resistance
-
-        # if the mass flow rate has changed, then update it and use new value
-        if m_flow_borehole is None:
-            m_flow_borehole = self.m_flow_borehole
-        else:
-            self.m_flow_borehole = m_flow_borehole
-
-        # if the mass flow rate has changed, then update it and use new value
-        if fluid is None:
-            fluid = self.fluid
-        else:
-            self.fluid = fluid
-
-        resist_bh_effective = bp.effective_borehole_thermal_resistance(
-            self, m_flow_borehole, fluid.cp
-        )
-
-        return resist_bh_effective
+from ghedesigner.equivalance import equivalent_single_u_tube, match_effective_borehole_resistance
 
 
 class SingleUTube(gt.pipes.SingleUTube):
@@ -187,6 +93,9 @@ class SingleUTube(gt.pipes.SingleUTube):
         super dumbness
         """
         return self.update_thermal_resistance(m_flow_borehole)
+
+    def to_single(self):
+        return self
 
     def as_dict(self) -> dict:
         return {'type': str(self.__class__)}
@@ -282,9 +191,48 @@ class MultipleUTube(gt.pipes.MultipleUTube):
         """
         return self.update_thermal_resistance(m_flow_borehole)
 
+    def u_tube_volumes(self):
+        # Compute volumes for U-tube geometry
+        # Effective parameters
+        n = int(self.nPipes * 2)  # Total number of tubes
+        # Total inside surface area (m^2)
+        area_surf_inner = n * pi * (self.r_in * 2.0) ** 2
+        resist_conv = 1 / (self.h_f * area_surf_inner)  # Convection resistance (m.K/W)
+        # Volumes
+        vol_fluid = n * pi * (self.r_in ** 2)
+        vol_pipe = n * pi * (self.r_out ** 2) - vol_fluid
+        # V_grout = pi * (u_tube.b.r_b**2) - vol_pipe - vol_fluid
+        resist_pipe = log(self.r_out / self.r_in) / (n * 2 * pi * self.pipe.k)
+        return vol_fluid, vol_pipe, resist_conv, resist_pipe
 
-class CoaxialBase(object):
-    def __init__(self, m_flow_borehole, fluid, borehole, pipe, soil, grout):
+    def to_single(self) -> SingleUTube:
+        # Find an equivalent single U-tube given multiple U-tube geometry
+
+        # Get effective parameters for the multiple u-tube
+        vol_fluid, vol_pipe, resist_conv, resist_pipe = self.u_tube_volumes()
+
+        single_u_tube = equivalent_single_u_tube(
+            self, vol_fluid, vol_pipe, resist_conv, resist_pipe
+        )
+
+        # Vary grout thermal conductivity to match effective borehole thermal
+        # resistance
+        match_effective_borehole_resistance(self, single_u_tube)
+
+        return single_u_tube
+
+
+class CoaxialPipe(gt.pipes.Coaxial):
+    def __init__(
+            self,
+            m_flow_borehole: float,
+            fluid: gt.media.Fluid,  # TODO: Use ghedesigner.media.Fluid
+            borehole: gt.boreholes.Borehole,
+            pipe: media.Pipe,
+            grout: media.Grout,
+            soil: media.Soil,
+            config=None,
+    ):
         self.m_flow_borehole = m_flow_borehole
         self.m_flow_pipe = m_flow_borehole
         # Store Thermal properties
@@ -306,115 +254,39 @@ class CoaxialBase(object):
         self.b = borehole  # pygfunction borehole
 
         # Declare variables that are computed in compute_resistance()
-        self.R_p_in = None
-        self.R_p_out = None
-        self.R_grout = None
-        self.h_fluid_a_in = None
-        self.h_fluid_a_out = None
-        self.R_f_a_in = None
-        self.R_f_a_out = None
-        self.h_fluid_in = None
-        self.R_f_in = None
-        self.R_ff = None
-        self.R_fp = None
+        self.R_p_in = 0.0
+        self.R_p_out = 0.0
+        self.R_grout = 0.0
+        self.h_fluid_a_in = 0.0
+        self.h_fluid_a_out = 0.0
+        self.R_f_a_in = 0.0
+        self.R_f_a_out = 0.0
+        self.h_fluid_in = 0.0
+        self.R_f_in = 0.0
+        self.R_ff = 0.0
+        self.R_fp = 0.0
 
         self.compute_resistances()
 
-        return
+        # borehole mass flow rate
+        self.m_flow_borehole = m_flow_borehole
+        # mass flow rate to each pipe
+        self.m_flow_pipe = self.compute_mass_flow_rate_pipe(m_flow_borehole, config)
+        # Store Thermal properties
+        self.soil = soil
+        self.grout = grout
+        self.pipe = pipe
+        # Store fluid properties
+        self.fluid = fluid
+        # Store borehole
+        self.borehole = borehole
 
-    def as_dict(self) -> dict:
-        output = dict()
-        output['type'] = str(self.__class__)
-        output['mass_flow_borehole'] = {'value': self.m_flow_borehole, 'units': 'kg/s'}
-        output['mass_flow_pipe'] = {'value': self.m_flow_pipe, 'units': 'kg/s'}
-        output['b'] = self.b.as_dict()
-        output['soil'] = self.soil.as_dict()
-        output['grout'] = self.grout.as_dict()
-        output['pipe'] = self.pipe.as_dict()
-        output['fluid'] = self.fluid.as_dict()
-        output['inner_pipe_resistance'] = {'value': self.R_p_in, 'units': 'm-K/W'}
-        output['outer_pipe_resistance'] = {'value': self.R_p_out, 'units': 'm-K/W'}
-        output['grout_resistance'] = {'value': self.R_grout, 'units': 'm-K/W'}
-        reynolds_annulus = compute_reynolds_concentric(
-            self.m_flow_pipe, self.r_in_out, self.r_out_in, self.fluid
-        )
-        output['reynolds_annulus'] = {'value': reynolds_annulus, 'units': ''}
-        output['inner_annulus_convection_coefficient'] = {'value': self.h_fluid_a_in, 'units': 'W/m2-K'}
-        output['outer_annulus_convection_coefficient'] = {'value': self.h_fluid_a_out, 'units': 'W/m2-K'}
-        output['inner_annulus_resistance'] = {'value': self.R_f_a_in, 'units': 'm-K/W'}
-        output['outer_annulus_resistance'] = {'value': self.R_f_a_out, 'units': 'm-K/W'}
-        reynolds = compute_reynolds(self.m_flow_pipe, self.r_in_in, self.fluid)
-        output['reynolds_inner'] = {'value': reynolds, 'units': ''}
-        output['inner_convection_coefficient'] = {'value': self.h_fluid_in, 'units': 'W/m2-K'}
-        output['fluid_to_fluid_resistance'] = {'value': self.R_ff, 'units': 'm-K/W'}
-        output['fluid_to_pipe_resistance'] = {'value': self.R_fp, 'units': 'm-K/W'}
-        resit_bh_effective = bp.effective_borehole_thermal_resistance(
-            self, self.m_flow_borehole, self.fluid.cp
-        )
-        output['effective_borehole_resistance'] = {'value': resit_bh_effective, 'units': 'm-K/W'}
-        return output
+        # # Declare variables that are computed in compute_resistance()
+        self.h_f = 0.0
+        self.R_p = 0.0
+        self.R_f = 0.0
 
-    def compute_resistances(self):
-        # Inner pipe thermal resistance
-        self.R_p_in = gt.pipes.conduction_thermal_resistance_circular_pipe(
-            self.r_in_in, self.r_in_out, self.pipe.k[0]
-        )
-        # Outer pipe thermal resistance
-        self.R_p_out = gt.pipes.conduction_thermal_resistance_circular_pipe(
-            self.r_out_in, self.r_out_out, self.pipe.k[1]
-        )
-        # Grout thermal resistance
-        self.R_grout = gt.pipes.conduction_thermal_resistance_circular_pipe(
-            self.r_out_out, self.b.r_b, self.grout.k
-        )
-
-        (
-            h_fluid_a_in,
-            h_fluid_a_out,
-        ) = gt.pipes.convective_heat_transfer_coefficient_concentric_annulus(
-            self.m_flow_borehole,
-            self.r_in_out,
-            self.r_out_in,
-            self.fluid.mu,
-            self.fluid.rho,
-            self.fluid.k,
-            self.fluid.cp,
-            self.roughness,
-        )
-
-        self.h_fluid_a_in = h_fluid_a_in
-        self.h_fluid_a_out = h_fluid_a_out
-
-        # Inner fluid convective resistance
-        self.R_f_a_in = 1.0 / (self.h_fluid_a_in * 2 * pi * self.r_in_out)
-        # Outer fluid convective resistance
-        self.R_f_a_out = 1.0 / (h_fluid_a_out * 2 * pi * self.r_out_in)
-        self.h_fluid_in = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
-            self.m_flow_borehole,
-            self.r_in_in,
-            self.fluid.mu,
-            self.fluid.rho,
-            self.fluid.k,
-            self.fluid.cp,
-            self.roughness,
-        )
-        self.R_f_in = 1.0 / (self.h_fluid_in * 2 * pi * self.r_in_in)
-
-        return
-
-
-class CoaxialPipe(CoaxialBase, gt.pipes.Coaxial, BasePipe):
-    def __init__(
-            self,
-            m_flow_borehole: float,
-            fluid: gt.media.Fluid,
-            borehole: gt.boreholes.Borehole,
-            pipe: media.Pipe,
-            grout: media.Grout,
-            soil: media.Soil
-    ):
-        CoaxialBase.__init__(
-            self, m_flow_borehole, fluid, borehole, pipe, soil, grout)
+        self.compute_resistances()
 
         # Vectors of inner and outer pipe radii
         # Note : The dimensions of the inlet pipe are the first elements of
@@ -498,6 +370,184 @@ class CoaxialPipe(CoaxialBase, gt.pipes.Coaxial, BasePipe):
         )
 
         return resist_bh_effective
+
+    def to_single(self) -> SingleUTube:
+        # Find an equivalent single U-tube given a coaxial heat exchanger
+        vol_fluid, vol_pipe, resist_conv, resist_pipe = self.concentric_tube_volumes()
+
+        single_u_tube = equivalent_single_u_tube(
+            self, vol_fluid, vol_pipe, resist_conv, resist_pipe
+        )
+
+        # Vary grout thermal conductivity to match effective borehole thermal
+        # resistance
+        match_effective_borehole_resistance(self, single_u_tube)
+
+        return single_u_tube
+
+    def as_dict(self) -> dict:
+        blob = dict()
+        blob['type'] = str(self.__class__)
+        blob['mass_flow_borehole'] = {'value': self.m_flow_borehole, 'units': 'kg/s'}
+        blob['mass_flow_pipe'] = {'value': self.m_flow_pipe, 'units': 'kg/s'}
+        # blob['borehole'] = self.borehole.as_dict()
+        blob['soil'] = self.soil.as_dict()
+        blob['grout'] = self.grout.as_dict()
+        blob['pipe'] = self.pipe.as_dict()
+        # blob['fluid'] = self.fluid.as_dict()
+        reynold_no = compute_reynolds_concentric(
+            self.m_flow_pipe, self.pipe.r_in, self.pipe.roughness, self.fluid
+        )
+        blob['reynolds'] = {'value': reynold_no, 'units': ''}
+        blob['convection_coefficient'] = {'value': self.h_f, 'units': 'W/m2-K'}
+        blob['pipe_resistance'] = {'value': self.R_p, 'units': 'm-K/W'}
+        blob['fluid_resistance'] = {'value': self.R_f, 'units': 'm-K/W'}
+        return blob
+
+    # def compute_resistances(self):
+    #     # Convection heat transfer coefficient of a single pipe
+    #     self.h_f = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
+    #         self.m_flow_pipe,
+    #         self.pipe.r_in,
+    #         self.fluid.mu,
+    #         self.fluid.rho,
+    #         self.fluid.k,
+    #         self.fluid.cp,
+    #         self.pipe.roughness,
+    #     )
+    #
+    #     # Single pipe thermal resistance
+    #     self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(
+    #         self.pipe.r_in, self.pipe.r_out, self.pipe.k
+    #     )
+    #     # Single pipe fluid thermal resistance
+    #     self.R_f = 1.0 / (self.h_f * 2 * pi * self.pipe.r_in)
+    #
+    #     return
+
+    @staticmethod
+    def compute_mass_flow_rate_pipe(m_flow_borehole, config):
+        if config == "series" or config is None:
+            m_flow_pipe = m_flow_borehole
+        elif config == "parallel":
+            m_flow_pipe = m_flow_borehole / 2.0
+        else:
+            raise ValueError("No such configuration exists.")
+        return m_flow_pipe
+
+    def compute_effective_borehole_resistance(self, m_flow_borehole=None, fluid=None):
+        # Compute the effective borehole thermal resistance
+
+        # if the mass flow rate has changed, then update it and use new value
+        if m_flow_borehole is None:
+            m_flow_borehole = self.m_flow_borehole
+        else:
+            self.m_flow_borehole = m_flow_borehole
+
+        # if the mass flow rate has changed, then update it and use new value
+        if fluid is None:
+            fluid = self.fluid
+        else:
+            self.fluid = fluid
+
+        resist_bh_effective = bp.effective_borehole_thermal_resistance(
+            self, m_flow_borehole, fluid.cp
+        )
+
+        return resist_bh_effective
+
+    # def as_dict(self) -> dict:
+    #     output = dict()
+    #     output['type'] = str(self.__class__)
+    #     output['mass_flow_borehole'] = {'value': self.m_flow_borehole, 'units': 'kg/s'}
+    #     output['mass_flow_pipe'] = {'value': self.m_flow_pipe, 'units': 'kg/s'}
+    #     output['b'] = self.b.as_dict()
+    #     output['soil'] = self.soil.as_dict()
+    #     output['grout'] = self.grout.as_dict()
+    #     output['pipe'] = self.pipe.as_dict()
+    #     output['fluid'] = self.fluid.as_dict()
+    #     output['inner_pipe_resistance'] = {'value': self.R_p_in, 'units': 'm-K/W'}
+    #     output['outer_pipe_resistance'] = {'value': self.R_p_out, 'units': 'm-K/W'}
+    #     output['grout_resistance'] = {'value': self.R_grout, 'units': 'm-K/W'}
+    #     reynolds_annulus = compute_reynolds_concentric(
+    #         self.m_flow_pipe, self.r_in_out, self.r_out_in, self.fluid
+    #     )
+    #     output['reynolds_annulus'] = {'value': reynolds_annulus, 'units': ''}
+    #     output['inner_annulus_convection_coefficient'] = {'value': self.h_fluid_a_in, 'units': 'W/m2-K'}
+    #     output['outer_annulus_convection_coefficient'] = {'value': self.h_fluid_a_out, 'units': 'W/m2-K'}
+    #     output['inner_annulus_resistance'] = {'value': self.R_f_a_in, 'units': 'm-K/W'}
+    #     output['outer_annulus_resistance'] = {'value': self.R_f_a_out, 'units': 'm-K/W'}
+    #     reynolds = compute_reynolds(self.m_flow_pipe, self.r_in_in, self.fluid)
+    #     output['reynolds_inner'] = {'value': reynolds, 'units': ''}
+    #     output['inner_convection_coefficient'] = {'value': self.h_fluid_in, 'units': 'W/m2-K'}
+    #     output['fluid_to_fluid_resistance'] = {'value': self.R_ff, 'units': 'm-K/W'}
+    #     output['fluid_to_pipe_resistance'] = {'value': self.R_fp, 'units': 'm-K/W'}
+    #     resit_bh_effective = bp.effective_borehole_thermal_resistance(
+    #         self, self.m_flow_borehole, self.fluid.cp
+    #     )
+    #     output['effective_borehole_resistance'] = {'value': resit_bh_effective, 'units': 'm-K/W'}
+    #     return output
+
+    def compute_resistances(self):
+        # Inner pipe thermal resistance
+        self.R_p_in = gt.pipes.conduction_thermal_resistance_circular_pipe(
+            self.r_in_in, self.r_in_out, self.pipe.k[0]
+        )
+        # Outer pipe thermal resistance
+        self.R_p_out = gt.pipes.conduction_thermal_resistance_circular_pipe(
+            self.r_out_in, self.r_out_out, self.pipe.k[1]
+        )
+        # Grout thermal resistance
+        self.R_grout = gt.pipes.conduction_thermal_resistance_circular_pipe(
+            self.r_out_out, self.b.r_b, self.grout.k
+        )
+
+        (
+            h_fluid_a_in,
+            h_fluid_a_out,
+        ) = gt.pipes.convective_heat_transfer_coefficient_concentric_annulus(
+            self.m_flow_borehole,
+            self.r_in_out,
+            self.r_out_in,
+            self.fluid.mu,
+            self.fluid.rho,
+            self.fluid.k,
+            self.fluid.cp,
+            self.roughness,
+        )
+
+        self.h_fluid_a_in = h_fluid_a_in
+        self.h_fluid_a_out = h_fluid_a_out
+
+        # Inner fluid convective resistance
+        self.R_f_a_in = 1.0 / (self.h_fluid_a_in * 2 * pi * self.r_in_out)
+        # Outer fluid convective resistance
+        self.R_f_a_out = 1.0 / (h_fluid_a_out * 2 * pi * self.r_out_in)
+        self.h_fluid_in = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
+            self.m_flow_borehole,
+            self.r_in_in,
+            self.fluid.mu,
+            self.fluid.rho,
+            self.fluid.k,
+            self.fluid.cp,
+            self.roughness,
+        )
+        self.R_f_in = 1.0 / (self.h_fluid_in * 2 * pi * self.r_in_in)
+
+        return
+
+    def concentric_tube_volumes(self):
+        # Unpack the radii to reduce confusion in the future
+        r_in_in, r_in_out = self.r_inner
+        r_out_in, r_out_out = self.r_outer
+        # Compute volumes for concentric ghe geometry
+        vol_fluid = pi * ((r_in_in ** 2) + (r_out_in ** 2) - (r_in_out ** 2))
+        vol_pipe = pi * ((r_in_out ** 2) - (r_in_in ** 2) + (r_out_out ** 2) - (r_out_in ** 2))
+        # V_grout = pi * ((coaxial.b.r_b**2) - (r_out_out**2))
+        area_surf_outer = pi * 2 * r_out_in
+        resist_conv = 1 / (self.h_fluid_a_in * area_surf_outer)
+        resist_pipe = log(r_out_out / r_out_in) / (2 * pi * self.pipe.k[1])
+        return vol_fluid, vol_pipe, resist_conv, resist_pipe
 
 
 def compute_fluid_resistance(h_conv, radius):

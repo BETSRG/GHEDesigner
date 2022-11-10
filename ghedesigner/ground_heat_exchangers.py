@@ -1,4 +1,5 @@
 import copy
+from typing import Type, Union
 import warnings
 
 import numpy as np
@@ -7,7 +8,8 @@ from scipy.interpolate import interp1d
 
 from ghedesigner import VERSION
 from ghedesigner import gfunction
-from ghedesigner.equivalance import compute_equivalent, solve_root
+from ghedesigner.borehole_heat_exchangers import SingleUTube, CoaxialPipe, MultipleUTube
+from ghedesigner.utilities import solve_root
 from ghedesigner.ground_loads import HybridLoad
 from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil
 from ghedesigner.radial_numerical_borehole import RadialNumericalBH
@@ -19,7 +21,7 @@ class BaseGHE:
             self,
             v_flow_system: float,
             b_spacing: float,
-            bhe_function,
+            bhe_function: Type[Union[SingleUTube, MultipleUTube, CoaxialPipe]],
             fluid: gt.media.Fluid,
             borehole: gt.boreholes.Borehole,
             pipe: Pipe,
@@ -45,7 +47,7 @@ class BaseGHE:
         self.bhe_object = bhe_function
         self.bhe = bhe_function(m_flow_borehole, fluid, borehole, pipe, grout, soil)
         # Equivalent borehole Heat Exchanger
-        self.bhe_eq = compute_equivalent(self.bhe)
+        self.bhe_eq = self.bhe.to_single()
 
         # Radial numerical short time step
         self.radial_numerical = RadialNumericalBH(self.bhe_eq)
@@ -312,7 +314,7 @@ class GHE(BaseGHE):
         self.bhe.update_thermal_resistance()
 
         # Solve for equivalent single U-tube
-        self.bhe_eq = compute_equivalent(self.bhe)
+        self.bhe_eq = self.bhe.to_single()
         # Update short time step object with equivalent single u-tube
         self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
         # Combine the short and long-term g-functions. The long term g-function

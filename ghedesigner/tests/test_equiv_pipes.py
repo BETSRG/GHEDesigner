@@ -1,4 +1,4 @@
-from ghedesigner import borehole_heat_exchangers, equivalance, media
+from ghedesigner import borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.fluid import GHEFluid
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
@@ -6,10 +6,6 @@ from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 class TestEquivalentPipes(GHEBaseTest):
     def test_equiv_pipes_coaxial_to_single_u_tube(self):
-        # Borehole dimensions
-        h = 100.0  # Borehole length (m)
-        d = 2.0  # Borehole buried depth (m)
-        r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
 
         # Pipe dimensions
         # Inner pipe radii
@@ -24,27 +20,23 @@ class TestEquivalentPipes(GHEBaseTest):
         r_outer = [r_out_in, r_out_out]  # The radii of the outer pipe from in to out
         epsilon = 1.0e-6  # Pipe roughness (m)
 
-        # Pipe positioning
+        # Pipe
         pos = (0, 0)
         s = 0
-
-        # Thermal properties
-        k_p = [0.4, 0.4]  # Inner and outer pipe thermal conductivity (W/m.K)
-        k_s = 2.0  # Ground thermal conductivity (W/m.K)
-        k_g = 1.0  # Grout thermal conductivity (W/m.K)
-
-        # Volumetric heat capacities
+        k_pipe_inner = 0.4  # Inner pipe thermal conductivity (W/m.K)
+        k_pipe_outer = 0.4  # Outer pipe thermal conductivity (W/m.K)
         rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        pipe = media.Pipe(pos, r_inner, r_outer, s, epsilon, (k_pipe_inner, k_pipe_outer), rho_cp_p)
 
-        # Thermal properties
-        # Pipe
-        pipe = media.Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rho_cp_p)
         # Soil
+        k_s = 2.0  # Ground thermal conductivity (W/m.K)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = media.Soil(k_s, rho_cp_s, ugt)
+
         # Grout
+        k_g = 1.0  # Grout thermal conductivity (W/m.K)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
         grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
@@ -54,8 +46,12 @@ class TestEquivalentPipes(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
+        h = 100.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
+        r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
         borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
+        # borehole heat exchanger
         coaxial = borehole_heat_exchangers.CoaxialPipe(
             m_flow_borehole, fluid, borehole, pipe, grout, soil
         )
@@ -63,14 +59,14 @@ class TestEquivalentPipes(GHEBaseTest):
         var = "Intermediate variables"
         self.log(var)
         self.log(len(var) * "-")
-        v_fluid, v_pipe, r_conv, r_pipe = equivalance.concentric_tube_volumes(coaxial)
+        v_fluid, v_pipe, r_conv, r_pipe = coaxial.concentric_tube_volumes()
         self.log("Fluid volume per meter (m^2): {0:.8f}".format(v_fluid))
         self.log("Pipe volume per meter (m^2): {0:.8f}".format(v_pipe))
         self.log("Total Convective Resistance (K/(W/m)): {0:.8f}".format(r_conv))
         self.log("Total Pipe Resistance (K/(W/m)): {0:.8f}".format(r_pipe))
         self.log("\n")
 
-        single_u_tube = equivalance.compute_equivalent(coaxial)
+        single_u_tube = coaxial.to_single()
 
         val = "Single U-tube equivalent parameters"
         self.log("\n" + val + "\n" + len(val) * "-")
@@ -150,13 +146,13 @@ class TestEquivalentPipes(GHEBaseTest):
         val = "Intermediate variables"
         self.log(val + "\n" + len(val) * "-")
         # Intermediate variables
-        v_fluid, v_pipe, r_conv, r_pipe = equivalance.u_tube_volumes(double_u_tube)
+        v_fluid, v_pipe, r_conv, r_pipe = double_u_tube.u_tube_volumes()
         self.log("Fluid volume per meter (m^2): {0:.8f}".format(v_fluid))
         self.log("Pipe volume per meter (m^2): {0:.8f}".format(v_pipe))
         self.log("Total Convective Resistance (K/(W/m)): {0:.8f}".format(r_conv))
         self.log("Total Pipe Resistance (K/(W/m)): {0:.8f}".format(r_pipe))
 
-        single_u_tube = equivalance.compute_equivalent(double_u_tube)
+        single_u_tube = double_u_tube.to_single()
         val = "Single U-tube equivalent parameters"
         self.log("\n" + val + "\n" + len(val) * "-")
         self.log(

@@ -12,6 +12,7 @@ from enum import auto, Enum
 from pathlib import Path
 
 import numpy as np
+from scipy.optimize import brentq
 from pygfunction.utilities import segment_ratios
 
 
@@ -109,6 +110,42 @@ def check_bracket(sign_x_l, sign_x_r, disp=None) -> bool:
     else:
         # The root has not been bracketed, this method will return false.
         return False
+
+
+def solve_root(
+        x, objective_function, lower=None, upper=None, abs_tol=1.0e-6, rel_tol=1.0e-6, max_iter=50
+):
+    # Vary flow rate to match the convective resistance
+
+    # Use Brent Quadratic to find the root
+    # Define a lower and upper for thermal conductivities
+    if lower is None:
+        lower = x / 100.0
+    else:
+        lower = lower
+    if upper is None:
+        upper = x * 10.0
+    else:
+        upper = upper
+    # Check objective function upper and lower bounds to make sure the root is
+    # bracketed
+    minus = objective_function(lower)
+    plus = objective_function(upper)
+    # get signs of upper and lower thermal conductivity bounds
+    kg_minus_sign = int(minus / abs(minus))
+    kg_plus_sign = int(plus / abs(plus))
+
+    # Solve the root if we can, if not, take the higher value
+    if kg_plus_sign != kg_minus_sign:
+        x = brentq(
+            objective_function, lower, upper, xtol=abs_tol, rtol=rel_tol, maxiter=max_iter
+        )
+    elif kg_plus_sign == -1 and kg_minus_sign == -1:
+        x = lower
+    elif kg_plus_sign == 1 and kg_minus_sign == 1:
+        x = upper
+
+    return x
 
 
 # File input/output or file path handling functions.
