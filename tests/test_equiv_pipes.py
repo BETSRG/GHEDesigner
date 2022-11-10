@@ -1,6 +1,6 @@
-from ghedt.borehole import GHEBorehole
-from ghedt.fluid import GHEFluid
-from ghedt import borehole_heat_exchangers, equivalance, media
+from ghedesigner import borehole_heat_exchangers, equivalance, media
+from ghedesigner.borehole import GHEBorehole
+from ghedesigner.fluid import GHEFluid
 from .ghe_base_case import GHEBaseTest
 
 

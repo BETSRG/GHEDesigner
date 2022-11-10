@@ -6,8 +6,8 @@ from pathlib import Path
 import math
 import numpy as np
 
-from ghedt import borehole_heat_exchangers
-from ghedt.utilities import DesignMethod
+from ghedesigner import borehole_heat_exchangers
+from ghedesigner.utilities import DesignMethod
 
 
 def create_title(allocated_width, title, filler_symbol=" "):

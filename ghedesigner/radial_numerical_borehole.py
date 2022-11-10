@@ -4,7 +4,7 @@ from math import pi
 from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
 
-from ghedt import borehole_heat_exchangers
+from ghedesigner import borehole_heat_exchangers
 
 
 class RadialCellType(object):

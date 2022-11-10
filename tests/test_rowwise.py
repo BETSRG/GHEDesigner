@@ -1,9 +1,8 @@
-from math import pi
-
 import numpy as np
 import pandas as pd
+from math import pi
 
-from ghedt.rowwise_generation import (
+from ghedesigner.rowwise_generation import (
     field_optimization_fr,
     field_optimization_wp_space_fr,
     gen_borehole_config,
@@ -37,18 +36,18 @@ class TestRowWise(GHEBaseTest):
         self.target_spacing_stop = 20.0  # in meters
         self.target_spacing_step = 1  # in meters
         self.target_spacing_number = (
-            int(
-                (self.target_spacing_stop - self.target_spacing_start)
-                / self.target_spacing_step
-            )
-            + 1
+                int(
+                    (self.target_spacing_stop - self.target_spacing_start)
+                    / self.target_spacing_step
+                )
+                + 1
         )
         self.rotation_step = 1  # in degrees
         self.rotation_start = -90 * (pi / 180)  # in radians
         self.rotation_stop = 90 * (pi / 180)  # in radians
         self.number_of_rotations = (
-            int((self.rotation_stop - self.rotation_start) / (self.rotation_step * 0.5))
-            + 1
+                int((self.rotation_stop - self.rotation_start) / (self.rotation_step * 0.5))
+                + 1
         )
         self.property, self.buildings = gen_shape(
             self.prop_polygon_ar, ng_zones=[self.building_polygon_ar]

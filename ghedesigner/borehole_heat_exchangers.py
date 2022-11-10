@@ -3,7 +3,7 @@ import pygfunction as gt
 from numpy import pi
 from pygfunction.pipes import _BasePipe as bp
 
-from ghedt import media
+from ghedesigner import media
 
 
 class BasePipe(object):

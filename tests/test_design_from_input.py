@@ -1,4 +1,4 @@
-# from ghedt import utilities, search_routines
+# from ghedesigner import utilities, search_routines
 # from .ghe_base_case import GHEBaseTest
 #
 #

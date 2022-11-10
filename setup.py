@@ -11,7 +11,7 @@ unmatched capability of automatic borehole field selection
 based on drilling geometric land constraints."""
 
 setup(
-    name='ghedt',
+    name='ghedesigner',
     install_requires=[
         'pygfunction @ git+https://github.com/MassimoCimmino/pygfunction@5465044309c1193514f64574680cd430249aef29',
         'wheel',  # I believe once we are installing pygfunction from wheels, we don't need this line anymore
@@ -29,6 +29,6 @@ setup(
     author='Jack C. Cook',
     author_email='jack.cook@okstate.edu',
     entry_points={
-        'console_scripts': ['ghedt=ghedt.utilities:dummy_entry_point']
+        'console_scripts': ['ghedesigner=ghedesigner.utilities:dummy_entry_point']
     }
 )

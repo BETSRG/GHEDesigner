@@ -8,11 +8,11 @@ from time import time as clock
 
 from math import pi
 
-from ghedt import geometry, design, utilities, borehole_heat_exchangers, media
-from ghedt.borehole import GHEBorehole
-from ghedt.fluid import GHEFluid
-from ghedt.output import output_design_details
-from ghedt.rowwise_generation import gen_shape
+from ghedesigner import geometry, design, utilities, borehole_heat_exchangers, media
+from ghedesigner.borehole import GHEBorehole
+from ghedesigner.fluid import GHEFluid
+from ghedesigner.output import output_design_details
+from ghedesigner.rowwise_generation import gen_shape
 from .ghe_base_case import GHEBaseTest
 
 

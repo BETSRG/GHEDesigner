@@ -3,7 +3,7 @@ import unittest
 
 import matplotlib.pyplot as plt
 
-from ghedt.coordinates import c_shape, open_rectangle, rectangle
+from ghedesigner.coordinates import c_shape, open_rectangle, rectangle
 
 show_plots = "PLOT_COORDINATES" in os.environ
 

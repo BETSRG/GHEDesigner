@@ -5,12 +5,12 @@ import numpy as np
 import pygfunction as gt
 from scipy.interpolate import interp1d
 
-from ghedt import gfunction
-from ghedt.equivalance import compute_equivalent, solve_root
-from ghedt.ground_loads import HybridLoad
-from ghedt.media import Grout, Pipe, SimulationParameters, Soil
-from ghedt.radial_numerical_borehole import RadialNumericalBH
-from ghedt.utilities import DesignMethod
+from ghedesigner import gfunction
+from ghedesigner.equivalance import compute_equivalent, solve_root
+from ghedesigner.ground_loads import HybridLoad
+from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil
+from ghedesigner.radial_numerical_borehole import RadialNumericalBH
+from ghedesigner.utilities import DesignMethod
 
 
 class BaseGHE:

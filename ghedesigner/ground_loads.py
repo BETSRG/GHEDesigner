@@ -6,9 +6,9 @@ import math
 import numpy as np
 from scipy.interpolate import interp1d
 
-from ghedt.borehole_heat_exchangers import SingleUTube
-from ghedt.media import SimulationParameters
-from ghedt.radial_numerical_borehole import RadialNumericalBH
+from ghedesigner.borehole_heat_exchangers import SingleUTube
+from ghedesigner.media import SimulationParameters
+from ghedesigner.radial_numerical_borehole import RadialNumericalBH
 
 
 class HybridLoad:

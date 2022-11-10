@@ -8,7 +8,6 @@ LOG_FILE: Optional[Path] = None
 
 
 class GHEBaseTest(TestCase):
-
     class LogMessageTypes(Enum):
         Debug = "DEBUG"
         Info = "INFO"

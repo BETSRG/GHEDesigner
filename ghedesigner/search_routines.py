@@ -7,11 +7,11 @@ import math
 import numpy as np
 import pygfunction as gt
 
-from ghedt.gfunction import compute_live_g_function
-from ghedt.ground_heat_exchangers import GHE
-from ghedt.media import Grout, Pipe, SimulationParameters, Soil
-from ghedt.rowwise_generation import field_optimization_fr, field_optimization_wp_space_fr
-from ghedt.utilities import eskilson_log_times, borehole_spacing, check_bracket, sign, DesignMethod
+from ghedesigner.gfunction import compute_live_g_function
+from ghedesigner.ground_heat_exchangers import GHE
+from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil
+from ghedesigner.rowwise_generation import field_optimization_fr, field_optimization_wp_space_fr
+from ghedesigner.utilities import eskilson_log_times, borehole_spacing, check_bracket, sign, DesignMethod
 
 
 class Bisection1D:

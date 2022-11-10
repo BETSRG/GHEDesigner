@@ -98,7 +98,7 @@ def check_bracket(sign_x_l, sign_x_r, disp=None) -> bool:
     if disp is not None:
         warnings.warn(
             "The disp option in check_bracket will be removed in "
-            "the ghedt 0.2 release."
+            "the ghedesigner 0.2 release."
         )
     if sign_x_l < 0 < sign_x_r:
         # Bracketed the root
@@ -122,7 +122,7 @@ def create_input_file(self, file_path_obj: Path):
 
 
 def read_input_file(path_file_obj: Path):
-    # Open a .obj file and return the ghedt object.
+    # Open a .obj file and return the ghedesigner object.
     with open(path_file_obj, "rb") as file:
         object_file = pickle.load(file)
     return object_file

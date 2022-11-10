@@ -3,7 +3,7 @@ from copy import deepcopy
 from numpy import pi, log, sqrt
 from scipy.optimize import brentq
 
-from ghedt import borehole_heat_exchangers, media
+from ghedesigner import borehole_heat_exchangers, media
 
 
 def compute_equivalent(bhe):

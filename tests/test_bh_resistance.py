@@ -1,9 +1,9 @@
 from matplotlib import pyplot
 from pandas import ExcelFile, read_excel
 
-from ghedt.borehole import GHEBorehole
-from ghedt.fluid import GHEFluid
-from ghedt import borehole_heat_exchangers, media
+from ghedesigner import borehole_heat_exchangers, media
+from ghedesigner.borehole import GHEBorehole
+from ghedesigner.fluid import GHEFluid
 from .ghe_base_case import GHEBaseTest
 
 

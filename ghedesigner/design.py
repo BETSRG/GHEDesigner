@@ -3,9 +3,9 @@ from abc import abstractmethod
 import numpy as np
 import pygfunction as gt
 
-from ghedt import domains, geometry, search_routines
-from ghedt.media import Grout, Pipe, SimulationParameters, Soil
-from ghedt.utilities import DesignMethod
+from ghedesigner import domains, geometry, search_routines
+from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil
+from ghedesigner.utilities import DesignMethod
 
 
 class DesignBase:

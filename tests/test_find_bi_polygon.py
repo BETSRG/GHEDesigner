@@ -9,10 +9,10 @@ import tempfile
 from pathlib import Path
 from time import time as clock
 
-from ghedt import design, geometry, utilities, borehole_heat_exchangers, media
-from ghedt.borehole import GHEBorehole
-from ghedt.fluid import GHEFluid
-from ghedt.output import output_design_details
+from ghedesigner import design, geometry, utilities, borehole_heat_exchangers, media
+from ghedesigner.borehole import GHEBorehole
+from ghedesigner.fluid import GHEFluid
+from ghedesigner.output import output_design_details
 from .ghe_base_case import GHEBaseTest
 
 

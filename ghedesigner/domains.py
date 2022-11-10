@@ -2,8 +2,8 @@ import copy
 
 import numpy as np
 
-from ghedt.coordinates import rectangle, transpose_coordinates, zoned_rectangle, l_shape, c_shape, lop_u
-from ghedt.feature_recognition import remove_cutout, determine_largest_rectangle
+from ghedesigner.coordinates import rectangle, transpose_coordinates, zoned_rectangle, l_shape, c_shape, lop_u
+from ghedesigner.feature_recognition import remove_cutout, determine_largest_rectangle
 
 
 def square_and_near_square(lower: int, upper: int, b: float):
