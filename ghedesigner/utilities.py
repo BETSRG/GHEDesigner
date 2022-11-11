@@ -13,7 +13,6 @@ from pathlib import Path
 
 import numpy as np
 from scipy.optimize import brentq
-from pygfunction.utilities import segment_ratios
 
 
 # TODO: Move this class to a centralized place with other enumerations
