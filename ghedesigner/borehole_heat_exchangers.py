@@ -383,8 +383,9 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         self.R_f_in = 0.0
         self.R_ff = 0.0
         self.R_fp = 0.0
-
-        self.compute_resistances()
+        self.h_f = 0.0
+        self.R_p = 0.0
+        self.R_f = 0.0
 
         # borehole mass flow rate
         self.m_flow_borehole = m_flow_borehole
@@ -397,12 +398,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         # Store fluid properties
         self.fluid = fluid
         # Store borehole
-        self.borehole = borehole
-
-        # # Declare variables that are computed in compute_resistance()
-        self.h_f = 0.0
-        self.R_p = 0.0
-        self.R_f = 0.0
+        self.borehole = _borehole
 
         self.compute_resistances()
 
@@ -424,7 +420,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
             pipe.pos,
             r_inner_p,
             r_outer_p,
-            borehole,
+            _borehole,
             self.soil.k,
             self.grout.k,
             resist_ff,

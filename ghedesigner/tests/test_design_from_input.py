@@ -1,4 +1,4 @@
-from ghedesigner import utilities, search_routines
+from ghedesigner import utilities
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
@@ -20,4 +20,4 @@ class TestDesignFromInput(GHEBaseTest):
         ghe.size(method=utilities.DesignMethod.Hybrid)
         # Export the g-function to a json file
         output_file = self.test_outputs_directory / "ghedt_output_from_input.json"
-        search_routines.oak_ridge_export(bisection_search, output_file)
+        bisection_search.oak_ridge_export(output_file)

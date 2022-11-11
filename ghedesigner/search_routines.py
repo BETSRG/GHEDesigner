@@ -295,6 +295,53 @@ class Bisection1D:
 
         return selection_key, selected_coordinates
 
+    def oak_ridge_export(self, file_path: Path):
+        # Dictionary for export
+        d = dict()
+        d["borehole_length"] = self.ghe.bhe.b.H
+        d["number_of_boreholes"] = len(self.selected_coordinates)
+        d["g_function_pairs"] = []
+        d["single_u_tube"] = {}
+
+        # create a local single U-tube object
+        bhe_eq = self.ghe.bhe_eq
+        d["single_u_tube"]["r_b"] = bhe_eq.borehole.r_b  # Borehole radius
+        d["single_u_tube"]["r_in"] = bhe_eq.r_in  # Inner pipe radius
+        d["single_u_tube"]["r_out"] = bhe_eq.r_out  # Outer pipe radius
+        # Note: Shank spacing or center pipe positions could be used
+        d["single_u_tube"]["s"] = bhe_eq.pipe.s  # Shank spacing (tube-to-tube)
+        d["single_u_tube"]["pos"] = bhe_eq.pos  # Center of the pipes
+        d["single_u_tube"][
+            "m_flow_borehole"
+        ] = bhe_eq.m_flow_borehole  # mass flow rate of the borehole
+        d["single_u_tube"]["k_g"] = bhe_eq.grout.k  # Grout thermal conductivity
+        d["single_u_tube"]["k_s"] = bhe_eq.soil.k  # Soil thermal conductivity
+        d["single_u_tube"]["k_p"] = bhe_eq.pipe.k  # Pipe thermal conductivity
+
+        # create a local ghe object
+        h = self.ghe.bhe.b.H
+        b_over_h = self.ghe.B_spacing / h
+        g = self.ghe.grab_g_function(b_over_h)
+
+        total_g_values = g.x.size
+        number_lts_g_values = 27
+        number_sts_g_values = 30
+        sts_step_size = int(
+            np.floor((total_g_values - number_lts_g_values) / number_sts_g_values).tolist()
+        )
+        lntts = []
+        g_values = []
+        for i in range(1, (total_g_values - number_lts_g_values), sts_step_size):
+            lntts.append(g.x[i].tolist())
+            g_values.append(g.y[i].tolist())
+        lntts += g.x[total_g_values - number_lts_g_values: total_g_values].tolist()
+        g_values += g.y[total_g_values - number_lts_g_values: total_g_values].tolist()
+
+        for lntts_val, g_val in zip(lntts, g_values):
+            d["g_function_pairs"].append({"ln_tts": lntts_val, "g_value": g_val})
+
+        file_path.write_text(dumps(d, indent=4))
+
 
 # This is the search algorithm used for finding row-wise fields
 class RowWiseModifiedBisectionSearch:
@@ -795,9 +842,7 @@ class Bisection2D(Bisection1D):
         self.load_years = load_years
         # Get a coordinates domain for initialization
         coordinates_domain = coordinates_domain_nested[0]
-        # print("Coordinate Dimensions",len(coordinates_domain),len(coordinates_domain[0]))
-        Bisection1D.__init__(
-            self,
+        super().__init__(
             coordinates_domain,
             field_descriptors[0],
             v_flow,
@@ -820,8 +865,7 @@ class Bisection2D(Bisection1D):
 
         self.coordinates_domain_nested = []
         self.calculated_temperatures_nested = []
-        # Tack on one borehole at the beginning to provide a high excess
-        # temperature
+        # Tack on one borehole at the beginning to provide a high excess temperature
         outer_domain = [coordinates_domain_nested[0][0]]
         for i in range(len(coordinates_domain_nested)):
             outer_domain.append(coordinates_domain_nested[i][-1])
@@ -877,8 +921,7 @@ class BisectionZD(Bisection1D):
 
         # Get a coordinates domain for initialization
         coordinates_domain = coordinates_domain_nested[0]
-        Bisection1D.__init__(
-            self,
+        super().__init__(
             coordinates_domain,
             field_descriptors[0],
             v_flow,
@@ -990,54 +1033,3 @@ class BisectionZD(Bisection1D):
         self.ghe.size(method=DesignMethod.Hybrid)
 
         return selection_key, selected_coordinates
-
-
-# The following functions are utility functions specific to search_routines.py
-# ------------------------------------------------------------------------------
-def oak_ridge_export(bisection_search, file_path: Path):
-    # Dictionary for export
-    d = dict()
-    d["borehole_length"] = bisection_search.ghe.bhe.b.H
-    d["number_of_boreholes"] = len(bisection_search.selected_coordinates)
-    d["g_function_pairs"] = []
-    d["single_u_tube"] = {}
-
-    # create a local single U-tube object
-    bhe_eq = bisection_search.ghe.bhe_eq
-    d["single_u_tube"]["r_b"] = bhe_eq.borehole.r_b  # Borehole radius
-    d["single_u_tube"]["r_in"] = bhe_eq.r_in  # Inner pipe radius
-    d["single_u_tube"]["r_out"] = bhe_eq.r_out  # Outer pipe radius
-    # Note: Shank spacing or center pipe positions could be used
-    d["single_u_tube"]["s"] = bhe_eq.pipe.s  # Shank spacing (tube-to-tube)
-    d["single_u_tube"]["pos"] = bhe_eq.pos  # Center of the pipes
-    d["single_u_tube"][
-        "m_flow_borehole"
-    ] = bhe_eq.m_flow_borehole  # mass flow rate of the borehole
-    d["single_u_tube"]["k_g"] = bhe_eq.grout.k  # Grout thermal conductivity
-    d["single_u_tube"]["k_s"] = bhe_eq.soil.k  # Soil thermal conductivity
-    d["single_u_tube"]["k_p"] = bhe_eq.pipe.k  # Pipe thermal conductivity
-
-    # create a local ghe object
-    ghe = bisection_search.ghe
-    h = ghe.bhe.b.H
-    b_over_h = ghe.B_spacing / h
-    g = ghe.grab_g_function(b_over_h)
-
-    total_g_values = g.x.size
-    number_lts_g_values = 27
-    number_sts_g_values = 30
-    sts_step_size = int(
-        np.floor((total_g_values - number_lts_g_values) / number_sts_g_values).tolist()
-    )
-    lntts = []
-    g_values = []
-    for i in range(1, (total_g_values - number_lts_g_values), sts_step_size):
-        lntts.append(g.x[i].tolist())
-        g_values.append(g.y[i].tolist())
-    lntts += g.x[total_g_values - number_lts_g_values: total_g_values].tolist()
-    g_values += g.y[total_g_values - number_lts_g_values: total_g_values].tolist()
-
-    for lntts_val, g_val in zip(lntts, g_values):
-        d["g_function_pairs"].append({"ln_tts": lntts_val, "g_value": g_val})
-
-    file_path.write_text(dumps(d, indent=4))

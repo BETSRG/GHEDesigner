@@ -1,6 +1,6 @@
 from json import loads
 
-from ghedesigner import geometry, design, search_routines, utilities, borehole_heat_exchangers, media
+from ghedesigner import geometry, design, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
@@ -129,4 +129,4 @@ class TestDesignFromORNLJsonInput(GHEBaseTest):
 
         # Export the g-function to a json file
         output_file_path = self.test_outputs_directory / 'ghedt_output_design_from_ornl_json_input.json'
-        search_routines.oak_ridge_export(bisection_search, output_file_path)
+        bisection_search.oak_ridge_export(output_file_path)
