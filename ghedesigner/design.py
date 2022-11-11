@@ -1,7 +1,6 @@
 from abc import abstractmethod
 
 import numpy as np
-import pygfunction as gt
 
 from ghedesigner import domains, geometry, search_routines, borehole, fluid
 from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil

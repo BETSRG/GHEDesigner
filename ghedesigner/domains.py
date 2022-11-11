@@ -33,7 +33,7 @@ def square_and_near_square(lower: int, upper: int, b: float):
     return coordinates_domain, field_descriptors
 
 
-def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, disp: bool=False):
+def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, disp: bool = False):
     # Make this work for the transpose
     if length_x >= length_y:
         length_1 = length_x

@@ -29,7 +29,8 @@ class GHEDesignerBoreholeBase:
         self.fluid = fluid
         self.b = borehole
 
-    def compute_effective_borehole_resistance(self, m_flow_borehole: float=None, fluid: fluid.GHEFluid=None) -> float:
+    def compute_effective_borehole_resistance(self, m_flow_borehole: float = None,
+                                              fluid: fluid.GHEFluid = None) -> float:
         pass
 
 
@@ -86,7 +87,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(self.pipe.r_in, self.pipe.r_out, self.pipe.k)
         self.R_fp = self.R_f + self.R_p
 
-    def update_thermal_resistance(self, m_flow_borehole:float=None) -> float:
+    def update_thermal_resistance(self, m_flow_borehole: float = None) -> float:
 
         # if the mass flow rate has changed, then update it and use new value
         if m_flow_borehole is None:
@@ -113,7 +114,8 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
 
         return resist_bh_effective
 
-    def compute_effective_borehole_resistance(self, m_flow_borehole:float=None, fluid:fluid.GHEFluid=None) -> float:
+    def compute_effective_borehole_resistance(self, m_flow_borehole: float = None,
+                                              fluid: fluid.GHEFluid = None) -> float:
         return self.update_thermal_resistance(m_flow_borehole)
 
     def to_single(self):
@@ -125,7 +127,8 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
 
 class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
 
-    def equivalent_single_u_tube(self, vol_fluid: float, vol_pipe: float, resist_conv: float, resist_pipe: float) -> SingleUTube:
+    def equivalent_single_u_tube(self, vol_fluid: float, vol_pipe: float, resist_conv: float,
+                                 resist_pipe: float) -> SingleUTube:
         # Note: BHE can be double U-tube or coaxial heat exchanger
 
         # Compute equivalent single U-tube geometry
@@ -275,7 +278,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(self.pipe.r_in, self.pipe.r_out, self.pipe.k)
         self.R_fp = self.R_f + self.R_p
 
-    def update_thermal_resistance(self, m_flow_borehole: float=None) -> float:
+    def update_thermal_resistance(self, m_flow_borehole: float = None) -> float:
 
         # if the mass flow rate has changed, then update it and use new value
         if m_flow_borehole is None:
@@ -302,10 +305,11 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
 
         return resist_bh_effective
 
-    def compute_effective_borehole_resistance(self, m_flow_borehole:float=None, fluid:fluid.GHEFluid=None) -> float:
+    def compute_effective_borehole_resistance(self, m_flow_borehole: float = None,
+                                              fluid: fluid.GHEFluid = None) -> float:
         return self.update_thermal_resistance(m_flow_borehole)
 
-    def u_tube_volumes(self) -> float:
+    def u_tube_volumes(self) -> Tuple[float, float, float, float]:
         # Compute volumes for U-tube geometry
         # Effective parameters
         n = int(self.nPipes * 2)  # Total number of tubes
@@ -428,7 +432,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
             J=2,
         )
 
-    def update_thermal_resistance(self, m_flow_borehole: float=None, fluid:fluid.GHEFluid=None) -> float:
+    def update_thermal_resistance(self, m_flow_borehole: float = None, fluid: fluid.GHEFluid = None) -> float:
 
         # if the mass flow rate has changed, then update it and use new value
         if m_flow_borehole is None:
@@ -549,7 +553,8 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
             raise ValueError("No such configuration exists.")
         return m_flow_pipe
 
-    def compute_effective_borehole_resistance(self, m_flow_borehole: float=None, fluid:fluid.GHEFluid=None) -> float:
+    def compute_effective_borehole_resistance(self, m_flow_borehole: float = None,
+                                              fluid: fluid.GHEFluid = None) -> float:
         # Compute the effective borehole thermal resistance
 
         # if the mass flow rate has changed, then update it and use new value
