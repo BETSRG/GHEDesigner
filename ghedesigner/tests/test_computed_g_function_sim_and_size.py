@@ -2,7 +2,6 @@ from json import loads
 
 from ghedesigner import gfunction, ground_heat_exchangers, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.fluid import GHEFluid
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
@@ -65,7 +64,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         # -----------------------
         v_flow_system = 31.2  # System volumetric flow rate (L/s)
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
 
         # Define a borehole
         borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)

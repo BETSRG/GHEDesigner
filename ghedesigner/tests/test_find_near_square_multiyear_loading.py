@@ -7,7 +7,6 @@ from time import time as clock
 
 from ghedesigner import design, geometry, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.fluid import GHEFluid
 from ghedesigner.output import output_design_details
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
@@ -65,7 +64,7 @@ class TestFindNearSquareMultiyearLoading(GHEBaseTest):
         grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
 
         # Fluid Flow Properties
         v_flow = 0.2  # Volumetric flow rate (L/s)

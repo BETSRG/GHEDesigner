@@ -2,7 +2,6 @@ from time import time as clock
 
 from ghedesigner import geometry, design, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.fluid import GHEFluid
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
@@ -75,7 +74,7 @@ class TestFindRectangle(GHEBaseTest):
         # Inputs related to fluid
         # -----------------------
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
 
         # Fluid properties
         v_flow = 0.2  # Volumetric flow rate (L/s)

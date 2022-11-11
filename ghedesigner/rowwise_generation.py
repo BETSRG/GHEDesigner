@@ -44,12 +44,7 @@ def field_optimization_wp_space_fr(
         rotate_start = (-90.0 + rotate_step) * (pi / 180.0)
     if rotate_stop is None:
         rotate_stop = pi / 2
-    if (
-            rotate_start > pi / 2
-            or rotate_start < -pi / 2
-            or rotate_stop > pi / 2
-            or rotate_stop < -pi / 2
-    ):
+    if rotate_start > pi / 2 or rotate_start < -pi / 2 or rotate_stop > pi / 2 or rotate_stop < -pi / 2:
         raise ValueError("Invalid Rotation")
 
     space = space_start
@@ -63,7 +58,6 @@ def field_optimization_wp_space_fr(
     max_rt = None
 
     while rt < rotate_stop:
-        # print("Current Rotation: ",rt)
         hole = two_space_gen_bhc(
             prop_bound,
             y_s,
@@ -137,7 +131,6 @@ def field_optimization_fr(
     max_rt = None
 
     while rt < rotate_stop:
-        # print("Current Rotation: ",rt)
         hole = gen_borehole_config(
             prop_bound,
             y_s,
@@ -157,7 +150,6 @@ def field_optimization_fr(
 
     # Ensures that there are no repeated boreholes
     max_hole = np.array(remove_duplicates(max_hole, x_s * 1.2))
-    # print("MaxHOle: ",max_hole)
 
     field = max_hole
     field_name = "S" + str(space) + "_rt" + str(max_rt)
@@ -295,17 +287,16 @@ def two_space_gen_bhc(
         rotate=rotate,
         intersection_tolerance=intersection_tolerance,
     )
-    # plotField(np.array([holes[element] for element in holes]),shape=field,shapes=no_go)
-    # holes = [holes[element] for element in holes]
+
     holes = holes.tolist()
     remove_points_too_close(field, holes, i_space, no_go_zones=no_go)
-    # plotField(np.array(holes),shape=field,shapes=no_go)
+
     # places the boreholes along the perimeter of the property boundary and no_go zone(s)
     perimeter_distribute(field, p_space, holes)
     if no_go is not None:
         for ng in no_go:
             perimeter_distribute(ng, p_space, holes)
-    # plotField(np.array(holes),shape=field,shapes=no_go)
+
     # returns the Holes as a numpy array for easier manipulation
     return_array = np.array(holes)
     return return_array
@@ -386,16 +377,11 @@ def dist_from_line(p1, p2, other_point):
     dist_l = sq_dist(p1, p2)
     d01 = sq_dist(p1, other_point)
     d02 = sq_dist(p2, other_point)
-    # if dp > d01:
-    # print("P1({},{}),P2({},{}), other_point({},{}))".format(p1[0],p1[1],p2[0],p2[1],other_point[0],other_point[1]))
     if d01 * d01 - dp * dp < 0:
         return d01
     if sqrt(d01 * d01 - dp * dp) / dist_l > 1:
         return min(d01, d02)
-    if (
-            min(p1[0], p2[0]) < other_point[0] < max(p1[0], p2[0])
-            or min(p1[1], p2[1]) < other_point[1] < max(p1[1], p2[1])
-    ):
+    if min(p1[0], p2[0]) < other_point[0] < max(p1[0], p2[0]) or min(p1[1], p2[1]) < other_point[1] < max(p1[1], p2[1]):
         return min(d01, d02, dp)
     else:
         return min(d01, d02)
@@ -431,14 +417,11 @@ def perimeter_distribute(field, space, r):
         if num_holes > 0:
             x_space = dx / num_holes
             y_space = dy / num_holes
-        # print("".join(["Dy: ",str(dy),", Dx: ",str(dx),", xNum: ",str(dx // (space * cos(theta))),", yNum: ",
-        # str(( dy // (space * sin(theta))))]))
+
         current_p = [vert1[0], vert1[1]]
 
         # for loop is tuned to leave one spot empty for the next line
         for _ in range(num_holes):
-            # if i==2: print("XD: ",vert2[0],", YD: ",vert2[1],", Current X: ",current_p[0],", Current Y: ",
-            # current_p[1],", theta: ",theta,", act_space*cos(theta): ",cos(theta) )
             r.append([current_p[0], current_p[1]])
             current_p[0] += x_space
             current_p[1] += y_space
@@ -478,17 +461,12 @@ def gen_borehole_config(
     lowest_vert = None
     highest_vert = None
     for vert in field.c:
-        # print("Vertex X value: ",vert[0])
-        # print("Vertex Y value: ", vert[1])
         if vert[0] != 0:
             phi = atan(vert[1] / vert[0])
         else:
             phi = pi / 2
         dist_vert = sqrt(vert[1] ** 2 + vert[0] ** 2)
         ref_angle = phi
-        # print(phi)
-        # print("The Phi value is: %f"%phi)
-        # sign = 1
         if phi > pi / 2:
             if phi > pi:
                 if phi > 3 * pi / 2.0:
@@ -497,10 +475,7 @@ def gen_borehole_config(
                     ref_angle = 2 * rotate + pi - phi
             else:
                 ref_angle = pi - phi + 2 * rotate
-        # if phi > pi + rotate or phi < rotate:
-        #    sign = -1
         yp = dist_vert * sin(ref_angle - rotate)
-        # print("yp is: ", yp)
         if yp < lowest_vert_val:
             lowest_vert_val = yp
             lowest_vert = vert
@@ -684,17 +659,12 @@ def gen_borehole_config(
                 i += 1
         row_point[0] += row_space[0]
         row_point[1] += row_space[1]
-    # if len(boreholes) > max_length:
-    # return {}
-    # print(boreholes)
     r_a = [boreholes[element] for element in boreholes]
     r_a = np.array(remove_duplicates(r_a, x_space))
-    # print("Boreholes: \n" + boreholes)
     return r_a
 
 
 def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersection_tolerance=1e-5):
-    # print("Processing Row")
     """
     Function generates a row of the borefield
     *Note: the formatting from the rows can be a little unexpected. Some adjustment
@@ -712,10 +682,8 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
     """
 
     if no_go is None:
-        # print("There is no no_go zone")
         distribute(row_sx, row_ex, row_space, r_a, rotate)
         return r_a
-    # currentXP = row_sx
     num_col = int(
         sqrt(
             (row_sx[0] - row_ex[0]) * (row_sx[0] - row_ex[0])
@@ -732,14 +700,7 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
         )
     ]
     inters = sort_intersections(inters, rotate)
-    # print("Inters: ",inters)
     num_inters = len(inters)
-    # if row_space == 9.9:
-    #   print("Correct Row Space")
-    #  print(rotate*(180/pi))
-    # if row_space == 9.9 and rotate-(-36.3*(pi/180)) < 1e-5 :
-    #   print("For the row: ",row)
-    #  print("The intersections are: ",inters)
 
     if num_inters > 1:
         if less_than(
@@ -784,9 +745,7 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
         if not (less_than_1 or less_than_2):
             indices.append(j)
     inters = inters[indices]
-    # print(inters)
     num_inters = len(inters)
-    # print("no_in value is: ",no_in)
     for i in range(num_inters - 1):
         space = float(
             sqrt(
@@ -811,7 +770,6 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
                 inters[i][0] -= d * cos(rotate)
                 inters[i][1] -= d * sin(rotate)
     if num_col < 1:
-        # print("num_col <1")
         ins = False
         for shape in no_go:
             if shape.point_intersect(
@@ -827,16 +785,12 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
             return r_a
     else:
         if num_inters == 0:
-            # print("no_in == 0")
             if not_inside(row_sx, no_go) and not_inside(row_ex, no_go):
                 distribute(row_sx, row_ex, row_space, r_a, rotate)
         elif num_inters == 2:
-            # print("no_in == 2")
             distribute(row_sx, inters[0], row_space, r_a, rotate)
             distribute(inters[1], row_ex, row_space, r_a, rotate)
         elif num_inters == 1:
-            # print("no_in == 1")
-            # print("row_sx: [%f,%f], inters[0]: [%f,%f]"%(row_sx[0],row_sx[1],inters[0][0],inters[0][1]))
             ins = False
             for shape in no_go:
                 if shape.point_intersect(
@@ -848,13 +802,10 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
             else:
                 distribute(inters[0], row_ex, row_space, r_a, rotate)
         elif num_inters % 2 == 0:
-            # print("n%2 == 0")
-            # print(inters)
             i = 0
             while i < num_inters:
                 if i == 0:
                     distribute(row_sx, inters[0], row_space, r_a, rotate)
-                    # print(r_a)
                     i = 1
                     continue
                 elif i == num_inters - 1:
@@ -863,7 +814,6 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
                     distribute(inters[i], inters[i + 1], row_space, r_a, rotate)
                 i += 2
         else:
-            # print("n%2 == 1")
             ins = False
             for shape in no_go:
                 if shape.point_intersect(
@@ -968,7 +918,6 @@ def less_than(p1, p2, rotate=0, intersection_tolerance=1e-5):
 
 
 def distribute(x1, x2, spacing, r, rotate):
-    # print("x1{}, x2{}, rotate{}, spacing{}".format(x1,x2,rotate,spacing))
     """
       Function generates a series of boreholes between x1 and x2
     Parameters
@@ -984,42 +933,27 @@ def distribute(x1, x2, spacing, r, rotate):
     :param rotate:
     :return:
     """
-    # print("made it here")
-    # print("Left Point: (%f,%f), Right Point: (%f,%f)" % (x1[0],x1[1],x2[0],x2[1]))
-    # print(spacing)
-    # if spacing <= 0:
-    # print("Received Invalid spacing value")
     dx = sqrt((x1[0] - x2[0]) * (x1[0] - x2[0]) + (x1[1] - x2[1]) * (x1[1] - x2[1]))
-    # print("The Value of dx is: ",dx)
     if dx < spacing:
         if len(r) == 0 or not (
                 r[len(r) - 1][0] == (x1[0] + x2[0]) / 2
                 and r[len(r) - 1][1] == (x1[1] + x2[1]) / 2
         ):
             r[len(r)] = [(x1[0] + x2[0]) / 2, (x1[1] + x2[1]) / 2]
-        # print([(x1[0]+x2[0])/2,(x1[1]+x2[1])/2])
         return
     current_x = x1
-    # initialX = [x1[0], x1[1]]
     act_num_col = int(dx // spacing)
     act_space = dx / act_num_col
-    # i=0
-    # oldSpace = dx
     while (
             sqrt(
                 (current_x[0] - x2[0]) * (current_x[0] - x2[0])
                 + (current_x[1] - x2[1]) * (current_x[1] - x2[1])
             )
     ) >= 1e-8:
-        # if current_x[0] - x2[0] <= (1e-15): r[len(r)] = [x2[0],x2[1]] break oldSpace = sqrt((current_x[0]-x2[0])*(
-        # current_x[0]-x2[0])+(current_x[1]-x2[1])*(current_x[1]-x2[1])) print("Final Values: (%f,%f). Distance: %f,
-        # Iteration: %f" % (x2[0],x2[1],sqrt((current_x[0]-x2[0])*(current_x[0]-x2[0])+(current_x[1]-x2[1])*(
-        # current_x[1]-x2[1])), i)) i+=1
         if len(r) == 0 or not (
                 r[len(r) - 1][0] == current_x[0] and r[len(r) - 1][1] == current_x[1]
         ):
             r[len(r)] = [current_x[0], current_x[1]]
-        # print([ current_x[0], x1[1] + ((x2[1]-x1[1])/(x2[0]-x1[0])) * current_x[0] ])
         current_x[0] += act_space * cos(rotate)
         current_x[1] += act_space * sin(rotate)
     if not (r[len(r) - 1][0] == x2[0] and r[len(r) - 1][1] == x2[1]):

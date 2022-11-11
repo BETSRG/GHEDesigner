@@ -3,7 +3,6 @@ from pandas import ExcelFile, read_excel
 
 from ghedesigner import borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.fluid import GHEFluid
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
@@ -51,7 +50,7 @@ class TestBHResistance(GHEBaseTest):
         grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
         v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
@@ -122,7 +121,7 @@ class TestBHResistance(GHEBaseTest):
         grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
         v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
@@ -209,7 +208,7 @@ class TestBHResistance(GHEBaseTest):
         grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
         v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
@@ -287,7 +286,7 @@ class TestBHResistance(GHEBaseTest):
         grout = media.Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
 
         # A list of volumetric flow rates to check borehole resistances for (L/s)
         v_flow_rates = [0.3, 0.2, 0.18, 0.15, 0.12, 0.1, 0.08, 0.07, 0.06, 0.05]

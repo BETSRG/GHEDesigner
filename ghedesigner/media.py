@@ -1,5 +1,11 @@
 import numpy as np
 
+from pygfunction.media import Fluid
+
+
+class GHEFluid(Fluid):
+    pass
+
 
 class ThermalProperty:
     def __init__(self, k, rho_cp):

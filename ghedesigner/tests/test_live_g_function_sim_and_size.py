@@ -1,7 +1,6 @@
 from ghedesigner import ground_heat_exchangers, gfunction, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.coordinates import rectangle
-from ghedesigner.fluid import GHEFluid
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
@@ -56,7 +55,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # Inputs related to fluid
         # -----------------------
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
 
         # Coordinates
         nx = 12

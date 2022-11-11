@@ -2,7 +2,6 @@ from json import loads
 
 from ghedesigner import geometry, design, search_routines, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.fluid import GHEFluid
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
@@ -67,7 +66,7 @@ class TestDesignFromORNLJsonInput(GHEBaseTest):
         # Inputs related to fluid
         # -----------------------
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
 
         # Fluid properties
         # Volumetric flow rate (L/s)

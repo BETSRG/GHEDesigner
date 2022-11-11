@@ -371,7 +371,7 @@ class RadialNumericalBH(object):
             # Tri-diagonal matrix solver
             # High level interface to LAPACK routine
             # https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.lapack.dgtsv.html#scipy.linalg.lapack.dgtsv
-            dgtsv(_dl, _d, _du, _b, overwrite_b=1)
+            dgtsv(_dl, _d, _du, _b, overwrite_b=1)  # TODO: Do we really need lapack just to do a TDMA solution?
 
             radial_cell[previous_temperature_idx, :] = _b
             radial_cell[temperature_idx, :] = _b

@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 import numpy as np
 
-from ghedesigner import domains, geometry, search_routines, borehole, fluid
+from ghedesigner import domains, geometry, search_routines, media, borehole
 from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil
 from ghedesigner.utilities import DesignMethod
 
@@ -11,9 +11,9 @@ class DesignBase:
     def __init__(
             self,
             v_flow: float,
-            borehole: borehole.GHEBorehole,
+            _borehole: borehole.GHEBorehole,
             bhe_object,
-            fluid: fluid.GHEFluid,
+            fluid: media.GHEFluid,
             pipe: Pipe,
             grout: Grout,
             soil: Soil,
@@ -28,7 +28,7 @@ class DesignBase:
             load_years = [2019]
         self.load_years = load_years
         self.V_flow = v_flow  # volumetric flow rate, m3/s
-        self.borehole = borehole
+        self.borehole = _borehole
         self.bhe_object = bhe_object  # a borehole heat exchanger object
         self.fluid = fluid  # a fluid object
         self.pipe = pipe
@@ -61,11 +61,11 @@ class DesignBase:
 
 
 class DesignNearSquare(DesignBase):
-    def __init__(self, v_flow: float, borehole: borehole.GHEBorehole, bhe_object, fluid: fluid.GHEFluid, pipe: Pipe,
+    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object, fluid: media.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
-        super().__init__(v_flow, borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
+        super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.routine = "near-square"
         self.geometric_constraints.check_inputs(self.routine)
@@ -110,11 +110,11 @@ class DesignNearSquare(DesignBase):
 
 
 class DesignRectangle(DesignBase):
-    def __init__(self, v_flow: float, borehole: borehole.GHEBorehole, bhe_object, fluid: fluid.GHEFluid, pipe: Pipe,
+    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object, fluid: media.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
-        super().__init__(v_flow, borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
+        super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.routine = "rectangle"
         self.geometric_constraints.check_inputs(self.routine)
@@ -149,11 +149,11 @@ class DesignRectangle(DesignBase):
 
 
 class DesignBiRectangle(DesignBase):
-    def __init__(self, v_flow: float, borehole: borehole.GHEBorehole, bhe_object, fluid: fluid.GHEFluid, pipe: Pipe,
+    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object, fluid: media.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
-        super().__init__(v_flow, borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
+        super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.routine = "bi-rectangle"
         self.geometric_constraints.check_inputs(self.routine)
@@ -191,11 +191,11 @@ class DesignBiRectangle(DesignBase):
 
 
 class DesignBiZoned(DesignBase):
-    def __init__(self, v_flow: float, borehole: borehole.GHEBorehole, bhe_object, fluid: fluid.GHEFluid, pipe: Pipe,
+    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object, fluid: media.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
-        super().__init__(v_flow, borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
+        super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.routine = "bi-zoned"
         self.geometric_constraints.check_inputs(self.routine)
@@ -232,12 +232,12 @@ class DesignBiZoned(DesignBase):
 
 
 class DesignBiRectangleConstrained(DesignBase):
-    def __init__(self, v_flow: float, borehole: borehole.GHEBorehole, bhe_object, fluid: fluid.GHEFluid, pipe: Pipe,
+    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object, fluid: media.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None,
                  property_boundary=None, building_descriptions=None):
-        super().__init__(v_flow, borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
+        super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.routine = "bi-rectangle_constrained"
         self.geometric_constraints.check_inputs(self.routine)
@@ -278,11 +278,11 @@ class DesignBiRectangleConstrained(DesignBase):
 
 
 class DesignRowWise(DesignBase):
-    def __init__(self, v_flow: float, borehole: borehole.GHEBorehole, bhe_object, fluid: fluid.GHEFluid, pipe: Pipe,
+    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object, fluid: media.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
-        super().__init__(v_flow, borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
+        super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.routine = "row-wise"
         self.geometric_constraints.check_inputs(self.routine)
