@@ -167,7 +167,3 @@ def read_input_file(path_file_obj: Path):
 
 def dummy_entry_point():
     print("Hello, GHE world!")
-
-
-def ghe_segment_ratios(nSegments, end_length_ratio=0.02):
-    return segment_ratios(nSegments, end_length_ratio)

@@ -9,7 +9,7 @@ import pygfunction as gt
 
 from ghedesigner.gfunction import compute_live_g_function
 from ghedesigner.ground_heat_exchangers import GHE
-from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil
+from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil, GHEFluid
 from ghedesigner.rowwise_generation import field_optimization_fr, field_optimization_wp_space_fr
 from ghedesigner.utilities import eskilson_log_times, borehole_spacing, check_bracket, sign, DesignMethod
 
@@ -22,7 +22,7 @@ class Bisection1D:
             v_flow: float,
             borehole: gt.boreholes.Borehole,
             bhe_object,
-            fluid: gt.media.Fluid,
+            fluid: GHEFluid,
             pipe: Pipe,
             grout: Grout,
             soil: Soil,
@@ -822,7 +822,7 @@ class Bisection2D(Bisection1D):
             v_flow: float,
             borehole: gt.boreholes.Borehole,
             bhe_object,
-            fluid: gt.media.Fluid,
+            fluid: GHEFluid,
             pipe: Pipe,
             grout: Grout,
             soil: Soil,
@@ -898,7 +898,7 @@ class BisectionZD(Bisection1D):
             v_flow: float,
             borehole: gt.boreholes.Borehole,
             bhe_object,
-            fluid: gt.media.Fluid,
+            fluid: GHEFluid,
             pipe: Pipe,
             grout: Grout,
             soil: Soil,

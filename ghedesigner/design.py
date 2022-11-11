@@ -1,11 +1,17 @@
 from abc import abstractmethod
-from typing import Type
+from typing import Type, Union
 
 import numpy as np
 
-from ghedesigner import domains, geometry, search_routines, media, borehole
+from ghedesigner import domains, geometry, search_routines, media, borehole, borehole_heat_exchangers
 from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil
 from ghedesigner.utilities import DesignMethod
+
+AnyBoreholeType = Union[
+    Type[borehole_heat_exchangers.SingleUTube],
+    Type[borehole_heat_exchangers.MultipleUTube],
+    Type[borehole_heat_exchangers.CoaxialPipe]
+]
 
 
 class DesignBase:
@@ -13,7 +19,7 @@ class DesignBase:
             self,
             v_flow: float,
             _borehole: borehole.GHEBorehole,
-            bhe_object: Type[borehole.GHEBorehole],
+            bhe_object: AnyBoreholeType,
             fluid: media.GHEFluid,
             pipe: Pipe,
             grout: Grout,
@@ -62,7 +68,7 @@ class DesignBase:
 
 
 class DesignNearSquare(DesignBase):
-    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: Type[borehole.GHEBorehole],
+    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: AnyBoreholeType,
                  fluid: media.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
@@ -112,7 +118,7 @@ class DesignNearSquare(DesignBase):
 
 
 class DesignRectangle(DesignBase):
-    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: Type[borehole.GHEBorehole],
+    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: AnyBoreholeType,
                  fluid: media.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
@@ -152,7 +158,7 @@ class DesignRectangle(DesignBase):
 
 
 class DesignBiRectangle(DesignBase):
-    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: Type[borehole.GHEBorehole],
+    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: AnyBoreholeType,
                  fluid: media.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
@@ -195,7 +201,7 @@ class DesignBiRectangle(DesignBase):
 
 
 class DesignBiZoned(DesignBase):
-    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: Type[borehole.GHEBorehole],
+    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: AnyBoreholeType,
                  fluid: media.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
@@ -237,7 +243,7 @@ class DesignBiZoned(DesignBase):
 
 
 class DesignBiRectangleConstrained(DesignBase):
-    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: Type[borehole.GHEBorehole],
+    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: AnyBoreholeType,
                  fluid: media.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
@@ -284,7 +290,7 @@ class DesignBiRectangleConstrained(DesignBase):
 
 
 class DesignRowWise(DesignBase):
-    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: Type[borehole.GHEBorehole],
+    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: AnyBoreholeType,
                  fluid: media.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,

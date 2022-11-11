@@ -168,3 +168,20 @@ class TestCreateNearSquareInputFile(GHEBaseTest):
 
         input_file_path = self.test_outputs_directory / 'ghedt_input_near_square_coaxial_tube.obj'
         utilities.create_input_file(design_coaxial_u_tube, input_file_path)
+
+        # Test reading the input file back in now
+        #
+        # Enter the path to the input file named `ghedt_input.obj` which was created above
+        path_to_file = self.test_outputs_directory / 'ghedt_input.obj'
+        # Initialize a Design object that is based on the content of the
+        # path_to_file variable.
+        _design = utilities.read_input_file(path_to_file)
+        # Find the design based on the inputs.
+        bisection_search = _design.find_design()
+        # Perform sizing in between the min and max bounds.
+        ghe = bisection_search.ghe
+        ghe.compute_g_functions()
+        ghe.size(method=utilities.DesignMethod.Hybrid)
+        # Export the g-function to a json file
+        output_file = self.test_outputs_directory / "ghedt_output_from_input.json"
+        bisection_search.oak_ridge_export(output_file)

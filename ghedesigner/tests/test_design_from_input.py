@@ -1,23 +1,12 @@
-from ghedesigner import utilities
-from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from unittest import TestCase
 
 
-class TestDesignFromInput(GHEBaseTest):
+class TestDesignFromInput(TestCase):
 
     def test_design_from_input(self):
-        # Note: The test_create_near_square_input_file.py can be run to create an input file.
-
-        # Enter the path to the input file named `ghedt_input.obj`.
-        path_to_file = self.test_data_directory / 'ghedt_input.obj'
-        # Initialize a Design object that is based on the content of the
-        # path_to_file variable.
-        design = utilities.read_input_file(path_to_file)
-        # Find the design based on the inputs.
-        bisection_search = design.find_design()
-        # Perform sizing in between the min and max bounds.
-        ghe = bisection_search.ghe
-        ghe.compute_g_functions()
-        ghe.size(method=utilities.DesignMethod.Hybrid)
-        # Export the g-function to a json file
-        output_file = self.test_outputs_directory / "ghedt_output_from_input.json"
-        bisection_search.oak_ridge_export(output_file)
+        # This used to be a standalone test, but it required the test_create_near_square_input_file test to be run
+        # first in order to create the input file, then this test would pick up the resulting input file.  This
+        # also required manually moving the file around.  Now the input file is still created there, and then
+        # immediately read in and exercised, doing what this example used to do.  To find more information, check out
+        # the bottom of that unit test.
+        pass
