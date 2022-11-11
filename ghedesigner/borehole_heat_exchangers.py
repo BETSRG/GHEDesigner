@@ -170,7 +170,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
 
         # The thermal conductivity of the pipe must now be varied such that R_fp is
         # equivalent to R_fp_prime
-        def objective_pipe_conductivity(pipe_k):
+        def objective_pipe_conductivity(pipe_k: float):
             eq_single_u_tube.pipe.k = pipe_k
             eq_single_u_tube.update_thermal_resistance()
             return eq_single_u_tube.R_fp - (resist_conv + resist_pipe)
@@ -226,7 +226,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
             self,
             m_flow_borehole: float,
             fluid: media.GHEFluid,
-            borehole: borehole.GHEBorehole,
+            _borehole: borehole.GHEBorehole,
             pipe: media.Pipe,
             grout: media.Grout,
             soil: media.Soil,
@@ -242,7 +242,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
 
         # TODO: May need to revisit this for series/parallel connections
         self.m_flow_pipe = m_flow_borehole
-        self.borehole = borehole
+        self.borehole = _borehole
         self.pipe = pipe
         self.soil = soil
         self.grout = grout
@@ -345,7 +345,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
             self,
             m_flow_borehole: float,
             fluid: media.GHEFluid,  # TODO: Use ghedesigner.media.Fluid
-            borehole: borehole.GHEBorehole,
+            _borehole: borehole.GHEBorehole,
             pipe: media.Pipe,
             grout: media.Grout,
             soil: media.Soil,
@@ -369,7 +369,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         self.r_in_in, self.r_in_out = self.r_inner
         self.r_out_in, self.r_out_out = self.r_outer
 
-        self.b = borehole  # pygfunction borehole
+        self.b = _borehole  # pygfunction borehole
 
         # Declare variables that are computed in compute_resistance()
         self.R_p_in = 0.0
