@@ -85,7 +85,12 @@ def open_rectangle(
     return open_r
 
 
-def c_shape(n_x_1, n_y, b_x, b_y, n_x_2) -> List[Tuple[float, float]]:
+def c_shape(n_x_1: int,
+            n_y: int,
+            b_x: Union[int, float],
+            b_y: Union[int, float],
+            n_x_2: int
+) -> List[Tuple[float, float]]:
     nbh = n_x_1 + (n_y * 2) - 1 + n_x_2 - 1
     c = []
     for i in range(n_x_1):
@@ -102,7 +107,13 @@ def c_shape(n_x_1, n_y, b_x, b_y, n_x_2) -> List[Tuple[float, float]]:
     return c
 
 
-def lop_u(n_x, n_y_1, b_x, b_y, n_y_2) -> List[Tuple[float, float]]:
+def lop_u(n_x: int,
+          n_y_1: int,
+          b_x: Union[int, float],
+          b_y: Union[int, float],
+          n_y_2: int
+) -> List[Tuple[float, float]]:
+
     nbh = n_x + n_y_1 - 1 + n_y_2 - 1
     _lop_u = []
     for i in range(n_x):
@@ -116,7 +127,12 @@ def lop_u(n_x, n_y_1, b_x, b_y, n_y_2) -> List[Tuple[float, float]]:
     return _lop_u
 
 
-def l_shape(n_x, n_y, b_x, b_y) -> List[Tuple[float, float]]:
+def l_shape(n_x: int,
+            n_y: int,
+            b_x: Union[int, float],
+            b_y: Union[int, float]
+) -> List[Tuple[float, float]]:
+
     nbh = n_x + n_y - 1
     l_shape_object = []
     for i in range(n_x):
@@ -127,7 +143,14 @@ def l_shape(n_x, n_y, b_x, b_y) -> List[Tuple[float, float]]:
     return l_shape_object
 
 
-def zoned_rectangle(n_x, n_y, b_x, b_y, n_ix, n_iy) -> List[Tuple[float, float]]:
+def zoned_rectangle(n_x: int,
+                    n_y: int,
+                    b_x: Union[int, float],
+                    b_y: Union[int, float],
+                    n_ix: int,
+                    n_iy: int
+) -> List[Tuple[float, float]]:
+
     # Create a zoned rectangle
     # The creator of the idea behind the "zoned rectangle" is
     # Dr. Jeffrey D. Spitler

@@ -3,7 +3,7 @@ from abc import abstractmethod
 import numpy as np
 import pygfunction as gt
 
-from ghedesigner import domains, geometry, search_routines
+from ghedesigner import domains, geometry, search_routines, borehole, fluid
 from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil
 from ghedesigner.utilities import DesignMethod
 
@@ -12,9 +12,9 @@ class DesignBase:
     def __init__(
             self,
             v_flow: float,
-            borehole: gt.boreholes.Borehole,
+            borehole: borehole.GHEBorehole,
             bhe_object,
-            fluid: gt.media.Fluid,
+            fluid: fluid.GHEFluid,
             pipe: Pipe,
             grout: Grout,
             soil: Soil,
@@ -62,7 +62,7 @@ class DesignBase:
 
 
 class DesignNearSquare(DesignBase):
-    def __init__(self, v_flow: float, borehole: gt.boreholes.Borehole, bhe_object, fluid: gt.media.Fluid, pipe: Pipe,
+    def __init__(self, v_flow: float, borehole: borehole.GHEBorehole, bhe_object, fluid: fluid.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
@@ -111,7 +111,7 @@ class DesignNearSquare(DesignBase):
 
 
 class DesignRectangle(DesignBase):
-    def __init__(self, v_flow: float, borehole: gt.boreholes.Borehole, bhe_object, fluid: gt.media.Fluid, pipe: Pipe,
+    def __init__(self, v_flow: float, borehole: borehole.GHEBorehole, bhe_object, fluid: fluid.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
@@ -150,7 +150,7 @@ class DesignRectangle(DesignBase):
 
 
 class DesignBiRectangle(DesignBase):
-    def __init__(self, v_flow: float, borehole: gt.boreholes.Borehole, bhe_object, fluid: gt.media.Fluid, pipe: Pipe,
+    def __init__(self, v_flow: float, borehole: borehole.GHEBorehole, bhe_object, fluid: fluid.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
@@ -192,7 +192,7 @@ class DesignBiRectangle(DesignBase):
 
 
 class DesignBiZoned(DesignBase):
-    def __init__(self, v_flow: float, borehole: gt.boreholes.Borehole, bhe_object, fluid: gt.media.Fluid, pipe: Pipe,
+    def __init__(self, v_flow: float, borehole: borehole.GHEBorehole, bhe_object, fluid: fluid.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
@@ -233,7 +233,7 @@ class DesignBiZoned(DesignBase):
 
 
 class DesignBiRectangleConstrained(DesignBase):
-    def __init__(self, v_flow: float, borehole: gt.boreholes.Borehole, bhe_object, fluid: gt.media.Fluid, pipe: Pipe,
+    def __init__(self, v_flow: float, borehole: borehole.GHEBorehole, bhe_object, fluid: fluid.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None,
@@ -279,7 +279,7 @@ class DesignBiRectangleConstrained(DesignBase):
 
 
 class DesignRowWise(DesignBase):
-    def __init__(self, v_flow: float, borehole: gt.boreholes.Borehole, bhe_object, fluid: gt.media.Fluid, pipe: Pipe,
+    def __init__(self, v_flow: float, borehole: borehole.GHEBorehole, bhe_object, fluid: fluid.GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
