@@ -1,14 +1,14 @@
-from math import log
+from copy import deepcopy
 import numpy as np
 import pygfunction as gt
-from numpy import pi
 from pygfunction.pipes import _BasePipe as bp
 
-from ghedesigner import media
-from ghedesigner.equivalance import equivalent_single_u_tube, match_effective_borehole_resistance
+from numpy import pi, log, sqrt
+
+from ghedesigner import media, utilities
 
 
-class SingleUTube(gt.pipes.SingleUTube):
+class GHEDesignerBoreholeBase:
     def __init__(
             self,
             m_flow_borehole: float,
@@ -18,7 +18,30 @@ class SingleUTube(gt.pipes.SingleUTube):
             grout: media.Grout,
             soil: media.Soil,
     ):
+        self.m_flow_pipe = m_flow_borehole
+        self.m_flow_borehole = m_flow_borehole
+        self.borehole = borehole
+        self.pipe = pipe
+        self.soil = soil
+        self.grout = grout
+        self.fluid = fluid
+        self.b = borehole
 
+    def compute_effective_borehole_resistance(self, m_flow_borehole=None, fluid=None) -> float:
+        pass
+
+
+class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
+    def __init__(
+            self,
+            m_flow_borehole: float,
+            fluid: gt.media.Fluid,
+            borehole: gt.boreholes.Borehole,
+            pipe: media.Pipe,
+            grout: media.Grout,
+            soil: media.Soil,
+    ):
+        GHEDesignerBoreholeBase.__init__(self, m_flow_borehole, fluid, borehole, pipe, grout, soil)
         self.R_p = 0.0
         self.R_f = 0.0
         self.R_fp = 0.0
@@ -88,7 +111,7 @@ class SingleUTube(gt.pipes.SingleUTube):
 
         return resist_bh_effective
 
-    def compute_effective_borehole_resistance(self, m_flow_borehole=None):
+    def compute_effective_borehole_resistance(self, m_flow_borehole=None, fluid=None):
         """
         super dumbness
         """
@@ -101,7 +124,102 @@ class SingleUTube(gt.pipes.SingleUTube):
         return {'type': str(self.__class__)}
 
 
-class MultipleUTube(gt.pipes.MultipleUTube):
+class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
+
+    def equivalent_single_u_tube(self, vol_fluid, vol_pipe, resist_conv, resist_pipe):
+        # Note: BHE can be double U-tube or coaxial heat exchanger
+
+        # Compute equivalent single U-tube geometry
+        n = 2
+        r_p_i_prime = sqrt(vol_fluid / (n * pi))
+        r_p_o_prime = sqrt((vol_fluid + vol_pipe) / (n * pi))
+        # A_s_prime = n * pi * ((r_p_i_prime * 2) ** 2)
+        # h_prime = 1 / (R_conv * A_s_prime)
+        k_p_prime = log(r_p_o_prime / r_p_i_prime) / (2 * pi * n * resist_pipe)
+
+        # Place single u-tubes at a B-spacing
+        # Total horizontal space (m)
+        borehole = deepcopy(self.b)
+        spacing = borehole.r_b * 2 - (n * r_p_o_prime * 2)
+        # If the spacing is negative, then the borehole is not large enough,
+        # therefore, the borehole will be increased if necessary
+        if spacing <= 0.0:
+            borehole.r_b -= spacing  # Add on the necessary spacing to fit
+            spacing = (borehole.r_b * 2.0) / 10.0  # make spacing 1/10th of diameter
+            borehole.r_b += spacing
+        s = spacing / 3  # outer tube-to-tube shank spacing (m)
+        pos = media.Pipe.place_pipes(s, r_p_o_prime, 1)  # Place single u-tube pipe
+
+        # New pipe geometry
+        roughness = deepcopy(self.pipe.roughness)
+        rho_cp = deepcopy(self.pipe.rhoCp)
+        pipe = media.Pipe(pos, r_p_i_prime, r_p_o_prime, s, roughness, k_p_prime, rho_cp)
+
+        # Don't tie together the original and equivalent BHEs
+        m_flow_borehole = deepcopy(self.m_flow_borehole)
+        fluid = deepcopy(self.fluid)
+        grout = deepcopy(self.grout)
+        soil = deepcopy(self.soil)
+
+        # Maintain the same mass flow rate so that the Rb/Rb* is not diverged from
+        eq_single_u_tube = SingleUTube(
+            m_flow_borehole, fluid, borehole, pipe, grout, soil
+        )
+
+        # The thermal conductivity of the pipe must now be varied such that R_fp is
+        # equivalent to R_fp_prime
+        def objective_pipe_conductivity(pipe_k):
+            eq_single_u_tube.pipe.k = pipe_k
+            eq_single_u_tube.update_thermal_resistance()
+            return eq_single_u_tube.R_fp - (resist_conv + resist_pipe)
+
+        # Use Brent Quadratic to find the root
+        # Define a lower and upper for pipe thermal conductivities
+        k_p_lower = eq_single_u_tube.pipe.k / 100.0
+        k_p_upper = eq_single_u_tube.pipe.k * 10.0
+
+        # Solve for the mass flow rate to make the convection values equal
+        utilities.solve_root(
+            eq_single_u_tube.pipe.k,
+            objective_pipe_conductivity,
+            lower=k_p_lower,
+            upper=k_p_upper,
+        )
+
+        eq_single_u_tube.update_thermal_resistance()
+
+        return eq_single_u_tube
+
+    def match_effective_borehole_resistance(self, preliminary_new_single_u_tube) -> SingleUTube:
+        # Find the thermal conductivity that makes the borehole resistances equal
+
+        # Define objective function for varying the grout thermal conductivity
+        def objective_resistance(k_g_in):
+            # update new tubes grout thermal conductivity and relevant parameters
+            preliminary_new_single_u_tube.k_g = k_g_in
+            preliminary_new_single_u_tube.grout.k = k_g_in
+            # Update Delta-circuit thermal resistances
+            # Initialize stored_coefficients
+            resist_bh_prime = preliminary_new_single_u_tube.update_thermal_resistance(m_flow_borehole=None)
+            resist_bh = self.compute_effective_borehole_resistance()
+            return resist_bh - resist_bh_prime
+
+        # Use Brent Quadratic to find the root
+        # Define a lower and upper for thermal conductivities
+        kg_lower = 1e-02
+        kg_upper = 7.0
+        k_g = utilities.solve_root(
+            preliminary_new_single_u_tube.grout.k, objective_resistance, lower=kg_lower, upper=kg_upper
+        )
+        # Ensure the grout thermal conductivity is updated
+        preliminary_new_single_u_tube.k_g = k_g
+        preliminary_new_single_u_tube.grout.k = k_g
+        preliminary_new_single_u_tube.update_thermal_resistance()
+
+        return preliminary_new_single_u_tube
+
+
+class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes):
     def __init__(
             self,
             m_flow_borehole: float,
@@ -185,7 +303,7 @@ class MultipleUTube(gt.pipes.MultipleUTube):
 
         return resist_bh_effective
 
-    def compute_effective_borehole_resistance(self, m_flow_borehole=None):
+    def compute_effective_borehole_resistance(self, m_flow_borehole=None, fluid=None):
         """
         super dumbness
         """
@@ -211,18 +329,18 @@ class MultipleUTube(gt.pipes.MultipleUTube):
         # Get effective parameters for the multiple u-tube
         vol_fluid, vol_pipe, resist_conv, resist_pipe = self.u_tube_volumes()
 
-        single_u_tube = equivalent_single_u_tube(
-            self, vol_fluid, vol_pipe, resist_conv, resist_pipe
+        single_u_tube = self.equivalent_single_u_tube(
+            vol_fluid, vol_pipe, resist_conv, resist_pipe
         )
 
         # Vary grout thermal conductivity to match effective borehole thermal
         # resistance
-        match_effective_borehole_resistance(self, single_u_tube)
+        self.match_effective_borehole_resistance(single_u_tube)
 
         return single_u_tube
 
 
-class CoaxialPipe(gt.pipes.Coaxial):
+class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
     def __init__(
             self,
             m_flow_borehole: float,
@@ -375,15 +493,15 @@ class CoaxialPipe(gt.pipes.Coaxial):
         # Find an equivalent single U-tube given a coaxial heat exchanger
         vol_fluid, vol_pipe, resist_conv, resist_pipe = self.concentric_tube_volumes()
 
-        single_u_tube = equivalent_single_u_tube(
-            self, vol_fluid, vol_pipe, resist_conv, resist_pipe
+        preliminary = self.equivalent_single_u_tube(
+            vol_fluid, vol_pipe, resist_conv, resist_pipe
         )
 
         # Vary grout thermal conductivity to match effective borehole thermal
         # resistance
-        match_effective_borehole_resistance(self, single_u_tube)
+        new_single_u_tube = self.match_effective_borehole_resistance(preliminary)
 
-        return single_u_tube
+        return new_single_u_tube
 
     def as_dict(self) -> dict:
         blob = dict()
