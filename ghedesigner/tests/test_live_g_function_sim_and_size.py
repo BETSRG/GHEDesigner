@@ -1,3 +1,5 @@
+from pygfunction.utilities import segment_ratios as sr
+
 from ghedesigner import ground_heat_exchangers, gfunction, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.coordinates import rectangle
@@ -102,7 +104,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         solver = "equivalent"
         boundary = "MIFT"
         end_length_ratio = 0.02
-        segment_ratios = utilities.segment_ratios(
+        segment_ratios = sr(
             n_segments, end_length_ratio=end_length_ratio
         )
         g_function = gfunction.compute_live_g_function(
