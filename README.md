@@ -62,7 +62,7 @@ git clone https://github.com/betsrg/ghedesigner
 
 ## Questions?
 
-If there are any questions, comments or concerns please [create][#create] an issue, comment on an [open][#issue] issue, comment on a [closed][#closed] issue, or [start][#start] a [discussion][#discussion].
+If there are any questions, comments or concerns please [create][#create] an issue, comment on an [open][#issue] issue, comment on a [closed][#closed] issue.
 
 ## Acknowledgements
 The initial release of this work (`ghedt-v0.1`) was financially supported by the U.S. Department of Energy through research subcontracts from Oak Ridge National Laboratory and the National Renewable Energy Laboratory, and by OSU through the Center for Integrated Building Systems, the OG&E Energy Technology Chair, and Oklahoma State University via return of indirect costs to Dr. Jeffrey D. Spitler.
@@ -89,5 +89,3 @@ Xu, X. and J. D. Spitler. 2006. _Modelling of Vertical Ground Loop Heat Exchange
 [#create]: https://github.com/betsrg/ghedesigner/issues/new
 [#issue]: https://github.com/betsrg/ghedesigner/issues
 [#closed]: https://github.com/betsrg/ghedesigner/issues?q=is%3Aissue+is%3Aclosed
-[#start]: https://github.com/betsrg/ghedesigner/discussions/new
-[#discussion]: https://github.com/betsrg/ghedesigner/discussions
