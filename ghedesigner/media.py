@@ -85,6 +85,7 @@ class Soil(ThermalProperty):
         return output
 
 
+# TODO: This should not be in the media file
 class SimulationParameters:
     def __init__(
             self,

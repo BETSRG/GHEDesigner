@@ -1,6 +1,10 @@
-from ghedesigner import design, geometry, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
+from ghedesigner.borehole_heat_exchangers import SingleUTube
+from ghedesigner.design import DesignBiRectangle
+from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.utilities import DesignMethod, create_input_file
 
 
 class TestCreateBiRectangleInputFile(GHEBaseTest):
@@ -32,15 +36,15 @@ class TestCreateBiRectangleInputFile(GHEBaseTest):
         # Pipe positions
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos_single = media.Pipe.place_pipes(s, r_out, 1)
+        pos_single = Pipe.place_pipes(s, r_out, 1)
         # Single U-tube BHE object
-        single_u_tube = borehole_heat_exchangers.SingleUTube
+        single_u_tube = SingleUTube
         # Double U-tube
-        # pos_double = plat.media.Pipe.place_pipes(s, r_out, 2)
-        # double_u_tube = plat.borehole_heat_exchangers.MultipleUTube
+        # pos_double = plat.Pipe.place_pipes(s, r_out, 2)
+        # double_u_tube = plat.MultipleUTube
         # Coaxial tube
         # pos_coaxial = (0, 0)
-        # coaxial_tube = plat.borehole_heat_exchangers.CoaxialPipe
+        # coaxial_tube = plat.CoaxialPipe
 
         # Thermal conductivities
         # ----------------------
@@ -57,21 +61,21 @@ class TestCreateBiRectangleInputFile(GHEBaseTest):
         # Thermal properties
         # ------------------
         # Pipe
-        pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
-        # pipe_double = plat.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-        # pipe_coaxial = plat.media.Pipe(
+        pipe_single = Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        # pipe_double = plat.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        # pipe_coaxial = plat.Pipe(
         #     pos_coaxial, r_inner, r_outer, 0, epsilon, k_p, rhoCp_p
         # )
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rho_cp_s, ugt)
+        soil = Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rho_cp_g)
+        grout = Grout(k_g, rho_cp_g)
 
         # Inputs related to fluid
         # -----------------------
         # Fluid properties
-        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Fluid properties
         v_flow_borehole = 0.2  # Borehole volumetric flow rate (L/s)
@@ -91,7 +95,7 @@ class TestCreateBiRectangleInputFile(GHEBaseTest):
         # Maximum and minimum allowable heights
         max_height = 135.0  # in meters
         min_height = 60  # in meters
-        sim_params = media.SimulationParameters(
+        sim_params = SimulationParameters(
             start_month,
             end_month,
             max_eft_allowable,
@@ -110,14 +114,13 @@ class TestCreateBiRectangleInputFile(GHEBaseTest):
         b_max_y = 12.0  # m
 
         # Geometric constraints for the `near-square` routine
-        geometric_constraints = geometry.GeometricConstraints(
-            length=length, width=width, b_min=b_min, b_max_x=b_max_x, b_max_y=b_max_y
-        )
+        geometric_constraints = GeometricConstraints(length=length, width=width, b_min=b_min, b_max_x=b_max_x,
+                                                     b_max_y=b_max_y)
 
         # Note: Flow functionality is currently only on a borehole basis. Future
         # development will include the ability to change the flow rate to be on a
         # system flow rate basis.
-        design_single_u_tube = design.DesignBiRectangle(
+        design_single_u_tube = DesignBiRectangle(
             v_flow_borehole,
             borehole,
             single_u_tube,
@@ -128,9 +131,9 @@ class TestCreateBiRectangleInputFile(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            utilities.DesignMethod.Hybrid,
+            DesignMethod.Hybrid,
         )
 
         # Output the design interface object to a json file, so it can be reused
         input_file_path = self.test_outputs_directory / 'ghedt_input.obj'
-        utilities.create_input_file(design_single_u_tube, input_file_path)
+        create_input_file(design_single_u_tube, input_file_path)

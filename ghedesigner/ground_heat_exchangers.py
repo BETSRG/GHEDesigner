@@ -6,8 +6,8 @@ import pygfunction as gt
 from scipy.interpolate import interp1d
 
 from ghedesigner import VERSION
-from ghedesigner import gfunction
 from ghedesigner.borehole_heat_exchangers import SingleUTube, CoaxialPipe, MultipleUTube
+from ghedesigner.gfunction import GFunction, compute_live_g_function
 from ghedesigner.ground_loads import HybridLoad
 from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil
 from ghedesigner.radial_numerical_borehole import RadialNumericalBH
@@ -26,7 +26,7 @@ class BaseGHE:
             pipe: Pipe,
             grout: Grout,
             soil: Soil,
-            g_function: gfunction.GFunction,
+            g_function: GFunction,
             sim_params: SimulationParameters,
             hourly_extraction_ground_loads: list,
             field_type="N/A",
@@ -52,8 +52,8 @@ class BaseGHE:
         self.radial_numerical = RadialNumericalBH(self.bhe_eq)
         self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
 
-        # GFunction object
-        self.GFunction = g_function
+        # gFunction object
+        self.gFunction = g_function
         # Additional simulation parameters
         self.sim_params = sim_params
         # Hourly ground extraction loads
@@ -64,8 +64,8 @@ class BaseGHE:
 
     def as_dict(self) -> dict:
         output = dict()
-        output['title'] = f"GHEDT GHE Output - Version {VERSION}"
-        output['number_of_boreholes'] = len(self.GFunction.bore_locations)
+        output['title'] = f"GHEDesigner GHE Output - Version {VERSION}"
+        output['number_of_boreholes'] = len(self.gFunction.bore_locations)
         output['borehole_depth'] = {'value': self.bhe.b.H, 'units': 'm'}
         output['borehole_spacing'] = {'value': self.B_spacing, 'units': 'm'}
         output['borehole_heat_exchanger'] = self.bhe.as_dict()
@@ -99,18 +99,18 @@ class BaseGHE:
 
     def grab_g_function(self, b_over_h):
         # interpolate for the Long time step g-function
-        g_function, rb_value, d_value, h_eq = self.GFunction.g_function_interpolation(
+        g_function, rb_value, d_value, h_eq = self.gFunction.g_function_interpolation(
             b_over_h
         )
         # correct the long time step for borehole radius
-        g_function_corrected = self.GFunction.borehole_radius_correction(
+        g_function_corrected = self.gFunction.borehole_radius_correction(
             g_function, rb_value, self.bhe.b.r_b
         )
         # Don't Update the HybridLoad (its dependent on the STS) because
         # it doesn't change the results much, and it slows things down a lot
         # combine the short and long time step g-function
         g = self.combine_sts_lts(
-            self.GFunction.log_time,
+            self.gFunction.log_time,
             g_function_corrected,
             self.radial_numerical.lntts.tolist(),
             self.radial_numerical.g.tolist(),
@@ -184,10 +184,10 @@ class BaseGHE:
         r_b_values = [self.bhe.b.r_b] * len(h_values)
         d_values = [self.bhe.b.D] * len(h_values)
 
-        coordinates = self.GFunction.bore_locations
-        log_time = self.GFunction.log_time
+        coordinates = self.gFunction.bore_locations
+        log_time = self.gFunction.log_time
 
-        g_function = gfunction.compute_live_g_function(
+        g_function = compute_live_g_function(
             self.B_spacing,
             h_values,
             r_b_values,
@@ -202,7 +202,7 @@ class BaseGHE:
             self.bhe.soil,
         )
 
-        self.GFunction = g_function
+        self.gFunction = g_function
 
         return
 
@@ -218,7 +218,7 @@ class GHE(BaseGHE):
             pipe: Pipe,
             grout: Grout,
             soil: Soil,
-            g_function: gfunction.GFunction,
+            g_function: GFunction,
             sim_params: SimulationParameters,
             hourly_extraction_ground_loads: list,
             field_type="N/A",
@@ -283,7 +283,7 @@ class GHE(BaseGHE):
         results['peak_load_analysis'] = self.hybrid_load.as_dict()
 
         g_function = dict()
-        g_function['coordinates (x[m], y[m])'] = [(x, y) for x, y in self.GFunction.bore_locations]  # TODO: Verify form
+        g_function['coordinates (x[m], y[m])'] = [(x, y) for x, y in self.gFunction.bore_locations]  # TODO: Verify form
         b_over_h = self.B_spacing / self.bhe.b.H
         g = self.grab_g_function(b_over_h)
         total_g_values = g.x.size

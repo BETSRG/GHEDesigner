@@ -1,8 +1,9 @@
 from matplotlib import pyplot
 from pandas import ExcelFile, read_excel
 
-from ghedesigner import borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
+from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase, CoaxialPipe, MultipleUTube, SingleUTube
+from ghedesigner.media import Pipe, Grout, GHEFluid, Soil
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
@@ -42,15 +43,15 @@ class TestBHResistance(GHEBaseTest):
 
         # Thermal properties
         # Pipe
-        pipe = media.Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rho_cp_s, ugt)
+        soil = Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rho_cp_g)
+        grout = Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
         v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
@@ -58,9 +59,7 @@ class TestBHResistance(GHEBaseTest):
         # Define a borehole
         borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
-        coaxial = borehole_heat_exchangers.CoaxialPipe(
-            m_flow_borehole, fluid, borehole, pipe, grout, soil
-        )
+        coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
         self.log(coaxial)
 
@@ -68,7 +67,7 @@ class TestBHResistance(GHEBaseTest):
 
         val = "Intermediate variables"
         self.log(val + "\n" + len(val) * "-")
-        re = borehole_heat_exchangers.compute_reynolds(
+        re = GHEDesignerBoreholeBase.compute_reynolds(
             coaxial.m_flow_pipe, coaxial.pipe.r_out[1], fluid
         )
         self.log("Reynolds number: {}".format(re))
@@ -109,19 +108,19 @@ class TestBHResistance(GHEBaseTest):
 
         # Pipe positions
         # Double U-tube [(x_in, y_in), (x_out, y_out), (x_in, y_in), (x_out, y_out)]
-        pos = media.Pipe.place_pipes(s, r_out, 2)
+        pos = Pipe.place_pipes(s, r_out, 2)
 
         # Thermal properties
         # Pipe
-        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rho_cp_s, ugt)
+        soil = Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rho_cp_g)
+        grout = Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
         v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
@@ -129,13 +128,9 @@ class TestBHResistance(GHEBaseTest):
         # Define a borehole
         borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
-        double_u_tube_series = borehole_heat_exchangers.MultipleUTube(
-            m_flow_borehole, fluid, borehole, pipe, grout, soil, config="series"
-        )
+        double_u_tube_series = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, config="series")
 
-        double_u_tube_parallel = borehole_heat_exchangers.MultipleUTube(
-            m_flow_borehole, fluid, borehole, pipe, grout, soil, config="parallel"
-        )
+        double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, config="parallel")
 
         self.log(double_u_tube_parallel)
 
@@ -143,9 +138,7 @@ class TestBHResistance(GHEBaseTest):
         r_b_parallel = double_u_tube_parallel.calc_effective_borehole_resistance()
 
         # Intermediate variables
-        re = borehole_heat_exchangers.compute_reynolds(
-            double_u_tube_parallel.m_flow_pipe, r_in, fluid
-        )
+        re = GHEDesignerBoreholeBase.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
 
         self.log("Reynolds number: {}".format(re))
         r_p = double_u_tube_parallel.R_p
@@ -186,7 +179,7 @@ class TestBHResistance(GHEBaseTest):
 
         # Pipe positions
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos = media.Pipe.place_pipes(s, r_out, 1)
+        pos = Pipe.place_pipes(s, r_out, 1)
 
         # Thermal conductivities
         k_p = 0.4  # Pipe thermal conductivity (W/m.K)
@@ -200,15 +193,15 @@ class TestBHResistance(GHEBaseTest):
 
         # Thermal properties
         # Pipe
-        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rho_cp_s, ugt)
+        soil = Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rho_cp_g)
+        grout = Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
         v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
@@ -216,14 +209,12 @@ class TestBHResistance(GHEBaseTest):
         # Define a borehole
         borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
-        single_u_tube = borehole_heat_exchangers.SingleUTube(
-            m_flow_borehole, fluid, borehole, pipe, grout, soil
-        )
+        single_u_tube = SingleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
         self.log(single_u_tube)
 
         # Intermediate variables
-        re = borehole_heat_exchangers.compute_reynolds(
+        re = GHEDesignerBoreholeBase.compute_reynolds(
             single_u_tube.m_flow_borehole, r_in, fluid
         )
         self.log("Reynolds number: {}".format(re))
@@ -261,9 +252,9 @@ class TestBHResistance(GHEBaseTest):
 
         # Pipe positions
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos_s = media.Pipe.place_pipes(s, r_out, 1)
+        pos_s = Pipe.place_pipes(s, r_out, 1)
         # Pipe positions
-        pos_d = media.Pipe.place_pipes(s, r_out, 2)
+        pos_d = Pipe.place_pipes(s, r_out, 2)
 
         # Thermal conductivities
         k_p = 0.4  # Pipe thermal conductivity (W/m.K)
@@ -277,16 +268,16 @@ class TestBHResistance(GHEBaseTest):
 
         # Thermal properties
         # Pipe
-        pipe_s = media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rho_cp_p)
-        pipe_d = media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe_s = Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe_d = Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rho_cp_s, ugt)
+        soil = Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rho_cp_g)
+        grout = Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # A list of volumetric flow rates to check borehole resistances for (L/s)
         v_flow_rates = [0.3, 0.2, 0.18, 0.15, 0.12, 0.1, 0.08, 0.07, 0.06, 0.05]
@@ -306,20 +297,17 @@ class TestBHResistance(GHEBaseTest):
             # Define a borehole
             borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
-            single_u_tube = borehole_heat_exchangers.SingleUTube(
-                m_flow_borehole, fluid, borehole, pipe_s, grout, soil
-            )
+            single_u_tube = SingleUTube(m_flow_borehole, fluid, borehole, pipe_s, grout, soil)
 
-            re = borehole_heat_exchangers.compute_reynolds(
+            re = GHEDesignerBoreholeBase.compute_reynolds(
                 single_u_tube.m_flow_pipe, r_in, fluid
             )
             borehole_values["Single U-tube"]["Re"].append(re)
 
-            double_u_tube_parallel = borehole_heat_exchangers.MultipleUTube(
-                m_flow_borehole, fluid, borehole, pipe_d, grout, soil, config="parallel"
-            )
+            double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe_d, grout, soil,
+                                                   config="parallel")
 
-            re = borehole_heat_exchangers.compute_reynolds(
+            re = GHEDesignerBoreholeBase.compute_reynolds(
                 double_u_tube_parallel.m_flow_pipe, r_in, fluid
             )
             borehole_values["Double U-tube"]["Re"].append(re)
@@ -358,12 +346,12 @@ class TestBHResistance(GHEBaseTest):
 
         # Thermal properties
         # Pipe
-        pipe = media.Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rho_cp_s, ugt)
+        soil = Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rho_cp_g)
+        grout = Grout(k_g, rho_cp_g)
 
         v_flow_rates = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.29, 0.28, 0.27, 0.26]
 
@@ -376,11 +364,9 @@ class TestBHResistance(GHEBaseTest):
             # Define a borehole
             borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
-            coaxial = borehole_heat_exchangers.CoaxialPipe(
-                m_flow_borehole, fluid, borehole, pipe, grout, soil
-            )
+            coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
-            re = borehole_heat_exchangers.compute_reynolds_concentric(
+            re = GHEDesignerBoreholeBase.compute_reynolds_concentric(
                 coaxial.m_flow_pipe, r_in_out, r_out_in, fluid
             )
             borehole_values["Coaxial"]["Re"].append(re)
@@ -405,7 +391,7 @@ class TestBHResistance(GHEBaseTest):
             ax_1[i].scatter(
                 borehole_values[tube]["Re"],
                 borehole_values[tube]["Rb"],
-                label=tube + " (GHEDT)",
+                label=tube + " (GHEDesigner)",
             )
             ax_1[i].scatter(
                 borehole_validation_values[tube]["Re"],

@@ -146,7 +146,7 @@ def compute_live_g_function(
         d["g"][key] = gfunc.gFunc.tolist()
 
     geothermal_g_input = GFunction.configure_database_file_for_usage(d)
-    # Initialize the GFunction object
+    # Initialize the gFunction object
     g_function = GFunction(**geothermal_g_input)
 
     return g_function

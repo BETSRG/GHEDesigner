@@ -1,8 +1,12 @@
 from json import loads
 
-from ghedesigner import geometry, design, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
+from ghedesigner.borehole_heat_exchangers import SingleUTube
+from ghedesigner.design import DesignNearSquare
+from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.utilities import DesignMethod
 
 
 class TestDesignFromORNLJsonInput(GHEBaseTest):
@@ -32,9 +36,9 @@ class TestDesignFromORNLJsonInput(GHEBaseTest):
         # Pipe positions
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos_single = media.Pipe.place_pipes(s, r_out, 1)
+        pos_single = Pipe.place_pipes(s, r_out, 1)
         # Single U-tube BHE object
-        single_u_tube = borehole_heat_exchangers.SingleUTube
+        single_u_tube = SingleUTube
 
         # Thermal conductivities
         # ----------------------
@@ -55,18 +59,18 @@ class TestDesignFromORNLJsonInput(GHEBaseTest):
         # Thermal properties
         # ------------------
         # Pipe
-        pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe_single = Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         # Soil
         # Undisturbed ground temperature (degrees Celsius)
         ugt = ornl_param_file_data["ground_temperature"]
-        soil = media.Soil(k_s, rho_cp_s, ugt)
+        soil = Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rho_cp_g)
+        grout = Grout(k_g, rho_cp_g)
 
         # Inputs related to fluid
         # -----------------------
         # Fluid properties
-        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Fluid properties
         # Volumetric flow rate (L/s)
@@ -89,7 +93,7 @@ class TestDesignFromORNLJsonInput(GHEBaseTest):
         # Maximum and minimum allowable heights
         max_height = 135.0  # in meters
         min_height = 60  # in meters
-        sim_params = media.SimulationParameters(
+        sim_params = SimulationParameters(
             start_month,
             end_month,
             max_eft_allowable,
@@ -102,12 +106,12 @@ class TestDesignFromORNLJsonInput(GHEBaseTest):
         hourly_extraction_ground_loads = self.get_atlanta_loads()
 
         # Geometric constraints for the `near-square` routine
-        geometric_constraints = geometry.GeometricConstraints(b=b, length=300)
+        geometric_constraints = GeometricConstraints(b=b, length=300)
         # TODO: length wasn't specified in the line above, but it is needed for near-square design, so I made up 300
 
         # Single U-tube
         # -------------
-        design_single_u_tube = design.DesignNearSquare(
+        design_single_u_tube = DesignNearSquare(
             v_flow,
             borehole,
             single_u_tube,
@@ -119,13 +123,13 @@ class TestDesignFromORNLJsonInput(GHEBaseTest):
             geometric_constraints,
             hourly_extraction_ground_loads,
             flow=flow,
-            method=utilities.DesignMethod.Hybrid,
+            method=DesignMethod.Hybrid,
         )
 
         # Find the near-square design for a single U-tube and size it.
         bisection_search = design_single_u_tube.find_design()
         bisection_search.ghe.compute_g_functions()
-        bisection_search.ghe.size(method=utilities.DesignMethod.Hybrid)
+        bisection_search.ghe.size(method=DesignMethod.Hybrid)
 
         # Export the g-function to a json file
         output_file_path = self.test_outputs_directory / 'ghedt_output_design_from_ornl_json_input.json'

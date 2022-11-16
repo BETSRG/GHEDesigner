@@ -32,33 +32,33 @@ is described in section 4.4.3 from pages 138-143 in Cook (2021).
 
 # Examples
 
-Welcome to `ghedt` examples. The following is a file structure overview of what
+Welcome to `GHEDesigner` examples. The following is a file structure overview of what
 is contained here. See below for a description of what is contained in the
 current levels documents and folders.
 
 ```angular2html
 ├── Atlanta_Office_Building_Loads.csv
 ├── BHE
-│   ├── BoreholeResistance
-│   │   ├── Coaxial.py
-│   │   ├── DoubleUTube.py
-│   │   ├── GLHEPRO.xlsx
-│   │   ├── SingleUTube.py
-│   │   └── validation.py
-│   └── EquivalentPipes
-│       ├── coaxial_to_single_u_tube.py
-│       └── double_to_single_u_tube.py
+│.... ├── BoreholeResistance
+│.... │.... ├── Coaxial.py
+│.... │.... ├── DoubleUTube.py
+│.... │.... ├── GLHEPRO.xlsx
+│.... │.... ├── SingleUTube.py
+│.... │.... └── validation.py
+│.... └── EquivalentPipes
+│....     ├── coaxial_to_single_u_tube.py
+│....     └── double_to_single_u_tube.py
 ├── Design
-│   ├── find_bi_rectangle.py
-│   ├── find_bi_zoned_rectangle.py
-│   ├── find_near_square.py
-│   ├── find_rectangle.py
-│   └── FromFile (For Oak Ridge National Lab internal use)
-│       ├── ...
+│.... ├── find_bi_rectangle.py
+│.... ├── find_bi_zoned_rectangle.py
+│.... ├── find_near_square.py
+│.... ├── find_rectangle.py
+│.... └── FromFile (For Oak Ridge National Lab internal use)
+│....     ├── ...
 ├── gFunctions
-│   ├── computed_g_function_sim_and_size.py
-│   ├── GLHEPRO_gFunctions_12x13.json
-│   └── live_g_function_sim_and_size.py
+│.... ├── computed_g_function_sim_and_size.py
+│.... ├── GLHEPRO_gFunctions_12x13.json
+│.... └── live_g_function_sim_and_size.py
 ```
 
 ## Ground Loads File
@@ -79,21 +79,21 @@ properties. The multiple u-tubes can be configured with serial or parallel flow.
 
 ```angular2html
 ├── BHE - Borehole Heat Exchanger
-│   ├── BoreholeResistance - These examples show how to compute effective borehole thermal resistances with various geometries.
-│   │   ├── Coaxial.py
-│   │   ├── DoubleUTube.py
-│   │   ├── GLHEPRO.xlsx
-│   │   ├── SingleUTube.py
-│   │   └── validation.py
-│   └── EquivalentPipes - Equivalent pipes are currently necessary for EnergyPlus to simulate non-single U-tube BHEs.
-│       ├── coaxial_to_single_u_tube.py
-│       └── double_to_single_u_tube.py
+│.... ├── BoreholeResistance - These examples show how to compute effective borehole thermal resistances with various geometries.
+│.... │.... ├── Coaxial.py
+│.... │.... ├── DoubleUTube.py
+│.... │.... ├── GLHEPRO.xlsx
+│.... │.... ├── SingleUTube.py
+│.... │.... └── validation.py
+│.... └── EquivalentPipes - Equivalent pipes are currently necessary for EnergyPlus to simulate non-single U-tube BHEs.
+│....     ├── coaxial_to_single_u_tube.py
+│....     └── double_to_single_u_tube.py
 ```
 
 ## Design
 
 The design examples showcase the automatic borehole selection process of
-`ghedt`. The following search routines are currently show cased:
+`GHEDesigner`. The following search routines are currently show cased:
 
 - Find near square - The algorithm utilized in this example finds a square or
   near-square field (N x N or N x N+1).
@@ -109,12 +109,12 @@ The design examples showcase the automatic borehole selection process of
 
 ```angular2html
 ├── Design
-│   ├── find_bi_rectangle.py
-│   ├── find_bi_zoned_rectangle.py
-│   ├── find_near_square.py
-│   ├── find_rectangle.py
-│   └── FromFile (For Oak Ridge National Lab internal use)
-│       ├── ...
+│.... ├── find_bi_rectangle.py
+│.... ├── find_bi_zoned_rectangle.py
+│.... ├── find_near_square.py
+│.... ├── find_rectangle.py
+│.... └── FromFile (For Oak Ridge National Lab internal use)
+│....     ├── ...
 ```
 
 ## g-Functions
@@ -127,7 +127,7 @@ g-function generation program, but must be properly formatted.)
 
 ```angular2html
 ├── gFunctions
-│   ├── computed_g_function_sim_and_size.py
-│   ├── GLHEPRO_gFunctions_12x13.json
-│   └── live_g_function_sim_and_size.py
+│.... ├── computed_g_function_sim_and_size.py
+│.... ├── GLHEPRO_gFunctions_12x13.json
+│.... └── live_g_function_sim_and_size.py
 ```

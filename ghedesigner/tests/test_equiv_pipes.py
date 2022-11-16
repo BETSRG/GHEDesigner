@@ -1,5 +1,6 @@
-from ghedesigner import borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
+from ghedesigner.borehole_heat_exchangers import MultipleUTube, CoaxialPipe
+from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
@@ -24,21 +25,21 @@ class TestEquivalentPipes(GHEBaseTest):
         k_pipe_inner = 0.4  # Inner pipe thermal conductivity (W/m.K)
         k_pipe_outer = 0.4  # Outer pipe thermal conductivity (W/m.K)
         rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        pipe = media.Pipe(pos, r_inner, r_outer, s, epsilon, (k_pipe_inner, k_pipe_outer), rho_cp_p)
+        pipe = Pipe(pos, r_inner, r_outer, s, epsilon, (k_pipe_inner, k_pipe_outer), rho_cp_p)
 
         # Soil
         k_s = 2.0  # Ground thermal conductivity (W/m.K)
         rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rho_cp_s, ugt)
+        soil = Soil(k_s, rho_cp_s, ugt)
 
         # Grout
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
         rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
-        grout = media.Grout(k_g, rho_cp_g)
+        grout = Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
         v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
@@ -50,9 +51,7 @@ class TestEquivalentPipes(GHEBaseTest):
         borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
         # borehole heat exchanger
-        coaxial = borehole_heat_exchangers.CoaxialPipe(
-            m_flow_borehole, fluid, borehole, pipe, grout, soil
-        )
+        coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
         var = "Intermediate variables"
         self.log(var)
@@ -116,19 +115,19 @@ class TestEquivalentPipes(GHEBaseTest):
 
         # Pipe positions
         # Double U-tube [(x_in, y_in), (x_out, y_out), (x_in, y_in), (x_out, y_out)]
-        pos = media.Pipe.place_pipes(s, r_out, 2)
+        pos = Pipe.place_pipes(s, r_out, 2)
 
         # Thermal properties
         # Pipe
-        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rho_cp_s, ugt)
+        soil = Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rho_cp_g)
+        grout = Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
         v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
@@ -137,9 +136,7 @@ class TestEquivalentPipes(GHEBaseTest):
         borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
         # Double U-tube defaults to parallel
-        double_u_tube = borehole_heat_exchangers.MultipleUTube(
-            m_flow_borehole, fluid, borehole, pipe, grout, soil
-        )
+        double_u_tube = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
         val = "Intermediate variables"
         self.log(val + "\n" + len(val) * "-")

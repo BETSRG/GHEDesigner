@@ -4,7 +4,7 @@ from math import pi
 from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
 
-from ghedesigner import borehole_heat_exchangers
+from ghedesigner.borehole_heat_exchangers import SingleUTube
 
 
 class RadialCellType(object):
@@ -25,7 +25,7 @@ class RadialNumericalBH(object):
 
     def __init__(
             self,
-            single_u_tube: borehole_heat_exchangers.SingleUTube,
+            single_u_tube: SingleUTube,
             ground_init_temp: float = 20.0,
             data_type: np.dtype = np.double,
     ):

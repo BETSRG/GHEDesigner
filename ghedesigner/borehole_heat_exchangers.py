@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from copy import deepcopy
 from typing import Tuple, Optional
 
@@ -5,18 +6,20 @@ import numpy as np
 import pygfunction as gt
 from numpy import pi, log, sqrt
 
-from ghedesigner import media, utilities, borehole
+from ghedesigner.borehole import GHEBorehole
+from ghedesigner.media import GHEFluid, Pipe, Grout, Soil
+from ghedesigner.utilities import solve_root
 
 
 class GHEDesignerBoreholeBase:
     def __init__(
             self,
             m_flow_borehole: float,
-            fluid: media.GHEFluid,
-            _borehole: borehole.GHEBorehole,
-            pipe: media.Pipe,
-            grout: media.Grout,
-            soil: media.Soil,
+            fluid: GHEFluid,
+            _borehole: GHEBorehole,
+            pipe: Pipe,
+            grout: Grout,
+            soil: Soil,
     ):
         self.m_flow_pipe = m_flow_borehole
         self.m_flow_borehole = m_flow_borehole
@@ -27,22 +30,53 @@ class GHEDesignerBoreholeBase:
         self.fluid = fluid
         self.b = _borehole
 
-    def calc_fluid_pipe_resist(self, m_flow_borehole: Optional[float] = None) -> float:
+    @abstractmethod
+    def calc_fluid_pipe_resistance(self, m_flow_borehole: Optional[float] = None) -> float:
         pass
 
+    @abstractmethod
     def calc_effective_borehole_resistance(self, m_flow_borehole: Optional[float] = None) -> float:
         pass
+
+    @staticmethod
+    def compute_fluid_resistance(h_conv: float, radius: float) -> float:
+        return 1 / (h_conv * 2 * pi * radius)
+
+    @staticmethod
+    def compute_reynolds(m_flow_pipe: float, r_in: float, fluid: GHEFluid) -> float:
+        # Hydraulic diameter
+        dia_hydraulic = 2.0 * r_in
+        # Fluid velocity
+        vol_flow_rate = m_flow_pipe / fluid.rho
+        area_cr_inner = pi * r_in ** 2
+        velocity = vol_flow_rate / area_cr_inner
+        # Reynolds number
+        return fluid.rho * velocity * dia_hydraulic / fluid.mu
+
+    @staticmethod
+    def compute_reynolds_concentric(m_flow_pipe: float, r_a_in: float, r_a_out: float, fluid: GHEFluid) -> float:
+        # Hydraulic diameter and radius for concentric tube annulus region
+        dia_hydraulic = 2 * (r_a_out - r_a_in)
+        # r_h = dia_hydraulic / 2
+        # Cross-sectional area of the annulus region
+        area_cr_annular = pi * ((r_a_out ** 2) - (r_a_in ** 2))
+        # Volume flow rate
+        vol_flow_rate = m_flow_pipe / fluid.rho
+        # Average velocity
+        velocity = vol_flow_rate / area_cr_annular
+        # Reynolds number
+        return fluid.rho * velocity * dia_hydraulic / fluid.mu
 
 
 class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
     def __init__(
             self,
             m_flow_borehole: float,
-            fluid: media.GHEFluid,
-            _borehole: borehole.GHEBorehole,
-            pipe: media.Pipe,
-            grout: media.Grout,
-            soil: media.Soil,
+            fluid: GHEFluid,
+            _borehole: GHEBorehole,
+            pipe: Pipe,
+            grout: Grout,
+            soil: Soil,
     ):
         GHEDesignerBoreholeBase.__init__(self, m_flow_borehole, fluid, _borehole, pipe, grout, soil)
         self.R_p = 0.0
@@ -60,7 +94,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.grout = grout
 
         # compute resistances required to construct inherited class
-        self.calc_fluid_pipe_resist(m_flow_borehole)
+        self.calc_fluid_pipe_resistance(m_flow_borehole)
 
         # Initialize pygfunction SingleUTube base class
         super().__init__(
@@ -77,7 +111,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.update_thermal_resistances(self.R_fp)
         self.calc_effective_borehole_resistance(m_flow_borehole)
 
-    def calc_fluid_pipe_resist(self, m_flow_borehole: Optional[float] = None) -> float:
+    def calc_fluid_pipe_resistance(self, m_flow_borehole: Optional[float] = None) -> float:
         if m_flow_borehole is not None:
             self.m_flow_borehole = m_flow_borehole
 
@@ -88,7 +122,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
                                                                                self.fluid.k,
                                                                                self.fluid.cp,
                                                                                self.pipe.roughness)
-        self.R_f = compute_fluid_resistance(self.h_f, self.pipe.r_in)
+        self.R_f = self.compute_fluid_resistance(self.h_f, self.pipe.r_in)
         self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(self.pipe.r_in, self.pipe.r_out, self.pipe.k)
         self.R_fp = self.R_f + self.R_p
         return self.R_fp
@@ -96,7 +130,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
     def calc_effective_borehole_resistance(self, m_flow_borehole: Optional[float] = None) -> float:
         if m_flow_borehole is not None:
             self.m_flow_borehole = m_flow_borehole
-            self.calc_fluid_pipe_resist(m_flow_borehole)
+            self.calc_fluid_pipe_resistance(m_flow_borehole)
             self.update_thermal_resistances(self.R_fp)
 
         # TODO: should this be here?
@@ -137,12 +171,12 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
             spacing = (_borehole.r_b * 2.0) / 10.0  # make spacing 1/10th of diameter
             _borehole.r_b += spacing
         s = spacing / 3  # outer tube-to-tube shank spacing (m)
-        pos = media.Pipe.place_pipes(s, r_p_o_prime, 1)  # Place single u-tube pipe
+        pos = Pipe.place_pipes(s, r_p_o_prime, 1)  # Place single u-tube pipe
 
         # New pipe geometry
         roughness = self.pipe.roughness
         rho_cp = self.pipe.rhoCp
-        pipe = media.Pipe(pos, r_p_i_prime, r_p_o_prime, s, roughness, k_p_prime, rho_cp)
+        pipe = Pipe(pos, r_p_i_prime, r_p_o_prime, s, roughness, k_p_prime, rho_cp)
 
         # Don't tie together the original and equivalent BHEs
         m_flow_borehole = self.m_flow_borehole
@@ -161,7 +195,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         # equivalent to R_fp_prime
         def objective_pipe_conductivity(pipe_k: float):
             eq_single_u_tube.pipe.k = pipe_k
-            eq_single_u_tube.calc_fluid_pipe_resist()
+            eq_single_u_tube.calc_fluid_pipe_resistance()
             return eq_single_u_tube.R_fp - (resist_conv + resist_pipe)
 
         # Use Brent Quadratic to find the root
@@ -170,7 +204,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         k_p_upper = eq_single_u_tube.pipe.k * 10.0
 
         # Solve for the mass flow rate to make the convection values equal
-        utilities.solve_root(
+        solve_root(
             eq_single_u_tube.pipe.k,
             objective_pipe_conductivity,
             lower=k_p_lower,
@@ -197,9 +231,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         # Define a lower and upper for thermal conductivities
         kg_lower = 1e-02
         kg_upper = 7.0
-        k_g = utilities.solve_root(
-            preliminary_new_single_u_tube.grout.k, objective_resistance, lower=kg_lower, upper=kg_upper
-        )
+        k_g = solve_root(preliminary_new_single_u_tube.grout.k, objective_resistance, lower=kg_lower, upper=kg_upper)
         # Ensure the grout thermal conductivity is updated
         preliminary_new_single_u_tube.k_g = k_g
         preliminary_new_single_u_tube.grout.k = k_g
@@ -211,11 +243,11 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
     def __init__(
             self,
             m_flow_borehole: float,
-            fluid: media.GHEFluid,
-            _borehole: borehole.GHEBorehole,
-            pipe: media.Pipe,
-            grout: media.Grout,
-            soil: media.Soil,
+            fluid: GHEFluid,
+            _borehole: GHEBorehole,
+            pipe: Pipe,
+            grout: Grout,
+            soil: Soil,
             config="parallel",
     ):
         self.R_p = 0.0
@@ -237,7 +269,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         self.n_pipes = int(len(pipe.pos) / 2)
 
         # compute resistances required to construct inherited class
-        self.calc_fluid_pipe_resist(m_flow_borehole)
+        self.calc_fluid_pipe_resistance(m_flow_borehole)
 
         super().__init__(
             self.pipe.pos,
@@ -255,7 +287,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         self.update_thermal_resistances(self.R_fp)
         self.calc_effective_borehole_resistance(m_flow_borehole)
 
-    def calc_fluid_pipe_resist(self, m_flow_borehole: Optional[float] = None) -> float:
+    def calc_fluid_pipe_resistance(self, m_flow_borehole: Optional[float] = None) -> float:
         self.h_f = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(m_flow_borehole,
                                                                                self.pipe.r_in,
                                                                                self.fluid.mu,
@@ -263,7 +295,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
                                                                                self.fluid.k,
                                                                                self.fluid.cp,
                                                                                self.pipe.roughness)
-        self.R_f = compute_fluid_resistance(self.h_f, self.pipe.r_in)
+        self.R_f = self.compute_fluid_resistance(self.h_f, self.pipe.r_in)
         self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(self.pipe.r_in, self.pipe.r_out, self.pipe.k)
         self.R_fp = self.R_f + self.R_p
         return self.R_fp
@@ -271,7 +303,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
     def calc_effective_borehole_resistance(self, m_flow_borehole: Optional[float] = None) -> float:
         if m_flow_borehole is not None:
             self.m_flow_borehole = m_flow_borehole
-            self.calc_fluid_pipe_resist(m_flow_borehole)
+            self.calc_fluid_pipe_resistance(m_flow_borehole)
             self.update_thermal_resistances(self.R_fp)
 
         # TODO: should this be here?
@@ -314,11 +346,11 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
     def __init__(
             self,
             m_flow_borehole: float,
-            fluid: media.GHEFluid,
-            _borehole: borehole.GHEBorehole,
-            pipe: media.Pipe,
-            grout: media.Grout,
-            soil: media.Soil,
+            fluid: GHEFluid,
+            _borehole: GHEBorehole,
+            pipe: Pipe,
+            grout: Grout,
+            soil: Soil,
             config=None,
     ):
         self.m_flow_borehole = m_flow_borehole
@@ -367,7 +399,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         self.borehole = _borehole
 
         # compute resistances required to construct inherited class
-        self.calc_fluid_pipe_resist(m_flow_borehole)
+        self.calc_fluid_pipe_resistance(m_flow_borehole)
 
         # Vectors of inner and outer pipe radii
         # Note: The dimensions of the inlet pipe are the first elements of the vectors.
@@ -393,7 +425,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         self.update_thermal_resistances(self.R_ff, self.R_fp)
         self.calc_effective_borehole_resistance(m_flow_borehole)
 
-    def calc_fluid_pipe_resist(self, m_flow_borehole: Optional[float] = None) -> None:
+    def calc_fluid_pipe_resistance(self, m_flow_borehole: Optional[float] = None) -> None:
 
         # inner pipe convection resistance
         self.h_f_in = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(m_flow_borehole,
@@ -403,7 +435,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
                                                                                   self.fluid.k,
                                                                                   self.fluid.cp,
                                                                                   self.pipe.roughness)
-        self.R_f_in = compute_fluid_resistance(self.h_f_in, self.r_in_in)
+        self.R_f_in = self.compute_fluid_resistance(self.h_f_in, self.r_in_in)
 
         # inner pipe conduction resistance
         self.R_p_in = gt.pipes.conduction_thermal_resistance_circular_pipe(self.r_in_in, self.r_in_out, self.pipe.k[0])
@@ -419,8 +451,8 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
             self.fluid.cp,
             self.roughness)
 
-        self.R_f_a_in = compute_fluid_resistance(self.h_f_a_in, self.r_in_out)
-        self.R_f_a_out = compute_fluid_resistance(self.h_f_a_out, self.r_out_in)
+        self.R_f_a_in = self.compute_fluid_resistance(self.h_f_a_in, self.r_in_out)
+        self.R_f_a_out = self.compute_fluid_resistance(self.h_f_a_out, self.r_out_in)
 
         # inner pipe conduction resistance
         self.R_p_out = gt.pipes.conduction_thermal_resistance_circular_pipe(self.r_out_in, self.r_out_out,
@@ -435,7 +467,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
     def calc_effective_borehole_resistance(self, m_flow_borehole: Optional[float] = None) -> float:
         if m_flow_borehole is not None:
             self.m_flow_borehole = m_flow_borehole
-            self.calc_fluid_pipe_resist(m_flow_borehole)
+            self.calc_fluid_pipe_resistance(m_flow_borehole)
             self.update_thermal_resistances(self.R_ff, self.R_fp)
 
         # TODO: should this be here?
@@ -462,12 +494,12 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         blob['type'] = str(self.__class__)
         blob['mass_flow_borehole'] = {'value': self.m_flow_borehole, 'units': 'kg/s'}
         blob['mass_flow_pipe'] = {'value': self.m_flow_pipe, 'units': 'kg/s'}
-        # blob['borehole'] = self.borehole.as_dict()
+        # blob['borehole'] = self.as_dict()
         blob['soil'] = self.soil.as_dict()
         blob['grout'] = self.grout.as_dict()
         blob['pipe'] = self.pipe.as_dict()
         # blob['fluid'] = self.fluid.as_dict()
-        reynold_no = compute_reynolds_concentric(
+        reynold_no = self.compute_reynolds_concentric(
             self.m_flow_pipe, self.pipe.r_in, self.pipe.roughness, self.fluid
         )
         blob['reynolds'] = {'value': reynold_no, 'units': ''}
@@ -498,32 +530,3 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         resist_conv = 1 / (self.h_f_a_in * area_surf_outer)
         resist_pipe = log(r_out_out / r_out_in) / (2 * pi * self.pipe.k[1])
         return vol_fluid, vol_pipe, resist_conv, resist_pipe
-
-
-def compute_fluid_resistance(h_conv: float, radius: float) -> float:
-    return 1 / (h_conv * 2 * pi * radius)
-
-
-def compute_reynolds(m_flow_pipe: float, r_in: float, fluid: media.GHEFluid) -> float:
-    # Hydraulic diameter
-    dia_hydraulic = 2.0 * r_in
-    # Fluid velocity
-    vol_flow_rate = m_flow_pipe / fluid.rho
-    area_cr_inner = pi * r_in ** 2
-    velocity = vol_flow_rate / area_cr_inner
-    # Reynolds number
-    return fluid.rho * velocity * dia_hydraulic / fluid.mu
-
-
-def compute_reynolds_concentric(m_flow_pipe: float, r_a_in: float, r_a_out: float, fluid: media.GHEFluid) -> float:
-    # Hydraulic diameter and radius for concentric tube annulus region
-    dia_hydraulic = 2 * (r_a_out - r_a_in)
-    # r_h = dia_hydraulic / 2
-    # Cross-sectional area of the annulus region
-    area_cr_annular = pi * ((r_a_out ** 2) - (r_a_in ** 2))
-    # Volume flow rate
-    vol_flow_rate = m_flow_pipe / fluid.rho
-    # Average velocity
-    velocity = vol_flow_rate / area_cr_annular
-    # Reynolds number
-    return fluid.rho * velocity * dia_hydraulic / fluid.mu

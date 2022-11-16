@@ -1,8 +1,12 @@
 from json import loads
 
-from ghedesigner import gfunction, ground_heat_exchangers, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
+from ghedesigner.borehole_heat_exchangers import SingleUTube
+from ghedesigner.gfunction import GFunction
+from ghedesigner.ground_heat_exchangers import GHE
+from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.utilities import DesignMethod
 
 
 class TestComputedGFunctionSimAndSize(GHEBaseTest):
@@ -24,9 +28,9 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         # Pipe positions
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos = media.Pipe.place_pipes(s, r_out, 1)
+        pos = Pipe.place_pipes(s, r_out, 1)
         # Single U-tube BHE object
-        bhe_object = borehole_heat_exchangers.SingleUTube
+        bhe_object = SingleUTube
 
         # Thermal conductivities
         # ----------------------
@@ -43,28 +47,28 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         # Thermal properties
         # ------------------
         # Pipe
-        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rho_cp_s, ugt)
+        soil = Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rho_cp_g)
+        grout = Grout(k_g, rho_cp_g)
 
         # Read in g-functions from GLHEPro
         glhe_json_data = self.test_data_directory / 'GLHEPRO_gFunctions_12x13.json'
         data = loads(glhe_json_data.read_text())
 
-        # Configure the database data for input to the goethermal GFunction object
-        geothermal_g_input = gfunction.GFunction.configure_database_file_for_usage(data)
+        # Configure the database data for input to the goethermal gFunction object
+        geothermal_g_input = GFunction.configure_database_file_for_usage(data)
 
-        # Initialize the GFunction object
-        g_function = gfunction.GFunction(**geothermal_g_input)
+        # Initialize the gFunction object
+        g_function = GFunction(**geothermal_g_input)
 
         # Inputs related to fluid
         # -----------------------
         v_flow_system = 31.2  # System volumetric flow rate (L/s)
         # Fluid properties
-        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Define a borehole
         borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
@@ -81,7 +85,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         # Maximum and minimum allowable heights
         max_height = 200  # in meters
         min_height = 60  # in meters
-        sim_params = media.SimulationParameters(
+        sim_params = SimulationParameters(
             start_month,
             end_month,
             max_eft_allowable,
@@ -93,7 +97,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         hourly_extraction_ground_loads = self.get_atlanta_loads()
 
         # Initialize GHE object
-        ghe = ground_heat_exchangers.GHE(
+        ghe = GHE(
             v_flow_system,
             b,
             bhe_object,
@@ -107,7 +111,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
             hourly_extraction_ground_loads,
         )
 
-        ghe.size(utilities.DesignMethod.Hybrid)
+        ghe.size(DesignMethod.Hybrid)
 
         calculation_details = "GLHEPRO_gFunctions_12x13.json".split(".")[0]
         self.log(calculation_details)

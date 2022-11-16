@@ -8,17 +8,21 @@ from time import time as clock
 
 from math import pi
 
-from ghedesigner import geometry, design, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
+from ghedesigner.borehole_heat_exchangers import SingleUTube
+from ghedesigner.design import DesignRowWise
+from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import output_design_details
 from ghedesigner.rowwise_generation import gen_shape
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.utilities import DesignMethod
 
 
 class TestFindRowWise(GHEBaseTest):
     def test_find_row_wise(self):
 
-        # This file contains two examples utilizing the RowWise design algorithm for a single U tube design.
+        # This file contains two examples utilizing the RowWise design algorithm for a single U tube
         # The 1st example doesn't treat perimeter boreholes different, and the second one maintains a perimeter target
         # spacing to interior target-spacing ratio of .8.
         # The results from these examples are exported to the "DesignExampleOutput" folder.
@@ -44,8 +48,8 @@ class TestFindRowWise(GHEBaseTest):
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Single U Tube Pipe Positions
-        pos_single = media.Pipe.place_pipes(s, r_out, 1)
-        single_u_tube = borehole_heat_exchangers.SingleUTube
+        pos_single = Pipe.place_pipes(s, r_out, 1)
+        single_u_tube = SingleUTube
 
         # Thermal conductivities
         k_p = 0.4  # Pipe thermal conductivity (W/m.K)
@@ -58,17 +62,17 @@ class TestFindRowWise(GHEBaseTest):
         rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Instantiating Pipe
-        pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe_single = Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
 
         # Instantiating Soil Properties
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rho_cp_s, ugt)
+        soil = Soil(k_s, rho_cp_s, ugt)
 
         # Instantiating Grout Properties
-        grout = media.Grout(k_g, rho_cp_g)
+        grout = Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Fluid Flow Properties
         v_flow = 0.2  # Volumetric flow rate (L/s)
@@ -86,7 +90,7 @@ class TestFindRowWise(GHEBaseTest):
         min_eft_allowable = 5  # degrees Celsius (HP EFT)
         max_height = 135  # 135.0  # in meters  # At 135, this causes a max height warning, at 240 it fails, at 245 pass
         min_height = 60  # in meters
-        sim_params = media.SimulationParameters(
+        sim_params = SimulationParameters(
             start_month,
             end_month,
             max_eft_allowable,
@@ -145,7 +149,7 @@ class TestFindRowWise(GHEBaseTest):
           - the upper bound rotation (rotateStop)
           - list of vertices for the property boundary (buildVert)
         """
-        geometric_constraints = geometry.GeometricConstraints(
+        geometric_constraints = GeometricConstraints(
             ng_zones=no_go_vert,
             p_spacing=p_spacing,
             spacing_start=spacing_start,
@@ -159,7 +163,7 @@ class TestFindRowWise(GHEBaseTest):
 
         # Single U-tube
         # -------------
-        design_single_u_tube = design.DesignRowWise(
+        design_single_u_tube = DesignRowWise(
             v_flow,
             borehole,
             single_u_tube,
@@ -170,7 +174,7 @@ class TestFindRowWise(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=utilities.DesignMethod.Hybrid,
+            method=DesignMethod.Hybrid,
             flow=flow,
         )
 
@@ -181,7 +185,7 @@ class TestFindRowWise(GHEBaseTest):
         )  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
-            method=utilities.DesignMethod.Hybrid
+            method=DesignMethod.Hybrid
         )  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
@@ -190,7 +194,7 @@ class TestFindRowWise(GHEBaseTest):
         self.log(subtitle + "\n" + len(subtitle) * "-")
         self.log("Calculation time: {0:.2f} seconds".format(toc - tic))
         self.log("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
-        nbh = len(bisection_search.ghe.GFunction.bore_locations)
+        nbh = len(bisection_search.ghe.gFunction.bore_locations)
         self.log("Number of boreholes: {}".format(nbh))
         self.log("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
@@ -208,7 +212,7 @@ class TestFindRowWise(GHEBaseTest):
             csv_f_2="BorefieldData_SU_WOP.csv",
             csv_f_3="Loadings_SU_WOP.csv",
             csv_f_4="GFunction_SU_WOP.csv",
-            load_method=utilities.DesignMethod.Hybrid,
+            load_method=DesignMethod.Hybrid,
         )
 
         # *************************************************************************************************************
@@ -218,7 +222,7 @@ class TestFindRowWise(GHEBaseTest):
 
         # Single U-tube
         # -------------
-        design_single_u_tube = design.DesignRowWise(
+        design_single_u_tube = DesignRowWise(
             v_flow,
             borehole,
             single_u_tube,
@@ -229,7 +233,7 @@ class TestFindRowWise(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=utilities.DesignMethod.Hybrid,
+            method=DesignMethod.Hybrid,
             flow=flow,
         )
 
@@ -240,7 +244,7 @@ class TestFindRowWise(GHEBaseTest):
         )  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
-            method=utilities.DesignMethod.Hybrid
+            method=DesignMethod.Hybrid
         )  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
@@ -249,7 +253,7 @@ class TestFindRowWise(GHEBaseTest):
         self.log(subtitle + "\n" + len(subtitle) * "-")
         self.log("Calculation time: {0:.2f} seconds".format(toc - tic))
         self.log("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
-        nbh = len(bisection_search.ghe.GFunction.bore_locations)
+        nbh = len(bisection_search.ghe.gFunction.bore_locations)
         self.log("Number of boreholes: {}".format(nbh))
         self.log("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
@@ -267,5 +271,5 @@ class TestFindRowWise(GHEBaseTest):
             csv_f_2="BorefieldData_SU_WP.csv",
             csv_f_3="Loadings_SU_WP.csv",
             csv_f_4="GFunction_SU_WP.csv",
-            load_method=utilities.DesignMethod.Hybrid,
+            load_method=DesignMethod.Hybrid,
         )

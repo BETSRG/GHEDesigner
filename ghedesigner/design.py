@@ -3,29 +3,30 @@ from typing import Type, Union
 
 import numpy as np
 
-from ghedesigner import domains, geometry, search_routines, media, borehole, borehole_heat_exchangers
-from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil
+from ghedesigner.borehole import GHEBorehole
+from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
+from ghedesigner.domains import square_and_near_square, rectangular, bi_rectangle_nested, bi_rectangle_zoned_nested, \
+    polygonal_land_constraint
+from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil, GHEFluid
+from ghedesigner.search_routines import Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch
 from ghedesigner.utilities import DesignMethod
 
-AnyBoreholeType = Union[
-    Type[borehole_heat_exchangers.SingleUTube],
-    Type[borehole_heat_exchangers.MultipleUTube],
-    Type[borehole_heat_exchangers.CoaxialPipe]
-]
+AnyBoreholeType = Union[Type[SingleUTube], Type[MultipleUTube], Type[CoaxialPipe]]
 
 
 class DesignBase:
     def __init__(
             self,
             v_flow: float,
-            _borehole: borehole.GHEBorehole,
+            _borehole: GHEBorehole,
             bhe_object: AnyBoreholeType,
-            fluid: media.GHEFluid,
+            fluid: GHEFluid,
             pipe: Pipe,
             grout: Grout,
             soil: Soil,
             sim_params: SimulationParameters,
-            geometric_constraints: geometry.GeometricConstraints,
+            geometric_constraints: GeometricConstraints,
             hourly_extraction_ground_loads: list,
             method: DesignMethod,
             flow: str = "borehole",
@@ -68,10 +69,10 @@ class DesignBase:
 
 
 class DesignNearSquare(DesignBase):
-    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: AnyBoreholeType,
-                 fluid: media.GHEFluid, pipe: Pipe,
+    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
+                 fluid: GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
-                 geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
+                 geometric_constraints: GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
         super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
@@ -79,7 +80,7 @@ class DesignNearSquare(DesignBase):
         self.geometric_constraints.check_inputs(self.routine)
         # If a near-square design routine is requested, then we go from a
         # 1x1 to 32x32 at the B-spacing
-        # The lower end of the near-square routine is always 1 borehole.
+        # The lower end of the near-square routine is always 1
         # There would never be a time that a user would __need__ to give a
         # different lower range. The upper number of boreholes range is
         # calculated based on the spacing and length provided.
@@ -88,16 +89,16 @@ class DesignNearSquare(DesignBase):
         (
             self.coordinates_domain,
             self.fieldDescriptors,
-        ) = domains.square_and_near_square(
+        ) = square_and_near_square(
             1, number_of_boreholes, self.geometric_constraints.B
         )
 
     def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True) -> search_routines.Bisection1D:
+                    exhaustive_fields_to_check=10, use_perimeter=True) -> Bisection1D:
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
-        return search_routines.Bisection1D(
+        return Bisection1D(
             self.coordinates_domain,
             self.fieldDescriptors,
             self.V_flow,
@@ -118,16 +119,15 @@ class DesignNearSquare(DesignBase):
 
 
 class DesignRectangle(DesignBase):
-    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: AnyBoreholeType,
-                 fluid: media.GHEFluid, pipe: Pipe,
-                 grout: Grout, soil: Soil, sim_params: SimulationParameters,
-                 geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
+    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
+                 fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
+                 geometric_constraints: GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
         super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.routine = "rectangle"
         self.geometric_constraints.check_inputs(self.routine)
-        self.coordinates_domain, self.fieldDescriptors = domains.rectangular(
+        self.coordinates_domain, self.fieldDescriptors = rectangular(
             self.geometric_constraints.length, self.geometric_constraints.width,
             self.geometric_constraints.B_min, self.geometric_constraints.B_max_x, disp=False
         )
@@ -137,7 +137,7 @@ class DesignRectangle(DesignBase):
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
-        return search_routines.Bisection1D(
+        return Bisection1D(
             self.coordinates_domain,
             self.fieldDescriptors,
             self.V_flow,
@@ -158,10 +158,10 @@ class DesignRectangle(DesignBase):
 
 
 class DesignBiRectangle(DesignBase):
-    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: AnyBoreholeType,
-                 fluid: media.GHEFluid, pipe: Pipe,
+    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
+                 fluid: GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
-                 geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
+                 geometric_constraints: GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
         super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
@@ -170,7 +170,7 @@ class DesignBiRectangle(DesignBase):
         (
             self.coordinates_domain_nested,
             self.fieldDescriptors,
-        ) = domains.bi_rectangle_nested(
+        ) = bi_rectangle_nested(
             self.geometric_constraints.length, self.geometric_constraints.width, self.geometric_constraints.B_min,
             self.geometric_constraints.B_max_x, self.geometric_constraints.B_max_y, disp=False
         )
@@ -180,7 +180,7 @@ class DesignBiRectangle(DesignBase):
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
-        return search_routines.Bisection2D(
+        return Bisection2D(
             self.coordinates_domain_nested,
             self.fieldDescriptors,
             self.V_flow,
@@ -201,10 +201,10 @@ class DesignBiRectangle(DesignBase):
 
 
 class DesignBiZoned(DesignBase):
-    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: AnyBoreholeType,
-                 fluid: media.GHEFluid, pipe: Pipe,
+    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
+                 fluid: GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
-                 geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
+                 geometric_constraints: GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
         super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
@@ -213,7 +213,7 @@ class DesignBiZoned(DesignBase):
         (
             self.coordinates_domain_nested,
             self.fieldDescriptors,
-        ) = domains.bi_rectangle_zoned_nested(
+        ) = bi_rectangle_zoned_nested(
             self.geometric_constraints.length, self.geometric_constraints.width, self.geometric_constraints.B_min,
             self.geometric_constraints.B_max_x, self.geometric_constraints.B_max_y
         )
@@ -223,7 +223,7 @@ class DesignBiZoned(DesignBase):
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
-        return search_routines.BisectionZD(
+        return BisectionZD(
             self.coordinates_domain_nested,
             self.fieldDescriptors,
             self.V_flow,
@@ -243,10 +243,9 @@ class DesignBiZoned(DesignBase):
 
 
 class DesignBiRectangleConstrained(DesignBase):
-    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: AnyBoreholeType,
-                 fluid: media.GHEFluid, pipe: Pipe,
-                 grout: Grout, soil: Soil, sim_params: SimulationParameters,
-                 geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
+    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
+                 fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
+                 geometric_constraints: GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None,
                  property_boundary=None, building_descriptions=None):
         super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
@@ -256,7 +255,7 @@ class DesignBiRectangleConstrained(DesignBase):
         (
             self.coordinates_domain_nested,
             self.fieldDescriptors,
-        ) = domains.polygonal_land_constraint(
+        ) = polygonal_land_constraint(
             property_boundary,
             self.geometric_constraints.B_min,
             self.geometric_constraints.B_max_x,
@@ -269,7 +268,7 @@ class DesignBiRectangleConstrained(DesignBase):
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
-        return search_routines.Bisection2D(
+        return Bisection2D(
             self.coordinates_domain_nested,
             self.fieldDescriptors,
             self.V_flow,
@@ -290,10 +289,10 @@ class DesignBiRectangleConstrained(DesignBase):
 
 
 class DesignRowWise(DesignBase):
-    def __init__(self, v_flow: float, _borehole: borehole.GHEBorehole, bhe_object: AnyBoreholeType,
-                 fluid: media.GHEFluid, pipe: Pipe,
+    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
+                 fluid: GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
-                 geometric_constraints: geometry.GeometricConstraints, hourly_extraction_ground_loads: list,
+                 geometric_constraints: GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
         super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
@@ -307,7 +306,7 @@ class DesignRowWise(DesignBase):
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
-        return search_routines.RowWiseModifiedBisectionSearch(
+        return RowWiseModifiedBisectionSearch(
             self.V_flow,
             self.borehole,
             self.bhe_object,

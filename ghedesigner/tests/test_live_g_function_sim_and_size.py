@@ -1,9 +1,13 @@
 from pygfunction.utilities import segment_ratios as sr
 
-from ghedesigner import ground_heat_exchangers, gfunction, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
+from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.coordinates import rectangle
+from ghedesigner.gfunction import compute_live_g_function
+from ghedesigner.ground_heat_exchangers import GHE
+from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.utilities import DesignMethod, eskilson_log_times
 
 
 class TestLiveGFunctionSimAndSize(GHEBaseTest):
@@ -25,9 +29,9 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # Pipe positions
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos = media.Pipe.place_pipes(s, r_out, 1)
+        pos = Pipe.place_pipes(s, r_out, 1)
         # Single U-tube BHE object
-        bhe_object = borehole_heat_exchangers.SingleUTube
+        bhe_object = SingleUTube
 
         # Thermal conductivities
         # ----------------------
@@ -44,20 +48,20 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # Thermal properties
         # ------------------
         # Pipe
-        pipe = media.Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rho_cp_s, ugt)
+        soil = Soil(k_s, rho_cp_s, ugt)
         # Grout
-        grout = media.Grout(k_g, rho_cp_g)
+        grout = Grout(k_g, rho_cp_g)
 
         # Eskilson's original ln(t/ts) values
-        log_time = utilities.eskilson_log_times()
+        log_time = eskilson_log_times()
 
         # Inputs related to fluid
         # -----------------------
         # Fluid properties
-        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Coordinates
         nx = 12
@@ -85,7 +89,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # Maximum and minimum allowable heights
         max_height = 150  # in meters
         min_height = 60  # in meters
-        sim_params = media.SimulationParameters(
+        sim_params = SimulationParameters(
             start_month,
             end_month,
             max_eft_allowable,
@@ -107,7 +111,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         segment_ratios = sr(
             n_segments, end_length_ratio=end_length_ratio
         )
-        g_function = gfunction.compute_live_g_function(
+        g_function = compute_live_g_function(
             b,
             [h],
             [r_b],
@@ -130,7 +134,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # --------------------------------------------------------------------------
 
         # Initialize the GHE object
-        ghe = ground_heat_exchangers.GHE(
+        ghe = GHE(
             v_flow_system,
             b,
             bhe_object,
@@ -145,7 +149,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         )
 
         # Simulate after computing just one g-function
-        max_hp_eft, min_hp_eft = ghe.simulate(method=utilities.DesignMethod.Hybrid)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethod.Hybrid)
 
         self.log("Min EFT: {0:.3f}\nMax EFT: {1:.3f}".format(min_hp_eft, max_hp_eft))
 
@@ -154,7 +158,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         r_b_values = [r_b] * len(h_values)
         d_values = [2.0] * len(h_values)
 
-        g_function = gfunction.compute_live_g_function(
+        g_function = compute_live_g_function(
             b,
             h_values,
             r_b_values,
@@ -170,7 +174,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         )
 
         # Re-Initialize the GHE object
-        ghe = ground_heat_exchangers.GHE(
+        ghe = GHE(
             v_flow_system,
             b,
             bhe_object,
@@ -184,6 +188,6 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             hourly_extraction_ground_loads,
         )
 
-        ghe.size(method=utilities.DesignMethod.Hybrid)
+        ghe.size(method=DesignMethod.Hybrid)
 
         self.log("Height of boreholes: {0:.4f}".format(ghe.bhe.b.H))

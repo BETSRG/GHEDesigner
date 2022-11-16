@@ -1,6 +1,11 @@
-from ghedesigner import utilities, coordinates, ground_heat_exchangers, gfunction, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
+from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
+from ghedesigner.coordinates import rectangle
+from ghedesigner.gfunction import compute_live_g_function
+from ghedesigner.ground_heat_exchangers import GHE
+from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.utilities import DesignMethod, eskilson_log_times
 
 
 class TestGHE(GHEBaseTest):
@@ -36,9 +41,9 @@ class TestGHE(GHEBaseTest):
         # Pipe positions
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos_s = media.Pipe.place_pipes(s, r_out, 1)
+        pos_s = Pipe.place_pipes(s, r_out, 1)
         # Double U-tube
-        pos_d = media.Pipe.place_pipes(s, r_out, 2)
+        pos_d = Pipe.place_pipes(s, r_out, 2)
         # Coaxial
         pos_c = (0, 0)
 
@@ -59,32 +64,30 @@ class TestGHE(GHEBaseTest):
         # Thermal properties
         # ------------------
         # Pipe
-        self.pipe_s = media.Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rho_cp_p)
-        self.pipe_d = media.Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rho_cp_p)
-        self.pipe_c = media.Pipe(
-            pos_c, r_inner, r_outer, s, epsilon, k_p_c, rho_cp_p
-        )
+        self.pipe_s = Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        self.pipe_d = Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        self.pipe_c = Pipe(pos_c, r_inner, r_outer, s, epsilon, k_p_c, rho_cp_p)
 
         # Single U-tube BHE object
-        self.SingleUTube = borehole_heat_exchangers.SingleUTube
+        self.SingleUTube = SingleUTube
         # Double U-tube bhe object
-        self.DoubleUTube = borehole_heat_exchangers.MultipleUTube
+        self.DoubleUTube = MultipleUTube
         # Coaxial tube bhe object
-        self.CoaxialTube = borehole_heat_exchangers.CoaxialPipe
+        self.CoaxialTube = CoaxialPipe
 
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        self.soil = media.Soil(k_s, rho_cp_s, ugt)
+        self.soil = Soil(k_s, rho_cp_s, ugt)
         # Grout
-        self.grout = media.Grout(k_g, rho_cp_g)
+        self.grout = Grout(k_g, rho_cp_g)
 
         # Coordinates
         nx = 12
         ny = 13
-        self.coordinates = coordinates.rectangle(nx, ny, self.B, self.B)
+        self.coordinates = rectangle(nx, ny, self.B, self.B)
 
         # Compute a range of g-functions for interpolation
-        self.log_time = utilities.eskilson_log_times()
+        self.log_time = eskilson_log_times()
         self.H_values = [24.0, 48.0, 96.0, 192.0, 384.0]
         self.r_b_values = [self.r_b] * len(self.H_values)
         self.D_values = [2.0] * len(self.H_values)
@@ -95,7 +98,7 @@ class TestGHE(GHEBaseTest):
 
         # -----------------------
         # Fluid properties
-        self.fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        self.fluid = GHEFluid(fluid_str="Water", percent=0.0)
         self.V_flow_system = v_flow_borehole * float(
             nx * ny
         )  # System volumetric flow rate (L/s)
@@ -114,7 +117,7 @@ class TestGHE(GHEBaseTest):
         # Maximum and minimum allowable heights
         max_height = 384  # in meters
         min_height = 24  # in meters
-        self.sim_params = media.SimulationParameters(
+        self.sim_params = SimulationParameters(
             start_month,
             end_month,
             max_eft_allowable,
@@ -131,7 +134,7 @@ class TestGHE(GHEBaseTest):
         borehole = GHEBorehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
-        g_function = gfunction.compute_live_g_function(
+        g_function = compute_live_g_function(
             self.B,
             self.H_values,
             self.r_b_values,
@@ -147,7 +150,7 @@ class TestGHE(GHEBaseTest):
         )
 
         # Initialize the GHE object
-        ghe = ground_heat_exchangers.GHE(
+        ghe = GHE(
             self.V_flow_system,
             self.B,
             self.SingleUTube,
@@ -161,12 +164,12 @@ class TestGHE(GHEBaseTest):
             self.hourly_extraction_ground_loads,
         )
 
-        max_hp_eft, min_hp_eft = ghe.simulate(method=utilities.DesignMethod.Hybrid)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethod.Hybrid)
 
         self.assertAlmostEqual(39.09, max_hp_eft, delta=0.01)
         self.assertAlmostEqual(16.66, min_hp_eft, delta=0.01)
 
-        ghe.size(method=utilities.DesignMethod.Hybrid)
+        ghe.size(method=DesignMethod.Hybrid)
 
         self.assertAlmostEqual(ghe.bhe.b.H, 130.22, places=2)
 
@@ -175,7 +178,7 @@ class TestGHE(GHEBaseTest):
         borehole = GHEBorehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
-        g_function = gfunction.compute_live_g_function(
+        g_function = compute_live_g_function(
             self.B,
             self.H_values,
             self.r_b_values,
@@ -191,7 +194,7 @@ class TestGHE(GHEBaseTest):
         )
 
         # Initialize the GHE object
-        ghe = ground_heat_exchangers.GHE(
+        ghe = GHE(
             self.V_flow_system,
             self.B,
             self.DoubleUTube,
@@ -205,12 +208,12 @@ class TestGHE(GHEBaseTest):
             self.hourly_extraction_ground_loads,
         )
 
-        max_hp_eft, min_hp_eft = ghe.simulate(method=utilities.DesignMethod.Hybrid)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethod.Hybrid)
 
         self.assertAlmostEqual(37.76, max_hp_eft, delta=0.01)
         self.assertAlmostEqual(17.09, min_hp_eft, delta=0.01)
 
-        ghe.size(method=utilities.DesignMethod.Hybrid)
+        ghe.size(method=DesignMethod.Hybrid)
 
         self.assertAlmostEqual(ghe.bhe.b.H, 120.40, places=2)
 
@@ -219,7 +222,7 @@ class TestGHE(GHEBaseTest):
         borehole = GHEBorehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
-        g_function = gfunction.compute_live_g_function(
+        g_function = compute_live_g_function(
             self.B,
             self.H_values,
             self.r_b_values,
@@ -235,7 +238,7 @@ class TestGHE(GHEBaseTest):
         )
 
         # Re-Initialize the GHE object
-        ghe = ground_heat_exchangers.GHE(
+        ghe = GHE(
             self.V_flow_system,
             self.B,
             self.CoaxialTube,
@@ -249,11 +252,11 @@ class TestGHE(GHEBaseTest):
             self.hourly_extraction_ground_loads,
         )
 
-        max_hp_eft, min_hp_eft = ghe.simulate(method=utilities.DesignMethod.Hybrid)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethod.Hybrid)
 
         self.assertAlmostEqual(38.06, max_hp_eft, delta=0.01)
         self.assertAlmostEqual(17.22, min_hp_eft, delta=0.01)
 
-        ghe.size(method=utilities.DesignMethod.Hybrid)
+        ghe.size(method=DesignMethod.Hybrid)
 
         self.assertAlmostEqual(ghe.bhe.b.H, 124.84, delta=0.01)

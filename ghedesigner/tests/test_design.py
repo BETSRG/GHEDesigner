@@ -1,6 +1,10 @@
-from ghedesigner import design, utilities, geometry, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
+from ghedesigner.borehole_heat_exchangers import SingleUTube
+from ghedesigner.design import DesignNearSquare
+from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.utilities import DesignMethod, length_of_side
 
 
 class TestNearSquare(GHEBaseTest):
@@ -37,15 +41,15 @@ class TestNearSquare(GHEBaseTest):
         # Pipe positions
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos_single = media.Pipe.place_pipes(s, r_out, 1)
+        pos_single = Pipe.place_pipes(s, r_out, 1)
         # Single U-tube BHE object
-        self.single_u_tube = borehole_heat_exchangers.SingleUTube
+        self.single_u_tube = SingleUTube
         # Double U-tube
-        # pos_double = plat.media.Pipe.place_pipes(s, r_out, 2)
-        # double_u_tube = plat.borehole_heat_exchangers.MultipleUTube
+        # pos_double = plat.Pipe.place_pipes(s, r_out, 2)
+        # double_u_tube = MultipleUTube
         # Coaxial tube
         # pos_coaxial = (0, 0)
-        # coaxial_tube = plat.borehole_heat_exchangers.CoaxialPipe
+        # coaxial_tube = CoaxialPipe
 
         # Thermal conductivities
         # ----------------------
@@ -63,21 +67,21 @@ class TestNearSquare(GHEBaseTest):
         # Thermal properties
         # ------------------
         # Pipe
-        self.pipe_single = media.Pipe(
+        self.pipe_single = Pipe(
             pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p
         )
-        # pipe_double = plat.media.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-        # pipe_coaxial = plat.media.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rhoCp_p)
+        # pipe_double = plat.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
+        # pipe_coaxial = plat.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rhoCp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        self.soil = media.Soil(k_s, rho_cp_s, ugt)
+        self.soil = Soil(k_s, rho_cp_s, ugt)
         # Grout
-        self.grout = media.Grout(k_g, rho_cp_g)
+        self.grout = Grout(k_g, rho_cp_g)
 
         # Inputs related to fluid
         # -----------------------
         # Fluid properties
-        self.fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        self.fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Fluid flow rate
         v_flow = 0.2  # Borehole volumetric flow rate (L/s)
@@ -98,7 +102,7 @@ class TestNearSquare(GHEBaseTest):
         # Maximum and minimum allowable heights
         max_height = 135.0  # in meters
         min_height = 60  # in meters
-        self.sim_params = media.SimulationParameters(
+        self.sim_params = SimulationParameters(
             start_month,
             end_month,
             max_eft_allowable,
@@ -118,10 +122,10 @@ class TestNearSquare(GHEBaseTest):
         # Required geometric constraints for the uniform rectangle design: B
         b = 5.0  # Borehole spacing (m)
         number_of_boreholes = 32
-        length = utilities.length_of_side(number_of_boreholes, b)
-        self.geometric_constraints = geometry.GeometricConstraints(b=b, length=length)
+        length = length_of_side(number_of_boreholes, b)
+        self.geometric_constraints = GeometricConstraints(b=b, length=length)
 
-        design_single_u_tube_a = design.DesignNearSquare(
+        design_single_u_tube_a = DesignNearSquare(
             self.V_flow_system,
             self.borehole,
             self.single_u_tube,
@@ -133,15 +137,15 @@ class TestNearSquare(GHEBaseTest):
             self.geometric_constraints,
             self.hourly_extraction_ground_loads,
             flow="system",
-            method=utilities.DesignMethod.Hybrid,
+            method=DesignMethod.Hybrid,
         )
         # Find the near-square design for a single U-tube and size it.
         bisection_search = design_single_u_tube_a.find_design()
         bisection_search.ghe.compute_g_functions()
-        bisection_search.ghe.size(method=utilities.DesignMethod.Hybrid)
+        bisection_search.ghe.size(method=DesignMethod.Hybrid)
         h_single_u_tube_a = bisection_search.ghe.bhe.b.H
 
-        design_single_u_tube_b = design.DesignNearSquare(
+        design_single_u_tube_b = DesignNearSquare(
             self.V_flow_borehole,
             self.borehole,
             self.single_u_tube,
@@ -153,12 +157,12 @@ class TestNearSquare(GHEBaseTest):
             self.geometric_constraints,
             self.hourly_extraction_ground_loads,
             flow="borehole",
-            method=utilities.DesignMethod.Hybrid,
+            method=DesignMethod.Hybrid,
         )
         # Find the near-square design for a single U-tube and size it.
         bisection_search = design_single_u_tube_b.find_design()
         bisection_search.ghe.compute_g_functions()
-        bisection_search.ghe.size(method=utilities.DesignMethod.Hybrid)
+        bisection_search.ghe.size(method=DesignMethod.Hybrid)
         h_single_u_tube_b = bisection_search.ghe.bhe.b.H
 
         # Verify that the `flow` toggle is properly working

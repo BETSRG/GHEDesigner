@@ -6,16 +6,20 @@
 
 from time import time as clock
 
-from ghedesigner import geometry, design, utilities, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
+from ghedesigner.borehole_heat_exchangers import SingleUTube
+from ghedesigner.design import DesignBiZoned
+from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import output_design_details
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.utilities import DesignMethod
 
 
 class TestFindBiZonedRectangle(GHEBaseTest):
     def test_find_bi_zoned_rectangle(self):
         # This file contains three examples utilizing the bi-zoned rectangle design algorithm for a single U, double U,
-        # and coaxial tube design. The results from these examples are exported to the "DesignExampleOutput" folder.
+        # and coaxial tube  The results from these examples are exported to the "DesignExampleOutput" folder.
 
         # Single U-tube Example
 
@@ -39,8 +43,8 @@ class TestFindBiZonedRectangle(GHEBaseTest):
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Single U Tube Pipe Positions
-        pos_single = media.Pipe.place_pipes(s, r_out, 1)
-        single_u_tube = borehole_heat_exchangers.SingleUTube
+        pos_single = Pipe.place_pipes(s, r_out, 1)
+        single_u_tube = SingleUTube
 
         # Thermal conductivities
         k_p = 0.4  # Pipe thermal conductivity (W/m.K)
@@ -53,17 +57,17 @@ class TestFindBiZonedRectangle(GHEBaseTest):
         rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Instantiating Pipe
-        pipe_single = media.Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe_single = Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
 
         # Instantiating Soil Properties
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = media.Soil(k_s, rho_cp_s, ugt)
+        soil = Soil(k_s, rho_cp_s, ugt)
 
         # Instantiating Grout Properties
-        grout = media.Grout(k_g, rho_cp_g)
+        grout = Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = media.GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Fluid Flow Properties
         v_flow = 0.2  # Volumetric flow rate (L/s)
@@ -81,7 +85,7 @@ class TestFindBiZonedRectangle(GHEBaseTest):
         min_eft_allowable = 5  # degrees Celsius (HP EFT)
         max_height = 135.0  # in meters
         min_height = 60  # in meters
-        sim_params = media.SimulationParameters(
+        sim_params = SimulationParameters(
             start_month,
             end_month,
             max_eft_allowable,
@@ -107,13 +111,13 @@ class TestFindBiZonedRectangle(GHEBaseTest):
           - B_min
           - B_max
         """
-        geometric_constraints = geometry.GeometricConstraints(
+        geometric_constraints = GeometricConstraints(
             length=length, width=width, b_min=b_min, b_max_x=b_max_x, b_max_y=b_max_y
         )
 
         # Single U-tube
         # -------------
-        design_single_u_tube = design.DesignBiZoned(
+        design_single_u_tube = DesignBiZoned(
             v_flow,
             borehole,
             single_u_tube,
@@ -124,7 +128,7 @@ class TestFindBiZonedRectangle(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=utilities.DesignMethod.Hybrid,
+            method=DesignMethod.Hybrid,
             flow=flow,
         )
 
@@ -133,7 +137,7 @@ class TestFindBiZonedRectangle(GHEBaseTest):
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
-            method=utilities.DesignMethod.Hybrid
+            method=DesignMethod.Hybrid
         )  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
@@ -142,7 +146,7 @@ class TestFindBiZonedRectangle(GHEBaseTest):
         self.log(subtitle + "\n" + len(subtitle) * "-")
         self.log("Calculation time: {0:.2f} seconds".format(toc - tic))
         self.log("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
-        nbh = len(bisection_search.ghe.GFunction.bore_locations)
+        nbh = len(bisection_search.ghe.gFunction.bore_locations)
         self.log("Number of boreholes: {}".format(nbh))
         self.log("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
 
@@ -159,12 +163,12 @@ class TestFindBiZonedRectangle(GHEBaseTest):
             csv_f_2="BorefieldData_SU.csv",
             csv_f_3="Loadings_SU.csv",
             csv_f_4="GFunction_SU.csv",
-            load_method=utilities.DesignMethod.Hybrid,
+            load_method=DesignMethod.Hybrid,
         )
         """
         # Double U-tube
         # -------------
-        design_double_u_tube = dt.design.Design(
+        design_double_u_tube = dt.Design(
             V_flow, borehole, double_u_tube, fluid, pipe_double, grout,
             soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
             method='hybrid', flow=flow, routine='bi-zoned')
@@ -181,7 +185,7 @@ class TestFindBiZonedRectangle(GHEBaseTest):
         self.log(subtitle + '\n' + len(subtitle) * '-')
         self.log('Calculation time: {0:.2f} seconds'.format(toc - tic))
         self.log('Height: {0:.4f} meters'.format(bisection_search.ghe.bhe.b.H))
-        nbh = len(bisection_search.ghe.GFunction.bore_locations)
+        nbh = len(bisection_search.ghe.gFunction.bore_locations)
         self.log('Number of boreholes: {}'.format(nbh))
         self.log('Total Drilling: {0:.1f} meters\n'.
               format(bisection_search.ghe.bhe.b.H * nbh))
@@ -213,14 +217,14 @@ class TestFindBiZonedRectangle(GHEBaseTest):
 
         # Coaxial tube
         pos_coaxial = (0, 0)
-        coaxial_tube = plat.borehole_heat_exchangers.CoaxialPipe
+        coaxial_tube = plat.CoaxialPipe
         pipe_coaxial = \
-            plat.media.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax,
+            plat.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax,
                             rhoCp_p)
 
         # Coaxial Tube
         # -------------
-        design_coax_tube = dt.design.Design(
+        design_coax_tube = dt.Design(
             V_flow, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
             soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
             method='hybrid', flow=flow, routine='bi-zoned')
@@ -237,7 +241,7 @@ class TestFindBiZonedRectangle(GHEBaseTest):
         self.log(subtitle + '\n' + len(subtitle) * '-')
         self.log('Calculation time: {0:.2f} seconds'.format(toc - tic))
         self.log('Height: {0:.4f} meters'.format(bisection_search.ghe.bhe.b.H))
-        nbh = len(bisection_search.ghe.GFunction.bore_locations)
+        nbh = len(bisection_search.ghe.gFunction.bore_locations)
         self.log('Number of boreholes: {}'.format(nbh))
         self.log('Total Drilling: {0:.1f} meters\n'.
               format(bisection_search.ghe.bhe.b.H * nbh))

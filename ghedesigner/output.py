@@ -6,7 +6,7 @@ from pathlib import Path
 import math
 import numpy as np
 
-from ghedesigner import borehole_heat_exchangers
+from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase
 from ghedesigner.utilities import DesignMethod
 
 
@@ -97,9 +97,8 @@ def create_d_row(row_allocation, entry_1, entry_2, d_type_1, d_type_2, b_tabs=0,
     r_s = ""
     for t in range(b_tabs):
         r_s += "\t"
-    r_s += "{:<{lO}{f1}}{:>{rO}{f2}}".format(
-        entry_1, entry_2, lO=left_offset, rO=right_offset, f1=d_type_1, f2=d_type_2
-    )
+    r_s += "{:<{lO}{f1}}{:>{rO}{f2}}".format(entry_1, entry_2, lO=left_offset, rO=right_offset, f1=d_type_1,
+                                             f2=d_type_2)
     for t in range(a_tabs):
         r_s += "\t"
     r_s += "\n"
@@ -177,7 +176,7 @@ def output_design_details(
     except:
         ghe = design
     bhe = ghe.bhe
-    g_function = ghe.GFunction
+    g_function = ghe.gFunction
     b_h = bhe.b
     b = g_function.bore_locations
 
@@ -191,30 +190,17 @@ def output_design_details(
     empty_line = create_line(allocated_width, character=" ")
     o_s = ""
     # oS += middleSpacingString.format("Project Name:",projectName,rO=rightOffset,lO=leftColLength) + "\n"
-    o_s += create_d_row(
-        allocated_width, "Project Name:", project_name, string_format, string_format
-    )
+    o_s += create_d_row(allocated_width, "Project Name:", project_name, string_format, string_format)
     o_s += blank_line
     o_s += "Notes:\n\n" + notes + "\n"
     o_s += blank_line
-    o_s += create_d_row(
-        allocated_width, "File/Model Name:", model_name, string_format, string_format
-    )
+    o_s += create_d_row(allocated_width, "File/Model Name:", model_name, string_format, string_format)
     now = datetime.now()
     time_string = now.strftime("%m/%d/%Y %H:%M:%S %p")
-    o_s += create_d_row(
-        allocated_width, "Simulated On:", time_string, string_format, string_format
-    )
-    o_s += create_d_row(
-        allocated_width, "Simulated By:", author, string_format, string_format
-    )
-    o_s += create_d_row(
-        allocated_width,
-        "Calculation Time, s:",
-        round(time, rounding_amount),
-        string_format,
-        float_format,
-    )
+    o_s += create_d_row(allocated_width, "Simulated On:", time_string, string_format, string_format)
+    o_s += create_d_row(allocated_width, "Simulated By:", author, string_format, string_format)
+    o_s += create_d_row(allocated_width, "Calculation Time, s:", round(time, rounding_amount), string_format,
+                        float_format, )
     o_s += empty_line
     o_s += create_title(allocated_width, "Design Selection", filler_symbol="-")
 
@@ -228,20 +214,13 @@ def output_design_details(
         design_values = ""
     design_formats = ["s", ".3f", ".3f", ".3f"]
 
-    o_s += create_table(
-        "Field Search Log",
-        design_header,
-        design_values,
-        allocated_width,
-        design_formats,
-        filler_symbol="-",
-        centering="^",
-    )
+    o_s += create_table("Field Search Log", design_header, design_values, allocated_width, design_formats,
+                        filler_symbol="-", centering="^", )
 
     o_s += empty_line
     o_s += create_title(allocated_width, "GHE System", filler_symbol="-")
 
-    # GFunction LTS Table
+    # gFunction LTS Table
     g_function_table_formats = [".3f"]
     gf_table_ff = [".3f"] * (len(g_function.g_lts) + 1)
     g_function_table_formats.extend(gf_table_ff)
@@ -262,15 +241,8 @@ def output_design_details(
         gf_row.append(ghe_gf[i])
         g_function_data.append(gf_row)
 
-    o_s += create_table(
-        "GFunction LTS Values",
-        [g_function_col_titles],
-        g_function_data,
-        allocated_width,
-        g_function_table_formats,
-        filler_symbol="-",
-        centering="^",
-    )
+    o_s += create_table("gFunction LTS Values", [g_function_col_titles], g_function_data, allocated_width,
+                        g_function_table_formats, filler_symbol="-", centering="^")
     o_s += empty_line
 
     """
@@ -278,44 +250,21 @@ def output_design_details(
     """
 
     o_s += "------ System parameters ------" + "\n"
-    o_s += create_d_row(
-        allocated_width, "Active Borehole Length, m:", b_h.H, string_format, int_format
-    )
-    o_s += create_d_row(
-        allocated_width,
-        "Borehole Radius, m:",
-        round(b_h.r_b, rounding_amount),
-        string_format,
-        float_format,
-    )
-    o_s += create_d_row(
-        allocated_width,
-        "Borehole Spacing, m:",
-        round(ghe.B_spacing, rounding_amount),
-        string_format,
-        float_format,
-    )
-    o_s += create_d_row(
-        allocated_width,
-        "Total Drilling, m:",
-        round(b_h.H * len(b), rounding_amount),
-        string_format,
-        float_format,
-    )
+    o_s += create_d_row(allocated_width, "Active Borehole Length, m:", b_h.H, string_format, int_format)
+    o_s += create_d_row(allocated_width, "Borehole Radius, m:", round(b_h.r_b, rounding_amount), string_format,
+                        float_format)
+    o_s += create_d_row(allocated_width, "Borehole Spacing, m:", round(ghe.B_spacing, rounding_amount), string_format,
+                        float_format)
+    o_s += create_d_row(allocated_width, "Total Drilling, m:", round(b_h.H * len(b), rounding_amount), string_format,
+                        float_format)
 
     indented_amount = 2
 
     o_s += "Field Geometry: " + "\n"
     # rightAd = rightOffset-indentedAmount*tabOffset+math.ceil(indentedAmount/2)
     # leftAd = leftColLength-tabOffset*indentedAmount+math.floor(indentedAmount/2)
-    o_s += create_d_row(
-        allocated_width,
-        "Field Type:",
-        ghe.fieldType,
-        string_format,
-        string_format,
-        b_tabs=indented_amount,
-    )
+    o_s += create_d_row(allocated_width, "Field Type:", ghe.fieldType, string_format, string_format,
+                        b_tabs=indented_amount)
     # oS += middleSpacingIndentedString.format("\t\tField Type:",ghe.fieldType,rO=rightAd,lO=leftAd)
     o_s += create_d_row(
         allocated_width,
@@ -334,14 +283,8 @@ def output_design_details(
     # System Details
 
     o_s += "Borehole Information: " + "\n"
-    o_s += create_d_row(
-        allocated_width,
-        "Shank Spacing, m:",
-        round(bhe.pipe.s, rounding_amount),
-        string_format,
-        float_format,
-        b_tabs=indented_amount,
-    )
+    o_s += create_d_row(allocated_width, "Shank Spacing, m:", round(bhe.pipe.s, rounding_amount), string_format,
+                        float_format, b_tabs=indented_amount)
 
     if isinstance(bhe.pipe.r_out, float):
         o_s += create_d_row(
@@ -431,7 +374,7 @@ def output_design_details(
             allocated_width,
             "Reynold's Number:",
             round(
-                borehole_heat_exchangers.compute_reynolds(
+                GHEDesignerBoreholeBase.compute_reynolds(
                     bhe.m_flow_borehole, bhe.pipe.r_in, bhe.fluid
                 ),
                 rounding_amount,
@@ -446,7 +389,7 @@ def output_design_details(
             allocated_width,
             "Reynold's Number:",
             round(
-                borehole_heat_exchangers.compute_reynolds_concentric(
+                GHEDesignerBoreholeBase.compute_reynolds_concentric(
                     bhe.m_flow_pipe, bhe.r_in_out, bhe.r_out_in, bhe.fluid
                 ),
                 rounding_amount,
@@ -855,7 +798,7 @@ def output_design_details(
         c_w = csv.writer(csv3OF)
         c_w.writerows(csv3_array)
 
-        # GFunction STS+LTS Table
+        # gFunction STS+LTS Table
     # gfunctionTableFormats = [".3f"]
     # gfTableFF = [".3f"] * (1)
     # gfunctionTableFormats.extend(gfTableFF)
@@ -877,7 +820,7 @@ def output_design_details(
         gf_row.append(gfunction_g_vals[i])
         csv4_array.append(gf_row)
 
-    # oS += createTable("GFunction Combined Values", [gfunctionColTitles], gfunctionData, allocatedWidth,
+    # oS += createTable("gFunction Combined Values", [gfunctionColTitles], gfunctionData, allocatedWidth,
     #                  gfunctionTableFormats,
     #                  fillerSymbol="-", centering="^")
     # oS += emptyLine

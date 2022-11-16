@@ -6,7 +6,6 @@
 # deprecation warning until the next major release.
 
 import pickle
-import warnings
 from enum import auto, Enum
 from pathlib import Path
 
@@ -93,12 +92,7 @@ def sign(x: float) -> int:
     return int(abs(x) / x)
 
 
-def check_bracket(sign_x_l, sign_x_r, disp=None) -> bool:
-    if disp is not None:
-        warnings.warn(
-            "The disp option in check_bracket will be removed in "
-            "the ghedesigner 0.2 release."
-        )
+def check_bracket(sign_x_l, sign_x_r) -> bool:
     if sign_x_l < 0 < sign_x_r:
         # Bracketed the root
         return True
