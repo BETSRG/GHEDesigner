@@ -1,5 +1,3 @@
-import copy
-
 import cv2
 import numpy as np
 
@@ -80,9 +78,9 @@ def determine_largest_rectangle(property_boundary):
     y_max = 0
     for x, y in property_boundary:
         if x > x_max:
-            x_max = copy.deepcopy(x)
+            x_max = x
         if y > y_max:
-            y_max = copy.deepcopy(y)
+            y_max = y
 
     rectangle = [[0, 0], [x_max, 0], [x_max, y_max], [0, y_max], [0, 0]]
 

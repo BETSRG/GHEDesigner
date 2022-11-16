@@ -127,6 +127,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
 
         # Place single u-tubes at a B-spacing
         # Total horizontal space (m)
+        # TODO: investigate why this deepcopy is required
         _borehole = deepcopy(self.b)
         spacing = _borehole.r_b * 2 - (n * r_p_o_prime * 2)
         # If the spacing is negative, then the borehole is not large enough,
@@ -139,15 +140,17 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         pos = media.Pipe.place_pipes(s, r_p_o_prime, 1)  # Place single u-tube pipe
 
         # New pipe geometry
-        roughness = deepcopy(self.pipe.roughness)
-        rho_cp = deepcopy(self.pipe.rhoCp)
+        roughness = self.pipe.roughness
+        rho_cp = self.pipe.rhoCp
         pipe = media.Pipe(pos, r_p_i_prime, r_p_o_prime, s, roughness, k_p_prime, rho_cp)
 
         # Don't tie together the original and equivalent BHEs
-        m_flow_borehole = deepcopy(self.m_flow_borehole)
-        fluid = deepcopy(self.fluid)
+        m_flow_borehole = self.m_flow_borehole
+        fluid = self.fluid
+
+        # TODO: investigate why this deepcopy is required
         grout = deepcopy(self.grout)
-        soil = deepcopy(self.soil)
+        soil = self.soil
 
         # Maintain the same mass flow rate so that the Rb/Rb* is not diverged from
         eq_single_u_tube = SingleUTube(

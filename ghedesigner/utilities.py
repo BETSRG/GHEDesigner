@@ -5,7 +5,6 @@
 # to a different module. If that is the case, the function needs to contain a
 # deprecation warning until the next major release.
 
-import copy
 import pickle
 import warnings
 from enum import auto, Enum
@@ -64,7 +63,7 @@ def borehole_spacing(borehole, coordinates):
     x_0, y_0 = coordinates[0]
     if len(coordinates) == 1:
         # Set the spacing to be the borehole radius if there's just one borehole
-        return copy.deepcopy(borehole.r_b)
+        return borehole.r_b
     elif len(coordinates) > 1:
         x_1, y_1 = coordinates[1]
         return max(borehole.r_b, np.sqrt((x_1 - x_0) ** 2 + (y_1 - y_0) ** 2))

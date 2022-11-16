@@ -1,4 +1,3 @@
-import copy
 import warnings
 
 import numpy as np
@@ -27,11 +26,11 @@ def calculate_g_function(
     bore_field = []
     bhe_objects = []
 
-    h = copy.deepcopy(borehole.H)
-    r_b = copy.deepcopy(borehole.r_b)
-    d = copy.deepcopy(borehole.D)
-    tilt = copy.deepcopy(borehole.tilt)
-    orientation = copy.deepcopy(borehole.orientation)
+    h = borehole.H
+    r_b = borehole.r_b
+    d = borehole.D
+    tilt = borehole.tilt
+    orientation = borehole.orientation
 
     for i in range(len(coordinates)):
         x, y = coordinates[i]

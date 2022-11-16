@@ -5,7 +5,6 @@ from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 class TestEquivalentPipes(GHEBaseTest):
     def test_equiv_pipes_coaxial_to_single_u_tube(self):
-
         # Pipe dimensions
         # Inner pipe radii
         r_in_in = 44.2 / 1000.0 / 2.0

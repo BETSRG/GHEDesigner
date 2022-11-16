@@ -1,6 +1,5 @@
-import copy
-from typing import Type, Union
 import warnings
+from typing import Type, Union
 
 import numpy as np
 import pygfunction as gt
@@ -9,11 +8,11 @@ from scipy.interpolate import interp1d
 from ghedesigner import VERSION
 from ghedesigner import gfunction
 from ghedesigner.borehole_heat_exchangers import SingleUTube, CoaxialPipe, MultipleUTube
-from ghedesigner.utilities import solve_root
 from ghedesigner.ground_loads import HybridLoad
 from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil
 from ghedesigner.radial_numerical_borehole import RadialNumericalBH
 from ghedesigner.utilities import DesignMethod
+from ghedesigner.utilities import solve_root
 
 
 class BaseGHE:
@@ -331,7 +330,7 @@ class GHE(BaseGHE):
         elif method == DesignMethod.Hourly:
             n_months = self.sim_params.end_month - self.sim_params.start_month + 1
             n_hours = int(n_months / 12.0 * 8760.0)
-            q_dot = copy.deepcopy(self.hourly_extraction_ground_loads)
+            q_dot = self.hourly_extraction_ground_loads
             # How many times does q need to be repeated?
             n_years = int(np.ceil(n_hours / 8760))
             if len(q_dot) // 8760 < n_years:

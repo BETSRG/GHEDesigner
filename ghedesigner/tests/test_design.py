@@ -1,5 +1,3 @@
-import copy
-
 from ghedesigner import design, utilities, geometry, borehole_heat_exchangers, media
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
@@ -83,7 +81,7 @@ class TestNearSquare(GHEBaseTest):
 
         # Fluid flow rate
         v_flow = 0.2  # Borehole volumetric flow rate (L/s)
-        self.V_flow_borehole = copy.deepcopy(v_flow)
+        self.V_flow_borehole = v_flow
 
         # Define a borehole
         self.borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)

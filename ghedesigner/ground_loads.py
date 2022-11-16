@@ -1,4 +1,3 @@
-import copy
 from calendar import monthrange
 from json import dumps
 
@@ -444,7 +443,7 @@ class HybridLoad:
         # For all the months, create dictionary of fields
         for i in range(1, 13):
             m_n = number_to_month(i)
-            d[m_n] = copy.deepcopy(hybrid_time_step_fields)
+            d[m_n] = hybrid_time_step_fields
 
             # set total
             d[m_n]["Total"]["rejection"] = self.monthly_cl[i]

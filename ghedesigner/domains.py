@@ -1,5 +1,3 @@
-import copy
-
 import numpy as np
 
 from ghedesigner.coordinates import rectangle, transpose_coordinates, zoned_rectangle, l_shape, c_shape, lop_u
@@ -92,7 +90,7 @@ def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, di
                 r = transpose_coordinates(r)
             rectangle_domain.append(r)
             field_descriptors.append(field_descriptor_format_string.format(N, n_2, b))
-            n_2_old = copy.deepcopy(n_2)
+            n_2_old = n_2
 
         N += 1
 

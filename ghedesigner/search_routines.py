@@ -1,4 +1,3 @@
-import copy
 from json import dumps
 from pathlib import Path
 from typing import Optional
@@ -265,9 +264,9 @@ class Bisection1D:
             c_sign = sign(c_t_excess)
 
             if c_sign == x_l_sign:
-                x_l_idx = copy.deepcopy(c_idx)
+                x_l_idx = c_idx
             else:
-                x_r_idx = copy.deepcopy(c_idx)
+                x_r_idx = c_idx
 
             i += 1
 
@@ -714,7 +713,7 @@ class RowWiseModifiedBisectionSearch:
         # boreholes from the field.
         elif t_lower < 0.0 and t_upper < 0.0:
 
-            original_coordinates = copy.deepcopy(lower_field)
+            original_coordinates = lower_field
 
             # Function For Sorting Boreholes Based on Proximity to a Point
             def point_sort(target_point, other_points, method="ascending"):
@@ -874,9 +873,7 @@ class Bisection2D(Bisection1D):
 
         selection_key, _ = self.search()
 
-        self.calculated_temperatures_nested.append(
-            copy.deepcopy(self.calculated_temperatures)
-        )
+        self.calculated_temperatures_nested.append(self.calculated_temperatures)
 
         # We tacked on one borehole to the beginning, so we need to subtract 1
         # on the index
@@ -980,9 +977,7 @@ class BisectionZD(Bisection1D):
                 selection_key, selected_coordinates = self.search()
             except ValueError:
                 break
-            self.calculated_temperatures_nested[i] = copy.deepcopy(
-                self.calculated_temperatures
-            )
+            self.calculated_temperatures_nested[i] = self.calculated_temperatures
 
             self.ghe.compute_g_functions()
             self.ghe.size(method=DesignMethod.Hybrid)
@@ -994,7 +989,7 @@ class BisectionZD(Bisection1D):
             if old_height < total_drilling:
                 break
             else:
-                old_height = copy.deepcopy(total_drilling)
+                old_height = total_drilling
 
             i += 1
 
@@ -1004,9 +999,7 @@ class BisectionZD(Bisection1D):
         minimum_total_drilling = min(values)
         idx = values.index(minimum_total_drilling)
         selection_key_outer = keys[idx]
-        self.calculated_temperatures = copy.deepcopy(
-            self.calculated_temperatures_nested[selection_key_outer]
-        )
+        self.calculated_temperatures = self.calculated_temperatures_nested[selection_key_outer]
 
         keys = list(self.calculated_temperatures.keys())
         values = list(self.calculated_temperatures.values())
