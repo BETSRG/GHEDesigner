@@ -41,38 +41,28 @@ GHEdesigner does not have every feature that is found in a tool like GLHEPRO.  F
 
 ## Requirements
 
-GHEDT requires at least Python 3.7 and is tested with Python 3.7 and 3.8. GHEDT  is dependent on the following packages:
+GHEDT requires at least Python 3.7 and is tested with Python 3.8. GHEDesigner is dependent on the following packages:
 
 - pygfunction (>=2.1)
 - numpy (>=1.19.2)
 - scipy (>=1.6.2)
-- matplotlib (>=3.3.4)
-- coolprop (>=6.4.1)
-- pandas (>=1.3.2)
-- openpyxl (>=3.0.8)
 - opencv-python (==4.5.4.58)
 
 ## Quick Start
 
-**Users** - Install `ghedt` via the package installer for Python ([pip][#pip]):
+**Users** - Install `ghedesigner` via the package installer for Python ([pip][#pip]):
 ```angular2html
-pip install ghedt
+pip install ghedesigner
 ```
 
 **Developers** - Clone the repository to via git:
 ```angular2html
-git clone https://github.com/j-c-cook/ghedt
+git clone https://github.com/betsrg/ghedesigner
 ```
-
-See [installation](https://github.com/j-c-cook/ghedt/blob/main/INSTALLATION.md)
-for more notes on installing. See [ghedt/examples/](https://github.com/j-c-cook/ghedt/tree/main/ghedt/examples)
-for usage.
 
 ## Questions?
 
-If there are any questions, comments or concerns please [create][#create] an
-issue, comment on an [open][#issue] issue, comment on a [closed][#closed] issue,
-or [start][#start] a [discussion][#discussion].
+If there are any questions, comments or concerns please [create][#create] an issue, comment on an [open][#issue] issue, comment on a [closed][#closed] issue.
 
 ## Acknowledgements
 The initial release of this work (`ghedt-v0.1`) was financially supported by the U.S. Department of Energy through research subcontracts from Oak Ridge National Laboratory and the National Renewable Energy Laboratory, and by OSU through the Center for Integrated Building Systems, the OG&E Energy Technology Chair, and Oklahoma State University via return of indirect costs to Dr. Jeffrey D. Spitler.
@@ -80,18 +70,13 @@ The initial release of this work (`ghedt-v0.1`) was financially supported by the
 ## References
 Cimmino, M. 2018. pygfunction: an open-source toolbox for the evaluation of thermal. eSim 2018, Montreál, IBPSA Canada. 492-501.
 
-Cook, J.C. (2021). Development of Computer Programs for Fast Computation of
-    g-Functions and Automated Ground Heat Exchanger Design. Master's Thesis,
-    Oklahoma State University, Stillwater, OK.
+Cook, J.C. (2021). Development of Computer Programs for Fast Computation of g-Functions and Automated Ground Heat Exchanger Design. Master's Thesis, Oklahoma State University, Stillwater, OK.
 
-Cullin, J.R. and J.D. Spitler. 2011. A Computationally Efficient Hybrid Time Step
-Methodology for Simulation of Ground Heat Exchangers. Geothermics.
-40(2): 144-156. https://doi.org/10.1016/j.geothermics.2011.01.001
+Cullin, J.R. and J.D. Spitler. 2011. A Computationally Efficient Hybrid Time Step Methodology for Simulation of Ground Heat Exchangers. Geothermics. 40(2): 144-156. https://doi.org/10.1016/j.geothermics.2011.01.001
 
 Prieto, C. and M. Cimmino. 2021. Thermal interactions in large irregular fields of geothermal boreholes: the method of equivalent boreholes. Journal of Building Performance Simulation 14(4): 446-460. https://doi.org/10.1080/19401493.2021.1968953
 
-Spitler, J.D., T.N. West and X. Liu. 2022a. Ground Heat Exchanger Design Tool
-with RowWise Placement of Boreholes. IGSHPA Research Track. Las Vegas. Dec. 6-8
+Spitler, J.D., T.N. West and X. Liu. 2022a. Ground Heat Exchanger Design Tool with RowWise Placement of Boreholes. IGSHPA Research Track. Las Vegas. Dec. 6-8
 
 Spitler, J. D., T. N. West, X. Liu and I. Borshon 2022b. An open library of g-functions for 34,321 configurations. IGSHPA Research Track. Las Vegas.
 
@@ -101,8 +86,6 @@ Xu, X. and J. D. Spitler. 2006. _Modelling of Vertical Ground Loop Heat Exchange
 
 [#pygfunction]: https://github.com/MassimoCimmino/pygfunction
 [#pip]: https://pip.pypa.io/en/latest/
-[#create]: https://github.com/j-c-cook/ghedt/issues/new
-[#issue]: https://github.com/j-c-cook/ghedt/issues
-[#closed]: https://github.com/j-c-cook/ghedt/issues?q=is%3Aissue+is%3Aclosed
-[#start]: https://github.com/j-c-cook/ghedt/discussions/new
-[#discussion]: https://github.com/j-c-cook/ghedt/discussions
+[#create]: https://github.com/betsrg/ghedesigner/issues/new
+[#issue]: https://github.com/betsrg/ghedesigner/issues
+[#closed]: https://github.com/betsrg/ghedesigner/issues?q=is%3Aissue+is%3Aclosed
