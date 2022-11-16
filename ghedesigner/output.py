@@ -459,7 +459,7 @@ def output_design_details(
     o_s += create_d_row(
         allocated_width,
         "Effective Borehole Resistance, W/(m*K):",
-        round(bhe.compute_effective_borehole_resistance(), rounding_amount),
+        round(bhe.calc_effective_borehole_resistance(), rounding_amount),
         string_format,
         float_format,
         b_tabs=indented_amount,

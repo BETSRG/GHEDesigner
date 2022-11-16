@@ -270,7 +270,7 @@ class RadialNumericalBH(object):
 
         self.__init__(single_u_tube)
 
-        resist_bh_effective = self.single_u_tube.compute_effective_borehole_resistance()
+        resist_bh_effective = self.single_u_tube.calc_effective_borehole_resistance()
 
         resist_f_eq = self.single_u_tube.R_f / 2.0
         resist_p_eq = self.single_u_tube.R_p / 2.0

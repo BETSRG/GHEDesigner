@@ -310,7 +310,7 @@ class HybridLoad:
     ):
         ts = self.radial_numerical.t_s
         two_pi_k = 2.0 * np.pi * self.bhe.soil.k
-        resist_bh_effective = self.bhe.compute_effective_borehole_resistance()
+        resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
         g_sts = self.radial_numerical.g_sts
         hours_in_day = 24
         hour_time = np.array(list(range(0, 2 * hours_in_day + 1)))

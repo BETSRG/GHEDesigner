@@ -151,7 +151,7 @@ class BaseGHE:
         two_pi_k = 2.0 * np.pi * self.bhe.soil.k  # (W/m.K)
         h = self.bhe.b.H  # (meters)
         tg = self.bhe.soil.ugt  # (Celsius)
-        rb = self.bhe.compute_effective_borehole_resistance()  # (m.K/W)
+        rb = self.bhe.calc_effective_borehole_resistance()  # (m.K/W)
         m_dot = self.bhe.m_flow_borehole  # (kg/s)
         cp = self.bhe.fluid.cp  # (J/kg.s)
 
@@ -311,7 +311,7 @@ class GHE(BaseGHE):
         b = self.B_spacing
         b_over_h = b / self.bhe.b.H
 
-        self.bhe.update_thermal_resistance()
+        # self.bhe.calc_effective_borehole_resistance()
 
         # Solve for equivalent single U-tube
         self.bhe_eq = self.bhe.to_single()

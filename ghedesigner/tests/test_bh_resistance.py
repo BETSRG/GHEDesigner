@@ -64,7 +64,7 @@ class TestBHResistance(GHEBaseTest):
 
         self.log(coaxial)
 
-        r_b = coaxial.compute_effective_borehole_resistance()
+        r_b = coaxial.calc_effective_borehole_resistance()
 
         val = "Intermediate variables"
         self.log(val + "\n" + len(val) * "-")
@@ -74,7 +74,7 @@ class TestBHResistance(GHEBaseTest):
         self.log("Reynolds number: {}".format(re))
         # R_p = Coaxial.R_p
         # self.log('Pipe resistance (K/(W/m)) : {}'.format(R_p))
-        h_f = coaxial.h_fluid_a_out
+        h_f = coaxial.h_f_a_out
         self.log("Convection coefficient (W/m2.K): {}".format(h_f))
         r_fp = coaxial.R_fp
         self.log("Convective resistance (K/(W/m)): {}".format(r_fp))
@@ -139,8 +139,8 @@ class TestBHResistance(GHEBaseTest):
 
         self.log(double_u_tube_parallel)
 
-        r_b_series = double_u_tube_series.compute_effective_borehole_resistance()
-        r_b_parallel = double_u_tube_parallel.compute_effective_borehole_resistance()
+        r_b_series = double_u_tube_series.calc_effective_borehole_resistance()
+        r_b_parallel = double_u_tube_parallel.calc_effective_borehole_resistance()
 
         # Intermediate variables
         re = borehole_heat_exchangers.compute_reynolds(
@@ -234,7 +234,7 @@ class TestBHResistance(GHEBaseTest):
         r_fp = single_u_tube.R_fp
         self.log("Convective resistance (K/(W/m)): {}".format(r_fp))
 
-        r_b = single_u_tube.compute_effective_borehole_resistance()
+        r_b = single_u_tube.calc_effective_borehole_resistance()
 
         self.log("Borehole thermal resistance: {0:.4f} m.K/W".format(r_b))
 
@@ -324,9 +324,9 @@ class TestBHResistance(GHEBaseTest):
             )
             borehole_values["Double U-tube"]["Re"].append(re)
 
-            r_b = single_u_tube.compute_effective_borehole_resistance()
+            r_b = single_u_tube.calc_effective_borehole_resistance()
             borehole_values["Single U-tube"]["Rb"].append(r_b)
-            r_b = double_u_tube_parallel.compute_effective_borehole_resistance()
+            r_b = double_u_tube_parallel.calc_effective_borehole_resistance()
             borehole_values["Double U-tube"]["Rb"].append(r_b)
 
         # Pipe dimensions
@@ -385,7 +385,7 @@ class TestBHResistance(GHEBaseTest):
             )
             borehole_values["Coaxial"]["Re"].append(re)
 
-            r_b = coaxial.compute_effective_borehole_resistance()
+            r_b = coaxial.calc_effective_borehole_resistance()
             borehole_values["Coaxial"]["Rb"].append(r_b)
 
         # Open GLHEPRO xlsx file

@@ -81,7 +81,7 @@ class TestEquivalentPipes(GHEBaseTest):
         self.log("Pipe thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.pipe.k))
         self.log("Grout thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.grout.k))
 
-        rb = single_u_tube.compute_effective_borehole_resistance()
+        rb = single_u_tube.calc_effective_borehole_resistance()
         self.log("Effective borehole resistance (m.K/W): {0:.8f}".format(rb))
 
         self.log(single_u_tube.as_dict())
@@ -166,7 +166,7 @@ class TestEquivalentPipes(GHEBaseTest):
         self.log("Pipe thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.pipe.k))
         self.log("Grout thermal conductivity (W/m.K): {0:.8f}".format(single_u_tube.grout.k))
 
-        rb = single_u_tube.compute_effective_borehole_resistance()
+        rb = single_u_tube.calc_effective_borehole_resistance()
         self.log("Effective borehole resistance (m.K/W): {0:.8f}".format(rb))
 
         self.log(single_u_tube.as_dict())
