@@ -1,47 +1,46 @@
-# GHEDesigner - The Flexible and Automatic Ground Heat Exchanger Design Tool
+# GHEDesigner - A Flexible and Automatic Ground Heat Exchanger Design Tool
 
-GHEdesigner is a Python package for designing ground heat exchangers (GHE) used with ground source heat pump (GSHP) systems.  Compared to currently available tools such as [GLHEPRO](https://hvac.okstate.edu/glhepro.html), GHEdesigner:
-- is flexible. It can synthesize borehole fields that are custom fit to  the user's property description.
-- implements the RowWise algorithm (Spitler, et al. 2022)
-- is highly automated.  It can select library configurations or custom configurations and determine the final depth requirements.
-- has automated conversion of hourly loads to an improved hybrid time step representation, based on the recommendations of Cullin and Spitler (2011).
+GHEDesigner is a Python package for designing ground heat exchangers (GHE) used with ground source heat pump (GSHP) systems. Compared to currently available tools such as [GLHEPRO](https://hvac.okstate.edu/glhepro.html), GHEDesigner:
+- is flexible. It can synthesize borehole fields that are custom fit to the user's property description,
+- implements the RowWise algorithm (Spitler, et al. 2022) for automatically placing and sizing boreholes in any land area with complex geometry, 
+- is highly automated. It can select library configurations or custom configurations and determine the final number and depth requirement of boreholes,
+- can make automated conversion of hourly loads to an improved hybrid time step representation, based on the recommendations of Cullin and Spitler (2011), and
 - is under continuing development at Oklahoma State University (OSU), Oak Ridge National Laboratory (ORNL), and National Renewable Energy Laboratory (NREL).
 
 ## Background
-GHEdesigner was originally funded through US Department of Energy contract DE‐AC05‐00OR22725 via a subcontract from Oak Ridge National Laboratory.  The first version, called GHEDT, is described in an MS thesis (Cook 2021).   Since that time, the tool has been renamed GHEdesigner, and work has continued at Oklahoma State University, Oak Ridge National Laboratory, and National Renewable Energy Laboratory.
+GHEDesigner was originally funded through US Department of Energy contract DE‐AC05‐00OR22725 via a subcontract from Oak Ridge National Laboratory. The earlier version, called GHEDT, is described in an MS thesis (Cook 2021). Since that time, the tool has been renamed GHEDesigner, and work has continued at Oklahoma State University, Oak Ridge National Laboratory, and National Renewable Energy Laboratory.
 
 Features added since Cook (2021) include:
 - Use of the RowWise algorithm to efficiently place boreholes in the available land area.
 - <<<Timothy, Matt: What else?>>>
 
-## Design Algorithms
+## Borehole Field Design Algorithms
 
-- This is intended to be an overview of all the design algorithms rather than just the ones that Jack developed.   I plan to cite the relevant papers
-- Long time-step g-functions are calculated using pygfunction (Cimmino 2018) using the equivalent borehole method (Prieto and Cimmino 2021).  It's also possible to read g-functions from a library (Spitler, et al. 2021).
-- Borehole thermal resistance is computed for single and   double U-tube configurations via the multi-pole method.  For co-axial ground heat exchangers, it is computed from fundamental heat transfer relationships.
+- Long time-step g-functions are calculated using pygfunction (Cimmino 2018) using the equivalent borehole method (Prieto and Cimmino 2021). It's also possible to read g-functions from a library (Spitler, et al. 2021).
+- Borehole thermal resistance is computed for single and double U-tube configurations via the multi-pole method. For co-axial ground heat exchangers, it is computed from fundamental heat transfer relationships.
 - Short time-step g-functions are computed using the Xu and Spitler (2006) method.
-- GHEDT contains a novel design methodology for automated selection of borehole fields. The advanced methodology performs optimization based on a target drilling depth. An integer bisection routine is utilized to quickly search over a unimodal domain of boreholes. GHEDT can consider available drilling and no-drilling zones defined as polygons.
-- GHEdesigner can synthesize a range of regularly shaped borehole configurations, including previously available shapes (rectangles, open rectangles, L-shape, U-shape, line) and shapes not previously available (C-shapes and zoned rectangles).  More information about these shapes can be found in the documentation for a publicly available g-function library. (Spitler, et al. 2021, 2022b)
-- GHEdesigner can synthesize on the fly irregularly shaped borehole configurations using the RowWise algorithm (Spitler, et al. 2022a) or the  bi-uniform polygonal constrained rectangular search (BUPCRS) (Cook 2021).  Both configurations are adapted to the user property boundaries and no-drill zones, if any. Spitler, et al. (2022a) gives an example where the RowWise algorithm saves 12%-18% compared to the BUPCRS algorithm.  The RowWise algorithm takes longer to run, though.
+- GHEDesigner contains a novel design methodology for automated selection of borehole fields. The advanced methodology performs optimization based on a target drilling depth. An integer bisection routine is utilized to quickly search over a unimodal domain of boreholes. GHEDesigner can consider the available land area for drilling and no-drilling zones defined as polygons.
+- GHEDesigner can synthesize a range of regularly shaped borehole configurations, including previously available shapes (rectangles, open rectangles, L-shape, U-shape, line) and shapes not previously available (C-shapes and zoned rectangles). More information about these shapes can be found in the documentation for a publicly available g-function library. (Spitler, et al. 2021, 2022b)
+- GHEDesigner can synthesize on the fly irregularly shaped borehole configurations using the RowWise algorithm (Spitler, et al. 2022a) or the bi-uniform polygonal constrained rectangular search (BUPCRS) (Cook 2021). Both configurations are adapted to the user-specified property boundaries and no-drill zones, if any. Spitler, et al. (2022a) gives an example where the RowWise algorithm saves 12%-18% compared to the BUPCRS algorithm. The RowWise algorithm takes longer to run, though.
 - A set of search routines can be used to size different types of configurations:
-- The unconstrained square/near-square search will search a domain of square (n x n) and near-square (n-1 x n) boreholes, with uniform spacing between the boreholes.
-- Uniform and bi-uniform constrained rectangular searches will search domains of rectangular configurations that have either uniform spacing or “bi-uniform” spacing – that is, uniform in the x direction and uniform in the y direction, but the two spacings may be different.
-- The bi-uniform constrained zoned rectangular search allows for rectangular configurations with different interior and perimeter spacings.
-- The bi-uniform polygonal constrained rectangular search (BUPCRS) can search configurations with an outer perimeter and no-go zones described as irregular polygons. This is still referred to as a rectangular search because it is still based on a rectangular grid, from which boreholes that are outside the perimeter or inside a no-go zone are removed.
-- The RowWise method generates and searches custom borehole fields that make full use of the available property.  The RowWise algorithms are described by Spitler et al. (2022a).
+  - The unconstrained square/near-square search will search a domain of square (n x n) and near-square (n-1 x n) boreholes fields, with uniform spacing between the boreholes.
+  - Uniform and bi-uniform constrained rectangular searches will search domains of rectangular configurations that have either uniform spacing or "bi-uniform" spacing – that is, uniform in the x direction and uniform in the y direction, but the two spacings may be different.
+  - The bi-uniform constrained zoned rectangular search allows for rectangular configurations with different interior and perimeter spacings.
+  - The bi-uniform polygonal constrained rectangular search (BUPCRS) can search configurations with an outer perimeter and no-go zones described as irregular polygons. This is still referred to as a rectangular search because it is still based on a rectangular grid, from which boreholes that are outside the perimeter or inside a no-go zone are removed.
+  - The RowWise method generates and searches custom borehole fields that make full use of the available property. The RowWise algorithms are described by Spitler et al. (2022a).
 
 ## Limitations
-GHEdesigner does not have every feature that is found in a tool like GLHEPRO.  Features that are currently missing include:
-- Heat pumps are not modeled.  Users input heat rejection/extraction rates.
-- An hourly simulation is available, but doesn't make use of load aggregation, so is very slow.
-- GHEdesigner only covers vertical borehole ground heat exchangers.  Horizontal ground heat exchangers are not treated.
-- GHEdesigner does not calculate head loss or warn the user that head loss may be excessive.
-- GHEdesigner does not have a graphical user interface.  This limits its usefulness for practicing engineers.
-- GHEdesigner is a Python package and requires some Python knowledge to use.  Again, this limits its usefulness for practicing engineers.
+GHEDesigner does not have every feature that is found in a tool like GLHEPRO. Features that are currently missing include:
+- Heat pumps are not modeled. Users input heat rejection/extraction rates.
+- An hourly simulation is available, but it doesn't make use of load aggregation, so is very slow.
+- GHEDesigner only covers vertical borehole ground heat exchangers. Horizontal ground heat exchangers are not treated.
+- GHEDesigner does not calculate the head loss in the ground heat exchanger or warn the user that head loss may be excessive.
+- GHEDesigner does not have a graphical user interface. This limits its usefulness for practicing engineers.
+- GHEDesigner is a Python package and requires some Python knowledge to use. Again, this limits its usefulness for practicing engineers.
 
 ## Requirements
 
-GHEDT requires at least Python 3.7 and is tested with Python 3.8. GHEDesigner is dependent on the following packages:
+GHEDesigner requires at least Python 3.7 and is tested with Python 3.8. GHEDesigner is dependent on the following packages:
 
 - pygfunction (>=2.1)
 - numpy (>=1.19.2)
@@ -50,7 +49,7 @@ GHEDT requires at least Python 3.7 and is tested with Python 3.8. GHEDesigner is
 
 ## Quick Start
 
-**Users** - Install `ghedesigner` via the package installer for Python ([pip][#pip]):
+**Users** - Install `GHEDesigner` via the package installer for Python ([pip][#pip]):
 ```angular2html
 pip install ghedesigner
 ```
