@@ -10,9 +10,9 @@ GHEDesigner is a Python package for designing ground heat exchangers (GHE) used 
 ## Background
 GHEDesigner was originally funded through US Department of Energy contract DE‐AC05‐00OR22725 via a subcontract from Oak Ridge National Laboratory. The earlier version, called GHEDT, is described in an MS thesis (Cook 2021). Since that time, the tool has been renamed GHEDesigner, and work has continued at Oklahoma State University, Oak Ridge National Laboratory, and National Renewable Energy Laboratory.
 
-Features added since Cook (2021) include:
+Updates since Cook (2021) include:
+- Extensive refactoring for creating a user-focused, stable API.
 - Use of the RowWise algorithm to efficiently place boreholes in the available land area.
-- <<<Timothy, Matt: What else?>>>
 
 ## Borehole Field Design Algorithms
 
@@ -64,7 +64,7 @@ git clone https://github.com/betsrg/ghedesigner
 If there are any questions, comments or concerns please [create][#create] an issue, comment on an [open][#issue] issue, comment on a [closed][#closed] issue.
 
 ## Acknowledgements
-The initial release of this work (`ghedt-v0.1`) was financially supported by the U.S. Department of Energy through research subcontracts from Oak Ridge National Laboratory and the National Renewable Energy Laboratory, and by OSU through the Center for Integrated Building Systems, the OG&E Energy Technology Chair, and Oklahoma State University via return of indirect costs to Dr. Jeffrey D. Spitler.
+The initial release of this work was financially supported by the U.S. Department of Energy through research subcontracts from Oak Ridge National Laboratory and the National Renewable Energy Laboratory, and by OSU through the Center for Integrated Building Systems, the OG&E Energy Technology Chair, and Oklahoma State University via return of indirect costs to Dr. Jeffrey D. Spitler.
 
 ## References
 Cimmino, M. 2018. pygfunction: an open-source toolbox for the evaluation of thermal. eSim 2018, Montreál, IBPSA Canada. 492-501.

@@ -96,7 +96,7 @@ class TestBHResistance(GHEBaseTest):
         r_out = 26.67 / 1000.0 / 2.0  # pipe outer radius (m)
         r_in = 21.6 / 1000.0 / 2.0  # pipe inner radius (m)
         s = 32.3 / 1000.0  # shank spacing (m)
-        pos = Pipe.place_pipes(s, r_out, 2)  # double U-tube
+        pos = Pipe.place_pipes(s, r_out, 2)  # double U-tube # TODO: move from static method to borehole
         k_p = 0.4  # pipe thermal conductivity (W/m.K)
         rho_cp_p = 1542.0 * 1000.0  # pipe volumetric heat capacity (J/K.m3)
         epsilon = 1.0e-6  # pipe roughness (m)
