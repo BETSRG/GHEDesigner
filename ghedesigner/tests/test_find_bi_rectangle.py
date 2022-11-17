@@ -222,10 +222,8 @@ class TestFindBiRectangle(GHEBaseTest):
 
         # Coaxial tube
         pos_coaxial = (0, 0)
-        coaxial_tube = plat.CoaxialPipe
-        pipe_coaxial = \
-            plat.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax,
-                            rhoCp_p)
+        coaxial_tube = CoaxialPipe
+        pipe_coaxial = Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rhoCp_p)
 
         # Coaxial Tube
         # -------------

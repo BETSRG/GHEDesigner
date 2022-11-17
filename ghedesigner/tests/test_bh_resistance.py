@@ -2,7 +2,8 @@ from matplotlib import pyplot
 from pandas import ExcelFile, read_excel
 
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase, CoaxialPipe, MultipleUTube, SingleUTube
+from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase, CoaxialPipe, MultipleUTube, SingleUTube, \
+    FlowConfig
 from ghedesigner.media import Pipe, Grout, GHEFluid, Soil
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
@@ -85,52 +86,41 @@ class TestBHResistance(GHEBaseTest):
         fig.savefig(str(output_plot))
 
     def test_bh_resistance_double_u_tube(self):
-        # Borehole dimensions
-        h = 100.0  # Borehole length (m)
-        d = 2.0  # Borehole buried depth (m)
-        r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
-
-        # Pipe dimensions
-        r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
-        r_in = 21.6 / 1000.0 / 2.0  # Pipe inner radius (m)
-        s = 32.3 / 1000.0  # Inner-tube to inner-tube Shank spacing (m)
-        epsilon = 1.0e-6  # Pipe roughness (m)
-
-        # Thermal conductivities
-        k_p = 0.4  # Pipe thermal conductivity (W/m.K)
-        k_s = 2.0  # Ground thermal conductivity (W/m.K)
-        k_g = 1.0  # Grout thermal conductivity (W/m.K)
-
-        # Volumetric heat capacities
-        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
-
-        # Pipe positions
-        # Double U-tube [(x_in, y_in), (x_out, y_out), (x_in, y_in), (x_out, y_out)]
-        pos = Pipe.place_pipes(s, r_out, 2)
-
-        # Thermal properties
-        # Pipe
-        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
-        # Soil
-        ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = Soil(k_s, rho_cp_s, ugt)
-        # Grout
-        grout = Grout(k_g, rho_cp_g)
-
-        # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
-        v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
-        # Total fluid mass flow rate per borehole (kg/s)
-        m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
-
-        # Define a borehole
+        # borehole
+        h = 100.0  # borehole length (m)
+        d = 2.0  # borehole buried depth (m)
+        r_b = 0.075  # borehole radius (m)
         borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
-        double_u_tube_series = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, config="series")
+        # pipe
+        r_out = 26.67 / 1000.0 / 2.0  # pipe outer radius (m)
+        r_in = 21.6 / 1000.0 / 2.0  # pipe inner radius (m)
+        s = 32.3 / 1000.0  # shank spacing (m)
+        pos = Pipe.place_pipes(s, r_out, 2)  # double U-tube
+        k_p = 0.4  # pipe thermal conductivity (W/m.K)
+        rho_cp_p = 1542.0 * 1000.0  # pipe volumetric heat capacity (J/K.m3)
+        epsilon = 1.0e-6  # pipe roughness (m)
+        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
 
-        double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, config="parallel")
+        # soil
+        k_s = 2.0  # Ground thermal conductivity (W/m.K)
+        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
+        soil = Soil(k_s, rho_cp_s, ugt)
+
+        # grout
+        k_g = 1.0  # Grout thermal conductivity (W/m.K)
+        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        grout = Grout(k_g, rho_cp_g)
+
+        # fluid
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+
+        # U-tubes
+        v_flow_borehole = 0.2  # volumetric flow rate per borehole (L/s)
+        m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho  # mass flow rate (kg/s)
+        double_u_tube_series = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)
+        double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, FlowConfig.Parallel)
 
         self.log(double_u_tube_parallel)
 
@@ -305,7 +295,7 @@ class TestBHResistance(GHEBaseTest):
             borehole_values["Single U-tube"]["Re"].append(re)
 
             double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe_d, grout, soil,
-                                                   config="parallel")
+                                                   FlowConfig.Parallel)
 
             re = GHEDesignerBoreholeBase.compute_reynolds(
                 double_u_tube_parallel.m_flow_pipe, r_in, fluid

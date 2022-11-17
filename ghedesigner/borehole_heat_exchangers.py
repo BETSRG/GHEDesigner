@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from copy import deepcopy
+from enum import auto, Enum
 from typing import Tuple, Optional
 
 import numpy as np
@@ -9,6 +10,12 @@ from numpy import pi, log, sqrt
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.media import GHEFluid, Pipe, Grout, Soil
 from ghedesigner.utilities import solve_root
+
+
+# TODO: move to central location with other enums
+class FlowConfig(Enum):
+    Parallel = auto()
+    Series = auto()
 
 
 class GHEDesignerBoreholeBase:
@@ -67,6 +74,15 @@ class GHEDesignerBoreholeBase:
         # Reynolds number
         return fluid.rho * velocity * dia_hydraulic / fluid.mu
 
+    @staticmethod
+    def calc_mass_flow_pipe(m_flow_borehole: float, config: Optional[FlowConfig] = None) -> float:
+        if config == FlowConfig.Series or config is None:
+            return m_flow_borehole
+        elif config == FlowConfig.Parallel:
+            return m_flow_borehole / 2.0
+        else:
+            raise ValueError(f"Invalid flow configuration: {str(config)}")
+
 
 class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
     def __init__(
@@ -85,8 +101,6 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.h_f = 0.0
         self.fluid = fluid
         self.m_flow_borehole = m_flow_borehole
-
-        # TODO: May need to revisit this for series/parallel connections
         self.m_flow_pipe = m_flow_borehole
         self.borehole = _borehole
         self.pipe = pipe
@@ -187,9 +201,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         soil = self.soil
 
         # Maintain the same mass flow rate so that the Rb/Rb* is not diverged from
-        eq_single_u_tube = SingleUTube(
-            m_flow_borehole, fluid, _borehole, pipe, grout, soil
-        )
+        eq_single_u_tube = SingleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
 
         # The thermal conductivity of the pipe must now be varied such that R_fp is
         # equivalent to R_fp_prime
@@ -248,7 +260,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
             pipe: Pipe,
             grout: Grout,
             soil: Soil,
-            config="parallel",
+            config=FlowConfig.Parallel,
     ):
         self.R_p = 0.0
         self.R_f = 0.0
@@ -256,9 +268,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         self.h_f = 0.0
         self.fluid = fluid
         self.m_flow_borehole = m_flow_borehole
-
-        # TODO: May need to revisit this for series/parallel connections
-        self.m_flow_pipe = m_flow_borehole
+        self.m_flow_pipe = self.calc_mass_flow_pipe(self.m_flow_borehole, config)
         self.borehole = _borehole
         self.pipe = pipe
         self.soil = soil
@@ -280,7 +290,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
             self.grout.k,
             self.R_fp,
             self.pipe.n_pipes,
-            config=config,
+            config=config.name,
         )
 
         # these methods must be called after inherited class construction
@@ -350,11 +360,10 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
             _borehole: GHEBorehole,
             pipe: Pipe,
             grout: Grout,
-            soil: Soil,
-            config=None,
+            soil: Soil
     ):
         self.m_flow_borehole = m_flow_borehole
-        self.m_flow_pipe = self.compute_mass_flow_rate_pipe(m_flow_borehole, config)
+        self.m_flow_pipe = m_flow_borehole
         # Store Thermal properties
         self.soil = soil
         self.grout = grout
@@ -426,7 +435,6 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         self.calc_effective_borehole_resistance(m_flow_borehole)
 
     def calc_fluid_pipe_resistance(self, m_flow_borehole: Optional[float] = None) -> None:
-
         # inner pipe convection resistance
         self.h_f_in = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(m_flow_borehole,
                                                                                   self.r_in_in,
@@ -507,16 +515,6 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         # blob['pipe_resistance'] = {'value': self.R_p, 'units': 'm-K/W'}
         # blob['fluid_resistance'] = {'value': self.R_f, 'units': 'm-K/W'}
         return blob
-
-    @staticmethod
-    def compute_mass_flow_rate_pipe(m_flow_borehole: float, config: str) -> float:
-        if config == "series" or config is None:
-            m_flow_pipe = m_flow_borehole
-        elif config == "parallel":
-            m_flow_pipe = m_flow_borehole / 2.0
-        else:
-            raise ValueError("No such configuration exists.")
-        return m_flow_pipe
 
     def concentric_tube_volumes(self) -> Tuple[float, float, float, float]:
         # Unpack the radii to reduce confusion in the future

@@ -40,8 +40,8 @@ class TestCreateBiRectangleInputFile(GHEBaseTest):
         # Single U-tube BHE object
         single_u_tube = SingleUTube
         # Double U-tube
-        # pos_double = plat.Pipe.place_pipes(s, r_out, 2)
-        # double_u_tube = plat.MultipleUTube
+        # pos_double = Pipe.place_pipes(s, r_out, 2)
+        # double_u_tube = MultipleUTube
         # Coaxial tube
         # pos_coaxial = (0, 0)
         # coaxial_tube = plat.CoaxialPipe
