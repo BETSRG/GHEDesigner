@@ -156,7 +156,6 @@ def field_optimization_fr(
     return [field, field_name]
 
 
-# This is adapted code from Jack Cook's Borefield processing code
 def find_duplicates(borefield, space, disp=False):
     """
     The distance method :func:`Borehole.distance` is utilized to find all

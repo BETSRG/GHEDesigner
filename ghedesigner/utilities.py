@@ -67,10 +67,7 @@ def borehole_spacing(borehole, coordinates):
         x_1, y_1 = coordinates[1]
         return max(borehole.r_b, np.sqrt((x_1 - x_0) ** 2 + (y_1 - y_0) ** 2))
     else:
-        raise ValueError(
-            "The coordinates_domain needs to contain a positive"
-            "number of (x, y) pairs."
-        )
+        raise ValueError("The coordinates_domain needs to contain a positive number of (x, y) pairs.")
 
 
 # TODO: Add `set_shank` functionality to utilities.py

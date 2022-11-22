@@ -44,7 +44,7 @@ class Bisection1D:
         self.searchTracker = []
         coordinates = coordinates_domain[0]
         current_field = field_descriptors[0]
-        self.fieldType = field_type
+        self.field_type = field_type
         # Flow rate tracking
         self.V_flow = v_flow
         self.flow = flow
@@ -112,9 +112,7 @@ class Bisection1D:
             v_flow_borehole = self.V_flow / float(len(coordinates))
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
         else:
-            raise ValueError(
-                "The flow argument should be either `borehole`" "or `system`."
-            )
+            raise ValueError("The flow argument should be either `borehole`" "or `system`.")
         return v_flow_system, m_flow_borehole
 
     def initialize_ghe(self, coordinates, h, field_specifier="N/A"):
@@ -161,7 +159,7 @@ class Bisection1D:
             g_function,
             self.sim_params,
             self.hourly_extraction_ground_loads,
-            field_type=self.fieldType,
+            field_type=self.field_type,
             field_specifier=field_specifier,
             load_years=self.load_years,
         )
@@ -172,11 +170,6 @@ class Bisection1D:
         max_hp_eft, min_hp_eft = self.ghe.simulate(method=self.method)
         t_excess = self.ghe.cost(max_hp_eft, min_hp_eft)
         self.searchTracker.append([field_specifier, t_excess, max_hp_eft, min_hp_eft])
-
-        # This is more of a debugging statement. May remove it in the future.
-        # Perhaps there becomes a debug: bool option in the API.
-        # if self.disp:
-        #     print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
 
         return t_excess
 
@@ -244,7 +237,6 @@ class Bisection1D:
             print("Beginning bisection search...")
 
         x_l_sign = sign(t_0_upper)
-        # xR_sign = sign(T_m1)
 
         i = 0
 
@@ -288,9 +280,7 @@ class Bisection1D:
         selection_key = keys[idx]
         selected_coordinates = self.coordinates_domain[selection_key]
 
-        self.initialize_ghe(
-            selected_coordinates, h, field_specifier=self.fieldDescriptors[selection_key]
-        )
+        self.initialize_ghe(selected_coordinates, h, field_specifier=self.fieldDescriptors[selection_key])
 
         return selection_key, selected_coordinates
 
@@ -398,11 +388,8 @@ class RowWiseModifiedBisectionSearch:
         self.disp = disp
         self.ghe: Optional[GHE] = None
         self.calculated_temperatures = {}
-        # self.advanced_tracking = advanced_tracking
         if advanced_tracking:
-            self.advanced_tracking = [
-                ["TargetSpacing", "Field Specifier", "nbh", "ExcessTemperature"]
-            ]
+            self.advanced_tracking = [["TargetSpacing", "Field Specifier", "nbh", "ExcessTemperature"]]
             self.checkedFields = []
         if search:
             self.selected_coordinates, self.selected_specifier = self.search(
@@ -428,9 +415,7 @@ class RowWiseModifiedBisectionSearch:
             v_flow_borehole = self.V_flow / float(len(coordinates))
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
         else:
-            raise ValueError(
-                "The flow argument should be either `borehole`" "or `system`."
-            )
+            raise ValueError("The flow argument should be either `borehole`" "or `system`.")
         return v_flow_system, m_flow_borehole
 
     def initialize_ghe(self, coordinates, h, field_specifier="N/A"):
@@ -487,11 +472,6 @@ class RowWiseModifiedBisectionSearch:
         t_excess = self.ghe.cost(max_hp_eft, min_hp_eft)
         self.searchTracker.append([field_specifier, t_excess, max_hp_eft, min_hp_eft])
 
-        # This is more of a debugging statement. May remove it in the future.
-        # Perhaps there becomes a debug: bool option in the API.
-        # if self.disp:
-        #     print('Min EFT: {}\nMax EFT: {}'.format(min_HP_EFT, max_HP_EFT))
-
         return t_excess
 
     def search(
@@ -505,6 +485,7 @@ class RowWiseModifiedBisectionSearch:
         # Copy all the geometric constraints to local variables
         if b_r_point is None:
             b_r_point = [0.0, 0.0]
+
         spacing_start = self.geometricConstraints.spacStart
         spacing_stop = self.geometricConstraints.spacStop
         spacing_step = self.geometricConstraints.spacStep
@@ -559,21 +540,14 @@ class RowWiseModifiedBisectionSearch:
                 rotate_start=rotate_start,
                 rotate_stop=rotate_stop,
             )
+
         # Get Excess Temperatures
-        t_upper = self.calculate_excess(
-            upper_field, self.sim_params.max_Height, field_specifier=upper_field_specifier
-        )
-        t_lower = self.calculate_excess(
-            lower_field, self.sim_params.max_Height, field_specifier=lower_field_specifier
-        )
+        t_upper = self.calculate_excess(upper_field, self.sim_params.max_Height, field_specifier=upper_field_specifier)
+        t_lower = self.calculate_excess(lower_field, self.sim_params.max_Height, field_specifier=lower_field_specifier)
 
         if self.advanced_tracking:
-            self.advanced_tracking.append(
-                [spacing_start, upper_field_specifier, len(upper_field), t_upper]
-            )
-            self.advanced_tracking.append(
-                [spacing_stop, lower_field_specifier, len(lower_field), t_lower]
-            )
+            self.advanced_tracking.append([spacing_start, upper_field_specifier, len(upper_field), t_upper])
+            self.advanced_tracking.append([spacing_stop, lower_field_specifier, len(lower_field), t_lower])
             self.checkedFields.append(upper_field)
             self.checkedFields.append(lower_field)
 
@@ -676,6 +650,7 @@ class RowWiseModifiedBisectionSearch:
                         rotate_start=rotate_start,
                         rotate_stop=rotate_stop,
                     )
+
                 t_e = self.calculate_excess(field, self.sim_params.max_Height, field_specifier=f_s)
 
                 if self.advanced_tracking:
@@ -685,8 +660,8 @@ class RowWiseModifiedBisectionSearch:
                 self.initialize_ghe(field, self.sim_params.max_Height, field_specifier=f_s)
                 self.ghe.compute_g_functions()
                 self.ghe.size(method=DesignMethod.Hybrid)
-                h = self.ghe.average_height()
-                total_drilling = h * len(field)
+                total_drilling = self.ghe.bhe.b.H * len(field)
+
                 if best_field is None:
                     best_field = field
                     best_drilling = total_drilling
@@ -736,9 +711,8 @@ class RowWiseModifiedBisectionSearch:
                 raise ValueError(msg)
 
             # Check if a 1X1 field is satisfactory
-            t_e_single = self.calculate_excess(
-                [[0, 0]], self.sim_params.max_Height, field_specifier="1X1"
-            )
+            t_e_single = self.calculate_excess([[0, 0]], self.sim_params.max_Height, field_specifier="1X1")
+
             if self.advanced_tracking:
                 self.advanced_tracking.append(["N/A", "1X1", 1, t_e_single])
                 self.checkedFields.append([[0, 0]])

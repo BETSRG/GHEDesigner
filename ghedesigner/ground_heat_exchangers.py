@@ -118,9 +118,6 @@ class BaseGHE:
 
         return g
 
-    def average_height(self):
-        return self.bhe.b.H
-
     def cost(self, max_eft, min_eft):
         delta_t_max = max_eft - self.sim_params.max_EFT_allowable
         delta_t_min = self.sim_params.min_EFT_allowable - min_eft
@@ -242,10 +239,9 @@ class GHE(BaseGHE):
         # the HybridLoad object
         if load_years is None:
             load_years = [2019]
-        (
-            hourly_rejection_loads,
-            hourly_extraction_loads,
-        ) = HybridLoad.split_heat_and_cool(self.hourly_extraction_ground_loads)
+
+        hourly_rejection_loads, hourly_extraction_loads = HybridLoad.split_heat_and_cool(
+            self.hourly_extraction_ground_loads)
 
         hybrid_load = HybridLoad(
             hourly_rejection_loads,
@@ -260,7 +256,7 @@ class GHE(BaseGHE):
         self.hybrid_load = hybrid_load
 
         # List of heat pump exiting fluid temperatures
-        self.HPEFT = []
+        self.hp_eft = []
         # list of change in borehole wall temperatures
         self.dTb = []
 
@@ -269,9 +265,9 @@ class GHE(BaseGHE):
         output['base'] = super().as_dict()
 
         results = dict()
-        if len(self.HPEFT) > 0:
-            max_hp_eft = max(self.HPEFT)
-            min_hp_eft = min(self.HPEFT)
+        if len(self.hp_eft) > 0:
+            max_hp_eft = max(self.hp_eft)
+            min_hp_eft = min(self.hp_eft)
             results['max_hp_entering_temp'] = {'value': max_hp_eft, 'units': 'C'}
             results['min_hp_entering_temp'] = {'value': min_hp_eft, 'units': 'C'}
             t_excess = self.cost(max_hp_eft, min_hp_eft)
@@ -345,7 +341,7 @@ class GHE(BaseGHE):
         else:
             raise ValueError("Only hybrid or hourly methods available.")
 
-        self.HPEFT = hp_eft
+        self.hp_eft = hp_eft
         self.dTb = d_tb
 
         max_hp_eft = float(max(hp_eft))

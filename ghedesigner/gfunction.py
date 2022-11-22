@@ -368,7 +368,7 @@ class GFunction:
         ds_tmp: dict = {}
         # the borehole radius dictionary that may be out of order
         r_bs_tmp: dict = {}
-        t_tmp: dict = {}
+
         for key in g_values:
             # do the g-function dictionary
             key_split = key.split("_")
@@ -376,7 +376,7 @@ class GFunction:
             height = float((key_split[1]))
             # create a g-function list associated with this height key
             g_tmp[height] = g_values[key]
-            # create a r_b value associated with this height key
+            # create an r_b value associated with this height key
             r_b = float(key_split[2])
             r_bs_tmp[height] = r_b
             # the D value is recently added to the key value for the saved
@@ -387,14 +387,6 @@ class GFunction:
             except:
                 pass
 
-            # do the time dictionary
-            time_arr: list = []
-            for _, lntts in enumerate(log_time):
-                alpha = 1.0e-06
-                t_seconds = height ** 2 / 9 / alpha * np.exp(lntts)
-                t_year = t_seconds / 60 / 24 / 365
-                time_arr.append(t_year)
-            t_tmp[height] = time_arr
         # every B-spacing should be the same for each file
         b = float(list(g_values.keys())[0].split("_")[0])
 
@@ -408,9 +400,6 @@ class GFunction:
             # if there's no D provided, make it 2
             ds = {key: 2.0 for key in keys}
         r_bs = {key: r_bs_tmp[key] for key in keys}
-        # time = {
-        #     key: t_tmp[key] for key in keys
-        # }  # fill the time array for yearly points
 
         geothermal_g_input = {
             "b": b,

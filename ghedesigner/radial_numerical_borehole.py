@@ -151,7 +151,9 @@ class RadialNumericalBH(object):
                 dtype=self.dtype,
             )
         cell_summation += num_fluid_cells
-        assert cell_summation == num_fluid_cells
+
+        # TODO: verify whether errors are possible here and raise exception if needed
+        # assert cell_summation == num_fluid_cells
 
         # load convection cells
         for idx in range(cell_summation, num_conv_cells + cell_summation):
@@ -179,7 +181,9 @@ class RadialNumericalBH(object):
                 dtype=self.dtype,
             )
         cell_summation += num_conv_cells
-        assert cell_summation == (num_fluid_cells + num_conv_cells)
+
+        # TODO: verify whether errors are possible here and raise exception if needed
+        # assert cell_summation == (num_fluid_cells + num_conv_cells)
 
         # load pipe cells
         for idx in range(cell_summation, num_pipe_cells + cell_summation):
@@ -207,7 +211,9 @@ class RadialNumericalBH(object):
                 dtype=self.dtype,
             )
         cell_summation += num_pipe_cells
-        assert cell_summation == (num_fluid_cells + num_conv_cells + num_pipe_cells)
+
+        # TODO: verify whether errors are possible here and raise exception if needed
+        # assert cell_summation == (num_fluid_cells + num_conv_cells + num_pipe_cells)
 
         # load grout cells
         for idx in range(cell_summation, num_grout_cells + cell_summation):
@@ -235,7 +241,9 @@ class RadialNumericalBH(object):
                 dtype=self.dtype,
             )
         cell_summation += num_grout_cells
-        assert cell_summation == (num_fluid_cells + num_conv_cells + num_pipe_cells + num_grout_cells)
+
+        # TODO: verify whether errors are possible here and raise exception if needed
+        # assert cell_summation == (num_fluid_cells + num_conv_cells + num_pipe_cells + num_grout_cells)
 
         # load soil cells
         for idx in range(cell_summation, num_soil_cells + cell_summation):

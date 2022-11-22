@@ -262,7 +262,7 @@ def output_design_details(
     # leftAd = leftColLength-tabOffset*indentedAmount+math.floor(indentedAmount/2)
     o_s += create_d_row(allocated_width, "Field Type:", ghe.fieldType, string_format, string_format,
                         b_tabs=indented_amount)
-    # oS += middleSpacingIndentedString.format("\t\tField Type:",ghe.fieldType,rO=rightAd,lO=leftAd)
+    # oS += middleSpacingIndentedString.format("\t\tField Type:",ghe.field_type,rO=rightAd,lO=leftAd)
     o_s += create_d_row(
         allocated_width,
         "Field Specifier:",
@@ -554,14 +554,14 @@ def output_design_details(
     )
     o_s += create_d_row(
         allocated_width,
-        "Maximum Allowable HPEFT, C: ",
+        "Maximum Allowable hp_eft, C: ",
         ghe.sim_params.max_EFT_allowable,
         string_format,
         float_format,
     )
     o_s += create_d_row(
         allocated_width,
-        "Minimum Allowable HPEFT, C: ",
+        "Minimum Allowable hp_eft, C: ",
         ghe.sim_params.min_EFT_allowable,
         string_format,
         float_format,
@@ -608,7 +608,7 @@ def output_design_details(
     # hoursInYear = 24 * daysInYear
     time_vals = ghe.times
     eft_vals = []
-    eft_vals.extend(ghe.HPEFT)
+    eft_vals.extend(ghe.hp_eft)
     d_tb_vals = []
     d_tb_vals.extend(ghe.dTb)
     n_years = 0
@@ -648,7 +648,7 @@ def output_design_details(
             n_years += 1
 
     header_array = [
-        ["Time", "Tbw", "Max HPEFT", "Min HPEFT"],
+        ["Time", "Tbw", "Max hp_eft", "Min hp_eft"],
         ["(months)", "(C)", "(C)", "(C)"],
     ]
     eft_table_formats = [".0f", ".3f", ".3f", ".3f"]
@@ -662,28 +662,28 @@ def output_design_details(
     min_eft_time = hours_to_month(min_eft_time)
     o_s += create_d_row(
         allocated_width,
-        "Max HPEFT, C:",
+        "Max hp_eft, C:",
         round(max_eft, rounding_amount),
         string_format,
         float_format,
     )
     o_s += create_d_row(
         allocated_width,
-        "Max HPEFT Time, Months:",
+        "Max hp_eft Time, Months:",
         round(max_eft_time, rounding_amount),
         string_format,
         float_format,
     )
     o_s += create_d_row(
         allocated_width,
-        "Min HPEFT, C:",
+        "Min hp_eft, C:",
         round(min_eft, rounding_amount),
         string_format,
         float_format,
     )
     o_s += create_d_row(
         allocated_width,
-        "Min HPEFT Time, Months:",
+        "Min hp_eft Time, Months:",
         round(min_eft_time, rounding_amount),
         string_format,
         float_format,
@@ -712,7 +712,7 @@ def output_design_details(
             current_time = tv
             loading = loading_values[i + 1]
             current_month = hours_to_month(tv)
-            normalized_loading = loading / (ghe.average_height() * ghe.nbh)
+            normalized_loading = loading / (ghe.bhe.b.H * ghe.nbh)
             wall_temperature = bhe.soil.ugt + d_tb
             hp_eft_val = eft_vals[i]
             csv1_row = list()
@@ -720,7 +720,7 @@ def output_design_details(
             csv1_row.append(hours_to_month(tv))
             if i > 1:
                 csv1_row.append(lv)
-                csv1_row.append(lv / (ghe.average_height() * ghe.nbh))
+                csv1_row.append(lv / (ghe.bhe.b.H * ghe.nbh))
             else:
                 csv1_row.append(0)
                 csv1_row.append(0)
@@ -735,7 +735,7 @@ def output_design_details(
             csv1_row.append(hours_to_month(tv))
             if i > 1:
                 csv1_row.append(lv)
-                csv1_row.append(lv / (ghe.average_height() * ghe.nbh))
+                csv1_row.append(lv / (ghe.bhe.b.H * ghe.nbh))
             else:
                 csv1_row.append(0)
                 csv1_row.append(0)
@@ -746,7 +746,7 @@ def output_design_details(
             current_time = tv
             loading = 0
             current_month = hours_to_month(tv)
-            normalized_loading = loading / (ghe.average_height() * ghe.nbh)
+            normalized_loading = loading / (ghe.bhe.b.H * ghe.nbh)
             wall_temperature = bhe.soil.ugt + d_tb
             hp_eft_val = eft_vals[i]
         csv1_row = list()
@@ -803,7 +803,7 @@ def output_design_details(
     # gfunctionColTitles.append("H:" + str(round(bH.H, 2)) + "m")
 
     csv4_array = [["ln(t/ts)", "H:{:.2f}".format(bhe.b.H)]]
-    ghe_gf_adjusted = ghe.grab_g_function(ghe.B_spacing / float(ghe.average_height()))
+    ghe_gf_adjusted = ghe.grab_g_function(ghe.B_spacing / float(ghe.bhe.b.H))
     gfunction_log_vals = ghe_gf_adjusted.x
     gfunction_g_vals = ghe_gf_adjusted.y
     for log_val, g_val in zip(gfunction_log_vals, gfunction_g_vals):

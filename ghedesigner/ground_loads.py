@@ -57,9 +57,11 @@ class HybridLoad:
         self.days_in_month = [0]
         for year in years:
             self.days_in_month.extend([monthrange(year, i)[1] for i in range(1, 13)])
-        assert (len(hourly_rejection_loads) == sum(self.days_in_month) * 24.0
-                and len(hourly_extraction_loads) == sum(self.days_in_month) * 24.0), (
-            "The total number of hours in the year are not equal. Is this a leap year?")
+
+        # TODO: verify whether errors are possible here and raise exception if needed
+        # assert (len(hourly_rejection_loads) == sum(self.days_in_month) * 24.0
+        #         and len(hourly_extraction_loads) == sum(self.days_in_month) * 24.0), (
+        #     "The total number of hours in the year are not equal. Is this a leap year?")
 
         # This block of data holds the compact monthly representation of the
         # loads. The intention is that these loads will usually repeat. It's
@@ -135,7 +137,6 @@ class HybridLoad:
     @staticmethod
     def split_heat_and_cool(hourly_heat_extraction, units="W"):
         """
-        JCC 02.16.2020
         Split the provided loads into heating and cooling. Heating is positive,
         cooling is negative.
         :return: Loads split into heating and cooling
@@ -180,7 +181,8 @@ class HybridLoad:
             month_extraction_loads = \
                 self.hourly_extraction_loads[hours_in_previous_months: hours_in_previous_months + hours_in_month]
 
-            assert (len(month_extraction_loads) == hours_in_month and len(month_rejection_loads) == hours_in_month)
+            # TODO: verify whether errors are possible here and raise exception if needed
+            # assert (len(month_extraction_loads) == hours_in_month and len(month_rejection_loads) == hours_in_month)
 
             # Sum
             # monthly cooling loads (or heat rejection) in kWh
@@ -258,16 +260,20 @@ class HybridLoad:
             two_day_hourly_peak_hl_load = \
                 hourly_extraction_loads[monthly_peak_hl_hour_start: monthly_peak_hl_hour_start + 2 * hours_in_day]
 
-            assert (len(two_day_hourly_peak_hl_load) == 2 * hours_in_day
-                    and len(two_day_hourly_peak_cl_load) == 2 * hours_in_day)
+            # TODO: verify whether errors are possible here and raise exception if needed
+            # assert (len(two_day_hourly_peak_hl_load) == 2 * hours_in_day
+            #         and len(two_day_hourly_peak_cl_load) == 2 * hours_in_day)
 
             # Double check ourselves
-            monthly_peak_cl_day_start = int((monthly_peak_cl_hour_start - hours_in_day) / hours_in_day)
-            monthly_peak_cl_hour_month = int(monthly_peak_cl_day_start - sum(self.days_in_month[0:i]))
-            assert monthly_peak_cl_hour_month == monthly_peak_cl_day - 1
-            monthly_peak_hl_day_start = (monthly_peak_hl_hour_start - hours_in_day) / hours_in_day
-            monthly_peak_hl_hour_month = int(monthly_peak_hl_day_start - sum(self.days_in_month[0:i]))
-            assert monthly_peak_hl_hour_month == monthly_peak_hl_day - 1
+            # TODO: verify whether errors are possible here and raise exception if needed
+            # monthly_peak_cl_day_start = int((monthly_peak_cl_hour_start - hours_in_day) / hours_in_day)
+            # monthly_peak_cl_hour_month = int(monthly_peak_cl_day_start - sum(self.days_in_month[0:i]))
+            # assert monthly_peak_cl_hour_month == monthly_peak_cl_day - 1
+
+            # TODO: verify whether errors are possible here and raise exception if needed
+            # monthly_peak_hl_day_start = (monthly_peak_hl_hour_start - hours_in_day) / hours_in_day
+            # monthly_peak_hl_hour_month = int(monthly_peak_hl_day_start - sum(self.days_in_month[0:i]))
+            # assert monthly_peak_hl_hour_month == monthly_peak_hl_day - 1
 
             # monthly cooling loads (or heat rejection) in kWh
             self.two_day_hourly_peak_cl_loads.append(two_day_hourly_peak_cl_load)
@@ -410,11 +416,7 @@ class HybridLoad:
             current_month_avg_hl = self.monthly_avg_hl[i]
 
             if current_month_peak_hl != 0.0:
-                (
-                    peak_duration,
-                    q_peak,
-                    q_nominal,
-                ) = self.perform_current_month_simulation(
+                peak_duration, q_peak, q_nominal = self.perform_current_month_simulation(
                     current_two_day_hl_load,
                     current_month_peak_hl,
                     current_month_avg_hl,
@@ -462,29 +464,6 @@ class HybridLoad:
             d[m_n]["Peak Duration"]["extraction"] = self.monthly_peak_hl_duration[i]
 
         return dumps(d, indent=2)
-
-        # Convert the dictionary into a multi-indexed pandas dataframe
-        # arrays = [[], []]
-        # for field in hybrid_time_step_fields:
-        #     arrays[0].append(field)
-        #     arrays[0].append(field)
-        #     arrays[1].append("rejection")
-        #     arrays[1].append("extraction")
-        # tuples = list(zip(*arrays))
-        # index = pd.MultiIndex.from_tuples(tuples, names=["Fields", "Load Type"])
-
-        # res = []
-        # for month in d:
-        #     tmp = []
-        #     for field in d[month]:
-        #         for load_type in d[month][field]:
-        #             tmp.append(d[month][field][load_type])
-        #     res.append(tmp)
-        # res = np.array(res)
-
-        # df = pd.DataFrame(res, index=list(d.keys()), columns=index)
-        #
-        # return df
 
     def process_month_loads(self):
         # Converts monthly load format to sequence of loads needed for

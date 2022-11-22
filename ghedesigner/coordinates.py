@@ -40,7 +40,10 @@ def rectangle(
     for i in range(num_bh_x):
         for j in range(num_bh_y):
             r.append((x_0 + i * spacing_x, y_0 + j * spacing_y))
-    assert len(r) == num_bh_x * num_bh_y
+
+    # TODO: verify whether errors are possible here and raise exception if needed
+    # assert len(r) == num_bh_x * num_bh_y
+
     return r
 
 
@@ -77,11 +80,14 @@ def open_rectangle(
             open_r.append(((num_bh_x - 1) * spacing_x, j * spacing_y))
         for i in range(num_bh_x):
             open_r.append((i * spacing_x, (num_bh_y - 1) * spacing_y))
-        nbh = num_bh_y * 2 + (num_bh_x - 2) * 2
+        # nbh = num_bh_y * 2 + (num_bh_x - 2) * 2
     else:
         open_r = rectangle(num_bh_x, num_bh_y, spacing_x, spacing_y)
-        nbh = num_bh_x * num_bh_y
-    assert len(open_r) == nbh
+        # nbh = num_bh_x * num_bh_y
+
+    # TODO: verify whether errors are possible here and raise exception if needed
+    # assert len(open_r) == nbh
+
     return open_r
 
 
@@ -91,7 +97,7 @@ def c_shape(n_x_1: int,
             b_y: Union[int, float],
             n_x_2: int
             ) -> List[Tuple[float, float]]:
-    nbh = n_x_1 + (n_y * 2) - 1 + n_x_2 - 1
+    # nbh = n_x_1 + (n_y * 2) - 1 + n_x_2 - 1
     c = []
     for i in range(n_x_1):
         c.append((i * b_x, 0.0))
@@ -103,7 +109,10 @@ def c_shape(n_x_1: int,
     y_loc = (n_y - 1) * b_y
     for i in range(1, n_x_2 + 1):
         c.append((i * b_x, y_loc))
-    assert len(c) == nbh
+
+    # TODO: verify whether errors are possible here and raise exception if needed
+    # assert len(c) == nbh
+
     return c
 
 
@@ -113,7 +122,7 @@ def lop_u(n_x: int,
           b_y: Union[int, float],
           n_y_2: int
           ) -> List[Tuple[float, float]]:
-    nbh = n_x + n_y_1 - 1 + n_y_2 - 1
+    # nbh = n_x + n_y_1 - 1 + n_y_2 - 1
     _lop_u = []
     for i in range(n_x):
         _lop_u.append((i * b_x, 0.0))
@@ -122,7 +131,10 @@ def lop_u(n_x: int,
     x_loc = (n_x - 1) * b_x
     for j in range(1, n_y_2):
         _lop_u.append((x_loc, j * b_y))
-    assert len(_lop_u) == nbh
+
+    # TODO: verify whether errors are possible here and raise exception if needed
+    # assert len(_lop_u) == nbh
+
     return _lop_u
 
 
@@ -131,13 +143,16 @@ def l_shape(n_x: int,
             b_x: Union[int, float],
             b_y: Union[int, float]
             ) -> List[Tuple[float, float]]:
-    nbh = n_x + n_y - 1
+    # nbh = n_x + n_y - 1
     l_shape_object = []
     for i in range(n_x):
         l_shape_object.append((i * b_x, 0.0))
     for j in range(1, n_y):
         l_shape_object.append((0.0, j * b_y))
-    assert len(l_shape_object) == nbh
+
+    # TODO: verify whether errors are possible here and raise exception if needed
+    # assert len(l_shape_object) == nbh
+
     return l_shape_object
 
 
