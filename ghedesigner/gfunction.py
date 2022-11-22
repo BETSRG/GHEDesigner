@@ -32,8 +32,7 @@ def calculate_g_function(
     tilt = borehole.tilt
     orientation = borehole.orientation
 
-    for i in range(len(coordinates)):
-        x, y = coordinates[i]
+    for x, y in coordinates:
         _borehole = gt.boreholes.Borehole(h, d, r_b, x, y, tilt, orientation)
         bore_field.append(_borehole)
         # Initialize pipe model
@@ -90,7 +89,7 @@ def calculate_g_function(
     return gfunc
 
 
-def compute_live_g_function(
+def calc_g_func_for_multiple_lengths(
         b: float,
         h_values: list,
         r_b,
@@ -108,7 +107,6 @@ def compute_live_g_function(
         solver="equivalent",
         boundary="MIFT",
         segment_ratios=None,
-        disp=False,
 ):
     d = {"g": {}, "bore_locations": coordinates, "logtime": log_time}
 
@@ -135,7 +133,6 @@ def compute_live_g_function(
             solver=solver,
             boundary=boundary,
             segment_ratios=segment_ratios,
-            disp=disp,
         )
 
         key = "{}_{}_{}_{}".format(b, h, r_b, d)
@@ -341,8 +338,8 @@ class GFunction:
             A corrected g_function
         """
         g_function_corrected = []
-        for i in range(len(g_function)):
-            g_function_corrected.append(g_function[i] - np.log(rb_star / rb))
+        for g in g_function:
+            g_function_corrected.append(g - np.log(rb_star / rb))
         return g_function_corrected
 
     @staticmethod

@@ -7,7 +7,7 @@ from scipy.interpolate import interp1d
 
 from ghedesigner import VERSION
 from ghedesigner.borehole_heat_exchangers import SingleUTube, CoaxialPipe, MultipleUTube
-from ghedesigner.gfunction import GFunction, compute_live_g_function
+from ghedesigner.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ground_loads import HybridLoad
 from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil
 from ghedesigner.radial_numerical_borehole import RadialNumericalBH
@@ -185,7 +185,7 @@ class BaseGHE:
         coordinates = self.gFunction.bore_locations
         log_time = self.gFunction.log_time
 
-        g_function = compute_live_g_function(
+        g_function = calc_g_func_for_multiple_lengths(
             self.B_spacing,
             h_values,
             self.bhe.b.r_b,
@@ -288,14 +288,15 @@ class GHE(BaseGHE):
         sts_step_size = int(np.floor((total_g_values - number_lts_g_values) / number_sts_g_values).tolist())
         lntts = []
         g_values = []
-        for i in range(0, (total_g_values - number_lts_g_values), sts_step_size):
-            lntts.append(g.x[i].tolist())
-            g_values.append(g.y[i].tolist())
+        for idx in range(0, (total_g_values - number_lts_g_values), sts_step_size):
+            lntts.append(g.x[idx].tolist())
+            g_values.append(g.y[idx].tolist())
         lntts += g.x[total_g_values - number_lts_g_values: total_g_values].tolist()
         g_values += g.y[total_g_values - number_lts_g_values: total_g_values].tolist()
-        for i in range(len(lntts)):
-            output += str(round(lntts[i], 4)) + "\t" + str(round(g_values[i], 4)) + "\n"
-        g_function['lntts, g'] = [(lntts[i], g_values[i]) for i in range(len(lntts))]
+        pairs = zip(lntts, g_values)
+        for lntts_val, g_val in pairs:
+            output += f"{lntts_val:0.4f}\t{g_val:0.4f}"
+        g_function['lntts, g'] = [*pairs]
 
         results['g_function_information'] = g_function
         output['simulation_results'] = results

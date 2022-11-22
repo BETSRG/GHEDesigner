@@ -19,9 +19,7 @@ def create_row(allocated_width, row_data, data_formats, centering=">"):
     n_cols = len(row_data)
     col_width = int(allocated_width / n_cols)
     left_over = float(allocated_width) % col_width
-    for i in range(len(data_formats)):
-        d_f = data_formats[i]
-        data = row_data[i]
+    for d_f, data in zip(data_formats, row_data):
         width = col_width
         if left_over > 0:
             width = col_width + 1
@@ -115,10 +113,10 @@ def hours_to_month(hours):
     n_years = math.floor(hours / np.sum(hours_in_year))
     frac_month = n_years * len(days_in_year)
     month_in_year = 0
-    for i in range(len(days_in_year)):
+    for idx, _ in enumerate(days_in_year):
         hours_left = hours - n_years * np.sum(hours_in_year)
-        if np.sum(hours_in_year[0: i + 1]) >= hours_left:
-            month_in_year = i
+        if np.sum(hours_in_year[0: idx + 1]) >= hours_left:
+            month_in_year = idx
             break
     # print("Year Months: ",fracMonth)
     # print("Month Months: ",monthInYear)
@@ -135,14 +133,13 @@ def ghe_time_convert(hours):
     hours_in_year = 24 * days_in_year
     month_in_year = 0
     year_hour_sum = 0
-    for i in range(len(days_in_year)):
+    for idx, _ in enumerate(days_in_year):
         hours_left = hours
-        c_m = i
-        if year_hour_sum + hours_in_year[c_m] - 1 >= hours_left:
-            month_in_year = i
+        if year_hour_sum + hours_in_year[idx] - 1 >= hours_left:
+            month_in_year = idx
             break
         else:
-            year_hour_sum += hours_in_year[c_m]
+            year_hour_sum += hours_in_year[idx]
     # print("Year Months: ",fracMonth)
     # print("Month Months: ",monthInYear)
     h_l = hours - np.sum(hours_in_year[0:month_in_year])
@@ -620,13 +617,13 @@ def output_design_details(
     last_month = -1
     month_tb_vals = []
     month_eft_vals = []
-    for i in range(len(time_vals)):
+    for tv, d_tb, eft in zip(time_vals, d_tb_vals, eft_vals):
         # currentHourMonth = timeVals[i] - hTotalYear * nYears
-        current_month = int(math.floor(hours_to_month(time_vals[i])))
+        current_month = int(math.floor(hours_to_month(tv)))
         # print(monthEFTVals)
         if current_month == last_month:
-            month_tb_vals.append(d_tb_vals[i])
-            month_eft_vals.append(eft_vals[i])
+            month_tb_vals.append(d_tb)
+            month_eft_vals.append(eft)
         elif current_month != last_month:
             if len(month_tb_vals) > 0:
                 if len(out_array) == 0:
@@ -645,8 +642,8 @@ def output_design_details(
                     ]
                 )
             last_month = current_month
-            month_tb_vals = [d_tb_vals[i]]
-            month_eft_vals = [eft_vals[i]]
+            month_tb_vals = [d_tb]
+            month_eft_vals = [eft]
         if current_month % 11 == 0:
             n_years += 1
 
@@ -710,20 +707,20 @@ def output_design_details(
 
     loading_values = ghe.loading
     # loadingValues_dt = np.hstack((loadingValues[1:] - loadingValues[:-1]))
-    for i in range(len(time_vals)):
+    for i, (tv, d_tb, lv) in enumerate(zip(time_vals, d_tb_vals, loading_values)):
         if i + 1 < len(time_vals):
-            current_time = time_vals[i]
+            current_time = tv
             loading = loading_values[i + 1]
-            current_month = hours_to_month(time_vals[i])
+            current_month = hours_to_month(tv)
             normalized_loading = loading / (ghe.average_height() * ghe.nbh)
-            wall_temperature = bhe.soil.ugt + d_tb_vals[i]
+            wall_temperature = bhe.soil.ugt + d_tb
             hp_eft_val = eft_vals[i]
             csv1_row = list()
-            csv1_row.append(time_vals[i])
-            csv1_row.append(hours_to_month(time_vals[i]))
+            csv1_row.append(tv)
+            csv1_row.append(hours_to_month(tv))
             if i > 1:
-                csv1_row.append(loading_values[i])
-                csv1_row.append(loading_values[i] / (ghe.average_height() * ghe.nbh))
+                csv1_row.append(lv)
+                csv1_row.append(lv / (ghe.average_height() * ghe.nbh))
             else:
                 csv1_row.append(0)
                 csv1_row.append(0)
@@ -734,11 +731,11 @@ def output_design_details(
         else:
 
             csv1_row = list()
-            csv1_row.append(time_vals[i])
-            csv1_row.append(hours_to_month(time_vals[i]))
+            csv1_row.append(tv)
+            csv1_row.append(hours_to_month(tv))
             if i > 1:
-                csv1_row.append(loading_values[i])
-                csv1_row.append(loading_values[i] / (ghe.average_height() * ghe.nbh))
+                csv1_row.append(lv)
+                csv1_row.append(lv / (ghe.average_height() * ghe.nbh))
             else:
                 csv1_row.append(0)
                 csv1_row.append(0)
@@ -746,11 +743,11 @@ def output_design_details(
             csv1_row.append(eft_vals[i - 1])
             csv1_array.append(csv1_row)
 
-            current_time = time_vals[i]
+            current_time = tv
             loading = 0
-            current_month = hours_to_month(time_vals[i])
+            current_month = hours_to_month(tv)
             normalized_loading = loading / (ghe.average_height() * ghe.nbh)
-            wall_temperature = bhe.soil.ugt + d_tb_vals[i]
+            wall_temperature = bhe.soil.ugt + d_tb
             hp_eft_val = eft_vals[i]
         csv1_row = list()
         csv1_row.append(current_time)
@@ -789,10 +786,9 @@ def output_design_details(
     csv3_array.append(
         ["Month", "Day", "Hour", "Time (Hours)", "Loading (W) (Extraction)"]
     )
-    for i in range(len(hourly_loadings)):
-        hour = i
+    for hour, hour_load in enumerate(hourly_loadings):
         month, day_in_month, hour_in_day = ghe_time_convert(hour)
-        csv3_array.append([month, day_in_month, hour_in_day, hour, hourly_loadings[i]])
+        csv3_array.append([month, day_in_month, hour_in_day, hour, hour_load])
 
     with open(os.path.join(output_directory, csv_f_3), "w", newline="") as csv3OF:
         c_w = csv.writer(csv3OF)
@@ -810,20 +806,11 @@ def output_design_details(
     ghe_gf_adjusted = ghe.grab_g_function(ghe.B_spacing / float(ghe.average_height()))
     gfunction_log_vals = ghe_gf_adjusted.x
     gfunction_g_vals = ghe_gf_adjusted.y
-    for i in range(len(gfunction_log_vals)):
+    for log_val, g_val in zip(gfunction_log_vals, gfunction_g_vals):
         gf_row = list()
-        gf_row.append(gfunction_log_vals[i])
-        # for gfunctionName in list(gfunction.g_lts):
-        # print(gfunction.g_lts[gfunctionName][i])
-        # print(gfunctionName)
-        # gfRow.append(gfunction.g_lts[gfunctionName][i])
-        gf_row.append(gfunction_g_vals[i])
+        gf_row.append(log_val)
+        gf_row.append(g_val)
         csv4_array.append(gf_row)
-
-    # oS += createTable("gFunction Combined Values", [gfunctionColTitles], gfunctionData, allocatedWidth,
-    #                  gfunctionTableFormats,
-    #                  fillerSymbol="-", centering="^")
-    # oS += emptyLine
 
     with open(os.path.join(output_directory, csv_f_4), "w", newline="") as csv4OF:
         c_w = csv.writer(csv4OF)

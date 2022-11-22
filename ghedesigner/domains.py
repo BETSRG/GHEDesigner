@@ -385,10 +385,9 @@ def polygonal_land_constraint(
 
     coordinates_domain_nested_cutout = []
 
-    for i in range(len(coordinates_domain_nested)):
+    for domain in coordinates_domain_nested:
         new_coordinates_domain = []
-        for j in range(len(coordinates_domain_nested[i])):
-            coordinates = coordinates_domain_nested[i][j]
+        for coordinates in domain:
             # Remove boreholes outside of property
             new_coordinates = remove_cutout(coordinates, boundary=property_boundary, remove_inside=False)
             # Remove boreholes inside of building
@@ -411,21 +410,12 @@ def polygonal_land_constraint(
 
 
 def reorder_domain(domain, descriptors):
-    # Reorder the domain so that the number of boreholes successively grow
-    numbers = {}
-    for i in range(len(domain)):
-        numbers[i] = len(domain[i])
+    """
+    Sort domains by length. Rearrange descriptors accordingly.
+    Solution from: https://stackoverflow.com/a/9764364
 
-    sorted_values = sorted(numbers.values())
+    # TODO: Investigate whether this is needed.
+    # TODO: Domains may already be presorted by the nature of the preceding algorithms.
+    """
 
-    reordered_domain = []
-    reordered_descriptors = []
-
-    for i in sorted_values:
-        for j in numbers.keys():
-            if numbers[j] == i:
-                reordered_domain.append(domain[j])
-                reordered_descriptors.append(descriptors[j])
-                break
-
-    return reordered_domain, reordered_descriptors
+    return zip(*sorted(zip(domain, descriptors), key=lambda x: len(x[0])))

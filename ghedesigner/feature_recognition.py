@@ -31,42 +31,42 @@ def remove_cutout(coordinates, boundary=None, remove_inside=True, keep_contour=T
     inside_points_idx = []
     outside_points_idx = []
     boundary_points_idx = []
-    for i in range(len(coordinates)):
-        coordinate = coordinates[i]
+    for idx, coordinate in enumerate(coordinates):
+        coordinate = coordinates[idx]
         dist = cv2.pointPolygonTest(_boundary, coordinate, False)
         if dist > 0.0:
-            inside_points_idx.append(i)
+            inside_points_idx.append(idx)
         elif dist < 0.0:
-            outside_points_idx.append(i)
+            outside_points_idx.append(idx)
         elif dist == 0.0:
-            boundary_points_idx.append(i)
+            boundary_points_idx.append(idx)
 
     new_coordinates = []
-    for i in range(len(coordinates)):
+    for idx, _ in enumerate(coordinates):
         # if we want to remove inside points and keep contour points
         if remove_inside and keep_contour:
-            if i in inside_points_idx:
+            if idx in inside_points_idx:
                 continue
             else:
-                new_coordinates.append(coordinates[i])
+                new_coordinates.append(coordinates[idx])
         # if we want to remove inside points and remove contour points
         elif remove_inside and not keep_contour:
-            if i in inside_points_idx or i in boundary_points_idx:
+            if idx in inside_points_idx or idx in boundary_points_idx:
                 continue
             else:
-                new_coordinates.append(coordinates[i])
+                new_coordinates.append(coordinates[idx])
         # if we want to keep outside points and remove contour points
         elif not remove_inside and not keep_contour:
-            if i in outside_points_idx or i in boundary_points_idx:
+            if idx in outside_points_idx or idx in boundary_points_idx:
                 continue
             else:
-                new_coordinates.append(coordinates[i])
+                new_coordinates.append(coordinates[idx])
         # if we want to keep outside points and keep contour points
         else:
-            if i in outside_points_idx:
+            if idx in outside_points_idx:
                 continue
             else:
-                new_coordinates.append(coordinates[i])
+                new_coordinates.append(coordinates[idx])
 
     new_coordinates = scale_coordinates(new_coordinates, 1 / scale)
 

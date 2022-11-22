@@ -3,7 +3,7 @@ from pygfunction.utilities import segment_ratios as sr
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.coordinates import rectangle
-from ghedesigner.gfunction import compute_live_g_function
+from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
@@ -108,10 +108,8 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         solver = "equivalent"
         boundary = "MIFT"
         end_length_ratio = 0.02
-        segment_ratios = sr(
-            n_segments, end_length_ratio=end_length_ratio
-        )
-        g_function = compute_live_g_function(
+        segment_ratios = sr(n_segments, end_length_ratio=end_length_ratio)
+        g_function = calc_g_func_for_multiple_lengths(
             b,
             [h],
             r_b,
@@ -157,7 +155,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         h_values = [24.0, 48.0, 96.0, 192.0, 384.0]
         bh_depth = 2.0
 
-        g_function = compute_live_g_function(
+        g_function = calc_g_func_for_multiple_lengths(
             b,
             h_values,
             r_b,

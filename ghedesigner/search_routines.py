@@ -6,7 +6,7 @@ import math
 import numpy as np
 import pygfunction as gt
 
-from ghedesigner.gfunction import compute_live_g_function
+from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil, GHEFluid
 from ghedesigner.rowwise_generation import field_optimization_fr, field_optimization_wp_space_fr
@@ -64,7 +64,7 @@ class Bisection1D:
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
-        g_function = compute_live_g_function(
+        g_function = calc_g_func_for_multiple_lengths(
             b,
             [borehole.H],
             borehole.r_b,
@@ -133,7 +133,7 @@ class Bisection1D:
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
-        g_function = compute_live_g_function(
+        g_function = calc_g_func_for_multiple_lengths(
             b,
             [borehole.H],
             borehole.r_b,
@@ -447,7 +447,7 @@ class RowWiseModifiedBisectionSearch:
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
-        g_function = compute_live_g_function(
+        g_function = calc_g_func_for_multiple_lengths(
             b,
             [borehole.H],
             borehole.r_b,
@@ -656,11 +656,11 @@ class RowWiseModifiedBisectionSearch:
             best_drilling = float("inf")
             best_excess = None
             best_spacing = None
-            for i in range(len(target_spacings)):
+            for ts in target_spacings:
                 if use_perimeter:
                     field, f_s = field_optimization_wp_space_fr(
                         p_spacing,
-                        target_spacings[i],
+                        ts,
                         rotate_step,
                         prop_bound,
                         ng_zones=ng_zones,
@@ -669,26 +669,20 @@ class RowWiseModifiedBisectionSearch:
                     )
                 else:
                     field, f_s = field_optimization_fr(
-                        target_spacings[i],
+                        ts,
                         rotate_step,
                         prop_bound,
                         ng_zones=ng_zones,
                         rotate_start=rotate_start,
                         rotate_stop=rotate_stop,
                     )
-                t_e = self.calculate_excess(
-                    field, self.sim_params.max_Height, field_specifier=f_s
-                )
+                t_e = self.calculate_excess(field, self.sim_params.max_Height, field_specifier=f_s)
 
                 if self.advanced_tracking:
-                    self.advanced_tracking.append(
-                        [target_spacings[i], f_s, len(field), t_e]
-                    )
+                    self.advanced_tracking.append([ts, f_s, len(field), t_e])
                     self.checkedFields.append(field)
 
-                self.initialize_ghe(
-                    field, self.sim_params.max_Height, field_specifier=f_s
-                )
+                self.initialize_ghe(field, self.sim_params.max_Height, field_specifier=f_s)
                 self.ghe.compute_g_functions()
                 self.ghe.size(method=DesignMethod.Hybrid)
                 h = self.ghe.average_height()
@@ -697,13 +691,13 @@ class RowWiseModifiedBisectionSearch:
                     best_field = field
                     best_drilling = total_drilling
                     best_excess = t_e
-                    best_spacing = target_spacings[i]
+                    best_spacing = ts
                 else:
                     if t_e <= 0.0 and total_drilling < best_drilling:
                         best_drilling = total_drilling
                         best_field = field
                         best_excess = t_e
-                        best_spacing = target_spacings[i]
+                        best_spacing = ts
             selected_coordinates = best_field
             selected_temp_excess = best_excess
             selected_spacing = best_spacing
@@ -720,21 +714,16 @@ class RowWiseModifiedBisectionSearch:
                 def dist(o_p):
                     return math.sqrt(
                         (target_point[0] - o_p[0]) * (target_point[0] - o_p[0])
-                        + (target_point[1] - o_p[1]) * (target_point[1] - o_p[1])
-                    )
+                        + (target_point[1] - o_p[1]) * (target_point[1] - o_p[1]))
 
                 distances = map(dist, other_points)
                 if method == "ascending":
                     return [x for _, x in sorted(zip(distances, other_points))]
                 elif method == "descending":
-                    return [
-                        x for _, x in sorted(zip(distances, other_points), reverse=True)
-                    ]
+                    return [x for _, x in sorted(zip(distances, other_points), reverse=True)]
 
             if b_r_removal_method == "CloseToCorner":
-                starting_field = point_sort(
-                    original_coordinates[0], lower_field, method="descending"
-                )
+                starting_field = point_sort(original_coordinates[0], lower_field, method="descending")
             elif b_r_removal_method == "CloseToPoint":
                 starting_field = point_sort(b_r_point, lower_field, method="descending")
             elif b_r_removal_method == "FarFromPoint":
@@ -866,8 +855,8 @@ class Bisection2D(Bisection1D):
         self.calculated_temperatures_nested = []
         # Tack on one borehole at the beginning to provide a high excess temperature
         outer_domain = [coordinates_domain_nested[0][0]]
-        for i in range(len(coordinates_domain_nested)):
-            outer_domain.append(coordinates_domain_nested[i][-1])
+        for cdn in coordinates_domain_nested:
+            outer_domain.append(cdn[-1])
 
         self.coordinates_domain = outer_domain
 
@@ -946,9 +935,9 @@ class BisectionZD(Bisection1D):
         # temperature
         outer_domain = [coordinates_domain_nested[0][0]]
         outer_descriptors = [field_descriptors[0][0]]
-        for i in range(len(coordinates_domain_nested)):
-            outer_domain.append(coordinates_domain_nested[i][-1])
-            outer_descriptors.append(field_descriptors[i][-1])
+        for cdn, fd in zip(coordinates_domain_nested, field_descriptors):
+            outer_domain.append(cdn[-1])
+            outer_descriptors.append(fd[-1])
 
         self.coordinates_domain = outer_domain
         self.fieldDescriptors = outer_descriptors
@@ -1004,9 +993,7 @@ class BisectionZD(Bisection1D):
         keys = list(self.calculated_temperatures.keys())
         values = list(self.calculated_temperatures.values())
 
-        negative_excess_values = [
-            values[i] for i in range(len(values)) if values[i] <= 0.0
-        ]
+        negative_excess_values = [v for v in values if v <= 0.0]
 
         excess_of_interest = max(negative_excess_values)
         idx = values.index(excess_of_interest)

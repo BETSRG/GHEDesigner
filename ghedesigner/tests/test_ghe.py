@@ -1,7 +1,7 @@
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
 from ghedesigner.coordinates import rectangle
-from ghedesigner.gfunction import compute_live_g_function
+from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
@@ -133,7 +133,7 @@ class TestGHE(GHEBaseTest):
         borehole = GHEBorehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
-        g_function = compute_live_g_function(
+        g_function = calc_g_func_for_multiple_lengths(
             self.B,
             self.H_values,
             self.r_b,
@@ -177,7 +177,7 @@ class TestGHE(GHEBaseTest):
         borehole = GHEBorehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
-        g_function = compute_live_g_function(
+        g_function = calc_g_func_for_multiple_lengths(
             self.B,
             self.H_values,
             self.r_b,
@@ -221,7 +221,7 @@ class TestGHE(GHEBaseTest):
         borehole = GHEBorehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
 
         # Initialize GHE object
-        g_function = compute_live_g_function(
+        g_function = calc_g_func_for_multiple_lengths(
             self.B,
             self.H_values,
             self.r_b,

@@ -137,9 +137,7 @@ class TestRowWise(GHEBaseTest):
     def test_borehole_config(self):
 
         target_spacing = (self.target_spacing_start + self.target_spacing_stop) / 2
-        rotations = np.linspace(
-            self.rotation_start, self.rotation_stop, num=self.number_of_rotations
-        )
+        rotations = np.linspace(self.rotation_start, self.rotation_stop, num=self.number_of_rotations)
         num_bhs = [
             len(
                 gen_borehole_config(
@@ -152,19 +150,14 @@ class TestRowWise(GHEBaseTest):
             )
             for rotation in rotations
         ]
-        reference_values = self.reference_values[
-            "test_borehole_config_lengths"
-        ].to_list()
-        for i in range(len(num_bhs)):
-            self.assertAlmostEqual(reference_values[i], num_bhs[i], delta=0.001)
+        reference_values = self.reference_values["test_borehole_config_lengths"].to_list()
+        for rv, nbh in zip(reference_values, num_bhs):
+            self.assertAlmostEqual(rv, nbh, delta=0.001)
 
     def test_normal_spacing(self):
 
-        target_spacings = np.linspace(
-            self.target_spacing_start,
-            self.target_spacing_stop,
-            num=self.target_spacing_number,
-        )
+        target_spacings = np.linspace(self.target_spacing_start, self.target_spacing_stop,
+                                      num=self.target_spacing_number)
         num_bhs = [
             len(
                 field_optimization_fr(
@@ -178,11 +171,9 @@ class TestRowWise(GHEBaseTest):
             )
             for ts in target_spacings
         ]
-        reference_values = self.reference_values[
-            "test_normal_spacing_lengths"
-        ].to_list()
-        for i in range(len(num_bhs)):
-            self.assertAlmostEqual(reference_values[i], num_bhs[i], delta=0.001)
+        reference_values = self.reference_values["test_normal_spacing_lengths"].to_list()
+        for rv, nbh in zip(reference_values, num_bhs):
+            self.assertAlmostEqual(rv, nbh, delta=0.001)
 
     def test_perimeter_spacing(self):
 
@@ -205,8 +196,6 @@ class TestRowWise(GHEBaseTest):
             )
             for ts in target_spacings
         ]
-        reference_values = self.reference_values[
-            "test_perimeter_spacing_lengths"
-        ].to_list()
-        for i in range(len(num_bhs)):
-            self.assertAlmostEqual(reference_values[i], num_bhs[i], delta=0.001)
+        reference_values = self.reference_values["test_perimeter_spacing_lengths"].to_list()
+        for rv, nbh in zip(reference_values, num_bhs):
+            self.assertAlmostEqual(rv, nbh, delta=0.001)

@@ -180,8 +180,7 @@ def find_duplicates(borefield, space, disp=False):
     """
 
     duplicate_pairs = []  # define an empty list to be appended to
-    for i in range(len(borefield)):
-        borehole_1 = borefield[i]
+    for i, borehole_1 in enumerate(borefield):
         for j in range(i, len(borefield)):  # only loop unique interactions
             borehole_2 = borefield[j]
             if i == j:  # skip the borehole itself
