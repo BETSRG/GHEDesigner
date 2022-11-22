@@ -89,8 +89,7 @@ class TestGHE(GHEBaseTest):
         # Compute a range of g-functions for interpolation
         self.log_time = eskilson_log_times()
         self.H_values = [24.0, 48.0, 96.0, 192.0, 384.0]
-        self.r_b_values = [self.r_b] * len(self.H_values)
-        self.D_values = [2.0] * len(self.H_values)
+        self.bh_depth = 2.0
 
         # Inputs related to fluid
         # -----------------------
@@ -137,8 +136,8 @@ class TestGHE(GHEBaseTest):
         g_function = compute_live_g_function(
             self.B,
             self.H_values,
-            self.r_b_values,
-            self.D_values,
+            self.r_b,
+            self.bh_depth,
             self.m_flow_borehole,
             self.SingleUTube,
             self.log_time,
@@ -181,8 +180,8 @@ class TestGHE(GHEBaseTest):
         g_function = compute_live_g_function(
             self.B,
             self.H_values,
-            self.r_b_values,
-            self.D_values,
+            self.r_b,
+            self.bh_depth,
             self.m_flow_borehole,
             self.DoubleUTube,
             self.log_time,
@@ -225,8 +224,8 @@ class TestGHE(GHEBaseTest):
         g_function = compute_live_g_function(
             self.B,
             self.H_values,
-            self.r_b_values,
-            self.D_values,
+            self.r_b,
+            self.bh_depth,
             self.m_flow_borehole,
             self.CoaxialTube,
             self.log_time,

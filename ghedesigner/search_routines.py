@@ -67,8 +67,8 @@ class Bisection1D:
         g_function = compute_live_g_function(
             b,
             [borehole.H],
-            [borehole.r_b],
-            [borehole.D],
+            borehole.r_b,
+            borehole.D,
             m_flow_borehole,
             self.bhe_object,
             self.log_time,
@@ -136,8 +136,8 @@ class Bisection1D:
         g_function = compute_live_g_function(
             b,
             [borehole.H],
-            [borehole.r_b],
-            [borehole.D],
+            borehole.r_b,
+            borehole.D,
             m_flow_borehole,
             self.bhe_object,
             self.log_time,
@@ -450,8 +450,8 @@ class RowWiseModifiedBisectionSearch:
         g_function = compute_live_g_function(
             b,
             [borehole.H],
-            [borehole.r_b],
-            [borehole.D],
+            borehole.r_b,
+            borehole.D,
             m_flow_borehole,
             self.bhe_object,
             self.log_time,

@@ -181,8 +181,6 @@ class BaseGHE:
         max_height = self.sim_params.max_Height
         avg_height = (min_height + max_height) / 2.0
         h_values = [min_height, avg_height, max_height]
-        r_b_values = [self.bhe.b.r_b] * len(h_values)
-        d_values = [self.bhe.b.D] * len(h_values)
 
         coordinates = self.gFunction.bore_locations
         log_time = self.gFunction.log_time
@@ -190,8 +188,8 @@ class BaseGHE:
         g_function = compute_live_g_function(
             self.B_spacing,
             h_values,
-            r_b_values,
-            d_values,
+            self.bhe.b.r_b,
+            self.bhe.b.D,
             self.bhe.m_flow_borehole,
             self.bhe_object,
             log_time,
@@ -203,8 +201,6 @@ class BaseGHE:
         )
 
         self.gFunction = g_function
-
-        return
 
 
 class GHE(BaseGHE):

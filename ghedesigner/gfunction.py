@@ -93,8 +93,8 @@ def calculate_g_function(
 def compute_live_g_function(
         b: float,
         h_values: list,
-        r_b_values: list,
-        d_values: list,
+        r_b,
+        depth,
         m_flow_borehole,
         bhe_object,
         log_time,
@@ -112,10 +112,7 @@ def compute_live_g_function(
 ):
     d = {"g": {}, "bore_locations": coordinates, "logtime": log_time}
 
-    for i in range(len(h_values)):
-        h = h_values[i]
-        r_b = r_b_values[i]
-        depth = d_values[i]
+    for h in h_values:
         _borehole = gt.boreholes.Borehole(h, depth, r_b, 0.0, 0.0)
 
         alpha = soil.k / soil.rhoCp

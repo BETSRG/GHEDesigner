@@ -114,8 +114,8 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         g_function = compute_live_g_function(
             b,
             [h],
-            [r_b],
-            [d],
+            r_b,
+            d,
             m_flow_borehole,
             bhe_object,
             log_time,
@@ -155,14 +155,13 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
 
         # Compute a range of g-functions for interpolation
         h_values = [24.0, 48.0, 96.0, 192.0, 384.0]
-        r_b_values = [r_b] * len(h_values)
-        d_values = [2.0] * len(h_values)
+        bh_depth = 2.0
 
         g_function = compute_live_g_function(
             b,
             h_values,
-            r_b_values,
-            d_values,
+            r_b,
+            bh_depth,
             m_flow_borehole,
             bhe_object,
             log_time,
