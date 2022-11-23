@@ -101,9 +101,7 @@ def check_bracket(sign_x_l, sign_x_r) -> bool:
         return False
 
 
-def solve_root(
-        x, objective_function, lower=None, upper=None, abs_tol=1.0e-6, rel_tol=1.0e-6, max_iter=50
-):
+def solve_root(x, objective_function, lower=None, upper=None, abs_tol=1.0e-6, rel_tol=1.0e-6, max_iter=50):
     # Vary flow rate to match the convective resistance
 
     # Use Brent Quadratic to find the root
@@ -126,9 +124,7 @@ def solve_root(
 
     # Solve the root if we can, if not, take the higher value
     if kg_plus_sign != kg_minus_sign:
-        x = brentq(
-            objective_function, lower, upper, xtol=abs_tol, rtol=rel_tol, maxiter=max_iter
-        )
+        x = brentq(objective_function, lower, upper, xtol=abs_tol, rtol=rel_tol, maxiter=max_iter)
     elif kg_plus_sign == -1 and kg_minus_sign == -1:
         x = lower
     elif kg_plus_sign == 1 and kg_minus_sign == 1:

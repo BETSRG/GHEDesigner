@@ -163,9 +163,7 @@ class TestFindBiPolygon(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating g-functions for Chosen Design
-        bisection_search.ghe.size(
-            method=DesignMethod.Hybrid
-        )  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -227,9 +225,7 @@ class TestFindBiPolygon(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_double_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(
-            method=DesignMethod.Hybrid
-        )  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -279,9 +275,7 @@ class TestFindBiPolygon(GHEBaseTest):
         # Coaxial tube
         pos_coaxial = (0, 0)
         coaxial_tube = CoaxialPipe
-        pipe_coaxial = Pipe(
-            pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rho_cp_p
-        )
+        pipe_coaxial = Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rho_cp_p)
 
         # Coaxial Tube
         # -------------
@@ -306,9 +300,7 @@ class TestFindBiPolygon(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_coax_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(
-            method=DesignMethod.Hybrid
-        )  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings

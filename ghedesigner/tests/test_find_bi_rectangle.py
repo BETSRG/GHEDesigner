@@ -111,9 +111,8 @@ class TestFindBiRectangle(GHEBaseTest):
           - B_min
           - B_max
         """
-        geometric_constraints = GeometricConstraints(
-            length=length, width=width, b_min=b_min, b_max_x=b_max_x, b_max_y=b_max_y
-        )
+        geometric_constraints = GeometricConstraints(length=length, width=width, b_min=b_min, b_max_x=b_max_x,
+                                                     b_max_y=b_max_y)
 
         # Single U-tube
         # -------------
@@ -136,9 +135,7 @@ class TestFindBiRectangle(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(
-            method=DesignMethod.Hybrid
-        )  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings

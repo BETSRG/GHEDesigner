@@ -272,9 +272,7 @@ def output_design_details(
         b_tabs=indented_amount,
     )
     # oS += middleSpacingIndentedString.format("\t\tField Specifier:",ghe.fieldSpecifier,rO=rightAd,lO=leftAd)
-    o_s += create_d_row(
-        allocated_width, "NBH:", len(b), string_format, int_format, b_tabs=indented_amount
-    )
+    o_s += create_d_row(allocated_width, "NBH:", len(b), string_format, int_format, b_tabs=indented_amount)
     # oS += middleSpacingIndentedString.format("\t\tNBH:",len(b),rO=rightAd,lO=leftAd)
     # Field NBH Borehole locations, field identification
     # System Details
@@ -370,12 +368,8 @@ def output_design_details(
         o_s += create_d_row(
             allocated_width,
             "Reynold's Number:",
-            round(
-                GHEDesignerBoreholeBase.compute_reynolds(
-                    bhe.m_flow_borehole, bhe.pipe.r_in, bhe.fluid
-                ),
-                rounding_amount,
-            ),
+            round(GHEDesignerBoreholeBase.compute_reynolds(bhe.m_flow_borehole, bhe.pipe.r_in, bhe.fluid),
+                  rounding_amount),
             string_format,
             float_format,
             b_tabs=indented_amount,
@@ -385,12 +379,8 @@ def output_design_details(
         o_s += create_d_row(
             allocated_width,
             "Reynold's Number:",
-            round(
-                GHEDesignerBoreholeBase.compute_reynolds_concentric(
-                    bhe.m_flow_pipe, bhe.r_in_out, bhe.r_out_in, bhe.fluid
-                ),
-                rounding_amount,
-            ),
+            round(GHEDesignerBoreholeBase.compute_reynolds_concentric(bhe.m_flow_pipe, bhe.r_in_out, bhe.r_out_in,
+                                                                      bhe.fluid), rounding_amount),
             string_format,
             float_format,
             b_tabs=indented_amount,

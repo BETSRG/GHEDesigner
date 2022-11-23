@@ -48,9 +48,7 @@ def calculate_g_function(
         options = {"nSegments": n_segments, "disp": disp}
     elif segments == "unequal":
         if segment_ratios is None:
-            segment_ratios = gt.utilities.segment_ratios(
-                n_segments, end_length_ratio=end_length_ratio
-            )
+            segment_ratios = gt.utilities.segment_ratios(n_segments, end_length_ratio=end_length_ratio)
         else:
             segment_ratios = segment_ratios
         options = {
@@ -72,9 +70,7 @@ def calculate_g_function(
         )
     elif boundary == "MIFT":
         m_flow_network = len(bore_field) * m_flow_borehole
-        network = gt.networks.Network(
-            bore_field, bhe_objects, m_flow_network=m_flow_network, cp_f=fluid.cp
-        )
+        network = gt.networks.Network(bore_field, bhe_objects, m_flow_network=m_flow_network, cp_f=fluid.cp)
         gfunc = gt.gfunction.gFunction(
             network,
             alpha,
@@ -289,17 +285,13 @@ class GFunction:
                 rb_f = lagrange(height_values, rb_values)
             else:
                 # interpolation function for rb values by H equivalent
-                rb_f = interp1d(
-                    height_values, rb_values, kind=kind, fill_value=fill_value
-                )
+                rb_f = interp1d(height_values, rb_values, kind=kind, fill_value=fill_value)
             self.interpolation_table["rb"] = rb_f
             try:
                 if kind == "lagrange":
                     d_f = lagrange(height_values, d_values)
                 else:
-                    d_f = interp1d(
-                        height_values, d_values, kind=kind, fill_value=fill_value
-                    )
+                    d_f = interp1d(height_values, d_values, kind=kind, fill_value=fill_value)
                 self.interpolation_table["D"] = d_f
             except:
                 pass

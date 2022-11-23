@@ -97,9 +97,7 @@ def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, di
     return rectangle_domain, field_descriptors
 
 
-def bi_rectangular(
-        length_x, length_y, b_min, b_max_x, b_max_y, transpose=False, disp=False
-):
+def bi_rectangular(length_x, length_y, b_min, b_max_x, b_max_y, transpose=False, disp=False):
     # Make this work for the transpose
     if length_x >= length_y:
         length_1 = length_x

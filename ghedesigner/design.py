@@ -86,12 +86,8 @@ class DesignNearSquare(DesignBase):
         # calculated based on the spacing and length provided.
         n = np.floor(self.geometric_constraints.length / self.geometric_constraints.B) + 1
         number_of_boreholes = int(n)
-        (
-            self.coordinates_domain,
-            self.fieldDescriptors,
-        ) = square_and_near_square(
-            1, number_of_boreholes, self.geometric_constraints.B
-        )
+        self.coordinates_domain, self.fieldDescriptors = square_and_near_square(1, number_of_boreholes,
+                                                                                self.geometric_constraints.B)
 
     def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
                     exhaustive_fields_to_check=10, use_perimeter=True) -> Bisection1D:
@@ -167,10 +163,7 @@ class DesignBiRectangle(DesignBase):
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.routine = "bi-rectangle"
         self.geometric_constraints.check_inputs(self.routine)
-        (
-            self.coordinates_domain_nested,
-            self.fieldDescriptors,
-        ) = bi_rectangle_nested(
+        self.coordinates_domain_nested, self.fieldDescriptors = bi_rectangle_nested(
             self.geometric_constraints.length, self.geometric_constraints.width, self.geometric_constraints.B_min,
             self.geometric_constraints.B_max_x, self.geometric_constraints.B_max_y, disp=False
         )
@@ -210,10 +203,7 @@ class DesignBiZoned(DesignBase):
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.routine = "bi-zoned"
         self.geometric_constraints.check_inputs(self.routine)
-        (
-            self.coordinates_domain_nested,
-            self.fieldDescriptors,
-        ) = bi_rectangle_zoned_nested(
+        self.coordinates_domain_nested, self.fieldDescriptors = bi_rectangle_zoned_nested(
             self.geometric_constraints.length, self.geometric_constraints.width, self.geometric_constraints.B_min,
             self.geometric_constraints.B_max_x, self.geometric_constraints.B_max_y
         )
@@ -252,10 +242,7 @@ class DesignBiRectangleConstrained(DesignBase):
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.routine = "bi-rectangle_constrained"
         self.geometric_constraints.check_inputs(self.routine)
-        (
-            self.coordinates_domain_nested,
-            self.fieldDescriptors,
-        ) = polygonal_land_constraint(
+        self.coordinates_domain_nested, self.fieldDescriptors = polygonal_land_constraint(
             property_boundary,
             self.geometric_constraints.B_min,
             self.geometric_constraints.B_max_x,
