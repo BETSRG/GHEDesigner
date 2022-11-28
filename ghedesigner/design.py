@@ -13,6 +13,7 @@ from ghedesigner.search_routines import Bisection1D, Bisection2D, BisectionZD, R
 from ghedesigner.utilities import DesignMethod
 
 AnyBoreholeType = Union[Type[SingleUTube], Type[MultipleUTube], Type[CoaxialPipe]]
+AnyBisectionType = Union[Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch]
 
 
 class DesignBase:
@@ -64,7 +65,7 @@ class DesignBase:
 
     @abstractmethod
     def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True):
+                    exhaustive_fields_to_check=10, use_perimeter=True) -> AnyBisectionType:
         pass
 
 
@@ -129,7 +130,7 @@ class DesignRectangle(DesignBase):
         )
 
     def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True):
+                    exhaustive_fields_to_check=10, use_perimeter=True) -> Bisection1D:
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
@@ -169,7 +170,7 @@ class DesignBiRectangle(DesignBase):
         )
 
     def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True):
+                    exhaustive_fields_to_check=10, use_perimeter=True) -> Bisection2D:
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
@@ -209,7 +210,7 @@ class DesignBiZoned(DesignBase):
         )
 
     def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True):
+                    exhaustive_fields_to_check=10, use_perimeter=True) -> BisectionZD:
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
@@ -251,7 +252,7 @@ class DesignBiRectangleConstrained(DesignBase):
         )
 
     def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True):
+                    exhaustive_fields_to_check=10, use_perimeter=True) -> Bisection2D:
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
@@ -287,7 +288,7 @@ class DesignRowWise(DesignBase):
         self.geometric_constraints.check_inputs(self.routine)
 
     def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True):
+                    exhaustive_fields_to_check=10, use_perimeter=True) -> RowWiseModifiedBisectionSearch:
         if b_r_point is None:
             b_r_point = [0.0, 0.0]
         if disp:

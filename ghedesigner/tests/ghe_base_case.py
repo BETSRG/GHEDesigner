@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 from unittest import TestCase
 
 LOG_FILE: Optional[Path] = None
@@ -52,7 +52,7 @@ class GHEBaseTest(TestCase):
         with LOG_FILE.open('a') as fp:
             fp.write(f"{date_time_string},{message_type_string},{message_string}\n")
 
-    def get_atlanta_loads(self):
+    def get_atlanta_loads(self) -> List[float]:
         # read in the csv file and convert the loads to a list of length 8760
         glhe_json_data = self.test_data_directory / 'Atlanta_Office_Building_Loads.csv'
         raw_lines = glhe_json_data.read_text().split('\n')

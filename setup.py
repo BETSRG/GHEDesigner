@@ -32,6 +32,6 @@ setup(
     author='Jack C. Cook',
     author_email='jack.cook@okstate.edu',
     entry_points={
-        'console_scripts': ['ghedesigner=ghedesigner.utilities:dummy_entry_point']
+        'console_scripts': ['ghedesigner=ghedesigner.manager:run_manager_from_cli']
     }
 )

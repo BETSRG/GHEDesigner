@@ -4,6 +4,7 @@ from pygfunction.media import Fluid
 
 
 class GHEFluid(Fluid):
+    # TODO: Make an enum for fluid type and convert it back and forth as needed
     pass
 
 
