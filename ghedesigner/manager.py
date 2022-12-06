@@ -166,6 +166,7 @@ class GHEManager:
     def get_borehole_locations(self):
         return self._search.ghe.gFunction.bore_locations
 
+
 def run_manager_from_cli():
     # TODO: Tons of error handling, autogenerate a default schema, use click
     input_file_path = Path(argv[1])
