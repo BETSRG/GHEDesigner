@@ -1,12 +1,12 @@
 from json import dumps, loads
 from pathlib import Path
-from sys import argv, exit
+from sys import argv, exit, stderr
 from typing import List, Optional, Type, Union
 
 from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
-from ghedesigner.design import DesignNearSquare, DesignBase
+from ghedesigner.design import DesignNearSquare, DesignBase, AnyBisectionType
 from ghedesigner.geometry import GeometricConstraints
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.utilities import DesignMethod
@@ -16,6 +16,7 @@ class GHEManager:
     """
     TODO: Add docs guiding all the steps
     """
+
     def __init__(self):
         self._fluid: Optional[GHEFluid] = None
         self._grout: Optional[Grout] = None
@@ -29,6 +30,7 @@ class GHEManager:
         self._ground_loads: Optional[List[float]] = None
         self._geometric_constraints: Optional[GeometricConstraints] = None
         self._design: Optional[DesignBase] = None
+        self._search: Optional[AnyBisectionType] = None
 
         # outputs after design is found
         self.u_tube_height = -1.0
@@ -149,12 +151,20 @@ class GHEManager:
             self._design,
         ]]):
             raise Exception("didn't set something")
-        search = self._design.find_design()
-        search.ghe.compute_g_functions()
+        self._search = self._design.find_design()
+        self._search.ghe.compute_g_functions()
         # TODO: Don't hard-wire Hybrid here
-        search.ghe.size(method=DesignMethod.Hybrid)
-        self.u_tube_height = search.ghe.bhe.b.H
+        self._search.ghe.size(method=DesignMethod.Hybrid)
+        self.u_tube_height = self._search.ghe.bhe.b.H
 
+    def get_g_function(self):
+        lts = self._search.ghe.gFunction.log_time
+        # TODO: handle the different keys in the g_vals dict, 60, 97.5, 135
+        g_vals = list(self._search.ghe.gFunction.g_lts.values())[0]
+        return list(zip(lts, g_vals))
+
+    def get_borehole_locations(self):
+        return self._search.ghe.gFunction.bore_locations
 
 def run_manager_from_cli():
     # TODO: Tons of error handling, autogenerate a default schema, use click
@@ -168,7 +178,7 @@ def run_manager_from_cli():
     manager = GHEManager()
     version = inputs['version']
     if version != VERSION:
-        print("Mismatched version, could be a problem")
+        print("Mismatched version, could be a problem", file=stderr)
     fluid_props = inputs['fluid']
     manager.set_fluid(**fluid_props)
     grout_props = inputs['grout']
@@ -190,7 +200,11 @@ def run_manager_from_cli():
     manager.find_design()
     with open(output_file_path, 'w') as f:
         f.write(dumps(
-            {'design_borehole_height': manager.u_tube_height},
+            {
+                'design_borehole_height': manager.u_tube_height,
+                'g_function': manager.get_g_function(),
+                'borehole_locations': manager.get_borehole_locations(),
+            },
             indent=2
         ))
 
