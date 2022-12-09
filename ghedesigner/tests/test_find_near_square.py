@@ -14,6 +14,8 @@ from ghedesigner.output import output_design_details
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethod, length_of_side
 
+from ghedesigner.manager import GHEManager
+
 
 class TestFindNearSquare(GHEBaseTest):
     def test_find_near_square(self):

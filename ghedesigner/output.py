@@ -1,9 +1,9 @@
 import csv
+import math
 import os
 from datetime import datetime
 from pathlib import Path
 
-import math
 import numpy as np
 
 from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase
@@ -165,8 +165,7 @@ def output_design_details(
         csv_f_1="TimeDependentValues.csv",
         csv_f_2="BoreFieldData.csv",
         csv_f_3="Loadings.csv",
-        csv_f_4="Gfunction.csv",
-
+        csv_f_4="Gfunction.csv"
 ):
     try:
         ghe = design.ghe
@@ -185,19 +184,48 @@ def output_design_details(
 
     blank_line = create_line(allocated_width)
     empty_line = create_line(allocated_width, character=" ")
-    o_s = ""
-    # oS += middleSpacingString.format("Project Name:",projectName,rO=rightOffset,lO=leftColLength) + "\n"
-    o_s += create_d_row(allocated_width, "Project Name:", project_name, string_format, string_format)
+
+    o_s = blank_line
+    o_s += create_d_row(
+        allocated_width,
+        "Project Name:",
+        project_name,
+        string_format,
+        string_format
+    )
     o_s += blank_line
     o_s += "Notes:\n\n" + notes + "\n"
     o_s += blank_line
-    o_s += create_d_row(allocated_width, "File/Model Name:", model_name, string_format, string_format)
+    o_s += create_d_row(
+        allocated_width,
+        "File/Model Name:",
+        model_name,
+        string_format,
+        string_format
+    )
     now = datetime.now()
     time_string = now.strftime("%m/%d/%Y %H:%M:%S %p")
-    o_s += create_d_row(allocated_width, "Simulated On:", time_string, string_format, string_format)
-    o_s += create_d_row(allocated_width, "Simulated By:", author, string_format, string_format)
-    o_s += create_d_row(allocated_width, "Calculation Time, s:", round(time, rounding_amount), string_format,
-                        float_format, )
+    o_s += create_d_row(
+        allocated_width,
+        "Simulated On:",
+        time_string,
+        string_format,
+        string_format
+    )
+    o_s += create_d_row(
+        allocated_width,
+        "Simulated By:",
+        author,
+        string_format,
+        string_format
+    )
+    o_s += create_d_row(
+        allocated_width,
+        "Calculation Time, s:",
+        round(time, rounding_amount),
+        string_format,
+        float_format
+    )
     o_s += empty_line
     o_s += create_title(allocated_width, "Design Selection", filler_symbol="-")
 
@@ -211,8 +239,15 @@ def output_design_details(
         design_values = ""
     design_formats = ["s", ".3f", ".3f", ".3f"]
 
-    o_s += create_table("Field Search Log", design_header, design_values, allocated_width, design_formats,
-                        filler_symbol="-", centering="^", )
+    o_s += create_table(
+        "Field Search Log",
+        design_header,
+        design_values,
+        allocated_width,
+        design_formats,
+        filler_symbol="-",
+        centering="^"
+    )
 
     o_s += empty_line
     o_s += create_title(allocated_width, "GHE System", filler_symbol="-")
@@ -233,7 +268,6 @@ def output_design_details(
         gf_row = list()
         gf_row.append(g_function.log_time[i])
         for g_function_name in list(g_function.g_lts):
-            # print(gfunction.g_lts[gfunctionName][i])
             gf_row.append(g_function.g_lts[g_function_name][i])
         gf_row.append(ghe_gf[i])
         g_function_data.append(gf_row)
@@ -242,26 +276,49 @@ def output_design_details(
                         g_function_table_formats, filler_symbol="-", centering="^")
     o_s += empty_line
 
-    """
-
-    """
-
     o_s += "------ System parameters ------" + "\n"
-    o_s += create_d_row(allocated_width, "Active Borehole Length, m:", b_h.H, string_format, int_format)
-    o_s += create_d_row(allocated_width, "Borehole Radius, m:", round(b_h.r_b, rounding_amount), string_format,
-                        float_format)
-    o_s += create_d_row(allocated_width, "Borehole Spacing, m:", round(ghe.B_spacing, rounding_amount), string_format,
-                        float_format)
-    o_s += create_d_row(allocated_width, "Total Drilling, m:", round(b_h.H * len(b), rounding_amount), string_format,
-                        float_format)
+    o_s += create_d_row(
+        allocated_width,
+        "Active Borehole Length, m:",
+        b_h.H,
+        string_format,
+        int_format
+    )
+    o_s += create_d_row(
+        allocated_width,
+        "Borehole Radius, m:",
+        round(b_h.r_b, rounding_amount),
+        string_format,
+        float_format
+    )
+    o_s += create_d_row(
+        allocated_width,
+        "Borehole Spacing, m:",
+        round(ghe.B_spacing, rounding_amount),
+        string_format,
+        float_format
+    )
+    o_s += create_d_row(
+        allocated_width,
+        "Total Drilling, m:",
+        round(b_h.H * len(b), rounding_amount),
+        string_format,
+        float_format
+    )
 
     indented_amount = 2
 
     o_s += "Field Geometry: " + "\n"
     # rightAd = rightOffset-indentedAmount*tabOffset+math.ceil(indentedAmount/2)
     # leftAd = leftColLength-tabOffset*indentedAmount+math.floor(indentedAmount/2)
-    o_s += create_d_row(allocated_width, "Field Type:", ghe.fieldType, string_format, string_format,
-                        b_tabs=indented_amount)
+    o_s += create_d_row(
+        allocated_width,
+        "Field Type:",
+        ghe.fieldType,
+        string_format,
+        string_format,
+        b_tabs=indented_amount
+    )
     # oS += middleSpacingIndentedString.format("\t\tField Type:",ghe.field_type,rO=rightAd,lO=leftAd)
     o_s += create_d_row(
         allocated_width,
@@ -272,14 +329,26 @@ def output_design_details(
         b_tabs=indented_amount,
     )
     # oS += middleSpacingIndentedString.format("\t\tField Specifier:",ghe.fieldSpecifier,rO=rightAd,lO=leftAd)
-    o_s += create_d_row(allocated_width, "NBH:", len(b), string_format, int_format, b_tabs=indented_amount)
+    o_s += create_d_row(
+        allocated_width,
+        "NBH:", len(b),
+        string_format,
+        int_format,
+        b_tabs=indented_amount
+    )
     # oS += middleSpacingIndentedString.format("\t\tNBH:",len(b),rO=rightAd,lO=leftAd)
     # Field NBH Borehole locations, field identification
     # System Details
 
     o_s += "Borehole Information: " + "\n"
-    o_s += create_d_row(allocated_width, "Shank Spacing, m:", round(bhe.pipe.s, rounding_amount), string_format,
-                        float_format, b_tabs=indented_amount)
+    o_s += create_d_row(
+        allocated_width,
+        "Shank Spacing, m:",
+        round(bhe.pipe.s, rounding_amount),
+        string_format,
+        float_format,
+        b_tabs=indented_amount
+    )
 
     if isinstance(bhe.pipe.r_out, float):
         o_s += create_d_row(
