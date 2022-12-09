@@ -167,11 +167,8 @@ class GHEManager:
         return self._search.ghe.gFunction.bore_locations
 
 
-def run_manager_from_cli():
-    # TODO: Tons of error handling, autogenerate a default schema, use click
-    input_file_path = Path(argv[1])
-    output_file_path = argv[2]
-    # TODO: argv[3] is the action to perform?  Or that's part of the input file?
+def run_manager_from_cli_worker(input_file_path: Path, output_file_path: Path):
+
     if not input_file_path.exists():
         print(f"No input file found at {input_file_path}, aborting")
         exit(1)
@@ -208,6 +205,14 @@ def run_manager_from_cli():
             },
             indent=2
         ))
+
+
+def run_manager_from_cli():
+    # TODO: Tons of error handling, autogenerate a default schema, use click
+    # TODO: argv[3] is the action to perform?  Or that's part of the input file?
+    input_file_path = Path(argv[1])
+    output_file_path = Path(argv[2])
+    run_manager_from_cli_worker(input_file_path, output_file_path)
 
 
 if __name__ == "__main__":

@@ -26,11 +26,9 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     version=VERSION,
-    packages=['ghedesigner'],  # , 'ghedesigner.tests'],
-    # package_data={"ghedesigner.tests": ["test_data/*"]},
-    # include_package_data=True,
-    author='Jack C. Cook',
-    author_email='jack.cook@okstate.edu',
+    packages=['ghedesigner'],
+    author='Jeffrey D. Spitler,',
+    author_email='spitler@okstate.edu',
     entry_points={
         'console_scripts': ['ghedesigner=ghedesigner.manager:run_manager_from_cli']
     }
