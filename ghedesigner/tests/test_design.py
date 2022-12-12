@@ -34,17 +34,11 @@ class TestNearSquare(GHEBaseTest):
             inner_radius=(21.6 / 1000.0 / 2.0), outer_radius=(26.67 / 1000.0 / 2.0), shank_spacing=(32.3 / 1000.0),
             roughness=1.0e-6, conductivity=0.4, rho_cp=(1542.0 * 1000.0)
         )
-        manager.set_soil(
-            conductivity=2.0, rho_cp=(2343.493 * 1000.0), undisturbed_temp=18.3
-        )
+        manager.set_soil(conductivity=2.0, rho_cp=(2343.493 * 1000.0), undisturbed_temp=18.3)
         manager.set_grout(conductivity=1.0, rho_cp=(3901.0 * 1000.0))
-        manager.set_fluid()  # defaults to water
+        manager.set_fluid()
         manager.set_borehole(length=96.0, buried_depth=2.0, radius=0.075)
-        manager.set_simulation_parameters(
-            num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60
-        )
-        with open('/tmp/blah.csv', 'w') as f:
-            f.write(',\n'.join([str(x) for x in self.get_atlanta_loads()]))
+        manager.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         manager.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         manager.set_geometry_constraints(b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "system" flow?
