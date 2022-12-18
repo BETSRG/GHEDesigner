@@ -10,6 +10,7 @@ Welcome to GHEDesigner's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   cli
    manager
 
 
