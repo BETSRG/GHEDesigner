@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Type, Union
 
-import numpy as np
+from math import floor
 
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
@@ -85,7 +85,7 @@ class DesignNearSquare(DesignBase):
         # There would never be a time that a user would __need__ to give a
         # different lower range. The upper number of boreholes range is
         # calculated based on the spacing and length provided.
-        n = np.floor(self.geometric_constraints.length / self.geometric_constraints.B) + 1
+        n = floor(self.geometric_constraints.length / self.geometric_constraints.B) + 1
         number_of_boreholes = int(n)
         self.coordinates_domain, self.fieldDescriptors = square_and_near_square(1, number_of_boreholes,
                                                                                 self.geometric_constraints.B)

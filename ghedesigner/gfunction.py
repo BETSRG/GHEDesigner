@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import pygfunction as gt
+from math import log
 from scipy.interpolate import interp1d, lagrange
 
 
@@ -331,7 +332,7 @@ class GFunction:
         """
         g_function_corrected = []
         for g in g_function:
-            g_function_corrected.append(g - np.log(rb_star / rb))
+            g_function_corrected.append(g - log(rb_star / rb))
         return g_function_corrected
 
     @staticmethod

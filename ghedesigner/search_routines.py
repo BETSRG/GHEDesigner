@@ -2,9 +2,8 @@ from json import dumps
 from pathlib import Path
 from typing import Optional
 
-import math
-import numpy as np
 import pygfunction as gt
+from math import ceil, floor, sqrt
 
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
@@ -241,7 +240,7 @@ class Bisection1D:
         i = 0
 
         while i < self.max_iter:
-            c_idx = int(np.ceil((x_l_idx + x_r_idx) / 2))
+            c_idx = ceil((x_l_idx + x_r_idx) / 2)
             # if the solution is no longer making progress break the while
             if c_idx == x_l_idx or c_idx == x_r_idx:
                 break
@@ -315,9 +314,7 @@ class Bisection1D:
         total_g_values = g.x.size
         number_lts_g_values = 27
         number_sts_g_values = 30
-        sts_step_size = int(
-            np.floor((total_g_values - number_lts_g_values) / number_sts_g_values).tolist()
-        )
+        sts_step_size = floor((total_g_values - number_lts_g_values) / number_sts_g_values)
         lntts = []
         g_values = []
         for i in range(1, (total_g_values - number_lts_g_values), sts_step_size):
@@ -687,7 +684,7 @@ class RowWiseModifiedBisectionSearch:
             # Function For Sorting Boreholes Based on Proximity to a Point
             def point_sort(target_point, other_points, method="ascending"):
                 def dist(o_p):
-                    return math.sqrt(
+                    return sqrt(
                         (target_point[0] - o_p[0]) * (target_point[0] - o_p[0])
                         + (target_point[1] - o_p[1]) * (target_point[1] - o_p[1]))
 

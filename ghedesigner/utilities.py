@@ -9,7 +9,7 @@ import pickle
 from enum import auto, Enum
 from pathlib import Path
 
-import numpy as np
+from math import sqrt
 from scipy.optimize import brentq
 
 
@@ -65,7 +65,7 @@ def borehole_spacing(borehole, coordinates):
         return borehole.r_b
     elif len(coordinates) > 1:
         x_1, y_1 = coordinates[1]
-        return max(borehole.r_b, np.sqrt((x_1 - x_0) ** 2 + (y_1 - y_0) ** 2))
+        return max(borehole.r_b, sqrt((x_1 - x_0) ** 2 + (y_1 - y_0) ** 2))
     else:
         raise ValueError("The coordinates_domain needs to contain a positive number of (x, y) pairs.")
 

@@ -1,10 +1,9 @@
 import csv
-import math
 import os
 from datetime import datetime
 from pathlib import Path
 
-import numpy as np
+from math import floor
 
 from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase
 from ghedesigner.utilities import DesignMethod
@@ -108,20 +107,20 @@ def create_line(row_allocation, character="*"):
 
 
 def hours_to_month(hours):
-    days_in_year = np.array([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
+    days_in_year = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     hours_in_year = 24 * days_in_year
-    n_years = math.floor(hours / np.sum(hours_in_year))
+    n_years = floor(hours / sum(hours_in_year))
     frac_month = n_years * len(days_in_year)
     month_in_year = 0
     for idx, _ in enumerate(days_in_year):
-        hours_left = hours - n_years * np.sum(hours_in_year)
-        if np.sum(hours_in_year[0: idx + 1]) >= hours_left:
+        hours_left = hours - n_years * sum(hours_in_year)
+        if sum(hours_in_year[0: idx + 1]) >= hours_left:
             month_in_year = idx
             break
     # print("Year Months: ",fracMonth)
     # print("Month Months: ",monthInYear)
     frac_month += month_in_year
-    h_l = hours - n_years * np.sum(hours_in_year) - np.sum(hours_in_year[0:month_in_year])
+    h_l = hours - n_years * sum(hours_in_year) - sum(hours_in_year[0:month_in_year])
     frac_month += h_l / (hours_in_year[month_in_year])
     # print("Hour Months: ",hL/(hoursInYear[monthInYear]))
     # print(fracMonth)
@@ -129,7 +128,7 @@ def hours_to_month(hours):
 
 
 def ghe_time_convert(hours):
-    days_in_year = np.array([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
+    days_in_year = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     hours_in_year = 24 * days_in_year
     month_in_year = 0
     year_hour_sum = 0
@@ -142,8 +141,8 @@ def ghe_time_convert(hours):
             year_hour_sum += hours_in_year[idx]
     # print("Year Months: ",fracMonth)
     # print("Month Months: ",monthInYear)
-    h_l = hours - np.sum(hours_in_year[0:month_in_year])
-    day_in_month = int(math.floor(h_l / 24)) + 1
+    h_l = hours - sum(hours_in_year[0:month_in_year])
+    day_in_month = floor(h_l / 24) + 1
     hour_in_day = h_l % 24 + 1
     # print("Hour Months: ",hL/(hoursInYear[monthInYear]))
     # print(fracMonth)
@@ -671,14 +670,14 @@ def output_design_details(
     d_tb_vals = []
     d_tb_vals.extend(ghe.dTb)
     n_years = 0
-    # hTotalYear = np.sum(hoursInYear)
+    # hTotalYear = sum(hoursInYear)
     out_array = []
     last_month = -1
     month_tb_vals = []
     month_eft_vals = []
     for tv, d_tb, eft in zip(time_vals, d_tb_vals, eft_vals):
         # currentHourMonth = timeVals[i] - hTotalYear * nYears
-        current_month = int(math.floor(hours_to_month(tv)))
+        current_month = floor(hours_to_month(tv))
         # print(monthEFTVals)
         if current_month == last_month:
             month_tb_vals.append(d_tb)
@@ -696,8 +695,8 @@ def output_design_details(
                     [
                         current_month,
                         previous_temp + month_tb_vals[-1],
-                        np.max(month_eft_vals),
-                        np.min(month_eft_vals),
+                        max(month_eft_vals),
+                        min(month_eft_vals),
                     ]
                 )
             last_month = current_month
@@ -713,8 +712,8 @@ def output_design_details(
     eft_table_formats = [".0f", ".3f", ".3f", ".3f"]
 
     o_s += create_title(allocated_width, "Peak Temperature", filler_symbol="-")
-    max_eft = np.max(eft_vals)
-    min_eft = np.min(eft_vals)
+    max_eft = max(eft_vals)
+    min_eft = min(eft_vals)
     max_eft_time = time_vals[eft_vals.index(max(eft_vals))]
     min_eft_time = time_vals[eft_vals.index(min(eft_vals))]
     max_eft_time = hours_to_month(max_eft_time)

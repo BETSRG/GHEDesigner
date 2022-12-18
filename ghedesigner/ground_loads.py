@@ -1,8 +1,8 @@
 from calendar import monthrange
 from json import dumps
 
-import math
 import numpy as np
+from math import floor, log, pi
 from scipy.interpolate import interp1d
 
 from ghedesigner.borehole_heat_exchangers import SingleUTube
@@ -204,10 +204,10 @@ class HybridLoad:
 
             # Day of month the peak heating load occurs
             # day of the month on which peak clg load occurs (e.g. 1-31)
-            self.monthly_peak_cl_day[i] = math.floor(
+            self.monthly_peak_cl_day[i] = floor(
                 month_rejection_loads.index(self.monthly_peak_cl[i]) / hours_in_day)
             # day of the month on which peak clg load occurs (e.g. 1-31)
-            self.monthly_peak_hl_day[i] = math.floor(
+            self.monthly_peak_hl_day[i] = floor(
                 month_extraction_loads.index(self.monthly_peak_hl[i]) / hours_in_day)
             # print("Monthly Peak HL Hour",month_extraction_loads.index(
             # self.monthly_peak_hl[i]) / hours_in_day)
@@ -312,7 +312,7 @@ class HybridLoad:
             two_day_fluid_temps_nm,
     ):
         ts = self.radial_numerical.t_s
-        two_pi_k = 2.0 * np.pi * self.bhe.soil.k
+        two_pi_k = 2.0 * pi * self.bhe.soil.k
         resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
         g_sts = self.radial_numerical.g_sts
         hours_in_day = 24

@@ -1,4 +1,4 @@
-GHEDesigner Command Line Interface
-==================================
+Command Line Interface
+======================
 
 Examples here

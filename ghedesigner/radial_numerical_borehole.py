@@ -1,6 +1,5 @@
 import numpy as np
-from math import log, sqrt, exp
-from math import pi
+from math import exp, log, pi, sqrt
 from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
 

@@ -3,6 +3,7 @@ from typing import Type, Union
 
 import numpy as np
 import pygfunction as gt
+from math import ceil, floor, pi
 from scipy.interpolate import interp1d
 
 from ghedesigner import VERSION
@@ -144,7 +145,7 @@ class BaseGHE:
         q_dot_b_dt = np.hstack((q_dot_b[1:] - q_dot_b[:-1]))
 
         ts = self.radial_numerical.t_s  # (-)
-        two_pi_k = 2.0 * np.pi * self.bhe.soil.k  # (W/m.K)
+        two_pi_k = 2.0 * pi * self.bhe.soil.k  # (W/m.K)
         h = self.bhe.b.H  # (meters)
         tg = self.bhe.soil.ugt  # (Celsius)
         rb = self.bhe.calc_effective_borehole_resistance()  # (m.K/W)
@@ -281,7 +282,7 @@ class GHE(BaseGHE):
         total_g_values = g.x.size
         number_lts_g_values = 27
         number_sts_g_values = 50
-        sts_step_size = int(np.floor((total_g_values - number_lts_g_values) / number_sts_g_values).tolist())
+        sts_step_size = floor((total_g_values - number_lts_g_values) / number_sts_g_values)
         lntts = []
         g_values = []
         for idx in range(0, (total_g_values - number_lts_g_values), sts_step_size):
@@ -325,7 +326,7 @@ class GHE(BaseGHE):
             n_hours = int(n_months / 12.0 * 8760.0)
             q_dot = self.hourly_extraction_ground_loads
             # How many times does q need to be repeated?
-            n_years = int(np.ceil(n_hours / 8760))
+            n_years = ceil(n_hours / 8760)
             if len(q_dot) // 8760 < n_years:
                 q_dot = q_dot * n_years
             else:

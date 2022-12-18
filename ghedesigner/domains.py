@@ -1,4 +1,4 @@
-import numpy as np
+from math import ceil, floor
 
 from ghedesigner.coordinates import rectangle, transpose_coordinates, zoned_rectangle, l_shape, c_shape, lop_u
 from ghedesigner.feature_recognition import remove_cutout, determine_largest_rectangle
@@ -49,8 +49,8 @@ def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, di
     n_1_max = (length_1 / b_min) + 1
     n_1_min = (length_1 / b_max) + 1
 
-    n_min = int(np.ceil(n_1_min).tolist())
-    n_max = int(np.floor(n_1_max).tolist())
+    n_min = ceil(n_1_min)
+    n_max = floor(n_1_max)
 
     n_2_old = 1
 
@@ -63,7 +63,7 @@ def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, di
     for N in range(n_min, n_max + 1):
         # Check to see if we bracket
         b = length_1 / (N - 1)
-        n_2 = int(np.floor((length_2 / b) + 1))
+        n_2 = floor((length_2 / b) + 1)
 
         if _iter == 0:
             for i in range(1, n_min):
@@ -121,11 +121,11 @@ def bi_rectangular(length_x, length_y, b_min, b_max_x, b_max_y, transpose=False,
     # borehole, to a line, to adding the rows
     _iter = 0
 
-    n_min = int(np.ceil(n_1_min).tolist())
-    n_max = int(np.floor(n_1_max).tolist())
+    n_min = ceil(n_1_min)
+    n_max = floor(n_1_max)
     for n_1 in range(n_min, n_max + 1):
 
-        n_2 = int(np.ceil((length_2 / b_max_2) + 1))
+        n_2 = ceil((length_2 / b_max_2) + 1)
         b_2 = length_2 / (n_2 - 1)
 
         b_1 = length_1 / (n_1 - 1)
@@ -179,8 +179,8 @@ def bi_rectangle_nested(length_x, length_y, b_min, b_max_x, b_max_y, disp=False)
     n_2_max = (length_2 / b_min) + 1
     n_2_min = (length_2 / b_max_2) + 1
 
-    n_min = int(np.ceil(n_2_min).tolist())
-    n_max = int(np.floor(n_2_max).tolist())
+    n_min = ceil(n_2_min)
+    n_max = floor(n_2_max)
 
     bi_rectangle_nested_domain = []
     field_descriptors = []
@@ -285,11 +285,11 @@ def bi_rectangle_zoned_nested(length_x, length_y, b_min, b_max_x, b_max_y):
     n_2_max = (length_2 / b_min) + 1
     n_2_min = (length_2 / b_max_2) + 1
 
-    n_min_1 = int(np.ceil(n_1_min).tolist())
-    n_max_1 = int(np.floor(n_1_max).tolist())
+    n_min_1 = ceil(n_1_min)
+    n_max_1 = floor(n_1_max)
 
-    n_min_2 = int(np.ceil(n_2_min).tolist())
-    n_max_2 = int(np.floor(n_2_max).tolist())
+    n_min_2 = ceil(n_2_min)
+    n_max_2 = floor(n_2_max)
 
     bi_rectangle_zoned_nested_domain = []
     field_descriptor_format_string = "{}X{}_{:.2f}X{:.2f}"
