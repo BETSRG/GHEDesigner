@@ -71,8 +71,7 @@ class DesignBase:
 
 class DesignNearSquare(DesignBase):
     def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
-                 fluid: GHEFluid, pipe: Pipe,
-                 grout: Grout, soil: Soil, sim_params: SimulationParameters,
+                 fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
         super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,

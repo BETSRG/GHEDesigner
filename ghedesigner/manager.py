@@ -1,7 +1,9 @@
 from json import dumps, loads
 from pathlib import Path
-from sys import argv, exit, stderr
+from sys import exit, stderr
 from typing import List, Optional, Type, Union
+
+import click
 
 from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
@@ -168,7 +170,6 @@ class GHEManager:
 
 
 def run_manager_from_cli_worker(input_file_path: Path, output_file_path: Path):
-
     if not input_file_path.exists():
         print(f"No input file found at {input_file_path}, aborting")
         exit(1)
@@ -207,13 +208,14 @@ def run_manager_from_cli_worker(input_file_path: Path, output_file_path: Path):
         ))
 
 
-def run_manager_from_cli():
-    # TODO: Tons of error handling, autogenerate a default schema, use click
-    # TODO: argv[3] is the action to perform?  Or that's part of the input file?
-    input_file_path = Path(argv[1])
-    output_file_path = Path(argv[2])
-    run_manager_from_cli_worker(input_file_path, output_file_path)
+@click.command(name="GHEDesignerCommandLine")
+@click.argument("input-path", type=click.Path(exists=True))
+@click.argument("output-path", type=click.Path(exists=True))
+def run_manager_from_cli(input_path, output_path):
+    input_path = Path(input_path).resolve()
+    output_path = Path(output_path).resolve()
 
+    if not input_path.exists():
+        print(f'Input file does not exist. Input file path: "{str(input_path)}"')
 
-if __name__ == "__main__":
-    run_manager_from_cli()
+    run_manager_from_cli_worker(input_path, output_path)

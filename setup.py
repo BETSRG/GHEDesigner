@@ -1,6 +1,6 @@
-from setuptools import setup
-
 from os import path
+
+from setuptools import setup
 
 from ghedesigner import VERSION
 
@@ -15,6 +15,7 @@ based on drilling geometric land constraints."""
 setup(
     name='ghedesigner',
     install_requires=[
+        'click',
         'pygfunction @ git+https://github.com/MassimoCimmino/pygfunction@5465044309c1193514f64574680cd430249aef29',
         'wheel',  # I believe once we are installing pygfunction from wheels, we don't need this line anymore
         'numpy>=1.19.2',
