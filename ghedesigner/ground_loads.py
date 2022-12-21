@@ -1,8 +1,8 @@
 from calendar import monthrange
 from json import dumps
+from math import floor, pi
 
 import numpy as np
-from math import floor, log, pi
 from scipy.interpolate import interp1d
 
 from ghedesigner.borehole_heat_exchangers import SingleUTube
@@ -386,11 +386,12 @@ class HybridLoad:
             current_month_avg_cl = self.monthly_avg_cl[i]
 
             if current_month_peak_cl != 0.0:
-                peak_duration, q_peak, q_nominal = self.perform_current_month_simulation(current_two_day_cl_load,
-                                                                                         current_month_peak_cl,
-                                                                                         current_month_avg_cl,
-                                                                                         self.two_day_fluid_temps_cl_pk,
-                                                                                         self.two_day_fluid_temps_cl_nm, )
+                peak_duration, q_peak, q_nominal = self.perform_current_month_simulation(
+                    current_two_day_cl_load,
+                    current_month_peak_cl,
+                    current_month_avg_cl,
+                    self.two_day_fluid_temps_cl_pk,
+                    self.two_day_fluid_temps_cl_nm)
             else:
                 peak_duration = 1.0e-6
 
