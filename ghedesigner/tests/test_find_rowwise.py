@@ -187,11 +187,11 @@ class TestFindRowWise(GHEBaseTest):
         # Print Summary of Findings
         subtitle = "* Single U-tube"  # Subtitle for the printed summary
         self.log(subtitle + "\n" + len(subtitle) * "-")
-        self.log("Calculation time: {0:.2f} seconds".format(toc - tic))
-        self.log("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
+        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
+        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
         nbh = len(bisection_search.ghe.gFunction.bore_locations)
-        self.log("Number of boreholes: {}".format(nbh))
-        self.log("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
+        self.log(f"Number of boreholes: {nbh}")
+        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
         output_design_details(
@@ -242,11 +242,11 @@ class TestFindRowWise(GHEBaseTest):
         # Print Summary of Findings
         subtitle = "* Single U-tube"  # Subtitle for the printed summary
         self.log(subtitle + "\n" + len(subtitle) * "-")
-        self.log("Calculation time: {0:.2f} seconds".format(toc - tic))
-        self.log("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
+        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
+        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
         nbh = len(bisection_search.ghe.gFunction.bore_locations)
-        self.log("Number of boreholes: {}".format(nbh))
-        self.log("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
+        self.log(f"Number of boreholes: {nbh}")
+        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
         output_design_details(

@@ -132,7 +132,7 @@ def calc_g_func_for_multiple_lengths(
             segment_ratios=segment_ratios,
         )
 
-        key = "{}_{}_{}_{}".format(b, h, r_b, d)
+        key = f"{b}_{h}_{r_b}_{d}"
 
         d["g"][key] = gfunc.gFunc.tolist()
 

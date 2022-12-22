@@ -859,7 +859,7 @@ def output_design_details(
 
     # gfunctionColTitles.append("H:" + str(round(bH.H, 2)) + "m")
 
-    csv4_array = [["ln(t/ts)", "H:{:.2f}".format(bhe.b.H)]]
+    csv4_array = [["ln(t/ts)", f"H:{bhe.b.H:0.2f}"]]
     ghe_gf_adjusted = ghe.grab_g_function(ghe.B_spacing / float(ghe.bhe.b.H))
     gfunction_log_vals = ghe_gf_adjusted.x
     gfunction_g_vals = ghe_gf_adjusted.y

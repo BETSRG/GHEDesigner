@@ -709,7 +709,7 @@ class RowWiseModifiedBisectionSearch:
                 while i < self.max_iter:
                     nbh = (nbh_max + nbh_min) // 2
                     current_field = starting_field[nbh_start - nbh:]
-                    f_s = lower_field_specifier + "_BR{}".format(nbh_start - nbh)
+                    f_s = lower_field_specifier + f"_BR{nbh_start - nbh}"
                     t_e = self.calculate_excess(
                         current_field, self.sim_params.max_Height, field_specifier=f_s
                     )

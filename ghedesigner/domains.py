@@ -26,7 +26,7 @@ def square_and_near_square(lower: int, upper: int, b: float):
             coordinates = rectangle(i, i + j, b, b)
 
             coordinates_domain.append(coordinates)
-            field_descriptors.append("{}X{}".format(i, i + j))
+            field_descriptors.append(f"{i}X{i + j}")
 
     return coordinates_domain, field_descriptors
 
@@ -43,7 +43,7 @@ def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, di
         transpose = True
 
     rectangle_domain = []
-    field_descriptor_format_string = "{}X{}_B{:.2f}"
+    field_descriptor_format_string = "{}X{}_B{:0.2f}"
     field_descriptors = []
     # find the maximum number of boreholes as a float
     n_1_max = (length_1 / b_min) + 1
@@ -85,7 +85,7 @@ def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, di
         else:
             r = rectangle(N, n_2, b, b)
             if disp:
-                print("{}\t{}\t{}\t{}".format(N, n_2, b, b))
+                print(f"{N}\t{n_2}\t{b}\t{b}")
             if transpose:
                 r = transpose_coordinates(r)
             rectangle_domain.append(r)
@@ -111,7 +111,7 @@ def bi_rectangular(length_x, length_y, b_min, b_max_x, b_max_y, transpose=False,
         b_max_2 = b_max_x
 
     bi_rectangle_domain = []
-    field_descriptor_format_string = "{}X{}_B1{:.2f}_B2{:.2f}"
+    field_descriptor_format_string = "{}X{}_B1{:0.2f}_B2{:0.2f}"
     field_descriptors = []
     # find the maximum number of boreholes as a float
     n_1_max = (length_1 / b_min) + 1
@@ -147,7 +147,7 @@ def bi_rectangular(length_x, length_y, b_min, b_max_x, b_max_y, transpose=False,
             _iter += 1
 
         if disp:
-            print("{0}x{1} with {2:.1f}x{3:.1f}".format(n_1, n_2, b_1, b_2))
+            print(f"{n_1}x{n_2} with {b_1:0.1f}x{b_2:0.1f}")
 
         coordinates = rectangle(n_1, n_2, b_1, b_2)
         if transpose:
@@ -216,7 +216,7 @@ def zoned_rectangle_domain(length_x, length_y, n_x, n_y, transpose=False):
     b_2 = length_2 / (n_2 - 1)
 
     _zoned_rectangle_domain = []
-    field_descriptor_format_string = "{}X{}_{}X{}_B1{:.2f}_B2{:.2f}"
+    field_descriptor_format_string = "{}X{}_{}X{}_B1{:0.2f}_B2{:0.2f}"
     field_descriptors = []
 
     n_i1 = 1
@@ -292,7 +292,7 @@ def bi_rectangle_zoned_nested(length_x, length_y, b_min, b_max_x, b_max_y):
     n_max_2 = floor(n_2_max)
 
     bi_rectangle_zoned_nested_domain = []
-    field_descriptor_format_string = "{}X{}_{:.2f}X{:.2f}"
+    field_descriptor_format_string = "{}X{}_{:0.2f}X{:0.2f}"
     field_descriptors = []
 
     n_1_values = list(range(n_min_1, n_max_1 + 1))

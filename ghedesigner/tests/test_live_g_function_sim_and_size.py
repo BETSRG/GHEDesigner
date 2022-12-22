@@ -136,7 +136,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # Simulate after computing just one g-function
         max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethod.Hybrid)
 
-        self.log("Min EFT: {0:.3f}\nMax EFT: {1:.3f}".format(min_hp_eft, max_hp_eft))
+        self.log("Min EFT: {0:0.3f}\nMax EFT: {1:0.3f}".format(min_hp_eft, max_hp_eft))
 
         # Compute a range of g-functions for interpolation
         h_values = [24.0, 48.0, 96.0, 192.0, 384.0]

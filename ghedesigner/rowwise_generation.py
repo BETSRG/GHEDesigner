@@ -194,7 +194,7 @@ def find_duplicates(borefield, space, disp=False):
         output = f"{'*gt.boreholes.find_duplicates()*' :-^50}"
         # keep a space between the function name
         print(output.replace("*", " "))
-        print("The duplicate pairs of boreholes found: {}".format(duplicate_pairs))
+        print(f"The duplicate pairs of boreholes found: {duplicate_pairs}")
     return duplicate_pairs
 
 
@@ -243,7 +243,7 @@ def remove_duplicates(borefield, space, disp=False):
             f"{'*gt.boreholes.remove_duplicates()*' :-^50}".replace("*", " ")
         )  # keep a space between the function name
         n_duplicates = len(borefield) - len(new_borefield)
-        print("The number of duplicates removed: {}".format(n_duplicates))
+        print(f"The number of duplicates removed: {n_duplicates}")
 
     return new_borefield
 

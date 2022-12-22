@@ -89,7 +89,7 @@ class DesignNearSquare(DesignBase):
 
     def find_design(self, disp=False, use_perimeter=True) -> Bisection1D:
         if disp:
-            title = "Find {}...".format(self.routine)
+            title = f"Find {self.routine}..."
             print(title + "\n" + len(title) * "=")
         return Bisection1D(
             self.coordinates_domain,
@@ -126,7 +126,7 @@ class DesignRectangle(DesignBase):
 
     def find_design(self, disp=False, use_perimeter=True) -> Bisection1D:
         if disp:
-            title = "Find {}...".format(self.routine)
+            title = f"Find {self.routine}..."
             print(title + "\n" + len(title) * "=")
         return Bisection1D(
             self.coordinates_domain,
@@ -165,7 +165,7 @@ class DesignBiRectangle(DesignBase):
 
     def find_design(self, disp=False, use_perimeter=True) -> Bisection2D:
         if disp:
-            title = "Find {}...".format(self.routine)
+            title = f"Find {self.routine}..."
             print(title + "\n" + len(title) * "=")
         return Bisection2D(
             self.coordinates_domain_nested,
@@ -204,7 +204,7 @@ class DesignBiZoned(DesignBase):
 
     def find_design(self, disp=False, use_perimeter=True) -> BisectionZD:
         if disp:
-            title = "Find {}...".format(self.routine)
+            title = f"Find {self.routine}..."
             print(title + "\n" + len(title) * "=")
         return BisectionZD(
             self.coordinates_domain_nested,
@@ -245,7 +245,7 @@ class DesignBiRectangleConstrained(DesignBase):
 
     def find_design(self, disp=False, use_perimeter=True) -> Bisection2D:
         if disp:
-            title = "Find {}...".format(self.routine)
+            title = f"Find {self.routine}..."
             print(title + "\n" + len(title) * "=")
         return Bisection2D(
             self.coordinates_domain_nested,
@@ -280,7 +280,7 @@ class DesignRowWise(DesignBase):
 
     def find_design(self, disp=False, use_perimeter=True) -> RowWiseModifiedBisectionSearch:
         if disp:
-            title = "Find {}...".format(self.routine)
+            title = f"Find {self.routine}..."
             print(title + "\n" + len(title) * "=")
         return RowWiseModifiedBisectionSearch(
             self.V_flow,
