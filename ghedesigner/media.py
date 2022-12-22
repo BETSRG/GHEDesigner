@@ -105,8 +105,8 @@ class SimulationParameters:
         self.max_EFT_allowable = max_entering_fluid_temp_allow  # degrees Celsius
         self.min_EFT_allowable = min_entering_fluid_temp_allow  # degrees Celsius
         # Maximum and minimum allowable heights
-        self.max_Height = max_height  # in meters
-        self.min_Height = min_height  # in meters
+        self.max_height = max_height  # in meters
+        self.min_height = min_height  # in meters
 
     def as_dict(self) -> dict:
         output = dict()
@@ -115,6 +115,6 @@ class SimulationParameters:
         output['end_month'] = self.end_month
         output['max_eft_allowable'] = {'value': self.max_EFT_allowable, 'units': 'C'}
         output['min_eft_allowable'] = {'value': self.min_EFT_allowable, 'units': 'C'}
-        output['maximum_height'] = {'value': self.max_Height, 'units': 'm'}
-        output['minimum_height'] = {'value': self.min_Height, 'units': 'm'}
+        output['maximum_height'] = {'value': self.max_height, 'units': 'm'}
+        output['minimum_height'] = {'value': self.min_height, 'units': 'm'}
         return output

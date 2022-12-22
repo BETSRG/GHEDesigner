@@ -341,12 +341,9 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         # Get effective parameters for the multiple u-tube
         vol_fluid, vol_pipe, resist_conv, resist_pipe = self.u_tube_volumes()
 
-        single_u_tube = self.equivalent_single_u_tube(
-            vol_fluid, vol_pipe, resist_conv, resist_pipe
-        )
+        single_u_tube = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe)
 
-        # Vary grout thermal conductivity to match effective borehole thermal
-        # resistance
+        # Vary grout thermal conductivity to match effective borehole thermal resistance
         self.match_effective_borehole_resistance(single_u_tube)
 
         return single_u_tube
@@ -415,7 +412,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         # In this example, the inlet pipe is the inside pipe.
         # TODO: fix this
         r_inner_p = np.array([pipe.r_in[0], pipe.r_out[0]])  # Inner pipe radii (m)
-        r_outer_p = np.array([pipe.r_in[1], pipe.r_out[1]])  # Outer pip radii (m)
+        r_outer_p = np.array([pipe.r_in[1], pipe.r_out[1]])  # Outer pipe radii (m)
 
         gt.pipes.Coaxial.__init__(
             self,
@@ -426,8 +423,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
             self.soil.k,
             self.grout.k,
             self.R_ff,
-            self.R_fp,
-            J=2,
+            self.R_fp
         )
 
         # these methods must be called after inherited class construction

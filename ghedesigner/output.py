@@ -626,14 +626,14 @@ def output_design_details(
     o_s += create_d_row(
         allocated_width,
         "Maximum Allowable Height, m: ",
-        ghe.sim_params.max_Height,
+        ghe.sim_params.max_height,
         string_format,
         float_format,
     )
     o_s += create_d_row(
         allocated_width,
         "Minimum Allowable Height, m: ",
-        ghe.sim_params.min_Height,
+        ghe.sim_params.min_height,
         string_format,
         float_format,
     )

@@ -182,17 +182,17 @@ class Bisection1D:
         # smallest location in the domain
         t_0_lower = self.calculate_excess(
             self.coordinates_domain[x_l_idx],
-            self.sim_params.min_Height,
+            self.sim_params.min_height,
             field_specifier=self.fieldDescriptors[x_l_idx],
         )
         t_0_upper = self.calculate_excess(
             self.coordinates_domain[x_l_idx],
-            self.sim_params.max_Height,
+            self.sim_params.max_height,
             field_specifier=self.fieldDescriptors[x_l_idx],
         )
         t_m1 = self.calculate_excess(
             self.coordinates_domain[x_r_idx],
-            self.sim_params.max_Height,
+            self.sim_params.max_height,
             field_specifier=self.fieldDescriptors[x_r_idx],
         )
 
@@ -202,7 +202,7 @@ class Bisection1D:
         if check_bracket(sign(t_0_lower), sign(t_0_upper)):
             if self.disp:
                 print("Size between min and max of lower bound in domain.")
-            self.initialize_ghe(self.coordinates_domain[0], self.sim_params.max_Height)
+            self.initialize_ghe(self.coordinates_domain[0], self.sim_params.max_height)
             return 0, self.coordinates_domain[0]
         elif check_bracket(sign(t_0_upper), sign(t_m1)):
             if self.disp:
@@ -247,7 +247,7 @@ class Bisection1D:
 
             c_t_excess = self.calculate_excess(
                 self.coordinates_domain[c_idx],
-                self.sim_params.max_Height,
+                self.sim_params.max_height,
                 field_specifier=self.fieldDescriptors[c_idx],
             )
 
@@ -263,7 +263,7 @@ class Bisection1D:
 
         coordinates = self.coordinates_domain[i]
 
-        h = self.sim_params.max_Height
+        h = self.sim_params.max_height
 
         self.calculate_excess(coordinates, h, field_specifier=self.fieldDescriptors[i])
         # Make sure the field being returned pertains to the index which is the
@@ -384,7 +384,7 @@ class RowWiseModifiedBisectionSearch:
             self.checkedFields = []
         if search:
             self.selected_coordinates, self.selected_specifier = self.search(use_perimeter=use_perimeter)
-            self.initialize_ghe(self.selected_coordinates, self.sim_params.max_Height,
+            self.initialize_ghe(self.selected_coordinates, self.sim_params.max_height,
                                 field_specifier=self.selected_specifier)
 
     def retrieve_flow(self, coordinates, rho):
@@ -514,8 +514,8 @@ class RowWiseModifiedBisectionSearch:
             )
 
         # Get Excess Temperatures
-        t_upper = self.calculate_excess(upper_field, self.sim_params.max_Height, field_specifier=upper_field_specifier)
-        t_lower = self.calculate_excess(lower_field, self.sim_params.max_Height, field_specifier=lower_field_specifier)
+        t_upper = self.calculate_excess(upper_field, self.sim_params.max_height, field_specifier=upper_field_specifier)
+        t_lower = self.calculate_excess(lower_field, self.sim_params.max_height, field_specifier=lower_field_specifier)
 
         if self.advanced_tracking:
             self.advanced_tracking.append([spacing_start, upper_field_specifier, len(upper_field), t_upper])
@@ -570,7 +570,7 @@ class RowWiseModifiedBisectionSearch:
 
                 # Getting the three field's excess temperature
                 t_e1 = self.calculate_excess(
-                    f1, self.sim_params.max_Height, field_specifier=f1_specifier
+                    f1, self.sim_params.max_height, field_specifier=f1_specifier
                 )
 
                 if self.advanced_tracking:
@@ -626,13 +626,13 @@ class RowWiseModifiedBisectionSearch:
                         rotate_stop=rotate_stop,
                     )
 
-                t_e = self.calculate_excess(field, self.sim_params.max_Height, field_specifier=f_s)
+                t_e = self.calculate_excess(field, self.sim_params.max_height, field_specifier=f_s)
 
                 if self.advanced_tracking:
                     self.advanced_tracking.append([ts, f_s, len(field), t_e])
                     self.checkedFields.append(field)
 
-                self.initialize_ghe(field, self.sim_params.max_Height, field_specifier=f_s)
+                self.initialize_ghe(field, self.sim_params.max_height, field_specifier=f_s)
                 self.ghe.compute_g_functions()
                 self.ghe.size(method=DesignMethod.Hybrid)
                 total_drilling = self.ghe.bhe.b.H * len(field)
@@ -687,7 +687,7 @@ class RowWiseModifiedBisectionSearch:
             #     raise ValueError(msg)
 
             # Check if a 1X1 field is satisfactory
-            t_e_single = self.calculate_excess([[0, 0]], self.sim_params.max_Height, field_specifier="1X1")
+            t_e_single = self.calculate_excess([[0, 0]], self.sim_params.max_height, field_specifier="1X1")
 
             if self.advanced_tracking:
                 self.advanced_tracking.append(["N/A", "1X1", 1, t_e_single])
@@ -711,7 +711,7 @@ class RowWiseModifiedBisectionSearch:
                     current_field = starting_field[nbh_start - nbh:]
                     f_s = lower_field_specifier + f"_BR{nbh_start - nbh}"
                     t_e = self.calculate_excess(
-                        current_field, self.sim_params.max_Height, field_specifier=f_s
+                        current_field, self.sim_params.max_height, field_specifier=f_s
                     )
                     if self.advanced_tracking:
                         self.advanced_tracking.append(
@@ -954,7 +954,7 @@ class BisectionZD(Bisection1D):
 
         self.initialize_ghe(
             selected_coordinates,
-            self.sim_params.max_Height,
+            self.sim_params.max_height,
             field_specifier=self.nested_fieldDescriptors[selection_key_outer][
                 selection_key
             ],

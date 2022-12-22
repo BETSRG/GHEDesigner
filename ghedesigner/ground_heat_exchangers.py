@@ -175,8 +175,8 @@ class BaseGHE:
     def compute_g_functions(self):
         # Compute g-functions for a bracketed solution, based on min and max
         # height
-        min_height = self.sim_params.min_Height
-        max_height = self.sim_params.max_Height
+        min_height = self.sim_params.min_height
+        max_height = self.sim_params.max_height
         avg_height = (min_height + max_height) / 2.0
         h_values = [min_height, avg_height, max_height]
 
@@ -349,25 +349,25 @@ class GHE(BaseGHE):
             return t_excess
 
         # Make the initial guess variable the average of the heights given
-        self.bhe.b.H = (self.sim_params.max_Height + self.sim_params.min_Height) / 2.0
+        self.bhe.b.H = (self.sim_params.max_height + self.sim_params.min_height) / 2.0
         # bhe.b.H is updated during sizing
         returned_height = solve_root(
             self.bhe.b.H,
             local_objective,
-            lower=self.sim_params.min_Height,
-            upper=self.sim_params.max_Height,
+            lower=self.sim_params.min_height,
+            upper=self.sim_params.max_height,
             abs_tol=1.0e-6,
             rel_tol=1.0e-6,
             max_iter=50,
         )
-        if returned_height == self.sim_params.min_Height:
+        if returned_height == self.sim_params.min_height:
             warnings.warn(
                 "The minimum height provided to size this ground heat"
                 " exchanger is not shallow enough. Provide a "
                 "shallower allowable depth or decrease the size of "
                 "the heat exchanger."
             )
-        if returned_height == self.sim_params.max_Height:
+        if returned_height == self.sim_params.max_height:
             pass  # TODO: Handle warnings in a nicer way
             # warnings.warn(
             #     "The maximum height provided to size this ground "

@@ -17,8 +17,6 @@ class HybridLoad:
             bhe: SingleUTube,
             radial_numerical: RadialNumericalBH,
             sim_params: SimulationParameters,
-            cop_rejection=None,
-            cop_extraction=None,
             years=None,
     ):
         # Split the hourly loads into heating and cooling (kW)
@@ -43,14 +41,6 @@ class HybridLoad:
         # Note: this is intended to be a scipy.interp1d object
         self.radial_numerical = radial_numerical
         self.years = years
-        if cop_extraction is None:
-            self.COP_extraction = 2.5  # When the building is heating mode
-        else:
-            self.COP_extraction = cop_extraction
-        if cop_rejection is None:
-            self.COP_rejection = 4.0  # When the building is in cooling mode
-        else:
-            self.COP_rejection = cop_rejection
 
         # Get the number of days in each month for a given year (make 0 NULL)
         self.days_in_month = [0]
@@ -699,28 +689,8 @@ class HybridLoad:
 
 
 def number_to_month(x):
-    # Convert a numeric 1-12 to a month name
-    if 12 >= int(x) > 0:
-
-        list_of_months = {
-            "1": "January",
-            "2": "February",
-            "3": "March",
-            "4": "April",
-            "5": "May",
-            "6": "June",
-            "7": "July",
-            "8": "August",
-            "9": "September",
-            "10": "October",
-            "11": "November",
-            "12": "December",
-        }
-
-        return list_of_months[str(x)]
-
-    else:
-        print('num_to_month function error: "num=' + str(x) + '"')
+    return ["NULL", "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"][x]
 
 
 def monthdays(month, year):
