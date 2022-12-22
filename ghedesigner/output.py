@@ -1,9 +1,8 @@
 import csv
 import os
 from datetime import datetime
-from pathlib import Path
-
 from math import floor
+from pathlib import Path
 
 from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase
 from ghedesigner.utilities import DesignMethod

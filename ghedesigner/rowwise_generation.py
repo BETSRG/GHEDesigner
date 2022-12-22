@@ -1,5 +1,6 @@
-import numpy as np
 from math import atan, cos, pi, sin, sqrt
+
+import numpy as np
 
 from ghedesigner.shape import Shapes, sort_intersections
 
@@ -745,12 +746,8 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
     inters = inters[indices]
     num_inters = len(inters)
     for i in range(num_inters - 1):
-        space = float(
-            sqrt(
-                (inters[i + 1][0] - inters[i][0]) * (inters[i + 1][0] - inters[i][0])
-                + (inters[i + 1][1] - inters[i][1]) * (inters[i + 1][1] - inters[i][1])
-            )
-        )
+        space = sqrt((inters[i + 1][0] - inters[i][0]) * (inters[i + 1][0] - inters[i][0])
+                     + (inters[i + 1][1] - inters[i][1]) * (inters[i + 1][1] - inters[i][1]))
         if space < row_space:
             i_none = False
             for shape in no_go:

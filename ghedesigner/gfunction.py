@@ -1,8 +1,8 @@
 import warnings
+from math import log
 
 import numpy as np
 import pygfunction as gt
-from math import log
 from scipy.interpolate import interp1d, lagrange
 
 

@@ -1,7 +1,6 @@
 from abc import abstractmethod
-from typing import Type, Union
-
 from math import floor
+from typing import Type, Union
 
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe

@@ -7,9 +7,9 @@
 
 import pickle
 from enum import auto, Enum
+from math import sqrt
 from pathlib import Path
 
-from math import sqrt
 from scipy.optimize import brentq
 
 
@@ -140,7 +140,6 @@ def create_input_file(self, file_path_obj: Path):
     # Store an object in a file using pickle.
     with open(str(file_path_obj), "wb") as file_handler:
         pickle.dump(self, file_handler)
-    return
 
 
 def read_input_file(path_file_obj: Path):

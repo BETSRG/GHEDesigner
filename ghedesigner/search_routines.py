@@ -1,9 +1,9 @@
 from json import dumps
+from math import ceil, floor, sqrt
 from pathlib import Path
 from typing import Optional
 
 import pygfunction as gt
-from math import ceil, floor, sqrt
 
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
@@ -103,12 +103,12 @@ class Bisection1D:
 
     def retrieve_flow(self, coordinates, rho):
         if self.flow == "borehole":
-            v_flow_system = self.V_flow * float(len(coordinates))
+            v_flow_system = self.V_flow * len(coordinates)
             # Total fluid mass flow rate per borehole (kg/s)
             m_flow_borehole = self.V_flow / 1000.0 * rho
         elif self.flow == "system":
             v_flow_system = self.V_flow
-            v_flow_borehole = self.V_flow / float(len(coordinates))
+            v_flow_borehole = self.V_flow / len(coordinates)
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
         else:
             raise ValueError("The flow argument should be either `borehole`" "or `system`.")
@@ -404,12 +404,12 @@ class RowWiseModifiedBisectionSearch:
 
     def retrieve_flow(self, coordinates, rho):
         if self.flow == "borehole":
-            v_flow_system = self.V_flow * float(len(coordinates))
+            v_flow_system = self.V_flow * len(coordinates)
             # Total fluid mass flow rate per borehole (kg/s)
             m_flow_borehole = self.V_flow / 1000.0 * rho
         elif self.flow == "system":
             v_flow_system = self.V_flow
-            v_flow_borehole = self.V_flow / float(len(coordinates))
+            v_flow_borehole = self.V_flow / len(coordinates)
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
         else:
             raise ValueError("The flow argument should be either `borehole`" "or `system`.")
@@ -943,7 +943,7 @@ class BisectionZD(Bisection1D):
             self.ghe.size(method=DesignMethod.Hybrid)
 
             nbh = len(selected_coordinates)
-            total_drilling = float(nbh) * self.ghe.bhe.b.H
+            total_drilling = nbh * self.ghe.bhe.b.H
             self.calculated_heights[i] = total_drilling
 
             if old_height < total_drilling:

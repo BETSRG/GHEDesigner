@@ -69,7 +69,8 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         coordinates = rectangle(nx, ny, b, b)
 
         # Fluid properties
-        v_flow_borehole = 0.2  # System volumetric flow rate (L/s)
+        v_flow_borehole = 0.2
+        # System volumetric flow rate (L/s)
         v_flow_system = v_flow_borehole * float(nx * ny)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho

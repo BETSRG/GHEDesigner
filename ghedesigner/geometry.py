@@ -73,5 +73,3 @@ class GeometricConstraints:
             assert self.rotateStart is not None
             assert self.propBound is not None
             assert self.ngZones is not None
-
-        return

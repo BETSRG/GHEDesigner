@@ -4,9 +4,8 @@
 # This search is described in <placeholder>.
 
 import csv
-from time import time as clock
-
 from math import pi
+from time import time as clock
 
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube

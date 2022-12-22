@@ -276,7 +276,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
 
         # Get number of pipes from positions
         self.resist_delta = None
-        self.n_pipes = int(len(pipe.pos) / 2)
+        self.n_pipes = len(pipe.pos) / 2
 
         # compute resistances required to construct inherited class
         self.calc_fluid_pipe_resistance(m_flow_borehole)
@@ -324,7 +324,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
     def u_tube_volumes(self) -> Tuple[float, float, float, float]:
         # Compute volumes for U-tube geometry
         # Effective parameters
-        n = int(self.nPipes * 2)  # Total number of tubes
+        n = self.nPipes * 2  # Total number of tubes
         # Total inside surface area (m^2)
         area_surf_inner = n * pi * (self.r_in * 2.0) ** 2
         resist_conv = 1 / (self.h_f * area_surf_inner)  # Convection resistance (m.K/W)

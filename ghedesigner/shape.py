@@ -1,5 +1,6 @@
-import numpy as np
 from math import atan, pi, sin, sqrt
+
+import numpy as np
 
 
 class Shapes:

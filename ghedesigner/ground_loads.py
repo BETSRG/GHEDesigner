@@ -13,8 +13,7 @@ from ghedesigner.radial_numerical_borehole import RadialNumericalBH
 class HybridLoad:
     def __init__(
             self,
-            hourly_rejection_loads: list,
-            hourly_extraction_loads: list,
+            raw_loads: list,
             bhe: SingleUTube,
             radial_numerical: RadialNumericalBH,
             sim_params: SimulationParameters,
@@ -25,8 +24,8 @@ class HybridLoad:
         # Split the hourly loads into heating and cooling (kW)
         if years is None:
             years = [2019]
-        self.hourly_rejection_loads = hourly_rejection_loads
-        self.hourly_extraction_loads = hourly_extraction_loads
+
+        self.hourly_rejection_loads, self.hourly_extraction_loads = self.split_heat_and_cool(raw_loads)
 
         # Simulation start and end month
         self.start_month = sim_params.start_month
@@ -135,35 +134,16 @@ class HybridLoad:
         return output
 
     @staticmethod
-    def split_heat_and_cool(hourly_heat_extraction, units="W"):
+    def split_heat_and_cool(raw_loads):
         """
-        Split the provided loads into heating and cooling. Heating is positive,
-        cooling is negative.
+        Split the provided loads into heating and cooling.
+        Heating is positive, cooling is negative.
+
+        :param raw_loads: raw loads entered by the user, in Watts
         :return: Loads split into heating and cooling
         """
-        # Expects hourly_heat_extraction to be in Watts
-
-        # Heat rejection in the ground occurs when buildings are in cooling
-        # mode, these loads appear negative on Ground extraction loads plots
-        hourly_rejection_loads: list = [0.0] * len(hourly_heat_extraction)
-        # Heat extraction in the ground occurs when buildings are in heating
-        # mode, these loads appear positive on Ground extraction load plots
-        hourly_extraction_loads: list = [0.0] * len(hourly_heat_extraction)
-
-        if units == "W":
-            scale = 1000.0
-        elif units == "kW":
-            scale = 1.0
-        else:
-            raise ValueError("Units provided are not an option.")
-
-        for i, l_hour in enumerate(hourly_heat_extraction):
-            if l_hour >= 0.0:
-                # Heat is extracted from ground when > 0
-                hourly_extraction_loads[i] = l_hour / scale
-            else:
-                # Heat is rejected to ground when < 0
-                hourly_rejection_loads[i] = l_hour / -scale
+        hourly_extraction_loads = [x / 1000.0 if x >= 0.0 else 0.0 for x in raw_loads]
+        hourly_rejection_loads = [abs(x) / 1000.0 if x < 0.0 else 0.0 for x in raw_loads]
 
         return hourly_rejection_loads, hourly_extraction_loads
 
@@ -215,8 +195,6 @@ class HybridLoad:
             # print("")
 
             hours_in_previous_months += hours_in_month
-
-        return
 
     def process_two_day_loads(self) -> None:
         # The two day (48 hour) two day loads are selected by locating the day
@@ -279,8 +257,6 @@ class HybridLoad:
             self.two_day_hourly_peak_hl_loads.append(two_day_hourly_peak_hl_load)
 
             hours_in_previous_months += hours_in_month
-
-        return
 
     @staticmethod
     def simulate_hourly(hour_time, q, g_sts, resist_bh, two_pi_k, ts):
@@ -427,8 +403,6 @@ class HybridLoad:
 
             # Set the monthly cooling load duration
             self.monthly_peak_hl_duration[i] = peak_duration
-
-        return
 
     def create_dataframe_of_peak_analysis(self) -> str:
         # The fields are: sum, peak, avg, peak day, peak duration

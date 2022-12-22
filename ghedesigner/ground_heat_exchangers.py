@@ -1,9 +1,9 @@
 import warnings
+from math import ceil, floor, pi
 from typing import Type, Union
 
 import numpy as np
 import pygfunction as gt
-from math import ceil, floor, pi
 from scipy.interpolate import interp1d
 
 from ghedesigner import VERSION
@@ -38,7 +38,7 @@ class BaseGHE:
         self.fieldSpecifier = field_specifier
         self.V_flow_system = v_flow_system
         self.B_spacing = b_spacing
-        self.nbh = float(len(g_function.bore_locations))
+        self.nbh = len(g_function.bore_locations)
         self.V_flow_borehole = self.V_flow_system / self.nbh
         m_flow_borehole = self.V_flow_borehole / 1000.0 * fluid.rho
         self.m_flow_borehole = m_flow_borehole
@@ -241,17 +241,12 @@ class GHE(BaseGHE):
         if load_years is None:
             load_years = [2019]
 
-        hourly_rejection_loads, hourly_extraction_loads = HybridLoad.split_heat_and_cool(
-            self.hourly_extraction_ground_loads)
-
         hybrid_load = HybridLoad(
-            hourly_rejection_loads,
-            hourly_extraction_loads,
+            self.hourly_extraction_ground_loads,
             self.bhe_eq,
             self.radial_numerical,
             sim_params,
-            years=load_years,
-        )
+            years=load_years)
 
         # hybrid load object
         self.hybrid_load = hybrid_load
@@ -304,8 +299,6 @@ class GHE(BaseGHE):
         b = self.B_spacing
         b_over_h = b / self.bhe.b.H
 
-        # self.bhe.calc_effective_borehole_resistance()
-
         # Solve for equivalent single U-tube
         self.bhe_eq = self.bhe.to_single()
         # Update short time step object with equivalent single u-tube
@@ -345,9 +338,7 @@ class GHE(BaseGHE):
         self.hp_eft = hp_eft
         self.dTb = d_tb
 
-        max_hp_eft = float(max(hp_eft))
-        min_hp_eft = float(min(hp_eft))
-        return max_hp_eft, min_hp_eft
+        return max(hp_eft), min(hp_eft)
 
     def size(self, method: DesignMethod) -> None:
         # Size the ground heat exchanger
@@ -384,5 +375,3 @@ class GHE(BaseGHE):
             #     "allowable depth or increase the size of the heat "
             #     "exchanger."
             # )
-
-        return
