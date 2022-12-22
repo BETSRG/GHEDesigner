@@ -60,14 +60,8 @@ class Pipe(ThermalProperty):
         dt = pi / float(n_pipes)
         pos = [(0.0, 0.0) for _ in range(2 * n_pipes)]
         for i in range(n_pipes):
-            pos[2 * i] = (
-                shank_space * cos(2.0 * i * dt + pi),
-                shank_space * sin(2.0 * i * dt + pi),
-            )
-            pos[2 * i + 1] = (
-                shank_space * cos(2.0 * i * dt + pi + dt),
-                shank_space * sin(2.0 * i * dt + pi + dt),
-            )
+            pos[2 * i] = (shank_space * cos(2.0 * i * dt + pi), shank_space * sin(2.0 * i * dt + pi))
+            pos[2 * i + 1] = (shank_space * cos(2.0 * i * dt + pi + dt), shank_space * sin(2.0 * i * dt + pi + dt))
         return pos
 
 

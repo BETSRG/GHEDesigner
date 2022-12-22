@@ -59,10 +59,8 @@ class GHEManager:
         """
         self._soil = Soil(conductivity, rho_cp, undisturbed_temp)
 
-    def set_pipe(
-            self, inner_radius: float, outer_radius: float, shank_spacing: float, roughness: float,
-            conductivity: float, rho_cp: float
-    ):
+    def set_pipe(self, inner_radius: float, outer_radius: float, shank_spacing: float,
+                 roughness: float, conductivity: float, rho_cp: float):
         """
         inner_radius m
         outer_radius m
@@ -75,9 +73,7 @@ class GHEManager:
         # TODO: Convert scalar properties if double or coax
         self._u_tube_type = SingleUTube  # for now just store the type on the class here
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 1)
-        self._pipe = Pipe(
-            pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp
-        )
+        self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
     def set_borehole(self, length: float, buried_depth: float, radius: float):
         """

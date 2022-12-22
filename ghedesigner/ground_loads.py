@@ -174,11 +174,9 @@ class HybridLoad:
 
             # Day of month the peak heating load occurs
             # day of the month on which peak clg load occurs (e.g. 1-31)
-            self.monthly_peak_cl_day[i] = floor(
-                month_rejection_loads.index(self.monthly_peak_cl[i]) / hours_in_day)
+            self.monthly_peak_cl_day[i] = floor(month_rejection_loads.index(self.monthly_peak_cl[i]) / hours_in_day)
             # day of the month on which peak clg load occurs (e.g. 1-31)
-            self.monthly_peak_hl_day[i] = floor(
-                month_extraction_loads.index(self.monthly_peak_hl[i]) / hours_in_day)
+            self.monthly_peak_hl_day[i] = floor(month_extraction_loads.index(self.monthly_peak_hl[i]) / hours_in_day)
             # print("Monthly Peak HL Hour",month_extraction_loads.index(
             # self.monthly_peak_hl[i]) / hours_in_day)
             # print("Monthly Peak HL Day: ",self.monthly_peak_hl_day[i])
@@ -299,9 +297,7 @@ class HybridLoad:
         delta_t_fluid_peak = self.simulate_hourly(hour_time, q_peak, g_sts, resist_bh_effective, two_pi_k, ts)
         two_day_fluid_temps_pk.append(delta_t_fluid_peak)
         # Get nominal fluid temperatures using nominal load
-        delta_t_fluid_nom = self.simulate_hourly(
-            hour_time, q_nominal, g_sts, resist_bh_effective, two_pi_k, ts
-        )
+        delta_t_fluid_nom = self.simulate_hourly(hour_time, q_nominal, g_sts, resist_bh_effective, two_pi_k, ts)
         two_day_fluid_temps_nm.append(delta_t_fluid_nom)
 
         delta_t_fluid_nom_max = max(delta_t_fluid_nom)

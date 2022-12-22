@@ -115,9 +115,7 @@ class Bisection1D:
         return v_flow_system, m_flow_borehole
 
     def initialize_ghe(self, coordinates, h, field_specifier="N/A"):
-        v_flow_system, m_flow_borehole = self.retrieve_flow(
-            coordinates, self.ghe.bhe.fluid.rho
-        )
+        v_flow_system, m_flow_borehole = self.retrieve_flow(coordinates, self.ghe.bhe.fluid.rho)
 
         self.ghe.bhe.b.H = h
         borehole = self.ghe.bhe.b

@@ -360,9 +360,7 @@ def bi_rectangle_zoned_nested(length_x, length_y, b_min, b_max_x, b_max_y):
     return bi_rectangle_zoned_nested_domain, field_descriptors
 
 
-def polygonal_land_constraint(
-        property_boundary, b_min, b_max_x, b_max_y, building_descriptions=None
-):
+def polygonal_land_constraint(property_boundary, b_min, b_max_x, b_max_y, building_descriptions=None):
     if building_descriptions is None:
         building_descriptions = []
 

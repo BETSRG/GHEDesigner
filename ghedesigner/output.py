@@ -32,9 +32,7 @@ def create_row(allocated_width, row_data, data_formats, centering=">"):
     return r_s
 
 
-def create_table(
-        title, col_titles, rows, allocated_width, col_formats, filler_symbol=" ", centering=">"
-):
+def create_table(title, col_titles, rows, allocated_width, col_formats, filler_symbol=" ", centering=">"):
     n_cols = len(col_titles[0])
     r_s = ""
     r_s += create_title(allocated_width, title, filler_symbol=filler_symbol)

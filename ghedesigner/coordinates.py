@@ -8,13 +8,8 @@ def transpose_coordinates(coordinates) -> List[Tuple[float, float]]:
     return coordinates_transposed
 
 
-def rectangle(
-        num_bh_x: int,
-        num_bh_y: int,
-        spacing_x: Union[int, float],
-        spacing_y: Union[int, float],
-        origin=(0, 0),
-) -> List[Tuple[float, float]]:
+def rectangle(num_bh_x: int, num_bh_y: int, spacing_x: Union[int, float], spacing_y: Union[int, float],
+              origin=(0, 0), ) -> List[Tuple[float, float]]:
     """
     Creates a rectangular borehole field.
 
@@ -47,12 +42,8 @@ def rectangle(
     return r
 
 
-def open_rectangle(
-        num_bh_x: int,
-        num_bh_y: int,
-        spacing_x: Union[int, float],
-        spacing_y: Union[int, float],
-) -> List[Tuple[float, float]]:
+def open_rectangle(num_bh_x: int, num_bh_y: int, spacing_x: Union[int, float],
+                   spacing_y: Union[int, float]) -> List[Tuple[float, float]]:
     """
     Creates a rectangular borehole field without center boreholes.
 
