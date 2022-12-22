@@ -1,5 +1,3 @@
-from pygfunction.utilities import segment_ratios as sr
-
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.coordinates import rectangle
@@ -103,13 +101,6 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         hourly_extraction_ground_loads = self.get_atlanta_loads()
 
         # Calculate a g-function for uniform inlet fluid temperature with
-        # 8 unequal segments using the equivalent solver
-        n_segments = 8
-        segments = "unequal"
-        solver = "equivalent"
-        boundary = "MIFT"
-        end_length_ratio = 0.02
-        segment_ratios = sr(n_segments, end_length_ratio=end_length_ratio)
         g_function = calc_g_func_for_multiple_lengths(
             b,
             [h],
@@ -123,11 +114,6 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             pipe,
             grout,
             soil,
-            n_segments=n_segments,
-            segments=segments,
-            solver=solver,
-            boundary=boundary,
-            segment_ratios=segment_ratios,
         )
 
         # --------------------------------------------------------------------------
@@ -188,4 +174,4 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
 
         ghe.size(method=DesignMethod.Hybrid)
 
-        self.log("Height of boreholes: {0:.4f}".format(ghe.bhe.b.H))
+        self.log(f"Height of boreholes: {ghe.bhe.b.H:0.4f}")

@@ -63,8 +63,7 @@ class DesignBase:
             print("\n")
 
     @abstractmethod
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True) -> AnyBisectionType:
+    def find_design(self, disp=False, use_perimeter=True) -> AnyBisectionType:
         pass
 
 
@@ -88,8 +87,7 @@ class DesignNearSquare(DesignBase):
         self.coordinates_domain, self.fieldDescriptors = square_and_near_square(1, number_of_boreholes,
                                                                                 self.geometric_constraints.B)
 
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True) -> Bisection1D:
+    def find_design(self, disp=False, use_perimeter=True) -> Bisection1D:
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
@@ -124,11 +122,9 @@ class DesignRectangle(DesignBase):
         self.geometric_constraints.check_inputs(self.routine)
         self.coordinates_domain, self.fieldDescriptors = rectangular(
             self.geometric_constraints.length, self.geometric_constraints.width,
-            self.geometric_constraints.B_min, self.geometric_constraints.B_max_x, disp=False
-        )
+            self.geometric_constraints.B_min, self.geometric_constraints.B_max_x)
 
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True) -> Bisection1D:
+    def find_design(self, disp=False, use_perimeter=True) -> Bisection1D:
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
@@ -167,8 +163,7 @@ class DesignBiRectangle(DesignBase):
             self.geometric_constraints.B_max_x, self.geometric_constraints.B_max_y, disp=False
         )
 
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True) -> Bisection2D:
+    def find_design(self, disp=False, use_perimeter=True) -> Bisection2D:
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
@@ -207,8 +202,7 @@ class DesignBiZoned(DesignBase):
             self.geometric_constraints.B_max_x, self.geometric_constraints.B_max_y
         )
 
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True) -> BisectionZD:
+    def find_design(self, disp=False, use_perimeter=True) -> BisectionZD:
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
@@ -249,8 +243,7 @@ class DesignBiRectangleConstrained(DesignBase):
             building_descriptions=building_descriptions,
         )
 
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True) -> Bisection2D:
+    def find_design(self, disp=False, use_perimeter=True) -> Bisection2D:
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
@@ -285,10 +278,7 @@ class DesignRowWise(DesignBase):
         self.routine = "row-wise"
         self.geometric_constraints.check_inputs(self.routine)
 
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True) -> RowWiseModifiedBisectionSearch:
-        if b_r_point is None:
-            b_r_point = [0.0, 0.0]
+    def find_design(self, disp=False, use_perimeter=True) -> RowWiseModifiedBisectionSearch:
         if disp:
             title = "Find {}...".format(self.routine)
             print(title + "\n" + len(title) * "=")
@@ -308,8 +298,5 @@ class DesignRowWise(DesignBase):
             disp=disp,
             field_type="row-wise",
             load_years=self.load_years,
-            b_r_point=b_r_point,
-            b_r_removal_method=b_r_removal_method,
-            exhaustive_fields_to_check=exhaustive_fields_to_check,
             use_perimeter=use_perimeter,
         )

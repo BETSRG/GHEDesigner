@@ -351,17 +351,11 @@ class RowWiseModifiedBisectionSearch:
             advanced_tracking: bool = True,
             field_type: str = "rowwise",
             load_years=None,
-            e_t: float = 1e-10,
-            b_r_point=None,
-            b_r_removal_method: str = "CloseToCorner",
-            exhaustive_fields_to_check: int = 10,
             use_perimeter: bool = True,
     ):
 
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
-        if b_r_point is None:
-            b_r_point = [0.0, 0.0]
         if load_years is None:
             load_years = [2019]
         self.load_years = load_years
@@ -389,18 +383,9 @@ class RowWiseModifiedBisectionSearch:
             self.advanced_tracking = [["TargetSpacing", "Field Specifier", "nbh", "ExcessTemperature"]]
             self.checkedFields = []
         if search:
-            self.selected_coordinates, self.selected_specifier = self.search(
-                e_t=e_t,
-                b_r_point=b_r_point,
-                b_r_removal_method=b_r_removal_method,
-                exhaustive_fields_to_check=exhaustive_fields_to_check,
-                use_perimeter=use_perimeter,
-            )
-            self.initialize_ghe(
-                self.selected_coordinates,
-                self.sim_params.max_Height,
-                field_specifier=self.selected_specifier,
-            )
+            self.selected_coordinates, self.selected_specifier = self.search(use_perimeter=use_perimeter)
+            self.initialize_ghe(self.selected_coordinates, self.sim_params.max_Height,
+                                field_specifier=self.selected_specifier)
 
     def retrieve_flow(self, coordinates, rho):
         if self.flow == "borehole":
@@ -471,17 +456,7 @@ class RowWiseModifiedBisectionSearch:
 
         return t_excess
 
-    def search(
-            self,
-            e_t=1e-10,
-            b_r_point=None,
-            b_r_removal_method="CloseToCorner",
-            exhaustive_fields_to_check=10,
-            use_perimeter=True,
-    ):
-        # Copy all the geometric constraints to local variables
-        if b_r_point is None:
-            b_r_point = [0.0, 0.0]
+    def search(self, use_perimeter=True):
 
         spacing_start = self.geometricConstraints.spacStart
         spacing_stop = self.geometricConstraints.spacStop
@@ -610,7 +585,7 @@ class RowWiseModifiedBisectionSearch:
                     low_e = t_e1
 
                 spacing_m = (spacing_low + spacing_high) * 0.5
-                if abs(low_e - high_e) < e_t:
+                if abs(low_e - high_e) < 1E-10:  # Error tolerance
                     break
 
                 i += 1
@@ -619,6 +594,9 @@ class RowWiseModifiedBisectionSearch:
             spacing_l = spacing_step + spacing_high
             target_spacings = []
             current_spacing = spacing_high
+
+            # TODO: this was an argument, but was never used.
+            exhaustive_fields_to_check = 10
             spacing_change = (spacing_l - current_spacing) / exhaustive_fields_to_check
             while current_spacing <= spacing_l:
                 target_spacings.append(current_spacing)
@@ -694,18 +672,19 @@ class RowWiseModifiedBisectionSearch:
                 elif method == "descending":
                     return [x for _, x in sorted(zip(distances, other_points), reverse=True)]
 
-            if b_r_removal_method == "CloseToCorner":
-                starting_field = point_sort(original_coordinates[0], lower_field, method="descending")
-            elif b_r_removal_method == "CloseToPoint":
-                starting_field = point_sort(b_r_point, lower_field, method="descending")
-            elif b_r_removal_method == "FarFromPoint":
-                starting_field = point_sort(b_r_point, lower_field, method="ascending")
-            elif b_r_removal_method == "RowRemoval":
-                starting_field = lower_field
-            else:
-                msg = b_r_removal_method + " is not a valid method for removing boreholes."
-                msg += "The valid methods are: CloseToCorner, CloseToPoint, FarFromPoint, and RowRemoval."
-                raise ValueError(msg)
+            # TODO: b_r_removal_method was an argument but it was never used
+            # if b_r_removal_method == "CloseToCorner":
+            starting_field = point_sort(original_coordinates[0], lower_field, method="descending")
+            # elif b_r_removal_method == "CloseToPoint":
+            #     starting_field = point_sort([0.0, 0.0], lower_field, method="descending")
+            # elif b_r_removal_method == "FarFromPoint":
+            #     starting_field = point_sort([0.0, 0.0], lower_field, method="ascending")
+            # elif b_r_removal_method == "RowRemoval":
+            #     starting_field = lower_field
+            # else:
+            #     msg = b_r_removal_method + " is not a valid method for removing boreholes."
+            #     msg += "The valid methods are: CloseToCorner, CloseToPoint, FarFromPoint, and RowRemoval."
+            #     raise ValueError(msg)
 
             # Check if a 1X1 field is satisfactory
             t_e_single = self.calculate_excess([[0, 0]], self.sim_params.max_Height, field_specifier="1X1")
