@@ -1,9 +1,10 @@
-import numpy as np
+from math import cos, pi, sin
 
 from pygfunction.media import Fluid
 
 
 class GHEFluid(Fluid):
+    # TODO: Make an enum for fluid type and convert it back and forth as needed
     pass
 
 
@@ -56,18 +57,11 @@ class Pipe(ThermalProperty):
     def place_pipes(s, r_out, n_pipes):
         """Positions pipes in an axis-symmetric configuration."""
         shank_space = s / 2 + r_out
-        pi = np.pi
         dt = pi / float(n_pipes)
         pos = [(0.0, 0.0) for _ in range(2 * n_pipes)]
         for i in range(n_pipes):
-            pos[2 * i] = (
-                shank_space * np.cos(2.0 * i * dt + pi),
-                shank_space * np.sin(2.0 * i * dt + pi),
-            )
-            pos[2 * i + 1] = (
-                shank_space * np.cos(2.0 * i * dt + pi + dt),
-                shank_space * np.sin(2.0 * i * dt + pi + dt),
-            )
+            pos[2 * i] = (shank_space * cos(2.0 * i * dt + pi), shank_space * sin(2.0 * i * dt + pi))
+            pos[2 * i + 1] = (shank_space * cos(2.0 * i * dt + pi + dt), shank_space * sin(2.0 * i * dt + pi + dt))
         return pos
 
 
@@ -105,8 +99,8 @@ class SimulationParameters:
         self.max_EFT_allowable = max_entering_fluid_temp_allow  # degrees Celsius
         self.min_EFT_allowable = min_entering_fluid_temp_allow  # degrees Celsius
         # Maximum and minimum allowable heights
-        self.max_Height = max_height  # in meters
-        self.min_Height = min_height  # in meters
+        self.max_height = max_height  # in meters
+        self.min_height = min_height  # in meters
 
     def as_dict(self) -> dict:
         output = dict()
@@ -115,6 +109,6 @@ class SimulationParameters:
         output['end_month'] = self.end_month
         output['max_eft_allowable'] = {'value': self.max_EFT_allowable, 'units': 'C'}
         output['min_eft_allowable'] = {'value': self.min_EFT_allowable, 'units': 'C'}
-        output['maximum_height'] = {'value': self.max_Height, 'units': 'm'}
-        output['minimum_height'] = {'value': self.min_Height, 'units': 'm'}
+        output['maximum_height'] = {'value': self.max_height, 'units': 'm'}
+        output['minimum_height'] = {'value': self.min_height, 'units': 'm'}
         return output

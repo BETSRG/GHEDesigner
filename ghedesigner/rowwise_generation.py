@@ -1,5 +1,6 @@
-import numpy as np
 from math import atan, cos, pi, sin, sqrt
+
+import numpy as np
 
 from ghedesigner.shape import Shapes, sort_intersections
 
@@ -193,7 +194,7 @@ def find_duplicates(borefield, space, disp=False):
         output = f"{'*gt.boreholes.find_duplicates()*' :-^50}"
         # keep a space between the function name
         print(output.replace("*", " "))
-        print("The duplicate pairs of boreholes found: {}".format(duplicate_pairs))
+        print(f"The duplicate pairs of boreholes found: {duplicate_pairs}")
     return duplicate_pairs
 
 
@@ -242,7 +243,7 @@ def remove_duplicates(borefield, space, disp=False):
             f"{'*gt.boreholes.remove_duplicates()*' :-^50}".replace("*", " ")
         )  # keep a space between the function name
         n_duplicates = len(borefield) - len(new_borefield)
-        print("The number of duplicates removed: {}".format(n_duplicates))
+        print(f"The number of duplicates removed: {n_duplicates}")
 
     return new_borefield
 
@@ -745,12 +746,8 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
     inters = inters[indices]
     num_inters = len(inters)
     for i in range(num_inters - 1):
-        space = float(
-            sqrt(
-                (inters[i + 1][0] - inters[i][0]) * (inters[i + 1][0] - inters[i][0])
-                + (inters[i + 1][1] - inters[i][1]) * (inters[i + 1][1] - inters[i][1])
-            )
-        )
+        space = sqrt((inters[i + 1][0] - inters[i][0]) * (inters[i + 1][0] - inters[i][0])
+                     + (inters[i + 1][1] - inters[i][1]) * (inters[i + 1][1] - inters[i][1]))
         if space < row_space:
             i_none = False
             for shape in no_go:

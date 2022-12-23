@@ -1,5 +1,3 @@
-from pygfunction.utilities import segment_ratios as sr
-
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.coordinates import rectangle
@@ -69,7 +67,8 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         coordinates = rectangle(nx, ny, b, b)
 
         # Fluid properties
-        v_flow_borehole = 0.2  # System volumetric flow rate (L/s)
+        v_flow_borehole = 0.2
+        # System volumetric flow rate (L/s)
         v_flow_system = v_flow_borehole * float(nx * ny)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
@@ -102,13 +101,6 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         hourly_extraction_ground_loads = self.get_atlanta_loads()
 
         # Calculate a g-function for uniform inlet fluid temperature with
-        # 8 unequal segments using the equivalent solver
-        n_segments = 8
-        segments = "unequal"
-        solver = "equivalent"
-        boundary = "MIFT"
-        end_length_ratio = 0.02
-        segment_ratios = sr(n_segments, end_length_ratio=end_length_ratio)
         g_function = calc_g_func_for_multiple_lengths(
             b,
             [h],
@@ -122,11 +114,6 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             pipe,
             grout,
             soil,
-            n_segments=n_segments,
-            segments=segments,
-            solver=solver,
-            boundary=boundary,
-            segment_ratios=segment_ratios,
         )
 
         # --------------------------------------------------------------------------
@@ -149,7 +136,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # Simulate after computing just one g-function
         max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethod.Hybrid)
 
-        self.log("Min EFT: {0:.3f}\nMax EFT: {1:.3f}".format(min_hp_eft, max_hp_eft))
+        self.log("Min EFT: {0:0.3f}\nMax EFT: {1:0.3f}".format(min_hp_eft, max_hp_eft))
 
         # Compute a range of g-functions for interpolation
         h_values = [24.0, 48.0, 96.0, 192.0, 384.0]
@@ -187,4 +174,4 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
 
         ghe.size(method=DesignMethod.Hybrid)
 
-        self.log("Height of boreholes: {0:.4f}".format(ghe.bhe.b.H))
+        self.log(f"Height of boreholes: {ghe.bhe.b.H:0.4f}")

@@ -115,4 +115,4 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
 
         calculation_details = "GLHEPRO_gFunctions_12x13.json".split(".")[0]
         self.log(calculation_details)
-        self.log("Height of boreholes: {0:.3f}".format(ghe.bhe.b.H))
+        self.log(f"Height of boreholes: {ghe.bhe.b.H:0.3f}")

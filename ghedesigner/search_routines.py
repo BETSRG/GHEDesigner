@@ -1,9 +1,8 @@
 from json import dumps
+from math import ceil, floor, sqrt
 from pathlib import Path
 from typing import Optional
 
-import math
-import numpy as np
 import pygfunction as gt
 
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
@@ -104,21 +103,19 @@ class Bisection1D:
 
     def retrieve_flow(self, coordinates, rho):
         if self.flow == "borehole":
-            v_flow_system = self.V_flow * float(len(coordinates))
+            v_flow_system = self.V_flow * len(coordinates)
             # Total fluid mass flow rate per borehole (kg/s)
             m_flow_borehole = self.V_flow / 1000.0 * rho
         elif self.flow == "system":
             v_flow_system = self.V_flow
-            v_flow_borehole = self.V_flow / float(len(coordinates))
+            v_flow_borehole = self.V_flow / len(coordinates)
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
         else:
             raise ValueError("The flow argument should be either `borehole`" "or `system`.")
         return v_flow_system, m_flow_borehole
 
     def initialize_ghe(self, coordinates, h, field_specifier="N/A"):
-        v_flow_system, m_flow_borehole = self.retrieve_flow(
-            coordinates, self.ghe.bhe.fluid.rho
-        )
+        v_flow_system, m_flow_borehole = self.retrieve_flow(coordinates, self.ghe.bhe.fluid.rho)
 
         self.ghe.bhe.b.H = h
         borehole = self.ghe.bhe.b
@@ -183,17 +180,17 @@ class Bisection1D:
         # smallest location in the domain
         t_0_lower = self.calculate_excess(
             self.coordinates_domain[x_l_idx],
-            self.sim_params.min_Height,
+            self.sim_params.min_height,
             field_specifier=self.fieldDescriptors[x_l_idx],
         )
         t_0_upper = self.calculate_excess(
             self.coordinates_domain[x_l_idx],
-            self.sim_params.max_Height,
+            self.sim_params.max_height,
             field_specifier=self.fieldDescriptors[x_l_idx],
         )
         t_m1 = self.calculate_excess(
             self.coordinates_domain[x_r_idx],
-            self.sim_params.max_Height,
+            self.sim_params.max_height,
             field_specifier=self.fieldDescriptors[x_r_idx],
         )
 
@@ -203,7 +200,7 @@ class Bisection1D:
         if check_bracket(sign(t_0_lower), sign(t_0_upper)):
             if self.disp:
                 print("Size between min and max of lower bound in domain.")
-            self.initialize_ghe(self.coordinates_domain[0], self.sim_params.max_Height)
+            self.initialize_ghe(self.coordinates_domain[0], self.sim_params.max_height)
             return 0, self.coordinates_domain[0]
         elif check_bracket(sign(t_0_upper), sign(t_m1)):
             if self.disp:
@@ -241,14 +238,14 @@ class Bisection1D:
         i = 0
 
         while i < self.max_iter:
-            c_idx = int(np.ceil((x_l_idx + x_r_idx) / 2))
+            c_idx = ceil((x_l_idx + x_r_idx) / 2)
             # if the solution is no longer making progress break the while
             if c_idx == x_l_idx or c_idx == x_r_idx:
                 break
 
             c_t_excess = self.calculate_excess(
                 self.coordinates_domain[c_idx],
-                self.sim_params.max_Height,
+                self.sim_params.max_height,
                 field_specifier=self.fieldDescriptors[c_idx],
             )
 
@@ -264,7 +261,7 @@ class Bisection1D:
 
         coordinates = self.coordinates_domain[i]
 
-        h = self.sim_params.max_Height
+        h = self.sim_params.max_height
 
         self.calculate_excess(coordinates, h, field_specifier=self.fieldDescriptors[i])
         # Make sure the field being returned pertains to the index which is the
@@ -315,9 +312,7 @@ class Bisection1D:
         total_g_values = g.x.size
         number_lts_g_values = 27
         number_sts_g_values = 30
-        sts_step_size = int(
-            np.floor((total_g_values - number_lts_g_values) / number_sts_g_values).tolist()
-        )
+        sts_step_size = floor((total_g_values - number_lts_g_values) / number_sts_g_values)
         lntts = []
         g_values = []
         for i in range(1, (total_g_values - number_lts_g_values), sts_step_size):
@@ -354,17 +349,11 @@ class RowWiseModifiedBisectionSearch:
             advanced_tracking: bool = True,
             field_type: str = "rowwise",
             load_years=None,
-            e_t: float = 1e-10,
-            b_r_point=None,
-            b_r_removal_method: str = "CloseToCorner",
-            exhaustive_fields_to_check: int = 10,
             use_perimeter: bool = True,
     ):
 
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
-        if b_r_point is None:
-            b_r_point = [0.0, 0.0]
         if load_years is None:
             load_years = [2019]
         self.load_years = load_years
@@ -392,27 +381,18 @@ class RowWiseModifiedBisectionSearch:
             self.advanced_tracking = [["TargetSpacing", "Field Specifier", "nbh", "ExcessTemperature"]]
             self.checkedFields = []
         if search:
-            self.selected_coordinates, self.selected_specifier = self.search(
-                e_t=e_t,
-                b_r_point=b_r_point,
-                b_r_removal_method=b_r_removal_method,
-                exhaustive_fields_to_check=exhaustive_fields_to_check,
-                use_perimeter=use_perimeter,
-            )
-            self.initialize_ghe(
-                self.selected_coordinates,
-                self.sim_params.max_Height,
-                field_specifier=self.selected_specifier,
-            )
+            self.selected_coordinates, self.selected_specifier = self.search(use_perimeter=use_perimeter)
+            self.initialize_ghe(self.selected_coordinates, self.sim_params.max_height,
+                                field_specifier=self.selected_specifier)
 
     def retrieve_flow(self, coordinates, rho):
         if self.flow == "borehole":
-            v_flow_system = self.V_flow * float(len(coordinates))
+            v_flow_system = self.V_flow * len(coordinates)
             # Total fluid mass flow rate per borehole (kg/s)
             m_flow_borehole = self.V_flow / 1000.0 * rho
         elif self.flow == "system":
             v_flow_system = self.V_flow
-            v_flow_borehole = self.V_flow / float(len(coordinates))
+            v_flow_borehole = self.V_flow / len(coordinates)
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
         else:
             raise ValueError("The flow argument should be either `borehole`" "or `system`.")
@@ -474,17 +454,7 @@ class RowWiseModifiedBisectionSearch:
 
         return t_excess
 
-    def search(
-            self,
-            e_t=1e-10,
-            b_r_point=None,
-            b_r_removal_method="CloseToCorner",
-            exhaustive_fields_to_check=10,
-            use_perimeter=True,
-    ):
-        # Copy all the geometric constraints to local variables
-        if b_r_point is None:
-            b_r_point = [0.0, 0.0]
+    def search(self, use_perimeter=True):
 
         spacing_start = self.geometricConstraints.spacStart
         spacing_stop = self.geometricConstraints.spacStop
@@ -542,8 +512,8 @@ class RowWiseModifiedBisectionSearch:
             )
 
         # Get Excess Temperatures
-        t_upper = self.calculate_excess(upper_field, self.sim_params.max_Height, field_specifier=upper_field_specifier)
-        t_lower = self.calculate_excess(lower_field, self.sim_params.max_Height, field_specifier=lower_field_specifier)
+        t_upper = self.calculate_excess(upper_field, self.sim_params.max_height, field_specifier=upper_field_specifier)
+        t_lower = self.calculate_excess(lower_field, self.sim_params.max_height, field_specifier=lower_field_specifier)
 
         if self.advanced_tracking:
             self.advanced_tracking.append([spacing_start, upper_field_specifier, len(upper_field), t_upper])
@@ -598,7 +568,7 @@ class RowWiseModifiedBisectionSearch:
 
                 # Getting the three field's excess temperature
                 t_e1 = self.calculate_excess(
-                    f1, self.sim_params.max_Height, field_specifier=f1_specifier
+                    f1, self.sim_params.max_height, field_specifier=f1_specifier
                 )
 
                 if self.advanced_tracking:
@@ -613,7 +583,7 @@ class RowWiseModifiedBisectionSearch:
                     low_e = t_e1
 
                 spacing_m = (spacing_low + spacing_high) * 0.5
-                if abs(low_e - high_e) < e_t:
+                if abs(low_e - high_e) < 1E-10:  # Error tolerance
                     break
 
                 i += 1
@@ -622,6 +592,9 @@ class RowWiseModifiedBisectionSearch:
             spacing_l = spacing_step + spacing_high
             target_spacings = []
             current_spacing = spacing_high
+
+            # TODO: this was an argument, but was never used.
+            exhaustive_fields_to_check = 10
             spacing_change = (spacing_l - current_spacing) / exhaustive_fields_to_check
             while current_spacing <= spacing_l:
                 target_spacings.append(current_spacing)
@@ -651,13 +624,13 @@ class RowWiseModifiedBisectionSearch:
                         rotate_stop=rotate_stop,
                     )
 
-                t_e = self.calculate_excess(field, self.sim_params.max_Height, field_specifier=f_s)
+                t_e = self.calculate_excess(field, self.sim_params.max_height, field_specifier=f_s)
 
                 if self.advanced_tracking:
                     self.advanced_tracking.append([ts, f_s, len(field), t_e])
                     self.checkedFields.append(field)
 
-                self.initialize_ghe(field, self.sim_params.max_Height, field_specifier=f_s)
+                self.initialize_ghe(field, self.sim_params.max_height, field_specifier=f_s)
                 self.ghe.compute_g_functions()
                 self.ghe.size(method=DesignMethod.Hybrid)
                 total_drilling = self.ghe.bhe.b.H * len(field)
@@ -687,7 +660,7 @@ class RowWiseModifiedBisectionSearch:
             # Function For Sorting Boreholes Based on Proximity to a Point
             def point_sort(target_point, other_points, method="ascending"):
                 def dist(o_p):
-                    return math.sqrt(
+                    return sqrt(
                         (target_point[0] - o_p[0]) * (target_point[0] - o_p[0])
                         + (target_point[1] - o_p[1]) * (target_point[1] - o_p[1]))
 
@@ -697,21 +670,22 @@ class RowWiseModifiedBisectionSearch:
                 elif method == "descending":
                     return [x for _, x in sorted(zip(distances, other_points), reverse=True)]
 
-            if b_r_removal_method == "CloseToCorner":
-                starting_field = point_sort(original_coordinates[0], lower_field, method="descending")
-            elif b_r_removal_method == "CloseToPoint":
-                starting_field = point_sort(b_r_point, lower_field, method="descending")
-            elif b_r_removal_method == "FarFromPoint":
-                starting_field = point_sort(b_r_point, lower_field, method="ascending")
-            elif b_r_removal_method == "RowRemoval":
-                starting_field = lower_field
-            else:
-                msg = b_r_removal_method + " is not a valid method for removing boreholes."
-                msg += "The valid methods are: CloseToCorner, CloseToPoint, FarFromPoint, and RowRemoval."
-                raise ValueError(msg)
+            # TODO: b_r_removal_method was an argument but it was never used
+            # if b_r_removal_method == "CloseToCorner":
+            starting_field = point_sort(original_coordinates[0], lower_field, method="descending")
+            # elif b_r_removal_method == "CloseToPoint":
+            #     starting_field = point_sort([0.0, 0.0], lower_field, method="descending")
+            # elif b_r_removal_method == "FarFromPoint":
+            #     starting_field = point_sort([0.0, 0.0], lower_field, method="ascending")
+            # elif b_r_removal_method == "RowRemoval":
+            #     starting_field = lower_field
+            # else:
+            #     msg = b_r_removal_method + " is not a valid method for removing boreholes."
+            #     msg += "The valid methods are: CloseToCorner, CloseToPoint, FarFromPoint, and RowRemoval."
+            #     raise ValueError(msg)
 
             # Check if a 1X1 field is satisfactory
-            t_e_single = self.calculate_excess([[0, 0]], self.sim_params.max_Height, field_specifier="1X1")
+            t_e_single = self.calculate_excess([[0, 0]], self.sim_params.max_height, field_specifier="1X1")
 
             if self.advanced_tracking:
                 self.advanced_tracking.append(["N/A", "1X1", 1, t_e_single])
@@ -733,9 +707,9 @@ class RowWiseModifiedBisectionSearch:
                 while i < self.max_iter:
                     nbh = (nbh_max + nbh_min) // 2
                     current_field = starting_field[nbh_start - nbh:]
-                    f_s = lower_field_specifier + "_BR{}".format(nbh_start - nbh)
+                    f_s = lower_field_specifier + f"_BR{nbh_start - nbh}"
                     t_e = self.calculate_excess(
-                        current_field, self.sim_params.max_Height, field_specifier=f_s
+                        current_field, self.sim_params.max_height, field_specifier=f_s
                     )
                     if self.advanced_tracking:
                         self.advanced_tracking.append(
@@ -946,7 +920,7 @@ class BisectionZD(Bisection1D):
             self.ghe.size(method=DesignMethod.Hybrid)
 
             nbh = len(selected_coordinates)
-            total_drilling = float(nbh) * self.ghe.bhe.b.H
+            total_drilling = nbh * self.ghe.bhe.b.H
             self.calculated_heights[i] = total_drilling
 
             if old_height < total_drilling:
@@ -978,7 +952,7 @@ class BisectionZD(Bisection1D):
 
         self.initialize_ghe(
             selected_coordinates,
-            self.sim_params.max_Height,
+            self.sim_params.max_height,
             field_specifier=self.nested_fieldDescriptors[selection_key_outer][
                 selection_key
             ],

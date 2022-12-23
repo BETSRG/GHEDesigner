@@ -1,4 +1,5 @@
 import warnings
+from math import log
 
 import numpy as np
 import pygfunction as gt
@@ -131,7 +132,7 @@ def calc_g_func_for_multiple_lengths(
             segment_ratios=segment_ratios,
         )
 
-        key = "{}_{}_{}_{}".format(b, h, r_b, d)
+        key = f"{b}_{h}_{r_b}_{d}"
 
         d["g"][key] = gfunc.gFunc.tolist()
 
@@ -331,7 +332,7 @@ class GFunction:
         """
         g_function_corrected = []
         for g in g_function:
-            g_function_corrected.append(g - np.log(rb_star / rb))
+            g_function_corrected.append(g - log(rb_star / rb))
         return g_function_corrected
 
     @staticmethod

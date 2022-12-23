@@ -1,6 +1,7 @@
+from math import pi
+
 import numpy as np
 import pandas as pd
-from math import pi
 
 from ghedesigner.rowwise_generation import (
     field_optimization_fr,

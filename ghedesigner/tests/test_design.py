@@ -1,169 +1,54 @@
-from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import SingleUTube
-from ghedesigner.design import DesignNearSquare
-from ghedesigner.geometry import GeometricConstraints
-from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
+from ghedesigner.manager import GHEManager
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethod, length_of_side
 
+
+# Pipe dimensions
+# ---------------
+# Single and Multiple U-tubes
+# Coaxial tube
+# r_in_in = 44.2 / 1000.0 / 2.0
+# r_in_out = 50.0 / 1000.0 / 2.0
+# # Outer pipe radii
+# r_out_in = 97.4 / 1000.0 / 2.0
+# r_out_out = 110.0 / 1000.0 / 2.0
+# Pipe radii
+# Note: This convention is different from pygfunction
+# r_inner = [r_in_in, r_in_out]  # The radii of the inner pipe from in to out
+# r_outer = [r_out_in, r_out_out]  # The radii of the outer pipe from in to out
+
+# Pipe positions
+# --------------
+# Single U-tube BHE object
+# Double U-tube
+# pos_double = plat.Pipe.place_pipes(s, r_out, 2)
+# double_u_tube = MultipleUTube
+# Coaxial tube
+# pos_coaxial = (0, 0)
+# coaxial_tube = CoaxialPipe
 
 class TestNearSquare(GHEBaseTest):
 
     def test_design_selection(self):
-        # Single U-tube
-        # -------------
-        # Design a single U-tube with a system volumetric flow rate
-
-        # Borehole dimensions
-        # -------------------
-        h = 96.0  # Borehole length (m)
-        d = 2.0  # Borehole buried depth (m)
-        r_b = 0.075  # Borehole radius (m)
-
-        # Pipe dimensions
-        # ---------------
-        # Single and Multiple U-tubes
-        r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
-        r_in = 21.6 / 1000.0 / 2.0  # Pipe inner radius (m)
-        s = 32.3 / 1000.0  # Inner-tube to inner-tube Shank spacing (m)
-        epsilon = 1.0e-6  # Pipe roughness (m)
-        # Coaxial tube
-        # r_in_in = 44.2 / 1000.0 / 2.0
-        # r_in_out = 50.0 / 1000.0 / 2.0
-        # # Outer pipe radii
-        # r_out_in = 97.4 / 1000.0 / 2.0
-        # r_out_out = 110.0 / 1000.0 / 2.0
-        # Pipe radii
-        # Note: This convention is different from pygfunction
-        # r_inner = [r_in_in, r_in_out]  # The radii of the inner pipe from in to out
-        # r_outer = [r_out_in, r_out_out]  # The radii of the outer pipe from in to out
-
-        # Pipe positions
-        # --------------
-        # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos_single = Pipe.place_pipes(s, r_out, 1)
-        # Single U-tube BHE object
-        self.single_u_tube = SingleUTube
-        # Double U-tube
-        # pos_double = plat.Pipe.place_pipes(s, r_out, 2)
-        # double_u_tube = MultipleUTube
-        # Coaxial tube
-        # pos_coaxial = (0, 0)
-        # coaxial_tube = CoaxialPipe
-
-        # Thermal conductivities
-        # ----------------------
-        k_p = 0.4  # Pipe thermal conductivity (W/m.K)
-        # k_p_coax = [0.4, 0.4]  # Pipes thermal conductivity (W/m.K)
-        k_s = 2.0  # Ground thermal conductivity (W/m.K)
-        k_g = 1.0  # Grout thermal conductivity (W/m.K)
-
-        # Volumetric heat capacities
-        # --------------------------
-        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
-
-        # Thermal properties
-        # ------------------
-        # Pipe
-        self.pipe_single = Pipe(
-            pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p
+        manager = GHEManager()
+        manager.set_pipe(
+            inner_radius=(21.6 / 1000.0 / 2.0), outer_radius=(26.67 / 1000.0 / 2.0), shank_spacing=(32.3 / 1000.0),
+            roughness=1.0e-6, conductivity=0.4, rho_cp=(1542.0 * 1000.0)
         )
-        # pipe_double = plat.Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rhoCp_p)
-        # pipe_coaxial = plat.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rhoCp_p)
-        # Soil
-        ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        self.soil = Soil(k_s, rho_cp_s, ugt)
-        # Grout
-        self.grout = Grout(k_g, rho_cp_g)
-
-        # Inputs related to fluid
-        # -----------------------
-        # Fluid properties
-        self.fluid = GHEFluid(fluid_str="Water", percent=0.0)
-
-        # Fluid flow rate
-        v_flow = 0.2  # Borehole volumetric flow rate (L/s)
-        self.V_flow_borehole = v_flow
-
-        # Define a borehole
-        self.borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
-
-        # Simulation parameters
-        # ---------------------
-        # Simulation start month and end month
-        start_month = 1
-        n_years = 20
-        end_month = n_years * 12
-        # Maximum and minimum allowable fluid temperatures
-        max_eft_allowable = 35  # degrees Celsius
-        min_eft_allowable = 5  # degrees Celsius
-        # Maximum and minimum allowable heights
-        max_height = 135.0  # in meters
-        min_height = 60  # in meters
-        self.sim_params = SimulationParameters(
-            start_month,
-            end_month,
-            max_eft_allowable,
-            min_eft_allowable,
-            max_height,
-            min_height,
-        )
-
-        # Note: Based on these inputs, the resulting near-square test will
-        # determine a system with 156 boreholes.
-        self.V_flow_system = self.V_flow_borehole * 156.0
-
-        # Process loads from file
-        self.hourly_extraction_ground_loads = self.get_atlanta_loads()
-
-        # Geometric constraints for the `near-square` routine
-        # Required geometric constraints for the uniform rectangle design: B
-        b = 5.0  # Borehole spacing (m)
-        number_of_boreholes = 32
-        length = length_of_side(number_of_boreholes, b)
-        self.geometric_constraints = GeometricConstraints(b=b, length=length)
-
-        design_single_u_tube_a = DesignNearSquare(
-            self.V_flow_system,
-            self.borehole,
-            self.single_u_tube,
-            self.fluid,
-            self.pipe_single,
-            self.grout,
-            self.soil,
-            self.sim_params,
-            self.geometric_constraints,
-            self.hourly_extraction_ground_loads,
-            flow="system",
-            method=DesignMethod.Hybrid,
-        )
-        # Find the near-square design for a single U-tube and size it.
-        bisection_search = design_single_u_tube_a.find_design()
-        bisection_search.ghe.compute_g_functions()
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)
-        h_single_u_tube_a = bisection_search.ghe.bhe.b.H
-
-        design_single_u_tube_b = DesignNearSquare(
-            self.V_flow_borehole,
-            self.borehole,
-            self.single_u_tube,
-            self.fluid,
-            self.pipe_single,
-            self.grout,
-            self.soil,
-            self.sim_params,
-            self.geometric_constraints,
-            self.hourly_extraction_ground_loads,
-            flow="borehole",
-            method=DesignMethod.Hybrid,
-        )
-        # Find the near-square design for a single U-tube and size it.
-        bisection_search = design_single_u_tube_b.find_design()
-        bisection_search.ghe.compute_g_functions()
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)
-        h_single_u_tube_b = bisection_search.ghe.bhe.b.H
+        manager.set_soil(conductivity=2.0, rho_cp=(2343.493 * 1000.0), undisturbed_temp=18.3)
+        manager.set_grout(conductivity=1.0, rho_cp=(3901.0 * 1000.0))
+        manager.set_fluid()
+        manager.set_borehole(length=96.0, buried_depth=2.0, radius=0.075)
+        manager.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
+        manager.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
+        manager.set_geometry_constraints(b=5.0, length=155)  # borehole spacing and field side length
+        # perform a design search assuming "system" flow?
+        manager.set_design(flow_rate=31.2, flow_type="system")
+        manager.find_design()
+        h_single_u_tube_a = manager.u_tube_height
+        # perform a design search assuming "borehole" flow?
+        manager.set_design(flow_rate=0.2, flow_type="borehole")
+        manager.find_design()
+        h_single_u_tube_b = manager.u_tube_height
 
         # Verify that the `flow` toggle is properly working
         self.assertAlmostEqual(h_single_u_tube_a, h_single_u_tube_b, places=8)

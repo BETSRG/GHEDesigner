@@ -1,4 +1,5 @@
 import warnings
+from math import ceil, floor, pi
 from typing import Type, Union
 
 import numpy as np
@@ -37,7 +38,7 @@ class BaseGHE:
         self.fieldSpecifier = field_specifier
         self.V_flow_system = v_flow_system
         self.B_spacing = b_spacing
-        self.nbh = float(len(g_function.bore_locations))
+        self.nbh = len(g_function.bore_locations)
         self.V_flow_borehole = self.V_flow_system / self.nbh
         m_flow_borehole = self.V_flow_borehole / 1000.0 * fluid.rho
         self.m_flow_borehole = m_flow_borehole
@@ -144,7 +145,7 @@ class BaseGHE:
         q_dot_b_dt = np.hstack((q_dot_b[1:] - q_dot_b[:-1]))
 
         ts = self.radial_numerical.t_s  # (-)
-        two_pi_k = 2.0 * np.pi * self.bhe.soil.k  # (W/m.K)
+        two_pi_k = 2.0 * pi * self.bhe.soil.k  # (W/m.K)
         h = self.bhe.b.H  # (meters)
         tg = self.bhe.soil.ugt  # (Celsius)
         rb = self.bhe.calc_effective_borehole_resistance()  # (m.K/W)
@@ -174,8 +175,8 @@ class BaseGHE:
     def compute_g_functions(self):
         # Compute g-functions for a bracketed solution, based on min and max
         # height
-        min_height = self.sim_params.min_Height
-        max_height = self.sim_params.max_Height
+        min_height = self.sim_params.min_height
+        max_height = self.sim_params.max_height
         avg_height = (min_height + max_height) / 2.0
         h_values = [min_height, avg_height, max_height]
 
@@ -240,17 +241,12 @@ class GHE(BaseGHE):
         if load_years is None:
             load_years = [2019]
 
-        hourly_rejection_loads, hourly_extraction_loads = HybridLoad.split_heat_and_cool(
-            self.hourly_extraction_ground_loads)
-
         hybrid_load = HybridLoad(
-            hourly_rejection_loads,
-            hourly_extraction_loads,
+            self.hourly_extraction_ground_loads,
             self.bhe_eq,
             self.radial_numerical,
             sim_params,
-            years=load_years,
-        )
+            years=load_years)
 
         # hybrid load object
         self.hybrid_load = hybrid_load
@@ -281,7 +277,7 @@ class GHE(BaseGHE):
         total_g_values = g.x.size
         number_lts_g_values = 27
         number_sts_g_values = 50
-        sts_step_size = int(np.floor((total_g_values - number_lts_g_values) / number_sts_g_values).tolist())
+        sts_step_size = floor((total_g_values - number_lts_g_values) / number_sts_g_values)
         lntts = []
         g_values = []
         for idx in range(0, (total_g_values - number_lts_g_values), sts_step_size):
@@ -303,8 +299,6 @@ class GHE(BaseGHE):
         b = self.B_spacing
         b_over_h = b / self.bhe.b.H
 
-        # self.bhe.calc_effective_borehole_resistance()
-
         # Solve for equivalent single U-tube
         self.bhe_eq = self.bhe.to_single()
         # Update short time step object with equivalent single u-tube
@@ -325,7 +319,7 @@ class GHE(BaseGHE):
             n_hours = int(n_months / 12.0 * 8760.0)
             q_dot = self.hourly_extraction_ground_loads
             # How many times does q need to be repeated?
-            n_years = int(np.ceil(n_hours / 8760))
+            n_years = ceil(n_hours / 8760)
             if len(q_dot) // 8760 < n_years:
                 q_dot = q_dot * n_years
             else:
@@ -344,9 +338,7 @@ class GHE(BaseGHE):
         self.hp_eft = hp_eft
         self.dTb = d_tb
 
-        max_hp_eft = float(max(hp_eft))
-        min_hp_eft = float(min(hp_eft))
-        return max_hp_eft, min_hp_eft
+        return max(hp_eft), min(hp_eft)
 
     def size(self, method: DesignMethod) -> None:
         # Size the ground heat exchanger
@@ -357,25 +349,25 @@ class GHE(BaseGHE):
             return t_excess
 
         # Make the initial guess variable the average of the heights given
-        self.bhe.b.H = (self.sim_params.max_Height + self.sim_params.min_Height) / 2.0
+        self.bhe.b.H = (self.sim_params.max_height + self.sim_params.min_height) / 2.0
         # bhe.b.H is updated during sizing
         returned_height = solve_root(
             self.bhe.b.H,
             local_objective,
-            lower=self.sim_params.min_Height,
-            upper=self.sim_params.max_Height,
+            lower=self.sim_params.min_height,
+            upper=self.sim_params.max_height,
             abs_tol=1.0e-6,
             rel_tol=1.0e-6,
             max_iter=50,
         )
-        if returned_height == self.sim_params.min_Height:
+        if returned_height == self.sim_params.min_height:
             warnings.warn(
                 "The minimum height provided to size this ground heat"
                 " exchanger is not shallow enough. Provide a "
                 "shallower allowable depth or decrease the size of "
                 "the heat exchanger."
             )
-        if returned_height == self.sim_params.max_Height:
+        if returned_height == self.sim_params.max_height:
             pass  # TODO: Handle warnings in a nicer way
             # warnings.warn(
             #     "The maximum height provided to size this ground "
@@ -383,5 +375,3 @@ class GHE(BaseGHE):
             #     "allowable depth or increase the size of the heat "
             #     "exchanger."
             # )
-
-        return

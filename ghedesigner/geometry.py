@@ -17,9 +17,7 @@ class GeometricConstraints:
             prop_bound: list = None,
             ng_zones: list = None,
             rotate_start: float = None,
-            rotate_stop: float = None,
-            directory="",
-            pdf_output_name="Graphs.pdf",
+            rotate_stop: float = None
     ):
         # Spacing parameters in meters
         self.B = b
@@ -44,8 +42,6 @@ class GeometricConstraints:
         self.ngZones = ng_zones
         self.rotateStart = rotate_start
         self.rotateStop = rotate_stop
-        self.Directory = directory
-        self.pdfOutputName = pdf_output_name
 
     def check_inputs(self, method):
         # The required instances for the near-square design is self.B
@@ -73,5 +69,3 @@ class GeometricConstraints:
             assert self.rotateStart is not None
             assert self.propBound is not None
             assert self.ngZones is not None
-
-        return

@@ -71,14 +71,12 @@ class TestBHResistance(GHEBaseTest):
         re = GHEDesignerBoreholeBase.compute_reynolds(
             coaxial.m_flow_pipe, coaxial.pipe.r_out[1], fluid
         )
-        self.log("Reynolds number: {}".format(re))
-        # R_p = Coaxial.R_p
-        # self.log('Pipe resistance (K/(W/m)) : {}'.format(R_p))
+        self.log(f"Reynolds number: {re}")
         h_f = coaxial.h_f_a_out
-        self.log("Convection coefficient (W/m2.K): {}".format(h_f))
+        self.log(f"Convection coefficient (W/m2.K): {h_f}")
         r_fp = coaxial.R_fp
-        self.log("Convective resistance (K/(W/m)): {}".format(r_fp))
-        self.log("Borehole thermal resistance: {0:4f} m.K/W".format(r_b))
+        self.log(f"Convective resistance (K/(W/m)): {r_fp}")
+        self.log(f"Borehole thermal resistance: {r_b:0.4f} m.K/W")
 
         fig = coaxial.visualize_pipes()
 
@@ -130,16 +128,15 @@ class TestBHResistance(GHEBaseTest):
         # Intermediate variables
         re = GHEDesignerBoreholeBase.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
 
-        self.log("Reynolds number: {}".format(re))
+        self.log(f"Reynolds number: {re}")
         r_p = double_u_tube_parallel.R_p
-        self.log("Pipe resistance (K/(W/m)) : {}".format(r_p))
+        self.log(f"Pipe resistance (K/(W/m)) : {r_p}")
         h_f = double_u_tube_parallel.h_f
-        self.log("Convection coefficient (W/m2.K): {}".format(h_f))
+        self.log(f"Convection coefficient (W/m2.K): {h_f}")
         r_fp = double_u_tube_parallel.R_fp
-        self.log("Convective resistance (K/(W/m)): {}".format(r_fp))
-
-        self.log("Borehole thermal resistance (series): {0:.4f} m.K/W".format(r_b_series))
-        self.log("Borehole thermal resistance (parallel): {0:.4f} m.K/W".format(r_b_parallel))
+        self.log(f"Convective resistance (K/(W/m)): {r_fp}")
+        self.log(f"Borehole thermal resistance (series): {r_b_series:0.4f} m.K/W")
+        self.log(f"Borehole thermal resistance (parallel): {r_b_parallel:0.4f} m.K/W")
 
         # Create a borehole top view
         fig = double_u_tube_series.visualize_pipes()
@@ -207,17 +204,17 @@ class TestBHResistance(GHEBaseTest):
         re = GHEDesignerBoreholeBase.compute_reynolds(
             single_u_tube.m_flow_borehole, r_in, fluid
         )
-        self.log("Reynolds number: {}".format(re))
+        self.log(f"Reynolds number: {re}")
         r_p = single_u_tube.R_p
-        self.log("Pipe resistance (K/(W/m)) : {}".format(r_p))
+        self.log(f"Pipe resistance (K/(W/m)) : {r_p}")
         h_f = single_u_tube.h_f
-        self.log("Convection coefficient (W/m2.K): {}".format(h_f))
+        self.log(f"Convection coefficient (W/m2.K): {h_f}")
         r_fp = single_u_tube.R_fp
-        self.log("Convective resistance (K/(W/m)): {}".format(r_fp))
+        self.log(f"Convective resistance (K/(W/m)): {r_fp}")
 
         r_b = single_u_tube.calc_effective_borehole_resistance()
 
-        self.log("Borehole thermal resistance: {0:.4f} m.K/W".format(r_b))
+        self.log(f"Borehole thermal resistance: {r_b:0.4f} m.K/W")
 
         # Create a borehole top view
         fig = single_u_tube.visualize_pipes()

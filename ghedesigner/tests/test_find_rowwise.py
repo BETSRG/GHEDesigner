@@ -4,9 +4,8 @@
 # This search is described in <placeholder>.
 
 import csv
-from time import time as clock
-
 from math import pi
+from time import time as clock
 
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube
@@ -180,23 +179,19 @@ class TestFindRowWise(GHEBaseTest):
 
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
-        bisection_search = design_single_u_tube.find_design(
-            disp=True, use_perimeter=False
-        )  # Finding GHE Design
+        bisection_search = design_single_u_tube.find_design(disp=True, use_perimeter=False)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(
-            method=DesignMethod.Hybrid
-        )  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
         subtitle = "* Single U-tube"  # Subtitle for the printed summary
         self.log(subtitle + "\n" + len(subtitle) * "-")
-        self.log("Calculation time: {0:.2f} seconds".format(toc - tic))
-        self.log("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
+        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
+        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
         nbh = len(bisection_search.ghe.gFunction.bore_locations)
-        self.log("Number of boreholes: {}".format(nbh))
-        self.log("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
+        self.log(f"Number of boreholes: {nbh}")
+        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
         output_design_details(
@@ -239,23 +234,19 @@ class TestFindRowWise(GHEBaseTest):
 
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
-        bisection_search = design_single_u_tube.find_design(
-            disp=True, use_perimeter=True
-        )  # Finding GHE Design
+        bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(
-            method=DesignMethod.Hybrid
-        )  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
         subtitle = "* Single U-tube"  # Subtitle for the printed summary
         self.log(subtitle + "\n" + len(subtitle) * "-")
-        self.log("Calculation time: {0:.2f} seconds".format(toc - tic))
-        self.log("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
+        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
+        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
         nbh = len(bisection_search.ghe.gFunction.bore_locations)
-        self.log("Number of boreholes: {}".format(nbh))
-        self.log("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
+        self.log(f"Number of boreholes: {nbh}")
+        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
         output_design_details(

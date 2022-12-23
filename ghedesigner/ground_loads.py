@@ -1,7 +1,7 @@
 from calendar import monthrange
 from json import dumps
+from math import floor, pi
 
-import math
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -13,20 +13,17 @@ from ghedesigner.radial_numerical_borehole import RadialNumericalBH
 class HybridLoad:
     def __init__(
             self,
-            hourly_rejection_loads: list,
-            hourly_extraction_loads: list,
+            raw_loads: list,
             bhe: SingleUTube,
             radial_numerical: RadialNumericalBH,
             sim_params: SimulationParameters,
-            cop_rejection=None,
-            cop_extraction=None,
             years=None,
     ):
         # Split the hourly loads into heating and cooling (kW)
         if years is None:
             years = [2019]
-        self.hourly_rejection_loads = hourly_rejection_loads
-        self.hourly_extraction_loads = hourly_extraction_loads
+
+        self.hourly_rejection_loads, self.hourly_extraction_loads = self.split_heat_and_cool(raw_loads)
 
         # Simulation start and end month
         self.start_month = sim_params.start_month
@@ -44,14 +41,6 @@ class HybridLoad:
         # Note: this is intended to be a scipy.interp1d object
         self.radial_numerical = radial_numerical
         self.years = years
-        if cop_extraction is None:
-            self.COP_extraction = 2.5  # When the building is heating mode
-        else:
-            self.COP_extraction = cop_extraction
-        if cop_rejection is None:
-            self.COP_rejection = 4.0  # When the building is in cooling mode
-        else:
-            self.COP_rejection = cop_rejection
 
         # Get the number of days in each month for a given year (make 0 NULL)
         self.days_in_month = [0]
@@ -135,35 +124,16 @@ class HybridLoad:
         return output
 
     @staticmethod
-    def split_heat_and_cool(hourly_heat_extraction, units="W"):
+    def split_heat_and_cool(raw_loads):
         """
-        Split the provided loads into heating and cooling. Heating is positive,
-        cooling is negative.
+        Split the provided loads into heating and cooling.
+        Heating is positive, cooling is negative.
+
+        :param raw_loads: raw loads entered by the user, in Watts
         :return: Loads split into heating and cooling
         """
-        # Expects hourly_heat_extraction to be in Watts
-
-        # Heat rejection in the ground occurs when buildings are in cooling
-        # mode, these loads appear negative on Ground extraction loads plots
-        hourly_rejection_loads: list = [0.0] * len(hourly_heat_extraction)
-        # Heat extraction in the ground occurs when buildings are in heating
-        # mode, these loads appear positive on Ground extraction load plots
-        hourly_extraction_loads: list = [0.0] * len(hourly_heat_extraction)
-
-        if units == "W":
-            scale = 1000.0
-        elif units == "kW":
-            scale = 1.0
-        else:
-            raise ValueError("Units provided are not an option.")
-
-        for i, l_hour in enumerate(hourly_heat_extraction):
-            if l_hour >= 0.0:
-                # Heat is extracted from ground when > 0
-                hourly_extraction_loads[i] = l_hour / scale
-            else:
-                # Heat is rejected to ground when < 0
-                hourly_rejection_loads[i] = l_hour / -scale
+        hourly_extraction_loads = [x / 1000.0 if x >= 0.0 else 0.0 for x in raw_loads]
+        hourly_rejection_loads = [abs(x) / 1000.0 if x < 0.0 else 0.0 for x in raw_loads]
 
         return hourly_rejection_loads, hourly_extraction_loads
 
@@ -204,19 +174,15 @@ class HybridLoad:
 
             # Day of month the peak heating load occurs
             # day of the month on which peak clg load occurs (e.g. 1-31)
-            self.monthly_peak_cl_day[i] = math.floor(
-                month_rejection_loads.index(self.monthly_peak_cl[i]) / hours_in_day)
+            self.monthly_peak_cl_day[i] = floor(month_rejection_loads.index(self.monthly_peak_cl[i]) / hours_in_day)
             # day of the month on which peak clg load occurs (e.g. 1-31)
-            self.monthly_peak_hl_day[i] = math.floor(
-                month_extraction_loads.index(self.monthly_peak_hl[i]) / hours_in_day)
+            self.monthly_peak_hl_day[i] = floor(month_extraction_loads.index(self.monthly_peak_hl[i]) / hours_in_day)
             # print("Monthly Peak HL Hour",month_extraction_loads.index(
             # self.monthly_peak_hl[i]) / hours_in_day)
             # print("Monthly Peak HL Day: ",self.monthly_peak_hl_day[i])
             # print("")
 
             hours_in_previous_months += hours_in_month
-
-        return
 
     def process_two_day_loads(self) -> None:
         # The two day (48 hour) two day loads are selected by locating the day
@@ -280,8 +246,6 @@ class HybridLoad:
 
             hours_in_previous_months += hours_in_month
 
-        return
-
     @staticmethod
     def simulate_hourly(hour_time, q, g_sts, resist_bh, two_pi_k, ts):
         # An hourly simulation for the fluid temperature
@@ -312,7 +276,7 @@ class HybridLoad:
             two_day_fluid_temps_nm,
     ):
         ts = self.radial_numerical.t_s
-        two_pi_k = 2.0 * np.pi * self.bhe.soil.k
+        two_pi_k = 2.0 * pi * self.bhe.soil.k
         resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
         g_sts = self.radial_numerical.g_sts
         hours_in_day = 24
@@ -333,9 +297,7 @@ class HybridLoad:
         delta_t_fluid_peak = self.simulate_hourly(hour_time, q_peak, g_sts, resist_bh_effective, two_pi_k, ts)
         two_day_fluid_temps_pk.append(delta_t_fluid_peak)
         # Get nominal fluid temperatures using nominal load
-        delta_t_fluid_nom = self.simulate_hourly(
-            hour_time, q_nominal, g_sts, resist_bh_effective, two_pi_k, ts
-        )
+        delta_t_fluid_nom = self.simulate_hourly(hour_time, q_nominal, g_sts, resist_bh_effective, two_pi_k, ts)
         two_day_fluid_temps_nm.append(delta_t_fluid_nom)
 
         delta_t_fluid_nom_max = max(delta_t_fluid_nom)
@@ -386,11 +348,12 @@ class HybridLoad:
             current_month_avg_cl = self.monthly_avg_cl[i]
 
             if current_month_peak_cl != 0.0:
-                peak_duration, q_peak, q_nominal = self.perform_current_month_simulation(current_two_day_cl_load,
-                                                                                         current_month_peak_cl,
-                                                                                         current_month_avg_cl,
-                                                                                         self.two_day_fluid_temps_cl_pk,
-                                                                                         self.two_day_fluid_temps_cl_nm, )
+                peak_duration, q_peak, q_nominal = self.perform_current_month_simulation(
+                    current_two_day_cl_load,
+                    current_month_peak_cl,
+                    current_month_avg_cl,
+                    self.two_day_fluid_temps_cl_pk,
+                    self.two_day_fluid_temps_cl_nm)
             else:
                 peak_duration = 1.0e-6
 
@@ -426,8 +389,6 @@ class HybridLoad:
 
             # Set the monthly cooling load duration
             self.monthly_peak_hl_duration[i] = peak_duration
-
-        return
 
     def create_dataframe_of_peak_analysis(self) -> str:
         # The fields are: sum, peak, avg, peak day, peak duration
@@ -724,28 +685,8 @@ class HybridLoad:
 
 
 def number_to_month(x):
-    # Convert a numeric 1-12 to a month name
-    if 12 >= int(x) > 0:
-
-        list_of_months = {
-            "1": "January",
-            "2": "February",
-            "3": "March",
-            "4": "April",
-            "5": "May",
-            "6": "June",
-            "7": "July",
-            "8": "August",
-            "9": "September",
-            "10": "October",
-            "11": "November",
-            "12": "December",
-        }
-
-        return list_of_months[str(x)]
-
-    else:
-        print('num_to_month function error: "num=' + str(x) + '"')
+    return ["NULL", "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"][x]
 
 
 def monthdays(month, year):

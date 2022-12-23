@@ -8,13 +8,8 @@ def transpose_coordinates(coordinates) -> List[Tuple[float, float]]:
     return coordinates_transposed
 
 
-def rectangle(
-        num_bh_x: int,
-        num_bh_y: int,
-        spacing_x: Union[int, float],
-        spacing_y: Union[int, float],
-        origin=(0, 0),
-) -> List[Tuple[float, float]]:
+def rectangle(num_bh_x: int, num_bh_y: int, spacing_x: Union[int, float], spacing_y: Union[int, float],
+              origin=(0, 0), ) -> List[Tuple[float, float]]:
     """
     Creates a rectangular borehole field.
 
@@ -47,12 +42,8 @@ def rectangle(
     return r
 
 
-def open_rectangle(
-        num_bh_x: int,
-        num_bh_y: int,
-        spacing_x: Union[int, float],
-        spacing_y: Union[int, float],
-) -> List[Tuple[float, float]]:
+def open_rectangle(num_bh_x: int, num_bh_y: int, spacing_x: Union[int, float],
+                   spacing_y: Union[int, float]) -> List[Tuple[float, float]]:
     """
     Creates a rectangular borehole field without center boreholes.
 
@@ -91,12 +82,8 @@ def open_rectangle(
     return open_r
 
 
-def c_shape(n_x_1: int,
-            n_y: int,
-            b_x: Union[int, float],
-            b_y: Union[int, float],
-            n_x_2: int
-            ) -> List[Tuple[float, float]]:
+def c_shape(n_x_1: int, n_y: int, b_x: Union[int, float],
+            b_y: Union[int, float], n_x_2: int) -> List[Tuple[float, float]]:
     # nbh = n_x_1 + (n_y * 2) - 1 + n_x_2 - 1
     c = []
     for i in range(n_x_1):
@@ -116,12 +103,8 @@ def c_shape(n_x_1: int,
     return c
 
 
-def lop_u(n_x: int,
-          n_y_1: int,
-          b_x: Union[int, float],
-          b_y: Union[int, float],
-          n_y_2: int
-          ) -> List[Tuple[float, float]]:
+def lop_u(n_x: int, n_y_1: int, b_x: Union[int, float],
+          b_y: Union[int, float], n_y_2: int) -> List[Tuple[float, float]]:
     # nbh = n_x + n_y_1 - 1 + n_y_2 - 1
     _lop_u = []
     for i in range(n_x):
@@ -138,11 +121,7 @@ def lop_u(n_x: int,
     return _lop_u
 
 
-def l_shape(n_x: int,
-            n_y: int,
-            b_x: Union[int, float],
-            b_y: Union[int, float]
-            ) -> List[Tuple[float, float]]:
+def l_shape(n_x: int, n_y: int, b_x: Union[int, float], b_y: Union[int, float]) -> List[Tuple[float, float]]:
     # nbh = n_x + n_y - 1
     l_shape_object = []
     for i in range(n_x):
@@ -156,16 +135,19 @@ def l_shape(n_x: int,
     return l_shape_object
 
 
-def zoned_rectangle(n_x: int,
-                    n_y: int,
-                    b_x: Union[int, float],
-                    b_y: Union[int, float],
-                    n_ix: int,
-                    n_iy: int
-                    ) -> List[Tuple[float, float]]:
-    # Create a zoned rectangle
-    # The creator of the idea behind the "zoned rectangle" is
-    # Dr. Jeffrey D. Spitler
+def zoned_rectangle(n_x: int, n_y: int, b_x: Union[int, float], b_y: Union[int, float],
+                    n_ix: int, n_iy: int) -> List[Tuple[float, float]]:
+    """
+    Create a zoned rectangle
+
+    :param n_x:
+    :param n_y:
+    :param b_x:
+    :param b_y:
+    :param n_ix:
+    :param n_iy:
+    :return:
+    """
 
     if n_ix > (n_x - 2):
         raise ValueError("To many interior x boreholes.")

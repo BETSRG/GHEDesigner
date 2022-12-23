@@ -1,5 +1,6 @@
-import numpy as np
 from math import atan, pi, sin, sqrt
+
+import numpy as np
 
 
 class Shapes:
@@ -161,8 +162,7 @@ def sort_intersections(r_a, rotate):
         # sign = -1
         vals[i] = dist_inter * sin(ref_ang + rotate)
         i += 1
-    zipped = zip(vals, r_a)
-    zipped = sorted(zipped)
+    zipped = sorted(zip(vals, r_a))
     r_a = [row for _, row in zipped]
     return r_a
 

@@ -1,6 +1,6 @@
-from setuptools import setup
-
 from os import path
+
+from setuptools import setup
 
 from ghedesigner import VERSION
 
@@ -15,6 +15,7 @@ based on drilling geometric land constraints."""
 setup(
     name='ghedesigner',
     install_requires=[
+        'click',
         'pygfunction @ git+https://github.com/MassimoCimmino/pygfunction@5465044309c1193514f64574680cd430249aef29',
         'wheel',  # I believe once we are installing pygfunction from wheels, we don't need this line anymore
         'numpy>=1.19.2',
@@ -26,12 +27,10 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     version=VERSION,
-    packages=['ghedesigner'],  # , 'ghedesigner.tests'],
-    # package_data={"ghedesigner.tests": ["test_data/*"]},
-    # include_package_data=True,
-    author='Jack C. Cook',
-    author_email='jack.cook@okstate.edu',
+    packages=['ghedesigner'],
+    author='Jeffrey D. Spitler,',
+    author_email='spitler@okstate.edu',
     entry_points={
-        'console_scripts': ['ghedesigner=ghedesigner.utilities:dummy_entry_point']
+        'console_scripts': ['ghedesigner=ghedesigner.manager:run_manager_from_cli']
     }
 )

@@ -157,11 +157,11 @@ class TestFindRectangle(GHEBaseTest):
         toc = clock()
         subtitle = "* Single U-tube"
         self.log(subtitle + "\n" + len(subtitle) * "-")
-        self.log("Calculation time: {0:.2f} seconds".format(toc - tic))
-        self.log("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
+        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
+        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
         nbh = len(bisection_search.ghe.gFunction.bore_locations)
-        self.log("Number of boreholes: {}".format(nbh))
-        self.log("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
+        self.log(f"Number of boreholes: {nbh}")
+        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Double U-tube
         # -------------
@@ -188,11 +188,11 @@ class TestFindRectangle(GHEBaseTest):
         toc = clock()
         subtitle = "* Double U-tube"
         self.log(subtitle + "\n" + len(subtitle) * "-")
-        self.log("Calculation time: {0:.2f} seconds".format(toc - tic))
-        self.log("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
+        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
+        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
         nbh = len(bisection_search.ghe.gFunction.bore_locations)
-        self.log("Number of boreholes: {}".format(nbh))
-        self.log("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
+        self.log(f"Number of boreholes: {nbh}")
+        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Coaxial tube
         # -------------
@@ -219,8 +219,8 @@ class TestFindRectangle(GHEBaseTest):
         toc = clock()
         subtitle = "* Coaxial tube"
         self.log(subtitle + "\n" + len(subtitle) * "-")
-        self.log("Calculation time: {0:.2f} seconds".format(toc - tic))
-        self.log("Height: {0:.4f} meters".format(bisection_search.ghe.bhe.b.H))
+        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
+        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
         nbh = len(bisection_search.ghe.gFunction.bore_locations)
-        self.log("Number of boreholes: {}".format(nbh))
-        self.log("Total Drilling: {0:.1f} meters\n".format(bisection_search.ghe.bhe.b.H * nbh))
+        self.log(f"Number of boreholes: {nbh}")
+        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")

@@ -98,9 +98,8 @@ class TestGHE(GHEBaseTest):
         # -----------------------
         # Fluid properties
         self.fluid = GHEFluid(fluid_str="Water", percent=0.0)
-        self.V_flow_system = v_flow_borehole * float(
-            nx * ny
-        )  # System volumetric flow rate (L/s)
+        # System volumetric flow rate (L/s)
+        self.V_flow_system = v_flow_borehole * float(nx * ny)
         # Total fluid mass flow rate per borehole (kg/s)
         self.m_flow_borehole = v_flow_borehole / 1000.0 * self.fluid.rho
 

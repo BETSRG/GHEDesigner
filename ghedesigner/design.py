@@ -1,7 +1,6 @@
 from abc import abstractmethod
+from math import floor
 from typing import Type, Union
-
-import numpy as np
 
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
@@ -13,6 +12,7 @@ from ghedesigner.search_routines import Bisection1D, Bisection2D, BisectionZD, R
 from ghedesigner.utilities import DesignMethod
 
 AnyBoreholeType = Union[Type[SingleUTube], Type[MultipleUTube], Type[CoaxialPipe]]
+AnyBisectionType = Union[Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch]
 
 
 class DesignBase:
@@ -63,15 +63,13 @@ class DesignBase:
             print("\n")
 
     @abstractmethod
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True):
+    def find_design(self, disp=False, use_perimeter=True) -> AnyBisectionType:
         pass
 
 
 class DesignNearSquare(DesignBase):
     def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
-                 fluid: GHEFluid, pipe: Pipe,
-                 grout: Grout, soil: Soil, sim_params: SimulationParameters,
+                 fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraints, hourly_extraction_ground_loads: list,
                  method: DesignMethod, flow: str = "borehole", load_years=None):
         super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
@@ -84,15 +82,14 @@ class DesignNearSquare(DesignBase):
         # There would never be a time that a user would __need__ to give a
         # different lower range. The upper number of boreholes range is
         # calculated based on the spacing and length provided.
-        n = np.floor(self.geometric_constraints.length / self.geometric_constraints.B) + 1
+        n = floor(self.geometric_constraints.length / self.geometric_constraints.B) + 1
         number_of_boreholes = int(n)
         self.coordinates_domain, self.fieldDescriptors = square_and_near_square(1, number_of_boreholes,
                                                                                 self.geometric_constraints.B)
 
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True) -> Bisection1D:
+    def find_design(self, disp=False, use_perimeter=True) -> Bisection1D:
         if disp:
-            title = "Find {}...".format(self.routine)
+            title = f"Find {self.routine}..."
             print(title + "\n" + len(title) * "=")
         return Bisection1D(
             self.coordinates_domain,
@@ -125,13 +122,11 @@ class DesignRectangle(DesignBase):
         self.geometric_constraints.check_inputs(self.routine)
         self.coordinates_domain, self.fieldDescriptors = rectangular(
             self.geometric_constraints.length, self.geometric_constraints.width,
-            self.geometric_constraints.B_min, self.geometric_constraints.B_max_x, disp=False
-        )
+            self.geometric_constraints.B_min, self.geometric_constraints.B_max_x)
 
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True):
+    def find_design(self, disp=False, use_perimeter=True) -> Bisection1D:
         if disp:
-            title = "Find {}...".format(self.routine)
+            title = f"Find {self.routine}..."
             print(title + "\n" + len(title) * "=")
         return Bisection1D(
             self.coordinates_domain,
@@ -168,10 +163,9 @@ class DesignBiRectangle(DesignBase):
             self.geometric_constraints.B_max_x, self.geometric_constraints.B_max_y, disp=False
         )
 
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True):
+    def find_design(self, disp=False, use_perimeter=True) -> Bisection2D:
         if disp:
-            title = "Find {}...".format(self.routine)
+            title = f"Find {self.routine}..."
             print(title + "\n" + len(title) * "=")
         return Bisection2D(
             self.coordinates_domain_nested,
@@ -208,10 +202,9 @@ class DesignBiZoned(DesignBase):
             self.geometric_constraints.B_max_x, self.geometric_constraints.B_max_y
         )
 
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True):
+    def find_design(self, disp=False, use_perimeter=True) -> BisectionZD:
         if disp:
-            title = "Find {}...".format(self.routine)
+            title = f"Find {self.routine}..."
             print(title + "\n" + len(title) * "=")
         return BisectionZD(
             self.coordinates_domain_nested,
@@ -250,10 +243,9 @@ class DesignBiRectangleConstrained(DesignBase):
             building_descriptions=building_descriptions,
         )
 
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True):
+    def find_design(self, disp=False, use_perimeter=True) -> Bisection2D:
         if disp:
-            title = "Find {}...".format(self.routine)
+            title = f"Find {self.routine}..."
             print(title + "\n" + len(title) * "=")
         return Bisection2D(
             self.coordinates_domain_nested,
@@ -286,12 +278,9 @@ class DesignRowWise(DesignBase):
         self.routine = "row-wise"
         self.geometric_constraints.check_inputs(self.routine)
 
-    def find_design(self, disp=False, b_r_point=None, b_r_removal_method="CloseToCorner",
-                    exhaustive_fields_to_check=10, use_perimeter=True):
-        if b_r_point is None:
-            b_r_point = [0.0, 0.0]
+    def find_design(self, disp=False, use_perimeter=True) -> RowWiseModifiedBisectionSearch:
         if disp:
-            title = "Find {}...".format(self.routine)
+            title = f"Find {self.routine}..."
             print(title + "\n" + len(title) * "=")
         return RowWiseModifiedBisectionSearch(
             self.V_flow,
@@ -309,8 +298,5 @@ class DesignRowWise(DesignBase):
             disp=disp,
             field_type="row-wise",
             load_years=self.load_years,
-            b_r_point=b_r_point,
-            b_r_removal_method=b_r_removal_method,
-            exhaustive_fields_to_check=exhaustive_fields_to_check,
             use_perimeter=use_perimeter,
         )

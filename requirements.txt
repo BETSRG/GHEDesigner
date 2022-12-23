@@ -1,8 +1,13 @@
 # library dependencies
+click
 numpy
 opencv-python
 git+https://github.com/MassimoCimmino/pygfunction@5465044309c1193514f64574680cd430249aef29
 scipy
+
+# docs dependencies
+sphinx
+sphinx-rtd-theme
 
 # dependencies for testing and example purposes only
 matplotlib

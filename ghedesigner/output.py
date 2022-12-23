@@ -1,10 +1,8 @@
 import csv
 import os
 from datetime import datetime
+from math import floor
 from pathlib import Path
-
-import math
-import numpy as np
 
 from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase
 from ghedesigner.utilities import DesignMethod
@@ -34,9 +32,7 @@ def create_row(allocated_width, row_data, data_formats, centering=">"):
     return r_s
 
 
-def create_table(
-        title, col_titles, rows, allocated_width, col_formats, filler_symbol=" ", centering=">"
-):
+def create_table(title, col_titles, rows, allocated_width, col_formats, filler_symbol=" ", centering=">"):
     n_cols = len(col_titles[0])
     r_s = ""
     r_s += create_title(allocated_width, title, filler_symbol=filler_symbol)
@@ -108,20 +104,20 @@ def create_line(row_allocation, character="*"):
 
 
 def hours_to_month(hours):
-    days_in_year = np.array([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
+    days_in_year = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     hours_in_year = 24 * days_in_year
-    n_years = math.floor(hours / np.sum(hours_in_year))
+    n_years = floor(hours / sum(hours_in_year))
     frac_month = n_years * len(days_in_year)
     month_in_year = 0
     for idx, _ in enumerate(days_in_year):
-        hours_left = hours - n_years * np.sum(hours_in_year)
-        if np.sum(hours_in_year[0: idx + 1]) >= hours_left:
+        hours_left = hours - n_years * sum(hours_in_year)
+        if sum(hours_in_year[0: idx + 1]) >= hours_left:
             month_in_year = idx
             break
     # print("Year Months: ",fracMonth)
     # print("Month Months: ",monthInYear)
     frac_month += month_in_year
-    h_l = hours - n_years * np.sum(hours_in_year) - np.sum(hours_in_year[0:month_in_year])
+    h_l = hours - n_years * sum(hours_in_year) - sum(hours_in_year[0:month_in_year])
     frac_month += h_l / (hours_in_year[month_in_year])
     # print("Hour Months: ",hL/(hoursInYear[monthInYear]))
     # print(fracMonth)
@@ -129,7 +125,7 @@ def hours_to_month(hours):
 
 
 def ghe_time_convert(hours):
-    days_in_year = np.array([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
+    days_in_year = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     hours_in_year = 24 * days_in_year
     month_in_year = 0
     year_hour_sum = 0
@@ -142,8 +138,8 @@ def ghe_time_convert(hours):
             year_hour_sum += hours_in_year[idx]
     # print("Year Months: ",fracMonth)
     # print("Month Months: ",monthInYear)
-    h_l = hours - np.sum(hours_in_year[0:month_in_year])
-    day_in_month = int(math.floor(h_l / 24)) + 1
+    h_l = hours - sum(hours_in_year[0:month_in_year])
+    day_in_month = floor(h_l / 24) + 1
     hour_in_day = h_l % 24 + 1
     # print("Hour Months: ",hL/(hoursInYear[monthInYear]))
     # print(fracMonth)
@@ -165,8 +161,7 @@ def output_design_details(
         csv_f_1="TimeDependentValues.csv",
         csv_f_2="BoreFieldData.csv",
         csv_f_3="Loadings.csv",
-        csv_f_4="Gfunction.csv",
-
+        csv_f_4="Gfunction.csv"
 ):
     try:
         ghe = design.ghe
@@ -185,19 +180,48 @@ def output_design_details(
 
     blank_line = create_line(allocated_width)
     empty_line = create_line(allocated_width, character=" ")
-    o_s = ""
-    # oS += middleSpacingString.format("Project Name:",projectName,rO=rightOffset,lO=leftColLength) + "\n"
-    o_s += create_d_row(allocated_width, "Project Name:", project_name, string_format, string_format)
+
+    o_s = blank_line
+    o_s += create_d_row(
+        allocated_width,
+        "Project Name:",
+        project_name,
+        string_format,
+        string_format
+    )
     o_s += blank_line
     o_s += "Notes:\n\n" + notes + "\n"
     o_s += blank_line
-    o_s += create_d_row(allocated_width, "File/Model Name:", model_name, string_format, string_format)
+    o_s += create_d_row(
+        allocated_width,
+        "File/Model Name:",
+        model_name,
+        string_format,
+        string_format
+    )
     now = datetime.now()
     time_string = now.strftime("%m/%d/%Y %H:%M:%S %p")
-    o_s += create_d_row(allocated_width, "Simulated On:", time_string, string_format, string_format)
-    o_s += create_d_row(allocated_width, "Simulated By:", author, string_format, string_format)
-    o_s += create_d_row(allocated_width, "Calculation Time, s:", round(time, rounding_amount), string_format,
-                        float_format, )
+    o_s += create_d_row(
+        allocated_width,
+        "Simulated On:",
+        time_string,
+        string_format,
+        string_format
+    )
+    o_s += create_d_row(
+        allocated_width,
+        "Simulated By:",
+        author,
+        string_format,
+        string_format
+    )
+    o_s += create_d_row(
+        allocated_width,
+        "Calculation Time, s:",
+        round(time, rounding_amount),
+        string_format,
+        float_format
+    )
     o_s += empty_line
     o_s += create_title(allocated_width, "Design Selection", filler_symbol="-")
 
@@ -211,8 +235,15 @@ def output_design_details(
         design_values = ""
     design_formats = ["s", ".3f", ".3f", ".3f"]
 
-    o_s += create_table("Field Search Log", design_header, design_values, allocated_width, design_formats,
-                        filler_symbol="-", centering="^", )
+    o_s += create_table(
+        "Field Search Log",
+        design_header,
+        design_values,
+        allocated_width,
+        design_formats,
+        filler_symbol="-",
+        centering="^"
+    )
 
     o_s += empty_line
     o_s += create_title(allocated_width, "GHE System", filler_symbol="-")
@@ -233,7 +264,6 @@ def output_design_details(
         gf_row = list()
         gf_row.append(g_function.log_time[i])
         for g_function_name in list(g_function.g_lts):
-            # print(gfunction.g_lts[gfunctionName][i])
             gf_row.append(g_function.g_lts[g_function_name][i])
         gf_row.append(ghe_gf[i])
         g_function_data.append(gf_row)
@@ -242,26 +272,49 @@ def output_design_details(
                         g_function_table_formats, filler_symbol="-", centering="^")
     o_s += empty_line
 
-    """
-
-    """
-
     o_s += "------ System parameters ------" + "\n"
-    o_s += create_d_row(allocated_width, "Active Borehole Length, m:", b_h.H, string_format, int_format)
-    o_s += create_d_row(allocated_width, "Borehole Radius, m:", round(b_h.r_b, rounding_amount), string_format,
-                        float_format)
-    o_s += create_d_row(allocated_width, "Borehole Spacing, m:", round(ghe.B_spacing, rounding_amount), string_format,
-                        float_format)
-    o_s += create_d_row(allocated_width, "Total Drilling, m:", round(b_h.H * len(b), rounding_amount), string_format,
-                        float_format)
+    o_s += create_d_row(
+        allocated_width,
+        "Active Borehole Length, m:",
+        b_h.H,
+        string_format,
+        int_format
+    )
+    o_s += create_d_row(
+        allocated_width,
+        "Borehole Radius, m:",
+        round(b_h.r_b, rounding_amount),
+        string_format,
+        float_format
+    )
+    o_s += create_d_row(
+        allocated_width,
+        "Borehole Spacing, m:",
+        round(ghe.B_spacing, rounding_amount),
+        string_format,
+        float_format
+    )
+    o_s += create_d_row(
+        allocated_width,
+        "Total Drilling, m:",
+        round(b_h.H * len(b), rounding_amount),
+        string_format,
+        float_format
+    )
 
     indented_amount = 2
 
     o_s += "Field Geometry: " + "\n"
     # rightAd = rightOffset-indentedAmount*tabOffset+math.ceil(indentedAmount/2)
     # leftAd = leftColLength-tabOffset*indentedAmount+math.floor(indentedAmount/2)
-    o_s += create_d_row(allocated_width, "Field Type:", ghe.fieldType, string_format, string_format,
-                        b_tabs=indented_amount)
+    o_s += create_d_row(
+        allocated_width,
+        "Field Type:",
+        ghe.fieldType,
+        string_format,
+        string_format,
+        b_tabs=indented_amount
+    )
     # oS += middleSpacingIndentedString.format("\t\tField Type:",ghe.field_type,rO=rightAd,lO=leftAd)
     o_s += create_d_row(
         allocated_width,
@@ -272,14 +325,26 @@ def output_design_details(
         b_tabs=indented_amount,
     )
     # oS += middleSpacingIndentedString.format("\t\tField Specifier:",ghe.fieldSpecifier,rO=rightAd,lO=leftAd)
-    o_s += create_d_row(allocated_width, "NBH:", len(b), string_format, int_format, b_tabs=indented_amount)
+    o_s += create_d_row(
+        allocated_width,
+        "NBH:", len(b),
+        string_format,
+        int_format,
+        b_tabs=indented_amount
+    )
     # oS += middleSpacingIndentedString.format("\t\tNBH:",len(b),rO=rightAd,lO=leftAd)
     # Field NBH Borehole locations, field identification
     # System Details
 
     o_s += "Borehole Information: " + "\n"
-    o_s += create_d_row(allocated_width, "Shank Spacing, m:", round(bhe.pipe.s, rounding_amount), string_format,
-                        float_format, b_tabs=indented_amount)
+    o_s += create_d_row(
+        allocated_width,
+        "Shank Spacing, m:",
+        round(bhe.pipe.s, rounding_amount),
+        string_format,
+        float_format,
+        b_tabs=indented_amount
+    )
 
     if isinstance(bhe.pipe.r_out, float):
         o_s += create_d_row(
@@ -559,14 +624,14 @@ def output_design_details(
     o_s += create_d_row(
         allocated_width,
         "Maximum Allowable Height, m: ",
-        ghe.sim_params.max_Height,
+        ghe.sim_params.max_height,
         string_format,
         float_format,
     )
     o_s += create_d_row(
         allocated_width,
         "Minimum Allowable Height, m: ",
-        ghe.sim_params.min_Height,
+        ghe.sim_params.min_height,
         string_format,
         float_format,
     )
@@ -602,14 +667,14 @@ def output_design_details(
     d_tb_vals = []
     d_tb_vals.extend(ghe.dTb)
     n_years = 0
-    # hTotalYear = np.sum(hoursInYear)
+    # hTotalYear = sum(hoursInYear)
     out_array = []
     last_month = -1
     month_tb_vals = []
     month_eft_vals = []
     for tv, d_tb, eft in zip(time_vals, d_tb_vals, eft_vals):
         # currentHourMonth = timeVals[i] - hTotalYear * nYears
-        current_month = int(math.floor(hours_to_month(tv)))
+        current_month = floor(hours_to_month(tv))
         # print(monthEFTVals)
         if current_month == last_month:
             month_tb_vals.append(d_tb)
@@ -627,8 +692,8 @@ def output_design_details(
                     [
                         current_month,
                         previous_temp + month_tb_vals[-1],
-                        np.max(month_eft_vals),
-                        np.min(month_eft_vals),
+                        max(month_eft_vals),
+                        min(month_eft_vals),
                     ]
                 )
             last_month = current_month
@@ -644,8 +709,8 @@ def output_design_details(
     eft_table_formats = [".0f", ".3f", ".3f", ".3f"]
 
     o_s += create_title(allocated_width, "Peak Temperature", filler_symbol="-")
-    max_eft = np.max(eft_vals)
-    min_eft = np.min(eft_vals)
+    max_eft = max(eft_vals)
+    min_eft = min(eft_vals)
     max_eft_time = time_vals[eft_vals.index(max(eft_vals))]
     min_eft_time = time_vals[eft_vals.index(min(eft_vals))]
     max_eft_time = hours_to_month(max_eft_time)
@@ -792,7 +857,7 @@ def output_design_details(
 
     # gfunctionColTitles.append("H:" + str(round(bH.H, 2)) + "m")
 
-    csv4_array = [["ln(t/ts)", "H:{:.2f}".format(bhe.b.H)]]
+    csv4_array = [["ln(t/ts)", f"H:{bhe.b.H:0.2f}"]]
     ghe_gf_adjusted = ghe.grab_g_function(ghe.B_spacing / float(ghe.bhe.b.H))
     gfunction_log_vals = ghe_gf_adjusted.x
     gfunction_g_vals = ghe_gf_adjusted.y
