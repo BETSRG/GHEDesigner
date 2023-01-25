@@ -1,6 +1,6 @@
 ---
-name: Custom issue template
-about: Describe this issue template's purpose here.
+name: Issue
+about: Standard template for new issues.
 title: ''
 labels: ''
 assignees: ''
@@ -8,7 +8,5 @@ assignees: ''
 ---
 
 Issue overview
----------------
-
-### Checklist
-- [ ]
+--------------
+Please delete this line and add a description of the issue. Include as much detail as you can so the issue can be reproduced.
