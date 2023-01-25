@@ -16,7 +16,7 @@ setup(
     name='ghedesigner',
     install_requires=[
         'click',
-        'pygfunction',
+        'pygfunction>=2.2.2',
         'numpy>=1.19.2',
         'scipy>=1.6.2',
         'opencv-python==4.5.4.58'
