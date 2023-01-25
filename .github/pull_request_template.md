@@ -1,12 +1,3 @@
----
-name: Pull request template
-about: Standard template for new pull requests.
-title: ''
-labels: ''
-assignees: ''
-
----
-
 Pull request overview
 --------------
 Please delete this line and add a description of the pull request.
