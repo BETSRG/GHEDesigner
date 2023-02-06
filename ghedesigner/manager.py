@@ -20,6 +20,12 @@ class DesignMethodGeometry(Enum):
     Rectangular = auto()
 
 
+class BoreholeType(Enum):
+    SingleUTubeType = auto()
+    DoubleUTubeType = auto()
+    CoaxialType = auto()
+
+
 class GHEManager:
     """
     TODO: Add docs guiding all the steps
@@ -65,8 +71,8 @@ class GHEManager:
         """
         self._soil = Soil(conductivity, rho_cp, undisturbed_temp)
 
-    def set_pipe(self, inner_radius: float, outer_radius: float, shank_spacing: float,
-                 roughness: float, conductivity: float, rho_cp: float):
+    def set_single_u_tube_pipe(self, inner_radius: float, outer_radius: float, shank_spacing: float,
+                               roughness: float, conductivity: float, rho_cp: float):
         """
         inner_radius m
         outer_radius m
@@ -75,10 +81,18 @@ class GHEManager:
         conductivity W/mK
         rho_cp J/K-m3
         """
-        # TODO: Take enum for pipe type, single, double or coax
+
         # TODO: Convert scalar properties if double or coax
         self._u_tube_type = SingleUTube  # for now just store the type on the class here
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 1)
+        self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
+
+    def set_double_u_tube_pipe(self, inner_radius: float, outer_radius: float, shank_spacing: float,
+                               roughness: float, conductivity: float, rho_cp: float):
+
+        # TODO: Convert scalar properties if double or coax
+        self._u_tube_type = MultipleUTube  # for now just store the type on the class here
+        pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 2)
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
     def set_borehole(self, length: float, buried_depth: float, radius: float):
@@ -209,7 +223,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_file_path: Path):
     soil_props = inputs['soil']
     manager.set_soil(**soil_props)
     pipe_props = inputs['pipe']
-    manager.set_pipe(**pipe_props)
+    manager.set_single_u_tube_pipe(**pipe_props)
     borehole_props = inputs['borehole']
     manager.set_borehole(**borehole_props)
     sim_props = inputs['simulation']

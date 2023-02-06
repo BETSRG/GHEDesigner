@@ -30,7 +30,7 @@ class TestNearSquare(GHEBaseTest):
 
     def test_design_selection(self):
         manager = GHEManager()
-        manager.set_pipe(
+        manager.set_single_u_tube_pipe(
             inner_radius=(21.6 / 1000.0 / 2.0), outer_radius=(26.67 / 1000.0 / 2.0), shank_spacing=(32.3 / 1000.0),
             roughness=1.0e-6, conductivity=0.4, rho_cp=(1542.0 * 1000.0)
         )
