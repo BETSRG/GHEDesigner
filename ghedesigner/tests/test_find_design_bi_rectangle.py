@@ -16,8 +16,8 @@ from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethod
 
 
-class TestFindBiRectangle(GHEBaseTest):
-    def test_find_bi_rectangle(self):
+class TestFindBiRectangleDesign(GHEBaseTest):
+    def test_find_bi_rectangle_design(self):
         # This file contains three examples utilizing the bi-rectangle design algorithm for a single U, double U, and
         # coaxial tube  The results from these examples are exported to the "DesignExampleOutput" folder.
 

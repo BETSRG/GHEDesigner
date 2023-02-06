@@ -16,9 +16,9 @@ from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethod, length_of_side
 
 
-class TestFindNearSquare(GHEBaseTest):
+class TestFindNearSquareDesign(GHEBaseTest):
 
-    def test_find_near_square_single(self):
+    def test_find_single_u_tube_design(self):
         manager = GHEManager()
         manager.set_pipe(
             inner_radius=(21.6 / 1000.0 / 2.0), outer_radius=(26.67 / 1000.0 / 2.0),
@@ -69,7 +69,7 @@ class TestFindNearSquare(GHEBaseTest):
             load_method=DesignMethod.Hybrid,
         )
 
-    def test_find_near_square_double(self):
+    def test_find_double_u_tube_design(self):
         # *************************************************************************************************************
         # Double U-tube Example
 
@@ -199,7 +199,7 @@ class TestFindNearSquare(GHEBaseTest):
             load_method=DesignMethod.Hybrid,
         )
 
-    def test_find_near_square_coaxial(self):
+    def test_find_coaxial_pipe_design(self):
         # *************************************************************************************************************
         # Coaxial Tube Example
 

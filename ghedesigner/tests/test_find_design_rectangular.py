@@ -9,8 +9,8 @@ from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethod
 
 
-class TestFindRectangle(GHEBaseTest):
-    def test_find_rectangle(self):
+class TestFindRectangleDesign(GHEBaseTest):
+    def test_find_rectangular_design(self):
         # Borehole dimensions
         # -------------------
         h = 96.0  # Borehole length (m)
