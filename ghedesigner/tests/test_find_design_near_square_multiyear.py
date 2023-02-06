@@ -1,45 +1,41 @@
-# Purpose: Design a bi-uniform constrained polygonal field using the common
-# design interface with a single U-tube, multiple U-tube and coaxial tube
-# borehole heat exchanger.
+# Purpose: Design a square or near-square field using the common design
+# interface with a single U-tube, multiple U-tube and coaxial tube.
 
-# This search is described in section 4.4.5 from pages 146-148 in Cook (2021).
+# This search is described in section 4.3.2 of Cook (2021) from pages 123-129.
 
-import csv
-import tempfile
-from pathlib import Path
 from time import time as clock
 
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
-from ghedesigner.design import DesignBiRectangleConstrained
+from ghedesigner.design import DesignNearSquare
 from ghedesigner.geometry import GeometricConstraints
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import output_design_details
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethod
+from ghedesigner.utilities import DesignMethod, length_of_side
 
 
-class TestFindBiPolygon(GHEBaseTest):
+class TestFindNearSquareMultiyearDesign(GHEBaseTest):
 
-    def test_find_bi_polygon(self):
-
-        # This file contains 3 examples utilizing the bi-uniform polygonal design algorithm for a single U, double U,
-        # and coaxial tube  The results from these examples are exported to the "DesignExampleOutput" folder.
+    def test_multiyear_loading(self):
+        # This file contains three examples utilizing the square-near-square design algorithm
+        # (utilizing a multi-year loading) for a single U, double U, and coaxial tube  The
+        # results from these examples are exported to the "DesignExampleOutput" folder.
 
         # Single U-tube Example
 
         # Output File Configuration
         project_name = "Atlanta Office Building: Design Example"
-        note = "Bi-Uniform Polygon Usage Example: Single U Tube"
+        note = "Square-Near-Square w/ Multi-year Loading Usage Example: Single U Tube"
         author = "Jane Doe"
-        iteration_name = "Example 6"
-        output_file_directory = Path(tempfile.mkdtemp())
+        iteration_name = "Example 2"
+        output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
 
         # Borehole dimensions
         h = 96.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
         r_b = 0.075  # Borehole radius (m)
-        # B = 5.0  # Borehole spacing (m)
+        b = 5.0  # Borehole spacing (m)
 
         # Single and Multiple U-tube Pipe Dimensions
         r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
@@ -84,10 +80,10 @@ class TestFindBiPolygon(GHEBaseTest):
 
         # Simulation parameters
         start_month = 1
-        n_years = 20
+        n_years = 4
         end_month = n_years * 12
-        max_eft_allowable = 35  # degrees Celsius (HP_EFT)
-        min_eft_allowable = 5  # degrees Celsius (HP_EFT)
+        max_eft_allowable = 35  # degrees Celsius (HP EFT)
+        min_eft_allowable = 5  # degrees Celsius (HP EFT)
         max_height = 135.0  # in meters
         min_height = 60  # in meters
         sim_params = SimulationParameters(
@@ -100,49 +96,25 @@ class TestFindBiPolygon(GHEBaseTest):
         )
 
         # Process loads from file
-        hourly_extraction_ground_loads = self.get_atlanta_loads()
+        # read in the csv file and convert the loads to a list of length 8760
+        csv_file = self.test_data_directory / 'Multiyear_Loading_Example.csv'
+        raw_lines = csv_file.read_text().split('\n')
+        hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
 
-        # Polygonal design constraints are the land and range of B-spacing
-        b_min = 5  # in m
-        b_max_x = 25  # in m
-        b_max_y = b_max_x  # in m
-
-        # Building Description
-        property_boundary_file = self.test_data_directory / "polygon_property_boundary.csv"
-        no_go_zone_file = self.test_data_directory / "polygon_no_go_zone1.csv"
-
-        prop_a = []  # in meters
-        ng_a = []  # in meters
-
-        with open(property_boundary_file, "r", newline="") as pF:
-            c_r = csv.reader(pF)
-            for line in c_r:
-                l_prop_a = []
-                for row in line:
-                    l_prop_a.append(float(row))
-                prop_a.append(l_prop_a)
-
-        with open(no_go_zone_file, "r", newline="") as ngF:
-            c_r = csv.reader(ngF)
-            ng_a.append([])
-            for line in c_r:
-                l_prop_a = []
-                for row in line:
-                    l_prop_a.append(float(row))
-                ng_a[-1].append(l_prop_a)
-
-        """ Geometric constraints for the `bi-rectangle_constrained` routine:
-          - B_min
-          - B_max_x
-          - B_max_y
+        """ Geometric constraints for the `near-square` routine.
+        Required geometric constraints for the uniform rectangle design:
+          - B
+          - length
         """
-        geometric_constraints = GeometricConstraints(
-            b_min=b_min, b_max_y=b_max_y, b_max_x=b_max_x
-        )
+        # B is already defined above
+        number_of_boreholes = 32
+        length = length_of_side(number_of_boreholes, b)
+        geometric_constraints = GeometricConstraints(b=b, length=length)
 
         # Single U-tube
         # -------------
-        design_single_u_tube = DesignBiRectangleConstrained(
+        # load_years optional parameter is used to determine if there are leap years in the given loads/where they fall
+        design_single_u_tube = DesignNearSquare(
             v_flow,
             borehole,
             single_u_tube,
@@ -155,15 +127,16 @@ class TestFindBiPolygon(GHEBaseTest):
             hourly_extraction_ground_loads,
             method=DesignMethod.Hybrid,
             flow=flow,
-            property_boundary=prop_a,
-            building_descriptions=ng_a,
+            load_years=[2010, 2011, 2012, 2013],
         )
 
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating g-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
+        bisection_search.ghe.size(
+            method=DesignMethod.Hybrid
+        )  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -189,13 +162,13 @@ class TestFindBiPolygon(GHEBaseTest):
             csv_f_2="BorefieldData_SU.csv",
             csv_f_3="Loadings_SU.csv",
             csv_f_4="GFunction_SU.csv",
-            load_method=DesignMethod.Hybrid,
+            load_method=DesignMethod.Hybrid
         )
 
         # *************************************************************************************************************
         # Double U-tube Example
 
-        note = "Bi-Uniform Polygon Usage Example: Double U Tube"
+        note = "Square-Near-Square w/ Multi-year Loading Usage Example: Double U Tube"
 
         # Double U-tube
         pos_double = Pipe.place_pipes(s, r_out, 2)
@@ -204,7 +177,7 @@ class TestFindBiPolygon(GHEBaseTest):
 
         # Double U-tube
         # -------------
-        design_double_u_tube = DesignBiRectangleConstrained(
+        design_double_u_tube = DesignNearSquare(
             v_flow,
             borehole,
             double_u_tube,
@@ -217,15 +190,16 @@ class TestFindBiPolygon(GHEBaseTest):
             hourly_extraction_ground_loads,
             method=DesignMethod.Hybrid,
             flow=flow,
-            property_boundary=prop_a,
-            building_descriptions=ng_a,
+            load_years=[2010, 2011, 2012, 2013],
         )
 
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
         bisection_search = design_double_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(
+            method=DesignMethod.Hybrid
+        )  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -257,7 +231,7 @@ class TestFindBiPolygon(GHEBaseTest):
         # *************************************************************************************************************
         # Coaxial Tube Example
 
-        note = "Bi-Uniform Polygon Usage Example: Coaxial Tube"
+        note = "Square-Near-Square w/ Multi-year Loading Usage Example:Coaxial Tube"
 
         # Coaxial tube
         r_in_in = 44.2 / 1000.0 / 2.0
@@ -275,11 +249,13 @@ class TestFindBiPolygon(GHEBaseTest):
         # Coaxial tube
         pos_coaxial = (0, 0)
         coaxial_tube = CoaxialPipe
-        pipe_coaxial = Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rho_cp_p)
+        pipe_coaxial = Pipe(
+            pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rho_cp_p
+        )
 
         # Coaxial Tube
         # -------------
-        design_coax_tube = DesignBiRectangleConstrained(
+        design_coax_tube = DesignNearSquare(
             v_flow,
             borehole,
             coaxial_tube,
@@ -292,15 +268,16 @@ class TestFindBiPolygon(GHEBaseTest):
             hourly_extraction_ground_loads,
             method=DesignMethod.Hybrid,
             flow=flow,
-            property_boundary=prop_a,
-            building_descriptions=ng_a,
+            load_years=[2010, 2011, 2012, 2013],
         )
 
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
         bisection_search = design_coax_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(
+            method=DesignMethod.Hybrid
+        )  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -326,5 +303,5 @@ class TestFindBiPolygon(GHEBaseTest):
             csv_f_2="BorefieldData_C.csv",
             csv_f_3="Loadings_C.csv",
             csv_f_4="GFunction_C.csv",
-            load_method=DesignMethod.Hybrid,
+            load_method=DesignMethod.Hybrid
         )

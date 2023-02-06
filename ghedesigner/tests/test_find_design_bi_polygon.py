@@ -1,44 +1,45 @@
-# Purpose: Design a constrained RowWise field using the common
-# design interface with a single U-tube borehole heat exchanger.
+# Purpose: Design a bi-uniform constrained polygonal field using the common
+# design interface with a single U-tube, multiple U-tube and coaxial tube
+# borehole heat exchanger.
 
-# This search is described in <placeholder>.
+# This search is described in section 4.4.5 from pages 146-148 in Cook (2021).
 
 import csv
-from math import pi
+import tempfile
+from pathlib import Path
 from time import time as clock
 
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import SingleUTube
-from ghedesigner.design import DesignRowWise
+from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
+from ghedesigner.design import DesignBiRectangleConstrained
 from ghedesigner.geometry import GeometricConstraints
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import output_design_details
-from ghedesigner.rowwise_generation import gen_shape
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethod
 
 
-class TestFindRowWise(GHEBaseTest):
-    def test_find_row_wise(self):
+class TestFindBiPolygonDesign(GHEBaseTest):
 
-        # This file contains two examples utilizing the RowWise design algorithm for a single U tube
-        # The 1st example doesn't treat perimeter boreholes different, and the second one maintains a perimeter target
-        # spacing to interior target-spacing ratio of .8.
-        # The results from these examples are exported to the "DesignExampleOutput" folder.
+    def test_find_bi_polygon_design(self):
 
-        # W/O Separate Perimeter Spacing Example
+        # This file contains 3 examples utilizing the bi-uniform polygonal design algorithm for a single U, double U,
+        # and coaxial tube  The results from these examples are exported to the "DesignExampleOutput" folder.
+
+        # Single U-tube Example
 
         # Output File Configuration
         project_name = "Atlanta Office Building: Design Example"
-        note = "RowWise Usage Example w/o Perimeter Spacing: Single U Tube"
-        author = "John Doe"
-        iteration_name = "Example 5"
-        output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
+        note = "Bi-Uniform Polygon Usage Example: Single U Tube"
+        author = "Jane Doe"
+        iteration_name = "Example 6"
+        output_file_directory = Path(tempfile.mkdtemp())
 
         # Borehole dimensions
         h = 96.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
         r_b = 0.075  # Borehole radius (m)
+        # B = 5.0  # Borehole spacing (m)
 
         # Single and Multiple U-tube Pipe Dimensions
         r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
@@ -85,9 +86,9 @@ class TestFindRowWise(GHEBaseTest):
         start_month = 1
         n_years = 20
         end_month = n_years * 12
-        max_eft_allowable = 35  # degrees Celsius (HP EFT)
-        min_eft_allowable = 5  # degrees Celsius (HP EFT)
-        max_height = 135  # 135.0  # in meters  # At 135, this causes a max height warning, at 240 it fails, at 245 pass
+        max_eft_allowable = 35  # degrees Celsius (HP_EFT)
+        min_eft_allowable = 5  # degrees Celsius (HP_EFT)
+        max_height = 135.0  # in meters
         min_height = 60  # in meters
         sim_params = SimulationParameters(
             start_month,
@@ -101,15 +102,10 @@ class TestFindRowWise(GHEBaseTest):
         # Process loads from file
         hourly_extraction_ground_loads = self.get_atlanta_loads()
 
-        # RowWise Design Constraints
-
-        p_spacing = 0.8  # Dimensionless
-        spacing_start = 10.0  # in meters
-        spacing_stop = 20.0  # in meters
-        spacing_step = 0.1  # in meters
-        rotate_step = 0.5  # in degrees
-        rotate_start = -90.0 * (pi / 180.0)  # in radians
-        rotate_stop = 0 * (pi / 180.0)  # in radians
+        # Polygonal design constraints are the land and range of B-spacing
+        b_min = 5  # in m
+        b_max_x = 25  # in m
+        b_max_y = b_max_x  # in m
 
         # Building Description
         property_boundary_file = self.test_data_directory / "polygon_property_boundary.csv"
@@ -121,48 +117,32 @@ class TestFindRowWise(GHEBaseTest):
         with open(property_boundary_file, "r", newline="") as pF:
             c_r = csv.reader(pF)
             for line in c_r:
-                l_list = []
+                l_prop_a = []
                 for row in line:
-                    l_list.append(float(row))
-                prop_a.append(l_list)
+                    l_prop_a.append(float(row))
+                prop_a.append(l_prop_a)
 
-        # for file in os.listdir(no_go_zone_file):
         with open(no_go_zone_file, "r", newline="") as ngF:
             c_r = csv.reader(ngF)
             ng_a.append([])
             for line in c_r:
-                l_list = []
+                l_prop_a = []
                 for row in line:
-                    l_list.append(float(row))
-                ng_a[-1].append(l_list)
+                    l_prop_a.append(float(row))
+                ng_a[-1].append(l_prop_a)
 
-        build_vert, no_go_vert = gen_shape(prop_a, ng_zones=ng_a)
-
-        """ Geometric constraints for the `row-wise` routine:
-          - list of vertices for the no-go zones (no_go_vert)
-          - perimeter target-spacing to interior target-spacing ratio
-          - the lower bound target-spacing (spacing_start)
-          - the upper bound target-spacing (spacing_stop)
-          - the range around the selected target-spacing over-which to to do an exhaustive search
-          - the lower bound rotation (rotateStart)
-          - the upper bound rotation (rotateStop)
-          - list of vertices for the property boundary (buildVert)
+        """ Geometric constraints for the `bi-rectangle_constrained` routine:
+          - B_min
+          - B_max_x
+          - B_max_y
         """
         geometric_constraints = GeometricConstraints(
-            ng_zones=no_go_vert,
-            p_spacing=p_spacing,
-            spacing_start=spacing_start,
-            spacing_stop=spacing_stop,
-            spacing_step=spacing_step,
-            rotate_start=rotate_start,
-            rotate_stop=rotate_stop,
-            rotate_step=rotate_step,
-            prop_bound=build_vert,
+            b_min=b_min, b_max_y=b_max_y, b_max_x=b_max_x
         )
 
         # Single U-tube
         # -------------
-        design_single_u_tube = DesignRowWise(
+        design_single_u_tube = DesignBiRectangleConstrained(
             v_flow,
             borehole,
             single_u_tube,
@@ -175,67 +155,14 @@ class TestFindRowWise(GHEBaseTest):
             hourly_extraction_ground_loads,
             method=DesignMethod.Hybrid,
             flow=flow,
-        )
-
-        # Find the near-square design for a single U-tube and size it.
-        tic = clock()  # Clock Start Time
-        bisection_search = design_single_u_tube.find_design(disp=True, use_perimeter=False)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
-        toc = clock()  # Clock Stop Time
-
-        # Print Summary of Findings
-        subtitle = "* Single U-tube"  # Subtitle for the printed summary
-        self.log(subtitle + "\n" + len(subtitle) * "-")
-        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
-        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
-        nbh = len(bisection_search.ghe.gFunction.bore_locations)
-        self.log(f"Number of boreholes: {nbh}")
-        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
-
-        # Generating Output File
-        output_design_details(
-            bisection_search,
-            toc - tic,
-            project_name,
-            note,
-            author,
-            iteration_name,
-            output_directory=output_file_directory,
-            summary_file="SummaryOfResults_SU_WOP.txt",
-            csv_f_1="TimeDependentValues_SU_WOP.csv",
-            csv_f_2="BorefieldData_SU_WOP.csv",
-            csv_f_3="Loadings_SU_WOP.csv",
-            csv_f_4="GFunction_SU_WOP.csv",
-            load_method=DesignMethod.Hybrid,
-        )
-
-        # *************************************************************************************************************
-        # Perimeter Spacing Example
-
-        note = "RowWise Usage Example w/o Perimeter Spacing: Single U Tube"
-
-        # Single U-tube
-        # -------------
-        design_single_u_tube = DesignRowWise(
-            v_flow,
-            borehole,
-            single_u_tube,
-            fluid,
-            pipe_single,
-            grout,
-            soil,
-            sim_params,
-            geometric_constraints,
-            hourly_extraction_ground_loads,
-            method=DesignMethod.Hybrid,
-            flow=flow,
+            property_boundary=prop_a,
+            building_descriptions=ng_a,
         )
 
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
+        bisection_search.ghe.compute_g_functions()  # Calculating g-functions for Chosen Design
         bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
@@ -257,10 +184,147 @@ class TestFindRowWise(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_SU_WP.txt",
-            csv_f_1="TimeDependentValues_SU_WP.csv",
-            csv_f_2="BorefieldData_SU_WP.csv",
-            csv_f_3="Loadings_SU_WP.csv",
-            csv_f_4="GFunction_SU_WP.csv",
+            summary_file="SummaryOfResults_SU.txt",
+            csv_f_1="TimeDependentValues_SU.csv",
+            csv_f_2="BorefieldData_SU.csv",
+            csv_f_3="Loadings_SU.csv",
+            csv_f_4="GFunction_SU.csv",
+            load_method=DesignMethod.Hybrid,
+        )
+
+        # *************************************************************************************************************
+        # Double U-tube Example
+
+        note = "Bi-Uniform Polygon Usage Example: Double U Tube"
+
+        # Double U-tube
+        pos_double = Pipe.place_pipes(s, r_out, 2)
+        double_u_tube = MultipleUTube
+        pipe_double = Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+
+        # Double U-tube
+        # -------------
+        design_double_u_tube = DesignBiRectangleConstrained(
+            v_flow,
+            borehole,
+            double_u_tube,
+            fluid,
+            pipe_double,
+            grout,
+            soil,
+            sim_params,
+            geometric_constraints,
+            hourly_extraction_ground_loads,
+            method=DesignMethod.Hybrid,
+            flow=flow,
+            property_boundary=prop_a,
+            building_descriptions=ng_a,
+        )
+
+        # Find the near-square design for a single U-tube and size it.
+        tic = clock()  # Clock Start Time
+        bisection_search = design_double_u_tube.find_design(disp=True)  # Finding GHE Design
+        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
+        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
+        toc = clock()  # Clock Stop Time
+
+        # Print Summary of Findings
+        subtitle = "* Double U-tube"  # Subtitle for the printed summary
+        self.log(subtitle + "\n" + len(subtitle) * "-")
+        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
+        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
+        nbh = len(bisection_search.ghe.gFunction.bore_locations)
+        self.log(f"Number of boreholes: {nbh}")
+        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
+
+        # Generating Output File
+        output_design_details(
+            bisection_search,
+            toc - tic,
+            project_name,
+            note,
+            author,
+            iteration_name,
+            output_directory=output_file_directory,
+            summary_file="SummaryOfResults_DU.txt",
+            csv_f_1="TimeDependentValues_DU.csv",
+            csv_f_2="BorefieldData_DU.csv",
+            csv_f_3="Loadings_DU.csv",
+            csv_f_4="GFunction_DU.csv",
+            load_method=DesignMethod.Hybrid,
+        )
+
+        # *************************************************************************************************************
+        # Coaxial Tube Example
+
+        note = "Bi-Uniform Polygon Usage Example: Coaxial Tube"
+
+        # Coaxial tube
+        r_in_in = 44.2 / 1000.0 / 2.0
+        r_in_out = 50.0 / 1000.0 / 2.0
+        # Outer pipe radii
+        r_out_in = 97.4 / 1000.0 / 2.0
+        r_out_out = 110.0 / 1000.0 / 2.0
+        # Pipe radii
+        # Note: This convention is different from pygfunction
+        r_inner = [r_in_in, r_in_out]  # The radii of the inner pipe from in to out
+        r_outer = [r_out_in, r_out_out]  # The radii of the outer pipe from in to out
+
+        k_p_coax = [0.4, 0.4]  # Pipes thermal conductivity (W/m.K)
+
+        # Coaxial tube
+        pos_coaxial = (0, 0)
+        coaxial_tube = CoaxialPipe
+        pipe_coaxial = Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rho_cp_p)
+
+        # Coaxial Tube
+        # -------------
+        design_coax_tube = DesignBiRectangleConstrained(
+            v_flow,
+            borehole,
+            coaxial_tube,
+            fluid,
+            pipe_coaxial,
+            grout,
+            soil,
+            sim_params,
+            geometric_constraints,
+            hourly_extraction_ground_loads,
+            method=DesignMethod.Hybrid,
+            flow=flow,
+            property_boundary=prop_a,
+            building_descriptions=ng_a,
+        )
+
+        # Find the near-square design for a single U-tube and size it.
+        tic = clock()  # Clock Start Time
+        bisection_search = design_coax_tube.find_design(disp=True)  # Finding GHE Design
+        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
+        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
+        toc = clock()  # Clock Stop Time
+
+        # Print Summary of Findings
+        subtitle = "* Coaxial Tube"  # Subtitle for the printed summary
+        self.log(subtitle + "\n" + len(subtitle) * "-")
+        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
+        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
+        nbh = len(bisection_search.ghe.gFunction.bore_locations)
+        self.log(f"Number of boreholes: {nbh}")
+        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
+
+        # Generating Output File
+        output_design_details(
+            bisection_search,
+            toc - tic,
+            project_name,
+            note,
+            author,
+            iteration_name,
+            output_directory=output_file_directory,
+            summary_file="SummaryOfResults_C.txt",
+            csv_f_1="TimeDependentValues_C.csv",
+            csv_f_2="BorefieldData_C.csv",
+            csv_f_3="Loadings_C.csv",
+            csv_f_4="GFunction_C.csv",
             load_method=DesignMethod.Hybrid,
         )

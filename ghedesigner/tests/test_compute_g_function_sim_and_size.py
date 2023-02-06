@@ -58,7 +58,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         glhe_json_data = self.test_data_directory / 'GLHEPRO_gFunctions_12x13.json'
         data = loads(glhe_json_data.read_text())
 
-        # Configure the database data for input to the goethermal gFunction object
+        # Configure the database data for input to the geothermal gFunction object
         geothermal_g_input = GFunction.configure_database_file_for_usage(data)
 
         # Initialize the gFunction object
