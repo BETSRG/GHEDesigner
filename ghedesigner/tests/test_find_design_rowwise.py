@@ -13,13 +13,13 @@ from ghedesigner.design import DesignRowWise
 from ghedesigner.geometry import GeometricConstraints
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import write_design_details
-from ghedesigner.rowwise_generation import gen_shape
+from ghedesigner.rowwise import gen_shape
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethod
 
 
-class TestFindRowWise(GHEBaseTest):
-    def test_find_row_wise(self):
+class TestFindRowWiseDesign(GHEBaseTest):
+    def test_find_row_wise_design(self):
 
         # This file contains two examples utilizing the RowWise design algorithm for a single U tube
         # The 1st example doesn't treat perimeter boreholes different, and the second one maintains a perimeter target

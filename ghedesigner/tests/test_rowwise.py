@@ -3,7 +3,7 @@ from math import pi
 import numpy as np
 import pandas as pd
 
-from ghedesigner.rowwise_generation import (
+from ghedesigner.rowwise import (
     field_optimization_fr,
     field_optimization_wp_space_fr,
     gen_borehole_config,

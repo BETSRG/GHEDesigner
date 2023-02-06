@@ -9,8 +9,8 @@ from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethod
 
 
-class TestDesignFromORNLJsonInput(GHEBaseTest):
-    def test_design_from_ornl_json_input(self):
+class TestFindDesignFromORNLJsonInput(GHEBaseTest):
+    def test_find_design_from_ornl_json_input(self):
         # Provide path to ORNL parameters file
         file_path = self.test_data_directory / 'ornl_params.json'
         ornl_param_file_data = loads(file_path.read_text())
