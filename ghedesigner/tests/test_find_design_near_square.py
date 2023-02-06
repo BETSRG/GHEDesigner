@@ -9,7 +9,7 @@ from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import MultipleUTube, CoaxialPipe
 from ghedesigner.design import DesignNearSquare
 from ghedesigner.geometry import GeometricConstraints
-from ghedesigner.manager import GHEManager
+from ghedesigner.manager import GHEManager, DesignMethodGeometry
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import output_design_details
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
@@ -32,7 +32,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         manager.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         manager.set_geometry_constraints(b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "system" flow?
-        manager.set_design(flow_rate=6.4, flow_type="system")
+        manager.set_design(flow_rate=6.4, flow_type="system", design_method_geo=DesignMethodGeometry.NearSquare)
         tic = clock()  # Clock Start Time
         manager.find_design()
         toc = clock()  # Clock Stop Time
