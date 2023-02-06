@@ -4,7 +4,7 @@ from ghedesigner.design import DesignNearSquare
 from ghedesigner.geometry import GeometricConstraints
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethod, create_input_file, read_input_file
+from ghedesigner.utilities import DesignMethodTimeStep, create_input_file, read_input_file
 
 
 class TestCreateNearSquareInputFile(GHEBaseTest):
@@ -128,7 +128,7 @@ class TestCreateNearSquareInputFile(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            DesignMethod.Hybrid,
+            DesignMethodTimeStep.Hybrid,
         )
 
         # Output the design interface object to a json file, so it can be reused
@@ -148,7 +148,7 @@ class TestCreateNearSquareInputFile(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            DesignMethod.Hybrid,
+            DesignMethodTimeStep.Hybrid,
         )
 
         input_file_path = self.test_outputs_directory / 'ghedt_input_near_square_double_u_tube.obj'
@@ -167,7 +167,7 @@ class TestCreateNearSquareInputFile(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            DesignMethod.Hybrid,
+            DesignMethodTimeStep.Hybrid,
         )
 
         input_file_path = self.test_outputs_directory / 'ghedt_input_near_square_coaxial_tube.obj'
@@ -185,7 +185,7 @@ class TestCreateNearSquareInputFile(GHEBaseTest):
         # Perform sizing in between the min and max bounds.
         ghe = bisection_search.ghe
         ghe.compute_g_functions()
-        ghe.size(method=DesignMethod.Hybrid)
+        ghe.size(method=DesignMethodTimeStep.Hybrid)
         # Export the g-function to a json file
         output_file = self.test_outputs_directory / "ghedt_output_from_input.json"
         bisection_search.oak_ridge_export(output_file)

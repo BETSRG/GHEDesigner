@@ -15,7 +15,7 @@ from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import output_design_details
 from ghedesigner.rowwise import gen_shape
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethod
+from ghedesigner.utilities import DesignMethodTimeStep
 
 
 class TestFindRowWiseDesign(GHEBaseTest):
@@ -173,7 +173,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=DesignMethod.Hybrid,
+            method=DesignMethodTimeStep.Hybrid,
             flow=flow,
         )
 
@@ -181,7 +181,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_single_u_tube.find_design(disp=True, use_perimeter=False)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -207,7 +207,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             csv_f_2="BorefieldData_SU_WOP.csv",
             csv_f_3="Loadings_SU_WOP.csv",
             csv_f_4="GFunction_SU_WOP.csv",
-            load_method=DesignMethod.Hybrid,
+            load_method=DesignMethodTimeStep.Hybrid,
         )
 
         # *************************************************************************************************************
@@ -228,7 +228,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=DesignMethod.Hybrid,
+            method=DesignMethodTimeStep.Hybrid,
             flow=flow,
         )
 
@@ -236,7 +236,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -262,5 +262,5 @@ class TestFindRowWiseDesign(GHEBaseTest):
             csv_f_2="BorefieldData_SU_WP.csv",
             csv_f_3="Loadings_SU_WP.csv",
             csv_f_4="GFunction_SU_WP.csv",
-            load_method=DesignMethod.Hybrid,
+            load_method=DesignMethodTimeStep.Hybrid,
         )

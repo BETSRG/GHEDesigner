@@ -6,7 +6,7 @@ from ghedesigner.gfunction import GFunction
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethod
+from ghedesigner.utilities import DesignMethodTimeStep
 
 
 class TestComputedGFunctionSimAndSize(GHEBaseTest):
@@ -111,7 +111,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
             hourly_extraction_ground_loads,
         )
 
-        ghe.size(DesignMethod.Hybrid)
+        ghe.size(DesignMethodTimeStep.Hybrid)
 
         calculation_details = "GLHEPRO_gFunctions_12x13.json".split(".")[0]
         self.log(calculation_details)

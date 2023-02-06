@@ -6,7 +6,7 @@ from ghedesigner.design import DesignNearSquare
 from ghedesigner.geometry import GeometricConstraints
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethod
+from ghedesigner.utilities import DesignMethodTimeStep
 
 
 class TestFindDesignFromORNLJsonInput(GHEBaseTest):
@@ -123,13 +123,13 @@ class TestFindDesignFromORNLJsonInput(GHEBaseTest):
             geometric_constraints,
             hourly_extraction_ground_loads,
             flow=flow,
-            method=DesignMethod.Hybrid,
+            method=DesignMethodTimeStep.Hybrid,
         )
 
         # Find the near-square design for a single U-tube and size it.
         bisection_search = design_single_u_tube.find_design()
         bisection_search.ghe.compute_g_functions()
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)
+        bisection_search.ghe.size(method=DesignMethodTimeStep.Hybrid)
 
         # Export the g-function to a json file
         output_file_path = self.test_outputs_directory / 'ghedt_output_design_from_ornl_json_input.json'

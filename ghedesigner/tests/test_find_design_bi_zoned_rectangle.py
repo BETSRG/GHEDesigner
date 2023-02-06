@@ -13,7 +13,7 @@ from ghedesigner.geometry import GeometricConstraints
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import output_design_details
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethod
+from ghedesigner.utilities import DesignMethodTimeStep
 
 
 class TestFindBiZonedRectangleDesign(GHEBaseTest):
@@ -128,7 +128,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=DesignMethod.Hybrid,
+            method=DesignMethodTimeStep.Hybrid,
             flow=flow,
         )
 
@@ -137,7 +137,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
-            method=DesignMethod.Hybrid
+            method=DesignMethodTimeStep.Hybrid
         )  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
@@ -163,7 +163,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
             csv_f_2="BorefieldData_SU.csv",
             csv_f_3="Loadings_SU.csv",
             csv_f_4="GFunction_SU.csv",
-            load_method=DesignMethod.Hybrid,
+            load_method=DesignMethodTimeStep.Hybrid,
         )
         """
         # Double U-tube

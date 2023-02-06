@@ -5,7 +5,7 @@ from math import floor
 from pathlib import Path
 
 from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase
-from ghedesigner.utilities import DesignMethod
+from ghedesigner.utilities import DesignMethodTimeStep
 
 
 def create_title(allocated_width, title, filler_symbol=" "):
@@ -153,7 +153,7 @@ def output_design_details(
         notes,
         author,
         model_name,
-        load_method: DesignMethod,
+        load_method: DesignMethodTimeStep,
         output_directory: Path,
         allocated_width=100,
         rounding_amount=10,
@@ -642,7 +642,7 @@ def output_design_details(
         string_format,
         int_format,
     )
-    load_method_string = "hybrid" if load_method == DesignMethod.Hybrid else "hourly"  # TODO: Use a method in the enum
+    load_method_string = "hybrid" if load_method == DesignMethodTimeStep.Hybrid else "hourly"  # TODO: Use a method in the enum
     o_s += create_d_row(
         allocated_width,
         "Simulation Loading Type: ",

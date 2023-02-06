@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from json import dumps, loads
 from pathlib import Path
 from sys import exit, stderr
@@ -7,11 +8,16 @@ import click
 
 from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
-from ghedesigner.design import DesignNearSquare, DesignBase, AnyBisectionType
+from ghedesigner.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, SingleUTube
+from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle
 from ghedesigner.geometry import GeometricConstraints
-from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
-from ghedesigner.utilities import DesignMethod
+from ghedesigner.media import GHEFluid, Grout, Pipe, SimulationParameters, Soil
+from ghedesigner.utilities import DesignMethodTimeStep
+
+
+class DesignMethodGeometry(Enum):
+    NearSquare = auto()
+    Rectangular = auto()
 
 
 class GHEManager:
@@ -114,27 +120,49 @@ class GHEManager:
         # Probably just need to add a few methods for set_geometry_*
         self._geometric_constraints = GeometricConstraints(**kwargs)
 
-    def set_design(self, flow_rate: float, flow_type: str):
+    def set_geometry_constraints_rectangular(self, length: float, width: float, b_min: float, b_max: float):
+        self._geometric_constraints = GeometricConstraints(length=length, width=width, b_min=b_min, b_max_x=b_max)
+
+    def set_design(self, flow_rate: float, flow_type: str, design_method_geo: DesignMethodGeometry):
         """
         system_flow_rate L/s total system flow rate
         flow_type string, for now either "system" or "borehole"
         """
-        # TODO: Allow switching between Design* types, hopefully by enum
+
         # TODO: Allow setting flow and method dynamically
-        self._design = DesignNearSquare(
-            flow_rate,
-            self._borehole,
-            self._u_tube_type,
-            self._fluid,
-            self._pipe,
-            self._grout,
-            self._soil,
-            self._simulation_parameters,
-            self._geometric_constraints,
-            self._ground_loads,
-            flow=flow_type,
-            method=DesignMethod.Hybrid,
-        )
+
+        if design_method_geo == DesignMethodGeometry.NearSquare:
+            self._design = DesignNearSquare(
+                flow_rate,
+                self._borehole,
+                self._u_tube_type,
+                self._fluid,
+                self._pipe,
+                self._grout,
+                self._soil,
+                self._simulation_parameters,
+                self._geometric_constraints,
+                self._ground_loads,
+                flow=flow_type,
+                method=DesignMethodTimeStep.Hybrid,
+            )
+        elif design_method_geo == DesignMethodGeometry.Rectangular:
+            self._design = DesignRectangle(
+                flow_rate,
+                self._borehole,
+                self._u_tube_type,
+                self._fluid,
+                self._pipe,
+                self._grout,
+                self._soil,
+                self._simulation_parameters,
+                self._geometric_constraints,
+                self._ground_loads,
+                flow=flow_type,
+                method=DesignMethodTimeStep.Hybrid,
+            )
+        else:
+            raise NotImplementedError("This design method has not been implemented")
 
     def find_design(self):
         if any([x is None for x in [
@@ -152,7 +180,7 @@ class GHEManager:
         self._search = self._design.find_design()
         self._search.ghe.compute_g_functions()
         # TODO: Don't hard-wire Hybrid here
-        self._search.ghe.size(method=DesignMethod.Hybrid)
+        self._search.ghe.size(method=DesignMethodTimeStep.Hybrid)
         self.u_tube_height = self._search.ghe.bhe.b.H
 
     def get_g_function(self):

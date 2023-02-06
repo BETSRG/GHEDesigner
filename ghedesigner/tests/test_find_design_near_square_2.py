@@ -1,4 +1,4 @@
-from ghedesigner.manager import GHEManager
+from ghedesigner.manager import GHEManager, DesignMethodGeometry
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
@@ -42,11 +42,11 @@ class TestNearSquare(GHEBaseTest):
         manager.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         manager.set_geometry_constraints(b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "system" flow?
-        manager.set_design(flow_rate=31.2, flow_type="system")
+        manager.set_design(flow_rate=31.2, flow_type="system", design_method_geo=DesignMethodGeometry.NearSquare)
         manager.find_design()
         h_single_u_tube_a = manager.u_tube_height
         # perform a design search assuming "borehole" flow?
-        manager.set_design(flow_rate=0.2, flow_type="borehole")
+        manager.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=DesignMethodGeometry.NearSquare)
         manager.find_design()
         h_single_u_tube_b = manager.u_tube_height
 
