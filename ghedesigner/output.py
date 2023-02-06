@@ -5,6 +5,7 @@ from math import floor
 from pathlib import Path
 
 from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase
+from ghedesigner.design import AnyBisectionType
 from ghedesigner.utilities import DesignMethod
 
 
@@ -147,12 +148,12 @@ def ghe_time_convert(hours):
 
 
 def output_design_details(
-        design,
-        time,
-        project_name,
-        notes,
-        author,
-        model_name,
+        design: AnyBisectionType,
+        time: float,
+        project_name: str,
+        notes: str,
+        author: str,
+        model_name: str,
         load_method: DesignMethod,
         output_directory: Path,
         allocated_width=100,
@@ -163,10 +164,7 @@ def output_design_details(
         csv_f_3="Loadings.csv",
         csv_f_4="Gfunction.csv"
 ):
-    try:
-        ghe = design.ghe
-    except:
-        ghe = design
+    ghe = design.ghe
     bhe = ghe.bhe
     g_function = ghe.gFunction
     b_h = bhe.b
