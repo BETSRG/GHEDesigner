@@ -163,7 +163,8 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating g-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(
+            method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -225,7 +226,8 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_double_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(
+            method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -300,7 +302,8 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_coax_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(
+            method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings

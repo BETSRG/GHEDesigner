@@ -4,9 +4,9 @@ from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 class TestFindRectangleDesign(GHEBaseTest):
     def test_single_u_tube(self):
-
         manager = GHEManager()
-        manager.set_single_u_tube_pipe(inner_radius=(21.6 / 1000.0 / 2.0), outer_radius=(26.67 / 1000.0 / 2.0), shank_spacing=(32.3 / 1000.0),
+        manager.set_single_u_tube_pipe(inner_radius=(21.6 / 1000.0 / 2.0), outer_radius=(26.67 / 1000.0 / 2.0),
+                                       shank_spacing=(32.3 / 1000.0),
                                        roughness=1.0e-6, conductivity=0.4, rho_cp=(1542.0 * 1000.0))
 
         manager.set_soil(conductivity=2.0, rho_cp=(2343.493 * 1000.0), undisturbed_temp=18.3)
@@ -20,9 +20,9 @@ class TestFindRectangleDesign(GHEBaseTest):
         manager.find_design()
 
     def test_double_u_tube(self):
-
         manager = GHEManager()
-        manager.set_double_u_tube_pipe(inner_radius=(21.6 / 1000.0 / 2.0), outer_radius=(26.67 / 1000.0 / 2.0), shank_spacing=(32.3 / 1000.0),
+        manager.set_double_u_tube_pipe(inner_radius=(21.6 / 1000.0 / 2.0), outer_radius=(26.67 / 1000.0 / 2.0),
+                                       shank_spacing=(32.3 / 1000.0),
                                        roughness=1.0e-6, conductivity=0.4, rho_cp=(1542.0 * 1000.0))
 
         manager.set_soil(conductivity=2.0, rho_cp=(2343.493 * 1000.0), undisturbed_temp=18.3)
@@ -36,11 +36,11 @@ class TestFindRectangleDesign(GHEBaseTest):
         manager.find_design()
 
     def test_coaxial_pipe(self):
-
         manager = GHEManager()
         manager.set_coaxial_pipe(inner_pipe_r_in=(44.2 / 1000.0 / 2.0), inner_pipe_r_out=(50.0 / 1000.0 / 2.0),
                                  outer_pipe_r_in=(97.4 / 1000.0 / 2.0), outer_pipe_r_out=(110.0 / 1000.0 / 2.0),
-                                 roughness=1.0e-6, conductivity_inner=0.4, conductivity_outer=0.4, rho_cp=(1542.0 * 1000.0))
+                                 roughness=1.0e-6, conductivity_inner=0.4, conductivity_outer=0.4,
+                                 rho_cp=(1542.0 * 1000.0))
 
         manager.set_soil(conductivity=2.0, rho_cp=(2343.493 * 1000.0), undisturbed_temp=18.3)
         manager.set_grout(conductivity=1.0, rho_cp=(3901.0 * 1000.0))
