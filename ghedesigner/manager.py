@@ -87,13 +87,24 @@ class GHEManager:
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 1)
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
-    def set_double_u_tube_pipe(self, inner_radius: float, outer_radius: float, shank_spacing: float,
-                               roughness: float, conductivity: float, rho_cp: float):
+    def set_double_u_tube_pipe(self, inner_radius: float, outer_radius: float, roughness: float, shank_spacing: float,
+                               conductivity: float, rho_cp: float):
 
         # TODO: Convert scalar properties if double or coax
         self._u_tube_type = MultipleUTube  # for now just store the type on the class here
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 2)
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
+
+    def set_coaxial_pipe(self, inner_pipe_r_in: float, inner_pipe_r_out: float, outer_pipe_r_in: float, outer_pipe_r_out: float,
+                         roughness: float, conductivity_inner: float, conductivity_outer: float, rho_cp: float):
+
+        # TODO: Convert scalar properties if double or coax
+        self._u_tube_type = CoaxialPipe  # for now just store the type on the class here
+        # Note: This convention is different from pygfunction
+        r_inner = [inner_pipe_r_in, inner_pipe_r_out]  # The radii of the inner pipe from in to out
+        r_outer = [outer_pipe_r_in, outer_pipe_r_out]  # The radii of the outer pipe from in to out
+        k_p = [conductivity_inner, conductivity_outer]
+        self._pipe = Pipe((0, 0), r_inner, r_outer, 0, roughness, k_p, rho_cp)
 
     def set_borehole(self, length: float, buried_depth: float, radius: float):
         """
