@@ -164,3 +164,6 @@ cython_debug/
 #Example Output Files
 ghedesigner/tests/test_outputs
 ghedesigner/tests/test_logs
+DesignExampleOutput/
+tmp/
+examples/
