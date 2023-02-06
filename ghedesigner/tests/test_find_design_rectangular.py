@@ -18,6 +18,8 @@ class TestFindRectangleDesign(GHEBaseTest):
         manager.set_geometry_constraints_rectangular(length=85.0, width=36.5, b_min=3.0, b_max=10.0)
         manager.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=DesignMethodGeometry.Rectangular)
         manager.find_design()
+        self.assertAlmostEqual(123.26, manager.u_tube_height, delta=0.01)
+        self.assertEqual(180, len(manager._search.selected_coordinates))
 
     def test_double_u_tube(self):
         manager = GHEManager()
@@ -34,6 +36,8 @@ class TestFindRectangleDesign(GHEBaseTest):
         manager.set_geometry_constraints_rectangular(length=85.0, width=36.5, b_min=3.0, b_max=10.0)
         manager.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=DesignMethodGeometry.Rectangular)
         manager.find_design()
+        self.assertAlmostEqual(127.66, manager.u_tube_height, delta=0.01)
+        self.assertEqual(144, len(manager._search.selected_coordinates))
 
     def test_coaxial_pipe(self):
         manager = GHEManager()
@@ -51,3 +55,5 @@ class TestFindRectangleDesign(GHEBaseTest):
         manager.set_geometry_constraints_rectangular(length=85.0, width=36.5, b_min=3.0, b_max=10.0)
         manager.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=DesignMethodGeometry.Rectangular)
         manager.find_design()
+        self.assertAlmostEqual(132.58, manager.u_tube_height, delta=0.01)
+        self.assertEqual(144, len(manager._search.selected_coordinates))
