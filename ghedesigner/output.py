@@ -1,6 +1,7 @@
 import csv
 import os
 from datetime import datetime
+from json import dumps
 from math import floor
 from pathlib import Path
 
@@ -147,22 +148,18 @@ def ghe_time_convert(hours):
     return month_in_year + 1, day_in_month, hour_in_day
 
 
-def output_design_details(
-        design,
-        time,
-        project_name,
-        notes,
-        author,
-        model_name,
+def write_output_files(
+        design: AnyBisectionType,
+        time: float,
+        project_name: str,
+        notes: str,
+        author: str,
+        model_name: str,
         load_method: DesignMethod,
         output_directory: Path,
         allocated_width=100,
         rounding_amount=10,
-        summary_file="SimulationSummary.txt",
-        csv_f_1="TimeDependentValues.csv",
-        csv_f_2="BoreFieldData.csv",
-        csv_f_3="Loadings.csv",
-        csv_f_4="Gfunction.csv"
+        file_suffix: str = "",
 ):
     try:
         ghe = design.ghe
@@ -756,8 +753,8 @@ def output_design_details(
     )
 
     output_directory.mkdir(exist_ok=True)
-    with open(str(output_directory / summary_file), "w", newline="") as txtF:
-        txtF.write(o_s)
+
+    (output_directory / f"SimulationSummary{file_suffix}.txt").write_text(o_s)
 
     csv1_array = []
 
@@ -813,7 +810,8 @@ def output_design_details(
         csv1_row.append(wall_temperature)
         csv1_row.append(hp_eft_val)
         csv1_array.append(csv1_row)
-    with open(os.path.join(output_directory, csv_f_1), "w", newline="") as csv1OF:
+
+    with open(os.path.join(output_directory, f"TimeDependentValues{file_suffix}.csv"), "w", newline="") as csv1OF:
         c_w = csv.writer(csv1OF)
         c_w.writerow(
             [
@@ -833,7 +831,7 @@ def output_design_details(
     for bL in g_function.bore_locations:
         csv2_array.append([bL[0], bL[1]])
 
-    with open(os.path.join(output_directory, csv_f_2), "w", newline="") as csv2OF:
+    with open(os.path.join(output_directory, f"BoreFieldData{file_suffix}.csv"), "w", newline="") as csv2OF:
         c_w = csv.writer(csv2OF)
         c_w.writerows(csv2_array)
 
@@ -846,7 +844,7 @@ def output_design_details(
         month, day_in_month, hour_in_day = ghe_time_convert(hour)
         csv3_array.append([month, day_in_month, hour_in_day, hour, hour_load])
 
-    with open(os.path.join(output_directory, csv_f_3), "w", newline="") as csv3OF:
+    with open(os.path.join(output_directory, f"Loadings{file_suffix}.csv"), "w", newline="") as csv3OF:
         c_w = csv.writer(csv3OF)
         c_w.writerows(csv3_array)
 
@@ -867,15 +865,28 @@ def output_design_details(
         gf_row.append(log_val)
         gf_row.append(g_val)
         csv4_array.append(gf_row)
-
-    with open(os.path.join(output_directory, csv_f_4), "w", newline="") as csv4OF:
+    with open(os.path.join(output_directory, f"Gfunction{file_suffix}.csv"), "w", newline="") as csv4OF:
         c_w = csv.writer(csv4OF)
         c_w.writerows(csv4_array)
+
+    # also write the JSON summary file
+    output_dict = get_design_summary_object(
+        design,
+        time,
+        project_name,
+        notes,
+        author,
+        model_name,
+        load_method
+    )
+    output_directory.mkdir(exist_ok=True)
+    with open(str(output_directory / f"SimulationSummary{file_suffix}.json"), "w", newline="") as txtF:
+        txtF.write(dumps(output_dict, indent=2))
 
     return o_s
 
 
-def design_summary(
+def get_design_summary_object(
         design: AnyBisectionType,
         time: float,
         project_name: str,

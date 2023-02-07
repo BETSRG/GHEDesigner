@@ -10,7 +10,7 @@ from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, Coa
 from ghedesigner.design import DesignNearSquare
 from ghedesigner.geometry import GeometricConstraints
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
-from ghedesigner.output import output_design_details
+from ghedesigner.output import write_output_files
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethod, length_of_side
 
@@ -149,7 +149,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
-        output_design_details(
+        write_output_files(
             bisection_search,
             toc - tic,
             project_name,
@@ -157,11 +157,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_SU.txt",
-            csv_f_1="TimeDependentValues_SU.csv",
-            csv_f_2="BorefieldData_SU.csv",
-            csv_f_3="Loadings_SU.csv",
-            csv_f_4="GFunction_SU.csv",
+            file_suffix="_SU",
             load_method=DesignMethod.Hybrid
         )
 
@@ -212,7 +208,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
-        output_design_details(
+        write_output_files(
             bisection_search,
             toc - tic,
             project_name,
@@ -220,11 +216,8 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_DU.txt",  # TODO: Use unique output file names for each test
-            csv_f_1="TimeDependentValues_DU.csv",
-            csv_f_2="BorefieldData_DU.csv",
-            csv_f_3="Loadings_DU.csv",
-            csv_f_4="GFunction_DU.csv",
+            # TODO: Use unique output file names for each test
+            file_suffix="_DU",
             load_method=DesignMethod.Hybrid,
         )
 
@@ -290,7 +283,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
-        output_design_details(
+        write_output_files(
             bisection_search,
             toc - tic,
             project_name,
@@ -298,10 +291,6 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_C.txt",
-            csv_f_1="TimeDependentValues_C.csv",
-            csv_f_2="BorefieldData_C.csv",
-            csv_f_3="Loadings_C.csv",
-            csv_f_4="GFunction_C.csv",
+            file_suffix="_C",
             load_method=DesignMethod.Hybrid
         )
