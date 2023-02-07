@@ -22,11 +22,11 @@ class TestFindNearSquareDesign(GHEBaseTest):
     def test_find_single_u_tube_design(self):
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_radius=(21.6 / 1000.0 / 2.0), outer_radius=(26.67 / 1000.0 / 2.0),
-            shank_spacing=(32.3 / 1000.0), roughness=1.0e-6, conductivity=0.4, rho_cp=(1542.0 * 1000.0)
+            inner_radius=0.0108, outer_radius=0.013335,
+            shank_spacing=0.0323, roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0
         )
-        ghe.set_soil(conductivity=2.0, rho_cp=(2343.493 * 1000.0), undisturbed_temp=18.3)
-        ghe.set_grout(conductivity=1.0, rho_cp=(3901.0 * 1000.0))
+        ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
+        ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
         ghe.set_borehole(length=96.0, buried_depth=2.0, radius=0.075)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
@@ -64,9 +64,9 @@ class TestFindNearSquareDesign(GHEBaseTest):
         b = 5.0  # Borehole spacing (m)
 
         # Single and Multiple U-tube Pipe Dimensions
-        r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
-        r_in = 21.6 / 1000.0 / 2.0  # Pipe inner radius (m)
-        s = 32.3 / 1000.0  # Inner-tube to inner-tube Shank spacing (m)
+        r_out = 0.013335  # Pipe outer radius (m)
+        r_in = 0.0108  # Pipe inner radius (m)
+        s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Thermal conductivities
@@ -75,9 +75,9 @@ class TestFindNearSquareDesign(GHEBaseTest):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343493.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Instantiating Soil Properties
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
@@ -197,9 +197,9 @@ class TestFindNearSquareDesign(GHEBaseTest):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343493.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Instantiating Soil Properties
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)

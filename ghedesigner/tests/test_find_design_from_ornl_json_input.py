@@ -52,10 +52,10 @@ class TestFindDesignFromORNLJsonInput(GHEBaseTest):
 
         # Volumetric heat capacities
         # --------------------------
-        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
         # Soil volumetric heat capacity (J/K.m3)
         rho_cp_s = ornl_param_file_data["ground_thermal_heat_capacity"]
-        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # ------------------

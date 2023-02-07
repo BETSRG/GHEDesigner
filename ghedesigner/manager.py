@@ -37,9 +37,7 @@ class GHEManager:
         self._grout: Optional[Grout] = None
         self._soil: Optional[Soil] = None
         self._pipe: Optional[Pipe] = None
-        self._u_tube_type: Optional[
-            Union[Type[SingleUTube], Type[MultipleUTube], Type[CoaxialPipe]]
-        ] = None
+        self._u_tube_type: Optional[Union[Type[SingleUTube], Type[MultipleUTube], Type[CoaxialPipe]]] = None
         self._borehole: Optional[GHEBorehole] = None
         self._simulation_parameters: Optional[SimulationParameters] = None
         self._ground_loads: Optional[List[float]] = None
