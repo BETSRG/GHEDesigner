@@ -19,31 +19,31 @@ from ghedesigner.utilities import DesignMethodTimeStep, length_of_side
 class TestFindNearSquareDesign(GHEBaseTest):
 
     def test_find_single_u_tube_design(self):
-        manager = GHEManager()
-        manager.set_single_u_tube_pipe(
+        ghe = GHEManager()
+        ghe.set_single_u_tube_pipe(
             inner_radius=(21.6 / 1000.0 / 2.0), outer_radius=(26.67 / 1000.0 / 2.0),
             shank_spacing=(32.3 / 1000.0), roughness=1.0e-6, conductivity=0.4, rho_cp=(1542.0 * 1000.0)
         )
-        manager.set_soil(conductivity=2.0, rho_cp=(2343.493 * 1000.0), undisturbed_temp=18.3)
-        manager.set_grout(conductivity=1.0, rho_cp=(3901.0 * 1000.0))
-        manager.set_fluid()
-        manager.set_borehole(length=96.0, buried_depth=2.0, radius=0.075)
-        manager.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
-        manager.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        manager.set_geometry_constraints(b=5.0, length=155)  # borehole spacing and field side length
+        ghe.set_soil(conductivity=2.0, rho_cp=(2343.493 * 1000.0), undisturbed_temp=18.3)
+        ghe.set_grout(conductivity=1.0, rho_cp=(3901.0 * 1000.0))
+        ghe.set_fluid()
+        ghe.set_borehole(length=96.0, buried_depth=2.0, radius=0.075)
+        ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
+        ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
+        ghe.set_geometry_constraints(b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "system" flow?
-        manager.set_design(flow_rate=6.4, flow_type="system", design_method_geo=DesignMethodGeometry.NearSquare)
+        ghe.set_design(flow_rate=6.4, flow_type="system", design_method_geo=DesignMethodGeometry.NearSquare)
         tic = clock()  # Clock Start Time
-        manager.find_design()
+        ghe.find_design()
         toc = clock()  # Clock Stop Time
 
-        self.assertAlmostEqual(manager.u_tube_height, 124.92, delta=1e-2)
+        self.assertAlmostEqual(ghe.u_tube_height, 124.92, delta=1e-2)
 
         # Print Summary of Findings
         subtitle = "* Single U-tube"  # Subtitle for the printed summary
         self.log(subtitle + "\n" + len(subtitle) * "-")
         self.log(f"Calculation time: {toc - tic:0.2f} seconds")
-        self.log(f"Height: {manager.u_tube_height:0.4f} meters")
+        self.log(f"Height: {ghe.u_tube_height:0.4f} meters")
 
         # Output File Configuration
         project_name = "Atlanta Office Building: Design Example"
@@ -54,7 +54,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
 
         # Generating Output File
         output_design_details(
-            manager._search,  # TODO: Make so we don't have to access a protected method for this
+            ghe._search,  # TODO: Make so we don't have to access a protected method for this
             toc - tic,
             project_name,
             note,
