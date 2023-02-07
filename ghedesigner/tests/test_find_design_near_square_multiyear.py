@@ -220,7 +220,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_DU.txt",
+            summary_file="SummaryOfResults_DU.txt",  # TODO: Use unique output file names for each test
             csv_f_1="TimeDependentValues_DU.csv",
             csv_f_2="BorefieldData_DU.csv",
             csv_f_3="Loadings_DU.csv",
