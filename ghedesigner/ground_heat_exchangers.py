@@ -10,7 +10,8 @@ from ghedesigner import VERSION
 from ghedesigner.borehole_heat_exchangers import SingleUTube, CoaxialPipe, MultipleUTube
 from ghedesigner.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ground_loads import HybridLoad
-from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil
+from ghedesigner.media import Grout, Pipe, Soil
+from ghedesigner.simulation import SimulationParameters
 from ghedesigner.radial_numerical_borehole import RadialNumericalBH
 from ghedesigner.utilities import DesignMethodTimeStep
 from ghedesigner.utilities import solve_root

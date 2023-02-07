@@ -11,7 +11,8 @@ from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
 from ghedesigner.design import DesignBiRectangleConstrained
 from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained
-from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
+from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
+from ghedesigner.simulation import SimulationParameters
 from ghedesigner.output import write_output_files
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethodTimeStep

@@ -10,7 +10,8 @@ from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.design import DesignBiZoned
 from ghedesigner.geometry import GeometricConstraintsBiZoned
-from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
+from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
+from ghedesigner.simulation import SimulationParameters
 from ghedesigner.output import write_output_files
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethodTimeStep
