@@ -116,7 +116,8 @@ class GHEManager:
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
     def set_coaxial_pipe(self, inner_pipe_r_in: float, inner_pipe_r_out: float, outer_pipe_r_in: float,
-                         outer_pipe_r_out: float, roughness: float, conductivity_inner: float, conductivity_outer: float,
+                         outer_pipe_r_out: float, roughness: float, conductivity_inner: float,
+                         conductivity_outer: float,
                          rho_cp: float):
 
         # TODO: Convert scalar properties if double or coax
@@ -243,7 +244,6 @@ class GHEManager:
 
 
 def run_manager_from_cli_worker(input_file_path: Path, output_file_path: Path):
-
     # TODO: need better input and runtime error handling
 
     if not input_file_path.exists():

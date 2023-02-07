@@ -149,7 +149,8 @@ class TestFindRowWiseDesign(GHEBaseTest):
           - list of vertices for the property boundary (buildVert)
         """
         geometric_constraints = GeometricConstraintsRowWise(
-            p_spacing, spacing_start, spacing_stop, spacing_step, rotate_step, rotate_stop, rotate_start, build_vert, no_go_vert)
+            p_spacing, spacing_start, spacing_stop, spacing_step, rotate_step, rotate_stop, rotate_start, build_vert,
+            no_go_vert)
 
         # Single U-tube
         # -------------

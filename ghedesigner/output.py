@@ -894,7 +894,6 @@ def get_design_summary_object(
         author: str,
         model_name: str,
         load_method: DesignMethodTimeStep) -> dict:
-
     # gFunction LTS Table
     g_function_col_titles = ["ln(t/ts)"]
     for g_function_name in list(design.ghe.gFunction.g_lts):

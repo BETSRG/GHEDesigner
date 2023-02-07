@@ -7,7 +7,8 @@ from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, Coa
 from ghedesigner.domains import square_and_near_square, rectangular, bi_rectangle_nested, bi_rectangle_zoned_nested, \
     polygonal_land_constraint
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsBiRectangle, GeometricConstraintsNearSquare, \
-    GeometricConstraintsRectangle, GeometricConstraintsBiZoned, GeometricConstraintsBiRectangleConstrained, GeometricConstraintsRowWise
+    GeometricConstraintsRectangle, GeometricConstraintsBiZoned, GeometricConstraintsBiRectangleConstrained, \
+    GeometricConstraintsRowWise
 from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil, GHEFluid
 from ghedesigner.search_routines import Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch
 from ghedesigner.utilities import DesignMethodTimeStep

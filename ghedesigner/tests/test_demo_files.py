@@ -1,7 +1,6 @@
 import os
-import unittest
 import tempfile
-
+import unittest
 from pathlib import Path
 
 from ghedesigner.manager import run_manager_from_cli_worker
