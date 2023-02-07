@@ -10,7 +10,7 @@ from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, SingleUTube
 from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle
-from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
 from ghedesigner.media import GHEFluid, Grout, Pipe, SimulationParameters, Soil
 from ghedesigner.utilities import DesignMethodTimeStep
 
@@ -40,6 +40,10 @@ class GHEManager:
         self._borehole: Optional[GHEBorehole] = None
         self._simulation_parameters: Optional[SimulationParameters] = None
         self._ground_loads: Optional[List[float]] = None
+        # OK so geometric_constraints is tricky.  We have base classes, yay!
+        # Unfortunately, the functionality between the child classes is not actually
+        # collapsed into a base class function ... yet.  So there will be complaints
+        # about types temporarily.  It's going in the right direction though.
         self._geometric_constraints: Optional[GeometricConstraints] = None
         self._design: Optional[DesignBase] = None
         self._search: Optional[AnyBisectionType] = None
@@ -157,13 +161,12 @@ class GHEManager:
         # TODO: Define load direction positive/negative
         self._ground_loads = hourly_ground_loads
 
-    def set_geometry_constraints(self, **kwargs):
-        # TODO: Figure out how the user should know which constraints are needed
-        # Probably just need to add a few methods for set_geometry_*
-        self._geometric_constraints = GeometricConstraints(**kwargs)
+    # TODO: Add more of the geometric constraints, along with required parameters
+    def set_geometry_constraints_near_square(self, b: float, length: float):
+        self._geometric_constraints = GeometricConstraintsNearSquare(b, length)
 
     def set_geometry_constraints_rectangular(self, length: float, width: float, b_min: float, b_max: float):
-        self._geometric_constraints = GeometricConstraints(length=length, width=width, b_min=b_min, b_max_x=b_max)
+        self._geometric_constraints = GeometricConstraintsRectangle(width, length, b_min, b_max)
 
     def set_design(self, flow_rate: float, flow_type: str, design_method_geo: DesignGeomType):
         """
@@ -174,6 +177,8 @@ class GHEManager:
         # TODO: Allow setting flow and method dynamically
 
         if design_method_geo == self.DesignGeomType.NearSquare:
+            # temporary disable of the type checker because of the _geometric_constraints member
+            # noinspection PyTypeChecker
             self._design = DesignNearSquare(
                 flow_rate,
                 self._borehole,
@@ -189,6 +194,8 @@ class GHEManager:
                 method=DesignMethodTimeStep.Hybrid,
             )
         elif design_method_geo == self.DesignGeomType.Rectangular:
+            # temporary disable of the type checker because of the _geometric_constraints member
+            # noinspection PyTypeChecker
             self._design = DesignRectangle(
                 flow_rate,
                 self._borehole,

@@ -8,7 +8,7 @@ from time import time as clock
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import MultipleUTube, CoaxialPipe
 from ghedesigner.design import DesignNearSquare
-from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.geometry import GeometricConstraintsNearSquare
 from ghedesigner.manager import GHEManager
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import write_output_files
@@ -30,7 +30,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_borehole(length=96.0, buried_depth=2.0, radius=0.075)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints(b=5.0, length=155)  # borehole spacing and field side length
+        ghe.set_geometry_constraints_near_square(b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "system" flow?
         ghe.set_design(flow_rate=6.4, flow_type="system", design_method_geo=ghe.DesignGeomType.NearSquare)
         tic = clock()  # Clock Start Time
@@ -133,7 +133,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
 
         number_of_boreholes = 32
         length = length_of_side(number_of_boreholes, b)
-        geometric_constraints = GeometricConstraints(b=b, length=length)
+        geometric_constraints = GeometricConstraintsNearSquare(b, length)
         hourly_extraction_ground_loads = self.get_atlanta_loads()
 
         note = "Square-Near-Square Usage Example: Double U Tube"
@@ -255,7 +255,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
 
         number_of_boreholes = 32
         length = length_of_side(number_of_boreholes, b)
-        geometric_constraints = GeometricConstraints(b=b, length=length)
+        geometric_constraints = GeometricConstraintsNearSquare(b, length)
         hourly_extraction_ground_loads = self.get_atlanta_loads()
 
         note = "Square-Near-Square Usage Example: Coaxial Tube"

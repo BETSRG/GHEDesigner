@@ -9,7 +9,7 @@ from time import time as clock
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.design import DesignBiRectangle
-from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.geometry import GeometricConstraintsBiRectangle
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import write_output_files
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
@@ -111,8 +111,7 @@ class TestFindBiRectangleDesign(GHEBaseTest):
           - B_min
           - B_max
         """
-        geometric_constraints = GeometricConstraints(length=length, width=width, b_min=b_min, b_max_x=b_max_x,
-                                                     b_max_y=b_max_y)
+        geometric_constraints = GeometricConstraintsBiRectangle(width, length, b_min, b_max_x, b_max_y)
 
         # Single U-tube
         # -------------

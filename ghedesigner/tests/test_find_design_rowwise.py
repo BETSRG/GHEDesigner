@@ -10,7 +10,7 @@ from time import time as clock
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.design import DesignRowWise
-from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.geometry import GeometricConstraintsRowWise
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import write_output_files
 from ghedesigner.rowwise import gen_shape
@@ -148,17 +148,8 @@ class TestFindRowWiseDesign(GHEBaseTest):
           - the upper bound rotation (rotateStop)
           - list of vertices for the property boundary (buildVert)
         """
-        geometric_constraints = GeometricConstraints(
-            ng_zones=no_go_vert,
-            p_spacing=p_spacing,
-            spacing_start=spacing_start,
-            spacing_stop=spacing_stop,
-            spacing_step=spacing_step,
-            rotate_start=rotate_start,
-            rotate_stop=rotate_stop,
-            rotate_step=rotate_step,
-            prop_bound=build_vert,
-        )
+        geometric_constraints = GeometricConstraintsRowWise(
+            p_spacing, spacing_start, spacing_stop, spacing_step, rotate_step, rotate_stop, rotate_start, build_vert, no_go_vert)
 
         # Single U-tube
         # -------------

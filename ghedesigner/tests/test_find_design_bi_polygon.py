@@ -10,7 +10,7 @@ from time import time as clock
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
 from ghedesigner.design import DesignBiRectangleConstrained
-from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import write_output_files
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
@@ -134,9 +134,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
           - B_max_x
           - B_max_y
         """
-        geometric_constraints = GeometricConstraints(
-            b_min=b_min, b_max_y=b_max_y, b_max_x=b_max_x
-        )
+        geometric_constraints = GeometricConstraintsBiRectangleConstrained(b_min, b_max_y, b_max_x)
 
         # Single U-tube
         # -------------

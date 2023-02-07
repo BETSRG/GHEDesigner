@@ -40,7 +40,7 @@ class TestNearSquare(GHEBaseTest):
         ghe.set_borehole(length=96.0, buried_depth=2.0, radius=0.075)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints(b=5.0, length=155)  # borehole spacing and field side length
+        ghe.set_geometry_constraints_near_square(b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "system" flow?
         ghe.set_design(flow_rate=31.2, flow_type="system", design_method_geo=ghe.DesignGeomType.NearSquare)
         ghe.find_design()
