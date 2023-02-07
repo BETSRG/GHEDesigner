@@ -34,37 +34,19 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_geometry_constraints_near_square(b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "system" flow?
         ghe.set_design(flow_rate=6.4, flow_type="system", design_method_geo=ghe.DesignGeomType.NearSquare)
-        tic = clock()  # Clock Start Time
         ghe.find_design()
-        toc = clock()  # Clock Stop Time
 
-        self.assertAlmostEqual(ghe.u_tube_height, 124.92, delta=1e-2)
-
-        # Print Summary of Findings
-        subtitle = "* Single U-tube"  # Subtitle for the printed summary
-        self.log(subtitle + "\n" + len(subtitle) * "-")
-        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
-        self.log(f"Height: {ghe.u_tube_height:0.4f} meters")
-
-        # Output File Configuration
+        # Output File Configuration  # TODO: Could add these to the manager constructor, or a set_meta_data method
         project_name = "Atlanta Office Building: Design Example"
         note = "Square-Near-Square Usage Example: Single U Tube"
         author = "John Doe"
         iteration_name = "Example 1"
-        output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
+        output_file_directory = self.test_outputs_directory / "TestFindDesignNearSquare"
+        outputs = ghe.collect_outputs(project_name, note, author, iteration_name, output_file_directory, "_SU")
 
-        # Generating Output File
-        write_output_files(
-            ghe._search,  # TODO: Make so we don't have to access a protected method for this
-            toc - tic,
-            project_name,
-            note,
-            author,
-            iteration_name,
-            output_directory=output_file_directory,
-            file_suffix="_SU",
-            load_method=DesignMethodTimeStep.Hybrid,
-        )
+        # can grab data off the outputs dict
+        u_tube_height = outputs['ghe_system']['active_borehole_length']
+        self.assertAlmostEqual(u_tube_height, 124.92, delta=1e-2)
 
     def test_find_double_u_tube_design(self):
         # *************************************************************************************************************
