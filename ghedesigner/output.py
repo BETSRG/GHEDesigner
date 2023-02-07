@@ -105,7 +105,7 @@ def create_line(row_allocation, character="*"):
 
 def hours_to_month(hours):
     days_in_year = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    hours_in_year = 24 * days_in_year
+    hours_in_year = [24 * x for x in days_in_year]
     n_years = floor(hours / sum(hours_in_year))
     frac_month = n_years * len(days_in_year)
     month_in_year = 0
@@ -126,7 +126,7 @@ def hours_to_month(hours):
 
 def ghe_time_convert(hours):
     days_in_year = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    hours_in_year = 24 * days_in_year
+    hours_in_year = [24 * x for x in days_in_year]
     month_in_year = 0
     year_hour_sum = 0
     for idx, _ in enumerate(days_in_year):
