@@ -11,7 +11,7 @@ from ghedesigner.design import DesignNearSquare
 from ghedesigner.geometry import GeometricConstraints
 from ghedesigner.manager import GHEManager
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
-from ghedesigner.output import output_design_details
+from ghedesigner.output import write_output_files
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethodTimeStep, length_of_side
 
@@ -53,7 +53,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
 
         # Generating Output File
-        output_design_details(
+        write_output_files(
             ghe._search,  # TODO: Make so we don't have to access a protected method for this
             toc - tic,
             project_name,
@@ -61,11 +61,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_SU.txt",
-            csv_f_1="TimeDependentValues_SU.csv",
-            csv_f_2="BorefieldData_SU.csv",
-            csv_f_3="Loadings_SU.csv",
-            csv_f_4="GFunction_SU.csv",
+            file_suffix="_SU",
             load_method=DesignMethodTimeStep.Hybrid,
         )
 
@@ -183,7 +179,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
-        output_design_details(
+        write_output_files(
             bisection_search,
             toc - tic,
             project_name,
@@ -191,11 +187,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_DU.txt",
-            csv_f_1="TimeDependentValues_DU.csv",
-            csv_f_2="BorefieldData_DU.csv",
-            csv_f_3="Loadings_DU.csv",
-            csv_f_4="GFunction_DU.csv",
+            file_suffix="_DU",
             load_method=DesignMethodTimeStep.Hybrid,
         )
 
@@ -323,7 +315,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         self.log(f"Number of boreholes: {nbh}")
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
         # Generating Output File
-        output_design_details(
+        write_output_files(
             bisection_search,
             toc - tic,
             project_name,
@@ -331,10 +323,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_C.txt",
-            csv_f_1="TimeDependentValues_C.csv",
-            csv_f_2="BorefieldData_C.csv",
-            csv_f_3="Loadings_C.csv",
-            csv_f_4="GFunction_C.csv",
+            file_suffix="_C",
             load_method=DesignMethodTimeStep.Hybrid,
         )

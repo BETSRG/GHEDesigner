@@ -11,7 +11,7 @@ from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.design import DesignBiRectangle
 from ghedesigner.geometry import GeometricConstraints
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
-from ghedesigner.output import output_design_details
+from ghedesigner.output import write_output_files
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethodTimeStep
 
@@ -153,7 +153,7 @@ class TestFindBiRectangleDesign(GHEBaseTest):
         # l_x_perimeter = 85.0
         # l_y_perimeter = 80.0
 
-        output_design_details(
+        write_output_files(
             bisection_search,
             toc - tic,
             project_name,
@@ -161,11 +161,7 @@ class TestFindBiRectangleDesign(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_SU.txt",
-            csv_f_1="TimeDependentValues_SU.txt",
-            csv_f_2="BorefieldData_SU.csv",
-            csv_f_3="Loadings_SU.csv",
-            csv_f_4="GFunction_SU.csv",
+            file_suffix="_SU",
             load_method=DesignMethodTimeStep.Hybrid,
         )
         """

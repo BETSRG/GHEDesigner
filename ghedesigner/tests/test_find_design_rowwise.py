@@ -12,7 +12,7 @@ from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.design import DesignRowWise
 from ghedesigner.geometry import GeometricConstraints
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
-from ghedesigner.output import output_design_details
+from ghedesigner.output import write_output_files
 from ghedesigner.rowwise import gen_shape
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethodTimeStep
@@ -195,7 +195,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
-        output_design_details(
+        write_output_files(
             bisection_search,
             toc - tic,
             project_name,
@@ -203,11 +203,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_SU_WOP.txt",
-            csv_f_1="TimeDependentValues_SU_WOP.csv",
-            csv_f_2="BorefieldData_SU_WOP.csv",
-            csv_f_3="Loadings_SU_WOP.csv",
-            csv_f_4="GFunction_SU_WOP.csv",
+            file_suffix="_SU_WOP",
             load_method=DesignMethodTimeStep.Hybrid,
         )
 
@@ -251,7 +247,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
-        output_design_details(
+        write_output_files(
             bisection_search,
             toc - tic,
             project_name,
@@ -259,10 +255,6 @@ class TestFindRowWiseDesign(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_SU_WP.txt",
-            csv_f_1="TimeDependentValues_SU_WP.csv",
-            csv_f_2="BorefieldData_SU_WP.csv",
-            csv_f_3="Loadings_SU_WP.csv",
-            csv_f_4="GFunction_SU_WP.csv",
+            file_suffix="_SU_WP",
             load_method=DesignMethodTimeStep.Hybrid,
         )
