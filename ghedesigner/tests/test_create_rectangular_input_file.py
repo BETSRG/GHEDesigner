@@ -1,10 +1,10 @@
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.design import DesignRectangle
-from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.geometry import GeometricConstraintsRectangle
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethod, create_input_file
+from ghedesigner.utilities import DesignMethodTimeStep, create_input_file
 
 
 class TestCreateRectangularInputFile(GHEBaseTest):
@@ -114,9 +114,7 @@ class TestCreateRectangularInputFile(GHEBaseTest):
         b_max = 10.0  # m
 
         # Geometric constraints for the `near-square` routine
-        geometric_constraints = GeometricConstraints(
-            length=length, width=width, b_min=b_min, b_max_x=b_max  # , unconstrained=False
-        )
+        geometric_constraints = GeometricConstraintsRectangle(width, length, b_min, b_max)
 
         # Note: Flow functionality is currently only on a borehole basis. Future
         # development will include the ability to change the flow rate to be on a
@@ -132,7 +130,7 @@ class TestCreateRectangularInputFile(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            DesignMethod.Hybrid,
+            DesignMethodTimeStep.Hybrid,
         )
 
         # Output the design interface object to a json file, so it can be reused

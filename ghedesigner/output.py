@@ -7,7 +7,7 @@ from pathlib import Path
 
 from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase
 from ghedesigner.design import AnyBisectionType
-from ghedesigner.utilities import DesignMethod
+from ghedesigner.utilities import DesignMethodTimeStep
 
 
 def create_title(allocated_width, title, filler_symbol=" "):
@@ -155,7 +155,7 @@ def write_output_files(
         notes: str,
         author: str,
         model_name: str,
-        load_method: DesignMethod,
+        load_method: DesignMethodTimeStep,
         output_directory: Path,
         allocated_width=100,
         rounding_amount=10,
@@ -640,7 +640,7 @@ def write_output_files(
         string_format,
         int_format,
     )
-    load_method_string = "hybrid" if load_method == DesignMethod.Hybrid else "hourly"  # TODO: Use a method in the enum
+    load_method_string = "hybrid" if load_method == DesignMethodTimeStep.Hybrid else "hourly"  # TODO: Use a method in the enum
     o_s += create_d_row(
         allocated_width,
         "Simulation Loading Type: ",
@@ -893,8 +893,7 @@ def get_design_summary_object(
         notes: str,
         author: str,
         model_name: str,
-        load_method: DesignMethod) -> dict:
-
+        load_method: DesignMethodTimeStep) -> dict:
     # gFunction LTS Table
     g_function_col_titles = ["ln(t/ts)"]
     for g_function_name in list(design.ghe.gFunction.g_lts):
@@ -979,7 +978,7 @@ def get_design_summary_object(
             'maximum_allowable_height': {'units': 'm', 'value': design.ghe.sim_params.max_height},
             'minimum_allowable_height': {'units': 'm', 'value': design.ghe.sim_params.min_height},
             'simulation_time': {'units': 'years', 'value': int(design.ghe.sim_params.end_month / 12)},
-            'simulation_load_method': "hybrid" if load_method == DesignMethod.Hybrid else "hourly"
+            'simulation_load_method': "hybrid" if load_method == DesignMethodTimeStep.Hybrid else "hourly"
         },
         'simulation_results': {
 

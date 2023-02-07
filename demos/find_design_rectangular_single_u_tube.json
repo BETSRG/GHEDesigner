@@ -19,27 +19,31 @@
     "shank_spacing": 0.0323,
     "roughness": 0.000001,
     "conductivity": 0.4,
-    "rho_cp": 1542000
+    "rho_cp": 1542000,
+    "arrangement": "singleutube"
   },
   "borehole": {
-    "length": 96.0,
     "buried_depth": 2.0,
     "radius": 0.075
   },
   "simulation": {
     "num_months": 240,
-    "max_eft": 35.0,
-    "min_eft": 5.0,
-    "max_height": 135.0,
-    "min_height": 60.0
+    "timestep": "hybrid"
   },
   "geometric_constraints": {
-    "b": 5.0,
-    "length": 155
+    "length": 100,
+    "width": 100,
+    "b_min": 2.0,
+    "b_max": 7.0,
+    "max_height": 135.0,
+    "min_height": 60.0,
+    "method": "rectangular"
   },
   "design": {
-    "flow_rate": 31.2,
-    "flow_type": "system"
+    "flow_rate": 0.2,
+    "flow_type": "borehole",
+    "max_eft": 35.0,
+    "min_eft": 5.0
   },
   "ground_loads": [
     0,

@@ -5,7 +5,7 @@ from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethod, eskilson_log_times
+from ghedesigner.utilities import DesignMethodTimeStep, eskilson_log_times
 
 
 class TestGHE(GHEBaseTest):
@@ -162,12 +162,12 @@ class TestGHE(GHEBaseTest):
             self.hourly_extraction_ground_loads,
         )
 
-        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethod.Hybrid)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethodTimeStep.Hybrid)
 
         self.assertAlmostEqual(39.09, max_hp_eft, delta=0.01)
         self.assertAlmostEqual(16.66, min_hp_eft, delta=0.01)
 
-        ghe.size(method=DesignMethod.Hybrid)
+        ghe.size(method=DesignMethodTimeStep.Hybrid)
 
         self.assertAlmostEqual(ghe.bhe.b.H, 130.22, places=2)
 
@@ -206,12 +206,12 @@ class TestGHE(GHEBaseTest):
             self.hourly_extraction_ground_loads,
         )
 
-        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethod.Hybrid)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethodTimeStep.Hybrid)
 
         self.assertAlmostEqual(37.76, max_hp_eft, delta=0.01)
         self.assertAlmostEqual(17.09, min_hp_eft, delta=0.01)
 
-        ghe.size(method=DesignMethod.Hybrid)
+        ghe.size(method=DesignMethodTimeStep.Hybrid)
 
         self.assertAlmostEqual(ghe.bhe.b.H, 120.40, places=2)
 
@@ -250,11 +250,11 @@ class TestGHE(GHEBaseTest):
             self.hourly_extraction_ground_loads,
         )
 
-        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethod.Hybrid)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethodTimeStep.Hybrid)
 
         self.assertAlmostEqual(38.06, max_hp_eft, delta=0.01)
         self.assertAlmostEqual(17.22, min_hp_eft, delta=0.01)
 
-        ghe.size(method=DesignMethod.Hybrid)
+        ghe.size(method=DesignMethodTimeStep.Hybrid)
 
         self.assertAlmostEqual(ghe.bhe.b.H, 124.84, delta=0.01)

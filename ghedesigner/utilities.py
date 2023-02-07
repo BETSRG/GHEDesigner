@@ -1,10 +1,3 @@
-# utilities.py - this module contains general utility functions. The functions
-# are categorically grouped by their purpose. If any one of these categories
-# becomes substantial, then a module can be created that is dedicated to
-# functions of that category. Some of these functions may be more applicable
-# to a different module. If that is the case, the function needs to contain a
-# deprecation warning until the next major release.
-
 import pickle
 from enum import auto, Enum
 from math import sqrt
@@ -14,7 +7,7 @@ from scipy.optimize import brentq
 
 
 # TODO: Move this class to a centralized place with other enumerations
-class DesignMethod(Enum):
+class DesignMethodTimeStep(Enum):
     Hybrid = auto()
     Hourly = auto()
 

@@ -9,7 +9,7 @@ from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil, GHEFluid
 from ghedesigner.rowwise import field_optimization_fr, field_optimization_wp_space_fr
-from ghedesigner.utilities import eskilson_log_times, borehole_spacing, check_bracket, sign, DesignMethod
+from ghedesigner.utilities import eskilson_log_times, borehole_spacing, check_bracket, sign, DesignMethodTimeStep
 
 
 class Bisection1D:
@@ -26,7 +26,7 @@ class Bisection1D:
             soil: Soil,
             sim_params: SimulationParameters,
             hourly_extraction_ground_loads: list,
-            method: DesignMethod,
+            method: DesignMethodTimeStep,
             flow: str = "borehole",
             max_iter=15,
             disp=False,
@@ -341,7 +341,7 @@ class RowWiseModifiedBisectionSearch:
             sim_params: SimulationParameters,
             hourly_extraction_ground_loads: list,
             geometric_constraints,
-            method: DesignMethod,
+            method: DesignMethodTimeStep,
             flow: str = "borehole",
             max_iter: int = 10,
             disp: bool = False,
@@ -632,7 +632,7 @@ class RowWiseModifiedBisectionSearch:
 
                 self.initialize_ghe(field, self.sim_params.max_height, field_specifier=f_s)
                 self.ghe.compute_g_functions()
-                self.ghe.size(method=DesignMethod.Hybrid)
+                self.ghe.size(method=DesignMethodTimeStep.Hybrid)
                 total_drilling = self.ghe.bhe.b.H * len(field)
 
                 if best_field is None:
@@ -764,7 +764,7 @@ class Bisection2D(Bisection1D):
             soil: Soil,
             sim_params: SimulationParameters,
             hourly_extraction_ground_loads: list,
-            method: DesignMethod,
+            method: DesignMethodTimeStep,
             flow: str = "borehole",
             max_iter=15,
             disp=False,
@@ -838,7 +838,7 @@ class BisectionZD(Bisection1D):
             soil: Soil,
             sim_params: SimulationParameters,
             hourly_extraction_ground_loads: list,
-            method: DesignMethod,
+            method: DesignMethodTimeStep,
             flow: str = "borehole",
             max_iter=15,
             disp=False,
@@ -917,7 +917,7 @@ class BisectionZD(Bisection1D):
             self.calculated_temperatures_nested[i] = self.calculated_temperatures
 
             self.ghe.compute_g_functions()
-            self.ghe.size(method=DesignMethod.Hybrid)
+            self.ghe.size(method=DesignMethodTimeStep.Hybrid)
 
             nbh = len(selected_coordinates)
             total_drilling = nbh * self.ghe.bhe.b.H
@@ -958,6 +958,6 @@ class BisectionZD(Bisection1D):
             ],
         )
         self.ghe.compute_g_functions()
-        self.ghe.size(method=DesignMethod.Hybrid)
+        self.ghe.size(method=DesignMethodTimeStep.Hybrid)
 
         return selection_key, selected_coordinates

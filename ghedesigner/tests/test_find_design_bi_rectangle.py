@@ -9,11 +9,11 @@ from time import time as clock
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.design import DesignBiRectangle
-from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.geometry import GeometricConstraintsBiRectangle
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import write_output_files
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethod
+from ghedesigner.utilities import DesignMethodTimeStep
 
 
 class TestFindBiRectangleDesign(GHEBaseTest):
@@ -111,8 +111,7 @@ class TestFindBiRectangleDesign(GHEBaseTest):
           - B_min
           - B_max
         """
-        geometric_constraints = GeometricConstraints(length=length, width=width, b_min=b_min, b_max_x=b_max_x,
-                                                     b_max_y=b_max_y)
+        geometric_constraints = GeometricConstraintsBiRectangle(width, length, b_min, b_max_x, b_max_y)
 
         # Single U-tube
         # -------------
@@ -127,7 +126,7 @@ class TestFindBiRectangleDesign(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=DesignMethod.Hybrid,
+            method=DesignMethodTimeStep.Hybrid,
             flow=flow,
         )
 
@@ -135,7 +134,8 @@ class TestFindBiRectangleDesign(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(
+            method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -161,7 +161,7 @@ class TestFindBiRectangleDesign(GHEBaseTest):
             iteration_name,
             output_directory=output_file_directory,
             file_suffix="_SU",
-            load_method=DesignMethod.Hybrid,
+            load_method=DesignMethodTimeStep.Hybrid,
         )
         """
         # Double U-tube

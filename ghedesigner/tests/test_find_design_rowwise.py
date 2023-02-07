@@ -10,12 +10,12 @@ from time import time as clock
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.design import DesignRowWise
-from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.geometry import GeometricConstraintsRowWise
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import write_output_files
 from ghedesigner.rowwise import gen_shape
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethod
+from ghedesigner.utilities import DesignMethodTimeStep
 
 
 class TestFindRowWiseDesign(GHEBaseTest):
@@ -148,17 +148,9 @@ class TestFindRowWiseDesign(GHEBaseTest):
           - the upper bound rotation (rotateStop)
           - list of vertices for the property boundary (buildVert)
         """
-        geometric_constraints = GeometricConstraints(
-            ng_zones=no_go_vert,
-            p_spacing=p_spacing,
-            spacing_start=spacing_start,
-            spacing_stop=spacing_stop,
-            spacing_step=spacing_step,
-            rotate_start=rotate_start,
-            rotate_stop=rotate_stop,
-            rotate_step=rotate_step,
-            prop_bound=build_vert,
-        )
+        geometric_constraints = GeometricConstraintsRowWise(
+            p_spacing, spacing_start, spacing_stop, spacing_step, rotate_step, rotate_stop, rotate_start, build_vert,
+            no_go_vert)
 
         # Single U-tube
         # -------------
@@ -173,7 +165,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=DesignMethod.Hybrid,
+            method=DesignMethodTimeStep.Hybrid,
             flow=flow,
         )
 
@@ -181,7 +173,8 @@ class TestFindRowWiseDesign(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_single_u_tube.find_design(disp=True, use_perimeter=False)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(
+            method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -203,7 +196,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             iteration_name,
             output_directory=output_file_directory,
             file_suffix="_SU_WOP",
-            load_method=DesignMethod.Hybrid,
+            load_method=DesignMethodTimeStep.Hybrid,
         )
 
         # *************************************************************************************************************
@@ -224,7 +217,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=DesignMethod.Hybrid,
+            method=DesignMethodTimeStep.Hybrid,
             flow=flow,
         )
 
@@ -232,7 +225,8 @@ class TestFindRowWiseDesign(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(
+            method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -254,5 +248,5 @@ class TestFindRowWiseDesign(GHEBaseTest):
             iteration_name,
             output_directory=output_file_directory,
             file_suffix="_SU_WP",
-            load_method=DesignMethod.Hybrid,
+            load_method=DesignMethodTimeStep.Hybrid,
         )

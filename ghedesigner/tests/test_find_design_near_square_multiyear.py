@@ -8,11 +8,11 @@ from time import time as clock
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
 from ghedesigner.design import DesignNearSquare
-from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.geometry import GeometricConstraintsNearSquare
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import write_output_files
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethod, length_of_side
+from ghedesigner.utilities import DesignMethodTimeStep, length_of_side
 
 
 class TestFindNearSquareMultiyearDesign(GHEBaseTest):
@@ -109,7 +109,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         # B is already defined above
         number_of_boreholes = 32
         length = length_of_side(number_of_boreholes, b)
-        geometric_constraints = GeometricConstraints(b=b, length=length)
+        geometric_constraints = GeometricConstraintsNearSquare(b, length)
 
         # Single U-tube
         # -------------
@@ -125,7 +125,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=DesignMethod.Hybrid,
+            method=DesignMethodTimeStep.Hybrid,
             flow=flow,
             load_years=[2010, 2011, 2012, 2013],
         )
@@ -135,7 +135,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
-            method=DesignMethod.Hybrid
+            method=DesignMethodTimeStep.Hybrid
         )  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
@@ -158,7 +158,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             iteration_name,
             output_directory=output_file_directory,
             file_suffix="_SU",
-            load_method=DesignMethod.Hybrid
+            load_method=DesignMethodTimeStep.Hybrid
         )
 
         # *************************************************************************************************************
@@ -184,7 +184,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=DesignMethod.Hybrid,
+            method=DesignMethodTimeStep.Hybrid,
             flow=flow,
             load_years=[2010, 2011, 2012, 2013],
         )
@@ -194,7 +194,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         bisection_search = design_double_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
-            method=DesignMethod.Hybrid
+            method=DesignMethodTimeStep.Hybrid
         )  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
@@ -218,7 +218,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             output_directory=output_file_directory,
             # TODO: Use unique output file names for each test
             file_suffix="_DU",
-            load_method=DesignMethod.Hybrid,
+            load_method=DesignMethodTimeStep.Hybrid,
         )
 
         # *************************************************************************************************************
@@ -259,7 +259,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=DesignMethod.Hybrid,
+            method=DesignMethodTimeStep.Hybrid,
             flow=flow,
             load_years=[2010, 2011, 2012, 2013],
         )
@@ -269,7 +269,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         bisection_search = design_coax_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
-            method=DesignMethod.Hybrid
+            method=DesignMethodTimeStep.Hybrid
         )  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
@@ -292,5 +292,5 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             iteration_name,
             output_directory=output_file_directory,
             file_suffix="_C",
-            load_method=DesignMethod.Hybrid
+            load_method=DesignMethodTimeStep.Hybrid
         )

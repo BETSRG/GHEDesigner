@@ -10,11 +10,11 @@ from time import time as clock
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
 from ghedesigner.design import DesignBiRectangleConstrained
-from ghedesigner.geometry import GeometricConstraints
+from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
 from ghedesigner.output import write_output_files
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethod
+from ghedesigner.utilities import DesignMethodTimeStep
 
 
 class TestFindBiPolygonDesign(GHEBaseTest):
@@ -134,9 +134,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
           - B_max_x
           - B_max_y
         """
-        geometric_constraints = GeometricConstraints(
-            b_min=b_min, b_max_y=b_max_y, b_max_x=b_max_x
-        )
+        geometric_constraints = GeometricConstraintsBiRectangleConstrained(b_min, b_max_y, b_max_x)
 
         # Single U-tube
         # -------------
@@ -151,7 +149,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=DesignMethod.Hybrid,
+            method=DesignMethodTimeStep.Hybrid,
             flow=flow,
             property_boundary=prop_a,
             building_descriptions=ng_a,
@@ -161,7 +159,8 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating g-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(
+            method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -183,7 +182,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
             iteration_name,
             output_directory=output_file_directory,
             file_suffix="_SU",
-            load_method=DesignMethod.Hybrid,
+            load_method=DesignMethodTimeStep.Hybrid,
         )
 
         # *************************************************************************************************************
@@ -209,7 +208,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=DesignMethod.Hybrid,
+            method=DesignMethodTimeStep.Hybrid,
             flow=flow,
             property_boundary=prop_a,
             building_descriptions=ng_a,
@@ -219,7 +218,8 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_double_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(
+            method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -241,7 +241,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
             iteration_name,
             output_directory=output_file_directory,
             file_suffix="_DU",
-            load_method=DesignMethod.Hybrid,
+            load_method=DesignMethodTimeStep.Hybrid,
         )
 
         # *************************************************************************************************************
@@ -280,7 +280,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
             sim_params,
             geometric_constraints,
             hourly_extraction_ground_loads,
-            method=DesignMethod.Hybrid,
+            method=DesignMethodTimeStep.Hybrid,
             flow=flow,
             property_boundary=prop_a,
             building_descriptions=ng_a,
@@ -290,7 +290,8 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         tic = clock()  # Clock Start Time
         bisection_search = design_coax_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method=DesignMethod.Hybrid)  # Calculating the Final Height for the Chosen Design
+        bisection_search.ghe.size(
+            method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
         toc = clock()  # Clock Stop Time
 
         # Print Summary of Findings
@@ -312,5 +313,5 @@ class TestFindBiPolygonDesign(GHEBaseTest):
             iteration_name,
             output_directory=output_file_directory,
             file_suffix="_C",
-            load_method=DesignMethod.Hybrid,
+            load_method=DesignMethodTimeStep.Hybrid,
         )
