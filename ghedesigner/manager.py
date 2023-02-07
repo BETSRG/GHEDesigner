@@ -116,8 +116,8 @@ class GHEManager:
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
     def set_coaxial_pipe(self, inner_pipe_r_in: float, inner_pipe_r_out: float, outer_pipe_r_in: float,
-                         outer_pipe_r_out: float,
-                         roughness: float, conductivity_inner: float, conductivity_outer: float, rho_cp: float):
+                         outer_pipe_r_out: float, roughness: float, conductivity_inner: float, conductivity_outer: float,
+                         rho_cp: float):
 
         # TODO: Convert scalar properties if double or coax
         self._u_tube_type = CoaxialPipe  # for now just store the type on the class here
@@ -284,9 +284,25 @@ def run_manager_from_cli_worker(input_file_path: Path, output_file_path: Path):
             rho_cp=pipe_props["rho_cp"]
         )
     elif pipe_type == ghe.BHPipeType.DoubleUType:
-        ghe.set_double_u_tube_pipe(**pipe_props)
+        ghe.set_double_u_tube_pipe(
+            inner_radius=pipe_props["inner_radius"],
+            outer_radius=pipe_props["outer_radius"],
+            shank_spacing=pipe_props["shank_spacing"],
+            roughness=pipe_props["roughness"],
+            conductivity=pipe_props["conductivity"],
+            rho_cp=pipe_props["rho_cp"]
+        )
     elif pipe_type == ghe.BHPipeType.CoaxialType:
-        ghe.set_coaxial_pipe(**pipe_props)
+        ghe.set_coaxial_pipe(
+            inner_pipe_r_in=pipe_props["inner_pipe_r_in"],
+            inner_pipe_r_out=pipe_props["inner_pipe_r_out"],
+            outer_pipe_r_in=pipe_props["outer_pipe_r_in"],
+            outer_pipe_r_out=pipe_props["outer_pipe_r_out"],
+            roughness=pipe_props["roughness"],
+            conductivity_inner=pipe_props["conductivity_inner"],
+            conductivity_outer=pipe_props["conductivity_outer"],
+            rho_cp=pipe_props["rho_cp"]
+        )
 
     ghe.set_borehole(
         length=constraint_props["max_height"],
