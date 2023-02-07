@@ -67,7 +67,7 @@ class GHEManager:
             return self.BHPipeType.DoubleUType
         if bh_pipe_str in ["COAXIAL", "COAXIALPIPE"]:
             return self.BHPipeType.CoaxialType
-        raise ValueError("Boehole pipe type not supported.")
+        raise ValueError("Borehole pipe type not supported.")
 
     def set_fluid(self, fluid_name: str = "Water", concentration_percent: float = 0.0):
         """
