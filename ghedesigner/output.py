@@ -5,6 +5,7 @@ from math import floor
 from pathlib import Path
 
 from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase
+from ghedesigner.design import AnyBisectionType
 from ghedesigner.utilities import DesignMethod
 
 
@@ -872,3 +873,205 @@ def output_design_details(
         c_w.writerows(csv4_array)
 
     return o_s
+
+
+def design_summary(
+        design: AnyBisectionType,
+        time: float,
+        project_name: str,
+        notes: str,
+        author: str,
+        model_name: str,
+        load_method: DesignMethod) -> dict:
+
+    # gFunction LTS Table
+    g_function_col_titles = ["ln(t/ts)"]
+    for g_function_name in list(design.ghe.gFunction.g_lts):
+        g_function_col_titles.append("H:" + str(round(g_function_name, 0)) + "m")
+    g_function_col_titles.append("H:" + str(round(design.ghe.bhe.b.H, 2)) + "m")
+    g_function_data = []
+    ghe_gf = design.ghe.gFunction.g_function_interpolation(float(design.ghe.B_spacing) / design.ghe.bhe.b.H)[0]
+    for i in range(len(design.ghe.gFunction.log_time)):
+        gf_row = list()
+        gf_row.append(design.ghe.gFunction.log_time[i])
+        for g_function_name in list(design.ghe.gFunction.g_lts):
+            gf_row.append(design.ghe.gFunction.g_lts[g_function_name][i])
+        gf_row.append(ghe_gf[i])
+        g_function_data.append(gf_row)
+
+    # these are dependent on the # pipes in each borehole, so precalculate
+    if isinstance(design.ghe.bhe.pipe.r_out, float):
+        pipe_geometry = {'pipe_outer_radius': design.ghe.bhe.pipe.r_out, 'pipe_inner_radius': design.ghe.bhe.pipe.r_in}
+        reynolds = GHEDesignerBoreholeBase.compute_reynolds(design.ghe.bhe.m_flow_borehole, design.ghe.bhe.pipe.r_in,
+                                                            design.ghe.bhe.fluid)
+    else:
+        pipe_geometry = {
+            'outer_pipe_outer_radius': design.ghe.bhe.pipe.r_out[0],
+            'inner_pipe_outer_radius': design.ghe.bhe.pipe.r_out[1],
+            'outer_pipe_inner_radius': design.ghe.bhe.pipe.r_in[0],
+            'inner_pipe_inner_radius': design.ghe.bhe.pipe.r_in[1],
+        }
+        reynolds = GHEDesignerBoreholeBase.compute_reynolds_concentric(design.ghe.bhe.m_flow_pipe,
+                                                                       design.ghe.bhe.r_in_out, design.ghe.bhe.r_out_in,
+                                                                       design.ghe.bhe.fluid)
+    # build out the actual output dictionary
+    output_dict = {
+        'project_name': project_name,
+        'notes': notes,
+        'model_name': model_name,
+        'simulation_time_stamp': datetime.now().strftime("%m/%d/%Y %H:%M:%S %p"),
+        'simulation_author': author,
+        'simulation_runtime': {'units': 's', 'value': time},
+        'design_selection_search_log': {
+            'titles': ["Field", "Excess Temperature", "Max Temperature", "Min Temperature"],
+            'units': [" ", "(C)", "(C)", "(C)"],
+            'data': design.searchTracker
+        },
+        'ghe_system': {
+            'search_log': {
+                'titles': g_function_col_titles,
+                'units': None,
+                'data': g_function_data
+            },
+            'active_borehole_length': design.ghe.bhe.b.H,
+            'borehole_radius': design.ghe.bhe.b.r_b,
+            'borehole_spacing': design.ghe.B_spacing,
+            'total_drilling': design.ghe.bhe.b.H * len(design.ghe.gFunction.bore_locations),
+            'field_type': design.ghe.fieldType,
+            'field_specifier': design.ghe.fieldSpecifier,
+            'number_of_boreholes': len(design.ghe.gFunction.bore_locations),
+            'shank_spacing': design.ghe.bhe.pipe.s,
+            'pipe_geometry': pipe_geometry,
+            'pipe_roughness': design.ghe.bhe.pipe.roughness,
+            'grout_thermal_conductivity': {'units': 'W/mK', 'value': design.ghe.bhe.grout.k},
+            'grout_volumetric_heat_capacity': {'units': 'kJ/m3-K', 'value': design.ghe.bhe.grout.rhoCp},
+            # TODO: Corrected arg to .rhoCp - verify, should be / 1000?
+            'reynolds_number': reynolds,
+            'effective_borehole_resistance': {'units': 'W/m-K',
+                                              'value': design.ghe.bhe.calc_effective_borehole_resistance()},
+            # TODO: are the units right here?
+            'soil_thermal_conductivity': {'units': 'W/m-K', 'value': design.ghe.bhe.soil.k},
+            'soil_volumetric_heat_capacity': {'units': 'kJ/m3-K', 'value': design.ghe.bhe.soil.rhoCp},
+            # TODO: Should be / 1000?
+            'soil_undisturbed_ground_temp': {'units': 'C', 'value': design.ghe.bhe.soil.ugt},
+            'fluid_volumetric_heat_capacity': {'units': 'kJ/m3-K', 'value': design.ghe.bhe.fluid.rhoCp / 1000},
+            'fluid_thermal_conductivity': {'units': 'W/mK', 'value': design.ghe.bhe.fluid.k},
+            'fluid_mixture': design.ghe.bhe.fluid.fluid.fluid_name,  # TODO: Is this the right lookup!?!?!? :)
+            'fluid_density': {'units': 'kg/m3', 'value': design.ghe.bhe.fluid.rho},
+            'fluid_mass_flow_rate_per_borehole': {'units': 'kg/s', 'value': design.ghe.bhe.m_flow_borehole},
+        },
+        'simulation_parameters': {
+            'start_month': design.ghe.sim_params.start_month,
+            'end_month': design.ghe.sim_params.end_month,
+            'maximum_allowable_hp_eft': {'units': 'C', 'value': design.ghe.sim_params.max_EFT_allowable},
+            'minimum_allowable_hp_eft': {'units': 'C', 'value': design.ghe.sim_params.min_EFT_allowable},
+            'maximum_allowable_height': {'units': 'm', 'value': design.ghe.sim_params.max_height},
+            'minimum_allowable_height': {'units': 'm', 'value': design.ghe.sim_params.min_height},
+            'simulation_time': {'units': 'years', 'value': int(design.ghe.sim_params.end_month / 12)},
+            'simulation_load_method': "hybrid" if load_method == DesignMethod.Hybrid else "hourly"
+        },
+        'simulation_results': {
+
+        }
+
+    }
+
+    # potentially add convection coefficient -- not sure why we wouldn't do it
+    if hasattr(design.ghe.bhe, "h_f"):
+        output_dict['ghe_system']['fluid_convection_coefficient'] = {
+            'units': 'W/m-K', 'value': design.ghe.bhe.h_f
+        }  # TODO: Should be W/m2-K?
+
+    # add monthly load summary
+    monthly_load_values = []
+    m_cl = design.ghe.hybrid_load.monthly_cl
+    m_hl = design.ghe.hybrid_load.monthly_hl
+    p_cl = design.ghe.hybrid_load.monthly_peak_cl
+    p_hl = design.ghe.hybrid_load.monthly_peak_hl
+    d_cl = design.ghe.hybrid_load.monthly_peak_cl_duration
+    d_hl = design.ghe.hybrid_load.monthly_peak_hl_duration
+    n_months = len(design.ghe.hybrid_load.monthly_cl) - 1
+    n_years = int(n_months / 12)
+    months = n_years * [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ]
+    start_ind = 1
+    stop_ind = n_months
+    for i in range(start_ind, stop_ind + 1):
+        monthly_load_values.append(
+            [months[i - 1], m_hl[i], m_cl[i], p_hl[i], d_hl[i], p_cl[i], d_cl[i]]
+        )
+    output_dict['ghe_system']['glhe_monthly_loads'] = {
+        'titles': [
+            "Month",
+            "Total Heating",
+            "Total Cooling",
+            "Peak Heating",
+            "PH Duration",
+            "Peak Cooling",
+            "PC Duration",
+        ],
+        'units': ["", "KW-Hr", "KW-Hr", "KW", "hr", "KW", "hr"],
+        'data': monthly_load_values
+    }
+
+    # add simulation results stuff
+    n_years = 0
+    out_array = []
+    last_month = -1
+    month_tb_vals = []
+    month_eft_vals = []
+    for tv, d_tb, eft in zip(design.ghe.times, design.ghe.dTb, design.ghe.hp_eft):
+        current_month = floor(hours_to_month(tv))
+        if current_month == last_month:
+            month_tb_vals.append(d_tb)
+            month_eft_vals.append(eft)
+        elif current_month != last_month:
+            if len(month_tb_vals) > 0:
+                if len(out_array) == 0:
+                    previous_temp = design.ghe.bhe.soil.ugt
+                else:
+                    previous_temp = design.ghe.bhe.soil.ugt
+                out_array.append(
+                    [
+                        current_month,
+                        previous_temp + month_tb_vals[-1],
+                        max(month_eft_vals),
+                        min(month_eft_vals),
+                    ]
+                )
+            last_month = current_month
+            month_tb_vals = [d_tb]
+            month_eft_vals = [eft]
+        if current_month % 11 == 0:
+            n_years += 1
+    max_eft = max(design.ghe.hp_eft)
+    min_eft = min(design.ghe.hp_eft)
+    max_eft_time = design.ghe.times[design.ghe.hp_eft.index(max(design.ghe.hp_eft))]
+    min_eft_time = design.ghe.times[design.ghe.hp_eft.index(min(design.ghe.hp_eft))]
+    max_eft_time = hours_to_month(max_eft_time)
+    min_eft_time = hours_to_month(min_eft_time)
+    output_dict['simulation_results'] = {
+        'max_hp_eft': {'units': 'C', 'value': max_eft},
+        'max_hp_eft_time': {'units': 'months', 'value': max_eft_time},
+        'min_hp_eft': {'units': 'C', 'value': min_eft},
+        'min_hp_eft_time': {'units': 'months', 'value': min_eft_time},
+        'monthly_temp_summary': {
+            'titles': ["Time", "Tbw", "Max hp_eft", "Min hp_eft"],
+            'units': ["(months)", "(C)", "(C)", "(C)"],
+            'data': out_array
+        }
+    }
+
+    return output_dict

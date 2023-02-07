@@ -5,8 +5,6 @@
 # This search is described in section 4.4.5 from pages 146-148 in Cook (2021).
 
 import csv
-import tempfile
-from pathlib import Path
 from time import time as clock
 
 from ghedesigner.borehole import GHEBorehole
