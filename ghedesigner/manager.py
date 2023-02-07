@@ -15,21 +15,19 @@ from ghedesigner.media import GHEFluid, Grout, Pipe, SimulationParameters, Soil
 from ghedesigner.utilities import DesignMethodTimeStep
 
 
-class DesignMethodGeometry(Enum):
-    NearSquare = auto()
-    Rectangular = auto()
-
-
-class BoreholeType(Enum):
-    SingleUTubeType = auto()
-    DoubleUTubeType = auto()
-    CoaxialType = auto()
-
-
 class GHEManager:
     """
     TODO: Add docs guiding all the steps
     """
+
+    class DesignGeomType(Enum):
+        NearSquare = auto()
+        Rectangular = auto()
+
+    class BHPipeType(Enum):
+        SingleUType = auto()
+        DoubleUType = auto()
+        CoaxialType = auto()
 
     def __init__(self):
         self._fluid: Optional[GHEFluid] = None
@@ -48,6 +46,24 @@ class GHEManager:
 
         # outputs after design is found
         self.u_tube_height = -1.0
+
+    def get_design_geometry_type(self, design_geometry_str: str):
+        design_geometry_str = str(design_geometry_str).upper()
+        if design_geometry_str in ["RECTANGULAR", "RECT", "RECTANGLE"]:
+            return self.DesignGeomType.Rectangular
+        if design_geometry_str in ["NEAR SQUARE", "SQUARE", "NEARSQUARE"]:
+            return self.DesignGeomType.NearSquare
+        raise ValueError("Geometry constraint method not supported.")
+
+    def get_bh_pipe_type(self, bh_pipe_str: str):
+        bh_pipe_str = str(bh_pipe_str).upper()
+        if bh_pipe_str in ["SINGLEUTUBE", "SINGLEU", "SINGLE"]:
+            return self.BHPipeType.SingleUType
+        if bh_pipe_str in ["DOUBLEUTUBE", "DOUBLEU", "DOUBLE"]:
+            return self.BHPipeType.DoubleUType
+        if bh_pipe_str in ["COAXIAL", "COAXIALPIPE"]:
+            return self.BHPipeType.CoaxialType
+        raise ValueError("Boehole pipe type not supported.")
 
     def set_fluid(self, fluid_name: str = "Water", concentration_percent: float = 0.0):
         """
@@ -149,7 +165,7 @@ class GHEManager:
     def set_geometry_constraints_rectangular(self, length: float, width: float, b_min: float, b_max: float):
         self._geometric_constraints = GeometricConstraints(length=length, width=width, b_min=b_min, b_max_x=b_max)
 
-    def set_design(self, flow_rate: float, flow_type: str, design_method_geo: DesignMethodGeometry):
+    def set_design(self, flow_rate: float, flow_type: str, design_method_geo: DesignGeomType):
         """
         system_flow_rate L/s total system flow rate
         flow_type string, for now either "system" or "borehole"
@@ -157,7 +173,7 @@ class GHEManager:
 
         # TODO: Allow setting flow and method dynamically
 
-        if design_method_geo == DesignMethodGeometry.NearSquare:
+        if design_method_geo == self.DesignGeomType.NearSquare:
             self._design = DesignNearSquare(
                 flow_rate,
                 self._borehole,
@@ -172,7 +188,7 @@ class GHEManager:
                 flow=flow_type,
                 method=DesignMethodTimeStep.Hybrid,
             )
-        elif design_method_geo == DesignMethodGeometry.Rectangular:
+        elif design_method_geo == self.DesignGeomType.Rectangular:
             self._design = DesignRectangle(
                 flow_rate,
                 self._borehole,
@@ -220,39 +236,91 @@ class GHEManager:
 
 
 def run_manager_from_cli_worker(input_file_path: Path, output_file_path: Path):
+
+    # TODO: need better input and runtime error handling
+
     if not input_file_path.exists():
         print(f"No input file found at {input_file_path}, aborting")
         exit(1)
+
     inputs = loads(input_file_path.read_text())
-    manager = GHEManager()
+
+    ghe = GHEManager()
+
     version = inputs['version']
+
     if version != VERSION:
         print("Mismatched version, could be a problem", file=stderr)
+
     fluid_props = inputs['fluid']
-    manager.set_fluid(**fluid_props)
     grout_props = inputs['grout']
-    manager.set_grout(**grout_props)
     soil_props = inputs['soil']
-    manager.set_soil(**soil_props)
     pipe_props = inputs['pipe']
-    manager.set_single_u_tube_pipe(**pipe_props)
     borehole_props = inputs['borehole']
-    manager.set_borehole(**borehole_props)
     sim_props = inputs['simulation']
-    manager.set_simulation_parameters(**sim_props)
-    ground_load_props = inputs['ground_loads']  # TODO: Modify this to allow different spec types
-    manager.set_ground_loads_from_hourly_list(ground_load_props)
     constraint_props = inputs['geometric_constraints']
-    manager.set_geometry_constraints(**constraint_props)
     design_props = inputs['design']
-    manager.set_design(**design_props)
-    manager.find_design()
+    ground_load_props = inputs['ground_loads']  # TODO: Modify this to allow different spec types
+
+    ghe.set_fluid(**fluid_props)
+    ghe.set_grout(**grout_props)
+    ghe.set_soil(**soil_props)
+
+    pipe_type = ghe.get_bh_pipe_type(pipe_props["arrangement"])
+    if pipe_type == ghe.BHPipeType.SingleUType:
+        ghe.set_single_u_tube_pipe(
+            inner_radius=pipe_props["inner_radius"],
+            outer_radius=pipe_props["outer_radius"],
+            shank_spacing=pipe_props["shank_spacing"],
+            roughness=pipe_props["roughness"],
+            conductivity=pipe_props["conductivity"],
+            rho_cp=pipe_props["rho_cp"]
+        )
+    elif pipe_type == ghe.BHPipeType.DoubleUType:
+        ghe.set_double_u_tube_pipe(**pipe_props)
+    elif pipe_type == ghe.BHPipeType.CoaxialType:
+        ghe.set_coaxial_pipe(**pipe_props)
+
+    ghe.set_borehole(
+        length=constraint_props["max_height"],
+        buried_depth=borehole_props["buried_depth"],
+        radius=borehole_props["radius"]
+    )
+
+    ghe.set_ground_loads_from_hourly_list(ground_load_props)
+    ghe.set_simulation_parameters(
+        num_months=sim_props["num_months"],
+        max_eft=design_props["max_eft"],
+        min_eft=design_props["min_eft"],
+        max_height=constraint_props["max_height"],
+        min_height=constraint_props["min_height"]
+    )
+
+    geom_type = ghe.get_design_geometry_type(constraint_props["method"])
+    if geom_type == ghe.DesignGeomType.Rectangular:
+        ghe.set_geometry_constraints_rectangular(
+            length=constraint_props["length"],
+            width=constraint_props["width"],
+            b_min=constraint_props["b_min"],
+            b_max=constraint_props["b_max"],
+        )
+    else:
+        raise ValueError("Geometry constraint method not supported.")
+
+    ghe.set_design(
+        flow_rate=design_props["flow_rate"],
+        flow_type=design_props["flow_type"],
+        design_method_geo=geom_type
+    )
+
+    ghe.find_design()
+
     with open(output_file_path, 'w') as f:
         f.write(dumps(
             {
-                'design_borehole_height': manager.u_tube_height,
-                'g_function': manager.get_g_function(),
-                'borehole_locations': manager.get_borehole_locations(),
+                'design_borehole_height': ghe.u_tube_height,
+                'g_function': ghe.get_g_function(),
+                'borehole_locations': ghe.get_borehole_locations(),
             },
             indent=2
         ))
