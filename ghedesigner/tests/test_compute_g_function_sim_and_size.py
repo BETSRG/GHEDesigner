@@ -4,7 +4,8 @@ from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.gfunction import GFunction
 from ghedesigner.ground_heat_exchangers import GHE
-from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
+from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
+from ghedesigner.simulation import SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethodTimeStep
 

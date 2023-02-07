@@ -6,7 +6,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from ghedesigner.borehole_heat_exchangers import SingleUTube
-from ghedesigner.media import SimulationParameters
+from ghedesigner.simulation import SimulationParameters
 from ghedesigner.radial_numerical_borehole import RadialNumericalBH
 
 

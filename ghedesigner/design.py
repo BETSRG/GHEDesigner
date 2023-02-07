@@ -9,7 +9,8 @@ from ghedesigner.domains import square_and_near_square, rectangular, bi_rectangl
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsBiRectangle, GeometricConstraintsNearSquare, \
     GeometricConstraintsRectangle, GeometricConstraintsBiZoned, GeometricConstraintsBiRectangleConstrained, \
     GeometricConstraintsRowWise
-from ghedesigner.media import Grout, Pipe, SimulationParameters, Soil, GHEFluid
+from ghedesigner.media import Grout, Pipe, Soil, GHEFluid
+from ghedesigner.simulation import SimulationParameters
 from ghedesigner.search_routines import Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch
 from ghedesigner.utilities import DesignMethodTimeStep
 

@@ -1,7 +1,8 @@
 from enum import Enum, auto
-from json import dumps, loads
+from json import loads
 from pathlib import Path
 from sys import exit, stderr
+from time import time
 from typing import List, Optional, Type, Union
 
 import click
@@ -11,7 +12,9 @@ from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, SingleUTube
 from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
-from ghedesigner.media import GHEFluid, Grout, Pipe, SimulationParameters, Soil
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.output import write_output_files, get_design_summary_object
+from ghedesigner.simulation import SimulationParameters
 from ghedesigner.utilities import DesignMethodTimeStep
 
 
@@ -48,8 +51,9 @@ class GHEManager:
         self._design: Optional[DesignBase] = None
         self._search: Optional[AnyBisectionType] = None
 
-        # outputs after design is found
-        self.u_tube_height = -1.0
+        # some things for results
+        self._search_time: int = 0
+        self.summary_results: dict = {}
 
     def get_design_geometry_type(self, design_geometry_str: str):
         design_geometry_str = str(design_geometry_str).upper()
@@ -227,23 +231,32 @@ class GHEManager:
             self._design,
         ]]):
             raise Exception("didn't set something")
+        start_time = time()
         self._search = self._design.find_design()
         self._search.ghe.compute_g_functions()
+        self._search_time = time() - start_time
         # TODO: Don't hard-wire Hybrid here
         self._search.ghe.size(method=DesignMethodTimeStep.Hybrid)
-        self.u_tube_height = self._search.ghe.bhe.b.H
 
-    def get_g_function(self):
-        lts = self._search.ghe.gFunction.log_time
-        # TODO: handle the different keys in the g_vals dict, 60, 97.5, 135
-        g_vals = list(self._search.ghe.gFunction.g_lts.values())[0]
-        return list(zip(lts, g_vals))
+    def collect_outputs(self, project_name: str, note: str, author: str, iteration_name: str, output_directory: Path,
+                        output_file_suffix: str = "") -> dict:
+        # Generating Output File
+        write_output_files(
+            self._search,
+            self._search_time,
+            project_name,
+            note,
+            author,
+            iteration_name,
+            output_directory=output_directory,
+            file_suffix=output_file_suffix,
+            load_method=DesignMethodTimeStep.Hybrid,
+        )
+        return get_design_summary_object(self._search, self._search_time, project_name, note, author, iteration_name,
+                                         DesignMethodTimeStep.Hybrid)
 
-    def get_borehole_locations(self):
-        return self._search.ghe.gFunction.bore_locations
 
-
-def run_manager_from_cli_worker(input_file_path: Path, output_file_path: Path):
+def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
     # TODO: need better input and runtime error handling
 
     if not input_file_path.exists():
@@ -337,24 +350,15 @@ def run_manager_from_cli_worker(input_file_path: Path, output_file_path: Path):
     )
 
     ghe.find_design()
-
-    with open(output_file_path, 'w') as f:
-        f.write(dumps(
-            {
-                'design_borehole_height': ghe.u_tube_height,
-                'g_function': ghe.get_g_function(),
-                'borehole_locations': ghe.get_borehole_locations(),
-            },
-            indent=2
-        ))
+    ghe.collect_outputs("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name", output_directory, "_CLI")
 
 
 @click.command(name="GHEDesignerCommandLine")
 @click.argument("input-path", type=click.Path(exists=True))
-@click.argument("output-path", type=click.Path(exists=True))
-def run_manager_from_cli(input_path, output_path):
+@click.argument("output-directory", type=click.Path(exists=True))
+def run_manager_from_cli(input_path, output_directory):
     input_path = Path(input_path).resolve()
-    output_path = Path(output_path).resolve()
+    output_path = Path(output_directory).resolve()
 
     if not input_path.exists():
         print(f'Input file does not exist. Input file path: "{str(input_path)}"')
