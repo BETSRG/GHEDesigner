@@ -5,8 +5,6 @@
 # This search is described in section 4.4.5 from pages 146-148 in Cook (2021).
 
 import csv
-import tempfile
-from pathlib import Path
 from time import time as clock
 
 from ghedesigner.borehole import GHEBorehole
@@ -14,7 +12,7 @@ from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, Coa
 from ghedesigner.design import DesignBiRectangleConstrained
 from ghedesigner.geometry import GeometricConstraints
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid, SimulationParameters
-from ghedesigner.output import output_design_details
+from ghedesigner.output import write_output_files
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethod
 
@@ -33,7 +31,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         note = "Bi-Uniform Polygon Usage Example: Single U Tube"
         author = "Jane Doe"
         iteration_name = "Example 6"
-        output_file_directory = Path(tempfile.mkdtemp())
+        output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
 
         # Borehole dimensions
         h = 96.0  # Borehole length (m)
@@ -176,7 +174,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
-        output_design_details(
+        write_output_files(
             bisection_search,
             toc - tic,
             project_name,
@@ -184,11 +182,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_SU.txt",
-            csv_f_1="TimeDependentValues_SU.csv",
-            csv_f_2="BorefieldData_SU.csv",
-            csv_f_3="Loadings_SU.csv",
-            csv_f_4="GFunction_SU.csv",
+            file_suffix="_SU",
             load_method=DesignMethod.Hybrid,
         )
 
@@ -238,7 +232,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
-        output_design_details(
+        write_output_files(
             bisection_search,
             toc - tic,
             project_name,
@@ -246,11 +240,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_DU.txt",
-            csv_f_1="TimeDependentValues_DU.csv",
-            csv_f_2="BorefieldData_DU.csv",
-            csv_f_3="Loadings_DU.csv",
-            csv_f_4="GFunction_DU.csv",
+            file_suffix="_DU",
             load_method=DesignMethod.Hybrid,
         )
 
@@ -313,7 +303,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
-        output_design_details(
+        write_output_files(
             bisection_search,
             toc - tic,
             project_name,
@@ -321,10 +311,6 @@ class TestFindBiPolygonDesign(GHEBaseTest):
             author,
             iteration_name,
             output_directory=output_file_directory,
-            summary_file="SummaryOfResults_C.txt",
-            csv_f_1="TimeDependentValues_C.csv",
-            csv_f_2="BorefieldData_C.csv",
-            csv_f_3="Loadings_C.csv",
-            csv_f_4="GFunction_C.csv",
+            file_suffix="_C",
             load_method=DesignMethod.Hybrid,
         )
