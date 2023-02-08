@@ -55,7 +55,6 @@ def create_d_row(row_allocation, entry_1, entry_2, d_type_1, d_type_2, b_tabs=0,
     tab_offset = 0.5 * tab_width
     n_tabs = b_tabs + a_tabs
     initial_ratio = 0.5
-    # reducedAllocation = rowAllocation-nTabs*tabWidth
     right_offset = initial_ratio * row_allocation
     left_offset = (1 - initial_ratio) * row_allocation
 
@@ -63,18 +62,8 @@ def create_d_row(row_allocation, entry_1, entry_2, d_type_1, d_type_2, b_tabs=0,
     left_offset = int(left_offset - tab_offset * n_tabs)
     if (right_offset + left_offset + n_tabs * tab_width) != row_allocation:
         right_offset += 1
-
     l_needed = len(str(entry_1))
     r_needed = len(str(entry_2))
-
-    if (l_needed + r_needed) > (right_offset + left_offset):
-        print("Allocation: ", row_allocation)
-        print("Characters Needed: ", (l_needed + r_needed + n_tabs * tab_width))
-        print("Allocated: ", (right_offset + left_offset + tab_width * n_tabs))
-        print("Right Offset Allocated: ", right_offset)
-        print("Left Offset Allocated: ", left_offset)
-        print("Tab Space: ", tab_width * n_tabs)
-        raise Exception("Not Enough Width Was Provided")
     if l_needed > left_offset:
         swing = l_needed - left_offset
         left_offset += swing
@@ -83,13 +72,6 @@ def create_d_row(row_allocation, entry_1, entry_2, d_type_1, d_type_2, b_tabs=0,
         swing = r_needed - right_offset
         right_offset += swing
         left_offset -= swing
-    if (right_offset + left_offset + tab_width * n_tabs) != row_allocation:
-        print("Allocation: ", row_allocation)
-        print("Allocated: ", (right_offset + left_offset + tab_width * n_tabs))
-        print("Right Offset Allocated: ", right_offset)
-        print("Left Offset Allocated: ", left_offset)
-        print("Tab Space: ", tab_width * n_tabs)
-        raise Exception("Width Allocation Error")
     r_s = ""
     for t in range(b_tabs):
         r_s += "\t"
@@ -116,13 +98,9 @@ def hours_to_month(hours):
         if sum(hours_in_year[0: idx + 1]) >= hours_left:
             month_in_year = idx
             break
-    # print("Year Months: ",fracMonth)
-    # print("Month Months: ",monthInYear)
     frac_month += month_in_year
     h_l = hours - n_years * sum(hours_in_year) - sum(hours_in_year[0:month_in_year])
     frac_month += h_l / (hours_in_year[month_in_year])
-    # print("Hour Months: ",hL/(hoursInYear[monthInYear]))
-    # print(fracMonth)
     return frac_month
 
 
@@ -138,13 +116,9 @@ def ghe_time_convert(hours):
             break
         else:
             year_hour_sum += hours_in_year[idx]
-    # print("Year Months: ",fracMonth)
-    # print("Month Months: ",monthInYear)
     h_l = hours - sum(hours_in_year[0:month_in_year])
     day_in_month = floor(h_l / 24) + 1
     hour_in_day = h_l % 24 + 1
-    # print("Hour Months: ",hL/(hoursInYear[monthInYear]))
-    # print(fracMonth)
     return month_in_year + 1, day_in_month, hour_in_day
 
 
@@ -161,12 +135,8 @@ def write_output_files(
         rounding_amount=10,
         file_suffix: str = "",
 ):
-    try:
-        ghe = design.ghe
-    except:
-        ghe = design
-    bhe = ghe.bhe
-    g_function = ghe.gFunction
+    bhe = design.ghe.bhe
+    g_function = design.ghe.gFunction
     b_h = bhe.b
     b = g_function.bore_locations
 
@@ -257,7 +227,7 @@ def write_output_files(
     g_function_col_titles.append("H:" + str(round(b_h.H, 2)) + "m")
 
     g_function_data = []
-    ghe_gf = g_function.g_function_interpolation(float(ghe.B_spacing) / b_h.H)[0]
+    ghe_gf = g_function.g_function_interpolation(float(design.ghe.B_spacing) / b_h.H)[0]
     for i in range(len(g_function.log_time)):
         gf_row = list()
         gf_row.append(g_function.log_time[i])
@@ -288,7 +258,7 @@ def write_output_files(
     o_s += create_d_row(
         allocated_width,
         "Borehole Spacing, m:",
-        round(ghe.B_spacing, rounding_amount),
+        round(design.ghe.B_spacing, rounding_amount),
         string_format,
         float_format
     )
@@ -308,7 +278,7 @@ def write_output_files(
     o_s += create_d_row(
         allocated_width,
         "Field Type:",
-        ghe.fieldType,
+        design.ghe.fieldType,
         string_format,
         string_format,
         b_tabs=indented_amount
@@ -317,7 +287,7 @@ def write_output_files(
     o_s += create_d_row(
         allocated_width,
         "Field Specifier:",
-        ghe.fieldSpecifier,
+        design.ghe.fieldSpecifier,
         string_format,
         string_format,
         b_tabs=indented_amount,
@@ -538,13 +508,13 @@ def write_output_files(
     o_s += empty_line
 
     monthly_load_values = []
-    m_cl = ghe.hybrid_load.monthly_cl
-    m_hl = ghe.hybrid_load.monthly_hl
-    p_cl = ghe.hybrid_load.monthly_peak_cl
-    p_hl = ghe.hybrid_load.monthly_peak_hl
-    d_cl = ghe.hybrid_load.monthly_peak_cl_duration
-    d_hl = ghe.hybrid_load.monthly_peak_hl_duration
-    n_months = len(ghe.hybrid_load.monthly_cl) - 1
+    m_cl = design.ghe.hybrid_load.monthly_cl
+    m_hl = design.ghe.hybrid_load.monthly_hl
+    p_cl = design.ghe.hybrid_load.monthly_peak_cl
+    p_hl = design.ghe.hybrid_load.monthly_peak_hl
+    d_cl = design.ghe.hybrid_load.monthly_peak_cl_duration
+    d_hl = design.ghe.hybrid_load.monthly_peak_hl_duration
+    n_months = len(design.ghe.hybrid_load.monthly_cl) - 1
     n_years = int(n_months / 12)
     months = n_years * [
         "January",
@@ -598,45 +568,45 @@ def write_output_files(
     o_s += create_d_row(
         allocated_width,
         "Start Month: ",
-        ghe.sim_params.start_month,
+        design.ghe.sim_params.start_month,
         string_format,
         int_format,
     )
     o_s += create_d_row(
-        allocated_width, "End Month: ", ghe.sim_params.end_month, string_format, int_format
+        allocated_width, "End Month: ", design.ghe.sim_params.end_month, string_format, int_format
     )
     o_s += create_d_row(
         allocated_width,
         "Maximum Allowable hp_eft, C: ",
-        ghe.sim_params.max_EFT_allowable,
+        design.ghe.sim_params.max_EFT_allowable,
         string_format,
         float_format,
     )
     o_s += create_d_row(
         allocated_width,
         "Minimum Allowable hp_eft, C: ",
-        ghe.sim_params.min_EFT_allowable,
+        design.ghe.sim_params.min_EFT_allowable,
         string_format,
         float_format,
     )
     o_s += create_d_row(
         allocated_width,
         "Maximum Allowable Height, m: ",
-        ghe.sim_params.max_height,
+        design.ghe.sim_params.max_height,
         string_format,
         float_format,
     )
     o_s += create_d_row(
         allocated_width,
         "Minimum Allowable Height, m: ",
-        ghe.sim_params.min_height,
+        design.ghe.sim_params.min_height,
         string_format,
         float_format,
     )
     o_s += create_d_row(
         allocated_width,
         "Simulation Time, years: ",
-        int(ghe.sim_params.end_month / 12),
+        int(design.ghe.sim_params.end_month / 12),
         string_format,
         int_format,
     )
@@ -659,11 +629,11 @@ def write_output_files(
     eft_table_title = "Monthly Temperature Summary"
     # daysInYear = np.array([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
     # hoursInYear = 24 * daysInYear
-    time_vals = ghe.times
+    time_vals = design.ghe.times
     eft_vals = []
-    eft_vals.extend(ghe.hp_eft)
+    eft_vals.extend(design.ghe.hp_eft)
     d_tb_vals = []
-    d_tb_vals.extend(ghe.dTb)
+    d_tb_vals.extend(design.ghe.dTb)
     n_years = 0
     # hTotalYear = sum(hoursInYear)
     out_array = []
@@ -758,14 +728,14 @@ def write_output_files(
 
     csv1_array = []
 
-    loading_values = ghe.loading
+    loading_values = design.ghe.loading
     # loadingValues_dt = np.hstack((loadingValues[1:] - loadingValues[:-1]))
     for i, (tv, d_tb, lv) in enumerate(zip(time_vals, d_tb_vals, loading_values)):
         if i + 1 < len(time_vals):
             current_time = tv
             loading = loading_values[i + 1]
             current_month = hours_to_month(tv)
-            normalized_loading = loading / (ghe.bhe.b.H * ghe.nbh)
+            normalized_loading = loading / (design.ghe.bhe.b.H * design.ghe.nbh)
             wall_temperature = bhe.soil.ugt + d_tb
             hp_eft_val = eft_vals[i]
             csv1_row = list()
@@ -773,7 +743,7 @@ def write_output_files(
             csv1_row.append(hours_to_month(tv))
             if i > 1:
                 csv1_row.append(lv)
-                csv1_row.append(lv / (ghe.bhe.b.H * ghe.nbh))
+                csv1_row.append(lv / (design.ghe.bhe.b.H * design.ghe.nbh))
             else:
                 csv1_row.append(0)
                 csv1_row.append(0)
@@ -788,7 +758,7 @@ def write_output_files(
             csv1_row.append(hours_to_month(tv))
             if i > 1:
                 csv1_row.append(lv)
-                csv1_row.append(lv / (ghe.bhe.b.H * ghe.nbh))
+                csv1_row.append(lv / (design.ghe.bhe.b.H * design.ghe.nbh))
             else:
                 csv1_row.append(0)
                 csv1_row.append(0)
@@ -799,7 +769,7 @@ def write_output_files(
             current_time = tv
             loading = 0
             current_month = hours_to_month(tv)
-            normalized_loading = loading / (ghe.bhe.b.H * ghe.nbh)
+            normalized_loading = loading / (design.ghe.bhe.b.H * design.ghe.nbh)
             wall_temperature = bhe.soil.ugt + d_tb
             hp_eft_val = eft_vals[i]
         csv1_row = list()
@@ -835,7 +805,7 @@ def write_output_files(
         c_w = csv.writer(csv2OF)
         c_w.writerows(csv2_array)
 
-    hourly_loadings = ghe.hourly_extraction_ground_loads
+    hourly_loadings = design.ghe.hourly_extraction_ground_loads
     csv3_array = list()
     csv3_array.append(
         ["Month", "Day", "Hour", "Time (Hours)", "Loading (W) (Extraction)"]
@@ -857,7 +827,7 @@ def write_output_files(
     # gfunctionColTitles.append("H:" + str(round(bH.H, 2)) + "m")
 
     csv4_array = [["ln(t/ts)", f"H:{bhe.b.H:0.2f}"]]
-    ghe_gf_adjusted = ghe.grab_g_function(ghe.B_spacing / float(ghe.bhe.b.H))
+    ghe_gf_adjusted = design.ghe.grab_g_function(design.ghe.B_spacing / float(design.ghe.bhe.b.H))
     gfunction_log_vals = ghe_gf_adjusted.x
     gfunction_g_vals = ghe_gf_adjusted.y
     for log_val, g_val in zip(gfunction_log_vals, gfunction_g_vals):
