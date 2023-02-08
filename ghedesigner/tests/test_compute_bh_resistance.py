@@ -38,9 +38,9 @@ class TestBHResistance(GHEBaseTest):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343493.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # Pipe
@@ -91,24 +91,24 @@ class TestBHResistance(GHEBaseTest):
         borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
 
         # pipe
-        r_out = 26.67 / 1000.0 / 2.0  # pipe outer radius (m)
-        r_in = 21.6 / 1000.0 / 2.0  # pipe inner radius (m)
-        s = 32.3 / 1000.0  # shank spacing (m)
+        r_out = 0.013335  # pipe outer radius (m)
+        r_in = 0.0108  # pipe inner radius (m)
+        s = 0.0323  # shank spacing (m)
         pos = Pipe.place_pipes(s, r_out, 2)  # double U-tube # TODO: move from static method to borehole
         k_p = 0.4  # pipe thermal conductivity (W/m.K)
-        rho_cp_p = 1542.0 * 1000.0  # pipe volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542000.0  # pipe volumetric heat capacity (J/K.m3)
         epsilon = 1.0e-6  # pipe roughness (m)
         pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
 
         # soil
         k_s = 2.0  # Ground thermal conductivity (W/m.K)
-        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343493.0  # Soil volumetric heat capacity (J/K.m3)
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = Soil(k_s, rho_cp_s, ugt)
 
         # grout
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
-        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
         grout = Grout(k_g, rho_cp_g)
 
         # fluid
@@ -159,9 +159,9 @@ class TestBHResistance(GHEBaseTest):
         r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
 
         # Pipe dimensions
-        r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
-        r_in = 21.6 / 1000.0 / 2.0  # Pipe inner radius (m)
-        s = 32.3 / 1000.0  # Inner-tube to inner-tube Shank spacing (m)
+        r_out = 0.013335  # Pipe outer radius (m)
+        r_in = 0.0108  # Pipe inner radius (m)
+        s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Pipe positions
@@ -174,9 +174,9 @@ class TestBHResistance(GHEBaseTest):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343493.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # Pipe
@@ -232,9 +232,9 @@ class TestBHResistance(GHEBaseTest):
         r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
 
         # Pipe dimensions
-        r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
-        r_in = 21.6 / 1000.0 / 2.0  # Pipe inner radius (m)
-        s = 32.3 / 1000.0  # Inner-tube to inner-tube Shank spacing (m)
+        r_out = 0.013335  # Pipe outer radius (m)
+        r_in = 0.0108  # Pipe inner radius (m)
+        s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Pipe positions
@@ -249,9 +249,9 @@ class TestBHResistance(GHEBaseTest):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343493.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # Pipe
@@ -327,9 +327,9 @@ class TestBHResistance(GHEBaseTest):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343493.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # Pipe

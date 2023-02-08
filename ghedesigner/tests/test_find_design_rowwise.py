@@ -34,7 +34,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
         note = "RowWise Usage Example w/o Perimeter Spacing: Single U Tube"
         author = "John Doe"
         iteration_name = "Example 5"
-        output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
+        output_file_directory = self.test_outputs_directory / "TestFindRowWiseDesign"
 
         # Borehole dimensions
         h = 96.0  # Borehole length (m)
@@ -42,9 +42,9 @@ class TestFindRowWiseDesign(GHEBaseTest):
         r_b = 0.075  # Borehole radius (m)
 
         # Single and Multiple U-tube Pipe Dimensions
-        r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
-        r_in = 21.6 / 1000.0 / 2.0  # Pipe inner radius (m)
-        s = 32.3 / 1000.0  # Inner-tube to inner-tube Shank spacing (m)
+        r_out = 0.013335  # Pipe outer radius (m)
+        r_in = 0.0108  # Pipe inner radius (m)
+        s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Single U Tube Pipe Positions
@@ -57,9 +57,9 @@ class TestFindRowWiseDesign(GHEBaseTest):
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
         # Volumetric heat capacities
-        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343493.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Instantiating Pipe
         pipe_single = Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
