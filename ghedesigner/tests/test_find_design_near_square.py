@@ -38,14 +38,13 @@ class TestFindNearSquareDesign(GHEBaseTest):
         author = "John Doe"
         iteration_name = "Example 1"
         output_file_directory = self.test_outputs_directory / "TestFindDesignNearSquareSingleU"
-        outputs = ghe.collect_outputs(project_name, note, author, iteration_name, output_file_directory, "_SU")
-
+        ghe.prepare_results(project_name, note, author, iteration_name)
+        ghe.write_output_files(output_file_directory, "_SU")
         # can grab data off the outputs dict
-        u_tube_height = outputs['ghe_system']['active_borehole_length']
+        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
         self.assertAlmostEqual(u_tube_height, 124.92, delta=1e-2)
-        # TODO: This was being checked, but I don't see this in the output structure, need to mine it out
-        # selected_coordinates = outputs['ghe_system']['selected_coordinates']
-        self.assertEqual(144, len(ghe._search.selected_coordinates))
+        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(144 + 1, len(selected_coordinates))
 
     def test_find_double_u_tube_design(self):
 
@@ -74,14 +73,14 @@ class TestFindNearSquareDesign(GHEBaseTest):
         author = "John Doe"
         iteration_name = "Example 1"
         output_file_directory = self.test_outputs_directory / "TestFindDesignNearSquareDoubleU"
-        outputs = ghe.collect_outputs(project_name, note, author, iteration_name, output_file_directory, "_SU")
+        ghe.prepare_results(project_name, note, author, iteration_name)
+        ghe.write_output_files(output_file_directory, "_DU")
 
         # can grab data off the outputs dict
-        u_tube_height = outputs['ghe_system']['active_borehole_length']
+        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
         self.assertAlmostEqual(u_tube_height, 131.57, delta=1e-2)
-        # TODO: This was being checked, but I don't see this in the output structure, need to mine it out
-        # selected_coordinates = outputs['ghe_system']['selected_coordinates']
-        self.assertEqual(144, len(ghe._search.selected_coordinates))
+        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(144 + 1, len(selected_coordinates))
 
     def test_find_coaxial_pipe_design(self):
 
@@ -105,9 +104,9 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.find_design()
 
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignCoaxialUTube"
-        outputs = ghe.collect_outputs("Project Name", "Notes", "Author", "Iteration Name", output_file_directory)
-        u_tube_height = outputs['ghe_system']['active_borehole_length']
+        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
+        ghe.write_output_files(output_file_directory, "")
+        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
         self.assertAlmostEqual(124.78, u_tube_height, delta=0.01)
-        # TODO: This was being checked, but I don't see this in the output structure, need to mine it out
-        # selected_coordinates = outputs['ghe_system']['selected_coordinates']
-        self.assertEqual(156, len(ghe._search.selected_coordinates))
+        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(156 + 1, len(selected_coordinates))

@@ -21,12 +21,12 @@ class TestNearSquare(GHEBaseTest):
         ghe.set_design(flow_rate=31.2, flow_type="system", design_method_geo=ghe.DesignGeomType.NearSquare)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestDesignSelectionSystem"
-        outputs = ghe.collect_outputs("Project Name", "Notes", "Author", "Iteration Name", output_file_directory)
-        u_tube_height = outputs['ghe_system']['active_borehole_length']
+        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
+        ghe.write_output_files(output_file_directory, "")
+        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
         self.assertAlmostEqual(130.27, u_tube_height, delta=0.01)
-        # TODO: This was being checked, but I don't see this in the output structure, need to mine it out
-        # selected_coordinates = outputs['ghe_system']['selected_coordinates']
-        self.assertEqual(156, len(ghe._search.selected_coordinates))
+        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(156 + 1, len(selected_coordinates))
 
     def test_design_selection_borehole(self):
         ghe = GHEManager()
@@ -45,9 +45,9 @@ class TestNearSquare(GHEBaseTest):
         ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.NearSquare)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestDesignSelectionBorehole"
-        outputs = ghe.collect_outputs("Project Name", "Notes", "Author", "Iteration Name", output_file_directory)
-        u_tube_height = outputs['ghe_system']['active_borehole_length']
+        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
+        ghe.write_output_files(output_file_directory, "")
+        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
         self.assertAlmostEqual(130.27, u_tube_height, delta=0.01)
-        # TODO: This was being checked, but I don't see this in the output structure, need to mine it out
-        # selected_coordinates = outputs['ghe_system']['selected_coordinates']
-        self.assertEqual(156, len(ghe._search.selected_coordinates))
+        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(156 + 1, len(selected_coordinates))
