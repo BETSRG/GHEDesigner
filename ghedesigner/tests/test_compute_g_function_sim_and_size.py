@@ -21,9 +21,9 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
 
         # Pipe dimensions
         # ---------------
-        r_out = 26.67 / 1000.0 / 2.0  # Pipe outer radius (m)
-        r_in = 21.6 / 1000.0 / 2.0  # Pipe inner radius (m)
-        s = 32.3 / 1000.0  # Inner-tube to inner-tube Shank spacing (m)
+        r_out = 0.013335  # Pipe outer radius (m)
+        r_in = 0.0108  # Pipe inner radius (m)
+        s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Pipe positions
@@ -41,9 +41,9 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
 
         # Volumetric heat capacities
         # --------------------------
-        rho_cp_p = 1542.0 * 1000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rho_cp_s = 2343.493 * 1000.0  # Soil volumetric heat capacity (J/K.m3)
-        rho_cp_g = 3901.0 * 1000.0  # Grout volumetric heat capacity (J/K.m3)
+        rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343493.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
 
         # Thermal properties
         # ------------------

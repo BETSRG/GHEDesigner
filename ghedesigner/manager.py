@@ -37,9 +37,7 @@ class GHEManager:
         self._grout: Optional[Grout] = None
         self._soil: Optional[Soil] = None
         self._pipe: Optional[Pipe] = None
-        self._u_tube_type: Optional[
-            Union[Type[SingleUTube], Type[MultipleUTube], Type[CoaxialPipe]]
-        ] = None
+        self._u_tube_type: Optional[Union[Type[SingleUTube], Type[MultipleUTube], Type[CoaxialPipe]]] = None
         self._borehole: Optional[GHEBorehole] = None
         self._simulation_parameters: Optional[SimulationParameters] = None
         self._ground_loads: Optional[List[float]] = None
@@ -132,13 +130,13 @@ class GHEManager:
         k_p = [conductivity_inner, conductivity_outer]
         self._pipe = Pipe((0, 0), r_inner, r_outer, 0, roughness, k_p, rho_cp)
 
-    def set_borehole(self, length: float, buried_depth: float, radius: float):
+    def set_borehole(self, height: float, buried_depth: float, radius: float):
         """
         length m (borehole ?length?)
         buried_depth m (burial depth?)
         radius m radius of borehole itself
         """
-        self._borehole = GHEBorehole(length, buried_depth, radius, x=0.0, y=0.0)
+        self._borehole = GHEBorehole(height, buried_depth, radius, x=0.0, y=0.0)
 
     def set_simulation_parameters(
             self, num_months: int, max_eft: float, min_eft: float, max_height: float, min_height: float
@@ -318,7 +316,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
         )
 
     ghe.set_borehole(
-        length=constraint_props["max_height"],
+        height=constraint_props["max_height"],
         buried_depth=borehole_props["buried_depth"],
         radius=borehole_props["radius"]
     )
