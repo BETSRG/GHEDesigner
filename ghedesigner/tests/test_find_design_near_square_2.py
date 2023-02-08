@@ -2,30 +2,6 @@ from ghedesigner.manager import GHEManager
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
-# Pipe dimensions
-# ---------------
-# Single and Multiple U-tubes
-# Coaxial tube
-# r_in_in = 44.2 / 1000.0 / 2.0
-# r_in_out = 50.0 / 1000.0 / 2.0
-# # Outer pipe radii
-# r_out_in = 97.4 / 1000.0 / 2.0
-# r_out_out = 110.0 / 1000.0 / 2.0
-# Pipe radii
-# Note: This convention is different from pygfunction
-# r_inner = [r_in_in, r_in_out]  # The radii of the inner pipe from in to out
-# r_outer = [r_out_in, r_out_out]  # The radii of the outer pipe from in to out
-
-# Pipe positions
-# --------------
-# Single U-tube BHE object
-# Double U-tube
-# pos_double = plat.Pipe.place_pipes(s, r_out, 2)
-# double_u_tube = MultipleUTube
-# Coaxial tube
-# pos_coaxial = (0, 0)
-# coaxial_tube = CoaxialPipe
-
 class TestNearSquare(GHEBaseTest):
 
     def test_design_selection_system(self):
@@ -48,6 +24,9 @@ class TestNearSquare(GHEBaseTest):
         outputs = ghe.collect_outputs("Project Name", "Notes", "Author", "Iteration Name", output_file_directory)
         u_tube_height = outputs['ghe_system']['active_borehole_length']
         self.assertAlmostEqual(130.27, u_tube_height, delta=0.01)
+        # TODO: This was being checked, but I don't see this in the output structure, need to mine it out
+        # selected_coordinates = outputs['ghe_system']['selected_coordinates']
+        self.assertEqual(156, len(ghe._search.selected_coordinates))
 
     def test_design_selection_borehole(self):
         ghe = GHEManager()
@@ -69,3 +48,6 @@ class TestNearSquare(GHEBaseTest):
         outputs = ghe.collect_outputs("Project Name", "Notes", "Author", "Iteration Name", output_file_directory)
         u_tube_height = outputs['ghe_system']['active_borehole_length']
         self.assertAlmostEqual(130.27, u_tube_height, delta=0.01)
+        # TODO: This was being checked, but I don't see this in the output structure, need to mine it out
+        # selected_coordinates = outputs['ghe_system']['selected_coordinates']
+        self.assertEqual(156, len(ghe._search.selected_coordinates))
