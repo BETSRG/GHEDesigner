@@ -18,12 +18,10 @@ from ghedesigner.utilities import DesignMethodTimeStep, length_of_side
 
 class TestFindNearSquareMultiyearDesign(GHEBaseTest):
 
-    def test_multiyear_loading(self):
+    def test_multiyear_loading_single_u_tube(self):
         # This file contains three examples utilizing the square-near-square design algorithm
         # (utilizing a multi-year loading) for a single U, double U, and coaxial tube  The
         # results from these examples are exported to the "DesignExampleOutput" folder.
-
-        # Single U-tube Example
 
         # Output File Configuration
         project_name = "Atlanta Office Building: Design Example"
@@ -162,8 +160,85 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             load_method=DesignMethodTimeStep.Hybrid
         )
 
-        # *************************************************************************************************************
-        # Double U-tube Example
+    def test_multiyear_loading_double_u_tube(self):
+
+        # Borehole dimensions
+        h = 96.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
+        r_b = 0.075  # Borehole radius (m)
+        b = 5.0  # Borehole spacing (m)
+
+        # Single and Multiple U-tube Pipe Dimensions
+        r_out = 0.013335  # Pipe outer radius (m)
+        r_in = 0.0108  # Pipe inner radius (m)
+        s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
+        epsilon = 1.0e-6  # Pipe roughness (m)
+
+        # Thermal conductivities
+        k_p = 0.4  # Pipe thermal conductivity (W/m.K)
+        k_s = 2.0  # Ground thermal conductivity (W/m.K)
+        k_g = 1.0  # Grout thermal conductivity (W/m.K)
+
+        # Volumetric heat capacities
+        rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343493.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
+
+        # Instantiating Soil Properties
+        ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
+        soil = Soil(k_s, rho_cp_s, ugt)
+
+        # Instantiating Grout Properties
+        grout = Grout(k_g, rho_cp_g)
+
+        # Fluid properties
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+
+        # Fluid Flow Properties
+        v_flow = 0.2  # Volumetric flow rate (L/s)
+        # Note: The flow parameter can be borehole or system.
+        flow = "borehole"
+
+        # Instantiate a Borehole
+        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+
+        # Simulation parameters
+        start_month = 1
+        n_years = 4
+        end_month = n_years * 12
+        max_eft_allowable = 35  # degrees Celsius (HP EFT)
+        min_eft_allowable = 5  # degrees Celsius (HP EFT)
+        max_height = 135.0  # in meters
+        min_height = 60  # in meters
+        sim_params = SimulationParameters(
+            start_month,
+            end_month,
+            max_eft_allowable,
+            min_eft_allowable,
+            max_height,
+            min_height,
+        )
+
+        # Process loads from file
+        # read in the csv file and convert the loads to a list of length 8760
+        csv_file = self.test_data_directory / 'Multiyear_Loading_Example.csv'
+        raw_lines = csv_file.read_text().split('\n')
+        hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
+
+        """ Geometric constraints for the `near-square` routine.
+        Required geometric constraints for the uniform rectangle design:
+          - B
+          - length
+        """
+        # B is already defined above
+        number_of_boreholes = 32
+        length = length_of_side(number_of_boreholes, b)
+        geometric_constraints = GeometricConstraintsNearSquare(b, length)
+
+        project_name = "Atlanta Office Building: Design Example"
+        author = "Jane Doe"
+        iteration_name = "Example 2"
+        output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
 
         note = "Square-Near-Square w/ Multi-year Loading Usage Example: Double U Tube"
 
@@ -222,8 +297,76 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             load_method=DesignMethodTimeStep.Hybrid,
         )
 
-        # *************************************************************************************************************
-        # Coaxial Tube Example
+    def test_multiyear_loading_coaxial(self):
+
+        # Borehole dimensions
+        h = 96.0  # Borehole length (m)
+        d = 2.0  # Borehole buried depth (m)
+        r_b = 0.075  # Borehole radius (m)
+        b = 5.0  # Borehole spacing (m)
+
+        # Single and Multiple U-tube Pipe Dimensions
+        epsilon = 1.0e-6  # Pipe roughness (m)
+
+        # Thermal conductivities
+        k_s = 2.0  # Ground thermal conductivity (W/m.K)
+        k_g = 1.0  # Grout thermal conductivity (W/m.K)
+
+        # Volumetric heat capacities
+        rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
+        rho_cp_s = 2343493.0  # Soil volumetric heat capacity (J/K.m3)
+        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
+
+        # Instantiating Soil Properties
+        ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
+        soil = Soil(k_s, rho_cp_s, ugt)
+
+        # Instantiating Grout Properties
+        grout = Grout(k_g, rho_cp_g)
+
+        # Fluid properties
+        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+
+        # Fluid Flow Properties
+        v_flow = 0.2  # Volumetric flow rate (L/s)
+        # Note: The flow parameter can be borehole or system.
+        flow = "borehole"
+
+        # Instantiate a Borehole
+        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+
+        # Simulation parameters
+        start_month = 1
+        n_years = 4
+        end_month = n_years * 12
+        max_eft_allowable = 35  # degrees Celsius (HP EFT)
+        min_eft_allowable = 5  # degrees Celsius (HP EFT)
+        max_height = 135.0  # in meters
+        min_height = 60  # in meters
+        sim_params = SimulationParameters(
+            start_month,
+            end_month,
+            max_eft_allowable,
+            min_eft_allowable,
+            max_height,
+            min_height,
+        )
+
+        # Process loads from file
+        # read in the csv file and convert the loads to a list of length 8760
+        csv_file = self.test_data_directory / 'Multiyear_Loading_Example.csv'
+        raw_lines = csv_file.read_text().split('\n')
+        hourly_extraction_ground_loads = [float(x) for x in raw_lines[1:] if x.strip() != '']
+
+        """ Geometric constraints for the `near-square` routine.
+        Required geometric constraints for the uniform rectangle design:
+          - B
+          - length
+        """
+        # B is already defined above
+        number_of_boreholes = 32
+        length = length_of_side(number_of_boreholes, b)
+        geometric_constraints = GeometricConstraintsNearSquare(b, length)
 
         note = "Square-Near-Square w/ Multi-year Loading Usage Example:Coaxial Tube"
 
@@ -282,6 +425,11 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         nbh = len(bisection_search.ghe.gFunction.bore_locations)
         self.log(f"Number of boreholes: {nbh}")
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
+
+        project_name = "Atlanta Office Building: Design Example"
+        author = "Jane Doe"
+        iteration_name = "Example 2"
+        output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
 
         # Generating Output File
         write_output_files(
