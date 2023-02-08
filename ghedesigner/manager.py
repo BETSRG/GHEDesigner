@@ -339,6 +339,11 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             b_min=constraint_props["b_min"],
             b_max=constraint_props["b_max"],
         )
+    elif geom_type == ghe.DesignGeomType.NearSquare:
+        ghe.set_geometry_constraints_near_square(
+            b=constraint_props["b"],
+            length=constraint_props["length"]
+        )
     else:
         raise ValueError("Geometry constraint method not supported.")
 
