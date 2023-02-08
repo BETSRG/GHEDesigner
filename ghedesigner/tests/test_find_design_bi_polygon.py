@@ -32,7 +32,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         note = "Bi-Uniform Polygon Usage Example: Single U Tube"
         author = "Jane Doe"
         iteration_name = "Example 6"
-        output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
+        output_file_directory = self.test_outputs_directory / "TestFindBiPolygonDesign"
 
         # Borehole dimensions
         h = 96.0  # Borehole length (m)

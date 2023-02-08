@@ -19,7 +19,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(length=96.0, buried_depth=2.0, radius=0.075)
+        ghe.set_borehole(height=96.0, buried_depth=2.0, radius=0.075)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
 
@@ -56,7 +56,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(length=96.0, buried_depth=2.0, radius=0.075)
+        ghe.set_borehole(height=96.0, buried_depth=2.0, radius=0.075)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
 
@@ -92,7 +92,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(length=96.0, buried_depth=2.0, radius=0.075)
+        ghe.set_borehole(height=96.0, buried_depth=2.0, radius=0.075)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
 

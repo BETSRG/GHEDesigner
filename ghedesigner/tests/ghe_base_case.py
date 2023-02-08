@@ -58,6 +58,12 @@ class GHEBaseTest(TestCase):
         raw_lines = glhe_json_data.read_text().split('\n')
         return [float(x) for x in raw_lines[1:] if x.strip() != '']
 
+    def get_multiyear_loads(self) -> List[float]:
+        # read in the csv file and convert the loads to a list of length 8760
+        glhe_json_data = self.test_data_directory / 'Multiyear_Loading_Example.csv'
+        raw_lines = glhe_json_data.read_text().split('\n')
+        return [float(x) for x in raw_lines[1:] if x.strip() != '']
+
     # def get_polygon_building_csv_list(self):
     #     building_file = self.test_data_directory / 'polygon_building.csv'
     #     build_polygon_df: pd.DataFrame = pd.read_csv(str(building_file))

@@ -29,7 +29,7 @@ class TestFindBiRectangleDesign(GHEBaseTest):
         note = "Bi-Rectangle Usage Example: Single U Tube"
         author = "John Doe"
         iteration_name = "Example 3"
-        output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
+        output_file_directory = self.test_outputs_directory / "TestFindBiRectangleDesign"
 
         # Borehole dimensions
         h = 96.0  # Borehole length (m)

@@ -34,7 +34,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
         note = "RowWise Usage Example w/o Perimeter Spacing: Single U Tube"
         author = "John Doe"
         iteration_name = "Example 5"
-        output_file_directory = self.test_outputs_directory / "DesignExampleOutput"
+        output_file_directory = self.test_outputs_directory / "TestFindRowWiseDesign"
 
         # Borehole dimensions
         h = 96.0  # Borehole length (m)
