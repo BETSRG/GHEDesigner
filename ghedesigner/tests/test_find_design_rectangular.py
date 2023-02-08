@@ -18,12 +18,12 @@ class TestFindRectangleDesign(GHEBaseTest):
         ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangular)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignSingleUTube"
-        outputs = ghe.collect_outputs("Project Name", "Notes", "Author", "Iteration Name", output_file_directory)
-        u_tube_height = outputs['ghe_system']['active_borehole_length']
+        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
+        ghe.write_output_files(output_file_directory, "")
+        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
         self.assertAlmostEqual(123.26, u_tube_height, delta=0.01)
-        # TODO: This was being checked, but I don't see this in the output structure, need to mine it out
-        # selected_coordinates = outputs['ghe_system']['selected_coordinates']
-        self.assertEqual(180, len(ghe._search.selected_coordinates))
+        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(180 + 1, len(selected_coordinates))
 
     def test_double_u_tube(self):
         ghe = GHEManager()
@@ -40,12 +40,12 @@ class TestFindRectangleDesign(GHEBaseTest):
         ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangular)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignDoubleUTube"
-        outputs = ghe.collect_outputs("Project Name", "Notes", "Author", "Iteration Name", output_file_directory)
-        u_tube_height = outputs['ghe_system']['active_borehole_length']
+        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
+        ghe.write_output_files(output_file_directory, "")
+        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
         self.assertAlmostEqual(127.66, u_tube_height, delta=0.01)
-        # TODO: This was being checked, but I don't see this in the output structure, need to mine it out
-        # selected_coordinates = outputs['ghe_system']['selected_coordinates']
-        self.assertEqual(144, len(ghe._search.selected_coordinates))
+        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(144 + 1, len(selected_coordinates))
 
     def test_coaxial_pipe(self):
         ghe = GHEManager()
@@ -62,9 +62,9 @@ class TestFindRectangleDesign(GHEBaseTest):
         ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangular)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignCoaxialUTube"
-        outputs = ghe.collect_outputs("Project Name", "Notes", "Author", "Iteration Name", output_file_directory)
-        u_tube_height = outputs['ghe_system']['active_borehole_length']
+        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
+        ghe.write_output_files(output_file_directory, "")
+        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
         self.assertAlmostEqual(132.58, u_tube_height, delta=0.01)
-        # TODO: This was being checked, but I don't see this in the output structure, need to mine it out
-        # selected_coordinates = outputs['ghe_system']['selected_coordinates']
-        self.assertEqual(144, len(ghe._search.selected_coordinates))
+        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(144 + 1, len(selected_coordinates))
