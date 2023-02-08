@@ -13,7 +13,7 @@ from ghedesigner.design import DesignBiRectangleConstrained
 from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
 from ghedesigner.simulation import SimulationParameters
-from ghedesigner.output import write_output_files
+from ghedesigner.output import OutputManager
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethodTimeStep
 
@@ -174,16 +174,18 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
-        write_output_files(
+        o = OutputManager(
             bisection_search,
             toc - tic,
             project_name,
             note,
             author,
             iteration_name,
+            load_method=DesignMethodTimeStep.Hybrid,
+        )  # this will just go through GHEManager methods eventually
+        o.write_all_output_files(
             output_directory=output_file_directory,
             file_suffix="_SU",
-            load_method=DesignMethodTimeStep.Hybrid,
         )
 
         # *************************************************************************************************************
@@ -233,16 +235,18 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
-        write_output_files(
+        o = OutputManager(
             bisection_search,
             toc - tic,
             project_name,
             note,
             author,
             iteration_name,
+            load_method=DesignMethodTimeStep.Hybrid,
+        )  # this will just go through GHEManager methods eventually
+        o.write_all_output_files(
             output_directory=output_file_directory,
             file_suffix="_DU",
-            load_method=DesignMethodTimeStep.Hybrid,
         )
 
         # *************************************************************************************************************
@@ -305,14 +309,16 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
 
         # Generating Output File
-        write_output_files(
+        o = OutputManager(
             bisection_search,
             toc - tic,
             project_name,
             note,
             author,
             iteration_name,
+            load_method=DesignMethodTimeStep.Hybrid,
+        )  # this will just go through GHEManager methods eventually
+        o.write_all_output_files(
             output_directory=output_file_directory,
             file_suffix="_C",
-            load_method=DesignMethodTimeStep.Hybrid,
         )

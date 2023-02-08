@@ -13,7 +13,7 @@ from ghedesigner.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, Sin
 from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-from ghedesigner.output import write_output_files, get_design_summary_object
+from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
 from ghedesigner.utilities import DesignMethodTimeStep
 
@@ -48,6 +48,7 @@ class GHEManager:
         self._geometric_constraints: Optional[GeometricConstraints] = None
         self._design: Optional[DesignBase] = None
         self._search: Optional[AnyBisectionType] = None
+        self.results: Optional[OutputManager] = None
 
         # some things for results
         self._search_time: int = 0
@@ -236,22 +237,19 @@ class GHEManager:
         # TODO: Don't hard-wire Hybrid here
         self._search.ghe.size(method=DesignMethodTimeStep.Hybrid)
 
-    def collect_outputs(self, project_name: str, note: str, author: str, iteration_name: str, output_directory: Path,
-                        output_file_suffix: str = "") -> dict:
-        # Generating Output File
-        write_output_files(
+    def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str) -> None:
+        self.results = OutputManager(
             self._search,
             self._search_time,
             project_name,
             note,
             author,
             iteration_name,
-            output_directory=output_directory,
-            file_suffix=output_file_suffix,
             load_method=DesignMethodTimeStep.Hybrid,
         )
-        return get_design_summary_object(self._search, self._search_time, project_name, note, author, iteration_name,
-                                         DesignMethodTimeStep.Hybrid)
+
+    def write_output_files(self, output_directory: Path, output_file_suffix: str = ""):
+        self.results.write_all_output_files(output_directory=output_directory, file_suffix=output_file_suffix)
 
 
 def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
@@ -348,7 +346,8 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
     )
 
     ghe.find_design()
-    ghe.collect_outputs("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name", output_directory, "_CLI")
+    ghe.prepare_results("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
+    ghe.write_output_files(output_directory, "_CLI")
 
 
 @click.command(name="GHEDesignerCommandLine")
