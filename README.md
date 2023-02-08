@@ -2,7 +2,7 @@
 
 GHEDesigner is a Python package for designing ground heat exchangers (GHE) used with ground source heat pump (GSHP) systems. Compared to currently available tools such as [GLHEPRO](https://hvac.okstate.edu/glhepro.html), GHEDesigner:
 - is flexible. It can synthesize borehole fields that are custom fit to the user's property description,
-- implements the RowWise algorithm (Spitler, et al. 2022) for automatically placing and sizing boreholes in any land area with complex geometry, 
+- implements the RowWise algorithm (Spitler, et al. 2022) for automatically placing and sizing boreholes in any land area with complex geometry,
 - is highly automated. It can select library configurations or custom configurations and determine the final number and depth requirement of boreholes,
 - can make automated conversion of hourly loads to an improved hybrid time step representation, based on the recommendations of Cullin and Spitler (2011), and
 - is under continuing development at Oklahoma State University (OSU), Oak Ridge National Laboratory (ORNL), and National Renewable Energy Laboratory (NREL).
@@ -30,7 +30,7 @@ Updates since Cook (2021) include:
   - The RowWise method generates and searches custom borehole fields that make full use of the available property. The RowWise algorithms are described by Spitler et al. (2022a).
 
 ## Limitations
-GHEDesigner does not have every feature that is found in a tool like GLHEPRO. Features that are currently missing include:
+GHEDesigner does not have every feature that is found in a tool like GLHEPro. Features that are currently missing include:
 - Heat pumps are not modeled. Users input heat rejection/extraction rates.
 - An hourly simulation is available, but it doesn't make use of load aggregation, so is very slow.
 - GHEDesigner only covers vertical borehole ground heat exchangers. Horizontal ground heat exchangers are not treated.
@@ -42,7 +42,7 @@ GHEDesigner does not have every feature that is found in a tool like GLHEPRO. Fe
 
 GHEDesigner requires at least Python 3.7 and is tested with Python 3.8. GHEDesigner is dependent on the following packages:
 
-- pygfunction (>=2.1)
+- pygfunction (>=2.2.2)
 - numpy (>=1.19.2)
 - scipy (>=1.6.2)
 - opencv-python (==4.5.4.58)

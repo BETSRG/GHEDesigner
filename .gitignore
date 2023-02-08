@@ -167,3 +167,4 @@ ghedesigner/tests/test_logs
 DesignExampleOutput/
 tmp/
 examples/
+demo_outputs/
