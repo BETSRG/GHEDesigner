@@ -13,7 +13,7 @@ from ghedesigner.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, Sin
 from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-from ghedesigner.output import write_output_files, get_design_summary_object
+from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
 from ghedesigner.utilities import DesignMethodTimeStep
 
@@ -238,8 +238,9 @@ class GHEManager:
 
     def collect_outputs(self, project_name: str, note: str, author: str, iteration_name: str, output_directory: Path,
                         output_file_suffix: str = "") -> dict:
+        o = OutputManager()
         # Generating Output File
-        write_output_files(
+        o.write_all_output_files(
             self._search,
             self._search_time,
             project_name,
@@ -250,8 +251,8 @@ class GHEManager:
             file_suffix=output_file_suffix,
             load_method=DesignMethodTimeStep.Hybrid,
         )
-        return get_design_summary_object(self._search, self._search_time, project_name, note, author, iteration_name,
-                                         DesignMethodTimeStep.Hybrid)
+        return o.get_summary_object(self._search, self._search_time, project_name, note, author, iteration_name,
+                                    DesignMethodTimeStep.Hybrid)
 
 
 def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):

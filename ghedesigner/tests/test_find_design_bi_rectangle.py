@@ -12,7 +12,7 @@ from ghedesigner.design import DesignBiRectangle
 from ghedesigner.geometry import GeometricConstraintsBiRectangle
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
 from ghedesigner.simulation import SimulationParameters
-from ghedesigner.output import write_output_files
+from ghedesigner.output import OutputManager
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 from ghedesigner.utilities import DesignMethodTimeStep
 
@@ -153,7 +153,8 @@ class TestFindBiRectangleDesign(GHEBaseTest):
         # l_x_perimeter = 85.0
         # l_y_perimeter = 80.0
 
-        write_output_files(
+        o = OutputManager()  # this will just go through GHEManager methods eventually
+        o.write_all_output_files(
             bisection_search,
             toc - tic,
             project_name,
