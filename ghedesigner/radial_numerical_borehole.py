@@ -331,20 +331,38 @@ class RadialNumericalBH(object):
         _center_cell = radial_cell[:, 1: self.num_cells - 1]
         _east_cell = radial_cell[:, 2: self.num_cells - 0]
 
+        fe_1 = log(radial_cell[r_out_idx, 0] / radial_cell[r_center_idx, 0]) / (2.0 * pi * radial_cell[k_idx, 0])
+        fe_2 = log(radial_cell[r_center_idx, 1] / radial_cell[r_in_idx, 1]) / (2.0 * pi * radial_cell[k_idx, 1])
+        ae = 1 / (fe_1 + fe_2)
+        ad = radial_cell[rho_cp_idx, 0] * radial_cell[volume_idx, 0] / time_step
+        _d[0] = -ae / ad - 1
+        _du[0] = ae / ad
+
+        def fill_f1(fx_1, cell):
+            fx_1[:] = np.log(cell[r_out_idx, :] / cell[r_center_idx, :]) / (2.0 * pi * cell[k_idx, :])
+
+        def fill_f2(fx_2, cell):
+            fx_2[:] = np.log(cell[r_center_idx, :] / cell[r_in_idx, :]) / (2.0 * pi * cell[k_idx, :])
+
+        fill_f1(_fe_1, _center_cell)
+        fill_f2(_fe_2, _east_cell)
+        _ae[:] = 1.0 / (_fe_1 + _fe_2)
+
+        fill_f1(_fw_1, _west_cell)
+        fill_f2(_fw_2, _center_cell)
+        _aw[:] = -1.0 / (_fw_1 + _fw_2)
+
+        _ad[:] = (_center_cell[rho_cp_idx, :] * _center_cell[volume_idx, :] / time_step)
+        _dl[0: self.num_cells - 2] = -_aw / _ad
+        _d[1: self.num_cells - 1] = _aw / _ad - _ae / _ad - 1.0
+        _du[1: self.num_cells - 1] = _ae / _ad
+
         while True:
 
             time += time_step
 
             # For the idx == 0 case:
 
-            fe_1 = log(radial_cell[r_out_idx, 0] / radial_cell[r_center_idx, 0]) / (2.0 * pi * radial_cell[k_idx, 0])
-            fe_2 = log(radial_cell[r_center_idx, 1] / radial_cell[r_in_idx, 1]) / (2.0 * pi * radial_cell[k_idx, 1])
-            ae = 1 / (fe_1 + fe_2)
-
-            ad = radial_cell[rho_cp_idx, 0] * radial_cell[volume_idx, 0] / time_step
-
-            _d[0] = -ae / ad - 1
-            _du[0] = ae / ad
             _b[0] = -radial_cell[previous_temperature_idx, 0] - heat_flux / ad
 
             # For the idx == n-1 case
@@ -354,26 +372,6 @@ class RadialNumericalBH(object):
             _b[self.num_cells - 1] = radial_cell[previous_temperature_idx, self.num_cells - 1]
 
             # Now handle the 1 to n-2 cases with numpy slicing and vectorization
-
-            def fill_f1(fx_1, cell):
-                fx_1[:] = np.log(cell[r_out_idx, :] / cell[r_center_idx, :]) / (2.0 * pi * cell[k_idx, :])
-
-            def fill_f2(fx_2, cell):
-                fx_2[:] = np.log(cell[r_center_idx, :] / cell[r_in_idx, :]) / (2.0 * pi * cell[k_idx, :])
-
-            fill_f1(_fe_1, _center_cell)
-            fill_f2(_fe_2, _east_cell)
-            _ae[:] = 1.0 / (_fe_1 + _fe_2)
-
-            fill_f1(_fw_1, _west_cell)
-            fill_f2(_fw_2, _center_cell)
-            _aw[:] = -1.0 / (_fw_1 + _fw_2)
-
-            _ad[:] = (_center_cell[rho_cp_idx, :] * _center_cell[volume_idx, :] / time_step)
-
-            _dl[0: self.num_cells - 2] = -_aw / _ad
-            _d[1: self.num_cells - 1] = _aw / _ad - _ae / _ad - 1.0
-            _du[1: self.num_cells - 1] = _ae / _ad
             _b[1: self.num_cells - 1] = -radial_cell[previous_temperature_idx, 1: self.num_cells - 1]
 
             # Tri-diagonal matrix solver

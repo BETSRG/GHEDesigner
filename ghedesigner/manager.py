@@ -252,7 +252,7 @@ class GHEManager:
             load_method=DesignMethodTimeStep.Hybrid,
         )
         return o.get_summary_object(self._search, self._search_time, project_name, note, author, iteration_name,
-                                         DesignMethodTimeStep.Hybrid)
+                                    DesignMethodTimeStep.Hybrid)
 
 
 def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
