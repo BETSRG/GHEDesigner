@@ -48,15 +48,16 @@ Updates since Cook (2021) include:
 - GHEDesigner can synthesize a range of regularly shaped borehole configurations, including previously available
   shapes (rectangles, open rectangles, L-shape, U-shape, line) and shapes not previously available (C-shapes and zoned
   rectangles). More information about these shapes can be found in the documentation for a publicly available g-function
-  library. (Spitler, et al. 2021, 2022b)
+  library. ([Spitler, et al. 2021](https://doi.org/10.15121/1811518), \
+  [2022b](https://doi.org/10.22488/okstate.22.000040))
 - GHEDesigner can synthesize on the fly irregularly shaped borehole configurations using the RowWise
   algorithm ([Spitler, et al. 2022a](https://doi.org/10.15121/1811518)) or the bi-uniform polygonal constrained
   rectangular search (BUPCRS) (Cook 2021). Both configurations are adapted to the user-specified property boundaries and
   no-drill zones, if any. [Spitler, et al. 2022a](https://doi.org/10.15121/1811518) gives an example where the RowWise
   algorithm saves 12-18% compared to the BUPCRS algorithm. The RowWise algorithm takes longer to run, though.
 - A set of search routines can be used to size different types of configurations:
-    - The unconstrained square/near-square search will search a domain of square (n x n) and near-square (*n-1* x *n*)
-      boreholes fields, with uniform spacing between the boreholes.
+    - The unconstrained square/near-square search will search a domain of square (*n* x *n*) and near-square 
+      (*n-1* x *n*) boreholes fields, with uniform spacing between the boreholes.
     - Uniform and bi-uniform constrained rectangular searches will search domains of rectangular configurations that
       have either uniform spacing or "bi-uniform" spacing – that is, uniform in the x direction and uniform in the y
       direction, but the two spacings may be different.
@@ -67,7 +68,7 @@ Updates since Cook (2021) include:
       still based on a rectangular grid, from which boreholes that are outside the perimeter or inside a no-go zone are
       removed.
     - The RowWise method generates and searches custom borehole fields that make full use of the available property. The
-      RowWise algorithms are described by Spitler et al. (2022a).
+      RowWise algorithms are described by [Spitler et al. (2022a)](https://shareok.org/handle/11244/336846).
 
 ## Limitations
 
@@ -141,14 +142,14 @@ Prieto, C. and M. Cimmino. 2021. Thermal interactions in large irregular fields 
 equivalent boreholes. Journal of Building Performance Simulation 14(4):
 446-460. https://doi.org/10.1080/19401493.2021.1968953
 
+Spitler, J. D., J. Cook, T. West and X. Liu 2021. G-Function Library for Modeling Vertical Bore Ground Heat Exchanger,
+Oak Ridge National Laboratory. https://doi.org/10.15121/1811518
+
 Spitler, J.D., T.N. West and X. Liu. 2022a. Ground Heat Exchanger Design Tool with RowWise Placement of Boreholes.
 IGSHPA Research Conference Proceedings. Pp. 53-60. Las Vegas. Dec. 6-8. https://doi.org/10.22488/okstate.22.000016
 
-Spitler, J.D., T.N. West, X. Liu and I. Borshon. 2022. An open library of g-functions for 34,321 configurations. IGSHPA
+Spitler, J.D., T.N. West, X. Liu and I. Borshon. 2022b. An open library of g-functions for 34,321 configurations. IGSHPA
 Research Conference Proceedings. Pp. 264-271. Las Vegas. Dec. 6-8  https://doi.org/10.22488/okstate.22.000040
-
-Spitler, J. D., J. Cook, T. West and X. Liu 2021. G-Function Library for Modeling Vertical Bore Ground Heat Exchanger,
-Oak Ridge National Laboratory. https://doi.org/10.15121/1811518
 
 Xu, X. and J. D. Spitler. 2006. _Modelling of Vertical Ground Loop Heat Exchangers with Variable Convective Resistance
 and Thermal Mass of the Fluid_. 10th International Conference on Thermal Energy Storage - Ecostock 2006, Pomona,
