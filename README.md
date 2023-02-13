@@ -41,7 +41,8 @@ Updates since [Cook (2021)](https://hdl.handle.net/11244/335489) include:
 - Borehole thermal resistance is computed for single and double U-tube configurations via the multipole
   method ([Claesson and Hellström 2011](https://doi.org/10.1080/10789669.2011.609927)). For coaxial ground heat
   exchangers, it is computed from fundamental heat transfer relationships.
-- Short time-step g-functions are computed using the Xu and Spitler (2006) method.
+- Short time-step g-functions are computed using the
+  [Xu and Spitler (2006)](https://hvac.okstate.edu/sites/default/files/pubs/papers/2006/07-Xu_Spitler_06.pdf) method.
 - GHEDesigner contains a novel design methodology for automated selection of borehole fields. The advanced methodology
   performs optimization based on a target drilling depth. An integer bisection routine is utilized to quickly search
   over a uni-modal domain of boreholes. GHEDesigner can consider the available land area for drilling and no-drilling
