@@ -11,8 +11,8 @@ as [GLHEPRO](https://betsrg.org/ground-loop-heat-exchanger-design-software), GHE
   depth requirement of boreholes,
 - can make automated conversion of hourly loads to an improved hybrid time step
   representation ([Cullin and Spitler 2011](https://doi.org/10.1016/j.geothermics.2011.01.001)), and
-- is under continuing development at Oklahoma State University (OSU), Oak Ridge National Laboratory (ORNL), and National
-  Renewable Energy Laboratory (NREL). (GLHEPRO remains under development at OSU.)
+- is under continuing development at Oklahoma State University (OSU), Oak Ridge National Laboratory (ORNL), and the
+  National Renewable Energy Laboratory (NREL). (GLHEPRO remains under development at OSU.)
 
 ## Background
 
@@ -22,15 +22,16 @@ online [screening tool](https://gshp.ornl.gov/login) ([Liu, et al. 2022](http://
 for techno-economic analysis and design of ground-source heat pump systems. The Oklahoma State University team led by
 Prof. Jeffrey D. Spitler was contracted to investigate fast methods for computing g-functions. An outgrowth of this
 research was a tool for automatically selecting and sizing borehole configurations. This tool, originally called GHEDT,
-is described in an MS thesis (Cook 2021). Since that time, the tool has been renamed GHEDesigner, and work has continued
-at Oklahoma State University, Oak Ridge National Laboratory, and National Renewable Energy Laboratory
+is described in an MS thesis ([Cook 2021](https://hdl.handle.net/11244/335489)). Since that time, the tool has been
+renamed GHEDesigner, and work has continued at Oklahoma State University, Oak Ridge National Laboratory, and the
+National Renewable Energy Laboratory.
 
-Updates since Cook (2021) include:
+Updates since [Cook (2021)](https://hdl.handle.net/11244/335489) include:
 
 - Development and addition of RowWise algorithm to efficiently place boreholes in the available land area.
 - Extensive refactoring for creating a user-focused, stable API.
 - Simplification of library dependencies.
-- Development of automated testing and deployment.
+- Development of automated testing and deployment proceedures.
 
 ## Borehole Field Design Algorithms
 
@@ -52,11 +53,12 @@ Updates since Cook (2021) include:
   [2022b](https://doi.org/10.22488/okstate.22.000040))
 - GHEDesigner can synthesize on the fly irregularly shaped borehole configurations using the RowWise
   algorithm ([Spitler, et al. 2022a](https://doi.org/10.15121/1811518)) or the bi-uniform polygonal constrained
-  rectangular search (BUPCRS) (Cook 2021). Both configurations are adapted to the user-specified property boundaries and
-  no-drill zones, if any. [Spitler, et al. 2022a](https://doi.org/10.15121/1811518) gives an example where the RowWise
-  algorithm saves 12-18% compared to the BUPCRS algorithm. The RowWise algorithm takes longer to run, though.
+  rectangular search (BUPCRS) ([Cook 2021](https://hdl.handle.net/11244/335489)). Both configurations are adapted to the
+  user-specified property boundaries and no-drill zones, if any. [Spitler, et al. 2022a](https://doi.org/10.15121/1811518)
+  gives an example where the RowWise algorithm saves 12-18% compared to the BUPCRS algorithm. The RowWise algorithm takes
+  longer to run, though.
 - A set of search routines can be used to size different types of configurations:
-    - The unconstrained square/near-square search will search a domain of square (*n* x *n*) and near-square 
+    - The unconstrained square/near-square search will search a domain of square (*n* x *n*) and near-square
       (*n-1* x *n*) boreholes fields, with uniform spacing between the boreholes.
     - Uniform and bi-uniform constrained rectangular searches will search domains of rectangular configurations that
       have either uniform spacing or "bi-uniform" spacing – that is, uniform in the x direction and uniform in the y
@@ -88,11 +90,11 @@ include:
 GHEDesigner is supported for Python versions >= 3.8, and is tested with Python 3.8 and 3.9. GHEDesigner is dependent on
 the following packages:
 
-- [pygfunction][#pygfunction] (>=2.2.2)
-- [numpy][#numpy] (>=1.19.2)
-- [scipy][#scipy] (>=1.6.2)
-- [opencv-python][#opencv] (==4.5.4.58)
 - [click][#click] (>=8.1)
+- [numpy][#numpy] (>=1.19.2)
+- [opencv-python][#opencv] (==4.5.4.58)
+- [pygfunction][#pygfunction] (>=2.2.2)
+- [scipy][#scipy] (>=1.6.2)
 
 ## Quick Start
 
@@ -123,13 +125,13 @@ indirect costs to Dr. Jeffrey D. Spitler.
 ## References
 
 Cimmino, M. 2018. pygfunction: an open-source toolbox for the evaluation of thermal. eSim 2018, Montreál, IBPSA Canada.
-492-501.
+492-501. http://www.ibpsa.org/proceedings/eSimPapers/2018/2-3-A-4.pdf
 
 Claesson, J. and G. Hellström. 2011. Multipole method to calculate borehole thermal resistances in a borehole heat
 exchanger. HVAC&R Research 17(6): 895-911. https://doi.org/10.1080/10789669.2011.609927
 
 Cook, J.C. (2021). Development of Computer Programs for Fast Computation of g-Functions and Automated Ground Heat
-Exchanger Design. Master's Thesis, Oklahoma State University, Stillwater, OK.
+Exchanger Design. Master's Thesis, Oklahoma State University, Stillwater, OK. https://hdl.handle.net/11244/335489
 
 Cullin, J.R. and J.D. Spitler. 2011. A Computationally Efficient Hybrid Time Step Methodology for Simulation of Ground
 Heat Exchangers. Geothermics. 40(2): 144-156. https://doi.org/10.1016/j.geothermics.2011.01.001
