@@ -91,11 +91,11 @@ include:
 GHEDesigner is supported for Python versions >= 3.8, and is tested with Python 3.8 and 3.9. GHEDesigner is dependent on
 the following packages:
 
-- [click][#click] (>=8.1)
-- [numpy][#numpy] (>=1.19.2)
-- [opencv-python][#opencv] (==4.5.4.58)
+- [click][#click] (>=8.1.3)
+- [numpy][#numpy] (>=1.24.2)
+- [opencv-python][#opencv] (==4.7.0.68)
 - [pygfunction][#pygfunction] (>=2.2.2)
-- [scipy][#scipy] (>=1.6.2)
+- [scipy][#scipy] (>=1.10.0)
 
 ## Quick Start
 
