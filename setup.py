@@ -8,9 +8,9 @@ this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-short_description = """A ground heat exchanger design tool with the advanced and
-unmatched capability of automatic borehole field selection
-based on drilling geometric land constraints."""
+short_description = """A ground heat exchanger design tool with the capability
+to select and size flexibly configured borehole fields that are customized
+for specific building and property constraints."""
 
 setup(
     name='ghedesigner',
