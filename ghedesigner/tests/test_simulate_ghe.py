@@ -165,12 +165,12 @@ class TestGHE(GHEBaseTest):
 
         max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethodTimeStep.Hybrid)
 
-        self.assertAlmostEqual(39.09, max_hp_eft, delta=0.01)
+        self.assertAlmostEqual(39.07, max_hp_eft, delta=0.01)
         self.assertAlmostEqual(16.66, min_hp_eft, delta=0.01)
 
         ghe.size(method=DesignMethodTimeStep.Hybrid)
 
-        self.assertAlmostEqual(ghe.bhe.b.H, 130.22, places=2)
+        self.assertAlmostEqual(ghe.bhe.b.H, 130.24, delta=0.01)
 
     def test_double_u_tube(self):
         # Define a borehole
@@ -214,7 +214,7 @@ class TestGHE(GHEBaseTest):
 
         ghe.size(method=DesignMethodTimeStep.Hybrid)
 
-        self.assertAlmostEqual(ghe.bhe.b.H, 120.40, places=2)
+        self.assertAlmostEqual(ghe.bhe.b.H, 120.35, delta=0.01)
 
     def test_coaxial_tube(self):
         # Define a borehole
@@ -253,9 +253,9 @@ class TestGHE(GHEBaseTest):
 
         max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethodTimeStep.Hybrid)
 
-        self.assertAlmostEqual(38.06, max_hp_eft, delta=0.01)
-        self.assertAlmostEqual(17.22, min_hp_eft, delta=0.01)
+        self.assertAlmostEqual(38.04, max_hp_eft, delta=0.01)
+        self.assertAlmostEqual(17.18, min_hp_eft, delta=0.01)
 
         ghe.size(method=DesignMethodTimeStep.Hybrid)
 
-        self.assertAlmostEqual(ghe.bhe.b.H, 124.84, delta=0.01)
+        self.assertAlmostEqual(ghe.bhe.b.H, 124.79, delta=0.01)

@@ -1,7 +1,6 @@
 # Purpose: Design a constrained RowWise field using the common
 # design interface with a single U-tube borehole heat exchanger.
 
-# This search is described in <placeholder>.
 
 import csv
 from math import pi
