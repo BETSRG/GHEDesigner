@@ -15,11 +15,11 @@ for specific building and property constraints."""
 setup(
     name='ghedesigner',
     install_requires=[
-        'click>=8.1',
-        'numpy>=1.19.2',
-        'opencv-python==4.5.4.58',
+        'click>=8.1.3',
+        'numpy>=1.24.2',
+        'opencv-python==4.7.0.68',
         'pygfunction>=2.2.2',
-        'scipy>=1.6.2'
+        'scipy>=1.10.0'
     ],
     url='https://github.com/BETSRG/GHEDesigner',
     description=short_description,
