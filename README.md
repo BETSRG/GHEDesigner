@@ -31,7 +31,7 @@ Updates since [Cook (2021)](https://hdl.handle.net/11244/335489) include:
 - Development and addition of RowWise algorithm to efficiently place boreholes in the available land area.
 - Extensive refactoring for creating a user-focused, stable API.
 - Simplification of library dependencies.
-- Development of automated testing and deployment proceedures.
+- Development of automated testing and deployment procedures.
 
 ## Borehole Field Design Algorithms
 
