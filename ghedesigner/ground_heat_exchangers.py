@@ -101,9 +101,7 @@ class BaseGHE:
 
     def grab_g_function(self, b_over_h):
         # interpolate for the Long time step g-function
-        g_function, rb_value, d_value, h_eq = self.gFunction.g_function_interpolation(
-            b_over_h
-        )
+        g_function, rb_value, _, _ = self.gFunction.g_function_interpolation(b_over_h)
         # correct the long time step for borehole radius
         g_function_corrected = self.gFunction.borehole_radius_correction(
             g_function, rb_value, self.bhe.b.r_b
