@@ -2,7 +2,7 @@ Pull request overview
 --------------
 Please delete this line and add a description of the pull request.
 
-- PR addresses #ISSUENUMBERHERE (if applicable)
+- PR resolves #ISSUENUMBERHERE (if applicable)
 - Describe the purpose of the PR
 
 ### Checklist

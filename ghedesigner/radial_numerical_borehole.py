@@ -272,9 +272,7 @@ class RadialNumericalBH(object):
             )
         cell_summation += num_soil_cells
 
-    def calc_sts_g_functions(
-            self, single_u_tube, final_time=None, calculate_at_bh_wall=False
-    ) -> tuple:
+    def calc_sts_g_functions(self, single_u_tube, final_time=None, calculate_at_bh_wall=False) -> tuple:
 
         self.__init__(single_u_tube)
 
@@ -428,10 +426,17 @@ class RadialNumericalBH(object):
             lntts.append(log(time / self.t_s))
 
             if time >= final_time - time_step:
-                self.g = np.insert(self.g, 0, g, axis=0)
-                self.lntts = np.insert(self.lntts, 0, lntts, axis=0)
                 break
 
-        self.g_sts = interp1d(lntts, g)
+        # quickly chop down the total values to a more manageable set
+        num_intervals = 30
+        g_sts_temp = interp1d(lntts, g)
+        uniform_lntts_vals = np.linspace(lntts[0], lntts[-1], num_intervals)
+        uniform_g_vals = g_sts_temp(uniform_lntts_vals)
+
+        # set the final arrays and interpolator objects
+        self.lntts = np.array(uniform_lntts_vals)
+        self.g = np.array(uniform_g_vals)
+        self.g_sts = interp1d(self.lntts, self.g)
 
         return self.lntts, self.g
