@@ -221,7 +221,8 @@ class OutputManager:
                 'grout_volumetric_heat_capacity': add_with_units(design.ghe.bhe.grout.rhoCp, 'kJ/m3-K'),
                 # TODO: Corrected arg to .rhoCp - verify, should be / 1000?
                 'reynolds_number': reynolds,
-                'effective_borehole_resistance': add_with_units(design.ghe.bhe.calc_effective_borehole_resistance(), 'W/m-K'),
+                'effective_borehole_resistance': add_with_units(design.ghe.bhe.calc_effective_borehole_resistance(),
+                                                                'W/m-K'),
                 # TODO: are the units right here?
                 'soil_thermal_conductivity': add_with_units(design.ghe.bhe.soil.k, 'W/m-K'),
                 'soil_volumetric_heat_capacity': add_with_units(design.ghe.bhe.soil.rhoCp, 'kJ/m3-K'),

@@ -14,7 +14,6 @@ from ghedesigner.tests.ghe_base_case import GHEBaseTest
 class TestFindBiRectangleDesign(GHEBaseTest):
 
     def test_single_u_tube(self):
-
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
             inner_radius=0.0108, outer_radius=0.013335, shank_spacing=0.0323,

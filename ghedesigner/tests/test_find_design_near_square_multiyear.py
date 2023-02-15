@@ -14,7 +14,6 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
     # results from these examples are exported to the "DesignExampleOutput" folder.
 
     def test_multiyear_loading_single_u_tube(self):
-
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
             inner_radius=0.0108, outer_radius=0.013335, shank_spacing=0.0323,
@@ -39,7 +38,6 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         self.assertEqual(16 + 1, len(selected_coordinates))
 
     def test_multiyear_loading_double_u_tube(self):
-
         ghe = GHEManager()
         ghe.set_double_u_tube_pipe(
             inner_radius=0.0108, outer_radius=0.013335, shank_spacing=0.0323,
@@ -63,7 +61,6 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         self.assertEqual(16 + 1, len(selected_coordinates))
 
     def test_multiyear_loading_coaxial(self):
-
         ghe = GHEManager()
         ghe.set_coaxial_pipe(
             inner_pipe_r_in=0.0221, inner_pipe_r_out=0.025, outer_pipe_r_in=0.0487, outer_pipe_r_out=0.055,
