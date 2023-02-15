@@ -76,9 +76,7 @@ class BaseGHE:
         return output
 
     @staticmethod
-    def combine_sts_lts(
-            log_time_lts: list, g_lts: list, log_time_sts: list, g_sts: list
-    ) -> interp1d:
+    def combine_sts_lts(log_time_lts: list, g_lts: list, log_time_sts: list, g_sts: list) -> interp1d:
         # make sure the short time step doesn't overlap with the long time step
         max_log_time_sts = max(log_time_sts)
         min_log_time_lts = min(log_time_lts)

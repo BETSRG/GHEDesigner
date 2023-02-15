@@ -141,10 +141,7 @@ class OutputManager:
         gfunction_log_vals = ghe_gf_adjusted.x
         gfunction_g_vals = ghe_gf_adjusted.y
         for log_val, g_val in zip(gfunction_log_vals, gfunction_g_vals):
-            gf_row = list()
-            gf_row.append(log_val)
-            gf_row.append(g_val)
-            csv_array.append(gf_row)
+            csv_array.append([log_val, g_val])
         return csv_array
 
     def get_summary_object(self,
