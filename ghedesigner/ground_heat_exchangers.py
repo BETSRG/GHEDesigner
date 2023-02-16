@@ -52,7 +52,7 @@ class BaseGHE:
 
         # Radial numerical short time step
         self.radial_numerical = RadialNumericalBH(self.bhe_eq)
-        self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
+        self.radial_numerical.calc_sts_g_functions()
 
         # gFunction object
         self.gFunction = g_function
@@ -296,10 +296,8 @@ class GHE(BaseGHE):
         b = self.B_spacing
         b_over_h = b / self.bhe.b.H
 
-        # Solve for equivalent single U-tube
-        self.bhe_eq = self.bhe.to_single()
         # Update short time step object with equivalent single u-tube
-        self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
+        self.radial_numerical.calc_sts_g_functions()
         # Combine the short and long-term g-functions. The long term g-function
         # is interpolated for specific B/H and rb/H values.
         g = self.grab_g_function(b_over_h)
@@ -365,10 +363,9 @@ class GHE(BaseGHE):
                 "the heat exchanger."
             )
         if returned_height == self.sim_params.max_height:
-            pass  # TODO: Handle warnings in a nicer way
-            # warnings.warn(
-            #     "The maximum height provided to size this ground "
-            #     "heat exchanger is not deep enough. Provide a deeper "
-            #     "allowable depth or increase the size of the heat "
-            #     "exchanger."
-            # )
+            warnings.warn(
+                "The maximum height provided to size this ground "
+                "heat exchanger is not deep enough. Provide a deeper "
+                "allowable depth or increase the size of the heat "
+                "exchanger."
+            )
