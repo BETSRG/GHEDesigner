@@ -272,9 +272,7 @@ class RadialNumericalBH(object):
             )
         cell_summation += num_soil_cells
 
-    def calc_sts_g_functions(self, single_u_tube, final_time=None, calculate_at_bh_wall=False) -> tuple:
-
-        self.__init__(single_u_tube)
+    def calc_sts_g_functions(self, final_time=None, calculate_at_bh_wall=False) -> tuple:
 
         resist_bh_effective = self.single_u_tube.calc_effective_borehole_resistance()
 
