@@ -357,6 +357,7 @@ class GHE(BaseGHE):
             rel_tol=1.0e-6,
             max_iter=50,
         )
+        # TODO: revaluate whether these warnings are appropriate
         if returned_height == self.sim_params.min_height:
             warnings.warn(
                 "The minimum height provided to size this ground heat"
@@ -365,10 +366,9 @@ class GHE(BaseGHE):
                 "the heat exchanger."
             )
         if returned_height == self.sim_params.max_height:
-            pass  # TODO: Handle warnings in a nicer way
-            # warnings.warn(
-            #     "The maximum height provided to size this ground "
-            #     "heat exchanger is not deep enough. Provide a deeper "
-            #     "allowable depth or increase the size of the heat "
-            #     "exchanger."
-            # )
+            warnings.warn(
+                "The maximum height provided to size this ground "
+                "heat exchanger is not deep enough. Provide a deeper "
+                "allowable depth or increase the size of the heat "
+                "exchanger."
+            )

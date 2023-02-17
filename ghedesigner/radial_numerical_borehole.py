@@ -102,6 +102,17 @@ class RadialNumericalBH(object):
         self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * 3600.0])
         self.g_sts = None
 
+    def partial_init(self, single_u_tube: SingleUTube):
+        # TODO: unravel how to eliminate this.
+        # - It was calling the full class ctor "self.__init__()" which is just plain wrong...
+        # - Now we're calling a stripped down version with only the most essential
+        #   variables which are required.
+        # - This is here partially because equivalent boreholes are generated.
+        self.single_u_tube = single_u_tube
+        soil_diffusivity = single_u_tube.k_s / single_u_tube.soil.rhoCp
+        self.t_s = single_u_tube.b.H ** 2 / (9 * soil_diffusivity)
+        self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * 3600.0])
+
     def fill_radial_cell(self, radial_cell, resist_p_eq, resist_f_eq, resist_tg_eq):
 
         num_fluid_cells = self.num_fluid_cells
@@ -274,7 +285,7 @@ class RadialNumericalBH(object):
 
     def calc_sts_g_functions(self, single_u_tube, final_time=None, calculate_at_bh_wall=False) -> tuple:
 
-        self.__init__(single_u_tube)
+        self.partial_init(single_u_tube)
 
         resist_bh_effective = self.single_u_tube.calc_effective_borehole_resistance()
 
