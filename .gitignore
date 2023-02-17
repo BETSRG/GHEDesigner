@@ -168,3 +168,4 @@ DesignExampleOutput/
 tmp/
 examples/
 demo_outputs/
+.DS_Store
