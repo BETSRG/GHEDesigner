@@ -10,8 +10,8 @@ from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsBiRec
     GeometricConstraintsRectangle, GeometricConstraintsBiZoned, GeometricConstraintsBiRectangleConstrained, \
     GeometricConstraintsRowWise
 from ghedesigner.media import Grout, Pipe, Soil, GHEFluid
-from ghedesigner.simulation import SimulationParameters
 from ghedesigner.search_routines import Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch
+from ghedesigner.simulation import SimulationParameters
 from ghedesigner.utilities import DesignMethodTimeStep
 
 AnyBoreholeType = Union[Type[SingleUTube], Type[MultipleUTube], Type[CoaxialPipe]]

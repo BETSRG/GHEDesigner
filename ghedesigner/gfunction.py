@@ -257,7 +257,7 @@ class GFunction:
             # (or equivalent height) as an input the g-function needs to be
             # interpolated at each point in dimensionless time
             self.interpolation_table["g"] = []
-            for i, lntts in enumerate(self.log_time):
+            for i, _ in enumerate(self.log_time):
                 x = []
                 y = []
                 for key in self.g_lts:

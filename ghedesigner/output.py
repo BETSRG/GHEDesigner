@@ -141,10 +141,7 @@ class OutputManager:
         gfunction_log_vals = ghe_gf_adjusted.x
         gfunction_g_vals = ghe_gf_adjusted.y
         for log_val, g_val in zip(gfunction_log_vals, gfunction_g_vals):
-            gf_row = list()
-            gf_row.append(log_val)
-            gf_row.append(g_val)
-            csv_array.append(gf_row)
+            csv_array.append([log_val, g_val])
         return csv_array
 
     def get_summary_object(self,
@@ -224,7 +221,8 @@ class OutputManager:
                 'grout_volumetric_heat_capacity': add_with_units(design.ghe.bhe.grout.rhoCp, 'kJ/m3-K'),
                 # TODO: Corrected arg to .rhoCp - verify, should be / 1000?
                 'reynolds_number': reynolds,
-                'effective_borehole_resistance': add_with_units(design.ghe.bhe.calc_effective_borehole_resistance(), 'W/m-K'),
+                'effective_borehole_resistance': add_with_units(design.ghe.bhe.calc_effective_borehole_resistance(),
+                                                                'W/m-K'),
                 # TODO: are the units right here?
                 'soil_thermal_conductivity': add_with_units(design.ghe.bhe.soil.k, 'W/m-K'),
                 'soil_volumetric_heat_capacity': add_with_units(design.ghe.bhe.soil.rhoCp, 'kJ/m3-K'),

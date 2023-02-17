@@ -47,7 +47,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
         self.assertEqual(144 + 1, len(selected_coordinates))
 
     def test_find_double_u_tube_design(self):
-
         ghe = GHEManager()
         ghe.set_double_u_tube_pipe(inner_radius=0.0108, outer_radius=0.013335,
                                    shank_spacing=0.0323,
@@ -83,7 +82,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
         self.assertEqual(144 + 1, len(selected_coordinates))
 
     def test_find_coaxial_pipe_design(self):
-
         ghe = GHEManager()
         ghe.set_coaxial_pipe(
             inner_pipe_r_in=0.0221, inner_pipe_r_out=0.025, outer_pipe_r_in=0.0487, outer_pipe_r_out=0.055,

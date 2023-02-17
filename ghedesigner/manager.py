@@ -10,8 +10,9 @@ import click
 from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, SingleUTube
-from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle
+from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle, DesignBiRectangle
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
+from ghedesigner.geometry import GeometricConstraintsBiRectangle
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
@@ -26,6 +27,7 @@ class GHEManager:
     class DesignGeomType(Enum):
         NearSquare = auto()
         Rectangular = auto()
+        BiRectangle = auto()
 
     class BHPipeType(Enum):
         SingleUType = auto()
@@ -60,6 +62,8 @@ class GHEManager:
             return self.DesignGeomType.Rectangular
         if design_geometry_str in ["NEAR SQUARE", "SQUARE", "NEARSQUARE"]:
             return self.DesignGeomType.NearSquare
+        if design_geometry_str in ["BIRECTANGLE", "BI-RECTANGLE", "BI RECTANGLE"]:
+            return self.DesignGeomType.BiRectangle
         raise ValueError("Geometry constraint method not supported.")
 
     def get_bh_pipe_type(self, bh_pipe_str: str):
@@ -165,12 +169,15 @@ class GHEManager:
         # TODO: Define load direction positive/negative
         self._ground_loads = hourly_ground_loads
 
-    # TODO: Add more of the geometric constraints, along with required parameters
     def set_geometry_constraints_near_square(self, b: float, length: float):
         self._geometric_constraints = GeometricConstraintsNearSquare(b, length)
 
     def set_geometry_constraints_rectangular(self, length: float, width: float, b_min: float, b_max: float):
         self._geometric_constraints = GeometricConstraintsRectangle(width, length, b_min, b_max)
+
+    def set_geometry_constraints_bi_rectangle(self, length: float, width: float, b_min: float,
+                                              b_max_x: float, b_max_y: float):
+        self._geometric_constraints = GeometricConstraintsBiRectangle(width, length, b_min, b_max_x, b_max_y)
 
     def set_design(self, flow_rate: float, flow_type: str, design_method_geo: DesignGeomType):
         """
@@ -201,6 +208,23 @@ class GHEManager:
             # temporary disable of the type checker because of the _geometric_constraints member
             # noinspection PyTypeChecker
             self._design = DesignRectangle(
+                flow_rate,
+                self._borehole,
+                self._u_tube_type,
+                self._fluid,
+                self._pipe,
+                self._grout,
+                self._soil,
+                self._simulation_parameters,
+                self._geometric_constraints,
+                self._ground_loads,
+                flow=flow_type,
+                method=DesignMethodTimeStep.Hybrid,
+            )
+        elif design_method_geo == self.DesignGeomType.BiRectangle:
+            # temporary disable of the type checker because of the _geometric_constraints member
+            # noinspection PyTypeChecker
+            self._design = DesignBiRectangle(
                 flow_rate,
                 self._borehole,
                 self._u_tube_type,
@@ -340,6 +364,14 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
         ghe.set_geometry_constraints_near_square(
             b=constraint_props["b"],
             length=constraint_props["length"]
+        )
+    elif geom_type == ghe.DesignGeomType.BiRectangle:
+        ghe.set_geometry_constraints_bi_rectangle(
+            length=constraint_props["length"],
+            width=constraint_props["width"],
+            b_min=constraint_props["b_min"],
+            b_max_x=constraint_props["b_max_x"],
+            b_max_y=constraint_props["b_max_y"]
         )
     else:
         raise ValueError("Geometry constraint method not supported.")
