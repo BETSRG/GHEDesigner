@@ -1,7 +1,7 @@
 from json import loads
 
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import SingleUTube
+from ghedesigner.enums import BHPipeType
 from ghedesigner.gfunction import GFunction
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
@@ -31,7 +31,6 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
         pos = Pipe.place_pipes(s, r_out, 1)
         # Single U-tube BHE object
-        bhe_object = SingleUTube
 
         # Thermal conductivities
         # ----------------------
@@ -101,7 +100,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         ghe = GHE(
             v_flow_system,
             b,
-            bhe_object,
+            BHPipeType.SingleUType,
             fluid,
             borehole,
             pipe,

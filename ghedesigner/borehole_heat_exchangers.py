@@ -1,6 +1,5 @@
 from abc import abstractmethod
 from copy import deepcopy
-from enum import auto, Enum
 from typing import Tuple, Optional
 
 import numpy as np
@@ -8,14 +7,9 @@ import pygfunction as gt
 from numpy import pi, log, sqrt
 
 from ghedesigner.borehole import GHEBorehole
+from ghedesigner.enums import BHPipeType, FlowConfig
 from ghedesigner.media import GHEFluid, Pipe, Grout, Soil
 from ghedesigner.utilities import solve_root
-
-
-# TODO: move to central location with other enums
-class FlowConfig(Enum):
-    Parallel = auto()
-    Series = auto()
 
 
 class GHEDesignerBoreholeBase:
@@ -524,3 +518,15 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         resist_conv = 1 / (self.h_f_a_in * area_surf_outer)
         resist_pipe = log(r_out_out / r_out_in) / (2 * pi * self.pipe.k[1])
         return vol_fluid, vol_pipe, resist_conv, resist_pipe
+
+
+def get_bhe_object(bhe_type: BHPipeType, m_flow_borehole: float, fluid: GHEFluid,
+                   _borehole: GHEBorehole, pipe: Pipe, grout: Grout, soil: Soil):
+    if bhe_type == BHPipeType.SingleUType:
+        return SingleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+    elif bhe_type == BHPipeType.DoubleUType:
+        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+    elif bhe_type == BHPipeType.CoaxialType:
+        return CoaxialPipe(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+    else:
+        raise TypeError("BHE type not implemented")

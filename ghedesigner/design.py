@@ -1,20 +1,20 @@
 from abc import abstractmethod
 from math import floor
-from typing import Type, Union
+from typing import Union
 
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
-from ghedesigner.domains import square_and_near_square, rectangular, bi_rectangle_nested, bi_rectangle_zoned_nested, \
-    polygonal_land_constraint
-from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsBiRectangle, GeometricConstraintsNearSquare, \
-    GeometricConstraintsRectangle, GeometricConstraintsBiZoned, GeometricConstraintsBiRectangleConstrained, \
-    GeometricConstraintsRowWise
+from ghedesigner.domains import polygonal_land_constraint, bi_rectangle_nested
+from ghedesigner.domains import square_and_near_square, rectangular, bi_rectangle_zoned_nested
+from ghedesigner.enums import BHPipeType
+from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsBiRectangle
+from ghedesigner.geometry import GeometricConstraintsBiZoned, GeometricConstraintsBiRectangleConstrained
+from ghedesigner.geometry import GeometricConstraintsNearSquare, GeometricConstraintsRectangle
+from ghedesigner.geometry import GeometricConstraintsRowWise
 from ghedesigner.media import Grout, Pipe, Soil, GHEFluid
 from ghedesigner.search_routines import Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch
 from ghedesigner.simulation import SimulationParameters
 from ghedesigner.utilities import DesignMethodTimeStep
 
-AnyBoreholeType = Union[Type[SingleUTube], Type[MultipleUTube], Type[CoaxialPipe]]
 AnyBisectionType = Union[Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch]
 
 
@@ -23,7 +23,7 @@ class DesignBase:
             self,
             v_flow: float,
             _borehole: GHEBorehole,
-            bhe_object: AnyBoreholeType,
+            bhe_type: BHPipeType,
             fluid: GHEFluid,
             pipe: Pipe,
             grout: Grout,
@@ -40,7 +40,7 @@ class DesignBase:
         self.load_years = load_years
         self.V_flow = v_flow  # volumetric flow rate, m3/s
         self.borehole = _borehole
-        self.bhe_object = bhe_object  # a borehole heat exchanger object
+        self.bhe_type = bhe_type  # a borehole heat exchanger object
         self.fluid = fluid  # a fluid object
         self.pipe = pipe
         self.grout = grout
@@ -71,11 +71,11 @@ class DesignBase:
 
 
 class DesignNearSquare(DesignBase):
-    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
+    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
                  fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsNearSquare, hourly_extraction_ground_loads: list,
                  method: DesignMethodTimeStep, flow: str = "borehole", load_years=None):
-        super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
+        super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.geometric_constraints = geometric_constraints
         # If a near-square design routine is requested, then we go from a
@@ -98,7 +98,7 @@ class DesignNearSquare(DesignBase):
             self.fieldDescriptors,
             self.V_flow,
             self.borehole,
-            self.bhe_object,
+            self.bhe_type,
             self.fluid,
             self.pipe,
             self.grout,
@@ -114,11 +114,11 @@ class DesignNearSquare(DesignBase):
 
 
 class DesignRectangle(DesignBase):
-    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
+    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
                  fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsRectangle, hourly_extraction_ground_loads: list,
                  method: DesignMethodTimeStep, flow: str = "borehole", load_years=None):
-        super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
+        super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.geometric_constraints = geometric_constraints
         self.coordinates_domain, self.fieldDescriptors = rectangular(
@@ -134,7 +134,7 @@ class DesignRectangle(DesignBase):
             self.fieldDescriptors,
             self.V_flow,
             self.borehole,
-            self.bhe_object,
+            self.bhe_type,
             self.fluid,
             self.pipe,
             self.grout,
@@ -150,12 +150,12 @@ class DesignRectangle(DesignBase):
 
 
 class DesignBiRectangle(DesignBase):
-    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
+    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
                  fluid: GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsBiRectangle, hourly_extraction_ground_loads: list,
                  method: DesignMethodTimeStep, flow: str = "borehole", load_years=None):
-        super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
+        super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.geometric_constraints = geometric_constraints
         self.coordinates_domain_nested, self.fieldDescriptors = bi_rectangle_nested(
@@ -172,7 +172,7 @@ class DesignBiRectangle(DesignBase):
             self.fieldDescriptors,
             self.V_flow,
             self.borehole,
-            self.bhe_object,
+            self.bhe_type,
             self.fluid,
             self.pipe,
             self.grout,
@@ -188,12 +188,12 @@ class DesignBiRectangle(DesignBase):
 
 
 class DesignBiZoned(DesignBase):
-    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
+    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
                  fluid: GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsBiZoned, hourly_extraction_ground_loads: list,
                  method: DesignMethodTimeStep, flow: str = "borehole", load_years=None):
-        super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
+        super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.geometric_constraints = geometric_constraints
         self.coordinates_domain_nested, self.fieldDescriptors = bi_rectangle_zoned_nested(
@@ -210,7 +210,7 @@ class DesignBiZoned(DesignBase):
             self.fieldDescriptors,
             self.V_flow,
             self.borehole,
-            self.bhe_object,
+            self.bhe_type,
             self.fluid,
             self.pipe,
             self.grout,
@@ -225,13 +225,13 @@ class DesignBiZoned(DesignBase):
 
 
 class DesignBiRectangleConstrained(DesignBase):
-    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
+    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
                  fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsBiRectangleConstrained,
                  hourly_extraction_ground_loads: list,
                  method: DesignMethodTimeStep, flow: str = "borehole", load_years=None,
                  property_boundary=None, building_descriptions=None):
-        super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
+        super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.geometric_constraints = geometric_constraints
         self.coordinates_domain_nested, self.fieldDescriptors = polygonal_land_constraint(
@@ -251,7 +251,7 @@ class DesignBiRectangleConstrained(DesignBase):
             self.fieldDescriptors,
             self.V_flow,
             self.borehole,
-            self.bhe_object,
+            self.bhe_type,
             self.fluid,
             self.pipe,
             self.grout,
@@ -267,12 +267,12 @@ class DesignBiRectangleConstrained(DesignBase):
 
 
 class DesignRowWise(DesignBase):
-    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_object: AnyBoreholeType,
+    def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
                  fluid: GHEFluid, pipe: Pipe,
                  grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsRowWise, hourly_extraction_ground_loads: list,
                  method: DesignMethodTimeStep, flow: str = "borehole", load_years=None):
-        super().__init__(v_flow, _borehole, bhe_object, fluid, pipe, grout, soil, sim_params, geometric_constraints,
+        super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow, load_years)
         self.geometric_constraints = geometric_constraints
 
@@ -283,7 +283,7 @@ class DesignRowWise(DesignBase):
         return RowWiseModifiedBisectionSearch(
             self.V_flow,
             self.borehole,
-            self.bhe_object,
+            self.bhe_type,
             self.fluid,
             self.pipe,
             self.grout,

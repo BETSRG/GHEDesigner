@@ -3,8 +3,8 @@ from math import ceil, floor, sqrt
 from pathlib import Path
 from typing import Optional
 
-import pygfunction as gt
-
+from ghedesigner.borehole_heat_exchangers import GHEBorehole
+from ghedesigner.enums import BHPipeType
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Grout, Pipe, Soil, GHEFluid
@@ -19,8 +19,8 @@ class Bisection1D:
             coordinates_domain: list,
             field_descriptors: list,
             v_flow: float,
-            borehole: gt.boreholes.Borehole,
-            bhe_object,
+            borehole: GHEBorehole,
+            bhe_type: BHPipeType,
             fluid: GHEFluid,
             pipe: Pipe,
             grout: Grout,
@@ -52,7 +52,7 @@ class Bisection1D:
         self.method = method
 
         self.log_time = eskilson_log_times()
-        self.bhe_object = bhe_object
+        self.bhe_type = bhe_type
         self.sim_params = sim_params
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.coordinates_domain = coordinates_domain
@@ -70,7 +70,7 @@ class Bisection1D:
             borehole.r_b,
             borehole.D,
             m_flow_borehole,
-            self.bhe_object,
+            self.bhe_type,
             self.log_time,
             coordinates,
             fluid,
@@ -83,7 +83,7 @@ class Bisection1D:
         self.ghe = GHE(
             v_flow_system,
             b,
-            bhe_object,
+            bhe_type,
             fluid,
             borehole,
             pipe,
@@ -135,7 +135,7 @@ class Bisection1D:
             borehole.r_b,
             borehole.D,
             m_flow_borehole,
-            self.bhe_object,
+            self.bhe_type,
             self.log_time,
             coordinates,
             fluid,
@@ -148,7 +148,7 @@ class Bisection1D:
         self.ghe = GHE(
             v_flow_system,
             b,
-            self.bhe_object,
+            self.bhe_type,
             fluid,
             borehole,
             pipe,
@@ -333,9 +333,9 @@ class RowWiseModifiedBisectionSearch:
     def __init__(
             self,
             v_flow: float,
-            borehole: gt.boreholes.Borehole,
-            bhe_object,
-            fluid: gt.media.Fluid,
+            borehole: GHEBorehole,
+            bhe_type: BHPipeType,
+            fluid: GHEFluid,
             pipe: Pipe,
             grout: Grout,
             soil: Soil,
@@ -371,7 +371,7 @@ class RowWiseModifiedBisectionSearch:
         self.flow = flow
         self.method = method
         self.log_time = eskilson_log_times()
-        self.bhe_object = bhe_object
+        self.bhe_type = bhe_type
         self.sim_params = sim_params
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.max_iter = max_iter
@@ -419,7 +419,7 @@ class RowWiseModifiedBisectionSearch:
             borehole.r_b,
             borehole.D,
             m_flow_borehole,
-            self.bhe_object,
+            self.bhe_type,
             self.log_time,
             coordinates,
             fluid,
@@ -432,7 +432,7 @@ class RowWiseModifiedBisectionSearch:
         self.ghe = GHE(
             v_flow_system,
             b,
-            self.bhe_object,
+            self.bhe_type,
             fluid,
             borehole,
             pipe,
@@ -757,8 +757,8 @@ class Bisection2D(Bisection1D):
             coordinates_domain_nested: list,
             field_descriptors: list,
             v_flow: float,
-            borehole: gt.boreholes.Borehole,
-            bhe_object,
+            borehole: GHEBorehole,
+            bhe_type,
             fluid: GHEFluid,
             pipe: Pipe,
             grout: Grout,
@@ -784,7 +784,7 @@ class Bisection2D(Bisection1D):
             field_descriptors[0],
             v_flow,
             borehole,
-            bhe_object,
+            bhe_type,
             fluid,
             pipe,
             grout,
@@ -831,8 +831,8 @@ class BisectionZD(Bisection1D):
             coordinates_domain_nested: list,
             field_descriptors: list,
             v_flow: float,
-            borehole: gt.boreholes.Borehole,
-            bhe_object,
+            borehole: GHEBorehole,
+            bhe_type,
             fluid: GHEFluid,
             pipe: Pipe,
             grout: Grout,
@@ -861,7 +861,7 @@ class BisectionZD(Bisection1D):
             field_descriptors[0],
             v_flow,
             borehole,
-            bhe_object,
+            bhe_type,
             fluid,
             pipe,
             grout,

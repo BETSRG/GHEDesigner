@@ -7,8 +7,8 @@
 from time import time as clock
 
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.design import DesignBiZoned
+from ghedesigner.enums import BHPipeType
 from ghedesigner.geometry import GeometricConstraintsBiZoned
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
 from ghedesigner.output import OutputManager
@@ -45,7 +45,6 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
 
         # Single U Tube Pipe Positions
         pos_single = Pipe.place_pipes(s, r_out, 1)
-        single_u_tube = SingleUTube
 
         # Thermal conductivities
         k_p = 0.4  # Pipe thermal conductivity (W/m.K)
@@ -119,7 +118,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
         design_single_u_tube = DesignBiZoned(
             v_flow,
             borehole,
-            single_u_tube,
+            BHPipeType.SingleUType,
             fluid,
             pipe_single,
             grout,

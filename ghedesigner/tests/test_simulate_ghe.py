@@ -1,6 +1,7 @@
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
 from ghedesigner.coordinates import rectangle
+from ghedesigner.enums import BHPipeType
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
@@ -139,7 +140,7 @@ class TestGHE(GHEBaseTest):
             self.r_b,
             self.bh_depth,
             self.m_flow_borehole,
-            self.SingleUTube,
+            BHPipeType.SingleUType,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -152,7 +153,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.V_flow_system,
             self.B,
-            self.SingleUTube,
+            BHPipeType.SingleUType,
             self.fluid,
             borehole,
             self.pipe_s,
@@ -183,7 +184,7 @@ class TestGHE(GHEBaseTest):
             self.r_b,
             self.bh_depth,
             self.m_flow_borehole,
-            self.DoubleUTube,
+            BHPipeType.DoubleUType,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -196,7 +197,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.V_flow_system,
             self.B,
-            self.DoubleUTube,
+            BHPipeType.DoubleUType,
             self.fluid,
             borehole,
             self.pipe_d,
@@ -227,7 +228,7 @@ class TestGHE(GHEBaseTest):
             self.r_b,
             self.bh_depth,
             self.m_flow_borehole,
-            self.CoaxialTube,
+            BHPipeType.CoaxialType,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -240,7 +241,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.V_flow_system,
             self.B,
-            self.CoaxialTube,
+            BHPipeType.CoaxialType,
             self.fluid,
             borehole,
             self.pipe_c,

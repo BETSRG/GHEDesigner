@@ -2,8 +2,8 @@ from matplotlib import pyplot
 from pandas import ExcelFile, read_excel
 
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase, CoaxialPipe, MultipleUTube, SingleUTube, \
-    FlowConfig
+from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase, CoaxialPipe, MultipleUTube, SingleUTube
+from ghedesigner.enums import FlowConfig
 from ghedesigner.media import Pipe, Grout, GHEFluid, Soil
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 

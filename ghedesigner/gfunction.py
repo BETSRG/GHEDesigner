@@ -5,10 +5,14 @@ import numpy as np
 import pygfunction as gt
 from scipy.interpolate import interp1d, lagrange
 
+from ghedesigner.borehole import GHEBorehole
+from ghedesigner.borehole_heat_exchangers import get_bhe_object
+from ghedesigner.enums import BHPipeType
+
 
 def calculate_g_function(
         m_flow_borehole,
-        bhe_object,
+        bhe_type: BHPipeType,
         time_values,
         coordinates,
         borehole,
@@ -34,11 +38,11 @@ def calculate_g_function(
     orientation = borehole.orientation
 
     for x, y in coordinates:
-        _borehole = gt.boreholes.Borehole(h, d, r_b, x, y, tilt, orientation)
+        _borehole = GHEBorehole(h, d, r_b, x, y, tilt, orientation)
         bore_field.append(_borehole)
         # Initialize pipe model
         if boundary == "MIFT":
-            bhe = bhe_object(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+            bhe = get_bhe_object(bhe_type, m_flow_borehole, fluid, _borehole, pipe, grout, soil)
             bhe_objects.append(bhe)
 
     alpha = soil.k / soil.rhoCp
@@ -92,7 +96,7 @@ def calc_g_func_for_multiple_lengths(
         r_b,
         depth,
         m_flow_borehole,
-        bhe_object,
+        bhe_type: BHPipeType,
         log_time,
         coordinates,
         fluid,
@@ -108,7 +112,7 @@ def calc_g_func_for_multiple_lengths(
     d = {"g": {}, "bore_locations": coordinates, "logtime": log_time}
 
     for h in h_values:
-        _borehole = gt.boreholes.Borehole(h, depth, r_b, 0.0, 0.0)
+        _borehole = GHEBorehole(h, depth, r_b, 0.0, 0.0)
 
         alpha = soil.k / soil.rhoCp
 
@@ -117,7 +121,7 @@ def calc_g_func_for_multiple_lengths(
 
         gfunc = calculate_g_function(
             m_flow_borehole,
-            bhe_object,
+            bhe_type,
             time_values,
             coordinates,
             _borehole,

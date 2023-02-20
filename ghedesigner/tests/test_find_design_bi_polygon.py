@@ -8,8 +8,8 @@ import csv
 from time import time as clock
 
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
 from ghedesigner.design import DesignBiRectangleConstrained
+from ghedesigner.enums import BHPipeType
 from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
 from ghedesigner.output import OutputManager
@@ -48,7 +48,6 @@ class TestFindBiPolygonDesign(GHEBaseTest):
 
         # Single U Tube Pipe Positions
         pos_single = Pipe.place_pipes(s, r_out, 1)
-        single_u_tube = SingleUTube
 
         # Thermal conductivities
         k_p = 0.4  # Pipe thermal conductivity (W/m.K)
@@ -142,7 +141,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         design_single_u_tube = DesignBiRectangleConstrained(
             v_flow,
             borehole,
-            single_u_tube,
+            BHPipeType.SingleUType,
             fluid,
             pipe_single,
             grout,
@@ -195,7 +194,6 @@ class TestFindBiPolygonDesign(GHEBaseTest):
 
         # Double U-tube
         pos_double = Pipe.place_pipes(s, r_out, 2)
-        double_u_tube = MultipleUTube
         pipe_double = Pipe(pos_double, r_in, r_out, s, epsilon, k_p, rho_cp_p)
 
         # Double U-tube
@@ -203,7 +201,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         design_double_u_tube = DesignBiRectangleConstrained(
             v_flow,
             borehole,
-            double_u_tube,
+            BHPipeType.DoubleUType,
             fluid,
             pipe_double,
             grout,
@@ -269,7 +267,6 @@ class TestFindBiPolygonDesign(GHEBaseTest):
 
         # Coaxial tube
         pos_coaxial = (0, 0)
-        coaxial_tube = CoaxialPipe
         pipe_coaxial = Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax, rho_cp_p)
 
         # Coaxial Tube
@@ -277,7 +274,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
         design_coax_tube = DesignBiRectangleConstrained(
             v_flow,
             borehole,
-            coaxial_tube,
+            BHPipeType.CoaxialType,
             fluid,
             pipe_coaxial,
             grout,

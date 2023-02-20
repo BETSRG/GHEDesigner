@@ -1,6 +1,6 @@
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.coordinates import rectangle
+from ghedesigner.enums import BHPipeType
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
@@ -29,8 +29,6 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
         pos = Pipe.place_pipes(s, r_out, 1)
-        # Single U-tube BHE object
-        bhe_object = SingleUTube
 
         # Thermal conductivities
         # ----------------------
@@ -108,7 +106,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             r_b,
             d,
             m_flow_borehole,
-            bhe_object,
+            BHPipeType.SingleUType,
             log_time,
             coordinates,
             fluid,
@@ -123,7 +121,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         ghe = GHE(
             v_flow_system,
             b,
-            bhe_object,
+            BHPipeType.SingleUType,
             fluid,
             borehole,
             pipe,
@@ -149,7 +147,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             r_b,
             bh_depth,
             m_flow_borehole,
-            bhe_object,
+            BHPipeType.SingleUType,
             log_time,
             coordinates,
             fluid,
@@ -162,7 +160,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         ghe = GHE(
             v_flow_system,
             b,
-            bhe_object,
+            BHPipeType.SingleUType,
             fluid,
             borehole,
             pipe,

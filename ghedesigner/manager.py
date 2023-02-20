@@ -3,14 +3,14 @@ from json import loads
 from pathlib import Path
 from sys import exit, stderr
 from time import time
-from typing import List, Optional, Type, Union
+from typing import List, Optional
 
 import click
 
 from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, SingleUTube
 from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle, DesignBiRectangle
+from ghedesigner.enums import BHPipeType
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
 from ghedesigner.geometry import GeometricConstraintsBiRectangle
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
@@ -29,17 +29,12 @@ class GHEManager:
         Rectangular = auto()
         BiRectangle = auto()
 
-    class BHPipeType(Enum):
-        SingleUType = auto()
-        DoubleUType = auto()
-        CoaxialType = auto()
-
     def __init__(self):
         self._fluid: Optional[GHEFluid] = None
         self._grout: Optional[Grout] = None
         self._soil: Optional[Soil] = None
         self._pipe: Optional[Pipe] = None
-        self._u_tube_type: Optional[Union[Type[SingleUTube], Type[MultipleUTube], Type[CoaxialPipe]]] = None
+        self._u_tube_type: BHPipeType = None
         self._borehole: Optional[GHEBorehole] = None
         self._simulation_parameters: Optional[SimulationParameters] = None
         self._ground_loads: Optional[List[float]] = None
@@ -69,11 +64,11 @@ class GHEManager:
     def get_bh_pipe_type(self, bh_pipe_str: str):
         bh_pipe_str = str(bh_pipe_str).upper()
         if bh_pipe_str in ["SINGLEUTUBE", "SINGLEU", "SINGLE"]:
-            return self.BHPipeType.SingleUType
+            return BHPipeType.SingleUType
         if bh_pipe_str in ["DOUBLEUTUBE", "DOUBLEU", "DOUBLE"]:
-            return self.BHPipeType.DoubleUType
+            return BHPipeType.DoubleUType
         if bh_pipe_str in ["COAXIAL", "COAXIALPIPE"]:
-            return self.BHPipeType.CoaxialType
+            return BHPipeType.CoaxialType
         raise ValueError("Borehole pipe type not supported.")
 
     def set_fluid(self, fluid_name: str = "Water", concentration_percent: float = 0.0):
@@ -110,7 +105,7 @@ class GHEManager:
         """
 
         # TODO: Convert scalar properties if double or coax
-        self._u_tube_type = SingleUTube  # for now just store the type on the class here
+        self._u_tube_type = BHPipeType.SingleUType
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 1)
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
@@ -118,7 +113,7 @@ class GHEManager:
                                conductivity: float, rho_cp: float):
 
         # TODO: Convert scalar properties if double or coax
-        self._u_tube_type = MultipleUTube  # for now just store the type on the class here
+        self._u_tube_type = BHPipeType.DoubleUType
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 2)
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
@@ -128,7 +123,7 @@ class GHEManager:
                          rho_cp: float):
 
         # TODO: Convert scalar properties if double or coax
-        self._u_tube_type = CoaxialPipe  # for now just store the type on the class here
+        self._u_tube_type = BHPipeType.CoaxialType
         # Note: This convention is different from pygfunction
         r_inner = [inner_pipe_r_in, inner_pipe_r_out]  # The radii of the inner pipe from in to out
         r_outer = [outer_pipe_r_in, outer_pipe_r_out]  # The radii of the outer pipe from in to out
@@ -307,7 +302,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
     ghe.set_soil(**soil_props)
 
     pipe_type = ghe.get_bh_pipe_type(pipe_props["arrangement"])
-    if pipe_type == ghe.BHPipeType.SingleUType:
+    if pipe_type == BHPipeType.SingleUType:
         ghe.set_single_u_tube_pipe(
             inner_radius=pipe_props["inner_radius"],
             outer_radius=pipe_props["outer_radius"],
@@ -316,7 +311,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             conductivity=pipe_props["conductivity"],
             rho_cp=pipe_props["rho_cp"]
         )
-    elif pipe_type == ghe.BHPipeType.DoubleUType:
+    elif pipe_type == BHPipeType.DoubleUType:
         ghe.set_double_u_tube_pipe(
             inner_radius=pipe_props["inner_radius"],
             outer_radius=pipe_props["outer_radius"],
@@ -325,7 +320,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             conductivity=pipe_props["conductivity"],
             rho_cp=pipe_props["rho_cp"]
         )
-    elif pipe_type == ghe.BHPipeType.CoaxialType:
+    elif pipe_type == BHPipeType.CoaxialType:
         ghe.set_coaxial_pipe(
             inner_pipe_r_in=pipe_props["inner_pipe_r_in"],
             inner_pipe_r_out=pipe_props["inner_pipe_r_out"],

@@ -1,8 +1,8 @@
 from json import loads
 
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.design import DesignNearSquare
+from ghedesigner.enums import BHPipeType
 from ghedesigner.geometry import GeometricConstraintsNearSquare
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
 from ghedesigner.simulation import SimulationParameters
@@ -38,8 +38,6 @@ class TestFindDesignFromORNLJsonInput(GHEBaseTest):
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
         pos_single = Pipe.place_pipes(s, r_out, 1)
-        # Single U-tube BHE object
-        single_u_tube = SingleUTube
 
         # Thermal conductivities
         # ----------------------
@@ -115,7 +113,7 @@ class TestFindDesignFromORNLJsonInput(GHEBaseTest):
         design_single_u_tube = DesignNearSquare(
             v_flow,
             borehole,
-            single_u_tube,
+            BHPipeType.SingleUType,
             fluid,
             pipe_single,
             grout,
