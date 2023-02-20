@@ -3,26 +3,20 @@ from json import loads
 from pathlib import Path
 from sys import exit, stderr
 from time import time
-from typing import List, Optional, Type, Union
+from typing import List, Optional
 
 import click
 
 from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, SingleUTube
 from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle, DesignBiRectangle
+from ghedesigner.enums import BHPipeType
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
 from ghedesigner.geometry import GeometricConstraintsBiRectangle
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
 from ghedesigner.utilities import DesignMethodTimeStep
-
-
-class BHPipeType(Enum):
-    SingleUType = auto()
-    DoubleUType = auto()
-    CoaxialType = auto()
 
 
 class GHEManager:
@@ -40,7 +34,7 @@ class GHEManager:
         self._grout: Optional[Grout] = None
         self._soil: Optional[Soil] = None
         self._pipe: Optional[Pipe] = None
-        self._u_tube_type: Optional[Union[Type[SingleUTube], Type[MultipleUTube], Type[CoaxialPipe]]] = None
+        self._u_tube_type: BHPipeType = None
         self._borehole: Optional[GHEBorehole] = None
         self._simulation_parameters: Optional[SimulationParameters] = None
         self._ground_loads: Optional[List[float]] = None
@@ -111,7 +105,7 @@ class GHEManager:
         """
 
         # TODO: Convert scalar properties if double or coax
-        self._u_tube_type = SingleUTube  # for now just store the type on the class here
+        self._u_tube_type = BHPipeType.SingleUType
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 1)
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
@@ -119,7 +113,7 @@ class GHEManager:
                                conductivity: float, rho_cp: float):
 
         # TODO: Convert scalar properties if double or coax
-        self._u_tube_type = MultipleUTube  # for now just store the type on the class here
+        self._u_tube_type = BHPipeType.DoubleUType
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 2)
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
@@ -129,7 +123,7 @@ class GHEManager:
                          rho_cp: float):
 
         # TODO: Convert scalar properties if double or coax
-        self._u_tube_type = CoaxialPipe  # for now just store the type on the class here
+        self._u_tube_type = BHPipeType.CoaxialType
         # Note: This convention is different from pygfunction
         r_inner = [inner_pipe_r_in, inner_pipe_r_out]  # The radii of the inner pipe from in to out
         r_outer = [outer_pipe_r_in, outer_pipe_r_out]  # The radii of the outer pipe from in to out

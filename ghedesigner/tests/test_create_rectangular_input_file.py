@@ -1,6 +1,6 @@
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.design import DesignRectangle
+from ghedesigner.enums import BHPipeType
 from ghedesigner.geometry import GeometricConstraintsRectangle
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
 from ghedesigner.simulation import SimulationParameters
@@ -39,8 +39,7 @@ class TestCreateRectangularInputFile(GHEBaseTest):
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
         pos_single = Pipe.place_pipes(s, r_out, 1)
-        # Single U-tube BHE object
-        single_u_tube = SingleUTube
+
         # Double U-tube
         # pos_double = plat.Pipe.place_pipes(s, r_out, 2)
         # double_u_tube = MultipleUTube
@@ -123,7 +122,7 @@ class TestCreateRectangularInputFile(GHEBaseTest):
         design_single_u_tube = DesignRectangle(
             v_flow_borehole,
             borehole,
-            single_u_tube,
+            BHPipeType.SingleUType,
             fluid,
             pipe_single,
             grout,

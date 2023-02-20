@@ -1,13 +1,13 @@
 import warnings
 from math import ceil, floor, pi
-from typing import Type, Union
 
 import numpy as np
-import pygfunction as gt
 from scipy.interpolate import interp1d
 
 from ghedesigner import VERSION
-from ghedesigner.borehole_heat_exchangers import SingleUTube, CoaxialPipe, MultipleUTube
+from ghedesigner.borehole import GHEBorehole
+from ghedesigner.borehole_heat_exchangers import get_bhe_object
+from ghedesigner.enums import BHPipeType
 from ghedesigner.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ground_loads import HybridLoad
 from ghedesigner.media import Grout, Pipe, Soil
@@ -22,9 +22,9 @@ class BaseGHE:
             self,
             v_flow_system: float,
             b_spacing: float,
-            bhe_function: Type[Union[SingleUTube, MultipleUTube, CoaxialPipe]],
-            fluid: gt.media.Fluid,
-            borehole: gt.boreholes.Borehole,
+            bhe_type: BHPipeType,
+            fluid,
+            borehole: GHEBorehole,
             pipe: Pipe,
             grout: Grout,
             soil: Soil,
@@ -45,8 +45,9 @@ class BaseGHE:
         self.m_flow_borehole = m_flow_borehole
 
         # Borehole Heat Exchanger
-        self.bhe_object = bhe_function
-        self.bhe = bhe_function(m_flow_borehole, fluid, borehole, pipe, grout, soil)
+        self.bhe_type = bhe_type
+        self.bhe = get_bhe_object(bhe_type, m_flow_borehole, fluid, borehole, pipe, grout, soil)
+
         # Equivalent borehole Heat Exchanger
         self.bhe_eq = self.bhe.to_single()
 
@@ -186,7 +187,7 @@ class BaseGHE:
             self.bhe.b.r_b,
             self.bhe.b.D,
             self.bhe.m_flow_borehole,
-            self.bhe_object,
+            self.bhe_type,
             log_time,
             coordinates,
             self.bhe.fluid,
@@ -203,9 +204,9 @@ class GHE(BaseGHE):
             self,
             v_flow_system: float,
             b_spacing: float,
-            bhe_object,
-            fluid: gt.media.Fluid,
-            borehole: gt.boreholes.Borehole,
+            bhe_type: BHPipeType,
+            fluid,
+            borehole: GHEBorehole,
             pipe: Pipe,
             grout: Grout,
             soil: Soil,
@@ -220,7 +221,7 @@ class GHE(BaseGHE):
             self,
             v_flow_system,
             b_spacing,
-            bhe_object,
+            bhe_type,
             fluid,
             borehole,
             pipe,

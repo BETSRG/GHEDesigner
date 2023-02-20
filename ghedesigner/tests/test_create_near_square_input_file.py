@@ -1,6 +1,6 @@
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
 from ghedesigner.design import DesignNearSquare
+from ghedesigner.enums import BHPipeType
 from ghedesigner.geometry import GeometricConstraintsNearSquare
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
 from ghedesigner.simulation import SimulationParameters
@@ -40,13 +40,10 @@ class TestCreateNearSquareInputFile(GHEBaseTest):
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
         pos_single = Pipe.place_pipes(s, r_out, 1)
         # Single U-tube BHE object
-        single_u_tube = SingleUTube
         # Double U-tube
         pos_double = Pipe.place_pipes(s, r_out, 2)
-        double_u_tube = MultipleUTube
         # Coaxial tube
         pos_coaxial = (0, 0)
-        coaxial_tube = CoaxialPipe
 
         # Thermal conductivities
         # ----------------------
@@ -121,7 +118,7 @@ class TestCreateNearSquareInputFile(GHEBaseTest):
         design_single_u_tube = DesignNearSquare(
             v_flow_borehole,
             borehole,
-            single_u_tube,
+            BHPipeType.SingleUType,
             fluid,
             pipe_single,
             grout,
@@ -141,7 +138,7 @@ class TestCreateNearSquareInputFile(GHEBaseTest):
         design_double_u_tube = DesignNearSquare(
             v_flow_borehole,
             borehole,
-            double_u_tube,
+            BHPipeType.DoubleUType,
             fluid,
             pipe_double,
             grout,
@@ -160,7 +157,7 @@ class TestCreateNearSquareInputFile(GHEBaseTest):
         design_coaxial_u_tube = DesignNearSquare(
             v_flow_borehole,
             borehole,
-            coaxial_tube,
+            BHPipeType.CoaxialType,
             fluid,
             pipe_coaxial,
             grout,
