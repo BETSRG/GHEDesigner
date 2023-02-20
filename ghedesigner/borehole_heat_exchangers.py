@@ -1,6 +1,5 @@
 from abc import abstractmethod
 from copy import deepcopy
-from enum import auto, Enum
 from typing import Tuple, Optional
 
 import numpy as np
@@ -8,15 +7,9 @@ import pygfunction as gt
 from numpy import pi, log, sqrt
 
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.enums import BHPipeType
+from ghedesigner.enums import BHPipeType, FlowConfig
 from ghedesigner.media import GHEFluid, Pipe, Grout, Soil
 from ghedesigner.utilities import solve_root
-
-
-# TODO: move to central location with other enums
-class FlowConfig(Enum):
-    Parallel = auto()
-    Series = auto()
 
 
 class GHEDesignerBoreholeBase:
