@@ -69,6 +69,10 @@ class DesignBase:
     def find_design(self, disp=False, use_perimeter=True) -> AnyBisectionType:
         pass
 
+    def to_input(self) -> dict:
+        # TODO: don't hardwire flow_type here
+        return {'flow_rate': self.V_flow, 'flow_type': 'borehole'}
+
 
 class DesignNearSquare(DesignBase):
     def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
@@ -147,6 +151,9 @@ class DesignRectangle(DesignBase):
             field_type="rectangle",
             load_years=self.load_years,
         )
+
+    def to_input(self) -> dict:
+        return {}
 
 
 class DesignBiRectangle(DesignBase):

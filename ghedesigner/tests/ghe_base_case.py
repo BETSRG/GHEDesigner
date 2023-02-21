@@ -41,6 +41,8 @@ class GHEBaseTest(TestCase):
         self.project_root_directory = self.tests_directory.parent
         self.test_outputs_directory = self.tests_directory / 'test_outputs'
         self.test_outputs_directory.mkdir(exist_ok=True)
+        self.demos_path = Path(__file__).parent.parent.parent / "demos"
+        self.demo_output_parent_dir = Path(__file__).parent.parent.parent / "demo_outputs"
 
     # noinspection PyMethodMayBeStatic
     def log(self, message, message_type: LogMessageTypes = LogMessageTypes.Info):

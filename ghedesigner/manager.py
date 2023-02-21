@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from json import loads
+from json import loads, dumps
 from pathlib import Path
 from sys import exit, stderr
 from time import time
@@ -269,6 +269,63 @@ class GHEManager:
 
     def write_output_files(self, output_directory: Path, output_file_suffix: str = ""):
         self.results.write_all_output_files(output_directory=output_directory, file_suffix=output_file_suffix)
+
+    def write_input_file(self, output_file_path: Path):
+
+        # TODO: geometric constraints are currently held in two places
+        #       SimulationParameters and GeometricConstraints
+        #       these should be consolidated
+        d_geo = self._geometric_constraints.to_input()
+        d_geo['max_height'] = self._simulation_parameters.max_height
+        d_geo['min_height'] = self._simulation_parameters.min_height
+
+        # TODO: data held in different places. consolodate
+        d_des = self._design.to_input()
+        d_des['max_eft'] = self._simulation_parameters.max_EFT_allowable
+        d_des['min_eft'] = self._simulation_parameters.min_EFT_allowable
+
+        # pipe data
+        d_pipe = {'rho_cp': self._pipe.rhoCp, 'roughness': self._pipe.roughness}
+
+        if self._u_tube_type in [BHPipeType.SingleUType, BHPipeType.DoubleUType]:
+            d_pipe['inner_radius'] = self._pipe.r_in
+            d_pipe['outer_radius'] = self._pipe.r_out
+            d_pipe['shank_spacing'] = self._pipe.s
+            d_pipe['conductivity'] = self._pipe.k
+        elif self._u_tube_type == BHPipeType.CoaxialType:
+            d_pipe['inner_pipe_r_in'] = self._pipe.r_in[0]
+            d_pipe['inner_pipe_r_out'] = self._pipe.r_in[1]
+            d_pipe['outer_pipe_r_in'] = self._pipe.r_out[0]
+            d_pipe['outer_pipe_r_out'] = self._pipe.r_out[1]
+            d_pipe['conductivity_inner'] = self._pipe.k[0]
+            d_pipe['conductivity_outer'] = self._pipe.k[1]
+        else:
+            raise TypeError('Invalid pipe type')
+
+        if self._u_tube_type == BHPipeType.SingleUType:
+            d_pipe['arrangement'] = 'singleutube'
+        elif self._u_tube_type == BHPipeType.DoubleUType:
+            d_pipe['arrangement'] = 'doubleutube'
+        elif self._u_tube_type == BHPipeType.CoaxialType:
+            d_pipe['arrangement'] = 'coaxial'
+        else:
+            raise TypeError('Invalid pipe type')
+
+        d = {
+            'version': VERSION,
+            'fluid': self._fluid.to_input(),
+            'grout': self._grout.to_input(),
+            'soil': self._soil.to_input(),
+            'pipe': d_pipe,
+            'borehole': self._borehole.to_input(),
+            'simulation': self._simulation_parameters.to_input(),
+            'geometric_constraints': d_geo,
+            'design': d_des,
+            'ground_loads': self._ground_loads
+        }
+
+        with open(output_file_path, 'w') as f:
+            f.write(dumps(d, sort_keys=True, indent=2, separators=(',', ': ')))
 
 
 def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):

@@ -30,3 +30,7 @@ class SimulationParameters:
         output['maximum_height'] = {'value': self.max_height, 'units': 'm'}
         output['minimum_height'] = {'value': self.min_height, 'units': 'm'}
         return output
+
+    def to_input(self) -> dict:
+        # TODO: hardcoded hybrid time step here should be responsive to user inputs
+        return {'num_months': self.end_month, 'timestep': 'hybrid'}
