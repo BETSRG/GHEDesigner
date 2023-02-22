@@ -15,7 +15,6 @@ class TestCreateInputFiles(GHEBaseTest):
         num_tests = 7
 
         for _, _, files in os.walk(self.demos_path):
-            print(files)
             self.assertTrue(len(files) == num_tests)
 
     def test_create_input_file_bi_rectangle_single_u_tube(self):
