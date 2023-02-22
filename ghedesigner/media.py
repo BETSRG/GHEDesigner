@@ -4,8 +4,13 @@ from pygfunction.media import Fluid
 
 
 class GHEFluid(Fluid):
-    # TODO: Make an enum for fluid type and convert it back and forth as needed
-    pass
+
+    def __init__(self, fluid_str: str, percent: float, T: float = 20):
+        super().__init__(fluid_str, percent, T)
+        self.concentration_percent = percent
+
+    def to_input(self):
+        return {'fluid_name': self.name, 'concentration_percent': self.concentration_percent}
 
 
 class ThermalProperty:
@@ -19,6 +24,9 @@ class ThermalProperty:
         output['thermal_conductivity'] = {'value': self.k, 'units': 'W/m-K'}
         output['volumetric_heat_capacity'] = {'value': self.rhoCp, 'units': 'J/K-m3'}
         return output
+
+    def to_input(self) -> dict:
+        return {'conductivity': self.k, 'rho_cp': self.rhoCp}
 
 
 class Grout(ThermalProperty):
@@ -77,3 +85,6 @@ class Soil(ThermalProperty):
         output = super().as_dict()
         output['undisturbed_ground_temperature'] = {'value': self.ugt, 'units': 'C'}
         return output
+
+    def to_input(self) -> dict:
+        return {'conductivity': self.k, 'rho_cp': self.rhoCp, 'undisturbed_temp': self.ugt}

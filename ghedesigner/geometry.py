@@ -8,6 +8,11 @@ class GeometricConstraintsNearSquare(GeometricConstraints):
         self.B = b
         self.length = length
 
+    def to_input(self) -> dict:
+        return {'length': self.length,
+                'b': self.B,
+                'method': 'nearsquare'}
+
 
 class GeometricConstraintsRectangle(GeometricConstraints):
     def __init__(self, width: float, length: float, b_min: float, b_max_x: float):
@@ -16,6 +21,13 @@ class GeometricConstraintsRectangle(GeometricConstraints):
         self.length = length
         self.B_min = b_min
         self.B_max_x = b_max_x
+
+    def to_input(self) -> dict:
+        return {'length': self.length,
+                'width': self.width,
+                'b_min': self.B_min,
+                'b_max': self.B_max_x,
+                'method': 'rectangular'}
 
 
 class GeometricConstraintsBiRectangle(GeometricConstraints):
@@ -26,6 +38,14 @@ class GeometricConstraintsBiRectangle(GeometricConstraints):
         self.B_min = b_min
         self.B_max_x = b_max_x
         self.B_max_y = b_max_y
+
+    def to_input(self) -> dict:
+        return {'length': self.length,
+                'width': self.width,
+                'b_min': self.B_min,
+                'b_max_x': self.B_max_x,
+                'b_max_y': self.B_max_y,
+                'method': 'birectangle'}
 
 
 class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):

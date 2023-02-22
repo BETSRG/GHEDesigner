@@ -32,7 +32,7 @@ class DesignBase:
             geometric_constraints: GeometricConstraints,
             hourly_extraction_ground_loads: list,
             method: DesignMethodTimeStep,
-            flow: str = "borehole",
+            flow_type: str = "borehole",
             load_years=None
     ):
         if load_years is None:
@@ -49,7 +49,7 @@ class DesignBase:
         self.geometric_constraints = geometric_constraints
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.method = method
-        self.flow = flow
+        self.flow_type = flow_type
         if self.method == "hourly":
             msg = (
                 "Note: It is not recommended to perform a field selection ",
@@ -68,6 +68,9 @@ class DesignBase:
     @abstractmethod
     def find_design(self, disp=False, use_perimeter=True) -> AnyBisectionType:
         pass
+
+    def to_input(self) -> dict:
+        return {'flow_rate': self.V_flow, 'flow_type': self.flow_type}
 
 
 class DesignNearSquare(DesignBase):
@@ -106,7 +109,7 @@ class DesignNearSquare(DesignBase):
             self.sim_params,
             self.hourly_extraction_ground_loads,
             method=self.method,
-            flow=self.flow,
+            flow=self.flow_type,
             disp=disp,
             field_type="near-square",
             load_years=self.load_years,
@@ -142,7 +145,7 @@ class DesignRectangle(DesignBase):
             self.sim_params,
             self.hourly_extraction_ground_loads,
             method=self.method,
-            flow=self.flow,
+            flow=self.flow_type,
             disp=disp,
             field_type="rectangle",
             load_years=self.load_years,
@@ -180,7 +183,7 @@ class DesignBiRectangle(DesignBase):
             self.sim_params,
             self.hourly_extraction_ground_loads,
             method=self.method,
-            flow=self.flow,
+            flow=self.flow_type,
             disp=disp,
             field_type="bi-rectangle",
             load_years=self.load_years,
@@ -218,7 +221,7 @@ class DesignBiZoned(DesignBase):
             self.sim_params,
             self.hourly_extraction_ground_loads,
             method=self.method,
-            flow=self.flow,
+            flow=self.flow_type,
             disp=disp,
             field_type="bi-zoned",
         )
@@ -259,7 +262,7 @@ class DesignBiRectangleConstrained(DesignBase):
             self.sim_params,
             self.hourly_extraction_ground_loads,
             method=self.method,
-            flow=self.flow,
+            flow=self.flow_type,
             disp=disp,
             field_type="bi-rectangle_constrained",
             load_years=self.load_years,
@@ -292,7 +295,7 @@ class DesignRowWise(DesignBase):
             self.hourly_extraction_ground_loads,
             self.geometric_constraints,
             method=self.method,
-            flow=self.flow,
+            flow=self.flow_type,
             disp=disp,
             field_type="row-wise",
             load_years=self.load_years,

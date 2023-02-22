@@ -1,7 +1,5 @@
-import pickle
 from enum import auto, Enum
 from math import sqrt
-from pathlib import Path
 
 from scipy.optimize import brentq
 
@@ -124,23 +122,3 @@ def solve_root(x, objective_function, lower=None, upper=None, abs_tol=1.0e-6, re
         x = upper
 
     return x
-
-
-# File input/output or file path handling functions.
-# --------------------------------------------------
-
-def create_input_file(self, file_path_obj: Path):
-    # Store an object in a file using pickle.
-    with open(str(file_path_obj), "wb") as file_handler:
-        pickle.dump(self, file_handler)
-
-
-def read_input_file(path_file_obj: Path):
-    # Open a .obj file and return the ghedesigner object.
-    with open(path_file_obj, "rb") as file:
-        object_file = pickle.load(file)
-    return object_file
-
-
-def dummy_entry_point():
-    print("Hello, GHE world!")
