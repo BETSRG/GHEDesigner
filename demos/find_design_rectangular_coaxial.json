@@ -35,9 +35,9 @@
   "geometric_constraints": {
     "length": 100,
     "width": 100,
-    "b_min": 2.0,
-    "b_max": 7.0,
-    "max_height": 135.0,
+    "b_min": 3.0,
+    "b_max": 10.0,
+    "max_height": 100.0,
     "min_height": 60.0,
     "method": "rectangular"
   },

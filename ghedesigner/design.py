@@ -151,9 +151,6 @@ class DesignRectangle(DesignBase):
             load_years=self.load_years,
         )
 
-    def to_input(self) -> dict:
-        return {}
-
 
 class DesignBiRectangle(DesignBase):
     def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
