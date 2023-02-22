@@ -1,3 +1,4 @@
+import os
 from json import loads, dumps
 from recursive_diff import recursive_eq
 
@@ -7,15 +8,15 @@ from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 class TestCreateInputFiles(GHEBaseTest):
 
-    # def test_num_files_match_num_tests(self):
+    def test_num_files_match_num_tests(self):
 
-    #     # update this to match the number of tests in this file
-    #     # there should be a corresponding test to each demo file
-    #     num_tests = 7
+        # update this to match the number of tests in this file
+        # there should be a corresponding test to each demo file
+        num_tests = 7
 
-    #     for _, _, files in os.walk(self.demos_path):
-    #         print(files)
-    #         self.assertTrue(len(files) == num_tests)
+        for _, _, files in os.walk(self.demos_path):
+            print(files)
+            self.assertTrue(len(files) == num_tests)
 
     def test_create_input_file_bi_rectangle_single_u_tube(self):
 
