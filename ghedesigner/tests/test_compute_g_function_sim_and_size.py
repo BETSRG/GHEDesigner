@@ -1,13 +1,12 @@
 from json import loads
 
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.enums import BHPipeType
+from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
 from ghedesigner.gfunction import GFunction
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
 from ghedesigner.simulation import SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethodTimeStep
 
 
 class TestComputedGFunctionSimAndSize(GHEBaseTest):

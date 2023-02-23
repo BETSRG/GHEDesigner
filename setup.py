@@ -13,7 +13,7 @@ to select and size flexibly configured borehole fields that are customized
 for specific building and property constraints."""
 
 setup(
-    name='ghedesigner',
+    name='GHEDesigner',
     install_requires=[
         'click>=8.1.3',
         'numpy>=1.24.2',
@@ -27,7 +27,7 @@ setup(
     long_description_content_type='text/markdown',
     version=VERSION,
     packages=['ghedesigner'],
-    author='Jeffrey D. Spitler,',
+    author='Jeffrey D. Spitler',
     author_email='spitler@okstate.edu',
     entry_points={
         'console_scripts': ['ghedesigner=ghedesigner.manager:run_manager_from_cli']

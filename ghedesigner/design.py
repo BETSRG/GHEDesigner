@@ -5,7 +5,7 @@ from typing import Union
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.domains import polygonal_land_constraint, bi_rectangle_nested
 from ghedesigner.domains import square_and_near_square, rectangular, bi_rectangle_zoned_nested
-from ghedesigner.enums import BHPipeType
+from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsBiRectangle
 from ghedesigner.geometry import GeometricConstraintsBiZoned, GeometricConstraintsBiRectangleConstrained
 from ghedesigner.geometry import GeometricConstraintsNearSquare, GeometricConstraintsRectangle
@@ -13,7 +13,6 @@ from ghedesigner.geometry import GeometricConstraintsRowWise
 from ghedesigner.media import Grout, Pipe, Soil, GHEFluid
 from ghedesigner.search_routines import Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch
 from ghedesigner.simulation import SimulationParameters
-from ghedesigner.utilities import DesignMethodTimeStep
 
 AnyBisectionType = Union[Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch]
 

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase
 from ghedesigner.design import AnyBisectionType
-from ghedesigner.utilities import DesignMethodTimeStep
+from ghedesigner.enums import DesignMethodTimeStep
 
 
 class OutputManager:

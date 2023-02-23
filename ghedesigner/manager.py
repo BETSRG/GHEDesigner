@@ -10,13 +10,12 @@ import click
 from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle, DesignBiRectangle
-from ghedesigner.enums import BHPipeType
+from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
 from ghedesigner.geometry import GeometricConstraintsBiRectangle
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
-from ghedesigner.utilities import DesignMethodTimeStep
 
 
 class GHEManager:
