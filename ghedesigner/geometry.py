@@ -59,7 +59,16 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
 
 
 class GeometricConstraintsBiZoned(GeometricConstraintsBiRectangle):
-    pass
+    def __init__(self, width: float, length: float, b_min: float, b_max_x: float, b_max_y: float):
+        super().__init__(width, length, b_min, b_max_x, b_max_y)
+
+    def to_input(self) -> dict:
+        return {'length': self.length,
+                'width': self.width,
+                'b_min': self.B_min,
+                'b_max_x': self.B_max_x,
+                'b_max_y': self.B_max_y,
+                'method': 'bizonedrectangle'}
 
 
 class GeometricConstraintsRowWise(GeometricConstraints):
