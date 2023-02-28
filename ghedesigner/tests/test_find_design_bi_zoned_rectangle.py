@@ -4,247 +4,76 @@
 
 # This search is described in section 4.4.3 from pages 138-143 in Cook (2021).
 
-from time import time as clock
-
-from ghedesigner.borehole import GHEBorehole
-from ghedesigner.design import DesignBiZoned
-from ghedesigner.enums import BHPipeType
-from ghedesigner.geometry import GeometricConstraintsBiZoned
-from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
-from ghedesigner.output import OutputManager
-from ghedesigner.simulation import SimulationParameters
+from ghedesigner.manager import GHEManager
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethodTimeStep
 
+
+# This file contains three examples utilizing the bi-zoned rectangle design algorithm for a single U, double U,
+# and coaxial tube.
 
 class TestFindBiZonedRectangleDesign(GHEBaseTest):
-    def test_find_bi_zoned_rectangle_design(self):
-        # This file contains three examples utilizing the bi-zoned rectangle design algorithm for a single U, double U,
-        # and coaxial tube  The results from these examples are exported to the "DesignExampleOutput" folder.
 
-        # Single U-tube Example
+    def test_single_u_tube(self):
+        ghe = GHEManager()
+        ghe.set_single_u_tube_pipe(
+            inner_radius=0.0108, outer_radius=0.013335, shank_spacing=0.0323,
+            roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
+        ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
+        ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
+        ghe.set_fluid()
+        ghe.set_borehole(height=96.0, buried_depth=2.0, radius=0.075)
+        ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
+        ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
+        ghe.set_geometry_constraints_bi_zoned_rectangle(length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiZonedRectangle)
+        ghe.find_design()
+        output_file_directory = self.test_outputs_directory / "TestFindBiZonedRectangleDesignSingleUTube"
+        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
+        ghe.write_output_files(output_file_directory, "")
+        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        self.assertAlmostEqual(134.66, u_tube_height, delta=0.01)
+        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(123 + 1, len(selected_coordinates))
 
-        # Output File Configuration
-        project_name = "Atlanta Office Building: Design Example"
-        note = "Bi-Zoned Rectangle Usage Example: Single U Tube"
-        author = "Jane Doe"
-        iteration_name = "Example 4"
-        output_file_directory = self.test_outputs_directory / "TestFindBiZonedRectangleDesign"
+    def test_double_u_tube(self):
+        ghe = GHEManager()
+        ghe.set_double_u_tube_pipe(inner_radius=0.0108, outer_radius=0.013335, shank_spacing=0.0323,
+                                   roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
+        ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
+        ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
+        ghe.set_fluid()
+        ghe.set_borehole(height=96.0, buried_depth=2.0, radius=0.075)
+        ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
+        ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
+        ghe.set_geometry_constraints_bi_zoned_rectangle(length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiZonedRectangle)
+        ghe.find_design()
+        output_file_directory = self.test_outputs_directory / "TestFindBiZonedRectangleDesignDoubleUTube"
+        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
+        ghe.write_output_files(output_file_directory, "")
+        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        self.assertAlmostEqual(134.28, u_tube_height, delta=0.01)
+        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(104 + 1, len(selected_coordinates))
 
-        # Borehole dimensions
-        h = 96.0  # Borehole length (m)
-        d = 2.0  # Borehole buried depth (m)
-        r_b = 0.075  # Borehole radius (m)
-        # B = 5.0  # Borehole spacing (m)
-
-        # Single and Multiple U-tube Pipe Dimensions
-        r_out = 0.013335  # Pipe outer radius (m)
-        r_in = 0.0108  # Pipe inner radius (m)
-        s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
-        epsilon = 1.0e-6  # Pipe roughness (m)
-
-        # Single U Tube Pipe Positions
-        pos_single = Pipe.place_pipes(s, r_out, 1)
-
-        # Thermal conductivities
-        k_p = 0.4  # Pipe thermal conductivity (W/m.K)
-        k_s = 2.0  # Ground thermal conductivity (W/m.K)
-        k_g = 1.0  # Grout thermal conductivity (W/m.K)
-
-        # Volumetric heat capacities
-        rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rho_cp_s = 2343493.0  # Soil volumetric heat capacity (J/K.m3)
-        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
-
-        # Instantiating Pipe
-        pipe_single = Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
-
-        # Instantiating Soil Properties
-        ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = Soil(k_s, rho_cp_s, ugt)
-
-        # Instantiating Grout Properties
-        grout = Grout(k_g, rho_cp_g)
-
-        # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
-
-        # Fluid Flow Properties
-        v_flow = 0.2  # Volumetric flow rate (L/s)
-        # Note: The flow parameter can be borehole or system.
-        flow = "borehole"
-
-        # Instantiate a Borehole
-        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
-
-        # Simulation parameters
-        start_month = 1
-        n_years = 20
-        end_month = n_years * 12
-        max_eft_allowable = 35  # degrees Celsius (HP EFT)
-        min_eft_allowable = 5  # degrees Celsius (HP EFT)
-        max_height = 135.0  # in meters
-        min_height = 60  # in meters
-        sim_params = SimulationParameters(
-            start_month,
-            end_month,
-            max_eft_allowable,
-            min_eft_allowable,
-            max_height,
-            min_height,
-        )
-
-        # Process loads from file
-        hourly_extraction_ground_loads = self.get_atlanta_loads()
-
-        # Rectangular design constraints are the land and range of B-spacing
-        length = 85.0  # m
-        width = 36.5  # m
-        b_min = 4.45  # m
-        b_max_x = 10.0  # m
-        b_max_y = 12.0  # m
-
-        """ Geometric constraints for the `bi-zoned` routine.
-        Required geometric constraints for the bi-zoned design:
-          - length
-          - width
-          - B_min
-          - B_max
-        """
-        geometric_constraints = GeometricConstraintsBiZoned(width, length, b_min, b_max_x, b_max_y)
-
-        # Single U-tube
-        # -------------
-        design_single_u_tube = DesignBiZoned(
-            v_flow,
-            borehole,
-            BHPipeType.SingleUType,
-            fluid,
-            pipe_single,
-            grout,
-            soil,
-            sim_params,
-            geometric_constraints,
-            hourly_extraction_ground_loads,
-            method=DesignMethodTimeStep.Hybrid,
-            flow=flow,
-        )
-
-        # Find the near-square design for a single U-tube and size it.
-        tic = clock()  # Clock Start Time
-        bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(
-            method=DesignMethodTimeStep.Hybrid
-        )  # Calculating the Final Height for the Chosen Design
-        toc = clock()  # Clock Stop Time
-
-        # Print Summary of Findings
-        subtitle = "* Single U-tube"  # Subtitle for the printed summary
-        self.log(subtitle + "\n" + len(subtitle) * "-")
-        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
-        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
-        nbh = len(bisection_search.ghe.gFunction.bore_locations)
-        self.log(f"Number of boreholes: {nbh}")
-        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
-
-        o = OutputManager(
-            bisection_search,
-            toc - tic,
-            project_name,
-            note,
-            author,
-            iteration_name,
-            load_method=DesignMethodTimeStep.Hybrid,
-        )  # this will just go through GHEManager methods eventually
-        o.write_all_output_files(
-            output_directory=output_file_directory,
-            file_suffix="_SU",
-        )
-
-        """
-        # Double U-tube
-        # -------------
-        design_double_u_tube = dt.Design(
-            V_flow, borehole, double_u_tube, fluid, pipe_double, grout,
-            soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-            method='hybrid', flow=flow, routine='bi-zoned')
-
-        # Find the near-square design for a single U-tube and size it.
-        tic = clock()  # Clock Start Time
-        bisection_search = design_double_u_tube.find_design(disp=True)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method='hybrid')  # Calculating the Final Height for the Chosen Design
-        toc = clock()  # Clock Stop Time
-
-        # Print Summary of Findings
-        subtitle = '* Double U-tube'  # Subtitle for the printed summary
-        self.log(subtitle + '\n' + len(subtitle) * '-')
-        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
-        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
-        nbh = len(bisection_search.ghe.gFunction.bore_locations)
-        self.log(f"Number of boreholes: {nbh}"
-        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters"
-
-        # Generating Output File
-        Output.OutputDesignDetails(bisection_search, toc - tic, projectName
-                                   , note, author, IterationName, outputDirectory=outputFileDirectory,
-                                   summaryFile="SummaryOfResults_DU.txt", csvF1="TimeDependentValues_DU.csv",
-                                   csvF2="BorefieldData_DU.csv", csvF3="Loadings_DU.csv", csvF4="GFunction_DU.csv")
-
-        # *************************************************************************************************************
-        #Coaxial Tube Example
-
-        note = "Bi-Rectangle Usage Example: Coaxial Tube"
-
-        # Coaxial tube
-        r_in_in = 44.2 / 1000. / 2.
-        r_in_out = 50. / 1000. / 2.
-        # Outer pipe radii
-        r_out_in = 97.4 / 1000. / 2.
-        r_out_out = 110. / 1000. / 2.
-        # Pipe radii
-        # Note: This convention is different from pygfunction
-        r_inner = [r_in_in, r_in_out]  # The radii of the inner pipe from in to out
-        r_outer = [r_out_in,
-                   r_out_out]  # The radii of the outer pipe from in to out
-
-        k_p_coax = [0.4, 0.4]  # Pipes thermal conductivity (W/m.K)
-
-        # Coaxial tube
-        pos_coaxial = (0, 0)
-        coaxial_tube = plat.CoaxialPipe
-        pipe_coaxial = \
-            plat.Pipe(pos_coaxial, r_inner, r_outer, 0, epsilon, k_p_coax,
-                            rhoCp_p)
-
-        # Coaxial Tube
-        # -------------
-        design_coax_tube = dt.Design(
-            V_flow, borehole, coaxial_tube, fluid, pipe_coaxial, grout,
-            soil, sim_params, geometric_constraints, hourly_extraction_ground_loads,
-            method='hybrid', flow=flow, routine='bi-zoned')
-
-        # Find the near-square design for a single U-tube and size it.
-        tic = clock()  # Clock Start Time
-        bisection_search = design_coax_tube.find_design(disp=True)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(method='hybrid')  # Calculating the Final Height for the Chosen Design
-        toc = clock()  # Clock Stop Time
-
-        # Print Summary of Findings
-        subtitle = '* Coaxial Tube'  # Subtitle for the printed summary
-        self.log(subtitle + '\n' + len(subtitle) * '-')
-        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
-        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
-        nbh = len(bisection_search.ghe.gFunction.bore_locations)
-        self.log(f"Number of boreholes: {nbh}"
-        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters"
-
-        # Generating Output File
-        Output.OutputDesignDetails(bisection_search, toc - tic, projectName
-                                   , note, author, IterationName, outputDirectory=outputFileDirectory,
-                                   summaryFile="SummaryOfResults_C.txt", csvF1="TimeDependentValues_C.csv",
-                                   csvF2="BorefieldData_C.csv", csvF3="Loadings_C.csv", csvF4="GFunction_C.csv")
-
-        """
+    def test_coaxial(self):
+        ghe = GHEManager()
+        ghe.set_coaxial_pipe(
+            inner_pipe_r_in=0.0221, inner_pipe_r_out=0.025, outer_pipe_r_in=0.0487, outer_pipe_r_out=0.055,
+            roughness=1.0e-6, conductivity_inner=0.4, conductivity_outer=0.4, rho_cp=1542000.0)
+        ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
+        ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
+        ghe.set_fluid()
+        ghe.set_borehole(height=96.0, buried_depth=2.0, radius=0.075)
+        ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
+        ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
+        ghe.set_geometry_constraints_bi_zoned_rectangle(length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiZonedRectangle)
+        ghe.find_design()
+        output_file_directory = self.test_outputs_directory / "TestFindZonedBiRectangleDesignCoaxial"
+        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
+        ghe.write_output_files(output_file_directory, "")
+        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        self.assertAlmostEqual(131.81, u_tube_height, delta=0.01)
+        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(118 + 1, len(selected_coordinates))

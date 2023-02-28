@@ -4,13 +4,13 @@ from pathlib import Path
 from typing import Optional
 
 from ghedesigner.borehole_heat_exchangers import GHEBorehole
-from ghedesigner.enums import BHPipeType
+from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Grout, Pipe, Soil, GHEFluid
 from ghedesigner.rowwise import field_optimization_fr, field_optimization_wp_space_fr
 from ghedesigner.simulation import SimulationParameters
-from ghedesigner.utilities import eskilson_log_times, borehole_spacing, check_bracket, sign, DesignMethodTimeStep
+from ghedesigner.utilities import eskilson_log_times, borehole_spacing, check_bracket, sign
 
 
 class Bisection1D:

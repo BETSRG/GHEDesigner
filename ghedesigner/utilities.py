@@ -1,49 +1,14 @@
-from enum import auto, Enum
 from math import sqrt
 
 from scipy.optimize import brentq
-
-
-# TODO: Move this class to a centralized place with other enumerations
-class DesignMethodTimeStep(Enum):
-    Hybrid = auto()
-    Hourly = auto()
 
 
 # Time functions
 # --------------
 def eskilson_log_times():
     # Return a list of Eskilson's original 27 dimensionless points in time
-    log_time = [
-        -8.5,
-        -7.8,
-        -7.2,
-        -6.5,
-        -5.9,
-        -5.2,
-        -4.5,
-        -3.963,
-        -3.27,
-        -2.864,
-        -2.577,
-        -2.171,
-        -1.884,
-        -1.191,
-        -0.497,
-        -0.274,
-        -0.051,
-        0.196,
-        0.419,
-        0.642,
-        0.873,
-        1.112,
-        1.335,
-        1.679,
-        2.028,
-        2.275,
-        3.003,
-    ]
-    return log_time
+    return [-8.5, -7.8, -7.2, -6.5, -5.9, -5.2, -4.5, -3.963, -3.27, -2.864, -2.577, -2.171, -1.884, -1.191,
+            -0.497, -0.274, -0.051, 0.196, 0.419, 0.642, 0.873, 1.112, 1.335, 1.679, 2.028, 2.275, 3.003]
 
 
 # Spatial functions
@@ -59,9 +24,6 @@ def borehole_spacing(borehole, coordinates):
         return max(borehole.r_b, sqrt((x_1 - x_0) ** 2 + (y_1 - y_0) ** 2))
     else:
         raise ValueError("The coordinates_domain needs to contain a positive number of (x, y) pairs.")
-
-
-# TODO: Add `set_shank` functionality to utilities.py
 
 
 def length_of_side(n, b):

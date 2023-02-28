@@ -10,3 +10,8 @@ class BHPipeType(Enum):
 class FlowConfig(Enum):
     Parallel = auto()
     Series = auto()
+
+
+class DesignMethodTimeStep(Enum):
+    Hybrid = auto()
+    Hourly = auto()

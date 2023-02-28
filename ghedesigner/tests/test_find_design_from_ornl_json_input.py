@@ -2,12 +2,11 @@ from json import loads
 
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.design import DesignNearSquare
-from ghedesigner.enums import BHPipeType
+from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
 from ghedesigner.geometry import GeometricConstraintsNearSquare
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
 from ghedesigner.simulation import SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
-from ghedesigner.utilities import DesignMethodTimeStep
 
 
 class TestFindDesignFromORNLJsonInput(GHEBaseTest):
