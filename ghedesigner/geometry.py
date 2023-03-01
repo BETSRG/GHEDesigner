@@ -3,6 +3,10 @@ class GeometricConstraints:
 
 
 class GeometricConstraintsNearSquare(GeometricConstraints):
+    """
+    Geometric constrains for near square design algorithm
+    """
+
     def __init__(self, b: float, length: float):
         super().__init__()
         self.B = b
@@ -15,6 +19,10 @@ class GeometricConstraintsNearSquare(GeometricConstraints):
 
 
 class GeometricConstraintsRectangle(GeometricConstraints):
+    """
+    Geometric constraints for rectangular design algorithm
+    """
+
     def __init__(self, width: float, length: float, b_min: float, b_max_x: float):
         super().__init__()
         self.width = width
@@ -31,6 +39,9 @@ class GeometricConstraintsRectangle(GeometricConstraints):
 
 
 class GeometricConstraintsBiRectangle(GeometricConstraints):
+    """
+    Geometric constraints for bi-rectangle design algorithm
+    """
     def __init__(self, width: float, length: float, b_min: float, b_max_x: float, b_max_y: float):
         super().__init__()
         self.width = width
@@ -49,8 +60,10 @@ class GeometricConstraintsBiRectangle(GeometricConstraints):
 
 
 class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
-    # TODO: This wasn't listed as one of the cases in the check_inputs function
-    #       But it was found in the examples, so keeping it here
+    """
+    Geometric constraints for bi-rectangle constrained design algorithm
+    """
+
     def __init__(self, b_min: float, b_max_y: float, b_max_x: float):
         super().__init__()
         self.B_min = b_min
@@ -59,6 +72,10 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
 
 
 class GeometricConstraintsBiZoned(GeometricConstraintsBiRectangle):
+    """
+    Geometric constraints for bi-zoned design algorithm
+    """
+
     def __init__(self, width: float, length: float, b_min: float, b_max_x: float, b_max_y: float):
         super().__init__(width, length, b_min, b_max_x, b_max_y)
 
@@ -72,6 +89,10 @@ class GeometricConstraintsBiZoned(GeometricConstraintsBiRectangle):
 
 
 class GeometricConstraintsRowWise(GeometricConstraints):
+    """
+    Geometric constraints for rowwise design algorithm
+    """
+
     def __init__(self, p_spacing: float,
                  spacing_start: float,
                  spacing_stop: float,
