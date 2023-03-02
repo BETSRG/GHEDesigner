@@ -17,6 +17,7 @@ from ghedesigner.geometry import GeometricConstraintsBiRectangle, GeometricConst
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
+from ghedesigner.validate import validate_input_file
 
 
 class GHEManager:
@@ -26,7 +27,7 @@ class GHEManager:
 
     class DesignGeomType(Enum):
         NearSquare = auto()
-        Rectangular = auto()
+        Rectangle = auto()
         BiRectangle = auto()
         BiZonedRectangle = auto()
 
@@ -55,7 +56,7 @@ class GHEManager:
     def get_design_geometry_type(self, design_geometry_str: str):
         design_geometry_str = str(design_geometry_str).upper()
         if design_geometry_str in ["RECTANGULAR", "RECT", "RECTANGLE"]:
-            return self.DesignGeomType.Rectangular
+            return self.DesignGeomType.Rectangle
         if design_geometry_str in ["NEAR SQUARE", "SQUARE", "NEARSQUARE"]:
             return self.DesignGeomType.NearSquare
         if design_geometry_str in ["BIRECTANGLE", "BI-RECTANGLE", "BI RECTANGLE"]:
@@ -206,7 +207,7 @@ class GHEManager:
                 flow=flow_type,
                 method=DesignMethodTimeStep.Hybrid,
             )
-        elif design_method_geo == self.DesignGeomType.Rectangular:
+        elif design_method_geo == self.DesignGeomType.Rectangle:
             # temporary disable of the type checker because of the _geometric_constraints member
             # noinspection PyTypeChecker
             self._design = DesignRectangle(
@@ -359,6 +360,9 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
         print(f"No input file found at {input_file_path}, aborting")
         exit(1)
 
+    # validate inputs against schema before doing anything
+    validate_input_file(input_file_path)
+
     inputs = loads(input_file_path.read_text())
 
     ghe = GHEManager()
@@ -429,7 +433,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
     )
 
     geom_type = ghe.get_design_geometry_type(constraint_props["method"])
-    if geom_type == ghe.DesignGeomType.Rectangular:
+    if geom_type == ghe.DesignGeomType.Rectangle:
         ghe.set_geometry_constraints_rectangular(
             length=constraint_props["length"],
             width=constraint_props["width"],

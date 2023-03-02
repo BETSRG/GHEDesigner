@@ -1,0 +1,20 @@
+{
+    "type": "object",
+    "properties": {
+        "conductivity": {
+            "type": "number",
+            "minimum": 0,
+            "units": "W/m-K"
+        },
+        "rho_cp": {
+            "type": "number",
+            "minimum": 0,
+            "units": "J/m^3-K"
+        },
+        "undisturbed_temp": {
+            "type": "number",
+            "units": "C"
+        }
+    },
+    "required": ["conductivity", "rho_cp", "undisturbed_temp"]
+}

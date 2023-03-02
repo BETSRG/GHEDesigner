@@ -20,7 +20,7 @@
     "roughness": 0.000001,
     "conductivity": 0.4,
     "rho_cp": 1542000,
-    "arrangement": "singleutube"
+    "arrangement": "doubleutube"
   },
   "borehole": {
     "buried_depth": 2.0,
@@ -37,7 +37,7 @@
     "b_max": 10.0,
     "max_height": 135.0,
     "min_height": 60.0,
-    "method": "rectangular"
+    "method": "rectangle"
   },
   "design": {
     "flow_rate": 0.2,

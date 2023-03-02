@@ -165,7 +165,7 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=100, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_rectangular(length=100.0, width=100., b_min=3.0, b_max=10.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangular)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangle)
         out_path = self.test_outputs_directory / "test_create_input_file_rectangular_coaxial.json"
         ghe.write_input_file(out_path)
 
@@ -191,7 +191,7 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_rectangular(length=100.0, width=100.0, b_min=3.0, b_max=10.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangular)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangle)
         out_path = self.test_outputs_directory / "test_create_input_file_rectangular_double_u_tube.json"
         ghe.write_input_file(out_path)
 
@@ -217,7 +217,7 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_rectangular(length=100.0, width=100.0, b_min=3.0, b_max=10.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangular)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangle)
         out_path = self.test_outputs_directory / "test_create_input_file_rectangular_single_u_tube.json"
         ghe.write_input_file(out_path)
 
