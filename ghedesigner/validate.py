@@ -15,7 +15,7 @@ def validate_schema_instance(schema_file_name: str, instance: dict, error_msg: s
     Base-level worker function to validate schema instances
     """
     try:
-        schema_dir = Path(__file__).parent.parent / "schemas"
+        schema_dir = Path(__file__).parent / "schemas"
         schema_path = schema_dir / schema_file_name
         schema = loads(schema_path.read_text())
         validate(instance=instance, schema=schema)

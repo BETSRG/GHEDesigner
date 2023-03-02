@@ -28,6 +28,8 @@ setup(
     long_description_content_type='text/markdown',
     version=VERSION,
     packages=['ghedesigner'],
+    include_package_data=True,
+    package_data={'ghedesigner': ['schemas/*.json']},
     author='Jeffrey D. Spitler',
     author_email='spitler@okstate.edu',
     entry_points={
