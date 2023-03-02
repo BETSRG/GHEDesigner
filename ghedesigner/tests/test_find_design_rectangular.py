@@ -14,8 +14,8 @@ class TestFindRectangleDesign(GHEBaseTest):
         ghe.set_borehole(height=96.0, buried_depth=2.0, radius=0.075)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_rectangular(length=85.0, width=36.5, b_min=3.0, b_max=10.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangular)
+        ghe.set_geometry_constraints_rectangle(length=85.0, width=36.5, b_min=3.0, b_max=10.0)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangle)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
@@ -36,8 +36,8 @@ class TestFindRectangleDesign(GHEBaseTest):
         ghe.set_borehole(height=96.0, buried_depth=2.0, radius=0.075)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_rectangular(length=85.0, width=36.5, b_min=3.0, b_max=10.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangular)
+        ghe.set_geometry_constraints_rectangle(length=85.0, width=36.5, b_min=3.0, b_max=10.0)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangle)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignDoubleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
@@ -58,8 +58,8 @@ class TestFindRectangleDesign(GHEBaseTest):
         ghe.set_borehole(height=96.0, buried_depth=2.0, radius=0.075)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_rectangular(length=85.0, width=36.5, b_min=3.0, b_max=10.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangular)
+        ghe.set_geometry_constraints_rectangle(length=85.0, width=36.5, b_min=3.0, b_max=10.0)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangle)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignCoaxialUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")

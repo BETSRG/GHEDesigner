@@ -22,4 +22,4 @@ jobs:
           pip install .
       - name: Run a test file
         run: |
-          ghedesigner demos/find_design_rectangular_single_u_tube.json /tmp
+          ghedesigner demos/find_design_rectangle_single_u_tube.json /tmp

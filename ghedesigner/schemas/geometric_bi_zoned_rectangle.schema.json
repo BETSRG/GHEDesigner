@@ -1,0 +1,54 @@
+{
+    "type": "object",
+    "properties": {
+        "length": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "width": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "b_min": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "b_max_x": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "b_max_y": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "max_height": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "min_height": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "method": {
+            "type": "string",
+            "const": "BIZONEDRECTANGLE"
+        }
+    },
+    "required": [
+        "length",
+        "width",
+        "b_min",
+        "b_max_x",
+        "b_max_y",
+        "max_height",
+        "min_height",
+        "method"
+    ]
+}

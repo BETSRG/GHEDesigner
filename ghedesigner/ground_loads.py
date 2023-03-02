@@ -673,7 +673,7 @@ class HybridLoad:
                 peak_last_avg_hour = last_avg_hour
 
         #       Now fill array containing step function loads
-        #        Note they are paired with the ending hour, so the ith load will start with the (i-1)th time
+        #       Note they are paired with the ending hour, so the ith load will start with the (i-1)th time
 
         n = self.hour.size
         # Note at this point the load and hour np arrays contain zeroes in indices zero and one, then continue from

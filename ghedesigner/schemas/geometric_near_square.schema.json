@@ -1,0 +1,30 @@
+{
+    "type": "object",
+    "properties": {
+        "length": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "b": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "max_height": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "min_height": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "method": {
+            "type": "string",
+            "const": "NEARSQUARE"
+        }
+    },
+    "required": ["length", "b", "max_height", "min_height", "method"]
+}

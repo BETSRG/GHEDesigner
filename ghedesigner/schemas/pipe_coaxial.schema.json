@@ -1,0 +1,60 @@
+{
+    "type": "object",
+    "properties": {
+        "inner_pipe_r_in": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "inner_pipe_r_out": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "outer_pipe_r_in": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "outer_pipe_r_out": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "roughness": {
+            "type": "number",
+            "minimum": 0,
+            "units": "m"
+        },
+        "conductivity_inner": {
+            "type": "number",
+            "minimum": 0,
+            "units": "W/m-K"
+        },
+        "conductivity_outer": {
+            "type": "number",
+            "minimum": 0,
+            "units": "W/m-K"
+        },
+        "rho_cp": {
+            "type": "number",
+            "minimum": 0,
+            "units": "J/m^3-K"
+        },
+        "arrangement": {
+            "type": "string",
+            "const": "COAXIAL"
+        }
+    },
+    "required": [
+        "inner_pipe_r_in",
+        "inner_pipe_r_out",
+        "outer_pipe_r_in",
+        "outer_pipe_r_out",
+        "roughness",
+        "conductivity_inner",
+        "conductivity_outer",
+        "rho_cp",
+        "arrangement"
+    ]
+}

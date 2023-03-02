@@ -35,7 +35,7 @@ class GeometricConstraintsRectangle(GeometricConstraints):
                 'width': self.width,
                 'b_min': self.B_min,
                 'b_max': self.B_max_x,
-                'method': 'rectangular'}
+                'method': 'rectangle'}
 
 
 class GeometricConstraintsBiRectangle(GeometricConstraints):
