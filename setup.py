@@ -16,6 +16,7 @@ setup(
     name='GHEDesigner',
     install_requires=[
         'click>=8.1.3',
+        'jsonschema>=4.17.3',
         'numpy>=1.24.2',
         'opencv-python==4.7.0.68',
         'pygfunction>=2.2.2',
@@ -27,6 +28,8 @@ setup(
     long_description_content_type='text/markdown',
     version=VERSION,
     packages=['ghedesigner'],
+    include_package_data=True,
+    package_data={'ghedesigner': ['schemas/*.json']},
     author='Jeffrey D. Spitler',
     author_email='spitler@okstate.edu',
     entry_points={

@@ -6,7 +6,17 @@ from pygfunction.media import Fluid
 class GHEFluid(Fluid):
 
     def __init__(self, fluid_str: str, percent: float, T: float = 20):
-        super().__init__(fluid_str, percent, T)
+
+        fluid_str = fluid_str.upper()
+        fluid_map = {
+            "WATER": "WATER",
+            "ETHYLALCOHOL": "MEA",
+            "ETHYLENEGLYCOL": "MEG",
+            "METHYLALCOHOL": "MMA",
+            "PROPYLENEGLYCOL": "MPG"
+        }
+
+        super().__init__(fluid_map[fluid_str], percent, T)
         self.concentration_percent = percent
 
     def to_input(self):

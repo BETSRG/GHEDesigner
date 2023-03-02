@@ -17,6 +17,7 @@ from ghedesigner.geometry import GeometricConstraintsBiRectangle, GeometricConst
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
+from ghedesigner.validate import validate_input_file
 
 
 class GHEManager:
@@ -26,7 +27,7 @@ class GHEManager:
 
     class DesignGeomType(Enum):
         NearSquare = auto()
-        Rectangular = auto()
+        Rectangle = auto()
         BiRectangle = auto()
         BiZonedRectangle = auto()
 
@@ -54,23 +55,23 @@ class GHEManager:
 
     def get_design_geometry_type(self, design_geometry_str: str):
         design_geometry_str = str(design_geometry_str).upper()
-        if design_geometry_str in ["RECTANGULAR", "RECT", "RECTANGLE"]:
-            return self.DesignGeomType.Rectangular
-        if design_geometry_str in ["NEAR SQUARE", "SQUARE", "NEARSQUARE"]:
+        if design_geometry_str == "RECTANGLE":
+            return self.DesignGeomType.Rectangle
+        if design_geometry_str == "NEARSQUARE":
             return self.DesignGeomType.NearSquare
-        if design_geometry_str in ["BIRECTANGLE", "BI-RECTANGLE", "BI RECTANGLE"]:
+        if design_geometry_str == "BIRECTANGLE":
             return self.DesignGeomType.BiRectangle
-        if design_geometry_str in ["BIZONEDRECTANGLE"]:
+        if design_geometry_str == "BIZONEDRECTANGLE":
             return self.DesignGeomType.BiZonedRectangle
         raise ValueError("Geometry constraint method not supported.")
 
     def get_bh_pipe_type(self, bh_pipe_str: str):
         bh_pipe_str = str(bh_pipe_str).upper()
-        if bh_pipe_str in ["SINGLEUTUBE", "SINGLEU", "SINGLE"]:
+        if bh_pipe_str == "SINGLEUTUBE":
             return BHPipeType.SingleUType
-        if bh_pipe_str in ["DOUBLEUTUBE", "DOUBLEU", "DOUBLE"]:
+        if bh_pipe_str == "DOUBLEUTUBE":
             return BHPipeType.DoubleUType
-        if bh_pipe_str in ["COAXIAL", "COAXIALPIPE"]:
+        if bh_pipe_str == "COAXIAL":
             return BHPipeType.CoaxialType
         raise ValueError("Borehole pipe type not supported.")
 
@@ -170,7 +171,7 @@ class GHEManager:
     def set_geometry_constraints_near_square(self, b: float, length: float):
         self._geometric_constraints = GeometricConstraintsNearSquare(b, length)
 
-    def set_geometry_constraints_rectangular(self, length: float, width: float, b_min: float, b_max: float):
+    def set_geometry_constraints_rectangle(self, length: float, width: float, b_min: float, b_max: float):
         self._geometric_constraints = GeometricConstraintsRectangle(width, length, b_min, b_max)
 
     def set_geometry_constraints_bi_rectangle(self, length: float, width: float, b_min: float,
@@ -206,7 +207,7 @@ class GHEManager:
                 flow=flow_type,
                 method=DesignMethodTimeStep.Hybrid,
             )
-        elif design_method_geo == self.DesignGeomType.Rectangular:
+        elif design_method_geo == self.DesignGeomType.Rectangle:
             # temporary disable of the type checker because of the _geometric_constraints member
             # noinspection PyTypeChecker
             self._design = DesignRectangle(
@@ -359,6 +360,9 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
         print(f"No input file found at {input_file_path}, aborting")
         exit(1)
 
+    # validate inputs against schema before doing anything
+    validate_input_file(input_file_path)
+
     inputs = loads(input_file_path.read_text())
 
     ghe = GHEManager()
@@ -429,8 +433,8 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
     )
 
     geom_type = ghe.get_design_geometry_type(constraint_props["method"])
-    if geom_type == ghe.DesignGeomType.Rectangular:
-        ghe.set_geometry_constraints_rectangular(
+    if geom_type == ghe.DesignGeomType.Rectangle:
+        ghe.set_geometry_constraints_rectangle(
             length=constraint_props["length"],
             width=constraint_props["width"],
             b_min=constraint_props["b_min"],
