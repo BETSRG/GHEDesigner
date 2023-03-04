@@ -3,12 +3,7 @@ from math import pi
 import numpy as np
 import pandas as pd
 
-from ghedesigner.rowwise import (
-    field_optimization_fr,
-    field_optimization_wp_space_fr,
-    gen_borehole_config,
-    gen_shape,
-)
+from ghedesigner.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_borehole_config, gen_shape
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 
@@ -49,30 +44,18 @@ class TestRowWise(GHEBaseTest):
         reference_values = self.reference_values
         area_1 = self.property.get_area()
         area_2 = self.buildings[0].get_area()
-        self.assertAlmostEqual(
-            area_1, reference_values["test_shape_methods_Area"][0], delta=0.001
-        )
-        self.assertAlmostEqual(
-            area_2, reference_values["test_shape_methods_Area"][1], delta=0.001
-        )
+        self.assertAlmostEqual(area_1, reference_values["test_shape_methods_Area"][0], delta=0.001)
+        self.assertAlmostEqual(area_2, reference_values["test_shape_methods_Area"][1], delta=0.001)
 
         pint_11 = self.property.point_intersect([100.0, 70.0])
         pint_12 = self.property.point_intersect([20.0, 80.0])
-        self.assertEqual(
-            pint_11, reference_values["test_shape_methods_point_intersections"][0]
-        )
-        self.assertEqual(
-            pint_12, reference_values["test_shape_methods_point_intersections"][1]
-        )
+        self.assertEqual(pint_11, reference_values["test_shape_methods_point_intersections"][0])
+        self.assertEqual(pint_12, reference_values["test_shape_methods_point_intersections"][1])
 
         pint_21 = self.buildings[0].point_intersect([100.0, 70.0])
         pint_22 = self.buildings[0].point_intersect([20.0, 80.0])
-        self.assertEqual(
-            pint_21, reference_values["test_shape_methods_point_intersections"][2]
-        )
-        self.assertEqual(
-            pint_22, reference_values["test_shape_methods_point_intersections"][3]
-        )
+        self.assertEqual(pint_21, reference_values["test_shape_methods_point_intersections"][2])
+        self.assertEqual(pint_22, reference_values["test_shape_methods_point_intersections"][3])
 
         shape_1_ex_1 = self.property.line_intersect([60.0, 30.0, 110.0, 130.0])
         shape_1_ex_2 = self.property.line_intersect([60.0, 55.0, 110.0, 50.0])
