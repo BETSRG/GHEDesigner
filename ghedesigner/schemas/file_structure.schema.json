@@ -10,7 +10,7 @@
         "simulaton": {"type": "object"},
         "geometric_constraints": {"type": "object"},
         "design": {"type": "object"},
-        "ground_loads": {"type": "array"}
+        "ground_loads": {"type": "array", "items": {"type": "number"}}
     },
     "required": [
         "version",

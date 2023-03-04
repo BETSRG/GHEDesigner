@@ -13,7 +13,8 @@ from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, D
 from ghedesigner.design import DesignBiZoned, DesignBiRectangleConstrained
 from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
-from ghedesigner.geometry import GeometricConstraintsBiRectangle, GeometricConstraintsBiZoned, GeometricConstraintsBiRectangleConstrained
+from ghedesigner.geometry import GeometricConstraintsBiRectangle, GeometricConstraintsBiZoned
+from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
@@ -21,9 +22,6 @@ from ghedesigner.validate import validate_input_file
 
 
 class GHEManager:
-    """
-    TODO: Add docs guiding all the steps
-    """
 
     class DesignGeomType(Enum):
         NearSquare = auto()
@@ -185,8 +183,9 @@ class GHEManager:
                                                     b_max_x: float, b_max_y: float):
         self._geometric_constraints = GeometricConstraintsBiZoned(width, length, b_min, b_max_x, b_max_y)
 
-    def set_geometry_constraints_bi_rectangle_constrained(self, b_min: float, b_max_x: float, b_max_y: float):
-        self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(b_min, b_max_x, b_max_y)
+    def set_geometry_constraints_bi_rectangle_constrained(self, b_min: float, b_max_x: float, b_max_y: float,
+                                                          property_boundary: list, no_go_boundaries: list):
+        self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries)
 
     def set_design(self, flow_rate: float, flow_type: str, design_method_geo: DesignGeomType):
         """
@@ -486,9 +485,11 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
         )
     elif geom_type == ghe.DesignGeomType.BiRectangleConstrained:
         ghe.set_geometry_constraints_bi_rectangle_constrained(
-            length=constraint_props["b_min"],
+            b_min=constraint_props["b_min"],
             b_max_x=constraint_props["b_max_x"],
-            b_max_y=constraint_props["b_max_y"]
+            b_max_y=constraint_props["b_max_y"],
+            property_boundary=constraint_props["property_boundary"],
+            no_go_boundaries=constraint_props["no_go_boundaries"]
         )
     else:
         raise ValueError("Geometry constraint method not supported.")

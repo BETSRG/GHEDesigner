@@ -360,9 +360,9 @@ def bi_rectangle_zoned_nested(length_x, length_y, b_min, b_max_x, b_max_y):
     return bi_rectangle_zoned_nested_domain, field_descriptors
 
 
-def polygonal_land_constraint(property_boundary, b_min, b_max_x, b_max_y, building_descriptions=None):
-    if building_descriptions is None:
-        building_descriptions = []
+def polygonal_land_constraint(b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries=None):
+    if no_go_boundaries is None:
+        no_go_boundaries = []
 
     outer_rectangle = determine_largest_rectangle(property_boundary)
 
@@ -381,9 +381,8 @@ def polygonal_land_constraint(property_boundary, b_min, b_max_x, b_max_y, buildi
             # Remove boreholes inside of building
             if len(new_coordinates) == 0:
                 continue
-            for building_description in building_descriptions:
-                new_coordinates = remove_cutout(new_coordinates, boundary=building_description, remove_inside=True,
-                                                keep_contour=False, )
+            for no_go_zone in no_go_boundaries:
+                new_coordinates = remove_cutout(new_coordinates, boundary=no_go_zone, remove_inside=True, keep_contour=False)
             new_coordinates_domain.append(new_coordinates)
         coordinates_domain_nested_cutout.append(new_coordinates_domain)
 

@@ -64,16 +64,20 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
     Geometric constraints for bi-rectangle constrained design algorithm
     """
 
-    def __init__(self, b_min: float, b_max_x: float, b_max_y: float,):
+    def __init__(self, b_min: float, b_max_x: float, b_max_y: float, property_boundary, no_go_boundaries):
         super().__init__()
         self.B_min = b_min
         self.B_max_y = b_max_y
         self.B_max_x = b_max_x
+        self.property_boundary = property_boundary
+        self.no_go_boundaries = no_go_boundaries
 
     def to_input(self) -> dict:
         return {'b_min': self.B_min,
                 'b_max_x': self.B_max_x,
                 'b_max_y': self.B_max_y,
+                'property_boundary': self.property_boundary,
+                'no_go_boundaries': self.no_go_boundaries,
                 'method': 'birectangleconstrained'}
 
 

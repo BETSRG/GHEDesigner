@@ -133,7 +133,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
           - B_max_x
           - B_max_y
         """
-        geometric_constraints = GeometricConstraintsBiRectangleConstrained(b_min, b_max_x, b_max_y)
+        geometric_constraints = GeometricConstraintsBiRectangleConstrained(b_min, b_max_x, b_max_y, prop_a, ng_a)
 
         # Single U-tube
         # -------------
@@ -149,9 +149,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
             geometric_constraints,
             hourly_extraction_ground_loads,
             method=DesignMethodTimeStep.Hybrid,
-            flow_type=flow,
-            property_boundary=prop_a,
-            building_descriptions=ng_a,
+            flow_type=flow
         )
 
         # Find the near-square design for a single U-tube and size it.
@@ -209,9 +207,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
             geometric_constraints,
             hourly_extraction_ground_loads,
             method=DesignMethodTimeStep.Hybrid,
-            flow_type=flow,
-            property_boundary=prop_a,
-            building_descriptions=ng_a,
+            flow_type=flow
         )
 
         # Find the near-square design for a single U-tube and size it.
@@ -282,9 +278,7 @@ class TestFindBiPolygonDesign(GHEBaseTest):
             geometric_constraints,
             hourly_extraction_ground_loads,
             method=DesignMethodTimeStep.Hybrid,
-            flow_type=flow,
-            property_boundary=prop_a,
-            building_descriptions=ng_a,
+            flow_type=flow
         )
 
         # Find the near-square design for a single U-tube and size it.
