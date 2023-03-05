@@ -1,23 +1,31 @@
 {
-    "type": "object",
-    "properties": {
-        "flow_rate": {
-            "type": "number",
-            "minimum": 0,
-            "units": "l/s"
-        },
-        "flow_type": {
-            "type": "string",
-            "enum": ["BOREHOLE", "SYSTEM"]
-        },
-        "max_eft": {
-            "type": "number",
-            "units": "C"
-        },
-        "min_eft": {
-            "type": "number",
-            "units": "C"
-        }
+  "type": "object",
+  "properties": {
+    "flow_rate": {
+      "type": "number",
+      "minimum": 0,
+      "units": "l/s"
     },
-    "required": ["flow_rate", "flow_type", "max_eft", "min_eft"]
+    "flow_type": {
+      "type": "string",
+      "enum": [
+        "BOREHOLE",
+        "SYSTEM"
+      ]
+    },
+    "max_eft": {
+      "type": "number",
+      "units": "C"
+    },
+    "min_eft": {
+      "type": "number",
+      "units": "C"
+    }
+  },
+  "required": [
+    "flow_rate",
+    "flow_type",
+    "max_eft",
+    "min_eft"
+  ]
 }

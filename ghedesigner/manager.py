@@ -10,10 +10,11 @@ import click
 from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle, DesignBiRectangle
-from ghedesigner.design import DesignBiZoned
+from ghedesigner.design import DesignBiZoned, DesignBiRectangleConstrained
 from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
 from ghedesigner.geometry import GeometricConstraintsBiRectangle, GeometricConstraintsBiZoned
+from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
@@ -21,15 +22,12 @@ from ghedesigner.validate import validate_input_file
 
 
 class GHEManager:
-    """
-    TODO: Add docs guiding all the steps
-    """
-
     class DesignGeomType(Enum):
         NearSquare = auto()
         Rectangle = auto()
         BiRectangle = auto()
         BiZonedRectangle = auto()
+        BiRectangleConstrained = auto()
 
     def __init__(self):
         self._fluid: Optional[GHEFluid] = None
@@ -63,6 +61,8 @@ class GHEManager:
             return self.DesignGeomType.BiRectangle
         if design_geometry_str == "BIZONEDRECTANGLE":
             return self.DesignGeomType.BiZonedRectangle
+        if design_geometry_str == "BIRECTANGLECONSTRAINED":
+            return self.DesignGeomType.BiRectangleConstrained
         raise ValueError("Geometry constraint method not supported.")
 
     def get_bh_pipe_type(self, bh_pipe_str: str):
@@ -182,6 +182,11 @@ class GHEManager:
                                                     b_max_x: float, b_max_y: float):
         self._geometric_constraints = GeometricConstraintsBiZoned(width, length, b_min, b_max_x, b_max_y)
 
+    def set_geometry_constraints_bi_rectangle_constrained(self, b_min: float, b_max_x: float, b_max_y: float,
+                                                          property_boundary: list, no_go_boundaries: list):
+        self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(b_min, b_max_x, b_max_y,
+                                                                                 property_boundary, no_go_boundaries)
+
     def set_design(self, flow_rate: float, flow_type: str, design_method_geo: DesignGeomType):
         """
         system_flow_rate L/s total system flow rate
@@ -204,7 +209,7 @@ class GHEManager:
                 self._simulation_parameters,
                 self._geometric_constraints,
                 self._ground_loads,
-                flow=flow_type,
+                flow_type=flow_type,
                 method=DesignMethodTimeStep.Hybrid,
             )
         elif design_method_geo == self.DesignGeomType.Rectangle:
@@ -221,7 +226,7 @@ class GHEManager:
                 self._simulation_parameters,
                 self._geometric_constraints,
                 self._ground_loads,
-                flow=flow_type,
+                flow_type=flow_type,
                 method=DesignMethodTimeStep.Hybrid,
             )
         elif design_method_geo == self.DesignGeomType.BiRectangle:
@@ -238,7 +243,7 @@ class GHEManager:
                 self._simulation_parameters,
                 self._geometric_constraints,
                 self._ground_loads,
-                flow=flow_type,
+                flow_type=flow_type,
                 method=DesignMethodTimeStep.Hybrid,
             )
         elif design_method_geo == self.DesignGeomType.BiZonedRectangle:
@@ -255,7 +260,24 @@ class GHEManager:
                 self._simulation_parameters,
                 self._geometric_constraints,
                 self._ground_loads,
-                flow=flow_type,
+                flow_type=flow_type,
+                method=DesignMethodTimeStep.Hybrid,
+            )
+        elif design_method_geo == self.DesignGeomType.BiRectangleConstrained:
+            # temporary disable of the type checker because of the _geometric_constraints member
+            # noinspection PyTypeChecker
+            self._design = DesignBiRectangleConstrained(
+                flow_rate,
+                self._borehole,
+                self._u_tube_type,
+                self._fluid,
+                self._pipe,
+                self._grout,
+                self._soil,
+                self._simulation_parameters,
+                self._geometric_constraints,
+                self._ground_loads,
+                flow_type=flow_type,
                 method=DesignMethodTimeStep.Hybrid,
             )
         else:
@@ -460,6 +482,14 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             b_min=constraint_props["b_min"],
             b_max_x=constraint_props["b_max_x"],
             b_max_y=constraint_props["b_max_y"]
+        )
+    elif geom_type == ghe.DesignGeomType.BiRectangleConstrained:
+        ghe.set_geometry_constraints_bi_rectangle_constrained(
+            b_min=constraint_props["b_min"],
+            b_max_x=constraint_props["b_max_x"],
+            b_max_y=constraint_props["b_max_y"],
+            property_boundary=constraint_props["property_boundary"],
+            no_go_boundaries=constraint_props["no_go_boundaries"]
         )
     else:
         raise ValueError("Geometry constraint method not supported.")

@@ -164,7 +164,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             geometric_constraints,
             hourly_extraction_ground_loads,
             method=DesignMethodTimeStep.Hybrid,
-            flow=flow,
+            flow_type=flow,
         )
 
         # Find the near-square design for a single U-tube and size it.
@@ -218,7 +218,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             geometric_constraints,
             hourly_extraction_ground_loads,
             method=DesignMethodTimeStep.Hybrid,
-            flow=flow,
+            flow_type=flow,
         )
 
         # Find the near-square design for a single U-tube and size it.

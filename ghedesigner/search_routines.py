@@ -457,15 +457,15 @@ class RowWiseModifiedBisectionSearch:
 
     def search(self, use_perimeter=True):
 
-        spacing_start = self.geometricConstraints.spacStart
-        spacing_stop = self.geometricConstraints.spacStop
-        spacing_step = self.geometricConstraints.spacStep
-        rotate_step = self.geometricConstraints.rotateStep
-        prop_bound = self.geometricConstraints.propBound
-        ng_zones = self.geometricConstraints.ngZones
-        rotate_start = self.geometricConstraints.rotateStart
-        rotate_stop = self.geometricConstraints.rotateStop
-        p_spacing = self.geometricConstraints.pSpac
+        spacing_start = self.geometricConstraints.spacing_start
+        spacing_stop = self.geometricConstraints.spacing_stop
+        spacing_step = self.geometricConstraints.spacing_step
+        rotate_step = self.geometricConstraints.rotate_step
+        prop_bound = self.geometricConstraints.property_boundary
+        ng_zones = self.geometricConstraints.no_go_boundaries
+        rotate_start = self.geometricConstraints.rotate_start
+        rotate_stop = self.geometricConstraints.rotate_stop
+        p_spacing = self.geometricConstraints.p_spacing
 
         selected_coordinates = None
         selected_specifier = None

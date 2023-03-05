@@ -23,7 +23,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
 
-        # TODO: need to understand why this is here. this was just pulled from the original example file
         b = 5.0
         number_of_boreholes = 32
         length = length_of_side(number_of_boreholes, b)
@@ -32,7 +31,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_design(flow_rate=6.4, flow_type="system", design_method_geo=ghe.DesignGeomType.NearSquare)
         ghe.find_design()
 
-        # Output File Configuration  # TODO: Could add these to the manager constructor, or a set_meta_data method
         project_name = "Atlanta Office Building: Design Example"
         note = "Square-Near-Square Usage Example: Single U Tube"
         author = "John Doe"
@@ -58,7 +56,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
 
-        # TODO: need to understand why this is here. this was just pulled from the original example file
         b = 5.0
         number_of_boreholes = 32
         length = length_of_side(number_of_boreholes, b)
@@ -66,7 +63,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.NearSquare)
         ghe.find_design()
 
-        # Output File Configuration  # TODO: Could add these to the manager constructor, or a set_meta_data method
         project_name = "Atlanta Office Building: Design Example"
         note = "Square-Near-Square Usage Example: Double U Tube"
         author = "John Doe"
@@ -93,7 +89,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
 
-        # TODO: need to understand why this is here. this was just pulled from the original example file
         b = 5.0
         number_of_boreholes = 32
         length = length_of_side(number_of_boreholes, b)

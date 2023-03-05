@@ -1,22 +1,25 @@
 {
-    "type": "object",
-    "properties": {
-        "fluid_name": {
-            "type": "string",
-            "enum": [
-                "WATER",
-                "ETHYLALCOHOL",
-                "ETHYLENEGLYCOL",
-                "METHYLALCOHOL",
-                "PROPYLENEGLYCOL"
-            ]
-        },
-        "concentration_percent": {
-            "type": "number",
-            "maximum": 60,
-            "minimum": 0,
-            "units": "percent"
-        }
+  "type": "object",
+  "properties": {
+    "fluid_name": {
+      "type": "string",
+      "enum": [
+        "WATER",
+        "ETHYLALCOHOL",
+        "ETHYLENEGLYCOL",
+        "METHYLALCOHOL",
+        "PROPYLENEGLYCOL"
+      ]
     },
-    "required": ["fluid_name", "concentration_percent"]
+    "concentration_percent": {
+      "type": "number",
+      "maximum": 60,
+      "minimum": 0,
+      "units": "percent"
+    }
+  },
+  "required": [
+    "fluid_name",
+    "concentration_percent"
+  ]
 }

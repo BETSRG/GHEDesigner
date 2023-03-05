@@ -1,15 +1,18 @@
 {
-    "type": "object",
-    "properties": {
-        "num_months": {
-            "type": "number",
-            "minimum": 0,
-            "units": "months"
-        },
-        "timestep": {
-            "type": "string",
-            "const": "HYBRID"
-        }
+  "type": "object",
+  "properties": {
+    "num_months": {
+      "type": "number",
+      "minimum": 0,
+      "units": "months"
     },
-    "required": ["num_months", "timestep"]
+    "timestep": {
+      "type": "string",
+      "const": "HYBRID"
+    }
+  },
+  "required": [
+    "num_months",
+    "timestep"
+  ]
 }

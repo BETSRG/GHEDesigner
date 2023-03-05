@@ -1,12 +1,11 @@
-from os import path
+from pathlib import Path
 
 from setuptools import setup
 
 from ghedesigner import VERSION
 
-this_directory = path.abspath(path.dirname(__file__))
-with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+readme_file = Path(__file__).parent.resolve() / 'README.md'
+readme_contents = readme_file.read_text()
 
 short_description = """A ground heat exchanger design tool with the capability
 to select and size flexibly configured borehole fields that are customized
@@ -24,7 +23,8 @@ setup(
     ],
     url='https://github.com/BETSRG/GHEDesigner',
     description=short_description,
-    long_description=long_description,
+    license='BSD-3',
+    long_description=readme_contents,
     long_description_content_type='text/markdown',
     version=VERSION,
     packages=['ghedesigner'],

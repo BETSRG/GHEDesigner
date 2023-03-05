@@ -9,7 +9,7 @@ class TestDemoFiles(GHEBaseTest):
 
     def test_demo_files(self):
 
-        time_str = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
+        time_str = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 
         for _, _, files in os.walk(self.demos_path):
             for f in files:
