@@ -86,10 +86,10 @@ class DesignNearSquare(DesignBase):
         # There would never be a time that a user would __need__ to give a
         # different lower range. The upper number of boreholes range is
         # calculated based on the spacing and length provided.
-        n = floor(self.geometric_constraints.length / self.geometric_constraints.B) + 1
+        n = floor(self.geometric_constraints.length / self.geometric_constraints.b) + 1
         number_of_boreholes = int(n)
         self.coordinates_domain, self.fieldDescriptors = square_and_near_square(1, number_of_boreholes,
-                                                                                self.geometric_constraints.B)
+                                                                                self.geometric_constraints.b)
 
     def find_design(self, disp=False, use_perimeter=True) -> Bisection1D:
         if disp:
@@ -125,7 +125,7 @@ class DesignRectangle(DesignBase):
         self.geometric_constraints = geometric_constraints
         self.coordinates_domain, self.fieldDescriptors = rectangular(
             self.geometric_constraints.length, self.geometric_constraints.width,
-            self.geometric_constraints.B_min, self.geometric_constraints.B_max_x)
+            self.geometric_constraints.b_min, self.geometric_constraints.b_max_x)
 
     def find_design(self, disp=False, use_perimeter=True) -> Bisection1D:
         if disp:
@@ -160,8 +160,8 @@ class DesignBiRectangle(DesignBase):
                          hourly_extraction_ground_loads, method, flow_type, load_years)
         self.geometric_constraints = geometric_constraints
         self.coordinates_domain_nested, self.fieldDescriptors = bi_rectangle_nested(
-            self.geometric_constraints.length, self.geometric_constraints.width, self.geometric_constraints.B_min,
-            self.geometric_constraints.B_max_x, self.geometric_constraints.B_max_y, disp=False
+            self.geometric_constraints.length, self.geometric_constraints.width, self.geometric_constraints.b_min,
+            self.geometric_constraints.b_max_x, self.geometric_constraints.b_max_y, disp=False
         )
 
     def find_design(self, disp=False, use_perimeter=True) -> Bisection2D:
@@ -197,8 +197,8 @@ class DesignBiZoned(DesignBase):
                          hourly_extraction_ground_loads, method, flow_type, load_years)
         self.geometric_constraints = geometric_constraints
         self.coordinates_domain_nested, self.fieldDescriptors = bi_rectangle_zoned_nested(
-            self.geometric_constraints.length, self.geometric_constraints.width, self.geometric_constraints.B_min,
-            self.geometric_constraints.B_max_x, self.geometric_constraints.B_max_y
+            self.geometric_constraints.length, self.geometric_constraints.width, self.geometric_constraints.b_min,
+            self.geometric_constraints.b_max_x, self.geometric_constraints.b_max_y
         )
 
     def find_design(self, disp=False, use_perimeter=True) -> BisectionZD:
@@ -234,9 +234,9 @@ class DesignBiRectangleConstrained(DesignBase):
                          hourly_extraction_ground_loads, method, flow_type, load_years)
         self.geometric_constraints = geometric_constraints
         self.coordinates_domain_nested, self.fieldDescriptors = polygonal_land_constraint(
-            self.geometric_constraints.B_min,
-            self.geometric_constraints.B_max_x,
-            self.geometric_constraints.B_max_y,
+            self.geometric_constraints.b_min,
+            self.geometric_constraints.b_max_x,
+            self.geometric_constraints.b_max_y,
             self.geometric_constraints.property_boundary,
             self.geometric_constraints.no_go_boundaries,
         )

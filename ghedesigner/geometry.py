@@ -9,12 +9,12 @@ class GeometricConstraintsNearSquare(GeometricConstraints):
 
     def __init__(self, b: float, length: float):
         super().__init__()
-        self.B = b
+        self.b = b
         self.length = length
 
     def to_input(self) -> dict:
         return {'length': self.length,
-                'b': self.B,
+                'b': self.b,
                 'method': 'nearsquare'}
 
 
@@ -27,14 +27,14 @@ class GeometricConstraintsRectangle(GeometricConstraints):
         super().__init__()
         self.width = width
         self.length = length
-        self.B_min = b_min
-        self.B_max_x = b_max_x
+        self.b_min = b_min
+        self.b_max_x = b_max_x
 
     def to_input(self) -> dict:
         return {'length': self.length,
                 'width': self.width,
-                'b_min': self.B_min,
-                'b_max': self.B_max_x,
+                'b_min': self.b_min,
+                'b_max': self.b_max_x,
                 'method': 'rectangle'}
 
 
@@ -46,16 +46,16 @@ class GeometricConstraintsBiRectangle(GeometricConstraints):
         super().__init__()
         self.width = width
         self.length = length
-        self.B_min = b_min
-        self.B_max_x = b_max_x
-        self.B_max_y = b_max_y
+        self.b_min = b_min
+        self.b_max_x = b_max_x
+        self.b_max_y = b_max_y
 
     def to_input(self) -> dict:
         return {'length': self.length,
                 'width': self.width,
-                'b_min': self.B_min,
-                'b_max_x': self.B_max_x,
-                'b_max_y': self.B_max_y,
+                'b_min': self.b_min,
+                'b_max_x': self.b_max_x,
+                'b_max_y': self.b_max_y,
                 'method': 'birectangle'}
 
 
@@ -66,16 +66,16 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
 
     def __init__(self, b_min: float, b_max_x: float, b_max_y: float, property_boundary, no_go_boundaries):
         super().__init__()
-        self.B_min = b_min
-        self.B_max_y = b_max_y
-        self.B_max_x = b_max_x
+        self.b_min = b_min
+        self.b_max_x = b_max_x
+        self.b_max_y = b_max_y
         self.property_boundary = property_boundary
         self.no_go_boundaries = no_go_boundaries
 
     def to_input(self) -> dict:
-        return {'b_min': self.B_min,
-                'b_max_x': self.B_max_x,
-                'b_max_y': self.B_max_y,
+        return {'b_min': self.b_min,
+                'b_max_x': self.b_max_x,
+                'b_max_y': self.b_max_y,
                 'property_boundary': self.property_boundary,
                 'no_go_boundaries': self.no_go_boundaries,
                 'method': 'birectangleconstrained'}
@@ -92,9 +92,9 @@ class GeometricConstraintsBiZoned(GeometricConstraintsBiRectangle):
     def to_input(self) -> dict:
         return {'length': self.length,
                 'width': self.width,
-                'b_min': self.B_min,
-                'b_max_x': self.B_max_x,
-                'b_max_y': self.B_max_y,
+                'b_min': self.b_min,
+                'b_max_x': self.b_max_x,
+                'b_max_y': self.b_max_y,
                 'method': 'bizonedrectangle'}
 
 
@@ -111,14 +111,14 @@ class GeometricConstraintsRowWise(GeometricConstraints):
                  rotate_stop: float,
                  rotate_start: float,
                  property_boundary,
-                 ng_zones):
+                 no_go_boundaries):
         super().__init__()
-        self.pSpac = p_spacing
-        self.spacStart = spacing_start
-        self.spacStop = spacing_stop
-        self.spacStep = spacing_step
-        self.rotateStep = rotate_step
-        self.rotateStop = rotate_stop
-        self.rotateStart = rotate_start
-        self.propBound = property_boundary
-        self.ngZones = ng_zones
+        self.p_spacing = p_spacing
+        self.spacing_start = spacing_start
+        self.spacing_stop = spacing_stop
+        self.spacing_step = spacing_step
+        self.rotate_step = rotate_step
+        self.rotate_stop = rotate_stop
+        self.rotate_start = rotate_start
+        self.property_boundary = property_boundary
+        self.no_go_boundaries = no_go_boundaries
