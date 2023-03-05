@@ -92,6 +92,7 @@ GHEDesigner is supported for Python versions >= 3.8, and is tested with Python 3
 the following packages:
 
 - [click][#click] (>=8.1.3)
+- [jsonschema][#jsonschema] (>=4.17.3)
 - [numpy][#numpy] (>=1.24.2)
 - [opencv-python][#opencv] (==4.7.0.68)
 - [pygfunction][#pygfunction] (>=2.2.2)
@@ -167,6 +168,8 @@ NJ. https://hvac.okstate.edu/sites/default/files/pubs/papers/2006/07-Xu_Spitler_
 [#opencv]: https://pypi.org/project/opencv-python/
 
 [#click]: https://click.palletsprojects.com/en/8.1.x/
+
+[#jsonschema]: https://pypi.org/project/jsonschema/
 
 [#pip]: https://pip.pypa.io/en/latest/
 
