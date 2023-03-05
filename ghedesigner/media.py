@@ -6,7 +6,6 @@ from pygfunction.media import Fluid
 class GHEFluid(Fluid):
 
     def __init__(self, fluid_str: str, percent: float, T: float = 20):
-
         fluid_str = fluid_str.upper()
         fluid_map = {
             "WATER": "WATER",

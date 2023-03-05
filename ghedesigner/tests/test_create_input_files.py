@@ -1,5 +1,6 @@
 import os
 from json import loads, dumps
+
 from recursive_diff import recursive_eq
 
 from ghedesigner.manager import GHEManager
@@ -9,7 +10,6 @@ from ghedesigner.tests.ghe_base_case import GHEBaseTest
 class TestCreateInputFiles(GHEBaseTest):
 
     def test_num_files_match_num_tests(self):
-
         # update this to match the number of tests in this file
         # there should be a test corresponding to each demo file
         num_tests = 9
@@ -18,7 +18,6 @@ class TestCreateInputFiles(GHEBaseTest):
             self.assertTrue(len(files) == num_tests)
 
     def test_create_input_file_bi_rectangle_constrained_single_u_tube(self):
-
         prop_boundary = [
             [19.46202532, 108.8860759],
             [19.67827004, 94.46835443],
@@ -66,7 +65,8 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_rectangle_constrained(b_min=5.0, b_max_x=25.0, b_max_y=25.0,
-                                                              property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
+                                                              property_boundary=prop_boundary,
+                                                              no_go_boundaries=no_go_zones)
         ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiRectangleConstrained)
         out_path = self.test_outputs_directory / "test_create_input_file_bi_rectangle_constrained_single_u_tube.json"
         ghe.write_input_file(out_path)
@@ -86,7 +86,6 @@ class TestCreateInputFiles(GHEBaseTest):
         recursive_eq(d_demo, d_new)
 
     def test_create_input_file_bi_zoned_rectangle_single_u_tube(self):
-
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
             inner_radius=0.0108, outer_radius=0.0133, shank_spacing=0.0323,
@@ -117,7 +116,6 @@ class TestCreateInputFiles(GHEBaseTest):
         recursive_eq(d_demo, d_new)
 
     def test_create_input_file_bi_rectangle_single_u_tube(self):
-
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
             inner_radius=0.0108, outer_radius=0.0133, shank_spacing=0.0323,

@@ -42,6 +42,7 @@ class GeometricConstraintsBiRectangle(GeometricConstraints):
     """
     Geometric constraints for bi-rectangle design algorithm
     """
+
     def __init__(self, width: float, length: float, b_min: float, b_max_x: float, b_max_y: float):
         super().__init__()
         self.width = width

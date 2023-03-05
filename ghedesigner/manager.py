@@ -22,7 +22,6 @@ from ghedesigner.validate import validate_input_file
 
 
 class GHEManager:
-
     class DesignGeomType(Enum):
         NearSquare = auto()
         Rectangle = auto()
@@ -185,7 +184,8 @@ class GHEManager:
 
     def set_geometry_constraints_bi_rectangle_constrained(self, b_min: float, b_max_x: float, b_max_y: float,
                                                           property_boundary: list, no_go_boundaries: list):
-        self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries)
+        self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(b_min, b_max_x, b_max_y,
+                                                                                 property_boundary, no_go_boundaries)
 
     def set_design(self, flow_rate: float, flow_type: str, design_method_geo: DesignGeomType):
         """

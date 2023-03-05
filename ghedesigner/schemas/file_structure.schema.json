@@ -1,27 +1,50 @@
 {
-    "type": "object",
-    "properties": {
-        "version": {"type": "string"},
-        "fluid": {"type": "object"},
-        "grout": {"type": "object"},
-        "soil": {"type": "object"},
-        "pipe": {"type": "object"},
-        "borehole": {"type": "object"},
-        "simulaton": {"type": "object"},
-        "geometric_constraints": {"type": "object"},
-        "design": {"type": "object"},
-        "ground_loads": {"type": "array", "items": {"type": "number"}}
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string"
     },
-    "required": [
-        "version",
-        "fluid",
-        "grout",
-        "soil",
-        "pipe",
-        "borehole",
-        "simulation",
-        "geometric_constraints",
-        "design",
-        "ground_loads"
-    ]
+    "fluid": {
+      "type": "object"
+    },
+    "grout": {
+      "type": "object"
+    },
+    "soil": {
+      "type": "object"
+    },
+    "pipe": {
+      "type": "object"
+    },
+    "borehole": {
+      "type": "object"
+    },
+    "simulaton": {
+      "type": "object"
+    },
+    "geometric_constraints": {
+      "type": "object"
+    },
+    "design": {
+      "type": "object"
+    },
+    "ground_loads": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "required": [
+    "version",
+    "fluid",
+    "grout",
+    "soil",
+    "pipe",
+    "borehole",
+    "simulation",
+    "geometric_constraints",
+    "design",
+    "ground_loads"
+  ]
 }

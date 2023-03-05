@@ -7,7 +7,6 @@
 from ghedesigner.manager import GHEManager
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
-
 prop_boundary = [
     [19.46202532, 108.8860759],
     [19.67827004, 94.46835443],
@@ -48,7 +47,6 @@ no_go_zones = [[
 class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
 
     def test_single_u_tube(self):
-
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
             inner_radius=0.0108, outer_radius=0.013335, shank_spacing=0.0323,
@@ -73,7 +71,6 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         self.assertEqual(76 + 1, len(selected_coordinates))
 
     def test_double_u_tube(self):
-
         ghe = GHEManager()
         ghe.set_double_u_tube_pipe(
             inner_radius=0.0108, outer_radius=0.013335, shank_spacing=0.0323,
@@ -98,7 +95,6 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         self.assertEqual(69 + 1, len(selected_coordinates))
 
     def test_coaxial(self):
-
         ghe = GHEManager()
         ghe.set_coaxial_pipe(
             inner_pipe_r_in=0.0221, inner_pipe_r_out=0.025, outer_pipe_r_in=0.0487, outer_pipe_r_out=0.055,

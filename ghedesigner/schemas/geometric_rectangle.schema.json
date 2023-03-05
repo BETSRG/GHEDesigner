@@ -1,48 +1,48 @@
 {
-    "type": "object",
-    "properties": {
-        "length": {
-            "type": "number",
-            "minimum": 0,
-            "units": "m"
-        },
-        "width": {
-            "type": "number",
-            "minimum": 0,
-            "units": "m"
-        },
-        "b_min": {
-            "type": "number",
-            "minimum": 0,
-            "units": "m"
-        },
-        "b_max": {
-            "type": "number",
-            "minimum": 0,
-            "units": "m"
-        },
-        "max_height": {
-            "type": "number",
-            "minimum": 0,
-            "units": "m"
-        },
-        "min_height": {
-            "type": "number",
-            "minimum": 0,
-            "units": "m"
-        },
-        "method": {
-            "type": "string",
-            "const": "RECTANGLE"
-        }
+  "type": "object",
+  "properties": {
+    "length": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
     },
-    "required": [
-        "length",
-        "width",
-        "b_min",
-        "b_max",
-        "max_height",
-        "min_height",
-        "method"
-    ]
+    "width": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
+    },
+    "b_min": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
+    },
+    "b_max": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
+    },
+    "max_height": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
+    },
+    "min_height": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
+    },
+    "method": {
+      "type": "string",
+      "const": "RECTANGLE"
+    }
+  },
+  "required": [
+    "length",
+    "width",
+    "b_min",
+    "b_max",
+    "max_height",
+    "min_height",
+    "method"
+  ]
 }

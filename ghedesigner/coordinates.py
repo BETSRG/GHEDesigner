@@ -78,7 +78,6 @@ def open_rectangle(num_bh_x: int, num_bh_y: int, spacing_x: Union[int, float],
 
 def c_shape(n_x_1: int, n_y: int, b_x: Union[int, float],
             b_y: Union[int, float], n_x_2: int) -> List[Tuple[float, float]]:
-
     c = []
     for i in range(n_x_1):
         c.append((i * b_x, 0.0))
@@ -96,7 +95,6 @@ def c_shape(n_x_1: int, n_y: int, b_x: Union[int, float],
 
 def lop_u(n_x: int, n_y_1: int, b_x: Union[int, float],
           b_y: Union[int, float], n_y_2: int) -> List[Tuple[float, float]]:
-
     _lop_u = []
     for i in range(n_x):
         _lop_u.append((i * b_x, 0.0))
@@ -110,7 +108,6 @@ def lop_u(n_x: int, n_y_1: int, b_x: Union[int, float],
 
 
 def l_shape(n_x: int, n_y: int, b_x: Union[int, float], b_y: Union[int, float]) -> List[Tuple[float, float]]:
-
     l_shape_object = []
     for i in range(n_x):
         l_shape_object.append((i * b_x, 0.0))

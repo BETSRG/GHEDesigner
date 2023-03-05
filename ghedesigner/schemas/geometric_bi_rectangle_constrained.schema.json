@@ -1,73 +1,73 @@
 {
-    "type": "object",
-    "properties": {
-        "b_min": {
-            "type": "number",
-            "minimum": 0,
-            "units": "m"
-        },
-        "b_max_x": {
-            "type": "number",
-            "minimum": 0,
-            "units": "m"
-        },
-        "b_max_y": {
-            "type": "number",
-            "minimum": 0,
-            "units": "m"
-        },
-        "max_height": {
-            "type": "number",
-            "minimum": 0,
-            "units": "m"
-        },
-        "min_height": {
-            "type": "number",
-            "minimum": 0,
-            "units": "m"
-        },
-        "property_boundary": {
-            "type": "array",
-            "items": {
-                "type": "array",
-                "minItems": 2,
-                "maxItems": 2,
-                "items": {
-                    "type": "number",
-                    "minimum": 0
-                }
-            },
-            "units": "m"
-        },
-        "no_go_boundaries": {
-            "type": "array",
-            "items": {
-                "type": "array",
-                "items": {
-                  	"type": "array",
-                	"minItems": 2,
-                	"maxItems": 2,
-                	"items": {
-                    	"type": "number",
-                    	"minimum": 0
-                	}
-                }
-            },
-            "units": "m"
-        },
-        "method": {
-            "type": "string",
-            "const": "BIRECTANGLECONSTRAINED"
-        }
+  "type": "object",
+  "properties": {
+    "b_min": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
     },
-    "required": [
-        "b_min",
-        "b_max_x",
-        "b_max_y",
-        "max_height",
-        "min_height",
-        "property_boundary",
-        "no_go_boundaries",
-        "method"
-    ]
+    "b_max_x": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
+    },
+    "b_max_y": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
+    },
+    "max_height": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
+    },
+    "min_height": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
+    },
+    "property_boundary": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "units": "m"
+    },
+    "no_go_boundaries": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "units": "m"
+    },
+    "method": {
+      "type": "string",
+      "const": "BIRECTANGLECONSTRAINED"
+    }
+  },
+  "required": [
+    "b_min",
+    "b_max_x",
+    "b_max_y",
+    "max_height",
+    "min_height",
+    "property_boundary",
+    "no_go_boundaries",
+    "method"
+  ]
 }
