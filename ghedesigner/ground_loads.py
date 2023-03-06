@@ -1,11 +1,12 @@
 from calendar import monthrange
 from json import dumps
-from math import floor, pi
+from math import floor
 
 import numpy as np
 from scipy.interpolate import interp1d
 
 from ghedesigner.borehole_heat_exchangers import SingleUTube
+from ghedesigner.constants import TWO_PI
 from ghedesigner.radial_numerical_borehole import RadialNumericalBH
 from ghedesigner.simulation import SimulationParameters
 
@@ -276,7 +277,7 @@ class HybridLoad:
             two_day_fluid_temps_nm,
     ):
         ts = self.radial_numerical.t_s
-        two_pi_k = 2.0 * pi * self.bhe.soil.k
+        two_pi_k = TWO_PI * self.bhe.soil.k
         resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
         g_sts = self.radial_numerical.g_sts
         hours_in_day = 24

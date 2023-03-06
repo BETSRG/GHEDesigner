@@ -1,6 +1,5 @@
 from enum import Enum, auto
 from json import loads, dumps
-from math import pi
 from pathlib import Path
 from sys import exit, stderr
 from time import time
@@ -10,6 +9,7 @@ import click
 
 from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
+from ghedesigner.constants import DEG_TO_RAD
 from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle, DesignBiRectangle
 from ghedesigner.design import DesignBiZoned, DesignBiRectangleConstrained, DesignRowWise
 from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
@@ -197,8 +197,8 @@ class GHEManager:
                                          property_boundary: list, no_go_boundaries: list):
 
         # convert from degrees to radians
-        rotate_start = rotate_start * pi / 180.0
-        rotate_stop = rotate_stop * pi / 180.0
+        rotate_start = rotate_start * DEG_TO_RAD
+        rotate_stop = rotate_stop * DEG_TO_RAD
 
         self._geometric_constraints = GeometricConstraintsRowWise(perimeter_spacing_ratio,
                                                                   spacing_start, spacing_stop, spacing_step,

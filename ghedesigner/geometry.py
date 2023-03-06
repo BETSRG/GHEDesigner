@@ -1,3 +1,6 @@
+from ghedesigner.constants import RAD_TO_DEG
+
+
 class GeometricConstraints:
     pass  # TODO: Pull in common functionality!
 
@@ -130,8 +133,8 @@ class GeometricConstraintsRowWise(GeometricConstraints):
                 'spacing_start': self.spacing_start,
                 'spacing_stop': self.spacing_stop,
                 'spacing_step': self.spacing_step,
-                'rotate_start': self.rotate_start,
-                'rotate_stop': self.rotate_stop,
+                'rotate_start': self.rotate_start * RAD_TO_DEG,
+                'rotate_stop': self.rotate_stop * RAD_TO_DEG,
                 'rotate_step': self.rotate_step,
                 'property_boundary': self.property_boundary,
                 'no_go_boundaries': self.no_go_boundaries,

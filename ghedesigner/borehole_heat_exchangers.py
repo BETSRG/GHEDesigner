@@ -7,6 +7,7 @@ import pygfunction as gt
 from numpy import pi, log, sqrt
 
 from ghedesigner.borehole import GHEBorehole
+from ghedesigner.constants import TWO_PI
 from ghedesigner.enums import BHPipeType, FlowConfig
 from ghedesigner.media import GHEFluid, Pipe, Grout, Soil
 from ghedesigner.utilities import solve_root
@@ -41,7 +42,7 @@ class GHEDesignerBoreholeBase:
 
     @staticmethod
     def compute_fluid_resistance(h_conv: float, radius: float) -> float:
-        return 1 / (h_conv * 2 * pi * radius)
+        return 1 / (h_conv * TWO_PI * radius)
 
     @staticmethod
     def compute_reynolds(m_flow_pipe: float, r_in: float, fluid: GHEFluid) -> float:
@@ -165,7 +166,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         r_p_o_prime = sqrt((vol_fluid + vol_pipe) / (n * pi))
         # A_s_prime = n * pi * ((r_p_i_prime * 2) ** 2)
         # h_prime = 1 / (R_conv * A_s_prime)
-        k_p_prime = log(r_p_o_prime / r_p_i_prime) / (2 * pi * n * resist_pipe)
+        k_p_prime = log(r_p_o_prime / r_p_i_prime) / (TWO_PI * n * resist_pipe)
 
         # Place single u-tubes at a B-spacing
         # Total horizontal space (m)
@@ -326,7 +327,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         vol_fluid = n * pi * (self.r_in ** 2)
         vol_pipe = n * pi * (self.r_out ** 2) - vol_fluid
         # V_grout = pi * (u_tube.b.r_b**2) - vol_pipe - vol_fluid
-        resist_pipe = log(self.r_out / self.r_in) / (n * 2 * pi * self.pipe.k)
+        resist_pipe = log(self.r_out / self.r_in) / (n * TWO_PI * self.pipe.k)
         return vol_fluid, vol_pipe, resist_conv, resist_pipe
 
     def to_single(self) -> SingleUTube:
@@ -516,7 +517,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         # V_grout = pi * ((coaxial.b.r_b**2) - (r_out_out**2))
         area_surf_outer = pi * 2 * r_out_in
         resist_conv = 1 / (self.h_f_a_in * area_surf_outer)
-        resist_pipe = log(r_out_out / r_out_in) / (2 * pi * self.pipe.k[1])
+        resist_pipe = log(r_out_out / r_out_in) / (TWO_PI * self.pipe.k[1])
         return vol_fluid, vol_pipe, resist_conv, resist_pipe
 
 

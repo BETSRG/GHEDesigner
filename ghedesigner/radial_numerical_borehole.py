@@ -5,6 +5,7 @@ from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
 
 from ghedesigner.borehole_heat_exchangers import SingleUTube
+from ghedesigner.constants import TWO_PI
 
 
 class RadialCellType(object):
@@ -95,7 +96,7 @@ class RadialNumericalBH(object):
         # other
         self.g = np.array([], dtype=self.dtype)
         self.lntts = np.array([], dtype=self.dtype)
-        self.c_0 = 2.0 * pi * single_u_tube.soil.k
+        self.c_0 = TWO_PI * single_u_tube.soil.k
         soil_diffusivity = single_u_tube.k_s / single_u_tube.soil.rhoCp
         self.t_s = single_u_tube.b.H ** 2 / (9 * soil_diffusivity)
         # default is at least 49 hours, or up to -8.6 log time
@@ -174,7 +175,7 @@ class RadialNumericalBH(object):
             inner_radius = self.r_in_convection + j * thickness
             center_radius = inner_radius + thickness / 2.0
             outer_radius = inner_radius + thickness
-            k_eq = log(self.r_in_tube / self.r_in_convection) / (2.0 * pi * resist_f_eq)
+            k_eq = log(self.r_in_tube / self.r_in_convection) / (TWO_PI * resist_f_eq)
             rho_cp = 1.0
             volume = pi * (outer_radius ** 2 - inner_radius ** 2)
             radial_cell[:, idx] = np.array(
@@ -204,7 +205,7 @@ class RadialNumericalBH(object):
             inner_radius = self.r_in_tube + j * thickness
             center_radius = inner_radius + thickness / 2.0
             outer_radius = inner_radius + thickness
-            conductivity = log(self.r_borehole / self.r_in_tube) / (2.0 * pi * resist_p_eq)
+            conductivity = log(self.r_borehole / self.r_in_tube) / (TWO_PI * resist_p_eq)
             rho_cp = self.single_u_tube.pipe.rhoCp
             volume = pi * (outer_radius ** 2 - inner_radius ** 2)
             radial_cell[:, idx] = np.array(
@@ -234,7 +235,7 @@ class RadialNumericalBH(object):
             inner_radius = self.r_out_tube + j * thickness
             center_radius = inner_radius + thickness / 2.0
             outer_radius = inner_radius + thickness
-            conductivity = log(self.r_borehole / self.r_in_tube) / (2.0 * pi * resist_tg_eq)
+            conductivity = log(self.r_borehole / self.r_in_tube) / (TWO_PI * resist_tg_eq)
             rho_cp = self.single_u_tube.grout.rhoCp
             volume = pi * (outer_radius ** 2 - inner_radius ** 2)
             radial_cell[:, idx] = np.array(
@@ -340,18 +341,18 @@ class RadialNumericalBH(object):
         _center_cell = radial_cell[:, 1: self.num_cells - 1]
         _east_cell = radial_cell[:, 2: self.num_cells - 0]
 
-        fe_1 = log(radial_cell[r_out_idx, 0] / radial_cell[r_center_idx, 0]) / (2.0 * pi * radial_cell[k_idx, 0])
-        fe_2 = log(radial_cell[r_center_idx, 1] / radial_cell[r_in_idx, 1]) / (2.0 * pi * radial_cell[k_idx, 1])
+        fe_1 = log(radial_cell[r_out_idx, 0] / radial_cell[r_center_idx, 0]) / (TWO_PI * radial_cell[k_idx, 0])
+        fe_2 = log(radial_cell[r_center_idx, 1] / radial_cell[r_in_idx, 1]) / (TWO_PI * radial_cell[k_idx, 1])
         ae = 1 / (fe_1 + fe_2)
         ad = radial_cell[rho_cp_idx, 0] * radial_cell[volume_idx, 0] / time_step
         _d[0] = -ae / ad - 1
         _du[0] = ae / ad
 
         def fill_f1(fx_1, cell):
-            fx_1[:] = np.log(cell[r_out_idx, :] / cell[r_center_idx, :]) / (2.0 * pi * cell[k_idx, :])
+            fx_1[:] = np.log(cell[r_out_idx, :] / cell[r_center_idx, :]) / (TWO_PI * cell[k_idx, :])
 
         def fill_f2(fx_2, cell):
-            fx_2[:] = np.log(cell[r_center_idx, :] / cell[r_in_idx, :]) / (2.0 * pi * cell[k_idx, :])
+            fx_2[:] = np.log(cell[r_center_idx, :] / cell[r_in_idx, :]) / (TWO_PI * cell[k_idx, :])
 
         fill_f1(_fe_1, _center_cell)
         fill_f2(_fe_2, _east_cell)

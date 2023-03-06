@@ -2,6 +2,8 @@ from math import atan, pi, sin, sqrt
 
 import numpy as np
 
+from ghedesigner.constants import PI_OVER_2, TWO_PI
+
 
 class Shapes:
 
@@ -144,18 +146,18 @@ def sort_intersections(r_a, rotate):
     i = 0
     for inter in r_a:
         if inter[0] == 0:
-            phi = pi / 2
+            phi = PI_OVER_2
         else:
             phi = atan(inter[1] / inter[0])
         dist_inter = sqrt(inter[1] ** 2 + inter[0] ** 2)
-        ref_ang = pi / 2 - phi
+        ref_ang = PI_OVER_2 - phi
         # sign = 1
-        if phi > pi / 2:
+        if phi > PI_OVER_2:
             if phi > pi:
-                if phi > 3 * pi / 2.0:
-                    ref_ang = 2 * pi - phi
+                if phi > 3 * PI_OVER_2:
+                    ref_ang = TWO_PI - phi
                 else:
-                    ref_ang = 3.0 * pi / 2.0 - phi
+                    ref_ang = 3.0 * PI_OVER_2 - phi
             else:
                 ref_ang = pi - phi
         # if phi > pi/2 + rotate and phi < 3*pi/2 + rotate:
