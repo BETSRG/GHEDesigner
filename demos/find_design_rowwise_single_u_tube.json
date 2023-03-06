@@ -35,7 +35,7 @@
     "spacing_start": 10.0,
     "spacing_stop": 20.0,
     "spacing_step": 0.1,
-    "rotate_start": -1.57079632,
+    "rotate_start": -90.0,
     "rotate_stop": 0.0,
     "rotate_step": 0.5,
     "max_height": 135.0,

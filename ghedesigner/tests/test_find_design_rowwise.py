@@ -61,7 +61,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_rowwise(perimeter_spacing_ratio=None,
                                              spacing_start=10.0, spacing_stop=20.0, spacing_step=0.1,
-                                             rotate_start=-1.57079632, rotate_stop=0.0, rotate_step=0.5,
+                                             rotate_start=-90.0, rotate_stop=0.0, rotate_step=0.5,
                                              property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
         ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.RowWise)
         ghe.find_design()
@@ -87,7 +87,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_rowwise(perimeter_spacing_ratio=0.8,
                                              spacing_start=10.0, spacing_stop=20.0, spacing_step=0.1,
-                                             rotate_start=-1.57079632, rotate_stop=0.0, rotate_step=0.5,
+                                             rotate_start=-90.0, rotate_stop=0.0, rotate_step=0.5,
                                              property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
         ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.RowWise)
         ghe.find_design()

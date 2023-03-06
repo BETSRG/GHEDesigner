@@ -1,5 +1,6 @@
 from enum import Enum, auto
 from json import loads, dumps
+from math import pi
 from pathlib import Path
 from sys import exit, stderr
 from time import time
@@ -194,6 +195,11 @@ class GHEManager:
                                          spacing_start: float, spacing_stop: float, spacing_step: float,
                                          rotate_start: float, rotate_stop: float, rotate_step: float,
                                          property_boundary: list, no_go_boundaries: list):
+
+        # convert from degrees to radians
+        rotate_start = rotate_start * pi / 180.0
+        rotate_stop = rotate_stop * pi / 180.0
+
         self._geometric_constraints = GeometricConstraintsRowWise(perimeter_spacing_ratio,
                                                                   spacing_start, spacing_stop, spacing_step,
                                                                   rotate_start, rotate_stop, rotate_step,
@@ -519,7 +525,6 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             no_go_boundaries=constraint_props["no_go_boundaries"]
         )
     elif geom_type == ghe.DesignGeomType.RowWise:
-        # TODO: need to not pass angles as radians. pass as degrees through inputs.
 
         # if present, we are using perimeter calculations
         if "perimeter_spacing_ratio" in constraint_props.keys():

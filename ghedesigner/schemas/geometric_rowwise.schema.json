@@ -23,11 +23,11 @@
     },
     "rotate_start": {
       "type": "number",
-      "units": "radians"
+      "units": "degrees"
     },
     "rotate_stop": {
       "type": "number",
-      "units": "radians"
+      "units": "degrees"
     },
     "rotate_step": {
       "type": "number",
