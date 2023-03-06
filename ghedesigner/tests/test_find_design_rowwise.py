@@ -1,256 +1,100 @@
-# Purpose: Design a constrained RowWise field using the common
-# design interface with a single U-tube borehole heat exchanger.
-
-
-import csv
-from math import pi
-from time import time as clock
-
-from ghedesigner.borehole import GHEBorehole
-from ghedesigner.design import DesignRowWise
-from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
-from ghedesigner.geometry import GeometricConstraintsRowWise
-from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
-from ghedesigner.output import OutputManager
-from ghedesigner.simulation import SimulationParameters
+from ghedesigner.manager import GHEManager
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
+prop_boundary = [
+    [19.46202532, 108.8860759],
+    [19.67827004, 94.46835443],
+    [24.65189873, 75.3164557],
+    [37.19409283, 56.59493671],
+    [51.68248945, 45.83544304],
+    [84.33544304, 38.94936709],
+    [112.0147679, 38.94936709],
+    [131.0443038, 35.50632911],
+    [147.2626582, 28.83544304],
+    [160.8860759, 18.07594937],
+    [171.6983122, 18.29113924],
+    [167.157173, 72.94936709],
+    [169.1033755, 80.48101266],
+    [177.3206751, 99.63291139],
+    [182.2943038, 115.7721519],
+    [182.2943038, 121.3670886],
+    [155.0474684, 118.5696203],
+    [53.19620253, 112.3291139]
+]
+
+no_go_zones = [[
+    [74.38818565, 80.69620253],
+    [73.0907173, 53.36708861],
+    [93.85021097, 52.50632911],
+    [120.0158228, 53.15189873],
+    [121.5295359, 62.18987342],
+    [128.8818565, 63.26582278],
+    [128.8818565, 78.5443038],
+    [129.0981013, 80.91139241],
+    [108.5548523, 81.34177215],
+    [104.0137131, 110],
+    [95.58016878, 110],
+    [95.7964135, 81.7721519]
+]]
+
+
+# This file contains two examples utilizing the RowWise design algorithm for a single U tube
+# The 1st example doesn't treat perimeter boreholes different, and the second one maintains a perimeter target
+# spacing to interior target-spacing ratio of .8.
 
 class TestFindRowWiseDesign(GHEBaseTest):
-    def test_find_row_wise_design(self):
 
-        # This file contains two examples utilizing the RowWise design algorithm for a single U tube
-        # The 1st example doesn't treat perimeter boreholes different, and the second one maintains a perimeter target
-        # spacing to interior target-spacing ratio of .8.
-        # The results from these examples are exported to the "DesignExampleOutput" folder.
+    # Purpose: Design a constrained RowWise field using the common
+    # design interface with a single U-tube borehole heat exchanger.
 
-        # W/O Separate Perimeter Spacing Example
+    def test_find_row_wise_design_wo_perimeter(self):
 
-        # Output File Configuration
-        project_name = "Atlanta Office Building: Design Example"
-        note = "RowWise Usage Example w/o Perimeter Spacing: Single U Tube"
-        author = "John Doe"
-        iteration_name = "Example 5"
-        output_file_directory = self.test_outputs_directory / "TestFindRowWiseDesign"
+        ghe = GHEManager()
+        ghe.set_single_u_tube_pipe(
+            inner_radius=0.0108, outer_radius=0.0133, shank_spacing=0.0323,
+            roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
+        ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
+        ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
+        ghe.set_fluid()
+        ghe.set_borehole(height=96.0, buried_depth=2.0, radius=0.075)
+        ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=200, min_height=60)
+        ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
+        ghe.set_geometry_constraints_rowwise(perimeter_spacing_ratio=None,
+                                             spacing_start=10.0, spacing_stop=20.0, spacing_step=0.1,
+                                             rotate_start=-1.57079632, rotate_stop=0.0, rotate_step=0.5,
+                                             property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.RowWise)
+        ghe.find_design()
+        output_file_directory = self.test_outputs_directory / "TestFindBiRectangleDesignSingleUTube"
+        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
+        ghe.write_output_files(output_file_directory, "")
+        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        self.assertAlmostEqual(199.46, u_tube_height, delta=0.01)
+        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(38 + 1, len(selected_coordinates))
 
-        # Borehole dimensions
-        h = 96.0  # Borehole length (m)
-        d = 2.0  # Borehole buried depth (m)
-        r_b = 0.075  # Borehole radius (m)
+    def test_find_row_wise_design_with_perimeter(self):
 
-        # Single and Multiple U-tube Pipe Dimensions
-        r_out = 0.013335  # Pipe outer radius (m)
-        r_in = 0.0108  # Pipe inner radius (m)
-        s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
-        epsilon = 1.0e-6  # Pipe roughness (m)
-
-        # Single U Tube Pipe Positions
-        pos_single = Pipe.place_pipes(s, r_out, 1)
-
-        # Thermal conductivities
-        k_p = 0.4  # Pipe thermal conductivity (W/m.K)
-        k_s = 2.0  # Ground thermal conductivity (W/m.K)
-        k_g = 1.0  # Grout thermal conductivity (W/m.K)
-
-        # Volumetric heat capacities
-        rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
-        rho_cp_s = 2343493.0  # Soil volumetric heat capacity (J/K.m3)
-        rho_cp_g = 3901000.0  # Grout volumetric heat capacity (J/K.m3)
-
-        # Instantiating Pipe
-        pipe_single = Pipe(pos_single, r_in, r_out, s, epsilon, k_p, rho_cp_p)
-
-        # Instantiating Soil Properties
-        ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
-        soil = Soil(k_s, rho_cp_s, ugt)
-
-        # Instantiating Grout Properties
-        grout = Grout(k_g, rho_cp_g)
-
-        # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
-
-        # Fluid Flow Properties
-        v_flow = 0.2  # Volumetric flow rate (L/s)
-        # Note: The flow parameter can be borehole or system.
-        flow = "borehole"
-
-        # Instantiate a Borehole
-        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
-
-        # Simulation parameters
-        start_month = 1
-        n_years = 20
-        end_month = n_years * 12
-        max_eft_allowable = 35  # degrees Celsius (HP EFT)
-        min_eft_allowable = 5  # degrees Celsius (HP EFT)
-        max_height = 135  # 135.0  # in meters  # At 135, this causes a max height warning, at 240 it fails, at 245 pass
-        min_height = 60  # in meters
-        sim_params = SimulationParameters(
-            start_month,
-            end_month,
-            max_eft_allowable,
-            min_eft_allowable,
-            max_height,
-            min_height,
-        )
-
-        # Process loads from file
-        hourly_extraction_ground_loads = self.get_atlanta_loads()
-
-        # RowWise Design Constraints
-
-        perimeter_spacing_ratio = None  # Dimensionless
-        spacing_start = 10.0  # in meters
-        spacing_stop = 20.0  # in meters
-        spacing_step = 0.1  # in meters
-        rotate_start = -90.0 * (pi / 180.0)  # in radians
-        rotate_stop = 0 * (pi / 180.0)  # in radians
-        rotate_step = 0.5  # in degrees
-
-        # Building Description
-        property_boundary_file = self.test_data_directory / "polygon_property_boundary.csv"
-        no_go_zone_file = self.test_data_directory / "polygon_no_go_zone1.csv"
-
-        prop_a = []  # in meters
-        ng_a = []  # in meters
-
-        with open(property_boundary_file, "r", newline="") as pF:
-            c_r = csv.reader(pF)
-            for line in c_r:
-                l_list = []
-                for row in line:
-                    l_list.append(float(row))
-                prop_a.append(l_list)
-
-        # for file in os.listdir(no_go_zone_file):
-        with open(no_go_zone_file, "r", newline="") as ngF:
-            c_r = csv.reader(ngF)
-            ng_a.append([])
-            for line in c_r:
-                l_list = []
-                for row in line:
-                    l_list.append(float(row))
-                ng_a[-1].append(l_list)
-
-        """ Geometric constraints for the `row-wise` routine:
-          - list of vertices for the no-go zones (no_go_vert)
-          - perimeter target-spacing to interior target-spacing ratio
-          - the lower bound target-spacing (spacing_start)
-          - the upper bound target-spacing (spacing_stop)
-          - the range around the selected target-spacing over-which to to do an exhaustive search
-          - the lower bound rotation (rotateStart)
-          - the upper bound rotation (rotateStop)
-          - list of vertices for the property boundary (buildVert)
-        """
-        geometric_constraints = GeometricConstraintsRowWise(perimeter_spacing_ratio, spacing_start, spacing_stop,
-                                                            spacing_step, rotate_start, rotate_stop,
-                                                            rotate_step, prop_a, ng_a)
-
-        # Single U-tube
-        # -------------
-        design_single_u_tube = DesignRowWise(
-            v_flow,
-            borehole,
-            BHPipeType.SingleUType,
-            fluid,
-            pipe_single,
-            grout,
-            soil,
-            sim_params,
-            geometric_constraints,
-            hourly_extraction_ground_loads,
-            method=DesignMethodTimeStep.Hybrid,
-            flow_type=flow,
-        )
-
-        # Find the near-square design for a single U-tube and size it.
-        tic = clock()  # Clock Start Time
-        bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(
-            method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
-        toc = clock()  # Clock Stop Time
-
-        # Print Summary of Findings
-        subtitle = "* Single U-tube"  # Subtitle for the printed summary
-        self.log(subtitle + "\n" + len(subtitle) * "-")
-        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
-        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
-        nbh = len(bisection_search.ghe.gFunction.bore_locations)
-        self.log(f"Number of boreholes: {nbh}")
-        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
-
-        # Generating Output File
-        o = OutputManager(
-            bisection_search,
-            toc - tic,
-            project_name,
-            note,
-            author,
-            iteration_name,
-            load_method=DesignMethodTimeStep.Hybrid,
-        )  # this will just go through GHEManager methods eventually
-        o.write_all_output_files(
-            output_directory=output_file_directory,
-            file_suffix="_SU_WOP",
-        )
-
-        # *************************************************************************************************************
-        # Perimeter Spacing Example
-
-        note = "RowWise Usage Example w/o Perimeter Spacing: Single U Tube"
-
-        perimeter_spacing_ratio = 0.8  # Dimensionless
-        geometric_constraints = GeometricConstraintsRowWise(perimeter_spacing_ratio, spacing_start, spacing_stop,
-                                                            spacing_step, rotate_start, rotate_stop,
-                                                            rotate_step, prop_a, ng_a)
-
-        # Single U-tube
-        # -------------
-        design_single_u_tube = DesignRowWise(
-            v_flow,
-            borehole,
-            BHPipeType.SingleUType,
-            fluid,
-            pipe_single,
-            grout,
-            soil,
-            sim_params,
-            geometric_constraints,
-            hourly_extraction_ground_loads,
-            method=DesignMethodTimeStep.Hybrid,
-            flow_type=flow,
-        )
-
-        # Find the near-square design for a single U-tube and size it.
-        tic = clock()  # Clock Start Time
-        bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
-        bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
-        bisection_search.ghe.size(
-            method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
-        toc = clock()  # Clock Stop Time
-
-        # Print Summary of Findings
-        subtitle = "* Single U-tube"  # Subtitle for the printed summary
-        self.log(subtitle + "\n" + len(subtitle) * "-")
-        self.log(f"Calculation time: {toc - tic:0.2f} seconds")
-        self.log(f"Height: {bisection_search.ghe.bhe.b.H:0.4f} meters")
-        nbh = len(bisection_search.ghe.gFunction.bore_locations)
-        self.log(f"Number of boreholes: {nbh}")
-        self.log(f"Total Drilling: {bisection_search.ghe.bhe.b.H * nbh:0.1f} meters\n")
-
-        # Generating Output File
-        o = OutputManager(
-            bisection_search,
-            toc - tic,
-            project_name,
-            note,
-            author,
-            iteration_name,
-            load_method=DesignMethodTimeStep.Hybrid,
-        )  # this will just go through GHEManager methods eventually
-        o.write_all_output_files(
-            output_directory=output_file_directory,
-            file_suffix="_SU_WP",
-        )
+        ghe = GHEManager()
+        ghe.set_single_u_tube_pipe(
+            inner_radius=0.0108, outer_radius=0.0133, shank_spacing=0.0323,
+            roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
+        ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
+        ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
+        ghe.set_fluid()
+        ghe.set_borehole(height=96.0, buried_depth=2.0, radius=0.075)
+        ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=200, min_height=60)
+        ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
+        ghe.set_geometry_constraints_rowwise(perimeter_spacing_ratio=0.8,
+                                             spacing_start=10.0, spacing_stop=20.0, spacing_step=0.1,
+                                             rotate_start=-1.57079632, rotate_stop=0.0, rotate_step=0.5,
+                                             property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.RowWise)
+        ghe.find_design()
+        output_file_directory = self.test_outputs_directory / "TestFindBiRectangleDesignSingleUTube"
+        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
+        ghe.write_output_files(output_file_directory, "")
+        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        self.assertAlmostEqual(197.53, u_tube_height, delta=0.01)
+        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(38 + 1, len(selected_coordinates))
