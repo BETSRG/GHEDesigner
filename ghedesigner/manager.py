@@ -10,11 +10,11 @@ import click
 from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle, DesignBiRectangle
-from ghedesigner.design import DesignBiZoned, DesignBiRectangleConstrained
+from ghedesigner.design import DesignBiZoned, DesignBiRectangleConstrained, DesignRowWise
 from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
 from ghedesigner.geometry import GeometricConstraintsBiRectangle, GeometricConstraintsBiZoned
-from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained
+from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained, GeometricConstraintsRowWise
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
@@ -28,6 +28,7 @@ class GHEManager:
         BiRectangle = auto()
         BiZonedRectangle = auto()
         BiRectangleConstrained = auto()
+        RowWise = auto()
 
     def __init__(self):
         self._fluid: Optional[GHEFluid] = None
@@ -63,6 +64,8 @@ class GHEManager:
             return self.DesignGeomType.BiZonedRectangle
         if design_geometry_str == "BIRECTANGLECONSTRAINED":
             return self.DesignGeomType.BiRectangleConstrained
+        if design_geometry_str == "ROWWISE":
+            return self.DesignGeomType.RowWise
         raise ValueError("Geometry constraint method not supported.")
 
     def get_bh_pipe_type(self, bh_pipe_str: str):
@@ -187,13 +190,20 @@ class GHEManager:
         self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(b_min, b_max_x, b_max_y,
                                                                                  property_boundary, no_go_boundaries)
 
+    def set_geometry_constraints_rowwise(self, perimeter_spacing_ratio: float,
+                                         spacing_start: float, spacing_stop: float, spacing_step: float,
+                                         rotate_start: float, rotate_stop: float, rotate_step: float,
+                                         property_boundary: list, no_go_boundaries: list):
+        self._geometric_constraints = GeometricConstraintsRowWise(perimeter_spacing_ratio,
+                                                                  spacing_start, spacing_stop, spacing_step,
+                                                                  rotate_start, rotate_stop, rotate_step,
+                                                                  property_boundary, no_go_boundaries)
+
     def set_design(self, flow_rate: float, flow_type: str, design_method_geo: DesignGeomType):
         """
         system_flow_rate L/s total system flow rate
         flow_type string, for now either "system" or "borehole"
         """
-
-        # TODO: Allow setting flow and method dynamically
 
         if design_method_geo == self.DesignGeomType.NearSquare:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -267,6 +277,23 @@ class GHEManager:
             # temporary disable of the type checker because of the _geometric_constraints member
             # noinspection PyTypeChecker
             self._design = DesignBiRectangleConstrained(
+                flow_rate,
+                self._borehole,
+                self._u_tube_type,
+                self._fluid,
+                self._pipe,
+                self._grout,
+                self._soil,
+                self._simulation_parameters,
+                self._geometric_constraints,
+                self._ground_loads,
+                flow_type=flow_type,
+                method=DesignMethodTimeStep.Hybrid,
+            )
+        elif design_method_geo == self.DesignGeomType.RowWise:
+            # temporary disable of the type checker because of the _geometric_constraints member
+            # noinspection PyTypeChecker
+            self._design = DesignRowWise(
                 flow_rate,
                 self._borehole,
                 self._u_tube_type,
@@ -394,15 +421,15 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
     if version != VERSION:
         print("Mismatched version, could be a problem", file=stderr)
 
-    fluid_props = inputs['fluid']
-    grout_props = inputs['grout']
-    soil_props = inputs['soil']
-    pipe_props = inputs['pipe']
-    borehole_props = inputs['borehole']
-    sim_props = inputs['simulation']
-    constraint_props = inputs['geometric_constraints']
-    design_props = inputs['design']
-    ground_load_props = inputs['ground_loads']  # TODO: Modify this to allow different spec types
+    fluid_props = inputs['fluid']  # type: dict
+    grout_props = inputs['grout']  # type: dict
+    soil_props = inputs['soil']  # type: dict
+    pipe_props = inputs['pipe']  # type: dict
+    borehole_props = inputs['borehole']  # type: dict
+    sim_props = inputs['simulation']  # type: dict
+    constraint_props = inputs['geometric_constraints']  # type: dict
+    design_props = inputs['design']  # type: dict
+    ground_load_props = inputs['ground_loads']    # type: list
 
     ghe.set_fluid(**fluid_props)
     ghe.set_grout(**grout_props)
@@ -488,6 +515,26 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             b_min=constraint_props["b_min"],
             b_max_x=constraint_props["b_max_x"],
             b_max_y=constraint_props["b_max_y"],
+            property_boundary=constraint_props["property_boundary"],
+            no_go_boundaries=constraint_props["no_go_boundaries"]
+        )
+    elif geom_type == ghe.DesignGeomType.RowWise:
+        # TODO: need to not pass angles as radians. pass as degrees through inputs.
+
+        # if present, we are using perimeter calculations
+        if "perimeter_spacing_ratio" in constraint_props.keys():
+            perimeter_spacing_ratio = constraint_props["perimeter_spacing_ratio"]
+        else:
+            perimeter_spacing_ratio = None
+
+        ghe.set_geometry_constraints_rowwise(
+            perimeter_spacing_ratio=perimeter_spacing_ratio,
+            spacing_start=constraint_props["spacing_start"],
+            spacing_stop=constraint_props["spacing_stop"],
+            spacing_step=constraint_props["spacing_step"],
+            rotate_start=constraint_props["rotate_start"],
+            rotate_stop=constraint_props["rotate_stop"],
+            rotate_step=constraint_props["rotate_step"],
             property_boundary=constraint_props["property_boundary"],
             no_go_boundaries=constraint_props["no_go_boundaries"]
         )

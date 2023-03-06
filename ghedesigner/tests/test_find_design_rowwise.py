@@ -12,7 +12,6 @@ from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
 from ghedesigner.geometry import GeometricConstraintsRowWise
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
 from ghedesigner.output import OutputManager
-from ghedesigner.rowwise import gen_shape
 from ghedesigner.simulation import SimulationParameters
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
@@ -101,13 +100,13 @@ class TestFindRowWiseDesign(GHEBaseTest):
 
         # RowWise Design Constraints
 
-        p_spacing = 0.8  # Dimensionless
+        perimeter_spacing_ratio = None  # Dimensionless
         spacing_start = 10.0  # in meters
         spacing_stop = 20.0  # in meters
         spacing_step = 0.1  # in meters
-        rotate_step = 0.5  # in degrees
         rotate_start = -90.0 * (pi / 180.0)  # in radians
         rotate_stop = 0 * (pi / 180.0)  # in radians
+        rotate_step = 0.5  # in degrees
 
         # Building Description
         property_boundary_file = self.test_data_directory / "polygon_property_boundary.csv"
@@ -134,8 +133,6 @@ class TestFindRowWiseDesign(GHEBaseTest):
                     l_list.append(float(row))
                 ng_a[-1].append(l_list)
 
-        build_vert, no_go_vert = gen_shape(prop_a, ng_zones=ng_a)
-
         """ Geometric constraints for the `row-wise` routine:
           - list of vertices for the no-go zones (no_go_vert)
           - perimeter target-spacing to interior target-spacing ratio
@@ -146,9 +143,9 @@ class TestFindRowWiseDesign(GHEBaseTest):
           - the upper bound rotation (rotateStop)
           - list of vertices for the property boundary (buildVert)
         """
-        geometric_constraints = GeometricConstraintsRowWise(
-            p_spacing, spacing_start, spacing_stop, spacing_step, rotate_step, rotate_stop, rotate_start, build_vert,
-            no_go_vert)
+        geometric_constraints = GeometricConstraintsRowWise(perimeter_spacing_ratio, spacing_start, spacing_stop,
+                                                            spacing_step, rotate_start, rotate_stop,
+                                                            rotate_step, prop_a, ng_a)
 
         # Single U-tube
         # -------------
@@ -169,7 +166,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
 
         # Find the near-square design for a single U-tube and size it.
         tic = clock()  # Clock Start Time
-        bisection_search = design_single_u_tube.find_design(disp=True, use_perimeter=False)  # Finding GHE Design
+        bisection_search = design_single_u_tube.find_design(disp=True)  # Finding GHE Design
         bisection_search.ghe.compute_g_functions()  # Calculating G-functions for Chosen Design
         bisection_search.ghe.size(
             method=DesignMethodTimeStep.Hybrid)  # Calculating the Final Height for the Chosen Design
@@ -203,6 +200,11 @@ class TestFindRowWiseDesign(GHEBaseTest):
         # Perimeter Spacing Example
 
         note = "RowWise Usage Example w/o Perimeter Spacing: Single U Tube"
+
+        perimeter_spacing_ratio = 0.8  # Dimensionless
+        geometric_constraints = GeometricConstraintsRowWise(perimeter_spacing_ratio, spacing_start, spacing_stop,
+                                                            spacing_step, rotate_start, rotate_stop,
+                                                            rotate_step, prop_a, ng_a)
 
         # Single U-tube
         # -------------

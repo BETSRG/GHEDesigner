@@ -97,6 +97,7 @@ def validate_geometric(instance: dict) -> None:
         "RECTANGLE": "geometric_rectangle.schema.json",
         "BIZONEDRECTANGLE": "geometric_bi_zoned_rectangle.schema.json",
         "BIRECTANGLECONSTRAINED": "geometric_bi_rectangle_constrained.schema.json",
+        "ROWWISE": "geometric_rowwise.schema.json",
     }
 
     if method not in schema_map.keys():

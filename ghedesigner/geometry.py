@@ -104,22 +104,35 @@ class GeometricConstraintsRowWise(GeometricConstraints):
     Geometric constraints for rowwise design algorithm
     """
 
-    def __init__(self, p_spacing: float,
+    def __init__(self,
+                 perimeter_spacing_ratio: float,
                  spacing_start: float,
                  spacing_stop: float,
                  spacing_step: float,
-                 rotate_step: float,
-                 rotate_stop: float,
                  rotate_start: float,
+                 rotate_stop: float,
+                 rotate_step: float,
                  property_boundary,
                  no_go_boundaries):
         super().__init__()
-        self.p_spacing = p_spacing
+        self.perimeter_spacing_ratio = perimeter_spacing_ratio
         self.spacing_start = spacing_start
         self.spacing_stop = spacing_stop
         self.spacing_step = spacing_step
-        self.rotate_step = rotate_step
-        self.rotate_stop = rotate_stop
         self.rotate_start = rotate_start
+        self.rotate_stop = rotate_stop
+        self.rotate_step = rotate_step
         self.property_boundary = property_boundary
         self.no_go_boundaries = no_go_boundaries
+
+    def to_input(self) -> dict:
+        return {'perimeter_spacing_ratio': self.perimeter_spacing_ratio,
+                'spacing_start': self.spacing_start,
+                'spacing_stop': self.spacing_stop,
+                'spacing_step': self.spacing_step,
+                'rotate_start': self.rotate_start,
+                'rotate_stop': self.rotate_stop,
+                'rotate_step': self.rotate_step,
+                'property_boundary': self.property_boundary,
+                'no_go_boundaries': self.no_go_boundaries,
+                'method': 'rowwise'}
