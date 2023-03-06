@@ -65,7 +65,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
                                              property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
         ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.RowWise)
         ghe.find_design()
-        output_file_directory = self.test_outputs_directory / "TestFindBiRectangleDesignSingleUTube"
+        output_file_directory = self.test_outputs_directory / "TestFindRowWiseDesignWithoutPerimeterSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
@@ -91,7 +91,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
                                              property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
         ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.RowWise)
         ghe.find_design()
-        output_file_directory = self.test_outputs_directory / "TestFindBiRectangleDesignSingleUTube"
+        output_file_directory = self.test_outputs_directory / "TestFindRowWiseDesignWithPerimeterSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
