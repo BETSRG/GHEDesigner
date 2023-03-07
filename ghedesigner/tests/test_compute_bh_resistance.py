@@ -59,29 +59,29 @@ class TestBHResistance(GHEBaseTest):
 
         # Define a borehole
         borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
-
         coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
-
-        self.log(coaxial)
-
         r_b = coaxial.calc_effective_borehole_resistance()
 
-        val = "Intermediate variables"
-        self.log(val + "\n" + len(val) * "-")
-        re = GHEDesignerBoreholeBase.compute_reynolds(
-            coaxial.m_flow_pipe, coaxial.pipe.r_out[1], fluid
-        )
-        self.log(f"Reynolds number: {re}")
-        h_f = coaxial.h_f_a_out
-        self.log(f"Convection coefficient (W/m2.K): {h_f}")
-        r_fp = coaxial.R_fp
-        self.log(f"Convective resistance (K/(W/m)): {r_fp}")
+        self.log(coaxial)
+        self.log("Intermediate Variables \n" + "-" * 30)
+        self.log(f"Convection coefficient at inside of inner pipe (W/m2.K): {coaxial.h_f_in}")
+        self.log(f"Convection coefficient at outside of inner pipe (W/m2.K): {coaxial.h_f_a_in}")
+        self.log(f"Convection coefficient at inside of outer pipe (W/m2.K): {coaxial.h_f_a_out}")
+        self.log("-" * 30)
+        self.log(f"Convective resistance at inside of inner pipe (K/(W/m): {coaxial.R_f_in}")
+        self.log(f"Conduction resistance of inner pipe (K/(W/m): {coaxial.R_p_in}")
+        self.log(f"Convection resistance at outside of inner pipe (K/(W/m): {coaxial.R_f_a_in}")
+        self.log(f"Convection resistance at inside of outer pipe (K/(W/m): {coaxial.R_f_a_out}")
+        self.log(f"Conduction resistance of outer pipe (K/(W/m): {coaxial.R_p_out}")
+        self.log(f"Inner fluid to inner annulus fluid resistance (K/(W/m): {coaxial.R_ff}")
+        self.log(f"Outer annulus fluid to pipe thermal resistance (K/(W/m): {coaxial.R_fp}")
+
+        self.log("-" * 30)
         self.log(f"Borehole thermal resistance: {r_b:0.4f} m.K/W")
 
-        fig = coaxial.visualize_pipes()
-
-        output_plot = self.test_outputs_directory / 'Coaxial.png'
-        fig.savefig(str(output_plot))
+        self.assertTrue(self.rel_error_within_tol(coaxial.h_f_in, 626.7, 0.02))
+        self.assertTrue(self.rel_error_within_tol(coaxial.h_f_a_in, 71.4, 0.02))
+        self.assertTrue(self.rel_error_within_tol(r_b, 0.1895, 0.02))
 
     def test_bh_resistance_double_u_tube(self):
         # borehole
@@ -117,40 +117,45 @@ class TestBHResistance(GHEBaseTest):
         # U-tubes
         v_flow_borehole = 0.2  # volumetric flow rate per borehole (L/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho  # mass flow rate (kg/s)
-        double_u_tube_series = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)
+
+        # Series
+        double_u_tube_series = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, FlowConfig.Series)
+        r_b_series = double_u_tube_series.calc_effective_borehole_resistance()
+        re = GHEDesignerBoreholeBase.compute_reynolds(double_u_tube_series.m_flow_pipe, r_in, fluid)
+        m_dot = double_u_tube_series.m_flow_pipe
+        r_p = double_u_tube_series.R_p
+        h_f = double_u_tube_series.h_f
+        r_fp = double_u_tube_series.R_fp
+
+        self.log(double_u_tube_series)
+        self.log(f"Reynolds number: {re}")
+        self.log(f"Mass flow per pipe: (kg/s): {m_dot}")
+        self.log(f"Pipe resistance (K/(W/m)): {r_p}")
+        self.log(f"Convection coefficient (W/m2.K): {h_f}")
+        self.log(f"Convective resistance (K/(W/m)): {r_fp}")
+        self.log(f"Borehole thermal resistance: {r_b_series:0.4f} m.K/W")
+
+        # Parallel
         double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, FlowConfig.Parallel)
+        r_b_parallel = double_u_tube_parallel.calc_effective_borehole_resistance()
+        re = GHEDesignerBoreholeBase.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
+        m_dot = double_u_tube_parallel.m_flow_pipe
+        r_p = double_u_tube_parallel.R_p
+        h_f = double_u_tube_parallel.h_f
+        r_fp = double_u_tube_parallel.R_fp
 
         self.log(double_u_tube_parallel)
-
-        r_b_series = double_u_tube_series.calc_effective_borehole_resistance()
-        r_b_parallel = double_u_tube_parallel.calc_effective_borehole_resistance()
-
-        # Intermediate variables
-        re = GHEDesignerBoreholeBase.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
-
         self.log(f"Reynolds number: {re}")
-        r_p = double_u_tube_parallel.R_p
+        self.log(f"Mass flow per pipe: (kg/s): {m_dot}")
         self.log(f"Pipe resistance (K/(W/m)) : {r_p}")
-        h_f = double_u_tube_parallel.h_f
         self.log(f"Convection coefficient (W/m2.K): {h_f}")
-        r_fp = double_u_tube_parallel.R_fp
         self.log(f"Convective resistance (K/(W/m)): {r_fp}")
-        self.log(f"Borehole thermal resistance (series): {r_b_series:0.4f} m.K/W")
-        self.log(f"Borehole thermal resistance (parallel): {r_b_parallel:0.4f} m.K/W")
+        self.log(f"Borehole thermal resistance: {r_b_parallel:0.4f} m.K/W")
 
-        # Create a borehole top view
-        fig = double_u_tube_series.visualize_pipes()
-
-        # Save the figure as a png
-        output_plot = self.test_outputs_directory / 'double_u_tube_series.png'
-        fig.savefig(str(output_plot))
-
-        # Create a borehole top view
-        fig = double_u_tube_parallel.visualize_pipes()
-
-        # Save the figure as a png
-        output_plot = self.test_outputs_directory / 'double_u_tube_parallel.png'
-        fig.savefig(str(output_plot))
+        # test values from GLHEPro v5.1
+        self.assertTrue(self.rel_error_within_tol(re, 5820.0, 0.01))
+        self.assertTrue(self.rel_error_within_tol(h_f, 1288.0, 0.01))
+        self.assertTrue(self.rel_error_within_tol(r_b_parallel, 0.1591, 0.005))
 
     def test_bh_resistance_single_u_tube(self):
         # Borehole dimensions
@@ -205,10 +210,10 @@ class TestBHResistance(GHEBaseTest):
         r_fp = single_u_tube.R_fp
         r_b = single_u_tube.calc_effective_borehole_resistance()
 
-        # comparison values from GLHEPro
-        self.assertTrue(self.rel_error_test(11748.0, re, 0.01))
-        self.assertTrue(self.rel_error_test(2538.0, h_f, 0.01))
-        self.assertTrue(self.rel_error_test(r_b, 0.2073, 0.01))
+        # comparison values from GLHEPro v5.1
+        self.assertTrue(self.rel_error_within_tol(re, 11748.0, 0.005))
+        self.assertTrue(self.rel_error_within_tol(h_f, 2538.0, 0.005))
+        self.assertTrue(self.rel_error_within_tol(r_b, 0.2073, 0.005))
 
         self.log(single_u_tube)
         self.log(f"Reynolds number: {re}")
@@ -280,17 +285,12 @@ class TestBHResistance(GHEBaseTest):
 
             single_u_tube = SingleUTube(m_flow_borehole, fluid, borehole, pipe_s, grout, soil)
 
-            re = GHEDesignerBoreholeBase.compute_reynolds(
-                single_u_tube.m_flow_pipe, r_in, fluid
-            )
+            re = GHEDesignerBoreholeBase.compute_reynolds(single_u_tube.m_flow_borehole, r_in, fluid)
             borehole_values["Single U-tube"]["Re"].append(re)
 
-            double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe_d, grout, soil,
-                                                   FlowConfig.Parallel)
+            double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe_d, grout, soil)
 
-            re = GHEDesignerBoreholeBase.compute_reynolds(
-                double_u_tube_parallel.m_flow_pipe, r_in, fluid
-            )
+            re = GHEDesignerBoreholeBase.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
             borehole_values["Double U-tube"]["Re"].append(re)
 
             r_b = single_u_tube.calc_effective_borehole_resistance()
@@ -347,9 +347,7 @@ class TestBHResistance(GHEBaseTest):
 
             coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
-            re = GHEDesignerBoreholeBase.compute_reynolds_concentric(
-                coaxial.m_flow_pipe, r_in_out, r_out_in, fluid
-            )
+            re = GHEDesignerBoreholeBase.compute_reynolds_concentric(coaxial.m_flow_borehole, r_in_out, r_out_in, fluid)
             borehole_values["Coaxial"]["Re"].append(re)
 
             r_b = coaxial.calc_effective_borehole_resistance()

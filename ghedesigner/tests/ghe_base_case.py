@@ -30,7 +30,7 @@ class GHEBaseTest(TestCase):
         tests_directory = cur_file.parent
         log_directory = tests_directory / 'test_logs'
         log_directory.mkdir(exist_ok=True)
-        date_time_string = datetime.now().strftime("%d%m%Y_%H%M%S")
+        date_time_string = datetime.now().strftime("%Y%m%d_%H%M%S")
         LOG_FILE = log_directory / f"{date_time_string}.log"
         self.log("Tests Initialized")
 
@@ -48,7 +48,7 @@ class GHEBaseTest(TestCase):
     def log(self, message, message_type: LogMessageTypes = LogMessageTypes.Info):
         if LOG_FILE is None:
             self.setup_log_file()
-        date_time_string = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
+        date_time_string = datetime.now().strftime("%Y%m%d_%H%M%S")
         message_type_string = GHEBaseTest.LogMessageTypes.get_string(message_type)
         message_string = str(message).strip()
         with LOG_FILE.open('a') as fp:
@@ -66,5 +66,6 @@ class GHEBaseTest(TestCase):
         raw_lines = glhe_json_data.read_text().split('\n')
         return [float(x) for x in raw_lines[1:] if x.strip() != '']
 
-    def rel_error_test(self, base, mod, tol) -> bool:
-        return abs((mod - base) / base) <= tol
+    @staticmethod
+    def rel_error_within_tol(test: float, base: float, tol: float) -> bool:
+        return abs((test - base) / base) <= tol
