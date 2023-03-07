@@ -1,0 +1,81 @@
+{
+  "type": "object",
+  "properties": {
+    "perimeter_spacing_ratio": {
+      "type": "number",
+      "minimum": 0,
+      "units": "-"
+    },
+    "spacing_start": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
+    },
+    "spacing_stop": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
+    },
+    "spacing_step": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m"
+    },
+    "rotate_start": {
+      "type": "number",
+      "units": "degrees"
+    },
+    "rotate_stop": {
+      "type": "number",
+      "units": "degrees"
+    },
+    "rotate_step": {
+      "type": "number",
+      "units": "degrees"
+    },
+    "property_boundary": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "units": "m"
+    },
+    "no_go_boundaries": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "units": "m"
+    },
+    "method": {
+      "type": "string",
+      "const": "ROWWISE"
+    }
+  },
+  "required": [
+    "spacing_start",
+    "spacing_stop",
+    "spacing_step",
+    "rotate_start",
+    "rotate_stop",
+    "rotate_step",
+    "property_boundary",
+    "no_go_boundaries",
+    "method"
+  ]
+}

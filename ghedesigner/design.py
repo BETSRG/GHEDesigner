@@ -65,7 +65,7 @@ class DesignBase:
             print("\n")
 
     @abstractmethod
-    def find_design(self, disp=False, use_perimeter=True) -> AnyBisectionType:
+    def find_design(self, disp=False) -> AnyBisectionType:
         pass
 
     def to_input(self) -> dict:
@@ -91,7 +91,7 @@ class DesignNearSquare(DesignBase):
         self.coordinates_domain, self.fieldDescriptors = square_and_near_square(1, number_of_boreholes,
                                                                                 self.geometric_constraints.b)
 
-    def find_design(self, disp=False, use_perimeter=True) -> Bisection1D:
+    def find_design(self, disp=False) -> Bisection1D:
         if disp:
             title = "Find near-square.."
             print(title + "\n" + len(title) * "=")
@@ -127,7 +127,7 @@ class DesignRectangle(DesignBase):
             self.geometric_constraints.length, self.geometric_constraints.width,
             self.geometric_constraints.b_min, self.geometric_constraints.b_max_x)
 
-    def find_design(self, disp=False, use_perimeter=True) -> Bisection1D:
+    def find_design(self, disp=False) -> Bisection1D:
         if disp:
             title = "Find rectangle..."
             print(title + "\n" + len(title) * "=")
@@ -164,7 +164,7 @@ class DesignBiRectangle(DesignBase):
             self.geometric_constraints.b_max_x, self.geometric_constraints.b_max_y, disp=False
         )
 
-    def find_design(self, disp=False, use_perimeter=True) -> Bisection2D:
+    def find_design(self, disp=False) -> Bisection2D:
         if disp:
             title = "Find bi-rectangle..."
             print(title + "\n" + len(title) * "=")
@@ -201,7 +201,7 @@ class DesignBiZoned(DesignBase):
             self.geometric_constraints.b_max_x, self.geometric_constraints.b_max_y
         )
 
-    def find_design(self, disp=False, use_perimeter=True) -> BisectionZD:
+    def find_design(self, disp=False) -> BisectionZD:
         if disp:
             title = "Find bi-zoned..."
             print(title + "\n" + len(title) * "=")
@@ -241,7 +241,7 @@ class DesignBiRectangleConstrained(DesignBase):
             self.geometric_constraints.no_go_boundaries,
         )
 
-    def find_design(self, disp=False, use_perimeter=True) -> Bisection2D:
+    def find_design(self, disp=False) -> Bisection2D:
         if disp:
             title = "Find bi-rectangle_constrained..."
             print(title + "\n" + len(title) * "=")
@@ -274,7 +274,7 @@ class DesignRowWise(DesignBase):
                          hourly_extraction_ground_loads, method, flow_type, load_years)
         self.geometric_constraints = geometric_constraints
 
-    def find_design(self, disp=False, use_perimeter=True) -> RowWiseModifiedBisectionSearch:
+    def find_design(self, disp=False) -> RowWiseModifiedBisectionSearch:
         if disp:
             title = "Find row-wise..."
             print(title + "\n" + len(title) * "=")
@@ -294,5 +294,4 @@ class DesignRowWise(DesignBase):
             disp=disp,
             field_type="row-wise",
             load_years=self.load_years,
-            use_perimeter=use_perimeter,
         )

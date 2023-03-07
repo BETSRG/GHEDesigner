@@ -20,10 +20,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install install -r requirements.txt
-      - name: Lint with flake8
-        run: |
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --statistics
       - name: Unit tests
         run: |
           nosetests -v

@@ -8,7 +8,7 @@ from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Grout, Pipe, Soil, GHEFluid
-from ghedesigner.rowwise import field_optimization_fr, field_optimization_wp_space_fr
+from ghedesigner.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
 from ghedesigner.simulation import SimulationParameters
 from ghedesigner.utilities import eskilson_log_times, borehole_spacing, check_bracket, sign
 
@@ -350,7 +350,6 @@ class RowWiseModifiedBisectionSearch:
             advanced_tracking: bool = True,
             field_type: str = "rowwise",
             load_years=None,
-            use_perimeter: bool = True,
     ):
 
         # Take the lowest part of the coordinates domain to be used for the
@@ -382,7 +381,7 @@ class RowWiseModifiedBisectionSearch:
             self.advanced_tracking = [["TargetSpacing", "Field Specifier", "nbh", "ExcessTemperature"]]
             self.checkedFields = []
         if search:
-            self.selected_coordinates, self.selected_specifier = self.search(use_perimeter=use_perimeter)
+            self.selected_coordinates, self.selected_specifier = self.search()
             self.initialize_ghe(self.selected_coordinates, self.sim_params.max_height,
                                 field_specifier=self.selected_specifier)
 
@@ -455,17 +454,21 @@ class RowWiseModifiedBisectionSearch:
 
         return t_excess
 
-    def search(self, use_perimeter=True):
+    def search(self):
 
         spacing_start = self.geometricConstraints.spacing_start
         spacing_stop = self.geometricConstraints.spacing_stop
         spacing_step = self.geometricConstraints.spacing_step
         rotate_step = self.geometricConstraints.rotate_step
-        prop_bound = self.geometricConstraints.property_boundary
-        ng_zones = self.geometricConstraints.no_go_boundaries
+        prop_bound, ng_zones = gen_shape(self.geometricConstraints.property_boundary, self.geometricConstraints.no_go_boundaries)
         rotate_start = self.geometricConstraints.rotate_start
         rotate_stop = self.geometricConstraints.rotate_stop
-        p_spacing = self.geometricConstraints.p_spacing
+        perimeter_spacing_ratio = self.geometricConstraints.perimeter_spacing_ratio
+
+        if perimeter_spacing_ratio is None:
+            use_perimeter = False
+        else:
+            use_perimeter = True
 
         selected_coordinates = None
         selected_specifier = None
@@ -477,7 +480,7 @@ class RowWiseModifiedBisectionSearch:
         # Generate Fields
         if use_perimeter:
             upper_field, upper_field_specifier = field_optimization_wp_space_fr(
-                p_spacing,
+                perimeter_spacing_ratio,
                 spacing_start,
                 rotate_step,
                 prop_bound,
@@ -486,7 +489,7 @@ class RowWiseModifiedBisectionSearch:
                 rotate_stop=rotate_stop,
             )
             lower_field, lower_field_specifier = field_optimization_wp_space_fr(
-                p_spacing,
+                perimeter_spacing_ratio,
                 spacing_stop,
                 rotate_step,
                 prop_bound,
@@ -549,7 +552,7 @@ class RowWiseModifiedBisectionSearch:
                 # Getting Three Middle Field
                 if use_perimeter:
                     f1, f1_specifier = field_optimization_wp_space_fr(
-                        p_spacing,
+                        perimeter_spacing_ratio,
                         spacing_m,
                         rotate_step,
                         prop_bound,
@@ -607,7 +610,7 @@ class RowWiseModifiedBisectionSearch:
             for ts in target_spacings:
                 if use_perimeter:
                     field, f_s = field_optimization_wp_space_fr(
-                        p_spacing,
+                        perimeter_spacing_ratio,
                         ts,
                         rotate_step,
                         prop_bound,

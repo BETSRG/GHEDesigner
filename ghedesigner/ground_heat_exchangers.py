@@ -1,5 +1,5 @@
 import warnings
-from math import ceil, floor, pi
+from math import ceil, floor
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -7,6 +7,7 @@ from scipy.interpolate import interp1d
 from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import get_bhe_object
+from ghedesigner.constants import TWO_PI
 from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
 from ghedesigner.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ground_loads import HybridLoad
@@ -142,7 +143,7 @@ class BaseGHE:
         q_dot_b_dt = np.hstack((q_dot_b[1:] - q_dot_b[:-1]))
 
         ts = self.radial_numerical.t_s  # (-)
-        two_pi_k = 2.0 * pi * self.bhe.soil.k  # (W/m.K)
+        two_pi_k = TWO_PI * self.bhe.soil.k  # (W/m.K)
         h = self.bhe.b.H  # (meters)
         tg = self.bhe.soil.ugt  # (Celsius)
         rb = self.bhe.calc_effective_borehole_resistance()  # (m.K/W)

@@ -2,6 +2,7 @@ from math import atan, cos, pi, sin, sqrt
 
 import numpy as np
 
+from ghedesigner.constants import DEG_TO_RAD, RAD_TO_DEG, PI_OVER_2
 from ghedesigner.shape import Shapes, sort_intersections
 
 
@@ -42,10 +43,10 @@ def field_optimization_wp_space_fr(
 
     """
     if rotate_start is None:
-        rotate_start = (-90.0 + rotate_step) * (pi / 180.0)
+        rotate_start = (-90.0 + rotate_step) * DEG_TO_RAD
     if rotate_stop is None:
-        rotate_stop = pi / 2
-    if rotate_start > pi / 2 or rotate_start < -pi / 2 or rotate_stop > pi / 2 or rotate_stop < -pi / 2:
+        rotate_stop = PI_OVER_2
+    if rotate_start > PI_OVER_2 or rotate_start < -PI_OVER_2 or rotate_stop > PI_OVER_2 or rotate_stop < -PI_OVER_2:
         raise ValueError("Invalid Rotation")
 
     space = space_start
@@ -72,10 +73,10 @@ def field_optimization_wp_space_fr(
         # Assuming that the rotation with the maximum number of boreholes is most efficiently using space
         if len(hole) > max_l:
             max_l = len(hole)
-            max_rt = rt * (180 / pi)
+            max_rt = rt * RAD_TO_DEG
             max_hole = hole
 
-        rt += rotate_step * (pi / 180)
+        rt += rotate_step * DEG_TO_RAD
 
     # Ensures that there are no repeated boreholes
     max_hole = np.array(remove_duplicates(max_hole, p_space * x_s))
@@ -108,14 +109,14 @@ def field_optimization_fr(
 
     """
     if rotate_start is None:
-        rotate_start = (-90.0) * (pi / 180.0)
+        rotate_start = -90.0 * DEG_TO_RAD
     if rotate_stop is None:
-        rotate_stop = pi / 2
+        rotate_stop = PI_OVER_2
     if (
-            rotate_start > pi / 2
-            or rotate_start < -pi / 2
-            or rotate_stop > pi / 2
-            or rotate_stop < -pi / 2
+            rotate_start > PI_OVER_2
+            or rotate_start < -PI_OVER_2
+            or rotate_stop > PI_OVER_2
+            or rotate_stop < -PI_OVER_2
     ):
         raise ValueError("Invalid Rotation")
 
@@ -144,10 +145,10 @@ def field_optimization_fr(
         # Assuming that the rotation with the maximum number of boreholes is most efficiently using space
         if len(hole) > max_l:
             max_l = len(hole)
-            max_rt = rt * (180 / pi)
+            max_rt = rt * RAD_TO_DEG
             max_hole = hole
 
-        rt += rotate_step * (pi / 180)
+        rt += rotate_step * DEG_TO_RAD
 
     # Ensures that there are no repeated boreholes
     max_hole = np.array(remove_duplicates(max_hole, x_s * 1.2))
@@ -463,13 +464,13 @@ def gen_borehole_config(
         if vert[0] != 0:
             phi = atan(vert[1] / vert[0])
         else:
-            phi = pi / 2
+            phi = PI_OVER_2
         dist_vert = sqrt(vert[1] ** 2 + vert[0] ** 2)
         ref_angle = phi
-        if phi > pi / 2:
+        if phi > PI_OVER_2:
             if phi > pi:
-                if phi > 3 * pi / 2.0:
-                    ref_angle = 2 * rotate + 3 * pi / 2 - phi
+                if phi > 3 * PI_OVER_2:
+                    ref_angle = 2 * rotate + 3 * PI_OVER_2 - phi
                 else:
                     ref_angle = 2 * rotate + pi - phi
             else:
@@ -486,7 +487,7 @@ def gen_borehole_config(
     num_rows = int((highest_vert_val - lowest_vert_val) // y_space)
     d = highest_vert_val - lowest_vert_val
     s = d / num_rows
-    row_space = [-1 * s * cos(pi / 2 - rotate), s * sin(pi / 2 - rotate)]
+    row_space = [-1 * s * cos(PI_OVER_2 - rotate), s * sin(PI_OVER_2 - rotate)]
 
     # Establishes the dictionary where the boreholes will be added two as well as establishing a point on the first row
     boreholes = {}
