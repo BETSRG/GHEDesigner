@@ -65,3 +65,6 @@ class GHEBaseTest(TestCase):
         glhe_json_data = self.test_data_directory / 'Multiyear_Loading_Example.csv'
         raw_lines = glhe_json_data.read_text().split('\n')
         return [float(x) for x in raw_lines[1:] if x.strip() != '']
+
+    def rel_error_test(self, base, mod, tol) -> bool:
+        return abs((mod - base) / base) <= tol

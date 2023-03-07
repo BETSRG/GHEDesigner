@@ -198,30 +198,24 @@ class TestBHResistance(GHEBaseTest):
 
         single_u_tube = SingleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
-        self.log(single_u_tube)
-
         # Intermediate variables
-        re = GHEDesignerBoreholeBase.compute_reynolds(
-            single_u_tube.m_flow_borehole, r_in, fluid
-        )
-        self.log(f"Reynolds number: {re}")
+        re = GHEDesignerBoreholeBase.compute_reynolds(single_u_tube.m_flow_borehole, r_in, fluid)
         r_p = single_u_tube.R_p
-        self.log(f"Pipe resistance (K/(W/m)) : {r_p}")
         h_f = single_u_tube.h_f
-        self.log(f"Convection coefficient (W/m2.K): {h_f}")
         r_fp = single_u_tube.R_fp
-        self.log(f"Convective resistance (K/(W/m)): {r_fp}")
-
         r_b = single_u_tube.calc_effective_borehole_resistance()
 
+        # comparison values from GLHEPro
+        self.assertTrue(self.rel_error_test(11748.0, re, 0.01))
+        self.assertTrue(self.rel_error_test(2538.0, h_f, 0.01))
+        self.assertTrue(self.rel_error_test(r_b, 0.2073, 0.01))
+
+        self.log(single_u_tube)
+        self.log(f"Reynolds number: {re}")
+        self.log(f"Pipe resistance (K/(W/m)) : {r_p}")
+        self.log(f"Convection coefficient (W/m2.K): {h_f}")
+        self.log(f"Convective resistance (K/(W/m)): {r_fp}")
         self.log(f"Borehole thermal resistance: {r_b:0.4f} m.K/W")
-
-        # Create a borehole top view
-        fig = single_u_tube.visualize_pipes()
-
-        # Save the figure as a png
-        output_plot = self.test_outputs_directory / 'single_u_tube.png'
-        fig.savefig(str(output_plot))
 
     def test_bh_resistance_validation(self):
         # Dictionary for storing PLAT variations
