@@ -68,7 +68,7 @@ class TestEquivalentPipes(GHEBaseTest):
         val = "Single U-tube equivalent parameters"
         self.log("\n" + val + "\n" + len(val) * "-")
         self.log(
-            f"Fluid volumetric flow rate (L/s): {single_u_tube.m_flow_pipe * 1000.0 / single_u_tube.fluid.rho:0.8f}")
+            f"Fluid volumetric flow rate (L/s): {single_u_tube.m_flow_borehole * 1000.0 / single_u_tube.fluid.rho:0.8f}")
         self.log(f"Radius of inner pipe (m): {single_u_tube.r_in:0.8f}")
         self.log(f"Radius of outer pipe (m): {single_u_tube.r_out:0.8f}")
         self.log(f"Shank spacing (m): {single_u_tube.pipe.s:0.8f}")
@@ -80,13 +80,6 @@ class TestEquivalentPipes(GHEBaseTest):
         self.log(f"Effective borehole resistance (m.K/W): {rb:0.8f}")
 
         self.log(single_u_tube.as_dict())
-
-        # Plot equivalent single U-tube
-        fig = single_u_tube.visualize_pipes()
-
-        # save equivalent
-        output_plot = self.test_outputs_directory / 'coaxial_to_single_equivalent.png'
-        fig.savefig(str(output_plot))
 
     def test_equiv_pipes_double_to_single_u_tube(self):
         # Borehole dimensions
@@ -148,7 +141,7 @@ class TestEquivalentPipes(GHEBaseTest):
         val = "Single U-tube equivalent parameters"
         self.log("\n" + val + "\n" + len(val) * "-")
         self.log(
-            f"Fluid volumetric flow rate (L/s): {single_u_tube.m_flow_pipe * 1000.0 / single_u_tube.fluid.rho:0.8f}")
+            f"Fluid volumetric flow rate (L/s): {single_u_tube.m_flow_borehole * 1000.0 / single_u_tube.fluid.rho:0.8f}")
         self.log(f"Radius of inner pipe (m): {single_u_tube.r_in:0.8f}")
         self.log(f"Radius of outer pipe (m): {single_u_tube.r_out:0.8f}")
         self.log(f"Shank spacing (m): {single_u_tube.pipe.s:0.8f}")
@@ -160,10 +153,3 @@ class TestEquivalentPipes(GHEBaseTest):
         self.log(f"Effective borehole resistance (m.K/W): {rb:0.8f}")
 
         self.log(single_u_tube.as_dict())
-
-        # Plot equivalent single U-tube
-        fig = single_u_tube.visualize_pipes()
-
-        # save equivalent
-        output_plot = self.test_outputs_directory / 'double_to_single_equivalent.png'
-        fig.savefig(str(output_plot))

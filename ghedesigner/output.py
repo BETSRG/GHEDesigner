@@ -184,7 +184,7 @@ class OutputManager:
                 'outer_pipe_inner_radius': add_with_units(design.ghe.bhe.pipe.r_in[0], 'm'),
                 'inner_pipe_inner_radius': add_with_units(design.ghe.bhe.pipe.r_in[1], 'm'),
             }
-            reynolds = GHEDesignerBoreholeBase.compute_reynolds_concentric(design.ghe.bhe.m_flow_pipe,
+            reynolds = GHEDesignerBoreholeBase.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
                                                                            design.ghe.bhe.r_in_out,
                                                                            design.ghe.bhe.r_out_in,
                                                                            design.ghe.bhe.fluid)
@@ -454,7 +454,7 @@ class OutputManager:
         else:
 
             o += self.d_row(width, "Reynold's Number:",
-                            round(GHEDesignerBoreholeBase.compute_reynolds_concentric(design.ghe.bhe.m_flow_pipe,
+                            round(GHEDesignerBoreholeBase.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
                                                                                       design.ghe.bhe.r_in_out,
                                                                                       design.ghe.bhe.r_out_in,
                                                                                       design.ghe.bhe.fluid), n_round),
