@@ -460,7 +460,8 @@ class RowWiseModifiedBisectionSearch:
         spacing_stop = self.geometricConstraints.spacing_stop
         spacing_step = self.geometricConstraints.spacing_step
         rotate_step = self.geometricConstraints.rotate_step
-        prop_bound, ng_zones = gen_shape(self.geometricConstraints.property_boundary, self.geometricConstraints.no_go_boundaries)
+        prop_bound, ng_zones = gen_shape(self.geometricConstraints.property_boundary,
+                                         self.geometricConstraints.no_go_boundaries)
         rotate_start = self.geometricConstraints.rotate_start
         rotate_stop = self.geometricConstraints.rotate_stop
         perimeter_spacing_ratio = self.geometricConstraints.perimeter_spacing_ratio

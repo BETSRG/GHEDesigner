@@ -48,7 +48,6 @@ class TestFindRowWiseDesign(GHEBaseTest):
     # design interface with a single U-tube borehole heat exchanger.
 
     def test_find_row_wise_design_wo_perimeter(self):
-
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
             inner_radius=0.0108, outer_radius=0.0133, shank_spacing=0.0323,
@@ -74,7 +73,6 @@ class TestFindRowWiseDesign(GHEBaseTest):
         self.assertEqual(38 + 1, len(selected_coordinates))
 
     def test_find_row_wise_design_with_perimeter(self):
-
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
             inner_radius=0.0108, outer_radius=0.0133, shank_spacing=0.0323,
