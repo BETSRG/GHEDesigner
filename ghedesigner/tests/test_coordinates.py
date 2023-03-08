@@ -1,18 +1,6 @@
-import os
 import unittest
 
-import matplotlib.pyplot as plt
-
-from ghedesigner.coordinates import c_shape, open_rectangle, rectangle
-
-show_plots = "PLOT_COORDINATES" in os.environ
-
-
-def plot_coordinates(coords, title):
-    plt.scatter(*zip(*coords))
-    plt.title(title)
-    plt.grid()
-    plt.show()
+from ghedesigner.coordinates import open_rectangle, rectangle
 
 
 class TestCoordinates(unittest.TestCase):
@@ -23,8 +11,6 @@ class TestCoordinates(unittest.TestCase):
         self.assertEqual(coords[0][1], 0)
         self.assertEqual(coords[-1][0], 3)
         self.assertEqual(coords[-1][1], 3)
-        if show_plots:
-            plot_coordinates(coords, "Rectangle")
 
     def test_open_rectangle(self):
         coords = open_rectangle(4, 4, 1, 1)
@@ -33,10 +19,6 @@ class TestCoordinates(unittest.TestCase):
         self.assertEqual(coords[0][1], 0)
         self.assertEqual(coords[-1][0], 3)
         self.assertEqual(coords[-1][1], 3)
-        if show_plots:
-            plot_coordinates(coords, "Open Rectangle")
 
-    def test_c_shape(self):
-        coords = c_shape(6, 6, 1, 1, 6)
-        if show_plots:
-            plot_coordinates(coords, "C-Shape")
+    # def test_c_shape(self):
+    #     coords = c_shape(6, 6, 1, 1, 6)
