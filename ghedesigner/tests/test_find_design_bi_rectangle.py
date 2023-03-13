@@ -34,7 +34,7 @@ class TestFindBiRectangleDesign(GHEBaseTest):
 
     def test_double_u_tube(self):
         ghe = GHEManager()
-        ghe.set_double_u_tube_pipe(
+        ghe.set_double_u_tube_pipe_parallel(
             inner_radius=0.0108, outer_radius=0.013335, shank_spacing=0.0323,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)

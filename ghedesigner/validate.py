@@ -63,7 +63,8 @@ def validate_pipe(instance: dict) -> None:
 
     schema_map = {
         "SINGLEUTUBE": "pipe_single_double_u_tube.schema.json",
-        "DOUBLEUTUBE": "pipe_single_double_u_tube.schema.json",
+        "DOUBLEUTUBESERIES": "pipe_single_double_u_tube.schema.json",
+        "DOUBLEUTUBEPARALLEL": "pipe_single_double_u_tube.schema.json",
         "COAXIAL": "pipe_coaxial.schema.json"
     }
 

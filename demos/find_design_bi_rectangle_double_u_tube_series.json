@@ -20,7 +20,7 @@
     "roughness": 0.000001,
     "conductivity": 0.4,
     "rho_cp": 1542000,
-    "arrangement": "doubleutubeparallel"
+    "arrangement": "doubleutubeseries"
   },
   "borehole": {
     "buried_depth": 2.0,
@@ -32,10 +32,13 @@
   },
   "geometric_constraints": {
     "length": 100,
-    "b": 5.0,
+    "width": 100,
+    "b_min": 2.0,
+    "b_max_x": 10.0,
+    "b_max_y": 12.0,
     "max_height": 135.0,
     "min_height": 60.0,
-    "method": "nearsquare"
+    "method": "birectangle"
   },
   "design": {
     "flow_rate": 0.2,

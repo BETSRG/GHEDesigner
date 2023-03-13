@@ -184,7 +184,7 @@ class TestGHE(GHEBaseTest):
             self.r_b,
             self.bh_depth,
             self.m_flow_borehole,
-            BHPipeType.DoubleUType,
+            BHPipeType.DoubleUTypeParallel,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -197,7 +197,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.V_flow_system,
             self.B,
-            BHPipeType.DoubleUType,
+            BHPipeType.DoubleUTypeParallel,
             self.fluid,
             borehole,
             self.pipe_d,

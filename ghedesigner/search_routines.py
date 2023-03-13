@@ -853,10 +853,7 @@ class BisectionZD(Bisection1D):
         if load_years is None:
             load_years = [2019]
         if disp:
-            print(
-                "Note: This design routine currently requires several "
-                "bisection searches."
-            )
+            print("Note: This design routine currently requires several bisection searches.")
 
         # Get a coordinates domain for initialization
         coordinates_domain = coordinates_domain_nested[0]

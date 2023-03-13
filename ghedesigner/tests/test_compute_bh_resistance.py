@@ -132,6 +132,11 @@ class TestBHResistance(GHEBaseTest):
         self.log(f"Convective resistance (K/(W/m)): {r_fp}")
         self.log(f"Borehole thermal resistance: {r_b_series:0.4f} m.K/W")
 
+        # test values pinned to current performance because GLHEPro doesn't offer a series connection
+        self.assertTrue(self.rel_error_within_tol(re, 11744.0, 0.01))
+        self.assertTrue(self.rel_error_within_tol(h_f, 2529.0, 0.01))
+        self.assertTrue(self.rel_error_within_tol(r_b_series, 0.1624, 0.01))
+
         # Parallel
         double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, FlowConfig.Parallel)
         r_b_parallel = double_u_tube_parallel.calc_effective_borehole_resistance()
