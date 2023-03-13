@@ -3,7 +3,8 @@ from enum import Enum, auto
 
 class BHPipeType(Enum):
     SingleUType = auto()
-    DoubleUType = auto()
+    DoubleUTypeParallel = auto()
+    DoubleUTypeSeries = auto()
     CoaxialType = auto()
 
 

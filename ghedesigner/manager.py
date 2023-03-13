@@ -73,8 +73,10 @@ class GHEManager:
         bh_pipe_str = str(bh_pipe_str).upper()
         if bh_pipe_str == "SINGLEUTUBE":
             return BHPipeType.SingleUType
-        if bh_pipe_str == "DOUBLEUTUBE":
-            return BHPipeType.DoubleUType
+        if bh_pipe_str == "DOUBLEUTUBEPARALLEL":
+            return BHPipeType.DoubleUTypeParallel
+        if bh_pipe_str == "DOUBLEUTUBESERIES":
+            return BHPipeType.DoubleUTypeSeries
         if bh_pipe_str == "COAXIAL":
             return BHPipeType.CoaxialType
         raise ValueError("Borehole pipe type not supported.")
@@ -117,11 +119,17 @@ class GHEManager:
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 1)
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
-    def set_double_u_tube_pipe(self, inner_radius: float, outer_radius: float, roughness: float, shank_spacing: float,
-                               conductivity: float, rho_cp: float):
+    def set_double_u_tube_pipe_parallel(self, inner_radius: float, outer_radius: float, roughness: float,
+                                        shank_spacing: float, conductivity: float, rho_cp: float):
 
-        # TODO: Convert scalar properties if double or coax
-        self._u_tube_type = BHPipeType.DoubleUType
+        self._u_tube_type = BHPipeType.DoubleUTypeParallel
+        pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 2)
+        self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
+
+    def set_double_u_tube_pipe_series(self, inner_radius: float, outer_radius: float, roughness: float,
+                                      shank_spacing: float, conductivity: float, rho_cp: float):
+
+        self._u_tube_type = BHPipeType.DoubleUTypeSeries
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 2)
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
@@ -367,7 +375,7 @@ class GHEManager:
         # pipe data
         d_pipe = {'rho_cp': self._pipe.rhoCp, 'roughness': self._pipe.roughness}
 
-        if self._u_tube_type in [BHPipeType.SingleUType, BHPipeType.DoubleUType]:
+        if self._u_tube_type in [BHPipeType.SingleUType, BHPipeType.DoubleUTypeParallel, BHPipeType.DoubleUTypeSeries]:
             d_pipe['inner_radius'] = self._pipe.r_in
             d_pipe['outer_radius'] = self._pipe.r_out
             d_pipe['shank_spacing'] = self._pipe.s
@@ -384,8 +392,10 @@ class GHEManager:
 
         if self._u_tube_type == BHPipeType.SingleUType:
             d_pipe['arrangement'] = 'singleutube'
-        elif self._u_tube_type == BHPipeType.DoubleUType:
-            d_pipe['arrangement'] = 'doubleutube'
+        elif self._u_tube_type == BHPipeType.DoubleUTypeParallel:
+            d_pipe['arrangement'] = 'doubleutubeparallel'
+        elif self._u_tube_type == BHPipeType.DoubleUTypeSeries:
+            d_pipe['arrangement'] = 'doubleutubeseries'
         elif self._u_tube_type == BHPipeType.CoaxialType:
             d_pipe['arrangement'] = 'coaxial'
         else:
@@ -451,8 +461,17 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             conductivity=pipe_props["conductivity"],
             rho_cp=pipe_props["rho_cp"]
         )
-    elif pipe_type == BHPipeType.DoubleUType:
-        ghe.set_double_u_tube_pipe(
+    elif pipe_type == BHPipeType.DoubleUTypeParallel:
+        ghe.set_double_u_tube_pipe_parallel(
+            inner_radius=pipe_props["inner_radius"],
+            outer_radius=pipe_props["outer_radius"],
+            shank_spacing=pipe_props["shank_spacing"],
+            roughness=pipe_props["roughness"],
+            conductivity=pipe_props["conductivity"],
+            rho_cp=pipe_props["rho_cp"]
+        )
+    elif pipe_type == BHPipeType.DoubleUTypeSeries:
+        ghe.set_double_u_tube_pipe_series(
             inner_radius=pipe_props["inner_radius"],
             outer_radius=pipe_props["outer_radius"],
             shank_spacing=pipe_props["shank_spacing"],

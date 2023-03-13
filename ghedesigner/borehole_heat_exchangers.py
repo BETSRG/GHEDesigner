@@ -503,8 +503,10 @@ def get_bhe_object(bhe_type: BHPipeType, m_flow_borehole: float, fluid: GHEFluid
                    _borehole: GHEBorehole, pipe: Pipe, grout: Grout, soil: Soil):
     if bhe_type == BHPipeType.SingleUType:
         return SingleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
-    elif bhe_type == BHPipeType.DoubleUType:
-        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+    elif bhe_type == BHPipeType.DoubleUTypeParallel:
+        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=FlowConfig.Parallel)
+    elif bhe_type == BHPipeType.DoubleUTypeSeries:
+        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=FlowConfig.Series)
     elif bhe_type == BHPipeType.CoaxialType:
         return CoaxialPipe(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
     else:
