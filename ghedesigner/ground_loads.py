@@ -1,3 +1,5 @@
+import warnings
+
 from calendar import monthrange
 from json import dumps
 from math import floor
@@ -429,7 +431,10 @@ class HybridLoad:
         # Converts monthly load format to sequence of loads needed for
         # simulation
         # This routine is taking loads applied to the ground NOT to a heat pump.
-        #
+
+        warn_msg_neg_timstep = "A negative time step has been generated in the hybrid loading scheme. " \
+                               "This will reduce the accuracy of the simulation."
+
         # First, begin array with zero load before simulation starts.
         self.load = np.append(self.load, 0)
         last_zero_hour = first_month_hour(self.start_month, self.years) - 1
@@ -526,10 +531,7 @@ class HybridLoad:
                     self.hour = np.append(self.hour, last_hour_cooling_peak)
 
                     if last_avg_hour - peak_last_avg_hour < 0.0:
-                        raise Warning(
-                            "A negative time step has been generated in the hybrid loading scheme. This"
-                            "will reduce the accuracy of the simulation."
-                        )
+                        warnings.warn(warn_msg_neg_timstep)
                     peak_last_avg_hour = last_avg_hour
                 # monthly average conditions between cooling peak and heating peak
                 if self.monthly_peak_hl[i] > 0 and ipf[i]:
@@ -543,10 +545,7 @@ class HybridLoad:
                     self.hour = np.append(self.hour, last_hour_heating_peak)
 
                     if last_avg_hour - peak_last_avg_hour < 0.0:
-                        raise Warning(
-                            "A negative time step has been generated in the hybrid loading scheme. This"
-                            "will reduce the accuracy of the simulation."
-                        )
+                        warnings.warn(warn_msg_neg_timstep)
                     peak_last_avg_hour = last_avg_hour
                 # rest of month
                 last_avg_hour = last_month_hour(i, self.years)
@@ -554,10 +553,7 @@ class HybridLoad:
                 self.hour = np.append(self.hour, last_avg_hour)
 
                 if last_avg_hour - peak_last_avg_hour < 0.0:
-                    raise Warning(
-                        "A negative time step has been generated in the hybrid loading scheme. This"
-                        "will reduce the accuracy of the simulation."
-                    )
+                    warnings.warn(warn_msg_neg_timstep)
                 peak_last_avg_hour = last_avg_hour
 
             elif peak_day_diff > 0:
@@ -572,10 +568,7 @@ class HybridLoad:
                     self.hour = np.append(self.hour, last_hour_heating_peak)
 
                     if last_avg_hour - peak_last_avg_hour < 0.0:
-                        raise Warning(
-                            "A negative time step has been generated in the hybrid loading scheme. This"
-                            "will reduce the accuracy of the simulation."
-                        )
+                        warnings.warn(warn_msg_neg_timstep)
                     peak_last_avg_hour = last_avg_hour
                 # monthly average conditions between heating peak and cooling peak
                 if self.monthly_peak_cl[i] > 0 and ipf[i]:
@@ -587,10 +580,7 @@ class HybridLoad:
                     self.hour = np.append(self.hour, last_hour_cooling_peak)
 
                     if last_avg_hour - peak_last_avg_hour < 0.0:
-                        raise Warning(
-                            "A negative time step has been generated in the hybrid loading scheme. This"
-                            "will reduce the accuracy of the simulation."
-                        )
+                        warnings.warn(warn_msg_neg_timstep)
                     peak_last_avg_hour = last_avg_hour
                 # rest of month
                 last_avg_hour = last_month_hour(i, self.years)
@@ -598,10 +588,7 @@ class HybridLoad:
                 self.hour = np.append(self.hour, last_avg_hour)
 
                 if last_avg_hour - peak_last_avg_hour < 0.0:
-                    raise Warning(
-                        "A negative time step has been generated in the hybrid loading scheme. This"
-                        "will reduce the accuracy of the simulation."
-                    )
+                    warnings.warn(warn_msg_neg_timstep)
                 peak_last_avg_hour = last_avg_hour
             else:
                 # monthly peak heating day and cooling day are the same
@@ -625,10 +612,7 @@ class HybridLoad:
                         )
 
                         if last_avg_hour - peak_last_avg_hour < 0.0:
-                            raise Warning(
-                                "A negative time step has been generated in the hybrid loading scheme. This"
-                                "will reduce the accuracy of the simulation."
-                            )
+                            warnings.warn(warn_msg_neg_timstep)
                         peak_last_avg_hour = last_avg_hour
                     # monthly average conditions between cooling peak and heating peak
                     if self.monthly_peak_hl[i] > 0 and ipf[i]:
@@ -644,10 +628,7 @@ class HybridLoad:
                         )
 
                         if last_avg_hour - peak_last_avg_hour < 0.0:
-                            raise Warning(
-                                "A negative time step has been generated in the hybrid loading scheme. This"
-                                "will reduce the accuracy of the simulation."
-                            )
+                            warnings.warn(warn_msg_neg_timstep)
                         peak_last_avg_hour = last_avg_hour
                     # rest of month
                     last_avg_hour = last_month_hour(i, self.years)
@@ -655,10 +636,7 @@ class HybridLoad:
                     self.hour = np.append(self.hour, last_avg_hour)
 
                     if last_avg_hour - peak_last_avg_hour < 0.0:
-                        raise Warning(
-                            "A negative time step has been generated in the hybrid loading scheme. This"
-                            "will reduce the accuracy of the simulation."
-                        )
+                        warnings.warn(warn_msg_neg_timstep)
                     peak_last_avg_hour = last_avg_hour
 
                 else:
@@ -667,10 +645,7 @@ class HybridLoad:
                     self.hour = np.append(self.hour, last_avg_hour)
 
                 if last_avg_hour - peak_last_avg_hour < 0.0:
-                    raise Warning(
-                        "A negative time step has been generated in the hybrid loading scheme. This"
-                        "will reduce the accuracy of the simulation."
-                    )
+                    warnings.warn(warn_msg_neg_timstep)
                 peak_last_avg_hour = last_avg_hour
 
         #       Now fill array containing step function loads
