@@ -461,7 +461,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             conductivity=pipe_props["conductivity"],
             rho_cp=pipe_props["rho_cp"]
         )
-    elif pipe_type in BHPipeType.DoubleUTypeParallel:
+    elif pipe_type == BHPipeType.DoubleUTypeParallel:
         ghe.set_double_u_tube_pipe_parallel(
             inner_radius=pipe_props["inner_radius"],
             outer_radius=pipe_props["outer_radius"],
