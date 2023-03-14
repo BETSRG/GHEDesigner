@@ -1,5 +1,6 @@
 import csv
 import os
+import re
 import warnings
 from datetime import datetime
 from json import dumps
@@ -581,6 +582,9 @@ class OutputManager:
 
         o += self.create_table(eft_table_title, header_array, out_array, width, eft_table_formats, filler_symbol="-",
                                centering="^")
+
+        # strip out all trailing whitespace
+        o = re.sub(r"\s+\n", "\n", o)
 
         return o
 
