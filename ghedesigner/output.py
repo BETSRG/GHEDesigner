@@ -342,9 +342,13 @@ class OutputManager:
         return output_dict
 
     def get_summary_text(self, n_round, width, project_name, model_name, notes, author, time, design, load_method):
-        f_float = ".3f"
-        f_str = "s"
+
         f_int = ".0f"
+        f_1f = ".1f"
+        f_2f = ".2f"
+        f_3f = ".3f"
+        f_4f = ".4f"
+        f_str = "s"
         f_sci = ".3e"
 
         blank_line = self.create_line(width)
@@ -360,7 +364,7 @@ class OutputManager:
         time_string = now.strftime("%m/%d/%Y %H:%M:%S %p")
         o += self.d_row(width, "Simulated On:", time_string, f_str)
         o += self.d_row(width, "Simulated By:", author, f_str)
-        o += self.d_row(width, "Calculation Time, s:", round(time, n_round), f_float)
+        o += self.d_row(width, "Calculation Time, s:", time, f_3f)
         o += empty_line
         o += self.create_title(width, "Design Selection", filler_symbol="-")
 
@@ -372,7 +376,7 @@ class OutputManager:
             design_values = design.searchTracker
         except:
             design_values = ""
-        design_formats = ["s", ".3f", ".3f", ".3f"]
+        design_formats = [f_str, f_2f, f_2f, f_2f]
 
         o += self.create_table("Field Search Log", design_header, design_values, width, design_formats,
                                filler_symbol="-", centering="^")
@@ -381,8 +385,8 @@ class OutputManager:
         o += self.create_title(width, "GHE System", filler_symbol="-")
 
         # gFunction LTS Table
-        g_function_table_formats = [".3f"]
-        gf_table_ff = [".3f"] * (len(design.ghe.gFunction.g_lts) + 1)
+        g_function_table_formats = [f_3f]
+        gf_table_ff = [f_3f] * (len(design.ghe.gFunction.g_lts) + 1)
         g_function_table_formats.extend(gf_table_ff)
         g_function_col_titles = ["ln(t/ts)"]
 
@@ -406,10 +410,9 @@ class OutputManager:
 
         o += self.create_title(width, "System Parameters", filler_symbol="-")
         o += self.d_row(width, "Active Borehole Length, m:", design.ghe.bhe.b.H, f_int)
-        o += self.d_row(width, "Borehole Radius, m:", round(design.ghe.bhe.b.r_b, n_round), f_float)
-        o += self.d_row(width, "Borehole Spacing, m:", round(design.ghe.B_spacing, n_round), f_float)
-        o += self.d_row(width, "Total Drilling, m:",
-                        round(design.ghe.bhe.b.H * len(design.ghe.gFunction.bore_locations), n_round), f_float)
+        o += self.d_row(width, "Borehole Radius, mm:", design.ghe.bhe.b.r_b * 1000, f_2f)
+        o += self.d_row(width, "Borehole Spacing, m:", design.ghe.B_spacing, f_3f)
+        o += self.d_row(width, "Total Drilling, m:", design.ghe.bhe.b.H * len(design.ghe.gFunction.bore_locations), f_int)
 
         o += "Field Geometry: " + "\n"
         o += self.d_row(width, "Field Type:", design.ghe.fieldType, f_str, n_tabs=1)
@@ -419,65 +422,50 @@ class OutputManager:
         o += "Borehole Information: " + "\n"
 
         if isinstance(design.ghe.bhe.pipe.r_out, float):
-            o += self.d_row(width, "Pipe Outer Radius, m:", round(design.ghe.bhe.pipe.r_out, n_round), f_float, n_tabs=1)
-            o += self.d_row(width, "Pipe Inner Radius, m:", round(design.ghe.bhe.pipe.r_in, n_round), f_float, n_tabs=1)
+            o += self.d_row(width, "Pipe Outer Radius, mm:", design.ghe.bhe.pipe.r_out * 1000, f_2f, n_tabs=1)
+            o += self.d_row(width, "Pipe Inner Radius, mm:", design.ghe.bhe.pipe.r_in * 1000, f_2f, n_tabs=1)
         else:
-            o += self.d_row(width, "Outer Pipe Outer Radius, m:", round(design.ghe.bhe.pipe.r_out[0], n_round), f_float, n_tabs=1)
-            o += self.d_row(width, "Inner Pipe Outer Pipe Outer Radius, m:", round(design.ghe.bhe.pipe.r_out[1], n_round),
-                            f_float, n_tabs=1)
-            o += self.d_row(width, "Outer Pipe Inner Radius, m:", round(design.ghe.bhe.pipe.r_in[0], n_round),
-                            f_float, n_tabs=1)
-            o += self.d_row(width, "Inner Pipe Inner Radius, m:", round(design.ghe.bhe.pipe.r_in[1], n_round),
-                            f_float, n_tabs=1)
+            o += self.d_row(width, "Outer Pipe Outer Radius, mm:", design.ghe.bhe.pipe.r_out[1] * 1000, f_2f, n_tabs=1)
+            o += self.d_row(width, "Outer Pipe Inner Radius, mm:", design.ghe.bhe.pipe.r_out[0] * 1000, f_2f, n_tabs=1)
+            o += self.d_row(width, "Inner Pipe Outer Radius, mm:", design.ghe.bhe.pipe.r_in[1] * 1000, f_2f, n_tabs=1)
+            o += self.d_row(width, "Inner Pipe Inner Radius, mm:", design.ghe.bhe.pipe.r_in[0] * 1000, f_2f, n_tabs=1)
 
-        o += self.d_row(width, "Pipe Roughness, m:", round(design.ghe.bhe.pipe.roughness, n_round), f_sci, n_tabs=1)
-        o += self.d_row(width, "Shank Spacing, m:", round(design.ghe.bhe.pipe.s, n_round), f_float, n_tabs=1)
-        o += self.d_row(width, "Grout Thermal Conductivity, W/(m*K):", round(design.ghe.bhe.grout.k, n_round),
-                        f_float, n_tabs=1)
-        o += self.d_row(width, "Grout Volumetric Heat Capacity, kJ/(K*m^3):", round(design.ghe.bhe.grout.rhoCp / 1000, n_round),
-                        f_float, n_tabs=1)
+        o += self.d_row(width, "Pipe Roughness, m:", design.ghe.bhe.pipe.roughness, f_sci, n_tabs=1)
+        o += self.d_row(width, "Shank Spacing, mm:", design.ghe.bhe.pipe.s * 1000, f_2f, n_tabs=1)
+        o += self.d_row(width, "Grout Thermal Conductivity, W/(m*K):", design.ghe.bhe.grout.k, f_3f, n_tabs=1)
+        o += self.d_row(width, "Grout Volumetric Heat Capacity, kJ/(K*m^3):", design.ghe.bhe.grout.rhoCp / 1000, f_2f, n_tabs=1)
         if isinstance(design.ghe.bhe.pipe.r_out, float):
             o += self.d_row(width, "Reynold's Number:",
-                            round(GHEDesignerBoreholeBase.compute_reynolds(design.ghe.bhe.m_flow_borehole,
-                                                                           design.ghe.bhe.pipe.r_in,
-                                                                           design.ghe.bhe.fluid), n_round),
-                            f_float, n_tabs=1)
+                            GHEDesignerBoreholeBase.compute_reynolds(design.ghe.bhe.m_flow_borehole,
+                                                                     design.ghe.bhe.pipe.r_in,
+                                                                     design.ghe.bhe.fluid),
+                            f_int, n_tabs=1)
         else:
 
             o += self.d_row(width, "Reynold's Number:",
-                            round(GHEDesignerBoreholeBase.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
-                                                                                      design.ghe.bhe.r_in_out,
-                                                                                      design.ghe.bhe.r_out_in,
-                                                                                      design.ghe.bhe.fluid), n_round),
-                            f_float, n_tabs=1)
+                            GHEDesignerBoreholeBase.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
+                                                                                design.ghe.bhe.r_in_out,
+                                                                                design.ghe.bhe.r_out_in,
+                                                                                design.ghe.bhe.fluid),
+                            f_int, n_tabs=1)
 
-        o += self.d_row(width, "Effective Borehole Resistance, W/(m*K):",
-                        round(design.ghe.bhe.calc_effective_borehole_resistance(), n_round),
-                        f_float, n_tabs=1)
+        o += self.d_row(width, "Effective Borehole Resistance, W/(m*K):", design.ghe.bhe.calc_effective_borehole_resistance(),
+                        f_4f, n_tabs=1)
         # Shank Spacing, Pipe Type, etc.
 
         o += "Soil Properties: " + "\n"
-        o += self.d_row(width, "Thermal Conductivity, W/(m*K):", round(design.ghe.bhe.soil.k, n_round),
-                        f_float, n_tabs=1)
-        o += self.d_row(width, "Volumetric Heat Capacity, kJ/(K*m^3):", round(design.ghe.bhe.soil.rhoCp / 1000, n_round),
-                        f_float, n_tabs=1)
-        o += self.d_row(width, "Undisturbed Ground Temperature, C:",round(design.ghe.bhe.soil.ugt, n_round),
-                        f_float, n_tabs=1)
+        o += self.d_row(width, "Thermal Conductivity, W/(m*K):", design.ghe.bhe.soil.k, f_3f, n_tabs=1)
+        o += self.d_row(width, "Volumetric Heat Capacity, kJ/(K*m^3):", design.ghe.bhe.soil.rhoCp / 1000, f_2f, n_tabs=1)
+        o += self.d_row(width, "Undisturbed Ground Temperature, C:", design.ghe.bhe.soil.ugt, f_2f, n_tabs=1)
 
         o += "Fluid Properties" + "\n"
-        o += self.d_row(width, "Volumetric Heat Capacity, kJ/(K*m^3):", round(design.ghe.bhe.fluid.rhoCp / 1000, n_round),
-                        f_float, n_tabs=1)
-        o += self.d_row(width, "Thermal Conductivity, W/(m*K):", round(design.ghe.bhe.fluid.k, n_round),
-                        f_float, n_tabs=1)
-        o += self.d_row(width, "Fluid Mix:", design.ghe.bhe.fluid.fluid.fluid_name,
-                        f_str, n_tabs=1)
-        o += self.d_row(width, "Density, kg/m^3:", round(design.ghe.bhe.fluid.rho, n_round),
-                        f_float, n_tabs=1)
-        o += self.d_row(width, "Mass Flow Rate Per Borehole, kg/s:", round(design.ghe.bhe.m_flow_borehole, n_round),
-                        f_float, n_tabs=1)
+        o += self.d_row(width, "Volumetric Heat Capacity, kJ/(K*m^3):", design.ghe.bhe.fluid.rhoCp / 1000, f_2f, n_tabs=1)
+        o += self.d_row(width, "Thermal Conductivity, W/(m*K):", design.ghe.bhe.fluid.k, f_2f, n_tabs=1)
+        o += self.d_row(width, "Fluid Mix:", design.ghe.bhe.fluid.fluid.fluid_name, f_str, n_tabs=1)
+        o += self.d_row(width, "Density, kg/m^3:", design.ghe.bhe.fluid.rho, f_2f, n_tabs=1)
+        o += self.d_row(width, "Mass Flow Rate Per Borehole, kg/s:", design.ghe.bhe.m_flow_borehole, f_3f, n_tabs=1)
         if hasattr(design.ghe.bhe, "h_f"):
-            o += self.d_row(width, "Fluid Convection Coefficient, W/(m*K):", round(design.ghe.bhe.h_f, n_round),
-                            f_float, n_tabs=1)
+            o += self.d_row(width, "Fluid Convection Coefficient, W/(m*K):", design.ghe.bhe.h_f, f_int, n_tabs=1)
         o += empty_line
 
         monthly_load_values = []
@@ -507,7 +495,7 @@ class OutputManager:
             ["", "KW-Hr", "KW-Hr", "KW", "hr", "KW", "hr"],
         ]
 
-        month_table_formats = ["s", ".3f", ".3f", ".3f", ".3f", ".3f", ".3f"]
+        month_table_formats = [f_str, f_1f, f_1f, f_1f, f_1f, f_1f, f_1f]
 
         o += self.create_table("GLHE Monthly Loads", month_header, monthly_load_values, width, month_table_formats,
                                filler_symbol="-", centering="^")
@@ -517,10 +505,10 @@ class OutputManager:
         o += self.create_title(width, "Simulation Parameters")
         o += self.d_row(width, "Start Month: ", design.ghe.sim_params.start_month, f_int)
         o += self.d_row(width, "End Month: ", design.ghe.sim_params.end_month, f_int)
-        o += self.d_row(width, "Maximum Allowable hp_eft, C: ", design.ghe.sim_params.max_EFT_allowable, f_float)
-        o += self.d_row(width, "Minimum Allowable hp_eft, C: ", design.ghe.sim_params.min_EFT_allowable, f_float)
-        o += self.d_row(width, "Maximum Allowable Height, m: ", design.ghe.sim_params.max_height, f_float)
-        o += self.d_row(width, "Minimum Allowable Height, m: ", design.ghe.sim_params.min_height, f_float)
+        o += self.d_row(width, "Maximum Allowable hp_eft, C: ", design.ghe.sim_params.max_EFT_allowable, f_2f)
+        o += self.d_row(width, "Minimum Allowable hp_eft, C: ", design.ghe.sim_params.min_EFT_allowable, f_2f)
+        o += self.d_row(width, "Maximum Allowable Height, m: ", design.ghe.sim_params.max_height, f_2f)
+        o += self.d_row(width, "Minimum Allowable Height, m: ", design.ghe.sim_params.min_height, f_2f)
         o += self.d_row(width, "Simulation Time, years: ", int(design.ghe.sim_params.end_month / 12), f_int)
         load_method_string = "hybrid" if load_method == DesignMethodTimeStep.Hybrid else "hourly"  # TODO: Use a method in the enum
         o += self.d_row(width, "Simulation Loading Type: ", load_method_string, f_str)
@@ -572,7 +560,7 @@ class OutputManager:
             ["Time", "Tbw", "Max hp_eft", "Min hp_eft"],
             ["(months)", "(C)", "(C)", "(C)"],
         ]
-        eft_table_formats = [".0f", ".3f", ".3f", ".3f"]
+        eft_table_formats = [f_int, f_2f, f_2f, f_2f]
 
         o += self.create_title(width, "Peak Temperature", filler_symbol="-")
         max_eft = max(design.ghe.hp_eft)
@@ -581,15 +569,13 @@ class OutputManager:
         min_eft_time = design.ghe.times[design.ghe.hp_eft.index(min(design.ghe.hp_eft))]
         max_eft_time = self.hours_to_month(max_eft_time)
         min_eft_time = self.hours_to_month(min_eft_time)
-        o += self.d_row(width, "Max hp_eft, C:", round(max_eft, n_round), f_float)
-        o += self.d_row(width, "Max hp_eft Time, Months:", round(max_eft_time, n_round), f_float)
-        o += self.d_row(width, "Min hp_eft, C:", round(min_eft, n_round), f_float)
-        o += self.d_row(width, "Min hp_eft Time, Months:", round(min_eft_time, n_round), f_float)
+        o += self.d_row(width, "Max hp_eft, C:", max_eft, f_3f)
+        o += self.d_row(width, "Max hp_eft Time, Months:", max_eft_time, f_3f)
+        o += self.d_row(width, "Min hp_eft, C:", min_eft, f_3f)
+        o += self.d_row(width, "Min hp_eft Time, Months:", min_eft_time, f_3f)
 
         o += self.create_table(eft_table_title, header_array, out_array, width, eft_table_formats, filler_symbol="-",
                                centering="^")
-
-        
 
         return o
 
@@ -634,7 +620,7 @@ class OutputManager:
         return r_s
 
     @staticmethod
-    def d_row(row_allocation: int, entry_1: str, entry_2, d_type: str, n_tabs: int=0):
+    def d_row(row_allocation: int, entry_1: str, entry_2, d_type: str, n_tabs: int = 0):
         tab_width = 4
         leading_spaces = n_tabs * tab_width
 
