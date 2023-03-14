@@ -1,5 +1,4 @@
 import warnings
-
 from calendar import monthrange
 from json import dumps
 from math import floor
