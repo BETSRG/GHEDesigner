@@ -27,8 +27,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         number_of_boreholes = 32
         length = length_of_side(number_of_boreholes, b)
         ghe.set_geometry_constraints_near_square(b=b, length=length)  # borehole spacing and field side length
-        # perform a design search assuming "system" flow?
-        ghe.set_design(flow_rate=6.4, flow_type="system", design_method_geo=ghe.DesignGeomType.NearSquare)
+        ghe.set_design(flow_rate=0.3, flow_type="borehole", design_method_geo=ghe.DesignGeomType.NearSquare)
         ghe.find_design()
 
         project_name = "Atlanta Office Building: Design Example"
@@ -40,9 +39,9 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.write_output_files(output_file_directory, "_SU")
         # can grab data off the outputs dict
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(u_tube_height, 124.55, delta=1e-2)
+        self.assertAlmostEqual(u_tube_height, 133.51, delta=1e-2)
         selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(144 + 1, len(selected_coordinates))
+        self.assertEqual(156 + 1, len(selected_coordinates))
 
     def test_find_double_u_tube_parallel_design(self):
         ghe = GHEManager()
