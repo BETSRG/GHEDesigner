@@ -16,10 +16,15 @@
       "maximum": 60,
       "minimum": 0,
       "units": "percent"
+    },
+    "temperature": {
+      "type": "number",
+      "units": "C"
     }
   },
   "required": [
     "fluid_name",
-    "concentration_percent"
+    "concentration_percent",
+    "temperature"
   ]
 }
