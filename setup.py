@@ -5,7 +5,7 @@ from setuptools import setup
 from ghedesigner import VERSION
 
 readme_file = Path(__file__).parent.resolve() / 'README.md'
-readme_contents = readme_file.read_text()
+readme_contents = readme_file.read_text(encoding='utf8')
 
 short_description = """A ground heat exchanger design tool with the capability
 to select and size flexibly configured borehole fields that are customized
