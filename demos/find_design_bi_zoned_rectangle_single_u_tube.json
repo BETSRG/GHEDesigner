@@ -2,7 +2,8 @@
   "version": "0.5",
   "fluid": {
     "fluid_name": "Water",
-    "concentration_percent": 0.0
+    "concentration_percent": 0.0,
+    "temperature": 20
   },
   "grout": {
     "conductivity": 1.0,

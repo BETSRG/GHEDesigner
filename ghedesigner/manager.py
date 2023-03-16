@@ -81,12 +81,14 @@ class GHEManager:
             return BHPipeType.CoaxialType
         raise ValueError("Borehole pipe type not supported.")
 
-    def set_fluid(self, fluid_name: str = "Water", concentration_percent: float = 0.0):
+    def set_fluid(self, fluid_name: str = "Water", concentration_percent: float = 0.0, temperature: float = 20.0):
         """
         fluid_name - convert to an enum
         concentration_percent %
         """
-        self._fluid = GHEFluid(fluid_str=fluid_name, percent=concentration_percent)
+        self._fluid = GHEFluid(fluid_str=fluid_name,
+                               percent=concentration_percent,
+                               temperature=temperature)
 
     def set_grout(self, conductivity: float, rho_cp: float):
         """
@@ -587,3 +589,7 @@ def run_manager_from_cli(input_path, output_directory):
         print(f'Input file does not exist. Input file path: "{str(input_path)}"')
 
     run_manager_from_cli_worker(input_path, output_path)
+
+
+if __name__ == "__main__":
+    run_manager_from_cli()

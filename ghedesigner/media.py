@@ -5,7 +5,7 @@ from pygfunction.media import Fluid
 
 class GHEFluid(Fluid):
 
-    def __init__(self, fluid_str: str, percent: float, T: float = 20):
+    def __init__(self, fluid_str: str, percent: float, temperature: float = 20):
         fluid_str = fluid_str.upper()
         fluid_map = {
             "WATER": "WATER",
@@ -15,11 +15,14 @@ class GHEFluid(Fluid):
             "PROPYLENEGLYCOL": "MPG"
         }
 
-        super().__init__(fluid_map[fluid_str], percent, T)
+        super().__init__(fluid_map[fluid_str], percent, temperature)
         self.concentration_percent = percent
+        self.temperature = temperature
 
     def to_input(self):
-        return {'fluid_name': self.name, 'concentration_percent': self.concentration_percent}
+        return {'fluid_name': self.name,
+                'concentration_percent': self.concentration_percent,
+                'temperature': self.temperature}
 
 
 class ThermalProperty:
