@@ -109,32 +109,32 @@ class GeometricConstraintsRowWise(GeometricConstraints):
 
     def __init__(self,
                  perimeter_spacing_ratio: float,
-                 spacing_start: float,
-                 spacing_stop: float,
+                 min_spacing: float,
+                 max_spacing: float,
                  spacing_step: float,
-                 rotate_start: float,
-                 rotate_stop: float,
+                 min_rotation: float,
+                 max_rotation: float,
                  rotate_step: float,
                  property_boundary,
                  no_go_boundaries):
         super().__init__()
         self.perimeter_spacing_ratio = perimeter_spacing_ratio
-        self.spacing_start = spacing_start
-        self.spacing_stop = spacing_stop
+        self.min_spacing = min_spacing
+        self.max_spacing = max_spacing
         self.spacing_step = spacing_step
-        self.rotate_start = rotate_start
-        self.rotate_stop = rotate_stop
+        self.min_rotation = min_rotation
+        self.max_rotation = max_rotation
         self.rotate_step = rotate_step
         self.property_boundary = property_boundary
         self.no_go_boundaries = no_go_boundaries
 
     def to_input(self) -> dict:
         return {'perimeter_spacing_ratio': self.perimeter_spacing_ratio,
-                'spacing_start': self.spacing_start,
-                'spacing_stop': self.spacing_stop,
+                'min_spacing': self.min_spacing,
+                'max_spacing': self.max_spacing,
                 'spacing_step': self.spacing_step,
-                'rotate_start': self.rotate_start * RAD_TO_DEG,
-                'rotate_stop': self.rotate_stop * RAD_TO_DEG,
+                'min_rotation': self.min_rotation * RAD_TO_DEG,
+                'max_rotation': self.max_rotation * RAD_TO_DEG,
                 'rotate_step': self.rotate_step,
                 'property_boundary': self.property_boundary,
                 'no_go_boundaries': self.no_go_boundaries,
