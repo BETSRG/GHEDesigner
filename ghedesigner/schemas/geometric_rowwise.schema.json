@@ -44,6 +44,18 @@
       "units": "degrees",
       "description": "Step size for field rotation search."
     },
+    "max_height": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m",
+      "description": "Maximum height, or active length, of each borehole heat exchanger."
+    },
+    "min_height": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m",
+      "description": "Minimum height, or active length, of each borehole heat exchanger."
+    },
     "property_boundary": {
       "type": "array",
       "items": {
@@ -88,6 +100,8 @@
     "rotate_start",
     "rotate_stop",
     "rotate_step",
+    "max_height",
+    "min_height",
     "property_boundary",
     "no_go_boundaries",
     "method"
