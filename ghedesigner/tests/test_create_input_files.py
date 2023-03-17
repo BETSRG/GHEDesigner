@@ -65,8 +65,8 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_rowwise(perimeter_spacing_ratio=0.8,
-                                             spacing_start=10.0, spacing_stop=20.0, spacing_step=0.1,
-                                             rotate_start=-90.0, rotate_stop=0.0, rotate_step=0.5,
+                                             min_spacing=10.0, max_spacing=20.0, spacing_step=0.1,
+                                             min_rotation=-90.0, max_rotation=0.0, rotate_step=0.5,
                                              property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
         ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.RowWise)
         out_path = self.test_outputs_directory / "test_create_input_file_rowwise_single_u_tube.json"

@@ -5,39 +5,39 @@
       "type": "number",
       "minimum": 0,
       "units": "-",
-      "description": "Ratio of permimeter to..."
+      "description": "The ratio between the minimum spacing between boreholes placed along the property and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes."
     },
-    "spacing_start": {
+    "min_spacing": {
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Borehole-to-borehole spacing distance at beginning of search."
+      "description": "The smallest minimum spacing that will be used to generate a RowWise field."
     },
-    "spacing_stop": {
+    "max_spacing": {
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Borehole-to-borehole spacing distance at end of search."
+      "description": "The largest minimum spacing that will be used to generate a RowWise field."
     },
     "spacing_step": {
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Step size for borehole-to-borehole spacing search."
+      "description": "The distance in spacing from the design found in the first part o first search to exhaustively check in the second part."
     },
-    "rotate_start": {
+    "max_rotation": {
       "type": "number",
       "units": "degrees",
       "maximum": 90,
       "minimum": -90,
-      "description": "Field rotation angle at beginning of search."
+      "description": "The maximum rotation of the rows of each field relative to horizontal that will be used in the search."
     },
-    "rotate_stop": {
+    "min_rotation": {
       "type": "number",
       "units": "degrees",
       "maximum": 90,
       "minimum": -90,
-      "description": "Field rotation angle at end of search."
+      "description": "The minimum rotation of the rows of each field relative to horizontal that will be used in the search."
     },
     "rotate_step": {
       "type": "number",

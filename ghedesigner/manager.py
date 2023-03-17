@@ -202,17 +202,17 @@ class GHEManager:
                                                                                  property_boundary, no_go_boundaries)
 
     def set_geometry_constraints_rowwise(self, perimeter_spacing_ratio: float,
-                                         spacing_start: float, spacing_stop: float, spacing_step: float,
-                                         rotate_start: float, rotate_stop: float, rotate_step: float,
+                                         max_spacing: float, min_spacing: float, spacing_step: float,
+                                         max_rotation: float, min_rotation: float, rotate_step: float,
                                          property_boundary: list, no_go_boundaries: list):
 
         # convert from degrees to radians
-        rotate_start = rotate_start * DEG_TO_RAD
-        rotate_stop = rotate_stop * DEG_TO_RAD
+        max_rotation = max_rotation * DEG_TO_RAD
+        min_rotation = min_rotation * DEG_TO_RAD
 
         self._geometric_constraints = GeometricConstraintsRowWise(perimeter_spacing_ratio,
-                                                                  spacing_start, spacing_stop, spacing_step,
-                                                                  rotate_start, rotate_stop, rotate_step,
+                                                                  min_spacing, max_spacing, spacing_step,
+                                                                  min_rotation, max_rotation, rotate_step,
                                                                   property_boundary, no_go_boundaries)
 
     def set_design(self, flow_rate: float, flow_type: str, design_method_geo: DesignGeomType):
@@ -555,11 +555,11 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
 
         ghe.set_geometry_constraints_rowwise(
             perimeter_spacing_ratio=perimeter_spacing_ratio,
-            spacing_start=constraint_props["spacing_start"],
-            spacing_stop=constraint_props["spacing_stop"],
+            max_spacing=constraint_props["max_spacing"],
+            min_spacing=constraint_props["min_spacing"],
             spacing_step=constraint_props["spacing_step"],
-            rotate_start=constraint_props["rotate_start"],
-            rotate_stop=constraint_props["rotate_stop"],
+            max_rotation=constraint_props["max_rotation"],
+            min_rotation=constraint_props["min_rotation"],
             rotate_step=constraint_props["rotate_step"],
             property_boundary=constraint_props["property_boundary"],
             no_go_boundaries=constraint_props["no_go_boundaries"]
