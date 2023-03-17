@@ -4,32 +4,38 @@
     "inner_radius": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Inner radius of pipe."
     },
     "outer_radius": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Outer radius of pipe."
     },
     "shank_spacing": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Spacing between up/down legs of u-tube pipe, as measured from nearest outer surfaces of each pipe (o<-- s -->o)."
     },
     "roughness": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Surface roughness of pipe."
     },
     "conductivity": {
       "type": "number",
       "minimum": 0,
-      "units": "W/m-K"
+      "units": "W/m-K",
+      "description": "Thermal conductivity."
     },
     "rho_cp": {
       "type": "number",
       "minimum": 0,
-      "units": "J/m^3-K"
+      "units": "J/m^3-K",
+      "description": "Volumetric heat capacity."
     },
     "arrangement": {
       "type": "string",
@@ -37,7 +43,8 @@
         "SINGLEUTUBE",
         "DOUBLEUTUBESERIES",
         "DOUBLEUTUBEPARALLEL"
-      ]
+      ],
+      "description": "Pipe arrangement specified."
     }
   },
   "required": [

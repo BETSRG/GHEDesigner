@@ -4,27 +4,32 @@
     "b_min": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Minimum borehole-to-borehole spacaing."
     },
     "b_max_x": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Maximum borehole-to-borehole spacaing in x-direction."
     },
     "b_max_y": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Maximum borehole-to-borehole spacaing in y-direction."
     },
     "max_height": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Maximum height, or active length, of each borehole heat exchanger."
     },
     "min_height": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Minimum height, or active length, of each borehole heat exchanger."
     },
     "property_boundary": {
       "type": "array",
@@ -37,7 +42,8 @@
           "minimum": 0
         }
       },
-      "units": "m"
+      "units": "m",
+      "description": "(x, y) coodinate points of closed polygon defining property boundary. Points should be entered in a counter-clockwise fasion."
     },
     "no_go_boundaries": {
       "type": "array",
@@ -53,11 +59,13 @@
           }
         }
       },
-      "units": "m"
+      "units": "m",
+      "description": "(x, y) coodinate points of closed polygon defining go/no-go boundaries. Go/no-go zones must lie within the area defined in 'property_boundary'. Points should be entered in a counter-clockwise fasion."
     },
     "method": {
       "type": "string",
-      "const": "BIRECTANGLECONSTRAINED"
+      "const": "BIRECTANGLECONSTRAINED",
+      "description": "Design algorithm specified."
     }
   },
   "required": [

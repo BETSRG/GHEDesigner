@@ -4,22 +4,26 @@
     "flow_rate": {
       "type": "number",
       "minimum": 0,
-      "units": "l/s"
+      "units": "l/s",
+      "description": "Volumetric design flow rate. Value specified will be either the system or per-borehole flow rate depending on the 'flow_type' set."
     },
     "flow_type": {
       "type": "string",
       "enum": [
         "BOREHOLE",
         "SYSTEM"
-      ]
+      ],
+      "description": "Indicates whether the design volumetric flow rate set on on a per-borehole or system basis."
     },
     "max_eft": {
       "type": "number",
-      "units": "C"
+      "units": "C",
+      "description": "Maximum heat pump entering fluid temperature."
     },
     "min_eft": {
       "type": "number",
-      "units": "C"
+      "units": "C",
+      "description": "Minimum heat pump entering fluid temperature."
     }
   },
   "required": [

@@ -78,6 +78,14 @@ def validate_pipe(instance: dict) -> None:
     )
 
 
+def validate_borehole(instance: dict) -> None:
+    validate_schema_instance(
+        schema_file_name="borehole.schema.json",
+        instance=instance,
+        error_msg="Errors in \"borehole\" input object."
+    )
+
+
 def validate_simulation(instance: dict) -> None:
     timestep = str(instance["timestep"]).upper()
     instance["timestep"] = timestep
@@ -135,6 +143,7 @@ def validate_input_file(input_file_path: Path) -> None:
     validate_grout(instance["grout"])
     validate_soil(instance["soil"])
     validate_pipe(instance["pipe"])
+    validate_borehole(instance["borehole"])
     validate_simulation(instance["simulation"])
     validate_geometric(instance["geometric_constraints"])
     validate_design(instance["design"])

@@ -4,34 +4,45 @@
     "perimeter_spacing_ratio": {
       "type": "number",
       "minimum": 0,
-      "units": "-"
+      "units": "-",
+      "description": "Ratio of permimeter to..."
     },
     "spacing_start": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Borehole-to-borehole spacing distance at beginning of search."
     },
     "spacing_stop": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Borehole-to-borehole spacing distance at end of search."
     },
     "spacing_step": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Step size for borehole-to-borehole spacing search."
     },
     "rotate_start": {
       "type": "number",
-      "units": "degrees"
+      "units": "degrees",
+      "maximum": 90,
+      "minimum": -90,
+      "description": "Field rotation angle at beginning of search."
     },
     "rotate_stop": {
       "type": "number",
-      "units": "degrees"
+      "units": "degrees",
+      "maximum": 90,
+      "minimum": -90,
+      "description": "Field rotation angle at end of search."
     },
     "rotate_step": {
       "type": "number",
-      "units": "degrees"
+      "units": "degrees",
+      "description": "Step size for field rotation search."
     },
     "property_boundary": {
       "type": "array",
@@ -44,7 +55,8 @@
           "minimum": 0
         }
       },
-      "units": "m"
+      "units": "m",
+      "description": "(x, y) coodinate points of closed polygon defining property boundary. Points should be entered in a counter-clockwise fasion."
     },
     "no_go_boundaries": {
       "type": "array",
@@ -60,11 +72,13 @@
           }
         }
       },
-      "units": "m"
+      "units": "m",
+      "description": "(x, y) coodinate points of closed polygon defining go/no-go boundaries. Go/no-go zones must lie within the area defined in 'property_boundary'. Points should be entered in a counter-clockwise fasion."
     },
     "method": {
       "type": "string",
-      "const": "ROWWISE"
+      "const": "ROWWISE",
+      "description": "Design algorithm specified."
     }
   },
   "required": [

@@ -1,18 +1,30 @@
 {
   "type": "object",
   "properties": {
+    "start_month": {
+      "type": "number",
+      "minimum": 0,
+      "units": "months",
+      "default": 0,
+      "description": "Start month of simulation."
+    },
     "num_months": {
       "type": "number",
       "minimum": 0,
-      "units": "months"
+      "units": "months",
+      "description": "Number of months used in ground heat exchanger sizing."
     },
     "timestep": {
       "type": "string",
-      "const": "HYBRID"
+      "enum": [
+        "HYBRID",
+        "TIMESTEP"
+      ],
+      "default": "HYBRID",
+      "description": "Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently avaliable."
     }
   },
   "required": [
-    "num_months",
-    "timestep"
+    "num_months"
   ]
 }

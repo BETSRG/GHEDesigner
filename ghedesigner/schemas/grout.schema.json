@@ -4,12 +4,14 @@
     "conductivity": {
       "type": "number",
       "minimum": 0,
-      "units": "W/m-K"
+      "units": "W/m-K",
+      "description": "Thermal conductivity."
     },
     "rho_cp": {
       "type": "number",
       "minimum": 0,
-      "units": "J/m^3-K"
+      "units": "J/m^3-K",
+      "description": "Volumetric heat capacity."
     }
   },
   "required": [
