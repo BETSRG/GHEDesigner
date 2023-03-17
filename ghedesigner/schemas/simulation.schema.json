@@ -2,15 +2,27 @@
   "type": "object",
   "properties": {
     "start_month": {
-      "type": "number",
-      "minimum": 0,
-      "units": "months",
-      "default": 0,
+      "type": "string",
+      "enum": [
+        "JANUARY",
+        "FEBRUARY",
+        "MARCH",
+        "APRIL",
+        "MAY",
+        "JUNE",
+        "JULY",
+        "AUGUST",
+        "SEPTEMBER",
+        "OCTOBER",
+        "NOVEMBER",
+        "DECEMBER"
+      ],
+      "default": "JANUARY",
       "description": "Start month of simulation."
     },
     "num_months": {
       "type": "number",
-      "minimum": 0,
+      "minimum": 1,
       "units": "months",
       "description": "Number of months used in ground heat exchanger sizing."
     },
