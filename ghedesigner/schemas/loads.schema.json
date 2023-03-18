@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "properties": {
+    "ground_loads": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "units": "W",
+      "minItems": 8760,
+      "maxItems": 8760,
+      "description": "Annual, hourly heat extraction and heat rejection loads of the\n\nground heat exchanger. Positive value indicate heat extraction,\n\nnegative values indicate heat rejection."
+    },
+    "heat_pump_loads": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "units": "W",
+      "minItems": 8760,
+      "maxItems": 8760,
+      "description": "This field is currently unused."
+    }
+  },
+  "required": [
+    "ground_loads"
+  ]
+}

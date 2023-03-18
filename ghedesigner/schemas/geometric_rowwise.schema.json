@@ -68,7 +68,7 @@
         }
       },
       "units": "m",
-      "description": "(x, y) coodinate points of closed polygon defining property boundary. Points should be entered in a counter-clockwise fasion."
+      "description": "(x, y) coodinate points of closed polygon defining property boundary.\n\nPoints should be entered in a counter-clockwise fasion."
     },
     "no_go_boundaries": {
       "type": "array",
@@ -85,7 +85,7 @@
         }
       },
       "units": "m",
-      "description": "(x, y) coodinate points of closed polygon defining go/no-go boundaries. Go/no-go zones must lie within the area defined in 'property_boundary'. Points should be entered in a counter-clockwise fasion."
+      "description": "(x, y) coodinate points of closed polygon defining go/no-go boundaries.\n\nGo/no-go zones must lie within the area defined in 'property_boundary'.\n\nPoints should be entered in a counter-clockwise fasion."
     },
     "method": {
       "type": "string",

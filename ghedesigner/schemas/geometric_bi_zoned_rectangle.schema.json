@@ -5,13 +5,13 @@
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Horizontal length of property boundary defining surface area avaliable for ground heat exchanger."
+      "description": "Horizontal length of property boundary defining surface area\n\navaliable for ground heat exchanger."
     },
     "width": {
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Horizontal width of property boundary defining surface area avaliable for ground heat exchanger."
+      "description": "Horizontal width of property boundary defining surface area\n\navaliable for ground heat exchanger."
     },
     "b_min": {
       "type": "number",

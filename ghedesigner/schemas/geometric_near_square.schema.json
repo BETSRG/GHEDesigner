@@ -5,7 +5,7 @@
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Horizontal side-length of property boundary defining surface area avaliable for ground heat exchanger."
+      "description": "Horizontal side-length of property boundary defining surface\n\narea avaliable for ground heat exchanger."
     },
     "b": {
       "type": "number",

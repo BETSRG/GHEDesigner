@@ -17,7 +17,7 @@
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Spacing between up/down legs of u-tube pipe, as measured from nearest outer surfaces of each pipe (o<-- s -->o)."
+      "description": "Spacing between up/down legs of u-tube pipe, as measured from nearest\n\nouter surfaces of each pipe (o<-- s -->o)."
     },
     "roughness": {
       "type": "number",

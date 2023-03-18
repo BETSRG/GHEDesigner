@@ -18,7 +18,7 @@
         "DECEMBER"
       ],
       "default": "JANUARY",
-      "description": "Start month of simulation."
+      "description": "This field is currently unused."
     },
     "num_months": {
       "type": "number",
@@ -33,7 +33,7 @@
         "TIMESTEP"
       ],
       "default": "HYBRID",
-      "description": "Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently avaliable."
+      "description": "This field is currently unused.\n\nSimulation timestep used in ground heat exchanger sizing.\n\n'HYBRID' is the only option currently avaliable."
     }
   },
   "required": [

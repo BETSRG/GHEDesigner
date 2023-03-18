@@ -23,7 +23,7 @@
     },
     "borehole": {
       "type": "object",
-      "description": "Object used to define static parameters related the borehole."
+      "description": "Object used to define parameters related the borehole."
     },
     "simulaton": {
       "type": "object",
@@ -31,21 +31,15 @@
     },
     "geometric_constraints": {
       "type": "object",
-      "description": "Object used to define geometric constraint parameters for the selected design algorithm."
+      "description": "Object used to define geometric constraint parameters for\n\nthe selected design algorithm."
     },
     "design": {
       "type": "object",
-      "description": "Object used to defind parameters related to design and sizing."
+      "description": "Object used to define parameters related to design and sizing."
     },
-    "ground_loads": {
-      "type": "array",
-      "items": {
-        "type": "number"
-      },
-      "minItems": 8760,
-      "maxItems": 8760,
-      "units": "W",
-      "description": "Annual, hourly ground heat exchanger loads used for sizing. Positive values indicate heat extraction, negative values indicate heat rejection."
+    "loads": {
+      "type": "object",
+      "description": "Object used to define loads for design and sizing."
     }
   },
   "required": [
@@ -58,6 +52,6 @@
     "simulation",
     "geometric_constraints",
     "design",
-    "ground_loads"
+    "loads"
   ]
 }
