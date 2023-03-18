@@ -87,7 +87,7 @@ def validate_borehole(instance: dict) -> None:
 
 
 def validate_simulation(instance: dict) -> None:
-    
+
     if "timestep" in instance:
         timestep = str(instance["timestep"]).upper()
         instance["timestep"] = timestep
