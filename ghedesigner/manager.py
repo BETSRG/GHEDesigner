@@ -413,7 +413,7 @@ class GHEManager:
             'simulation': self._simulation_parameters.to_input(),
             'geometric_constraints': d_geo,
             'design': d_des,
-            'ground_loads': self._ground_loads
+            'loads': {'ground_loads': self._ground_loads}
         }
 
         with open(output_file_path, 'w') as f:
@@ -447,7 +447,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
     sim_props = inputs['simulation']  # type: dict
     constraint_props = inputs['geometric_constraints']  # type: dict
     design_props = inputs['design']  # type: dict
-    ground_load_props = inputs['ground_loads']  # type: list
+    ground_load_props = inputs['loads']['ground_loads']  # type: list
 
     ghe.set_fluid(**fluid_props)
     ghe.set_grout(**grout_props)

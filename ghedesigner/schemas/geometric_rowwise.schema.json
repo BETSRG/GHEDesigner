@@ -5,7 +5,7 @@
       "type": "number",
       "minimum": 0,
       "units": "-",
-      "description": "The ratio between the minimum spacing between boreholes placed along the property and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes."
+      "description": "The ratio between the minimum spacing between boreholes placed along the\n\nproperty and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes."
     },
     "min_spacing": {
       "type": "number",
@@ -23,21 +23,21 @@
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "The distance in spacing from the design found in the first part o first search to exhaustively check in the second part."
+      "description": "The distance in spacing from the design found in the first part of first\n\nsearch to exhaustively check in the second part."
     },
     "max_rotation": {
       "type": "number",
       "units": "degrees",
       "maximum": 90,
       "minimum": -90,
-      "description": "The maximum rotation of the rows of each field relative to horizontal that will be used in the search."
+      "description": "The maximum rotation of the rows of each field relative to horizontal that\n\nwill be used in the search."
     },
     "min_rotation": {
       "type": "number",
       "units": "degrees",
       "maximum": 90,
       "minimum": -90,
-      "description": "The minimum rotation of the rows of each field relative to horizontal that will be used in the search."
+      "description": "The minimum rotation of the rows of each field relative to horizontal that\n\nwill be used in the search."
     },
     "rotate_step": {
       "type": "number",
@@ -94,11 +94,12 @@
     }
   },
   "required": [
-    "spacing_start",
-    "spacing_stop",
+    "perimeter_spacing_ratio",
+    "min_spacing",
+    "max_spacing",
     "spacing_step",
-    "rotate_start",
-    "rotate_stop",
+    "max_rotation",
+    "min_rotation",
     "rotate_step",
     "max_height",
     "min_height",

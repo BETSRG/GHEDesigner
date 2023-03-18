@@ -9,7 +9,7 @@
 import importlib
 
 from pathlib import Path
-from sys import path, exit
+from sys import path
 
 root_dir = Path(__file__).parent.parent.resolve()
 path.insert(0, str(root_dir))
@@ -56,7 +56,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
-## PATCH `sphinx-jsonschema`
+# PATCH `sphinx-jsonschema`
 # to render the extra `units`` schema properties
 
 def _patched_sphinx_jsonschema_simpletype(self, schema):
@@ -71,6 +71,7 @@ def _patched_sphinx_jsonschema_simpletype(self, schema):
 
     return rows
 
+
 sjs_wide_format = importlib.import_module("sphinx-jsonschema.wide_format")
-_original_sphinx_jsonschema_simpletype = sjs_wide_format.WideFormat._simpletype  #type: ignore
-sjs_wide_format.WideFormat._simpletype = _patched_sphinx_jsonschema_simpletype  #type: ignore
+_original_sphinx_jsonschema_simpletype = sjs_wide_format.WideFormat._simpletype  # type: ignore
+sjs_wide_format.WideFormat._simpletype = _patched_sphinx_jsonschema_simpletype  # type: ignore

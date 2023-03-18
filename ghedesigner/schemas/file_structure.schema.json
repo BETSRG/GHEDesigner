@@ -25,7 +25,7 @@
       "type": "object",
       "description": "Object used to define parameters related the borehole."
     },
-    "simulaton": {
+    "simulation": {
       "type": "object",
       "description": "Object used to define parameters related to simulation."
     },
