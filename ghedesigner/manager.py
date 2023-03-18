@@ -343,7 +343,6 @@ class GHEManager:
         self._search = self._design.find_design()
         self._search.ghe.compute_g_functions()
         self._search_time = time() - start_time
-        # TODO: Don't hard-wire Hybrid here
         self._search.ghe.size(method=DesignMethodTimeStep.Hybrid)
 
     def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str) -> None:

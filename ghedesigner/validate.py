@@ -87,8 +87,11 @@ def validate_borehole(instance: dict) -> None:
 
 
 def validate_simulation(instance: dict) -> None:
-    timestep = str(instance["timestep"]).upper()
-    instance["timestep"] = timestep
+    
+    if "timestep" in instance:
+        timestep = str(instance["timestep"]).upper()
+        instance["timestep"] = timestep
+
     validate_schema_instance(
         schema_file_name="simulation.schema.json",
         instance=instance,
