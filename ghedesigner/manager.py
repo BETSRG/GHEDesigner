@@ -24,11 +24,11 @@ from ghedesigner.validate import validate_input_file
 
 class GHEManager:
     class DesignGeomType(Enum):
+        BiRectangle = auto()
+        BiRectangleConstrained = auto()
+        BiZonedRectangle = auto()
         NearSquare = auto()
         Rectangle = auto()
-        BiRectangle = auto()
-        BiZonedRectangle = auto()
-        BiRectangleConstrained = auto()
         RowWise = auto()
 
     def __init__(self):
@@ -53,7 +53,12 @@ class GHEManager:
         self._search_time: int = 0
         self.summary_results: dict = {}
 
-    def get_design_geometry_type(self, design_geometry_str: str):
+    def set_design_geometry_type(self, design_geometry_str: str):
+        """
+        Sets the design type.
+
+        :param design_geometry_str: design geometry input string.
+        """
         design_geometry_str = str(design_geometry_str).upper()
         if design_geometry_str == "RECTANGLE":
             return self.DesignGeomType.Rectangle
@@ -69,7 +74,12 @@ class GHEManager:
             return self.DesignGeomType.RowWise
         raise ValueError("Geometry constraint method not supported.")
 
-    def get_bh_pipe_type(self, bh_pipe_str: str):
+    def set_bh_pipe_type(self, bh_pipe_str: str):
+        """
+        Sets the borehole pipe type.
+
+        :param bh_pipe_str: pipe type input string.
+        """
         bh_pipe_str = str(bh_pipe_str).upper()
         if bh_pipe_str == "SINGLEUTUBE":
             return BHPipeType.SingleUType
@@ -83,8 +93,11 @@ class GHEManager:
 
     def set_fluid(self, fluid_name: str = "Water", concentration_percent: float = 0.0, temperature: float = 20.0):
         """
-        fluid_name - convert to an enum
-        concentration_percent %
+        Sets the fluid instance.
+
+        :param fluid_name: fluid name input string.
+        :param concentration_percent: concentration percent of antifreeze mixture.
+        :param temperature: design fluid temperature, in C.
         """
         self._fluid = GHEFluid(fluid_str=fluid_name,
                                percent=concentration_percent,
@@ -92,37 +105,52 @@ class GHEManager:
 
     def set_grout(self, conductivity: float, rho_cp: float):
         """
-        conductivity W/mK
-        rho_cp J/K-m3
+        Sets the grout instance.
+
+        :param conductivity: thermal conductivity, in W/m-K.
+        :param rho_cp: volumetric heat capacity, in J/m^3-K.
         """
         self._grout = Grout(conductivity, rho_cp)
 
     def set_soil(self, conductivity: float, rho_cp: float, undisturbed_temp: float):
         """
-        conductivity W/mK
-        rho_cp J/K-m3
-        undisturbed_temp Celsius
+        Sets the soil instance.
+
+        :param conductivity: thermal conductivity, in W/m-K.
+        :param rho_cp: volumetric heat capacity, in J/m^3-K.
+        :param undisturbed_temp: undisturbed soil temperature, in C.
         """
         self._soil = Soil(conductivity, rho_cp, undisturbed_temp)
 
     def set_single_u_tube_pipe(self, inner_radius: float, outer_radius: float, shank_spacing: float,
                                roughness: float, conductivity: float, rho_cp: float):
         """
-        inner_radius m
-        outer_radius m
-        shank_spacing m
-        roughness m
-        conductivity W/mK
-        rho_cp J/K-m3
+        Sets the pipe instance for a single u-tube pipe.
+
+        :param inner_radius: inner pipe radius, in m.
+        :param outer_radius: outer pipe radius, in m.
+        :param shank_spacing: shank spacing between the u-tube legs, in m, as measured edge-to-edge.
+        :param roughness: pipe surface roughness, in m.
+        :param conductivity: thermal conductivity, in W/m-K.
+        :param rho_cp: volumetric heat capacity, in J/m^3-K.
         """
 
-        # TODO: Convert scalar properties if double or coax
         self._u_tube_type = BHPipeType.SingleUType
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 1)
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
     def set_double_u_tube_pipe_parallel(self, inner_radius: float, outer_radius: float, roughness: float,
                                         shank_spacing: float, conductivity: float, rho_cp: float):
+        """
+        Sets the pipe instance for a double u-tube pipe in a parallel configuration.
+
+        :param inner_radius: inner pipe radius, in m.
+        :param outer_radius: outer pipe radius, in m.
+        :param shank_spacing: shank spacing between the u-tube legs, in m, as measured edge-to-edge.
+        :param roughness: pipe surface roughness, in m.
+        :param conductivity: thermal conductivity, in W/m-K.
+        :param rho_cp: volumetric heat capacity, in J/m^3-K.
+        """
 
         self._u_tube_type = BHPipeType.DoubleUTypeParallel
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 2)
@@ -130,6 +158,16 @@ class GHEManager:
 
     def set_double_u_tube_pipe_series(self, inner_radius: float, outer_radius: float, roughness: float,
                                       shank_spacing: float, conductivity: float, rho_cp: float):
+        """
+        Sets the pipe instance for a double u-tube pipe in a series configuration.
+
+        :param inner_radius: inner pipe radius, in m.
+        :param outer_radius: outer pipe radius, in m.
+        :param shank_spacing: shank spacing between the u-tube legs, in m, as measured edge-to-edge.
+        :param roughness: pipe surface roughness, in m.
+        :param conductivity: thermal conductivity, in W/m-K.
+        :param rho_cp: volumetric heat capacity, in J/m^3-K.
+        """
 
         self._u_tube_type = BHPipeType.DoubleUTypeSeries
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 2)
@@ -139,8 +177,19 @@ class GHEManager:
                          outer_pipe_r_out: float, roughness: float, conductivity_inner: float,
                          conductivity_outer: float,
                          rho_cp: float):
+        """
+        Sets the pipe instance for a coaxial pipe.
 
-        # TODO: Convert scalar properties if double or coax
+        :param inner_pipe_r_in: inner pipe inner radius, in m.
+        :param inner_pipe_r_out: inner pipe outer radius, in m.
+        :param outer_pipe_r_in: outer pipe inner radius, in m.
+        :param outer_pipe_r_out: outer pipe outer radius, in m.
+        :param roughness: pipe surface roughness, in m.
+        :param conductivity_inner: thermal conductivity of inner pipe, in W/m-K.
+        :param conductivity_outer: thermal conductivity of outer pipe, in W/m-K.
+        :param rho_cp: volumetric heat capacity, in J/m^3-K.
+        """
+
         self._u_tube_type = BHPipeType.CoaxialType
         # Note: This convention is different from pygfunction
         r_inner = [inner_pipe_r_in, inner_pipe_r_out]  # The radii of the inner pipe from in to out
@@ -150,9 +199,11 @@ class GHEManager:
 
     def set_borehole(self, height: float, buried_depth: float, radius: float):
         """
-        length m (borehole ?length?)
-        buried_depth m (burial depth?)
-        radius m radius of borehole itself
+        Sets the borehole instance
+
+        :param height: height, or active length, of the borehole, in m.
+        :param buried_depth: depth of top of borehole below the ground surface, in m.
+        :param radius: radius of the borehole, in m.
         """
         self._borehole = GHEBorehole(height, buried_depth, radius, x=0.0, y=0.0)
 
@@ -160,9 +211,13 @@ class GHEManager:
             self, num_months: int, max_eft: float, min_eft: float, max_height: float, min_height: float
     ):
         """
-        num_months for now assuming we start at month 1
-        max_eft, min_eft Celsius on limits of loop temperature
-        max_height, min_height m heat exchanger limits
+        Sets the simulation parameters
+
+        :param num_months: number of months in simulation.
+        :param max_eft: maximum heat pump entering fluid temperature, in C.
+        :param min_eft: minimum heat pump entering fluid temperature, in C.
+        :param max_height: maximum height of borehole, in m.
+        :param min_height: minimum height of borehole, in m.
         """
         # TODO: Should max height be limited by the GHEBorehole length?
         self._simulation_parameters = SimulationParameters(
@@ -176,28 +231,71 @@ class GHEManager:
 
     def set_ground_loads_from_hourly_list(self, hourly_ground_loads: List[float]):
         """
-        hourly_ground_loads list of hourly load float values
+        Sets the ground loads based on a list input.
+
+        :param hourly_ground_loads: annual, hourly ground loads, in W.
         """
         # TODO: Add API methods for different load inputs
         # TODO: Define load direction positive/negative
         self._ground_loads = hourly_ground_loads
 
     def set_geometry_constraints_near_square(self, b: float, length: float):
+        """
+        Sets the geometry constraints for the near-square design method.
+
+        :param b: borehole-to-borehole spacing, in m.
+        :param length: side length of the sizing domain, in m.
+        """
         self._geometric_constraints = GeometricConstraintsNearSquare(b, length)
 
     def set_geometry_constraints_rectangle(self, length: float, width: float, b_min: float, b_max: float):
+        """
+        Sets the geometry constraints for the rectangle design method.
+
+        :param length: side length of the sizing domain, in m.
+        :param width: side width of the sizing domain, in m.
+        :param b_min: minimum borehole-to-borehole spacing, in m.
+        :param b_max: maximum borehole-to-borehole spacing, in m.
+        """
         self._geometric_constraints = GeometricConstraintsRectangle(width, length, b_min, b_max)
 
     def set_geometry_constraints_bi_rectangle(self, length: float, width: float, b_min: float,
                                               b_max_x: float, b_max_y: float):
+        """
+        Sets the geometry constraints for the bi-rectangle design method.
+
+        :param length: side length of the sizing domain, in m.
+        :param width: side width of the sizing domain, in m.
+        :param b_min: minimum borehole-to-borehole spacing, in m.
+        :param b_max_x: maximum borehole-to-borehole spacing in the x-direction, in m.
+        :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
+        """
         self._geometric_constraints = GeometricConstraintsBiRectangle(width, length, b_min, b_max_x, b_max_y)
 
     def set_geometry_constraints_bi_zoned_rectangle(self, length: float, width: float, b_min: float,
                                                     b_max_x: float, b_max_y: float):
+        """
+        Sets the geometry constraints for the bi-zoned rectangle design method.
+
+        :param length: side length of the sizing domain, in m.
+        :param width: side width of the sizing domain, in m.
+        :param b_min: minimum borehole-to-borehole spacing, in m.
+        :param b_max_x: maximum borehole-to-borehole spacing in the x-direction, in m.
+        :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
+        """
         self._geometric_constraints = GeometricConstraintsBiZoned(width, length, b_min, b_max_x, b_max_y)
 
     def set_geometry_constraints_bi_rectangle_constrained(self, b_min: float, b_max_x: float, b_max_y: float,
                                                           property_boundary: list, no_go_boundaries: list):
+        """
+        Sets the geometry constraints for the bi-rectangle constrained design method.
+
+        :param b_min: minimum borehole-to-borehole spacing, in m.
+        :param b_max_x: maximum borehole-to-borehole spacing in the x-direction, in m.
+        :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
+        :param property_boundary: property boundary points, in m.
+        :param no_go_boundaries: boundary points for no-go zones, in m.
+        """
         self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(b_min, b_max_x, b_max_y,
                                                                                  property_boundary, no_go_boundaries)
 
@@ -205,6 +303,24 @@ class GHEManager:
                                          max_spacing: float, min_spacing: float, spacing_step: float,
                                          max_rotation: float, min_rotation: float, rotate_step: float,
                                          property_boundary: list, no_go_boundaries: list):
+        """
+        Sets the geometry constraints for the rowwise design method.
+
+        :param permimeter_spacing_ratio: the ratio between the minimum spacing between
+            boreholes placed along the property and no-go zones and the standard borehole-to-borehole
+            spacing used for internal boreholes.
+        :param max_spacing: the largest minimum spacing that will be used to generate a RowWise field.
+        :param min_spacing: the smallest minimum spacing that will be used to generate a RowWise field.
+        :param spacing_step: the distance in spacing from the design found in the first part of first
+            search to exhaustively check in the second part.
+        :param max_rotation: the maximum rotation of the rows of each field relative to horizontal that
+            will be used in the search.
+        :param min_rotation: the minimum rotation of the rows of each field relative to horizontal that
+            will be used in the search.
+        :param rotate_step: step size for field rotation search.
+        :param property_boundary: property boundary points.
+        :param no_go_boundaries: boundary points for no-go zones.
+        """
 
         # convert from degrees to radians
         max_rotation = max_rotation * DEG_TO_RAD
@@ -217,8 +333,11 @@ class GHEManager:
 
     def set_design(self, flow_rate: float, flow_type: str, design_method_geo: DesignGeomType):
         """
-        system_flow_rate L/s total system flow rate
-        flow_type string, for now either "system" or "borehole"
+        Set the design method.
+
+        :param flow_rate: design flow rate, in lps.
+        :param flow_type: flow type string input.
+        :param design_method_geo: geometric design constraint.
         """
 
         if design_method_geo == self.DesignGeomType.NearSquare:
@@ -327,6 +446,10 @@ class GHEManager:
             raise NotImplementedError("This design method has not been implemented")
 
     def find_design(self):
+        """
+        Calls design methods to execute sizing.
+        """
+
         if any([x is None for x in [
             self._fluid,
             self._grout,
@@ -346,6 +469,9 @@ class GHEManager:
         self._search.ghe.size(method=DesignMethodTimeStep.Hybrid)
 
     def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str) -> None:
+        """
+        Prepares the output results.
+        """
         self.results = OutputManager(
             self._search,
             self._search_time,
@@ -357,9 +483,20 @@ class GHEManager:
         )
 
     def write_output_files(self, output_directory: Path, output_file_suffix: str = ""):
+        """
+        Writes the output files.
+
+        :param output_directory: output directory for output files.
+        :param output_file_suffix: adds a string suffix to the output files.
+        """
         self.results.write_all_output_files(output_directory=output_directory, file_suffix=output_file_suffix)
 
     def write_input_file(self, output_file_path: Path):
+        """
+        Writes an input file based on current simulation configuration.
+
+        :param output_file_path: output directory to write input file.
+        """
 
         # TODO: geometric constraints are currently held in two places
         #       SimulationParameters and GeometricConstraints
@@ -420,6 +557,13 @@ class GHEManager:
 
 
 def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
+    """
+    Worker function to run simulation.
+
+    :param input_file_path: path to input file.
+    :param output_directory: path to write output files.
+    """
+
     # TODO: need better input and runtime error handling
 
     if not input_file_path.exists():
@@ -452,7 +596,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
     ghe.set_grout(**grout_props)
     ghe.set_soil(**soil_props)
 
-    pipe_type = ghe.get_bh_pipe_type(pipe_props["arrangement"])
+    pipe_type = ghe.set_bh_pipe_type(pipe_props["arrangement"])
     if pipe_type == BHPipeType.SingleUType:
         ghe.set_single_u_tube_pipe(
             inner_radius=pipe_props["inner_radius"],
@@ -507,7 +651,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
         min_height=constraint_props["min_height"]
     )
 
-    geom_type = ghe.get_design_geometry_type(constraint_props["method"])
+    geom_type = ghe.set_design_geometry_type(constraint_props["method"])
     if geom_type == ghe.DesignGeomType.Rectangle:
         ghe.set_geometry_constraints_rectangle(
             length=constraint_props["length"],
@@ -581,6 +725,12 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
 @click.argument("input-path", type=click.Path(exists=True))
 @click.argument("output-directory", type=click.Path(exists=True))
 def run_manager_from_cli(input_path, output_directory):
+    """
+    Run simulation. Function is exposed through a console script.
+
+    :param input_file_path: path to input file.
+    :param output_directory: path to write output files.
+    """
     input_path = Path(input_path).resolve()
     output_path = Path(output_directory).resolve()
 

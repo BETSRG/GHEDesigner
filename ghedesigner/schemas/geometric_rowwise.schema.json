@@ -7,17 +7,17 @@
       "units": "-",
       "description": "The ratio between the minimum spacing between boreholes placed along the\n\nproperty and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes."
     },
-    "min_spacing": {
-      "type": "number",
-      "minimum": 0,
-      "units": "m",
-      "description": "The smallest minimum spacing that will be used to generate a RowWise field."
-    },
     "max_spacing": {
       "type": "number",
       "minimum": 0,
       "units": "m",
       "description": "The largest minimum spacing that will be used to generate a RowWise field."
+    },
+    "min_spacing": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m",
+      "description": "The smallest minimum spacing that will be used to generate a RowWise field."
     },
     "spacing_step": {
       "type": "number",
