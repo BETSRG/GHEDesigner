@@ -4,41 +4,49 @@
     "length": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Horizontal length of property boundary defining surface area\n\navaliable for ground heat exchanger."
     },
     "width": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Horizontal width of property boundary defining surface area\n\navaliable for ground heat exchanger."
     },
     "b_min": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Minimum borehole-to-borehole spacaing."
     },
     "b_max_x": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Maximum borehole-to-borehole spacaing in x-direction."
     },
     "b_max_y": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Maximum borehole-to-borehole spacaing in y-direction."
     },
     "max_height": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Maximum height, or active length, of each borehole heat exchanger."
     },
     "min_height": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Minimum height, or active length, of each borehole heat exchanger."
     },
     "method": {
       "type": "string",
-      "const": "BIZONEDRECTANGLE"
+      "const": "BIZONEDRECTANGLE",
+      "description": "Design algorithm specified."
     }
   },
   "required": [

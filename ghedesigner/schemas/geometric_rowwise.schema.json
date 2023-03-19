@@ -4,34 +4,57 @@
     "perimeter_spacing_ratio": {
       "type": "number",
       "minimum": 0,
-      "units": "-"
+      "units": "-",
+      "description": "The ratio between the minimum spacing between boreholes placed along the\n\nproperty and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes."
     },
-    "spacing_start": {
+    "max_spacing": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "The largest minimum spacing that will be used to generate a RowWise field."
     },
-    "spacing_stop": {
+    "min_spacing": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "The smallest minimum spacing that will be used to generate a RowWise field."
     },
     "spacing_step": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "The distance in spacing from the design found in the first part of first\n\nsearch to exhaustively check in the second part."
     },
-    "rotate_start": {
+    "max_rotation": {
       "type": "number",
-      "units": "degrees"
+      "units": "degrees",
+      "maximum": 90,
+      "minimum": -90,
+      "description": "The maximum rotation of the rows of each field relative to horizontal that\n\nwill be used in the search."
     },
-    "rotate_stop": {
+    "min_rotation": {
       "type": "number",
-      "units": "degrees"
+      "units": "degrees",
+      "maximum": 90,
+      "minimum": -90,
+      "description": "The minimum rotation of the rows of each field relative to horizontal that\n\nwill be used in the search."
     },
     "rotate_step": {
       "type": "number",
-      "units": "degrees"
+      "units": "degrees",
+      "description": "Step size for field rotation search."
+    },
+    "max_height": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m",
+      "description": "Maximum height, or active length, of each borehole heat exchanger."
+    },
+    "min_height": {
+      "type": "number",
+      "minimum": 0,
+      "units": "m",
+      "description": "Minimum height, or active length, of each borehole heat exchanger."
     },
     "property_boundary": {
       "type": "array",
@@ -44,7 +67,8 @@
           "minimum": 0
         }
       },
-      "units": "m"
+      "units": "m",
+      "description": "(x, y) coodinate points of closed polygon defining property boundary.\n\nPoints should be entered in a counter-clockwise fasion."
     },
     "no_go_boundaries": {
       "type": "array",
@@ -60,20 +84,25 @@
           }
         }
       },
-      "units": "m"
+      "units": "m",
+      "description": "(x, y) coodinate points of closed polygon defining go/no-go boundaries.\n\nGo/no-go zones must lie within the area defined in 'property_boundary'.\n\nPoints should be entered in a counter-clockwise fasion."
     },
     "method": {
       "type": "string",
-      "const": "ROWWISE"
+      "const": "ROWWISE",
+      "description": "Design algorithm specified."
     }
   },
   "required": [
-    "spacing_start",
-    "spacing_stop",
+    "perimeter_spacing_ratio",
+    "min_spacing",
+    "max_spacing",
     "spacing_step",
-    "rotate_start",
-    "rotate_stop",
+    "max_rotation",
+    "min_rotation",
     "rotate_step",
+    "max_height",
+    "min_height",
     "property_boundary",
     "no_go_boundaries",
     "method"

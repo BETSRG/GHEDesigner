@@ -4,46 +4,55 @@
     "inner_pipe_r_in": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Inner pipe inner radius."
     },
     "inner_pipe_r_out": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Inner pipe outer radius."
     },
     "outer_pipe_r_in": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Outer pipe inner radius."
     },
     "outer_pipe_r_out": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Outer pipe outer radius."
     },
     "roughness": {
       "type": "number",
       "minimum": 0,
-      "units": "m"
+      "units": "m",
+      "description": "Surface roughness."
     },
     "conductivity_inner": {
       "type": "number",
       "minimum": 0,
-      "units": "W/m-K"
+      "units": "W/m-K",
+      "description": "Thermal conductivity of inner pipe."
     },
     "conductivity_outer": {
       "type": "number",
       "minimum": 0,
-      "units": "W/m-K"
+      "units": "W/m-K",
+      "description": "Thermal conductivity of outer pipe."
     },
     "rho_cp": {
       "type": "number",
       "minimum": 0,
-      "units": "J/m^3-K"
+      "units": "J/m^3-K",
+      "description": "Volumetric heat capacity."
     },
     "arrangement": {
       "type": "string",
-      "const": "COAXIAL"
+      "const": "COAXIAL",
+      "description": "Pipe arrangement specified."
     }
   },
   "required": [

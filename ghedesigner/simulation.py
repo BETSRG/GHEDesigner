@@ -32,5 +32,4 @@ class SimulationParameters:
         return output
 
     def to_input(self) -> dict:
-        # TODO: hardcoded hybrid time step here should be responsive to user inputs
-        return {'num_months': self.end_month, 'timestep': 'hybrid'}
+        return {'num_months': self.end_month}

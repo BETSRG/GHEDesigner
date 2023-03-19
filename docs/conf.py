@@ -6,6 +6,8 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import importlib
+
 from pathlib import Path
 from sys import path
 
@@ -43,7 +45,7 @@ release = VERSION
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['sphinx.ext.viewcode', 'sphinx.ext.autodoc']
+extensions = ['sphinx.ext.viewcode', 'sphinx.ext.autodoc', 'sphinx-jsonschema']
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
@@ -53,3 +55,24 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+
+
+# PATCH `sphinx-jsonschema`
+# to render the extra `units`` schema properties
+
+def _patched_sphinx_jsonschema_simpletype(self, schema):
+    """Render the *extra* ``units`` and ``tags`` schema properties for every object."""
+    rows = _original_sphinx_jsonschema_simpletype(self, schema)
+
+    if "units" in schema:
+        units = schema["units"]
+        units = f"``{units}``"
+        rows.append(self._line(self._cell("units"), self._cell(units)))
+        del schema["units"]
+
+    return rows
+
+
+sjs_wide_format = importlib.import_module("sphinx-jsonschema.wide_format")
+_original_sphinx_jsonschema_simpletype = sjs_wide_format.WideFormat._simpletype  # type: ignore
+sjs_wide_format.WideFormat._simpletype = _patched_sphinx_jsonschema_simpletype  # type: ignore

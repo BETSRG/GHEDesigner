@@ -9,17 +9,20 @@
         "ETHYLENEGLYCOL",
         "METHYLALCOHOL",
         "PROPYLENEGLYCOL"
-      ]
+      ],
+      "description": "Circulation fluid type."
     },
     "concentration_percent": {
       "type": "number",
       "maximum": 60,
       "minimum": 0,
-      "units": "percent"
+      "units": "percent",
+      "description": "Mass fraction concentration percent of circulation fluid.\n\ne.g.: '0' indicates pure water; '20' indicates 20% antifreeze, 80% pure water."
     },
     "temperature": {
       "type": "number",
-      "units": "C"
+      "units": "C",
+      "description": "Average design fluid temperature at peak conditions."
     }
   },
   "required": [

@@ -2,37 +2,44 @@
   "type": "object",
   "properties": {
     "version": {
-      "type": "string"
+      "type": "string",
+      "description": "Version of input file."
     },
     "fluid": {
-      "type": "object"
+      "type": "object",
+      "description": "Object used to define parameters related to the circulation fluid."
     },
     "grout": {
-      "type": "object"
+      "type": "object",
+      "description": "Object used to define parameters related to grout material."
     },
     "soil": {
-      "type": "object"
+      "type": "object",
+      "description": "Object used to define parameters related to soil material."
     },
     "pipe": {
-      "type": "object"
+      "type": "object",
+      "description": "Object used to define parameters related the pipes."
     },
     "borehole": {
-      "type": "object"
+      "type": "object",
+      "description": "Object used to define parameters related the borehole."
     },
-    "simulaton": {
-      "type": "object"
+    "simulation": {
+      "type": "object",
+      "description": "Object used to define parameters related to simulation."
     },
     "geometric_constraints": {
-      "type": "object"
+      "type": "object",
+      "description": "Object used to define geometric constraint parameters for\n\nthe selected design algorithm."
     },
     "design": {
-      "type": "object"
+      "type": "object",
+      "description": "Object used to define parameters related to design and sizing."
     },
-    "ground_loads": {
-      "type": "array",
-      "items": {
-        "type": "number"
-      }
+    "loads": {
+      "type": "object",
+      "description": "Object used to define loads for design and sizing."
     }
   },
   "required": [
@@ -45,6 +52,6 @@
     "simulation",
     "geometric_constraints",
     "design",
-    "ground_loads"
+    "loads"
   ]
 }
