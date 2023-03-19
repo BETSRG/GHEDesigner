@@ -4,9 +4,11 @@ from pathlib import Path
 
 from jsonschema import validate, ValidationError
 
+from ghedesigner.enums import BHPipeType
 
-# Note: JSON schema does not currently have a good way to handle case-insentive enums.
-#       Some fields are upper cased manually here for validation purposes.
+
+# Note: JSON schema does not currently have a good way to handle case-insensitive enums.
+#       Some fields are upper-cased manually here for validation purposes.
 #       More details here: https://github.com/json-schema-org/community/discussions/148
 
 
@@ -62,10 +64,10 @@ def validate_pipe(instance: dict) -> None:
     instance["arrangement"] = pipe_arrangement
 
     schema_map = {
-        "SINGLEUTUBE": "pipe_single_double_u_tube.schema.json",
-        "DOUBLEUTUBESERIES": "pipe_single_double_u_tube.schema.json",
-        "DOUBLEUTUBEPARALLEL": "pipe_single_double_u_tube.schema.json",
-        "COAXIAL": "pipe_coaxial.schema.json"
+        BHPipeType.SINGLEUTUBE.name: "pipe_single_double_u_tube.schema.json",
+        BHPipeType.DOUBLEUTUBESERIES.name: "pipe_single_double_u_tube.schema.json",
+        BHPipeType.DOUBLEUTUBEPARALLEL.name: "pipe_single_double_u_tube.schema.json",
+        BHPipeType.COAXIAL.name: "pipe_coaxial.schema.json"
     }
 
     if pipe_arrangement not in schema_map.keys():

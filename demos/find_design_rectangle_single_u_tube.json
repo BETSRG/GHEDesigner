@@ -21,7 +21,7 @@
     "roughness": 0.000001,
     "conductivity": 0.4,
     "rho_cp": 1542000,
-    "arrangement": "singleutube"
+    "arrangement": "SINGLEUTUBE"
   },
   "borehole": {
     "buried_depth": 2.0,

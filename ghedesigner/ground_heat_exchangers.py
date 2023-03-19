@@ -305,14 +305,14 @@ class GHE(BaseGHE):
         # is interpolated for specific B/H and rb/H values.
         g = self.grab_g_function(b_over_h)
 
-        if method == DesignMethodTimeStep.Hybrid:
+        if method == DesignMethodTimeStep.HYBRID:
             q_dot = self.hybrid_load.load[2:] * 1000.0  # convert to Watts
             time_values = self.hybrid_load.hour[2:]  # convert to seconds
             self.times = time_values
             self.loading = q_dot
 
             hp_eft, d_tb = self._simulate_detailed(q_dot, time_values, g)
-        elif method == DesignMethodTimeStep.Hourly:
+        elif method == DesignMethodTimeStep.HOURLY:
             n_months = self.sim_params.end_month - self.sim_params.start_month + 1
             n_hours = int(n_months / 12.0 * 8760.0)
             q_dot = self.hourly_extraction_ground_loads

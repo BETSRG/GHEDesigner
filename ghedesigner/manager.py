@@ -36,7 +36,7 @@ class GHEManager:
         self._grout: Optional[Grout] = None
         self._soil: Optional[Soil] = None
         self._pipe: Optional[Pipe] = None
-        self._u_tube_type: BHPipeType = None
+        self._u_tube_type: Optional[BHPipeType] = None
         self._borehole: Optional[GHEBorehole] = None
         self._simulation_parameters: Optional[SimulationParameters] = None
         self._ground_loads: Optional[List[float]] = None
@@ -74,21 +74,22 @@ class GHEManager:
             return self.DesignGeomType.RowWise
         raise ValueError("Geometry constraint method not supported.")
 
-    def set_bh_pipe_type(self, bh_pipe_str: str):
+    @staticmethod
+    def set_bh_pipe_type(bh_pipe_str: str):
         """
         Sets the borehole pipe type.
 
         :param bh_pipe_str: pipe type input string.
         """
         bh_pipe_str = str(bh_pipe_str).upper()
-        if bh_pipe_str == "SINGLEUTUBE":
-            return BHPipeType.SingleUType
-        if bh_pipe_str == "DOUBLEUTUBEPARALLEL":
-            return BHPipeType.DoubleUTypeParallel
-        if bh_pipe_str == "DOUBLEUTUBESERIES":
-            return BHPipeType.DoubleUTypeSeries
-        if bh_pipe_str == "COAXIAL":
-            return BHPipeType.CoaxialType
+        if bh_pipe_str == BHPipeType.SINGLEUTUBE.name:
+            return BHPipeType.SINGLEUTUBE
+        if bh_pipe_str == BHPipeType.DOUBLEUTUBEPARALLEL.name:
+            return BHPipeType.DOUBLEUTUBEPARALLEL
+        if bh_pipe_str == BHPipeType.DOUBLEUTUBESERIES.name:
+            return BHPipeType.DOUBLEUTUBESERIES
+        if bh_pipe_str == BHPipeType.COAXIAL.name:
+            return BHPipeType.COAXIAL
         raise ValueError("Borehole pipe type not supported.")
 
     def set_fluid(self, fluid_name: str = "Water", concentration_percent: float = 0.0, temperature: float = 20.0):
@@ -135,7 +136,7 @@ class GHEManager:
         :param rho_cp: volumetric heat capacity, in J/m^3-K.
         """
 
-        self._u_tube_type = BHPipeType.SingleUType
+        self._u_tube_type = BHPipeType.SINGLEUTUBE
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 1)
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
@@ -152,7 +153,7 @@ class GHEManager:
         :param rho_cp: volumetric heat capacity, in J/m^3-K.
         """
 
-        self._u_tube_type = BHPipeType.DoubleUTypeParallel
+        self._u_tube_type = BHPipeType.DOUBLEUTUBEPARALLEL
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 2)
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
@@ -169,7 +170,7 @@ class GHEManager:
         :param rho_cp: volumetric heat capacity, in J/m^3-K.
         """
 
-        self._u_tube_type = BHPipeType.DoubleUTypeSeries
+        self._u_tube_type = BHPipeType.DOUBLEUTUBESERIES
         pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 2)
         self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
 
@@ -190,7 +191,7 @@ class GHEManager:
         :param rho_cp: volumetric heat capacity, in J/m^3-K.
         """
 
-        self._u_tube_type = BHPipeType.CoaxialType
+        self._u_tube_type = BHPipeType.COAXIAL
         # Note: This convention is different from pygfunction
         r_inner = [inner_pipe_r_in, inner_pipe_r_out]  # The radii of the inner pipe from in to out
         r_outer = [outer_pipe_r_in, outer_pipe_r_out]  # The radii of the outer pipe from in to out
@@ -306,7 +307,7 @@ class GHEManager:
         """
         Sets the geometry constraints for the rowwise design method.
 
-        :param permimeter_spacing_ratio: the ratio between the minimum spacing between
+        :param perimeter_spacing_ratio: the ratio between the minimum spacing between
             boreholes placed along the property and no-go zones and the standard borehole-to-borehole
             spacing used for internal boreholes.
         :param max_spacing: the largest minimum spacing that will be used to generate a RowWise field.
@@ -355,7 +356,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=DesignMethodTimeStep.Hybrid,
+                method=DesignMethodTimeStep.HYBRID,
             )
         elif design_method_geo == self.DesignGeomType.Rectangle:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -372,7 +373,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=DesignMethodTimeStep.Hybrid,
+                method=DesignMethodTimeStep.HYBRID,
             )
         elif design_method_geo == self.DesignGeomType.BiRectangle:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -389,7 +390,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=DesignMethodTimeStep.Hybrid,
+                method=DesignMethodTimeStep.HYBRID,
             )
         elif design_method_geo == self.DesignGeomType.BiZonedRectangle:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -406,7 +407,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=DesignMethodTimeStep.Hybrid,
+                method=DesignMethodTimeStep.HYBRID,
             )
         elif design_method_geo == self.DesignGeomType.BiRectangleConstrained:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -423,7 +424,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=DesignMethodTimeStep.Hybrid,
+                method=DesignMethodTimeStep.HYBRID,
             )
         elif design_method_geo == self.DesignGeomType.RowWise:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -440,7 +441,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=DesignMethodTimeStep.Hybrid,
+                method=DesignMethodTimeStep.HYBRID,
             )
         else:
             raise NotImplementedError("This design method has not been implemented")
@@ -466,7 +467,7 @@ class GHEManager:
         self._search = self._design.find_design()
         self._search.ghe.compute_g_functions()
         self._search_time = time() - start_time
-        self._search.ghe.size(method=DesignMethodTimeStep.Hybrid)
+        self._search.ghe.size(method=DesignMethodTimeStep.HYBRID)
 
     def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str) -> None:
         """
@@ -479,7 +480,7 @@ class GHEManager:
             note,
             author,
             iteration_name,
-            load_method=DesignMethodTimeStep.Hybrid,
+            load_method=DesignMethodTimeStep.HYBRID,
         )
 
     def write_output_files(self, output_directory: Path, output_file_suffix: str = ""):
@@ -505,7 +506,7 @@ class GHEManager:
         d_geo['max_height'] = self._simulation_parameters.max_height
         d_geo['min_height'] = self._simulation_parameters.min_height
 
-        # TODO: data held in different places. consolodate
+        # TODO: data held in different places
         d_des = self._design.to_input()
         d_des['max_eft'] = self._simulation_parameters.max_EFT_allowable
         d_des['min_eft'] = self._simulation_parameters.min_EFT_allowable
@@ -513,12 +514,12 @@ class GHEManager:
         # pipe data
         d_pipe = {'rho_cp': self._pipe.rhoCp, 'roughness': self._pipe.roughness}
 
-        if self._u_tube_type in [BHPipeType.SingleUType, BHPipeType.DoubleUTypeParallel, BHPipeType.DoubleUTypeSeries]:
+        if self._u_tube_type in [BHPipeType.SINGLEUTUBE, BHPipeType.DOUBLEUTUBEPARALLEL, BHPipeType.DOUBLEUTUBESERIES]:
             d_pipe['inner_radius'] = self._pipe.r_in
             d_pipe['outer_radius'] = self._pipe.r_out
             d_pipe['shank_spacing'] = self._pipe.s
             d_pipe['conductivity'] = self._pipe.k
-        elif self._u_tube_type == BHPipeType.CoaxialType:
+        elif self._u_tube_type == BHPipeType.COAXIAL:
             d_pipe['inner_pipe_r_in'] = self._pipe.r_in[0]
             d_pipe['inner_pipe_r_out'] = self._pipe.r_in[1]
             d_pipe['outer_pipe_r_in'] = self._pipe.r_out[0]
@@ -528,14 +529,14 @@ class GHEManager:
         else:
             raise TypeError('Invalid pipe type')
 
-        if self._u_tube_type == BHPipeType.SingleUType:
-            d_pipe['arrangement'] = 'singleutube'
-        elif self._u_tube_type == BHPipeType.DoubleUTypeParallel:
-            d_pipe['arrangement'] = 'doubleutubeparallel'
-        elif self._u_tube_type == BHPipeType.DoubleUTypeSeries:
-            d_pipe['arrangement'] = 'doubleutubeseries'
-        elif self._u_tube_type == BHPipeType.CoaxialType:
-            d_pipe['arrangement'] = 'coaxial'
+        if self._u_tube_type == BHPipeType.SINGLEUTUBE:
+            d_pipe['arrangement'] = BHPipeType.SINGLEUTUBE.name
+        elif self._u_tube_type == BHPipeType.DOUBLEUTUBEPARALLEL:
+            d_pipe['arrangement'] = BHPipeType.DOUBLEUTUBEPARALLEL.name
+        elif self._u_tube_type == BHPipeType.DOUBLEUTUBESERIES:
+            d_pipe['arrangement'] = BHPipeType.DOUBLEUTUBESERIES.name
+        elif self._u_tube_type == BHPipeType.COAXIAL:
+            d_pipe['arrangement'] = BHPipeType.COAXIAL.name
         else:
             raise TypeError('Invalid pipe type')
 
@@ -597,7 +598,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
     ghe.set_soil(**soil_props)
 
     pipe_type = ghe.set_bh_pipe_type(pipe_props["arrangement"])
-    if pipe_type == BHPipeType.SingleUType:
+    if pipe_type == BHPipeType.SINGLEUTUBE:
         ghe.set_single_u_tube_pipe(
             inner_radius=pipe_props["inner_radius"],
             outer_radius=pipe_props["outer_radius"],
@@ -606,7 +607,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             conductivity=pipe_props["conductivity"],
             rho_cp=pipe_props["rho_cp"]
         )
-    elif pipe_type == BHPipeType.DoubleUTypeParallel:
+    elif pipe_type == BHPipeType.DOUBLEUTUBEPARALLEL:
         ghe.set_double_u_tube_pipe_parallel(
             inner_radius=pipe_props["inner_radius"],
             outer_radius=pipe_props["outer_radius"],
@@ -615,7 +616,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             conductivity=pipe_props["conductivity"],
             rho_cp=pipe_props["rho_cp"]
         )
-    elif pipe_type == BHPipeType.DoubleUTypeSeries:
+    elif pipe_type == BHPipeType.DOUBLEUTUBESERIES:
         ghe.set_double_u_tube_pipe_series(
             inner_radius=pipe_props["inner_radius"],
             outer_radius=pipe_props["outer_radius"],
@@ -624,7 +625,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             conductivity=pipe_props["conductivity"],
             rho_cp=pipe_props["rho_cp"]
         )
-    elif pipe_type == BHPipeType.CoaxialType:
+    elif pipe_type == BHPipeType.COAXIAL:
         ghe.set_coaxial_pipe(
             inner_pipe_r_in=pipe_props["inner_pipe_r_in"],
             inner_pipe_r_out=pipe_props["inner_pipe_r_out"],
@@ -728,7 +729,7 @@ def run_manager_from_cli(input_path, output_directory):
     """
     Run simulation. Function is exposed through a console script.
 
-    :param input_file_path: path to input file.
+    :param input_path: path to input file.
     :param output_directory: path to write output files.
     """
     input_path = Path(input_path).resolve()

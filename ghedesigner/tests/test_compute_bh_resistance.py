@@ -116,7 +116,7 @@ class TestBHResistance(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho  # mass flow rate (kg/s)
 
         # Series
-        double_u_tube_series = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, FlowConfig.Series)
+        double_u_tube_series = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, FlowConfig.SERIES)
         r_b_series = double_u_tube_series.calc_effective_borehole_resistance()
         re = GHEDesignerBoreholeBase.compute_reynolds(double_u_tube_series.m_flow_pipe, r_in, fluid)
         m_dot = double_u_tube_series.m_flow_pipe
@@ -138,7 +138,7 @@ class TestBHResistance(GHEBaseTest):
         self.assertTrue(self.rel_error_within_tol(r_b_series, 0.1624, 0.01))
 
         # Parallel
-        double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, FlowConfig.Parallel)
+        double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, FlowConfig.PARALLEL)
         r_b_parallel = double_u_tube_parallel.calc_effective_borehole_resistance()
         re = GHEDesignerBoreholeBase.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
         m_dot = double_u_tube_parallel.m_flow_pipe

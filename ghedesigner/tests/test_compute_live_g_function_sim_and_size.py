@@ -106,7 +106,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             r_b,
             d,
             m_flow_borehole,
-            BHPipeType.SingleUType,
+            BHPipeType.SINGLEUTUBE,
             log_time,
             coordinates,
             fluid,
@@ -121,7 +121,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         ghe = GHE(
             v_flow_system,
             b,
-            BHPipeType.SingleUType,
+            BHPipeType.SINGLEUTUBE,
             fluid,
             borehole,
             pipe,
@@ -133,7 +133,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         )
 
         # Simulate after computing just one g-function
-        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethodTimeStep.Hybrid)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethodTimeStep.HYBRID)
 
         self.log("Min EFT: {0:0.3f}\nMax EFT: {1:0.3f}".format(min_hp_eft, max_hp_eft))
 
@@ -147,7 +147,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             r_b,
             bh_depth,
             m_flow_borehole,
-            BHPipeType.SingleUType,
+            BHPipeType.SINGLEUTUBE,
             log_time,
             coordinates,
             fluid,
@@ -160,7 +160,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         ghe = GHE(
             v_flow_system,
             b,
-            BHPipeType.SingleUType,
+            BHPipeType.SINGLEUTUBE,
             fluid,
             borehole,
             pipe,
@@ -171,6 +171,6 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             hourly_extraction_ground_loads,
         )
 
-        ghe.size(method=DesignMethodTimeStep.Hybrid)
+        ghe.size(method=DesignMethodTimeStep.HYBRID)
 
         self.log(f"Height of boreholes: {ghe.bhe.b.H:0.4f}")

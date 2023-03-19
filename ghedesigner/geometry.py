@@ -1,8 +1,15 @@
+from abc import abstractmethod
+
 from ghedesigner.constants import RAD_TO_DEG
 
 
 class GeometricConstraints:
-    pass  # TODO: Pull in common functionality!
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def to_input(self):
+        pass
 
 
 class GeometricConstraintsNearSquare(GeometricConstraints):

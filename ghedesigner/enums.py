@@ -2,17 +2,17 @@ from enum import Enum, auto
 
 
 class BHPipeType(Enum):
-    SingleUType = auto()
-    DoubleUTypeParallel = auto()
-    DoubleUTypeSeries = auto()
-    CoaxialType = auto()
+    SINGLEUTUBE = auto()
+    DOUBLEUTUBEPARALLEL = auto()
+    DOUBLEUTUBESERIES = auto()
+    COAXIAL = auto()
 
 
 class FlowConfig(Enum):
-    Parallel = auto()
-    Series = auto()
+    PARALLEL = auto()
+    SERIES = auto()
 
 
 class DesignMethodTimeStep(Enum):
-    Hybrid = auto()
-    Hourly = auto()
+    HYBRID = auto()
+    HOURLY = auto()

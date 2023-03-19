@@ -637,7 +637,7 @@ class RowWiseModifiedBisectionSearch:
 
                 self.initialize_ghe(field, self.sim_params.max_height, field_specifier=f_s)
                 self.ghe.compute_g_functions()
-                self.ghe.size(method=DesignMethodTimeStep.Hybrid)
+                self.ghe.size(method=DesignMethodTimeStep.HYBRID)
                 total_drilling = self.ghe.bhe.b.H * len(field)
 
                 if best_field is None:
@@ -919,7 +919,7 @@ class BisectionZD(Bisection1D):
             self.calculated_temperatures_nested[i] = self.calculated_temperatures
 
             self.ghe.compute_g_functions()
-            self.ghe.size(method=DesignMethodTimeStep.Hybrid)
+            self.ghe.size(method=DesignMethodTimeStep.HYBRID)
 
             nbh = len(selected_coordinates)
             total_drilling = nbh * self.ghe.bhe.b.H
@@ -960,6 +960,6 @@ class BisectionZD(Bisection1D):
             ],
         )
         self.ghe.compute_g_functions()
-        self.ghe.size(method=DesignMethodTimeStep.Hybrid)
+        self.ghe.size(method=DesignMethodTimeStep.HYBRID)
 
         return selection_key, selected_coordinates
