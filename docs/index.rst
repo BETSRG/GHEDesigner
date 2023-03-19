@@ -13,6 +13,7 @@ Welcome to GHEDesigner's documentation!
    cli
    manager
    schemas
+   examples
 
 
 Indices and tables
