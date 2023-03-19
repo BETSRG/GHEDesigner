@@ -83,8 +83,7 @@
     "min_eft": 5.0
   },
   "loads": {
-    "ground_loads":
-    [
+    "ground_loads": [
       0,
       0,
       0,

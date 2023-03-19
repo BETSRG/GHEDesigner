@@ -6,15 +6,15 @@
       "minimum": 0,
       "units": "m",
       "description": "Depth of top of borehole below the ground surface."
-      },
+    },
     "radius": {
       "type": "number",
       "units": "m",
       "description": "Radius of borehole."
-      }
+    }
   },
   "required": [
-      "buried_depth",
-      "radius"
+    "buried_depth",
+    "radius"
   ]
 }
