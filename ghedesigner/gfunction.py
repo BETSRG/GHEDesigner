@@ -173,28 +173,7 @@ class GFunction:
         self.interpolation_table: dict = {}
 
     def g_function_interpolation(self, b_over_h: float, kind="default"):
-        r"""
-        Interpolate a range of g-functions for a specific B/H ratio
-        Parameters
-        ----------
-        b_over_h: float
-            A B/H ratio
-        kind: str
-            Could be 'linear', 'quadratic', 'cubic', etc.
-            default: 'cubic'
-        Returns
-        -------
-        **g-function: list**
-            A list of the g-function values for each ln(t/ts)
-        **rb: float**
-            A borehole radius value that is interpolated for
-        **D: float**
-            A burial depth that is interpolated for
-        **H_eq: float**
-            An equivalent height
-            .. math::
-                H_{eq} = \dfrac{B_{field}}{B/H}
-        """
+
         # the g-functions are stored in a dictionary based on heights, so an
         # equivalent height can be found
         h_eq = 1 / b_over_h * self.B
@@ -238,9 +217,8 @@ class GFunction:
                     return g_function, rb, d, h_eq
                 else:
                     raise ValueError(
-                        "The interpolation requires two g-function curves if "
-                        "the requested B/H is not already computed."
-                    )
+                        "The interpolation requires two g-function curves "
+                        "if the requested B/H is not already computed.")
 
         # Automatically adjust interpolation if necessary
         # Lagrange also needs 2

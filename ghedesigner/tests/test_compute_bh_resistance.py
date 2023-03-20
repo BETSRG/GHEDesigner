@@ -84,7 +84,7 @@ class TestBHResistance(GHEBaseTest):
         # borehole
         h = 100.0  # borehole length (m)
         d = 2.0  # borehole buried depth (m)
-        dia = 0.150  # borehole radius (m)
+        dia = 0.150  # borehole diameter (m)
         borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # pipe

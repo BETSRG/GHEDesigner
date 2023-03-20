@@ -69,8 +69,8 @@ class TestEquivalentPipes(GHEBaseTest):
         self.log("\n" + val + "\n" + len(val) * "-")
         self.log(
             f"Fluid volumetric flow rate (L/s): {single_u_tube.m_flow_borehole * 1000.0 / single_u_tube.fluid.rho:0.8f}")
-        self.log(f"Radius of inner pipe (m): {single_u_tube.r_in:0.8f}")
-        self.log(f"Radius of outer pipe (m): {single_u_tube.r_out:0.8f}")
+        self.log(f"Diameter of inner pipe (m): {single_u_tube.r_in * 2.0:0.8f}")
+        self.log(f"Diameter of outer pipe (m): {single_u_tube.r_out * 2.0:0.8f}")
         self.log(f"Shank spacing (m): {single_u_tube.pipe.s:0.8f}")
         self.log(f"Convection coefficient (): {single_u_tube.h_f:08f}")
         self.log(f"Pipe thermal conductivity (W/m.K): {single_u_tube.pipe.k:0.8f}")
@@ -144,8 +144,8 @@ class TestEquivalentPipes(GHEBaseTest):
         self.log("\n" + val + "\n" + len(val) * "-")
         self.log(
             f"Fluid volumetric flow rate (L/s): {single_u_tube.m_flow_borehole * 1000.0 / single_u_tube.fluid.rho:0.8f}")
-        self.log(f"Radius of inner pipe (m): {single_u_tube.r_in:0.8f}")
-        self.log(f"Radius of outer pipe (m): {single_u_tube.r_out:0.8f}")
+        self.log(f"Diameter of inner pipe (m): {single_u_tube.r_in * 2.0:0.8f}")
+        self.log(f"Diameter of outer pipe (m): {single_u_tube.r_out * 2.0:0.8f}")
         self.log(f"Shank spacing (m): {single_u_tube.pipe.s:0.8f}")
         self.log(f"Convection coefficient (-): {single_u_tube.h_f:0.8f}")
         self.log(f"Pipe thermal conductivity (W/m.K): {single_u_tube.pipe.k:0.8f}")
