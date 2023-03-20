@@ -1,17 +1,17 @@
 {
   "type": "object",
   "properties": {
-    "inner_radius": {
+    "inner_diameter": {
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Inner radius of pipe."
+      "description": "Inner diameter of pipe."
     },
-    "outer_radius": {
+    "outer_diameter": {
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Outer radius of pipe."
+      "description": "Outer diameter of pipe."
     },
     "shank_spacing": {
       "type": "number",
@@ -48,8 +48,8 @@
     }
   },
   "required": [
-    "inner_radius",
-    "outer_radius",
+    "inner_diameter",
+    "outer_diameter",
     "shank_spacing",
     "roughness",
     "conductivity",

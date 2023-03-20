@@ -15,10 +15,10 @@
     "undisturbed_temp": 18.3
   },
   "pipe": {
-    "inner_pipe_r_in": 0.0221,
-    "inner_pipe_r_out": 0.0250,
-    "outer_pipe_r_in": 0.0487,
-    "outer_pipe_r_out": 0.0550,
+    "inner_pipe_d_in": 0.0442,
+    "inner_pipe_d_out": 0.050,
+    "outer_pipe_d_in": 0.0974,
+    "outer_pipe_d_out": 0.11,
     "roughness": 0.000001,
     "conductivity_inner": 0.4,
     "conductivity_outer": 0.4,

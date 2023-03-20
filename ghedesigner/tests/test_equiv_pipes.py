@@ -88,8 +88,10 @@ class TestEquivalentPipes(GHEBaseTest):
         dia = 150.0 / 1000.0  # Borehole diameter
 
         # Pipe dimensions
-        r_out = 0.013335  # Pipe outer radius (m)
-        r_in = 0.0108  # Pipe inner radius (m)
+        d_out = 0.02667  # Pipe outer diameter (m)
+        d_in = 0.0216  # Pipe inner diameter (m)
+        r_out = d_out / 2.0
+        r_in = d_in / 2.0
         s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 

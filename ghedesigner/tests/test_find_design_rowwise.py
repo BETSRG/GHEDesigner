@@ -50,7 +50,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
     def test_find_row_wise_design_wo_perimeter(self):
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_radius=0.0108, outer_radius=0.0133, shank_spacing=0.0323,
+            inner_diameter=0.0216, outer_diameter=0.02667, shank_spacing=0.0323,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
@@ -75,7 +75,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
     def test_find_row_wise_design_with_perimeter(self):
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_radius=0.0108, outer_radius=0.0133, shank_spacing=0.0323,
+            inner_diameter=0.0216, outer_diameter=0.02667, shank_spacing=0.0323,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)

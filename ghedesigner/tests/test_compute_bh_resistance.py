@@ -88,8 +88,10 @@ class TestBHResistance(GHEBaseTest):
         borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # pipe
-        r_out = 0.013335  # pipe outer radius (m)
-        r_in = 0.0108  # pipe inner radius (m)
+        d_out = 0.02667  # pipe outer diameter (m)
+        d_in = 0.0216  # pipe inner diameter (m)
+        r_out = d_out / 2.0
+        r_in = d_in / 2.0
         s = 0.0323  # shank spacing (m)
         pos = Pipe.place_pipes(s, r_out, 2)  # double U-tube # TODO: move from static method to borehole
         k_p = 0.4  # pipe thermal conductivity (W/m.K)
@@ -168,8 +170,10 @@ class TestBHResistance(GHEBaseTest):
         dia = 150.0 / 1000.0  # Borehole diameter
 
         # Pipe dimensions
-        r_out = 0.013335  # Pipe outer radius (m)
-        r_in = 0.0108  # Pipe inner radius (m)
+        d_out = 0.02667  # Pipe outer diameter (m)
+        d_in = 0.0216  # Pipe inner diameter (m)
+        r_out = d_out / 2.0
+        r_in = d_in / 2.0
         s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
@@ -235,8 +239,10 @@ class TestBHResistance(GHEBaseTest):
         dia = 150.0 / 1000.0  # Borehole diameter
 
         # Pipe dimensions
-        r_out = 0.013335  # Pipe outer radius (m)
-        r_in = 0.0108  # Pipe inner radius (m)
+        d_out = 0.02667  # Pipe outer diameter (m)
+        d_in = 0.0216  # Pipe inner diameter (m)
+        r_out = d_out / 2.0
+        r_in = d_in / 2.0
         s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 

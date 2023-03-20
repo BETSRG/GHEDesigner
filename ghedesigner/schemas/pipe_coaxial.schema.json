@@ -1,29 +1,29 @@
 {
   "type": "object",
   "properties": {
-    "inner_pipe_r_in": {
+    "inner_pipe_d_in": {
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Inner pipe inner radius."
+      "description": "Inner pipe inner diameter."
     },
-    "inner_pipe_r_out": {
+    "inner_pipe_d_out": {
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Inner pipe outer radius."
+      "description": "Inner pipe outer diameter."
     },
-    "outer_pipe_r_in": {
+    "outer_pipe_d_in": {
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Outer pipe inner radius."
+      "description": "Outer pipe inner diameter."
     },
-    "outer_pipe_r_out": {
+    "outer_pipe_d_out": {
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Outer pipe outer radius."
+      "description": "Outer pipe outer diameter."
     },
     "roughness": {
       "type": "number",
@@ -56,10 +56,10 @@
     }
   },
   "required": [
-    "inner_pipe_r_in",
-    "inner_pipe_r_out",
-    "outer_pipe_r_in",
-    "outer_pipe_r_out",
+    "inner_pipe_d_in",
+    "inner_pipe_d_out",
+    "outer_pipe_d_in",
+    "outer_pipe_d_out",
     "roughness",
     "conductivity_inner",
     "conductivity_outer",

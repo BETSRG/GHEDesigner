@@ -116,68 +116,77 @@ class GHEManager:
         """
         self._soil = Soil(conductivity, rho_cp, undisturbed_temp)
 
-    def set_single_u_tube_pipe(self, inner_radius: float, outer_radius: float, shank_spacing: float,
+    def set_single_u_tube_pipe(self, inner_diameter: float, outer_diameter: float, shank_spacing: float,
                                roughness: float, conductivity: float, rho_cp: float):
         """
         Sets the pipe instance for a single u-tube pipe.
 
-        :param inner_radius: inner pipe radius, in m.
-        :param outer_radius: outer pipe radius, in m.
+        :param inner_diameter: inner pipe diameter, in m.
+        :param outer_diameter: outer pipe diameter, in m.
         :param shank_spacing: shank spacing between the u-tube legs, in m, as measured edge-to-edge.
         :param roughness: pipe surface roughness, in m.
         :param conductivity: thermal conductivity, in W/m-K.
         :param rho_cp: volumetric heat capacity, in J/m^3-K.
         """
 
-        self._u_tube_type = BHPipeType.SINGLEUTUBE
-        pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 1)
-        self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
+        r_in = inner_diameter / 2.0
+        r_out = outer_diameter / 2.0
 
-    def set_double_u_tube_pipe_parallel(self, inner_radius: float, outer_radius: float, roughness: float,
-                                        shank_spacing: float, conductivity: float, rho_cp: float):
+        self._u_tube_type = BHPipeType.SINGLEUTUBE
+        pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 1)
+        self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, roughness, conductivity, rho_cp)
+
+    def set_double_u_tube_pipe_parallel(self, inner_diameter: float, outer_diameter: float, shank_spacing: float,
+                                        roughness: float, conductivity: float, rho_cp: float):
         """
         Sets the pipe instance for a double u-tube pipe in a parallel configuration.
 
-        :param inner_radius: inner pipe radius, in m.
-        :param outer_radius: outer pipe radius, in m.
+        :param inner_diameter: inner pipe diameter, in m.
+        :param outer_diameter: outer pipe diameter, in m.
         :param shank_spacing: shank spacing between the u-tube legs, in m, as measured edge-to-edge.
         :param roughness: pipe surface roughness, in m.
         :param conductivity: thermal conductivity, in W/m-K.
         :param rho_cp: volumetric heat capacity, in J/m^3-K.
         """
 
-        self._u_tube_type = BHPipeType.DOUBLEUTUBEPARALLEL
-        pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 2)
-        self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
+        r_in = inner_diameter / 2.0
+        r_out = outer_diameter / 2.0
 
-    def set_double_u_tube_pipe_series(self, inner_radius: float, outer_radius: float, roughness: float,
-                                      shank_spacing: float, conductivity: float, rho_cp: float):
+        self._u_tube_type = BHPipeType.DOUBLEUTUBEPARALLEL
+        pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 2)
+        self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, roughness, conductivity, rho_cp)
+
+    def set_double_u_tube_pipe_series(self, inner_diameter: float, outer_diameter: float, shank_spacing: float,
+                                      roughness: float, conductivity: float, rho_cp: float):
         """
         Sets the pipe instance for a double u-tube pipe in a series configuration.
 
-        :param inner_radius: inner pipe radius, in m.
-        :param outer_radius: outer pipe radius, in m.
+        :param inner_diameter: inner pipe diameter, in m.
+        :param outer_diameter: outer pipe diameter, in m.
         :param shank_spacing: shank spacing between the u-tube legs, in m, as measured edge-to-edge.
         :param roughness: pipe surface roughness, in m.
         :param conductivity: thermal conductivity, in W/m-K.
         :param rho_cp: volumetric heat capacity, in J/m^3-K.
         """
 
-        self._u_tube_type = BHPipeType.DOUBLEUTUBESERIES
-        pipe_positions = Pipe.place_pipes(shank_spacing, outer_radius, 2)
-        self._pipe = Pipe(pipe_positions, inner_radius, outer_radius, shank_spacing, roughness, conductivity, rho_cp)
+        r_in = inner_diameter / 2.0
+        r_out = outer_diameter / 2.0
 
-    def set_coaxial_pipe(self, inner_pipe_r_in: float, inner_pipe_r_out: float, outer_pipe_r_in: float,
-                         outer_pipe_r_out: float, roughness: float, conductivity_inner: float,
+        self._u_tube_type = BHPipeType.DOUBLEUTUBESERIES
+        pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 2)
+        self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, roughness, conductivity, rho_cp)
+
+    def set_coaxial_pipe(self, inner_pipe_d_in: float, inner_pipe_d_out: float, outer_pipe_d_in: float,
+                         outer_pipe_d_out: float, roughness: float, conductivity_inner: float,
                          conductivity_outer: float,
                          rho_cp: float):
         """
         Sets the pipe instance for a coaxial pipe.
 
-        :param inner_pipe_r_in: inner pipe inner radius, in m.
-        :param inner_pipe_r_out: inner pipe outer radius, in m.
-        :param outer_pipe_r_in: outer pipe inner radius, in m.
-        :param outer_pipe_r_out: outer pipe outer radius, in m.
+        :param inner_pipe_d_in: inner pipe inner diameter, in m.
+        :param inner_pipe_d_out: inner pipe outer diameter, in m.
+        :param outer_pipe_d_in: outer pipe inner diameter, in m.
+        :param outer_pipe_d_out: outer pipe outer diameter, in m.
         :param roughness: pipe surface roughness, in m.
         :param conductivity_inner: thermal conductivity of inner pipe, in W/m-K.
         :param conductivity_outer: thermal conductivity of outer pipe, in W/m-K.
@@ -186,8 +195,8 @@ class GHEManager:
 
         self._u_tube_type = BHPipeType.COAXIAL
         # Note: This convention is different from pygfunction
-        r_inner = [inner_pipe_r_in, inner_pipe_r_out]  # The radii of the inner pipe from in to out
-        r_outer = [outer_pipe_r_in, outer_pipe_r_out]  # The radii of the outer pipe from in to out
+        r_inner = [inner_pipe_d_in / 2.0, inner_pipe_d_out / 2.0]  # The radii of the inner pipe from in to out
+        r_outer = [outer_pipe_d_in / 2.0, outer_pipe_d_out / 2.0]  # The radii of the outer pipe from in to out
         k_p = [conductivity_inner, conductivity_outer]
         self._pipe = Pipe((0, 0), r_inner, r_outer, 0, roughness, k_p, rho_cp)
 
@@ -519,15 +528,15 @@ class GHEManager:
         d_pipe = {'rho_cp': self._pipe.rhoCp, 'roughness': self._pipe.roughness}
 
         if self._u_tube_type in [BHPipeType.SINGLEUTUBE, BHPipeType.DOUBLEUTUBEPARALLEL, BHPipeType.DOUBLEUTUBESERIES]:
-            d_pipe['inner_radius'] = self._pipe.r_in
-            d_pipe['outer_radius'] = self._pipe.r_out
+            d_pipe['inner_diameter'] = self._pipe.r_in * 2.0
+            d_pipe['outer_diameter'] = self._pipe.r_out * 2.0
             d_pipe['shank_spacing'] = self._pipe.s
             d_pipe['conductivity'] = self._pipe.k
         elif self._u_tube_type == BHPipeType.COAXIAL:
-            d_pipe['inner_pipe_r_in'] = self._pipe.r_in[0]
-            d_pipe['inner_pipe_r_out'] = self._pipe.r_in[1]
-            d_pipe['outer_pipe_r_in'] = self._pipe.r_out[0]
-            d_pipe['outer_pipe_r_out'] = self._pipe.r_out[1]
+            d_pipe['inner_pipe_d_in'] = self._pipe.r_in[0] * 2.0
+            d_pipe['inner_pipe_d_out'] = self._pipe.r_in[1] * 2.0
+            d_pipe['outer_pipe_d_in'] = self._pipe.r_out[0] * 2.0
+            d_pipe['outer_pipe_d_out'] = self._pipe.r_out[1] * 2.0
             d_pipe['conductivity_inner'] = self._pipe.k[0]
             d_pipe['conductivity_outer'] = self._pipe.k[1]
         else:
@@ -604,8 +613,8 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
     pipe_type = ghe.set_bh_pipe_type(pipe_props["arrangement"])
     if pipe_type == BHPipeType.SINGLEUTUBE:
         ghe.set_single_u_tube_pipe(
-            inner_radius=pipe_props["inner_radius"],
-            outer_radius=pipe_props["outer_radius"],
+            inner_diameter=pipe_props["inner_diameter"],
+            outer_diameter=pipe_props["outer_diameter"],
             shank_spacing=pipe_props["shank_spacing"],
             roughness=pipe_props["roughness"],
             conductivity=pipe_props["conductivity"],
@@ -613,8 +622,8 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
         )
     elif pipe_type == BHPipeType.DOUBLEUTUBEPARALLEL:
         ghe.set_double_u_tube_pipe_parallel(
-            inner_radius=pipe_props["inner_radius"],
-            outer_radius=pipe_props["outer_radius"],
+            inner_diameter=pipe_props["inner_diameter"],
+            outer_diameter=pipe_props["outer_diameter"],
             shank_spacing=pipe_props["shank_spacing"],
             roughness=pipe_props["roughness"],
             conductivity=pipe_props["conductivity"],
@@ -622,8 +631,8 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
         )
     elif pipe_type == BHPipeType.DOUBLEUTUBESERIES:
         ghe.set_double_u_tube_pipe_series(
-            inner_radius=pipe_props["inner_radius"],
-            outer_radius=pipe_props["outer_radius"],
+            inner_diameter=pipe_props["inner_diameter"],
+            outer_diameter=pipe_props["outer_diameter"],
             shank_spacing=pipe_props["shank_spacing"],
             roughness=pipe_props["roughness"],
             conductivity=pipe_props["conductivity"],
@@ -631,10 +640,10 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
         )
     elif pipe_type == BHPipeType.COAXIAL:
         ghe.set_coaxial_pipe(
-            inner_pipe_r_in=pipe_props["inner_pipe_r_in"],
-            inner_pipe_r_out=pipe_props["inner_pipe_r_out"],
-            outer_pipe_r_in=pipe_props["outer_pipe_r_in"],
-            outer_pipe_r_out=pipe_props["outer_pipe_r_out"],
+            inner_pipe_d_in=pipe_props["inner_pipe_d_in"],
+            inner_pipe_d_out=pipe_props["inner_pipe_d_out"],
+            outer_pipe_d_in=pipe_props["outer_pipe_d_in"],
+            outer_pipe_d_out=pipe_props["outer_pipe_d_out"],
             roughness=pipe_props["roughness"],
             conductivity_inner=pipe_props["conductivity_inner"],
             conductivity_outer=pipe_props["conductivity_outer"],

@@ -13,9 +13,8 @@ class TestFindNearSquareDesign(GHEBaseTest):
     def test_find_single_u_tube_design(self):
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_radius=0.0108, outer_radius=0.013335,
-            shank_spacing=0.0323, roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0
-        )
+            inner_diameter=0.0216, outer_diameter=0.02667,
+            shank_spacing=0.0323, roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
@@ -46,7 +45,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
     def test_find_double_u_tube_parallel_design(self):
         ghe = GHEManager()
         ghe.set_double_u_tube_pipe_parallel(
-            inner_radius=0.0108, outer_radius=0.013335, shank_spacing=0.0323,
+            inner_diameter=0.0216, outer_diameter=0.02667, shank_spacing=0.0323,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
@@ -79,7 +78,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
     def test_find_double_u_tube_series_design(self):
         ghe = GHEManager()
         ghe.set_double_u_tube_pipe_series(
-            inner_radius=0.0108, outer_radius=0.013335, shank_spacing=0.0323,
+            inner_diameter=0.0216, outer_diameter=0.02667, shank_spacing=0.0323,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
@@ -112,7 +111,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
     def test_find_coaxial_pipe_design(self):
         ghe = GHEManager()
         ghe.set_coaxial_pipe(
-            inner_pipe_r_in=0.0221, inner_pipe_r_out=0.025, outer_pipe_r_in=0.0487, outer_pipe_r_out=0.055,
+            inner_pipe_d_in=0.0442, inner_pipe_d_out=0.050, outer_pipe_d_in=0.0974, outer_pipe_d_out=0.11,
             roughness=1.0e-6, conductivity_inner=0.4, conductivity_outer=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
