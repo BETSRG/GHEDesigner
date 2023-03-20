@@ -10,7 +10,7 @@ class TestBHResistance(GHEBaseTest):
         # Borehole dimensions
         h = 100.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
-        r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
+        dia = 150.0 / 1000.0  # Borehole diameter
 
         # Pipe dimensions
         # Inner pipe radii
@@ -55,7 +55,7 @@ class TestBHResistance(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
         coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
         r_b = coaxial.calc_effective_borehole_resistance()
 
@@ -84,8 +84,8 @@ class TestBHResistance(GHEBaseTest):
         # borehole
         h = 100.0  # borehole length (m)
         d = 2.0  # borehole buried depth (m)
-        r_b = 0.075  # borehole radius (m)
-        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+        dia = 0.150  # borehole radius (m)
+        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # pipe
         r_out = 0.013335  # pipe outer radius (m)
@@ -165,7 +165,7 @@ class TestBHResistance(GHEBaseTest):
         # Borehole dimensions
         h = 100.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
-        r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
+        dia = 150.0 / 1000.0  # Borehole diameter
 
         # Pipe dimensions
         r_out = 0.013335  # Pipe outer radius (m)
@@ -203,7 +203,7 @@ class TestBHResistance(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         single_u_tube = SingleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
@@ -232,7 +232,7 @@ class TestBHResistance(GHEBaseTest):
         # Borehole dimensions
         h = 100.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
-        r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
+        dia = 150.0 / 1000.0  # Borehole diameter
 
         # Pipe dimensions
         r_out = 0.013335  # Pipe outer radius (m)
@@ -296,7 +296,7 @@ class TestBHResistance(GHEBaseTest):
             m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho
 
             # Define a borehole
-            borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+            borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
             single_u_tube = SingleUTube(m_flow_borehole, fluid, borehole, pipe_s, grout, soil)
 
             # check Reynolds numbers
@@ -365,7 +365,7 @@ class TestBHResistance(GHEBaseTest):
             borehole_values["Coaxial"]["V_dot"].append(V_flow_borehole)
 
             # Define a borehole
-            borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+            borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
             coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
             # check Reynolds number

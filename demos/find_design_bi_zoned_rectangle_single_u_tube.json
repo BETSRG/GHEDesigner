@@ -25,7 +25,7 @@
   },
   "borehole": {
     "buried_depth": 2.0,
-    "radius": 0.075
+    "diameter": 0.150
   },
   "simulation": {
     "num_months": 240

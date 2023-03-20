@@ -191,14 +191,15 @@ class GHEManager:
         k_p = [conductivity_inner, conductivity_outer]
         self._pipe = Pipe((0, 0), r_inner, r_outer, 0, roughness, k_p, rho_cp)
 
-    def set_borehole(self, height: float, buried_depth: float, radius: float):
+    def set_borehole(self, height: float, buried_depth: float, diameter: float):
         """
         Sets the borehole instance
 
         :param height: height, or active length, of the borehole, in m.
         :param buried_depth: depth of top of borehole below the ground surface, in m.
-        :param radius: radius of the borehole, in m.
+        :param diameter: diameter of the borehole, in m.
         """
+        radius = diameter / 2.0
         self._borehole = GHEBorehole(height, buried_depth, radius, x=0.0, y=0.0)
 
     def set_simulation_parameters(
@@ -643,7 +644,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
     ghe.set_borehole(
         height=constraint_props["max_height"],
         buried_depth=borehole_props["buried_depth"],
-        radius=borehole_props["radius"]
+        diameter=borehole_props["diameter"]
     )
 
     ghe.set_ground_loads_from_hourly_list(ground_load_props)

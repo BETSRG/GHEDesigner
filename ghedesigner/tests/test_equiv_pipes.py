@@ -47,8 +47,8 @@ class TestEquivalentPipes(GHEBaseTest):
         # Define a borehole
         h = 100.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
-        r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
-        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+        dia = 150.0 / 1000.0  # Borehole diameter
+        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # borehole heat exchanger
         coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
@@ -85,7 +85,7 @@ class TestEquivalentPipes(GHEBaseTest):
         # Borehole dimensions
         h = 100.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
-        r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
+        dia = 150.0 / 1000.0  # Borehole diameter
 
         # Pipe dimensions
         r_out = 0.013335  # Pipe outer radius (m)
@@ -123,7 +123,7 @@ class TestEquivalentPipes(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # Double U-tube defaults to parallel
         double_u_tube = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)

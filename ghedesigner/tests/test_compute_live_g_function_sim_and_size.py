@@ -15,7 +15,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # -------------------
         h = 96.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
-        r_b = 0.075  # Borehole radius]
+        dia = 0.150  # Borehole diameter
         b = 5.0  # Borehole spacing (m)
 
         # Pipe dimensions
@@ -73,7 +73,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # Simulation start month and end month
         # --------------------------------
@@ -103,7 +103,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         g_function = calc_g_func_for_multiple_lengths(
             b,
             [h],
-            r_b,
+            dia / 2.0,
             d,
             m_flow_borehole,
             BHPipeType.SINGLEUTUBE,
@@ -144,7 +144,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         g_function = calc_g_func_for_multiple_lengths(
             b,
             h_values,
-            r_b,
+            dia / 2.0,
             bh_depth,
             m_flow_borehole,
             BHPipeType.SINGLEUTUBE,

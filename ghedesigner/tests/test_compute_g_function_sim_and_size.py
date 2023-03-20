@@ -15,7 +15,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         # -------------------
         h = 100.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
-        r_b = 150.0 / 1000.0 / 2.0  # Borehole radius]
+        dia = 150.0 / 1000.0  # Borehole diameter
         b = 5.0  # Borehole spacing (m)
 
         # Pipe dimensions
@@ -70,7 +70,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Define a borehole
-        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # Simulation start month and end month
         # --------------------------------
