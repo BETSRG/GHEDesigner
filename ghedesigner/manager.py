@@ -11,7 +11,7 @@ from ghedesigner.borehole import GHEBorehole
 from ghedesigner.constants import DEG_TO_RAD
 from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle, DesignBiRectangle
 from ghedesigner.design import DesignBiZoned, DesignBiRectangleConstrained, DesignRowWise
-from ghedesigner.enums import BHPipeType, DesignMethodTimeStep, DesignGeomType
+from ghedesigner.enums import BHPipeType, DesignMethodTimeStep, DesignGeomType, FlowConfig
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
 from ghedesigner.geometry import GeometricConstraintsBiRectangle, GeometricConstraintsBiZoned
 from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained, GeometricConstraintsRowWise
@@ -325,13 +325,21 @@ class GHEManager:
                                                                   min_rotation, max_rotation, rotate_step,
                                                                   property_boundary, no_go_boundaries)
 
-    def set_design(self, flow_rate: float, flow_type: str):
+    def set_design(self, flow_rate: float, flow_type_str: str):
         """
         Set the design method.
 
         :param flow_rate: design flow rate, in lps.
-        :param flow_type: flow type string input.
+        :param flow_type_str: flow type string input.
         """
+
+        flow_type_str = flow_type_str.upper()
+        if flow_type_str == FlowConfig.SYSTEM.name:
+            flow_type = FlowConfig.SYSTEM
+        elif flow_type_str == FlowConfig.BOREHOLE.name:
+            flow_type = FlowConfig.BOREHOLE
+        else:
+            raise ValueError(f"FlowConfig \"{flow_type_str}\" is not implemented.")
 
         if self._geometric_constraints.type is None:
             raise ValueError("Geometric constraints must be set before set_design is called.")
@@ -708,7 +716,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
 
     ghe.set_design(
         flow_rate=design_props["flow_rate"],
-        flow_type=design_props["flow_type"]
+        flow_type_str=design_props["flow_type"]
     )
 
     ghe.find_design()

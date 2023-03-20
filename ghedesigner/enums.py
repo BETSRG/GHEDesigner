@@ -2,20 +2,20 @@ from enum import Enum, auto
 
 
 class BHPipeType(Enum):
-    SINGLEUTUBE = auto()
+    COAXIAL = auto()
     DOUBLEUTUBEPARALLEL = auto()
     DOUBLEUTUBESERIES = auto()
-    COAXIAL = auto()
+    SINGLEUTUBE = auto()
 
 
-class FlowConfig(Enum):
+class DoubleUTubeConnType(Enum):
     PARALLEL = auto()
     SERIES = auto()
 
 
 class DesignMethodTimeStep(Enum):
-    HYBRID = auto()
     HOURLY = auto()
+    HYBRID = auto()
 
 
 class DesignGeomType(Enum):
@@ -25,3 +25,8 @@ class DesignGeomType(Enum):
     NEARSQUARE = auto()
     RECTANGLE = auto()
     ROWWISE = auto()
+
+
+class FlowConfig(Enum):
+    BOREHOLE = auto()
+    SYSTEM = auto()

@@ -18,7 +18,7 @@ class TestNearSquare(GHEBaseTest):
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_near_square(b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "system" flow?
-        ghe.set_design(flow_rate=31.2, flow_type="system")
+        ghe.set_design(flow_rate=31.2, flow_type_str="system")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestDesignSelectionSystem"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
@@ -42,7 +42,7 @@ class TestNearSquare(GHEBaseTest):
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_near_square(b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "borehole" flow?
-        ghe.set_design(flow_rate=0.2, flow_type="borehole")
+        ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestDesignSelectionBorehole"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")

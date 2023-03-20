@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from ghedesigner.borehole_heat_exchangers import GHEBorehole
-from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
+from ghedesigner.enums import BHPipeType, DesignMethodTimeStep, FlowConfig
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Grout, Pipe, Soil, GHEFluid
@@ -28,7 +28,7 @@ class Bisection1D:
             sim_params: SimulationParameters,
             hourly_extraction_ground_loads: list,
             method: DesignMethodTimeStep,
-            flow: str = "borehole",
+            flow_type: FlowConfig.BOREHOLE,
             max_iter=15,
             disp=False,
             search=True,
@@ -47,7 +47,7 @@ class Bisection1D:
         self.field_type = field_type
         # Flow rate tracking
         self.V_flow = v_flow
-        self.flow = flow
+        self.flow_type = flow_type
         v_flow_system, m_flow_borehole = self.retrieve_flow(coordinates, fluid.rho)
         self.method = method
 
@@ -103,11 +103,11 @@ class Bisection1D:
             self.selection_key, self.selected_coordinates = self.search()
 
     def retrieve_flow(self, coordinates, rho):
-        if self.flow == "borehole":
+        if self.flow_type == FlowConfig.BOREHOLE:
             v_flow_system = self.V_flow * len(coordinates)
             # Total fluid mass flow rate per borehole (kg/s)
             m_flow_borehole = self.V_flow / 1000.0 * rho
-        elif self.flow == "system":
+        elif self.flow_type == FlowConfig.SYSTEM:
             v_flow_system = self.V_flow
             v_flow_borehole = self.V_flow / len(coordinates)
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
@@ -343,7 +343,7 @@ class RowWiseModifiedBisectionSearch:
             hourly_extraction_ground_loads: list,
             geometric_constraints,
             method: DesignMethodTimeStep,
-            flow: str = "borehole",
+            flow: FlowConfig.BOREHOLE,
             max_iter: int = 10,
             disp: bool = False,
             search: bool = True,
@@ -367,7 +367,7 @@ class RowWiseModifiedBisectionSearch:
         self.fieldType = field_type
         # Flow rate tracking
         self.V_flow = v_flow
-        self.flow = flow
+        self.flow_type = flow
         self.method = method
         self.log_time = eskilson_log_times()
         self.bhe_type = bhe_type
@@ -386,11 +386,11 @@ class RowWiseModifiedBisectionSearch:
                                 field_specifier=self.selected_specifier)
 
     def retrieve_flow(self, coordinates, rho):
-        if self.flow == "borehole":
+        if self.flow_type == FlowConfig.BOREHOLE:
             v_flow_system = self.V_flow * len(coordinates)
             # Total fluid mass flow rate per borehole (kg/s)
             m_flow_borehole = self.V_flow / 1000.0 * rho
-        elif self.flow == "system":
+        elif self.flow_type == FlowConfig.SYSTEM:
             v_flow_system = self.V_flow
             v_flow_borehole = self.V_flow / len(coordinates)
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
@@ -770,7 +770,7 @@ class Bisection2D(Bisection1D):
             sim_params: SimulationParameters,
             hourly_extraction_ground_loads: list,
             method: DesignMethodTimeStep,
-            flow: str = "borehole",
+            flow_type: FlowConfig.BOREHOLE,
             max_iter=15,
             disp=False,
             field_type="N/A",
@@ -796,7 +796,7 @@ class Bisection2D(Bisection1D):
             sim_params,
             hourly_extraction_ground_loads,
             method=method,
-            flow=flow,
+            flow_type=flow_type,
             max_iter=max_iter,
             disp=disp,
             search=False,
@@ -844,7 +844,7 @@ class BisectionZD(Bisection1D):
             sim_params: SimulationParameters,
             hourly_extraction_ground_loads: list,
             method: DesignMethodTimeStep,
-            flow: str = "borehole",
+            flow_type: FlowConfig.BOREHOLE,
             max_iter=15,
             disp=False,
             field_type="N/A",
@@ -870,7 +870,7 @@ class BisectionZD(Bisection1D):
             sim_params,
             hourly_extraction_ground_loads,
             method=method,
-            flow=flow,
+            flow_type=flow_type,
             max_iter=max_iter,
             disp=disp,
             search=False,

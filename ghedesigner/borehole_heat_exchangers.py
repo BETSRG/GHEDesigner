@@ -8,7 +8,7 @@ from numpy import pi, log, sqrt
 
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.constants import TWO_PI
-from ghedesigner.enums import BHPipeType, FlowConfig
+from ghedesigner.enums import BHPipeType, DoubleUTubeConnType
 from ghedesigner.media import GHEFluid, Pipe, Grout, Soil
 from ghedesigner.utilities import solve_root
 
@@ -124,10 +124,10 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
 class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
 
     @staticmethod
-    def calc_mass_flow_pipe(m_flow_borehole: float, config: Optional[FlowConfig] = None) -> float:
-        if config == FlowConfig.SERIES or config is None:
+    def calc_mass_flow_pipe(m_flow_borehole: float, config: Optional[DoubleUTubeConnType] = None) -> float:
+        if config == DoubleUTubeConnType.SERIES or config is None:
             return m_flow_borehole
-        elif config == FlowConfig.PARALLEL:
+        elif config == DoubleUTubeConnType.PARALLEL:
             return m_flow_borehole / 2.0
         else:
             raise ValueError(f"Invalid flow configuration: {str(config)}")
@@ -231,7 +231,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
             pipe: Pipe,
             grout: Grout,
             soil: Soil,
-            config=FlowConfig.PARALLEL,
+            config=DoubleUTubeConnType.PARALLEL,
     ):
         self.R_p = 0.0
         self.R_f = 0.0
@@ -505,9 +505,10 @@ def get_bhe_object(bhe_type: BHPipeType, m_flow_borehole: float, fluid: GHEFluid
     if bhe_type == BHPipeType.SINGLEUTUBE:
         return SingleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
     elif bhe_type == BHPipeType.DOUBLEUTUBEPARALLEL:
-        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=FlowConfig.PARALLEL)
+        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil,
+                             config=DoubleUTubeConnType.PARALLEL)
     elif bhe_type == BHPipeType.DOUBLEUTUBESERIES:
-        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=FlowConfig.SERIES)
+        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=DoubleUTubeConnType.SERIES)
     elif bhe_type == BHPipeType.COAXIAL:
         return CoaxialPipe(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
     else:

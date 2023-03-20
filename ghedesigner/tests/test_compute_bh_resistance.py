@@ -1,6 +1,6 @@
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, SingleUTube
-from ghedesigner.enums import FlowConfig
+from ghedesigner.enums import DoubleUTubeConnType
 from ghedesigner.media import Pipe, Grout, GHEFluid, Soil
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
@@ -116,7 +116,8 @@ class TestBHResistance(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho  # mass flow rate (kg/s)
 
         # Series
-        double_u_tube_series = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, FlowConfig.SERIES)
+        double_u_tube_series = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil,
+                                             DoubleUTubeConnType.SERIES)
         r_b_series = double_u_tube_series.calc_effective_borehole_resistance()
         re = MultipleUTube.compute_reynolds(double_u_tube_series.m_flow_pipe, r_in, fluid)
         m_dot = double_u_tube_series.m_flow_pipe
@@ -138,7 +139,8 @@ class TestBHResistance(GHEBaseTest):
         self.assertTrue(self.rel_error_within_tol(r_b_series, 0.1624, 0.01))
 
         # Parallel
-        double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, FlowConfig.PARALLEL)
+        double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil,
+                                               DoubleUTubeConnType.PARALLEL)
         r_b_parallel = double_u_tube_parallel.calc_effective_borehole_resistance()
         re = MultipleUTube.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
         m_dot = double_u_tube_parallel.m_flow_pipe
