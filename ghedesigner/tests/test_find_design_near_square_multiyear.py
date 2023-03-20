@@ -27,7 +27,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         ghe.set_ground_loads_from_hourly_list(self.get_multiyear_loads())
         ghe.set_geometry_constraints_near_square(b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "borehole" flow?
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.NearSquare)
+        ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindNearSquareMultiyearDesignSingleU"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
@@ -50,7 +50,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         ghe.set_ground_loads_from_hourly_list(self.get_multiyear_loads())
         ghe.set_geometry_constraints_near_square(b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "borehole" flow?
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.NearSquare)
+        ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindNearSquareMultiyearDesignDoubleU"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
@@ -73,7 +73,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         ghe.set_ground_loads_from_hourly_list(self.get_multiyear_loads())
         ghe.set_geometry_constraints_near_square(b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "borehole" flow?
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.NearSquare)
+        ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindNearSquareMultiyearDesignCoaxial"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")

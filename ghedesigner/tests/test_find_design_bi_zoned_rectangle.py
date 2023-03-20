@@ -25,7 +25,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_zoned_rectangle(length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiZonedRectangle)
+        ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiZonedRectangleDesignSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
@@ -47,7 +47,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_zoned_rectangle(length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiZonedRectangle)
+        ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiZonedRectangleDesignDoubleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
@@ -69,7 +69,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_zoned_rectangle(length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiZonedRectangle)
+        ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindZonedBiRectangleDesignCoaxial"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")

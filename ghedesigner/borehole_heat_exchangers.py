@@ -8,7 +8,7 @@ from numpy import pi, log, sqrt
 
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.constants import TWO_PI
-from ghedesigner.enums import BHPipeType, FlowConfig
+from ghedesigner.enums import BHPipeType, DoubleUTubeConnType
 from ghedesigner.media import GHEFluid, Pipe, Grout, Soil
 from ghedesigner.utilities import solve_root
 
@@ -51,20 +51,6 @@ class GHEDesignerBoreholeBase:
         vol_flow_rate = m_flow_pipe / fluid.rho
         area_cr_inner = pi * r_in ** 2
         velocity = vol_flow_rate / area_cr_inner
-        # Reynolds number
-        return fluid.rho * velocity * dia_hydraulic / fluid.mu
-
-    @staticmethod
-    def compute_reynolds_concentric(m_flow_pipe: float, r_a_in: float, r_a_out: float, fluid: GHEFluid) -> float:
-        # Hydraulic diameter and radius for concentric tube annulus region
-        dia_hydraulic = 2 * (r_a_out - r_a_in)
-        # r_h = dia_hydraulic / 2
-        # Cross-sectional area of the annulus region
-        area_cr_annular = pi * ((r_a_out ** 2) - (r_a_in ** 2))
-        # Volume flow rate
-        vol_flow_rate = m_flow_pipe / fluid.rho
-        # Average velocity
-        velocity = vol_flow_rate / area_cr_annular
         # Reynolds number
         return fluid.rho * velocity * dia_hydraulic / fluid.mu
 
@@ -138,10 +124,10 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
 class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
 
     @staticmethod
-    def calc_mass_flow_pipe(m_flow_borehole: float, config: Optional[FlowConfig] = None) -> float:
-        if config == FlowConfig.Series or config is None:
+    def calc_mass_flow_pipe(m_flow_borehole: float, config: Optional[DoubleUTubeConnType] = None) -> float:
+        if config == DoubleUTubeConnType.SERIES or config is None:
             return m_flow_borehole
-        elif config == FlowConfig.Parallel:
+        elif config == DoubleUTubeConnType.PARALLEL:
             return m_flow_borehole / 2.0
         else:
             raise ValueError(f"Invalid flow configuration: {str(config)}")
@@ -245,7 +231,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
             pipe: Pipe,
             grout: Grout,
             soil: Soil,
-            config=FlowConfig.Parallel,
+            config=DoubleUTubeConnType.PARALLEL,
     ):
         self.R_p = 0.0
         self.R_f = 0.0
@@ -468,17 +454,32 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
 
         return new_single_u_tube
 
+    @staticmethod
+    def compute_reynolds_concentric(m_flow_pipe: float, r_a_in: float, r_a_out: float, fluid: GHEFluid) -> float:
+        # Hydraulic diameter and radius for concentric tube annulus region
+        dia_hydraulic = 2 * (r_a_out - r_a_in)
+        # r_h = dia_hydraulic / 2
+        # Cross-sectional area of the annulus region
+        area_cr_annular = pi * ((r_a_out ** 2) - (r_a_in ** 2))
+        # Volume flow rate
+        vol_flow_rate = m_flow_pipe / fluid.rho
+        # Average velocity
+        velocity = vol_flow_rate / area_cr_annular
+        # Reynolds number
+        return fluid.rho * velocity * dia_hydraulic / fluid.mu
+
     def as_dict(self) -> dict:
         blob = dict()
         blob['type'] = str(self.__class__)
         blob['mass_flow_borehole'] = {'value': self.m_flow_borehole, 'units': 'kg/s'}
-        blob['mass_flow_pipe'] = {'value': self.m_flow_pipe, 'units': 'kg/s'}
+        blob['mass_flow_pipe'] = {'value': self.m_flow_borehole, 'units': 'kg/s'}
         # blob['borehole'] = self.as_dict()
         blob['soil'] = self.soil.as_dict()
         blob['grout'] = self.grout.as_dict()
         blob['pipe'] = self.pipe.as_dict()
         # blob['fluid'] = self.fluid.as_dict()
-        reynold_no = self.compute_reynolds_concentric(self.m_flow_pipe, self.pipe.r_in, self.pipe.roughness, self.fluid)
+        reynold_no = self.compute_reynolds_concentric(self.m_flow_borehole, self.pipe.r_in, self.pipe.roughness,
+                                                      self.fluid)
         blob['reynolds'] = {'value': reynold_no, 'units': ''}
         # blob['convection_coefficient'] = {'value': self.h_f, 'units': 'W/m2-K'}
         # blob['pipe_resistance'] = {'value': self.R_p, 'units': 'm-K/W'}
@@ -501,13 +502,14 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
 
 def get_bhe_object(bhe_type: BHPipeType, m_flow_borehole: float, fluid: GHEFluid,
                    _borehole: GHEBorehole, pipe: Pipe, grout: Grout, soil: Soil):
-    if bhe_type == BHPipeType.SingleUType:
+    if bhe_type == BHPipeType.SINGLEUTUBE:
         return SingleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
-    elif bhe_type == BHPipeType.DoubleUTypeParallel:
-        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=FlowConfig.Parallel)
-    elif bhe_type == BHPipeType.DoubleUTypeSeries:
-        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=FlowConfig.Series)
-    elif bhe_type == BHPipeType.CoaxialType:
+    elif bhe_type == BHPipeType.DOUBLEUTUBEPARALLEL:
+        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil,
+                             config=DoubleUTubeConnType.PARALLEL)
+    elif bhe_type == BHPipeType.DOUBLEUTUBESERIES:
+        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=DoubleUTubeConnType.SERIES)
+    elif bhe_type == BHPipeType.COAXIAL:
         return CoaxialPipe(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
     else:
         raise TypeError("BHE type not implemented")

@@ -1,7 +1,7 @@
 from json import loads
 
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
+from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.gfunction import GFunction
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
@@ -99,7 +99,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         ghe = GHE(
             v_flow_system,
             b,
-            BHPipeType.SingleUType,
+            BHPipeType.SINGLEUTUBE,
             fluid,
             borehole,
             pipe,
@@ -110,7 +110,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
             hourly_extraction_ground_loads,
         )
 
-        ghe.size(DesignMethodTimeStep.Hybrid)
+        ghe.size(TimestepType.HYBRID)
 
         calculation_details = "GLHEPRO_gFunctions_12x13.json".split(".")[0]
         self.log(calculation_details)

@@ -1,7 +1,7 @@
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube, MultipleUTube, CoaxialPipe
 from ghedesigner.coordinates import rectangle
-from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
+from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
@@ -140,7 +140,7 @@ class TestGHE(GHEBaseTest):
             self.r_b,
             self.bh_depth,
             self.m_flow_borehole,
-            BHPipeType.SingleUType,
+            BHPipeType.SINGLEUTUBE,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -153,7 +153,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.V_flow_system,
             self.B,
-            BHPipeType.SingleUType,
+            BHPipeType.SINGLEUTUBE,
             self.fluid,
             borehole,
             self.pipe_s,
@@ -164,12 +164,12 @@ class TestGHE(GHEBaseTest):
             self.hourly_extraction_ground_loads,
         )
 
-        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethodTimeStep.Hybrid)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HYBRID)
 
         self.assertAlmostEqual(39.07, max_hp_eft, delta=0.01)
         self.assertAlmostEqual(16.66, min_hp_eft, delta=0.01)
 
-        ghe.size(method=DesignMethodTimeStep.Hybrid)
+        ghe.size(method=TimestepType.HYBRID)
 
         self.assertAlmostEqual(ghe.bhe.b.H, 130.24, delta=0.01)
 
@@ -184,7 +184,7 @@ class TestGHE(GHEBaseTest):
             self.r_b,
             self.bh_depth,
             self.m_flow_borehole,
-            BHPipeType.DoubleUTypeParallel,
+            BHPipeType.DOUBLEUTUBEPARALLEL,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -197,7 +197,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.V_flow_system,
             self.B,
-            BHPipeType.DoubleUTypeParallel,
+            BHPipeType.DOUBLEUTUBEPARALLEL,
             self.fluid,
             borehole,
             self.pipe_d,
@@ -208,12 +208,12 @@ class TestGHE(GHEBaseTest):
             self.hourly_extraction_ground_loads,
         )
 
-        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethodTimeStep.Hybrid)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HYBRID)
 
         self.assertAlmostEqual(37.97, max_hp_eft, delta=0.01)
         self.assertAlmostEqual(16.95, min_hp_eft, delta=0.01)
 
-        ghe.size(method=DesignMethodTimeStep.Hybrid)
+        ghe.size(method=TimestepType.HYBRID)
 
         self.assertAlmostEqual(ghe.bhe.b.H, 122.10, delta=0.01)
 
@@ -228,7 +228,7 @@ class TestGHE(GHEBaseTest):
             self.r_b,
             self.bh_depth,
             self.m_flow_borehole,
-            BHPipeType.CoaxialType,
+            BHPipeType.COAXIAL,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -241,7 +241,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.V_flow_system,
             self.B,
-            BHPipeType.CoaxialType,
+            BHPipeType.COAXIAL,
             self.fluid,
             borehole,
             self.pipe_c,
@@ -252,11 +252,11 @@ class TestGHE(GHEBaseTest):
             self.hourly_extraction_ground_loads,
         )
 
-        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethodTimeStep.Hybrid)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HYBRID)
 
         self.assertAlmostEqual(38.04, max_hp_eft, delta=0.01)
         self.assertAlmostEqual(17.18, min_hp_eft, delta=0.01)
 
-        ghe.size(method=DesignMethodTimeStep.Hybrid)
+        ghe.size(method=TimestepType.HYBRID)
 
         self.assertAlmostEqual(ghe.bhe.b.H, 124.79, delta=0.01)

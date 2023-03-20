@@ -1,7 +1,7 @@
 {
   "version": "0.5",
   "fluid": {
-    "fluid_name": "Water",
+    "fluid_name": "WATER",
     "concentration_percent": 0.0,
     "temperature": 20
   },
@@ -21,7 +21,7 @@
     "roughness": 0.000001,
     "conductivity": 0.4,
     "rho_cp": 1542000,
-    "arrangement": "singleutube"
+    "arrangement": "SINGLEUTUBE"
   },
   "borehole": {
     "buried_depth": 2.0,
@@ -70,11 +70,11 @@
       [95.58016878, 110],
       [95.7964135, 81.7721519]
     ]],
-    "method": "birectangleconstrained"
+    "method": "BIRECTANGLECONSTRAINED"
   },
   "design": {
     "flow_rate": 0.2,
-    "flow_type": "borehole",
+    "flow_type": "BOREHOLE",
     "max_eft": 35.0,
     "min_eft": 5.0
   },

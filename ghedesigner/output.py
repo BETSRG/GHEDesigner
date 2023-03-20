@@ -7,9 +7,9 @@ from json import dumps
 from math import floor
 from pathlib import Path
 
-from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase
+from ghedesigner.borehole_heat_exchangers import CoaxialPipe, GHEDesignerBoreholeBase
 from ghedesigner.design import AnyBisectionType
-from ghedesigner.enums import DesignMethodTimeStep
+from ghedesigner.enums import TimestepType
 
 
 class OutputManager:
@@ -21,9 +21,8 @@ class OutputManager:
                  notes: str,
                  author: str,
                  model_name: str,
-                 load_method: DesignMethodTimeStep,
+                 load_method: TimestepType,
                  allocated_width=100,
-                 rounding_amount=10,
                  ):
 
         # this constructor should take all the args to build out a full output manager
@@ -32,9 +31,8 @@ class OutputManager:
         # make individual hidden worker functions to build out each part
         # but then add individual public functions to write specific files
         # have one routine to write all of them
-        self.text_summary = self.get_summary_text(
-            rounding_amount, allocated_width, project_name, model_name, notes, author, time, design, load_method
-        )
+        self.text_summary = self.get_summary_text(allocated_width, project_name, model_name, notes, author, time,
+                                                  design, load_method)
         self.loading_data_rows = self.get_loading_data(design)
         self.borehole_location_data_rows = self.get_borehole_location_data(design)
         self.hourly_loading_data_rows = self.get_hourly_loading_data(design)
@@ -146,6 +144,15 @@ class OutputManager:
             csv_array.append([log_val, g_val])
         return csv_array
 
+    @staticmethod
+    def get_timestep_str(load_method: TimestepType):
+        if load_method == TimestepType.HYBRID:
+            return TimestepType.HYBRID.name
+        if load_method == TimestepType.HOURLY:
+            return TimestepType.HOURLY.name
+        warnings.warn("Load method not implemented")
+        return ""
+
     def get_summary_object(self,
                            design: AnyBisectionType,
                            time: float,
@@ -153,7 +160,7 @@ class OutputManager:
                            notes: str,
                            author: str,
                            model_name: str,
-                           load_method: DesignMethodTimeStep) -> dict:
+                           load_method: TimestepType) -> dict:
         # gFunction LTS Table
         g_function_col_titles = ["ln(t/ts)"]
         for g_function_name in list(design.ghe.gFunction.g_lts):
@@ -186,10 +193,10 @@ class OutputManager:
                 'outer_pipe_inner_radius': add_with_units(design.ghe.bhe.pipe.r_in[0], 'm'),
                 'inner_pipe_inner_radius': add_with_units(design.ghe.bhe.pipe.r_in[1], 'm'),
             }
-            reynolds = GHEDesignerBoreholeBase.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
-                                                                           design.ghe.bhe.r_in_out,
-                                                                           design.ghe.bhe.r_out_in,
-                                                                           design.ghe.bhe.fluid)
+            reynolds = CoaxialPipe.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
+                                                               design.ghe.bhe.r_in_out,
+                                                               design.ghe.bhe.r_out_in,
+                                                               design.ghe.bhe.fluid)
         # build out the actual output dictionary
         output_dict = {
             'project_name': project_name,
@@ -244,7 +251,7 @@ class OutputManager:
                 'maximum_allowable_height': add_with_units(design.ghe.sim_params.max_height, 'm'),
                 'minimum_allowable_height': add_with_units(design.ghe.sim_params.min_height, 'm'),
                 'simulation_time': add_with_units(int(design.ghe.sim_params.end_month / 12), 'years'),
-                'simulation_load_method': "hybrid" if load_method == DesignMethodTimeStep.Hybrid else "hourly"
+                'simulation_load_method': self.get_timestep_str(load_method)
             },
             'simulation_results': {
 
@@ -342,7 +349,7 @@ class OutputManager:
 
         return output_dict
 
-    def get_summary_text(self, n_round, width, project_name, model_name, notes, author, time, design, load_method):
+    def get_summary_text(self, width, project_name, model_name, notes, author, time, design, load_method):
 
         f_int = ".0f"
         f_1f = ".1f"
@@ -446,10 +453,10 @@ class OutputManager:
         else:
 
             o += self.d_row(width, "Reynold's Number:",
-                            GHEDesignerBoreholeBase.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
-                                                                                design.ghe.bhe.r_in_out,
-                                                                                design.ghe.bhe.r_out_in,
-                                                                                design.ghe.bhe.fluid),
+                            CoaxialPipe.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
+                                                                    design.ghe.bhe.r_in_out,
+                                                                    design.ghe.bhe.r_out_in,
+                                                                    design.ghe.bhe.fluid),
                             f_int, n_tabs=1)
 
         o += self.d_row(width, "Effective Borehole Resistance, W/(m-K):",
@@ -516,7 +523,7 @@ class OutputManager:
         o += self.d_row(width, "Maximum Allowable Height, m: ", design.ghe.sim_params.max_height, f_2f)
         o += self.d_row(width, "Minimum Allowable Height, m: ", design.ghe.sim_params.min_height, f_2f)
         o += self.d_row(width, "Simulation Time, years: ", int(design.ghe.sim_params.end_month / 12), f_int)
-        load_method_string = "hybrid" if load_method == DesignMethodTimeStep.Hybrid else "hourly"  # TODO: Use a method in the enum
+        load_method_string = self.get_timestep_str(load_method)
         o += self.d_row(width, "Simulation Loading Type: ", load_method_string, f_str)
 
         o += empty_line

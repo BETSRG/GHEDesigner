@@ -60,7 +60,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.set_geometry_constraints_bi_rectangle_constrained(
             b_min=5.0, b_max_x=25.0, b_max_y=25.0,
             property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiRectangleConstrained)
+        ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiRectangleConstrainedDesignSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
@@ -84,7 +84,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.set_geometry_constraints_bi_rectangle_constrained(
             b_min=5.0, b_max_x=25.0, b_max_y=25.0,
             property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiRectangleConstrained)
+        ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiRectangleConstrainedDesignDoubleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
@@ -108,7 +108,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.set_geometry_constraints_bi_rectangle_constrained(
             b_min=5.0, b_max_x=25.0, b_max_y=25.0,
             property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiRectangleConstrained)
+        ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiRectangleConstrainedDesignCoaxial"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")

@@ -1,8 +1,16 @@
+from abc import abstractmethod
+
 from ghedesigner.constants import RAD_TO_DEG
+from ghedesigner.enums import DesignGeomType
 
 
 class GeometricConstraints:
-    pass  # TODO: Pull in common functionality!
+    def __init__(self):
+        self.type = None
+
+    @abstractmethod
+    def to_input(self):
+        pass
 
 
 class GeometricConstraintsNearSquare(GeometricConstraints):
@@ -14,11 +22,12 @@ class GeometricConstraintsNearSquare(GeometricConstraints):
         super().__init__()
         self.b = b
         self.length = length
+        self.type = DesignGeomType.NEARSQUARE
 
     def to_input(self) -> dict:
         return {'length': self.length,
                 'b': self.b,
-                'method': 'nearsquare'}
+                'method': DesignGeomType.NEARSQUARE.name}
 
 
 class GeometricConstraintsRectangle(GeometricConstraints):
@@ -32,13 +41,14 @@ class GeometricConstraintsRectangle(GeometricConstraints):
         self.length = length
         self.b_min = b_min
         self.b_max_x = b_max_x
+        self.type = DesignGeomType.RECTANGLE
 
     def to_input(self) -> dict:
         return {'length': self.length,
                 'width': self.width,
                 'b_min': self.b_min,
                 'b_max': self.b_max_x,
-                'method': 'rectangle'}
+                'method': DesignGeomType.RECTANGLE.name}
 
 
 class GeometricConstraintsBiRectangle(GeometricConstraints):
@@ -53,6 +63,7 @@ class GeometricConstraintsBiRectangle(GeometricConstraints):
         self.b_min = b_min
         self.b_max_x = b_max_x
         self.b_max_y = b_max_y
+        self.type = DesignGeomType.BIRECTANGLE
 
     def to_input(self) -> dict:
         return {'length': self.length,
@@ -60,7 +71,7 @@ class GeometricConstraintsBiRectangle(GeometricConstraints):
                 'b_min': self.b_min,
                 'b_max_x': self.b_max_x,
                 'b_max_y': self.b_max_y,
-                'method': 'birectangle'}
+                'method': DesignGeomType.BIRECTANGLE.name}
 
 
 class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
@@ -75,6 +86,7 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
         self.b_max_y = b_max_y
         self.property_boundary = property_boundary
         self.no_go_boundaries = no_go_boundaries
+        self.type = DesignGeomType.BIRECTANGLECONSTRAINED
 
     def to_input(self) -> dict:
         return {'b_min': self.b_min,
@@ -82,7 +94,7 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
                 'b_max_y': self.b_max_y,
                 'property_boundary': self.property_boundary,
                 'no_go_boundaries': self.no_go_boundaries,
-                'method': 'birectangleconstrained'}
+                'method': DesignGeomType.BIRECTANGLECONSTRAINED.name}
 
 
 class GeometricConstraintsBiZoned(GeometricConstraintsBiRectangle):
@@ -92,6 +104,7 @@ class GeometricConstraintsBiZoned(GeometricConstraintsBiRectangle):
 
     def __init__(self, width: float, length: float, b_min: float, b_max_x: float, b_max_y: float):
         super().__init__(width, length, b_min, b_max_x, b_max_y)
+        self.type = DesignGeomType.BIZONEDRECTANGLE
 
     def to_input(self) -> dict:
         return {'length': self.length,
@@ -99,7 +112,7 @@ class GeometricConstraintsBiZoned(GeometricConstraintsBiRectangle):
                 'b_min': self.b_min,
                 'b_max_x': self.b_max_x,
                 'b_max_y': self.b_max_y,
-                'method': 'bizonedrectangle'}
+                'method': DesignGeomType.BIZONEDRECTANGLE.name}
 
 
 class GeometricConstraintsRowWise(GeometricConstraints):
@@ -127,6 +140,7 @@ class GeometricConstraintsRowWise(GeometricConstraints):
         self.rotate_step = rotate_step
         self.property_boundary = property_boundary
         self.no_go_boundaries = no_go_boundaries
+        self.type = DesignGeomType.ROWWISE
 
     def to_input(self) -> dict:
         return {'perimeter_spacing_ratio': self.perimeter_spacing_ratio,
@@ -138,4 +152,4 @@ class GeometricConstraintsRowWise(GeometricConstraints):
                 'rotate_step': self.rotate_step,
                 'property_boundary': self.property_boundary,
                 'no_go_boundaries': self.no_go_boundaries,
-                'method': 'rowwise'}
+                'method': DesignGeomType.ROWWISE.name}
