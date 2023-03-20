@@ -5,7 +5,7 @@ from typing import Union
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.domains import polygonal_land_constraint, bi_rectangle_nested
 from ghedesigner.domains import square_and_near_square, rectangular, bi_rectangle_zoned_nested
-from ghedesigner.enums import BHPipeType, DesignMethodTimeStep, FlowConfig
+from ghedesigner.enums import BHPipeType, TimestepType, FlowConfigType
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsBiRectangle
 from ghedesigner.geometry import GeometricConstraintsBiZoned, GeometricConstraintsBiRectangleConstrained
 from ghedesigner.geometry import GeometricConstraintsNearSquare, GeometricConstraintsRectangle
@@ -30,8 +30,8 @@ class DesignBase:
             sim_params: SimulationParameters,
             geometric_constraints: GeometricConstraints,
             hourly_extraction_ground_loads: list,
-            method: DesignMethodTimeStep,
-            flow_type: FlowConfig = FlowConfig.BOREHOLE,
+            method: TimestepType,
+            flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
             load_years=None
     ):
         if load_years is None:
@@ -76,7 +76,7 @@ class DesignNearSquare(DesignBase):
     def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
                  fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsNearSquare, hourly_extraction_ground_loads: list,
-                 method: DesignMethodTimeStep, flow_type: FlowConfig = FlowConfig.BOREHOLE, load_years=None):
+                 method: TimestepType, flow_type: FlowConfigType = FlowConfigType.BOREHOLE, load_years=None):
         super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow_type, load_years)
         self.geometric_constraints = geometric_constraints
@@ -119,7 +119,7 @@ class DesignRectangle(DesignBase):
     def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
                  fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsRectangle, hourly_extraction_ground_loads: list,
-                 method: DesignMethodTimeStep, flow_type: FlowConfig = FlowConfig.BOREHOLE, load_years=None):
+                 method: TimestepType, flow_type: FlowConfigType = FlowConfigType.BOREHOLE, load_years=None):
         super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow_type, load_years)
         self.geometric_constraints = geometric_constraints
@@ -155,7 +155,7 @@ class DesignBiRectangle(DesignBase):
     def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
                  fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsBiRectangle, hourly_extraction_ground_loads: list,
-                 method: DesignMethodTimeStep, flow_type: FlowConfig = FlowConfig.BOREHOLE, load_years=None):
+                 method: TimestepType, flow_type: FlowConfigType = FlowConfigType.BOREHOLE, load_years=None):
         super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow_type, load_years)
         self.geometric_constraints = geometric_constraints
@@ -192,7 +192,7 @@ class DesignBiZoned(DesignBase):
     def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
                  fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsBiZoned, hourly_extraction_ground_loads: list,
-                 method: DesignMethodTimeStep, flow_type: FlowConfig = FlowConfig.BOREHOLE, load_years=None):
+                 method: TimestepType, flow_type: FlowConfigType = FlowConfigType.BOREHOLE, load_years=None):
         super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow_type, load_years)
         self.geometric_constraints = geometric_constraints
@@ -228,8 +228,8 @@ class DesignBiRectangleConstrained(DesignBase):
     def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
                  fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsBiRectangleConstrained,
-                 hourly_extraction_ground_loads: list, method: DesignMethodTimeStep,
-                 flow_type: FlowConfig = FlowConfig.BOREHOLE, load_years=None):
+                 hourly_extraction_ground_loads: list, method: TimestepType,
+                 flow_type: FlowConfigType = FlowConfigType.BOREHOLE, load_years=None):
         super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow_type, load_years)
         self.geometric_constraints = geometric_constraints
@@ -269,7 +269,7 @@ class DesignRowWise(DesignBase):
     def __init__(self, v_flow: float, _borehole: GHEBorehole, bhe_type: BHPipeType,
                  fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsRowWise, hourly_extraction_ground_loads: list,
-                 method: DesignMethodTimeStep, flow_type: FlowConfig = FlowConfig.BOREHOLE, load_years=None):
+                 method: TimestepType, flow_type: FlowConfigType = FlowConfigType.BOREHOLE, load_years=None):
         super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow_type, load_years)
         self.geometric_constraints = geometric_constraints

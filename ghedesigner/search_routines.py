@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from ghedesigner.borehole_heat_exchangers import GHEBorehole
-from ghedesigner.enums import BHPipeType, DesignMethodTimeStep, FlowConfig
+from ghedesigner.enums import BHPipeType, TimestepType, FlowConfigType
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Grout, Pipe, Soil, GHEFluid
@@ -27,8 +27,8 @@ class Bisection1D:
             soil: Soil,
             sim_params: SimulationParameters,
             hourly_extraction_ground_loads: list,
-            method: DesignMethodTimeStep,
-            flow_type: FlowConfig.BOREHOLE,
+            method: TimestepType,
+            flow_type: FlowConfigType.BOREHOLE,
             max_iter=15,
             disp=False,
             search=True,
@@ -103,11 +103,11 @@ class Bisection1D:
             self.selection_key, self.selected_coordinates = self.search()
 
     def retrieve_flow(self, coordinates, rho):
-        if self.flow_type == FlowConfig.BOREHOLE:
+        if self.flow_type == FlowConfigType.BOREHOLE:
             v_flow_system = self.V_flow * len(coordinates)
             # Total fluid mass flow rate per borehole (kg/s)
             m_flow_borehole = self.V_flow / 1000.0 * rho
-        elif self.flow_type == FlowConfig.SYSTEM:
+        elif self.flow_type == FlowConfigType.SYSTEM:
             v_flow_system = self.V_flow
             v_flow_borehole = self.V_flow / len(coordinates)
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
@@ -342,8 +342,8 @@ class RowWiseModifiedBisectionSearch:
             sim_params: SimulationParameters,
             hourly_extraction_ground_loads: list,
             geometric_constraints,
-            method: DesignMethodTimeStep,
-            flow: FlowConfig.BOREHOLE,
+            method: TimestepType,
+            flow: FlowConfigType.BOREHOLE,
             max_iter: int = 10,
             disp: bool = False,
             search: bool = True,
@@ -386,11 +386,11 @@ class RowWiseModifiedBisectionSearch:
                                 field_specifier=self.selected_specifier)
 
     def retrieve_flow(self, coordinates, rho):
-        if self.flow_type == FlowConfig.BOREHOLE:
+        if self.flow_type == FlowConfigType.BOREHOLE:
             v_flow_system = self.V_flow * len(coordinates)
             # Total fluid mass flow rate per borehole (kg/s)
             m_flow_borehole = self.V_flow / 1000.0 * rho
-        elif self.flow_type == FlowConfig.SYSTEM:
+        elif self.flow_type == FlowConfigType.SYSTEM:
             v_flow_system = self.V_flow
             v_flow_borehole = self.V_flow / len(coordinates)
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
@@ -637,7 +637,7 @@ class RowWiseModifiedBisectionSearch:
 
                 self.initialize_ghe(field, self.sim_params.max_height, field_specifier=f_s)
                 self.ghe.compute_g_functions()
-                self.ghe.size(method=DesignMethodTimeStep.HYBRID)
+                self.ghe.size(method=TimestepType.HYBRID)
                 total_drilling = self.ghe.bhe.b.H * len(field)
 
                 if best_field is None:
@@ -769,8 +769,8 @@ class Bisection2D(Bisection1D):
             soil: Soil,
             sim_params: SimulationParameters,
             hourly_extraction_ground_loads: list,
-            method: DesignMethodTimeStep,
-            flow_type: FlowConfig.BOREHOLE,
+            method: TimestepType,
+            flow_type: FlowConfigType.BOREHOLE,
             max_iter=15,
             disp=False,
             field_type="N/A",
@@ -843,8 +843,8 @@ class BisectionZD(Bisection1D):
             soil: Soil,
             sim_params: SimulationParameters,
             hourly_extraction_ground_loads: list,
-            method: DesignMethodTimeStep,
-            flow_type: FlowConfig.BOREHOLE,
+            method: TimestepType,
+            flow_type: FlowConfigType.BOREHOLE,
             max_iter=15,
             disp=False,
             field_type="N/A",
@@ -919,7 +919,7 @@ class BisectionZD(Bisection1D):
             self.calculated_temperatures_nested[i] = self.calculated_temperatures
 
             self.ghe.compute_g_functions()
-            self.ghe.size(method=DesignMethodTimeStep.HYBRID)
+            self.ghe.size(method=TimestepType.HYBRID)
 
             nbh = len(selected_coordinates)
             total_drilling = nbh * self.ghe.bhe.b.H
@@ -960,6 +960,6 @@ class BisectionZD(Bisection1D):
             ],
         )
         self.ghe.compute_g_functions()
-        self.ghe.size(method=DesignMethodTimeStep.HYBRID)
+        self.ghe.size(method=TimestepType.HYBRID)
 
         return selection_key, selected_coordinates

@@ -2,17 +2,33 @@ from math import cos, pi, sin
 
 from pygfunction.media import Fluid
 
+from ghedesigner.enums import FluidType
+
 
 class GHEFluid(Fluid):
 
     def __init__(self, fluid_str: str, percent: float, temperature: float = 20):
+
         fluid_str = fluid_str.upper()
+        if fluid_str == FluidType.ETHYLALCOHOL.name:
+            self.fluid_type = FluidType.ETHYLALCOHOL
+        elif fluid_str == FluidType.ETHYLENEGLYCOL.name:
+            self.fluid_type = FluidType.ETHYLENEGLYCOL
+        elif fluid_str == FluidType.METHYLALCOHOL.name:
+            self.fluid_type = FluidType.METHYLALCOHOL
+        elif fluid_str == FluidType.PROPYLENEGLYCOL.name:
+            self.fluid_type = FluidType.PROPYLENEGLYCOL
+        elif fluid_str == FluidType.WATER.name:
+            self.fluid_type = FluidType.WATER
+        else:
+            raise ValueError(f"FluidType \"{fluid_str}\" not implemented")
+
         fluid_map = {
-            "WATER": "WATER",
-            "ETHYLALCOHOL": "MEA",
-            "ETHYLENEGLYCOL": "MEG",
-            "METHYLALCOHOL": "MMA",
-            "PROPYLENEGLYCOL": "MPG"
+            FluidType.ETHYLALCOHOL.name: "MEA",
+            FluidType.ETHYLENEGLYCOL.name: "MEG",
+            FluidType.METHYLALCOHOL.name: "MMA",
+            FluidType.PROPYLENEGLYCOL.name: "MPG",
+            FluidType.WATER.name: "WATER"
         }
 
         super().__init__(fluid_map[fluid_str], percent, temperature)
@@ -20,7 +36,7 @@ class GHEFluid(Fluid):
         self.temperature = temperature
 
     def to_input(self):
-        return {'fluid_name': self.name,
+        return {'fluid_name': self.fluid_type.name,
                 'concentration_percent': self.concentration_percent,
                 'temperature': self.temperature}
 

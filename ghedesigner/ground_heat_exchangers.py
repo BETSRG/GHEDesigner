@@ -8,7 +8,7 @@ from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import get_bhe_object
 from ghedesigner.constants import TWO_PI
-from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
+from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ground_loads import HybridLoad
 from ghedesigner.media import Grout, Pipe, Soil
@@ -293,7 +293,7 @@ class GHE(BaseGHE):
 
         return output
 
-    def simulate(self, method: DesignMethodTimeStep):
+    def simulate(self, method: TimestepType):
         b = self.B_spacing
         b_over_h = b / self.bhe.b.H
 
@@ -305,14 +305,14 @@ class GHE(BaseGHE):
         # is interpolated for specific B/H and rb/H values.
         g = self.grab_g_function(b_over_h)
 
-        if method == DesignMethodTimeStep.HYBRID:
+        if method == TimestepType.HYBRID:
             q_dot = self.hybrid_load.load[2:] * 1000.0  # convert to Watts
             time_values = self.hybrid_load.hour[2:]  # convert to seconds
             self.times = time_values
             self.loading = q_dot
 
             hp_eft, d_tb = self._simulate_detailed(q_dot, time_values, g)
-        elif method == DesignMethodTimeStep.HOURLY:
+        elif method == TimestepType.HOURLY:
             n_months = self.sim_params.end_month - self.sim_params.start_month + 1
             n_hours = int(n_months / 12.0 * 8760.0)
             q_dot = self.hourly_extraction_ground_loads
@@ -338,7 +338,7 @@ class GHE(BaseGHE):
 
         return max(hp_eft), min(hp_eft)
 
-    def size(self, method: DesignMethodTimeStep) -> None:
+    def size(self, method: TimestepType) -> None:
         # Size the ground heat exchanger
         def local_objective(h):
             self.bhe.b.H = h

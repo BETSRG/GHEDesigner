@@ -1,6 +1,6 @@
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.coordinates import rectangle
-from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
+from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
 from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
@@ -133,7 +133,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         )
 
         # Simulate after computing just one g-function
-        max_hp_eft, min_hp_eft = ghe.simulate(method=DesignMethodTimeStep.HYBRID)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HYBRID)
 
         self.log("Min EFT: {0:0.3f}\nMax EFT: {1:0.3f}".format(min_hp_eft, max_hp_eft))
 
@@ -171,6 +171,6 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             hourly_extraction_ground_loads,
         )
 
-        ghe.size(method=DesignMethodTimeStep.HYBRID)
+        ghe.size(method=TimestepType.HYBRID)
 
         self.log(f"Height of boreholes: {ghe.bhe.b.H:0.4f}")

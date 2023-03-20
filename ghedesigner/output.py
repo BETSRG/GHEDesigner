@@ -9,7 +9,7 @@ from pathlib import Path
 
 from ghedesigner.borehole_heat_exchangers import CoaxialPipe, GHEDesignerBoreholeBase
 from ghedesigner.design import AnyBisectionType
-from ghedesigner.enums import DesignMethodTimeStep
+from ghedesigner.enums import TimestepType
 
 
 class OutputManager:
@@ -21,7 +21,7 @@ class OutputManager:
                  notes: str,
                  author: str,
                  model_name: str,
-                 load_method: DesignMethodTimeStep,
+                 load_method: TimestepType,
                  allocated_width=100,
                  ):
 
@@ -145,11 +145,11 @@ class OutputManager:
         return csv_array
 
     @staticmethod
-    def get_timestep_str(load_method: DesignMethodTimeStep):
-        if load_method == DesignMethodTimeStep.HYBRID:
-            return DesignMethodTimeStep.HYBRID.name
-        if load_method == DesignMethodTimeStep.HOURLY:
-            return DesignMethodTimeStep.HOURLY.name
+    def get_timestep_str(load_method: TimestepType):
+        if load_method == TimestepType.HYBRID:
+            return TimestepType.HYBRID.name
+        if load_method == TimestepType.HOURLY:
+            return TimestepType.HOURLY.name
         warnings.warn("Load method not implemented")
         return ""
 
@@ -160,7 +160,7 @@ class OutputManager:
                            notes: str,
                            author: str,
                            model_name: str,
-                           load_method: DesignMethodTimeStep) -> dict:
+                           load_method: TimestepType) -> dict:
         # gFunction LTS Table
         g_function_col_titles = ["ln(t/ts)"]
         for g_function_name in list(design.ghe.gFunction.g_lts):

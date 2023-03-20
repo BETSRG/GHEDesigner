@@ -1,7 +1,7 @@
 {
   "version": "0.5",
   "fluid": {
-    "fluid_name": "Water",
+    "fluid_name": "WATER",
     "concentration_percent": 0.0,
     "temperature": 20
   },

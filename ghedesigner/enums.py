@@ -13,7 +13,7 @@ class DoubleUTubeConnType(Enum):
     SERIES = auto()
 
 
-class DesignMethodTimeStep(Enum):
+class TimestepType(Enum):
     HOURLY = auto()
     HYBRID = auto()
 
@@ -27,6 +27,14 @@ class DesignGeomType(Enum):
     ROWWISE = auto()
 
 
-class FlowConfig(Enum):
+class FlowConfigType(Enum):
     BOREHOLE = auto()
     SYSTEM = auto()
+
+
+class FluidType(Enum):
+    ETHYLALCOHOL = auto()
+    ETHYLENEGLYCOL = auto()
+    METHYLALCOHOL = auto()
+    PROPYLENEGLYCOL = auto()
+    WATER = auto()
