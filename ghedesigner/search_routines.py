@@ -343,7 +343,7 @@ class RowWiseModifiedBisectionSearch:
             hourly_extraction_ground_loads: list,
             geometric_constraints,
             method: TimestepType,
-            flow: FlowConfigType.BOREHOLE,
+            flow_type: FlowConfigType.BOREHOLE,
             max_iter: int = 10,
             disp: bool = False,
             search: bool = True,
@@ -367,7 +367,7 @@ class RowWiseModifiedBisectionSearch:
         self.fieldType = field_type
         # Flow rate tracking
         self.V_flow = v_flow
-        self.flow_type = flow
+        self.flow_type = flow_type
         self.method = method
         self.log_time = eskilson_log_times()
         self.bhe_type = bhe_type
