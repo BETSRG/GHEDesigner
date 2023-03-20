@@ -17,26 +17,28 @@ class TestGHE(GHEBaseTest):
         # -------------------
         self.H = 100.0  # Borehole length (m)
         self.D = 2.0  # Borehole buried depth (m)
-        self.r_b = 0.075  # Borehole radius]
+        self.dia = 0.150  # Borehole diameter
         self.B = 5.0  # Borehole spacing (m)
 
         # Pipe dimensions
         # ---------------
         # U-tubes
-        r_out = 0.013335  # Pipe outer radius (m)
-        r_in = 0.0108  # Pipe inner radius (m)
+        d_out = 0.02667  # Pipe outer diameter (m)
+        d_in = 0.0216  # Pipe inner diameter (m)
+        r_out = d_out / 2.0
+        r_in = d_in / 2.0
         s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
         # Coaxial
         # Inner pipe radii
-        r_in_in = 44.2 / 1000.0 / 2.0
-        r_in_out = 50.0 / 1000.0 / 2.0
+        d_in_in = 44.2 / 1000.0
+        d_in_out = 50.0 / 1000.0
         # Outer pipe radii
-        r_out_in = 97.4 / 1000.0 / 2.0
-        r_out_out = 110.0 / 1000.0 / 2.0
+        d_out_in = 97.4 / 1000.0
+        d_out_out = 110.0 / 1000.0
         # Pipe radii
         # Note: This convention is different from pygfunction
-        r_inner = [r_in_in, r_in_out]  # The radii of the inner pipe from in to out
-        r_outer = [r_out_in, r_out_out]  # The radii of the outer pipe from in to out
+        r_inner = [d_in_in / 2.0, d_in_out / 2.0]  # The radii of the inner pipe from in to out
+        r_outer = [d_out_in / 2.0, d_out_out / 2.0]  # The radii of the outer pipe from in to out
 
         epsilon = 1.0e-6  # Pipe roughness (m)
 
@@ -131,13 +133,13 @@ class TestGHE(GHEBaseTest):
 
     def test_single_u_tube(self):
         # Define a borehole
-        borehole = GHEBorehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(self.H, self.D, self.dia / 2.0, x=0.0, y=0.0)
 
         # Initialize GHE object
         g_function = calc_g_func_for_multiple_lengths(
             self.B,
             self.H_values,
-            self.r_b,
+            self.dia / 2.0,
             self.bh_depth,
             self.m_flow_borehole,
             BHPipeType.SINGLEUTUBE,
@@ -175,13 +177,13 @@ class TestGHE(GHEBaseTest):
 
     def test_double_u_tube(self):
         # Define a borehole
-        borehole = GHEBorehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(self.H, self.D, self.dia / 2.0, x=0.0, y=0.0)
 
         # Initialize GHE object
         g_function = calc_g_func_for_multiple_lengths(
             self.B,
             self.H_values,
-            self.r_b,
+            self.dia / 2.0,
             self.bh_depth,
             self.m_flow_borehole,
             BHPipeType.DOUBLEUTUBEPARALLEL,
@@ -219,13 +221,13 @@ class TestGHE(GHEBaseTest):
 
     def test_coaxial_tube(self):
         # Define a borehole
-        borehole = GHEBorehole(self.H, self.D, self.r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(self.H, self.D, self.dia / 2.0, x=0.0, y=0.0)
 
         # Initialize GHE object
         g_function = calc_g_func_for_multiple_lengths(
             self.B,
             self.H_values,
-            self.r_b,
+            self.dia / 2.0,
             self.bh_depth,
             self.m_flow_borehole,
             BHPipeType.COAXIAL,

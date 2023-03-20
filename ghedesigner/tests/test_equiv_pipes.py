@@ -47,8 +47,8 @@ class TestEquivalentPipes(GHEBaseTest):
         # Define a borehole
         h = 100.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
-        r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
-        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+        dia = 150.0 / 1000.0  # Borehole diameter
+        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # borehole heat exchanger
         coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
@@ -69,8 +69,8 @@ class TestEquivalentPipes(GHEBaseTest):
         self.log("\n" + val + "\n" + len(val) * "-")
         self.log(
             f"Fluid volumetric flow rate (L/s): {single_u_tube.m_flow_borehole * 1000.0 / single_u_tube.fluid.rho:0.8f}")
-        self.log(f"Radius of inner pipe (m): {single_u_tube.r_in:0.8f}")
-        self.log(f"Radius of outer pipe (m): {single_u_tube.r_out:0.8f}")
+        self.log(f"Diameter of inner pipe (m): {single_u_tube.r_in * 2.0:0.8f}")
+        self.log(f"Diameter of outer pipe (m): {single_u_tube.r_out * 2.0:0.8f}")
         self.log(f"Shank spacing (m): {single_u_tube.pipe.s:0.8f}")
         self.log(f"Convection coefficient (): {single_u_tube.h_f:08f}")
         self.log(f"Pipe thermal conductivity (W/m.K): {single_u_tube.pipe.k:0.8f}")
@@ -85,11 +85,13 @@ class TestEquivalentPipes(GHEBaseTest):
         # Borehole dimensions
         h = 100.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
-        r_b = 150.0 / 1000.0 / 2.0  # Borehole radius
+        dia = 150.0 / 1000.0  # Borehole diameter
 
         # Pipe dimensions
-        r_out = 0.013335  # Pipe outer radius (m)
-        r_in = 0.0108  # Pipe inner radius (m)
+        d_out = 0.02667  # Pipe outer diameter (m)
+        d_in = 0.0216  # Pipe inner diameter (m)
+        r_out = d_out / 2.0
+        r_in = d_in / 2.0
         s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
@@ -123,7 +125,7 @@ class TestEquivalentPipes(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # Double U-tube defaults to parallel
         double_u_tube = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)
@@ -142,8 +144,8 @@ class TestEquivalentPipes(GHEBaseTest):
         self.log("\n" + val + "\n" + len(val) * "-")
         self.log(
             f"Fluid volumetric flow rate (L/s): {single_u_tube.m_flow_borehole * 1000.0 / single_u_tube.fluid.rho:0.8f}")
-        self.log(f"Radius of inner pipe (m): {single_u_tube.r_in:0.8f}")
-        self.log(f"Radius of outer pipe (m): {single_u_tube.r_out:0.8f}")
+        self.log(f"Diameter of inner pipe (m): {single_u_tube.r_in * 2.0:0.8f}")
+        self.log(f"Diameter of outer pipe (m): {single_u_tube.r_out * 2.0:0.8f}")
         self.log(f"Shank spacing (m): {single_u_tube.pipe.s:0.8f}")
         self.log(f"Convection coefficient (-): {single_u_tube.h_f:0.8f}")
         self.log(f"Pipe thermal conductivity (W/m.K): {single_u_tube.pipe.k:0.8f}")

@@ -1,6 +1,4 @@
-from json import dumps
-from math import ceil, floor, sqrt
-from pathlib import Path
+from math import ceil, sqrt
 from typing import Optional
 
 from ghedesigner.borehole_heat_exchangers import GHEBorehole
@@ -282,51 +280,6 @@ class Bisection1D:
 
         return selection_key, selected_coordinates
 
-    def oak_ridge_export(self, file_path: Path):
-        # Dictionary for export
-        d = dict()
-        d["borehole_length"] = self.ghe.bhe.b.H
-        d["number_of_boreholes"] = len(self.selected_coordinates)
-        d["g_function_pairs"] = []
-        d["single_u_tube"] = {}
-
-        # create a local single U-tube object
-        bhe_eq = self.ghe.bhe_eq
-        d["single_u_tube"]["r_b"] = bhe_eq.borehole.r_b  # Borehole radius
-        d["single_u_tube"]["r_in"] = bhe_eq.r_in  # Inner pipe radius
-        d["single_u_tube"]["r_out"] = bhe_eq.r_out  # Outer pipe radius
-        # Note: Shank spacing or center pipe positions could be used
-        d["single_u_tube"]["s"] = bhe_eq.pipe.s  # Shank spacing (tube-to-tube)
-        d["single_u_tube"]["pos"] = bhe_eq.pos  # Center of the pipes
-        d["single_u_tube"][
-            "m_flow_borehole"
-        ] = bhe_eq.m_flow_borehole  # mass flow rate of the borehole
-        d["single_u_tube"]["k_g"] = bhe_eq.grout.k  # Grout thermal conductivity
-        d["single_u_tube"]["k_s"] = bhe_eq.soil.k  # Soil thermal conductivity
-        d["single_u_tube"]["k_p"] = bhe_eq.pipe.k  # Pipe thermal conductivity
-
-        # create a local ghe object
-        h = self.ghe.bhe.b.H
-        b_over_h = self.ghe.B_spacing / h
-        g = self.ghe.grab_g_function(b_over_h)
-
-        total_g_values = g.x.size
-        number_lts_g_values = 27
-        number_sts_g_values = 30
-        sts_step_size = floor((total_g_values - number_lts_g_values) / number_sts_g_values)
-        lntts = []
-        g_values = []
-        for i in range(1, (total_g_values - number_lts_g_values), sts_step_size):
-            lntts.append(g.x[i].tolist())
-            g_values.append(g.y[i].tolist())
-        lntts += g.x[total_g_values - number_lts_g_values: total_g_values].tolist()
-        g_values += g.y[total_g_values - number_lts_g_values: total_g_values].tolist()
-
-        for lntts_val, g_val in zip(lntts, g_values):
-            d["g_function_pairs"].append({"ln_tts": lntts_val, "g_value": g_val})
-
-        file_path.write_text(dumps(d, indent=4))
-
 
 # This is the search algorithm used for finding row-wise fields
 class RowWiseModifiedBisectionSearch:
@@ -343,7 +296,7 @@ class RowWiseModifiedBisectionSearch:
             hourly_extraction_ground_loads: list,
             geometric_constraints,
             method: TimestepType,
-            flow: FlowConfigType.BOREHOLE,
+            flow_type: FlowConfigType.BOREHOLE,
             max_iter: int = 10,
             disp: bool = False,
             search: bool = True,
@@ -367,7 +320,7 @@ class RowWiseModifiedBisectionSearch:
         self.fieldType = field_type
         # Flow rate tracking
         self.V_flow = v_flow
-        self.flow_type = flow
+        self.flow_type = flow_type
         self.method = method
         self.log_time = eskilson_log_times()
         self.bhe_type = bhe_type

@@ -81,9 +81,12 @@ class Pipe(ThermalProperty):
         output = dict()
         output['base'] = super().as_dict()
         output['pipe_center_positions'] = str(self.pos)
-        radius = 'radius' if type(self.r_in) is float else 'radii'
-        output[f"pipe_inner_{radius}"] = str(self.r_in)
-        output[f"pipe_outer_{radius}"] = str(self.r_out)
+        if type(self.r_in) is float:
+            output["pipe_inner_diameter"] = str(self.r_in * 2.0)
+            output["pipe_outer_diameter"] = str(self.r_out * 2.0)
+        else:
+            output["pipe_inner_diameters"] = str([x * 2.0 for x in self.r_in])
+            output["pipe_outer_diameters"] = str([x * 2.0 for x in self.r_out])
         output['shank_spacing_pipe_to_pipe'] = {'value': self.s, 'units': 'm'}
         output['pipe_roughness'] = {'value': self.roughness, 'units': 'm'}
         output['number_of_pipes'] = self.n_pipes

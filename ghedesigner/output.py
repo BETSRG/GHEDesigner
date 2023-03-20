@@ -181,17 +181,17 @@ class OutputManager:
 
         # these are dependent on the # pipes in each borehole, so precalculate
         if isinstance(design.ghe.bhe.pipe.r_out, float):
-            pipe_geometry = {'pipe_outer_radius': add_with_units(design.ghe.bhe.pipe.r_out, 'm'),
-                             'pipe_inner_radius': add_with_units(design.ghe.bhe.pipe.r_in, 'm')}
+            pipe_geometry = {'pipe_outer_diameter': add_with_units(design.ghe.bhe.pipe.r_out * 2.0, 'm'),
+                             'pipe_inner_diameter': add_with_units(design.ghe.bhe.pipe.r_in * 2.0, 'm')}
             reynolds = GHEDesignerBoreholeBase.compute_reynolds(design.ghe.bhe.m_flow_borehole,
                                                                 design.ghe.bhe.pipe.r_in,
                                                                 design.ghe.bhe.fluid)
         else:
             pipe_geometry = {
-                'outer_pipe_outer_radius': add_with_units(design.ghe.bhe.pipe.r_out[0], 'm'),
-                'inner_pipe_outer_radius': add_with_units(design.ghe.bhe.pipe.r_out[1], 'm'),
-                'outer_pipe_inner_radius': add_with_units(design.ghe.bhe.pipe.r_in[0], 'm'),
-                'inner_pipe_inner_radius': add_with_units(design.ghe.bhe.pipe.r_in[1], 'm'),
+                'inner_pipe_inner_diameter': add_with_units(design.ghe.bhe.pipe.r_in[0] * 2.0, 'm'),
+                'inner_pipe_outer_diameter': add_with_units(design.ghe.bhe.pipe.r_in[1] * 2.0, 'm'),
+                'outer_pipe_inner_diameter': add_with_units(design.ghe.bhe.pipe.r_out[0] * 2.0, 'm'),
+                'outer_pipe_outer_diameter': add_with_units(design.ghe.bhe.pipe.r_out[1] * 2.0, 'm'),
             }
             reynolds = CoaxialPipe.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
                                                                design.ghe.bhe.r_in_out,
@@ -217,7 +217,7 @@ class OutputManager:
                     'data': g_function_data
                 },
                 'active_borehole_length': add_with_units(design.ghe.bhe.b.H, 'm'),
-                'borehole_radius': add_with_units(design.ghe.bhe.b.r_b, 'm'),
+                'borehole_diameter': add_with_units(design.ghe.bhe.b.r_b * 2.0, 'm'),
                 'borehole_spacing': add_with_units(design.ghe.B_spacing, 'm'),
                 'total_drilling': add_with_units(design.ghe.bhe.b.H * len(design.ghe.gFunction.bore_locations), 'm'),
                 'field_type': design.ghe.fieldType,
@@ -418,7 +418,7 @@ class OutputManager:
 
         o += self.create_title(width, "System Parameters", filler_symbol="-")
         o += self.d_row(width, "Active Borehole Length, m:", design.ghe.bhe.b.H, f_int)
-        o += self.d_row(width, "Borehole Radius, mm:", design.ghe.bhe.b.r_b * 1000, f_2f)
+        o += self.d_row(width, "Borehole Diameter, mm:", design.ghe.bhe.b.r_b * 1000 * 2.0, f_2f)
         o += self.d_row(width, "Borehole Spacing, m:", design.ghe.B_spacing, f_3f)
         o += self.d_row(width, "Total Drilling, m:", design.ghe.bhe.b.H * len(design.ghe.gFunction.bore_locations),
                         f_int)
@@ -431,13 +431,17 @@ class OutputManager:
         o += "Borehole Information: " + "\n"
 
         if isinstance(design.ghe.bhe.pipe.r_out, float):
-            o += self.d_row(width, "Pipe Outer Radius, mm:", design.ghe.bhe.pipe.r_out * 1000, f_2f, n_tabs=1)
-            o += self.d_row(width, "Pipe Inner Radius, mm:", design.ghe.bhe.pipe.r_in * 1000, f_2f, n_tabs=1)
+            o += self.d_row(width, "Pipe Outer Diameter, mm:", design.ghe.bhe.pipe.r_out * 1000 * 2.0, f_2f, n_tabs=1)
+            o += self.d_row(width, "Pipe Inner Diameter, mm:", design.ghe.bhe.pipe.r_in * 1000 * 2.0, f_2f, n_tabs=1)
         else:
-            o += self.d_row(width, "Outer Pipe Outer Radius, mm:", design.ghe.bhe.pipe.r_out[1] * 1000, f_2f, n_tabs=1)
-            o += self.d_row(width, "Outer Pipe Inner Radius, mm:", design.ghe.bhe.pipe.r_out[0] * 1000, f_2f, n_tabs=1)
-            o += self.d_row(width, "Inner Pipe Outer Radius, mm:", design.ghe.bhe.pipe.r_in[1] * 1000, f_2f, n_tabs=1)
-            o += self.d_row(width, "Inner Pipe Inner Radius, mm:", design.ghe.bhe.pipe.r_in[0] * 1000, f_2f, n_tabs=1)
+            o += self.d_row(width, "Outer Pipe Outer Diameter, mm:", design.ghe.bhe.pipe.r_out[1] * 1000 * 2.0, f_2f,
+                            n_tabs=1)
+            o += self.d_row(width, "Outer Pipe Inner Diameter, mm:", design.ghe.bhe.pipe.r_out[0] * 1000 * 2.0, f_2f,
+                            n_tabs=1)
+            o += self.d_row(width, "Inner Pipe Outer Diameter, mm:", design.ghe.bhe.pipe.r_in[1] * 1000 * 2.0, f_2f,
+                            n_tabs=1)
+            o += self.d_row(width, "Inner Pipe Inner Diameter, mm:", design.ghe.bhe.pipe.r_in[0] * 1000 * 2.0, f_2f,
+                            n_tabs=1)
 
         o += self.d_row(width, "Pipe Roughness, m:", design.ghe.bhe.pipe.roughness, f_sci, n_tabs=1)
         o += self.d_row(width, "Shank Spacing, mm:", design.ghe.bhe.pipe.s * 1000, f_2f, n_tabs=1)

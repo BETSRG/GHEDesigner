@@ -290,7 +290,7 @@ class DesignRowWise(DesignBase):
             self.hourly_extraction_ground_loads,
             self.geometric_constraints,
             method=self.method,
-            flow=self.flow_type,
+            flow_type=self.flow_type,
             disp=disp,
             field_type="row-wise",
             load_years=self.load_years,

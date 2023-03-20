@@ -7,14 +7,14 @@
       "units": "m",
       "description": "Depth of top of borehole below the ground surface."
     },
-    "radius": {
+    "diameter": {
       "type": "number",
       "units": "m",
-      "description": "Radius of borehole."
+      "description": "Diameter of borehole."
     }
   },
   "required": [
     "buried_depth",
-    "radius"
+    "diameter"
   ]
 }

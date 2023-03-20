@@ -15,13 +15,15 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         # -------------------
         h = 100.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
-        r_b = 150.0 / 1000.0 / 2.0  # Borehole radius]
+        dia = 150.0 / 1000.0  # Borehole diameter
         b = 5.0  # Borehole spacing (m)
 
         # Pipe dimensions
         # ---------------
-        r_out = 0.013335  # Pipe outer radius (m)
-        r_in = 0.0108  # Pipe inner radius (m)
+        d_out = 0.02667  # Pipe outer diameter (m)
+        d_in = 0.0216  # Pipe inner diameter (m)
+        r_out = d_out / 2.0
+        r_in = d_in / 2.0
         s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
@@ -70,7 +72,7 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         fluid = GHEFluid(fluid_str="Water", percent=0.0)
 
         # Define a borehole
-        borehole = GHEBorehole(h, d, r_b, x=0.0, y=0.0)
+        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # Simulation start month and end month
         # --------------------------------

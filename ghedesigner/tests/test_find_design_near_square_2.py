@@ -7,13 +7,12 @@ class TestNearSquare(GHEBaseTest):
     def test_design_selection_system(self):
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_radius=0.0108, outer_radius=0.013335, shank_spacing=0.0323,
-            roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0
-        )
+            inner_diameter=0.0216, outer_diameter=0.02667, shank_spacing=0.0323,
+            roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(height=96.0, buried_depth=2.0, radius=0.075)
+        ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.150)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_near_square(b=5.0, length=155)  # borehole spacing and field side length
@@ -31,13 +30,12 @@ class TestNearSquare(GHEBaseTest):
     def test_design_selection_borehole(self):
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_radius=0.0108, outer_radius=0.013335, shank_spacing=0.0323,
-            roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0
-        )
+            inner_diameter=0.0216, outer_diameter=0.02667, shank_spacing=0.0323,
+            roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(height=96.0, buried_depth=2.0, radius=0.075)
+        ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.150)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_near_square(b=5.0, length=155)  # borehole spacing and field side length
