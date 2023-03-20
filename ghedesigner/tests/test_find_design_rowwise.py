@@ -62,7 +62,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
                                              min_spacing=10.0, max_spacing=20.0, spacing_step=0.1,
                                              min_rotation=-90.0, max_rotation=0.0, rotate_step=0.5,
                                              property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.RowWise)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRowWiseDesignWithoutPerimeterSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
@@ -87,7 +87,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
                                              min_spacing=10.0, max_spacing=20.0, spacing_step=0.1,
                                              min_rotation=-90.0, max_rotation=0.0, rotate_step=0.5,
                                              property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.RowWise)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRowWiseDesignWithPerimeterSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")

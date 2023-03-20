@@ -4,7 +4,7 @@ from pathlib import Path
 
 from jsonschema import validate, ValidationError
 
-from ghedesigner.enums import BHPipeType
+from ghedesigner.enums import BHPipeType, DesignGeomType
 
 
 # Note: JSON schema does not currently have a good way to handle case-insensitive enums.
@@ -105,12 +105,12 @@ def validate_geometric(instance: dict) -> None:
     instance["method"] = method
 
     schema_map = {
-        "NEARSQUARE": "geometric_near_square.schema.json",
-        "BIRECTANGLE": "geometric_bi_rectangle.schema.json",
-        "RECTANGLE": "geometric_rectangle.schema.json",
-        "BIZONEDRECTANGLE": "geometric_bi_zoned_rectangle.schema.json",
-        "BIRECTANGLECONSTRAINED": "geometric_bi_rectangle_constrained.schema.json",
-        "ROWWISE": "geometric_rowwise.schema.json",
+        DesignGeomType.BIRECTANGLE.name: "geometric_bi_rectangle.schema.json",
+        DesignGeomType.BIRECTANGLECONSTRAINED.name: "geometric_bi_rectangle_constrained.schema.json",
+        DesignGeomType.BIZONEDRECTANGLE.name: "geometric_bi_zoned_rectangle.schema.json",
+        DesignGeomType.NEARSQUARE.name: "geometric_near_square.schema.json",
+        DesignGeomType.RECTANGLE.name: "geometric_rectangle.schema.json",
+        DesignGeomType.ROWWISE.name: "geometric_rowwise.schema.json",
     }
 
     if method not in schema_map.keys():

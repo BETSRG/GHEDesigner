@@ -68,7 +68,7 @@ class TestCreateInputFiles(GHEBaseTest):
                                              min_spacing=10.0, max_spacing=20.0, spacing_step=0.1,
                                              min_rotation=-90.0, max_rotation=0.0, rotate_step=0.5,
                                              property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.RowWise)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         out_path = self.test_outputs_directory / "test_create_input_file_rowwise_single_u_tube.json"
         ghe.write_input_file(out_path)
 
@@ -136,7 +136,7 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_geometry_constraints_bi_rectangle_constrained(b_min=5.0, b_max_x=25.0, b_max_y=25.0,
                                                               property_boundary=prop_boundary,
                                                               no_go_boundaries=no_go_zones)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiRectangleConstrained)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         out_path = self.test_outputs_directory / "test_create_input_file_bi_rectangle_constrained_single_u_tube.json"
         ghe.write_input_file(out_path)
 
@@ -166,7 +166,7 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_zoned_rectangle(length=100, width=100.0, b_min=2.0, b_max_x=10.0, b_max_y=12.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiZonedRectangle)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         out_path = self.test_outputs_directory / "test_create_input_file_bi_zoned_rectangle_single_u_tube.json"
         ghe.write_input_file(out_path)
 
@@ -196,7 +196,7 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_rectangle(length=100, width=100.0, b_min=2.0, b_max_x=10.0, b_max_y=12.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiRectangle)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         out_path = self.test_outputs_directory / "test_create_input_file_bi_rectangle_single_u_tube.json"
         ghe.write_input_file(out_path)
 
@@ -222,7 +222,7 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_rectangle(length=100, width=100.0, b_min=2.0, b_max_x=10.0, b_max_y=12.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.BiRectangle)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         out_path = self.test_outputs_directory / "test_create_input_file_bi_rectangle_single_u_tube.json"
         ghe.write_input_file(out_path)
 
@@ -248,7 +248,7 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_near_square(b=5.0, length=100.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.NearSquare)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         out_path = self.test_outputs_directory / "test_create_input_file_near_square_coaxial.json"
         ghe.write_input_file(out_path)
 
@@ -274,7 +274,7 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_near_square(b=5.0, length=100.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.NearSquare)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         out_path = self.test_outputs_directory / "test_create_input_file_near_square_double_u_tube.json"
         ghe.write_input_file(out_path)
 
@@ -301,7 +301,7 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_near_square(b=5, length=100)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.NearSquare)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         out_path = self.test_outputs_directory / "test_create_input_file_near_square_single_u_tube.json"
         ghe.write_input_file(out_path)
 
@@ -327,7 +327,7 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=100, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_rectangle(length=100.0, width=100., b_min=3.0, b_max=10.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangle)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         out_path = self.test_outputs_directory / "test_create_input_file_rectangle_coaxial.json"
         ghe.write_input_file(out_path)
 
@@ -353,7 +353,7 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_rectangle(length=100.0, width=100.0, b_min=3.0, b_max=10.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangle)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         out_path = self.test_outputs_directory / "test_create_input_file_rectangle_double_u_tube.json"
         ghe.write_input_file(out_path)
 
@@ -379,7 +379,7 @@ class TestCreateInputFiles(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_rectangle(length=100.0, width=100.0, b_min=3.0, b_max=10.0)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.Rectangle)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         out_path = self.test_outputs_directory / "test_create_input_file_rectangle_single_u_tube.json"
         ghe.write_input_file(out_path)
 

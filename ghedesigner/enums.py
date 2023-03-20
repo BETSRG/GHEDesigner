@@ -16,3 +16,12 @@ class FlowConfig(Enum):
 class DesignMethodTimeStep(Enum):
     HYBRID = auto()
     HOURLY = auto()
+
+
+class DesignGeomType(Enum):
+    BIRECTANGLE = auto()
+    BIRECTANGLECONSTRAINED = auto()
+    BIZONEDRECTANGLE = auto()
+    NEARSQUARE = auto()
+    RECTANGLE = auto()
+    ROWWISE = auto()

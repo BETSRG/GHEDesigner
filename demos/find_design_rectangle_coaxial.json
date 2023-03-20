@@ -39,7 +39,7 @@
     "b_max": 10.0,
     "max_height": 100.0,
     "min_height": 60.0,
-    "method": "rectangle"
+    "method": "RECTANGLE"
   },
   "design": {
     "flow_rate": 0.2,

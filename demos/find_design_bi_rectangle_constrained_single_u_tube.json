@@ -70,7 +70,7 @@
       [95.58016878, 110],
       [95.7964135, 81.7721519]
     ]],
-    "method": "birectangleconstrained"
+    "method": "BIRECTANGLECONSTRAINED"
   },
   "design": {
     "flow_rate": 0.2,

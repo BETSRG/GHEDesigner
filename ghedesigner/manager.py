@@ -1,9 +1,8 @@
-from enum import Enum, auto
 from json import loads, dumps
 from pathlib import Path
 from sys import exit, stderr
 from time import time
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import click
 
@@ -12,7 +11,7 @@ from ghedesigner.borehole import GHEBorehole
 from ghedesigner.constants import DEG_TO_RAD
 from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle, DesignBiRectangle
 from ghedesigner.design import DesignBiZoned, DesignBiRectangleConstrained, DesignRowWise
-from ghedesigner.enums import BHPipeType, DesignMethodTimeStep
+from ghedesigner.enums import BHPipeType, DesignMethodTimeStep, DesignGeomType
 from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
 from ghedesigner.geometry import GeometricConstraintsBiRectangle, GeometricConstraintsBiZoned
 from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained, GeometricConstraintsRowWise
@@ -23,13 +22,6 @@ from ghedesigner.validate import validate_input_file
 
 
 class GHEManager:
-    class DesignGeomType(Enum):
-        BiRectangle = auto()
-        BiRectangleConstrained = auto()
-        BiZonedRectangle = auto()
-        NearSquare = auto()
-        Rectangle = auto()
-        RowWise = auto()
 
     def __init__(self):
         self._fluid: Optional[GHEFluid] = None
@@ -53,25 +45,26 @@ class GHEManager:
         self._search_time: int = 0
         self.summary_results: dict = {}
 
-    def set_design_geometry_type(self, design_geometry_str: str):
+    @staticmethod
+    def set_design_geometry_type(design_geometry_str: str):
         """
         Sets the design type.
 
         :param design_geometry_str: design geometry input string.
         """
         design_geometry_str = str(design_geometry_str).upper()
-        if design_geometry_str == "RECTANGLE":
-            return self.DesignGeomType.Rectangle
-        if design_geometry_str == "NEARSQUARE":
-            return self.DesignGeomType.NearSquare
-        if design_geometry_str == "BIRECTANGLE":
-            return self.DesignGeomType.BiRectangle
-        if design_geometry_str == "BIZONEDRECTANGLE":
-            return self.DesignGeomType.BiZonedRectangle
-        if design_geometry_str == "BIRECTANGLECONSTRAINED":
-            return self.DesignGeomType.BiRectangleConstrained
-        if design_geometry_str == "ROWWISE":
-            return self.DesignGeomType.RowWise
+        if design_geometry_str == DesignGeomType.BIRECTANGLE.name:
+            return DesignGeomType.BIRECTANGLE
+        if design_geometry_str == DesignGeomType.BIRECTANGLECONSTRAINED.name:
+            return DesignGeomType.BIRECTANGLECONSTRAINED
+        if design_geometry_str == DesignGeomType.BIZONEDRECTANGLE.name:
+            return DesignGeomType.BIZONEDRECTANGLE
+        if design_geometry_str == DesignGeomType.NEARSQUARE.name:
+            return DesignGeomType.NEARSQUARE
+        if design_geometry_str == DesignGeomType.RECTANGLE.name:
+            return DesignGeomType.RECTANGLE
+        if design_geometry_str == DesignGeomType.ROWWISE.name:
+            return DesignGeomType.ROWWISE
         raise ValueError("Geometry constraint method not supported.")
 
     @staticmethod
@@ -300,7 +293,7 @@ class GHEManager:
         self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(b_min, b_max_x, b_max_y,
                                                                                  property_boundary, no_go_boundaries)
 
-    def set_geometry_constraints_rowwise(self, perimeter_spacing_ratio: float,
+    def set_geometry_constraints_rowwise(self, perimeter_spacing_ratio: Union[float, None],
                                          max_spacing: float, min_spacing: float, spacing_step: float,
                                          max_rotation: float, min_rotation: float, rotate_step: float,
                                          property_boundary: list, no_go_boundaries: list):
@@ -332,16 +325,18 @@ class GHEManager:
                                                                   min_rotation, max_rotation, rotate_step,
                                                                   property_boundary, no_go_boundaries)
 
-    def set_design(self, flow_rate: float, flow_type: str, design_method_geo: DesignGeomType):
+    def set_design(self, flow_rate: float, flow_type: str):
         """
         Set the design method.
 
         :param flow_rate: design flow rate, in lps.
         :param flow_type: flow type string input.
-        :param design_method_geo: geometric design constraint.
         """
 
-        if design_method_geo == self.DesignGeomType.NearSquare:
+        if self._geometric_constraints.type is None:
+            raise ValueError("Geometric constraints must be set before set_design is called.")
+
+        if self._geometric_constraints.type == DesignGeomType.NEARSQUARE:
             # temporary disable of the type checker because of the _geometric_constraints member
             # noinspection PyTypeChecker
             self._design = DesignNearSquare(
@@ -358,7 +353,7 @@ class GHEManager:
                 flow_type=flow_type,
                 method=DesignMethodTimeStep.HYBRID,
             )
-        elif design_method_geo == self.DesignGeomType.Rectangle:
+        elif self._geometric_constraints.type == DesignGeomType.RECTANGLE:
             # temporary disable of the type checker because of the _geometric_constraints member
             # noinspection PyTypeChecker
             self._design = DesignRectangle(
@@ -375,7 +370,7 @@ class GHEManager:
                 flow_type=flow_type,
                 method=DesignMethodTimeStep.HYBRID,
             )
-        elif design_method_geo == self.DesignGeomType.BiRectangle:
+        elif self._geometric_constraints.type == DesignGeomType.BIRECTANGLE:
             # temporary disable of the type checker because of the _geometric_constraints member
             # noinspection PyTypeChecker
             self._design = DesignBiRectangle(
@@ -392,7 +387,7 @@ class GHEManager:
                 flow_type=flow_type,
                 method=DesignMethodTimeStep.HYBRID,
             )
-        elif design_method_geo == self.DesignGeomType.BiZonedRectangle:
+        elif self._geometric_constraints.type == DesignGeomType.BIZONEDRECTANGLE:
             # temporary disable of the type checker because of the _geometric_constraints member
             # noinspection PyTypeChecker
             self._design = DesignBiZoned(
@@ -409,7 +404,7 @@ class GHEManager:
                 flow_type=flow_type,
                 method=DesignMethodTimeStep.HYBRID,
             )
-        elif design_method_geo == self.DesignGeomType.BiRectangleConstrained:
+        elif self._geometric_constraints.type == DesignGeomType.BIRECTANGLECONSTRAINED:
             # temporary disable of the type checker because of the _geometric_constraints member
             # noinspection PyTypeChecker
             self._design = DesignBiRectangleConstrained(
@@ -426,7 +421,7 @@ class GHEManager:
                 flow_type=flow_type,
                 method=DesignMethodTimeStep.HYBRID,
             )
-        elif design_method_geo == self.DesignGeomType.RowWise:
+        elif self._geometric_constraints.type == DesignGeomType.ROWWISE:
             # temporary disable of the type checker because of the _geometric_constraints member
             # noinspection PyTypeChecker
             self._design = DesignRowWise(
@@ -653,19 +648,19 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
     )
 
     geom_type = ghe.set_design_geometry_type(constraint_props["method"])
-    if geom_type == ghe.DesignGeomType.Rectangle:
+    if geom_type == DesignGeomType.RECTANGLE:
         ghe.set_geometry_constraints_rectangle(
             length=constraint_props["length"],
             width=constraint_props["width"],
             b_min=constraint_props["b_min"],
             b_max=constraint_props["b_max"],
         )
-    elif geom_type == ghe.DesignGeomType.NearSquare:
+    elif geom_type == DesignGeomType.NEARSQUARE:
         ghe.set_geometry_constraints_near_square(
             b=constraint_props["b"],
             length=constraint_props["length"]
         )
-    elif geom_type == ghe.DesignGeomType.BiRectangle:
+    elif geom_type == DesignGeomType.BIRECTANGLE:
         ghe.set_geometry_constraints_bi_rectangle(
             length=constraint_props["length"],
             width=constraint_props["width"],
@@ -673,7 +668,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             b_max_x=constraint_props["b_max_x"],
             b_max_y=constraint_props["b_max_y"]
         )
-    elif geom_type == ghe.DesignGeomType.BiZonedRectangle:
+    elif geom_type == DesignGeomType.BIZONEDRECTANGLE:
         ghe.set_geometry_constraints_bi_zoned_rectangle(
             length=constraint_props["length"],
             width=constraint_props["width"],
@@ -681,7 +676,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             b_max_x=constraint_props["b_max_x"],
             b_max_y=constraint_props["b_max_y"]
         )
-    elif geom_type == ghe.DesignGeomType.BiRectangleConstrained:
+    elif geom_type == DesignGeomType.BIRECTANGLECONSTRAINED:
         ghe.set_geometry_constraints_bi_rectangle_constrained(
             b_min=constraint_props["b_min"],
             b_max_x=constraint_props["b_max_x"],
@@ -689,7 +684,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
             property_boundary=constraint_props["property_boundary"],
             no_go_boundaries=constraint_props["no_go_boundaries"]
         )
-    elif geom_type == ghe.DesignGeomType.RowWise:
+    elif geom_type == DesignGeomType.ROWWISE:
 
         # if present, we are using perimeter calculations
         if "perimeter_spacing_ratio" in constraint_props.keys():
@@ -713,8 +708,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
 
     ghe.set_design(
         flow_rate=design_props["flow_rate"],
-        flow_type=design_props["flow_type"],
-        design_method_geo=geom_type
+        flow_type=design_props["flow_type"]
     )
 
     ghe.find_design()

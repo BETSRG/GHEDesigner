@@ -27,7 +27,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         number_of_boreholes = 32
         length = length_of_side(number_of_boreholes, b)
         ghe.set_geometry_constraints_near_square(b=b, length=length)  # borehole spacing and field side length
-        ghe.set_design(flow_rate=0.3, flow_type="borehole", design_method_geo=ghe.DesignGeomType.NearSquare)
+        ghe.set_design(flow_rate=0.3, flow_type="borehole")
         ghe.find_design()
 
         project_name = "Atlanta Office Building: Design Example"
@@ -59,7 +59,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         number_of_boreholes = 32
         length = length_of_side(number_of_boreholes, b)
         ghe.set_geometry_constraints_near_square(b=b, length=length)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.NearSquare)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         ghe.find_design()
 
         project_name = "Atlanta Office Building: Design Example"
@@ -92,7 +92,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         number_of_boreholes = 32
         length = length_of_side(number_of_boreholes, b)
         ghe.set_geometry_constraints_near_square(b=b, length=length)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.NearSquare)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         ghe.find_design()
 
         project_name = "Atlanta Office Building: Design Example"
@@ -125,7 +125,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         number_of_boreholes = 32
         length = length_of_side(number_of_boreholes, b)
         ghe.set_geometry_constraints_near_square(b=b, length=length)
-        ghe.set_design(flow_rate=0.2, flow_type="borehole", design_method_geo=ghe.DesignGeomType.NearSquare)
+        ghe.set_design(flow_rate=0.2, flow_type="borehole")
         ghe.find_design()
 
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignCoaxialUTube"

@@ -74,7 +74,7 @@
       [95.58016878, 110],
       [95.7964135, 81.7721519]
     ]],
-    "method": "rowwise"
+    "method": "ROWWISE"
   },
   "design": {
     "flow_rate": 0.2,
