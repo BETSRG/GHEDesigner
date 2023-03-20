@@ -1,5 +1,5 @@
 from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase, CoaxialPipe, MultipleUTube, SingleUTube
+from ghedesigner.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, SingleUTube
 from ghedesigner.enums import FlowConfig
 from ghedesigner.media import Pipe, Grout, GHEFluid, Soil
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
@@ -118,7 +118,7 @@ class TestBHResistance(GHEBaseTest):
         # Series
         double_u_tube_series = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, FlowConfig.SERIES)
         r_b_series = double_u_tube_series.calc_effective_borehole_resistance()
-        re = GHEDesignerBoreholeBase.compute_reynolds(double_u_tube_series.m_flow_pipe, r_in, fluid)
+        re = MultipleUTube.compute_reynolds(double_u_tube_series.m_flow_pipe, r_in, fluid)
         m_dot = double_u_tube_series.m_flow_pipe
         r_p = double_u_tube_series.R_p
         h_f = double_u_tube_series.h_f
@@ -140,7 +140,7 @@ class TestBHResistance(GHEBaseTest):
         # Parallel
         double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, FlowConfig.PARALLEL)
         r_b_parallel = double_u_tube_parallel.calc_effective_borehole_resistance()
-        re = GHEDesignerBoreholeBase.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
+        re = MultipleUTube.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
         m_dot = double_u_tube_parallel.m_flow_pipe
         r_p = double_u_tube_parallel.R_p
         h_f = double_u_tube_parallel.h_f
@@ -206,7 +206,7 @@ class TestBHResistance(GHEBaseTest):
         single_u_tube = SingleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
         # Intermediate variables
-        re = GHEDesignerBoreholeBase.compute_reynolds(single_u_tube.m_flow_borehole, r_in, fluid)
+        re = SingleUTube.compute_reynolds(single_u_tube.m_flow_borehole, r_in, fluid)
         r_p = single_u_tube.R_p
         h_f = single_u_tube.h_f
         r_fp = single_u_tube.R_fp
@@ -298,7 +298,7 @@ class TestBHResistance(GHEBaseTest):
             single_u_tube = SingleUTube(m_flow_borehole, fluid, borehole, pipe_s, grout, soil)
 
             # check Reynolds numbers
-            re = GHEDesignerBoreholeBase.compute_reynolds(single_u_tube.m_flow_borehole, r_in, fluid)
+            re = SingleUTube.compute_reynolds(single_u_tube.m_flow_borehole, r_in, fluid)
             borehole_values["Single U-tube"]["Re"].append(re)
             self.assertTrue(self.rel_error_within_tol(re, re_glhepro_single[idx], 0.01))
 
@@ -311,7 +311,7 @@ class TestBHResistance(GHEBaseTest):
             double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe_d, grout, soil)
 
             # check Reynolds numbers
-            re = GHEDesignerBoreholeBase.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
+            re = MultipleUTube.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
             borehole_values["Double U-tube"]["Re"].append(re)
             self.assertTrue(self.rel_error_within_tol(re, re_glhepro_double[idx], 0.01))
 
@@ -367,7 +367,7 @@ class TestBHResistance(GHEBaseTest):
             coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
             # check Reynolds number
-            re = GHEDesignerBoreholeBase.compute_reynolds_concentric(coaxial.m_flow_borehole, r_in_out, r_out_in, fluid)
+            re = CoaxialPipe.compute_reynolds_concentric(coaxial.m_flow_borehole, r_in_out, r_out_in, fluid)
             borehole_values["Coaxial"]["Re"].append(re)
             self.assertTrue(self.rel_error_within_tol(re, re_glhepro_coaxial[idx], 0.01))
 

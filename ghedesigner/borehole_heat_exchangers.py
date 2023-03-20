@@ -54,20 +54,6 @@ class GHEDesignerBoreholeBase:
         # Reynolds number
         return fluid.rho * velocity * dia_hydraulic / fluid.mu
 
-    @staticmethod
-    def compute_reynolds_concentric(m_flow_pipe: float, r_a_in: float, r_a_out: float, fluid: GHEFluid) -> float:
-        # Hydraulic diameter and radius for concentric tube annulus region
-        dia_hydraulic = 2 * (r_a_out - r_a_in)
-        # r_h = dia_hydraulic / 2
-        # Cross-sectional area of the annulus region
-        area_cr_annular = pi * ((r_a_out ** 2) - (r_a_in ** 2))
-        # Volume flow rate
-        vol_flow_rate = m_flow_pipe / fluid.rho
-        # Average velocity
-        velocity = vol_flow_rate / area_cr_annular
-        # Reynolds number
-        return fluid.rho * velocity * dia_hydraulic / fluid.mu
-
 
 class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
     def __init__(
@@ -467,6 +453,20 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         new_single_u_tube = self.match_effective_borehole_resistance(preliminary)
 
         return new_single_u_tube
+
+    @staticmethod
+    def compute_reynolds_concentric(m_flow_pipe: float, r_a_in: float, r_a_out: float, fluid: GHEFluid) -> float:
+        # Hydraulic diameter and radius for concentric tube annulus region
+        dia_hydraulic = 2 * (r_a_out - r_a_in)
+        # r_h = dia_hydraulic / 2
+        # Cross-sectional area of the annulus region
+        area_cr_annular = pi * ((r_a_out ** 2) - (r_a_in ** 2))
+        # Volume flow rate
+        vol_flow_rate = m_flow_pipe / fluid.rho
+        # Average velocity
+        velocity = vol_flow_rate / area_cr_annular
+        # Reynolds number
+        return fluid.rho * velocity * dia_hydraulic / fluid.mu
 
     def as_dict(self) -> dict:
         blob = dict()

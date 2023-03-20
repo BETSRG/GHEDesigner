@@ -7,7 +7,7 @@ from json import dumps
 from math import floor
 from pathlib import Path
 
-from ghedesigner.borehole_heat_exchangers import GHEDesignerBoreholeBase
+from ghedesigner.borehole_heat_exchangers import CoaxialPipe, GHEDesignerBoreholeBase
 from ghedesigner.design import AnyBisectionType
 from ghedesigner.enums import DesignMethodTimeStep
 
@@ -193,10 +193,10 @@ class OutputManager:
                 'outer_pipe_inner_radius': add_with_units(design.ghe.bhe.pipe.r_in[0], 'm'),
                 'inner_pipe_inner_radius': add_with_units(design.ghe.bhe.pipe.r_in[1], 'm'),
             }
-            reynolds = GHEDesignerBoreholeBase.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
-                                                                           design.ghe.bhe.r_in_out,
-                                                                           design.ghe.bhe.r_out_in,
-                                                                           design.ghe.bhe.fluid)
+            reynolds = CoaxialPipe.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
+                                                               design.ghe.bhe.r_in_out,
+                                                               design.ghe.bhe.r_out_in,
+                                                               design.ghe.bhe.fluid)
         # build out the actual output dictionary
         output_dict = {
             'project_name': project_name,
@@ -453,10 +453,10 @@ class OutputManager:
         else:
 
             o += self.d_row(width, "Reynold's Number:",
-                            GHEDesignerBoreholeBase.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
-                                                                                design.ghe.bhe.r_in_out,
-                                                                                design.ghe.bhe.r_out_in,
-                                                                                design.ghe.bhe.fluid),
+                            CoaxialPipe.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
+                                                                    design.ghe.bhe.r_in_out,
+                                                                    design.ghe.bhe.r_out_in,
+                                                                    design.ghe.bhe.fluid),
                             f_int, n_tabs=1)
 
         o += self.d_row(width, "Effective Borehole Resistance, W/(m-K):",
