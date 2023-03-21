@@ -23,3 +23,12 @@ jobs:
       - name: Run a test file
         run: |
           ghedesigner demos/find_design_rectangle_single_u_tube.json /tmp
+      - name: Test validate option
+        run: |
+          ghedesigner --validate demos/find_design_rectangle_single_u_tube.json
+      - name: Test version string
+        run: |
+          ghedesigner --version
+      - name: Test help
+        run: |
+          ghedesigner --help

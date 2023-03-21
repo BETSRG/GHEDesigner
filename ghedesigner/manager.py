@@ -735,7 +735,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
 
 
 @click.command(name="GHEDesignerCommandLine")
-@click.argument("input-path", type=click.Path(exists=True), required=False)
+@click.argument("input-path", type=click.Path(exists=True))
 @click.argument("output-directory", type=click.Path(exists=True), required=False)
 @click.version_option(VERSION)
 @click.option(
