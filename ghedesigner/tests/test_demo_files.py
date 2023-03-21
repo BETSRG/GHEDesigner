@@ -14,11 +14,7 @@ class TestDemoFiles(GHEBaseTest):
 
         for _, _, files in os.walk(self.demos_path):
             for f in files:
-                try:
-                    demo_file_path = self.demos_path / f
-                    out_dir = self.demo_output_parent_dir / time_str / f.replace('.json', '')
-                    os.makedirs(out_dir)
-                    run_manager_from_cli_worker(input_file_path=demo_file_path, output_directory=out_dir)
-                except:
-                    print(f"Demo file failed: {f}", file=sys.stderr)
-                    exit(1)
+                demo_file_path = self.demos_path / f
+                out_dir = self.demo_output_parent_dir / time_str / f.replace('.json', '')
+                os.makedirs(out_dir)
+                self.assertEqual(0, run_manager_from_cli_worker(input_file_path=demo_file_path, output_directory=out_dir))
