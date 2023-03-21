@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import datetime
 
 from ghedesigner.manager import run_manager_from_cli_worker
@@ -19,5 +20,5 @@ class TestDemoFiles(GHEBaseTest):
                     os.makedirs(out_dir)
                     run_manager_from_cli_worker(input_file_path=demo_file_path, output_directory=out_dir)
                 except:
-                    print(f"Demo file failed: {f}")
+                    print(f"Demo file failed: {f}", file=sys.stderr)
                     exit(1)

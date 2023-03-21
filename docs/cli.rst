@@ -8,5 +8,5 @@ This library comes with a command line interface. Once this library is pip insta
 
   Options:
     --version   Show the version and exit.
-    --validate  Validate input and exit.
+    --validate  Validate input file and exit.
     --help      Show this message and exit.
