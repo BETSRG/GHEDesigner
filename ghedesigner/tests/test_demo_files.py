@@ -1,5 +1,4 @@
 import os
-import sys
 from datetime import datetime
 
 from ghedesigner.manager import run_manager_from_cli_worker
