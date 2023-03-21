@@ -735,16 +735,25 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path):
 
 
 @click.command(name="GHEDesignerCommandLine")
-@click.argument("input-path", type=click.Path(exists=True))
-@click.argument("output-directory", type=click.Path(exists=True))
-def run_manager_from_cli(input_path, output_directory):
-    """
-    Run simulation. Function is exposed through a console script.
+@click.argument("input-path", type=click.Path(exists=True), required=False)
+@click.argument("output-directory", type=click.Path(exists=True), required=False)
+@click.version_option(VERSION)
+@click.option(
+    "--validate",
+    default=False,
+    is_flag=True,
+    show_default=False,
+    help="Validate input and exit."
+)
+def run_manager_from_cli(input_path, output_directory, validate):
 
-    :param input_path: path to input file.
-    :param output_directory: path to write output files.
-    """
     input_path = Path(input_path).resolve()
+
+    if validate:
+        validate_input_file(input_path)
+        print("Valid input file.")
+        exit(0)
+
     output_path = Path(output_directory).resolve()
 
     if not input_path.exists():
