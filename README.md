@@ -53,9 +53,9 @@ Updates since [Cook (2021)](https://hdl.handle.net/11244/335489) include:
   library. ([Spitler, et al. 2021](https://doi.org/10.15121/1811518), \
   [2022b](https://doi.org/10.22488/okstate.22.000040))
 - GHEDesigner can synthesize on the fly irregularly shaped borehole configurations using the RowWise
-  algorithm ([Spitler, et al. 2022a](https://doi.org/10.15121/1811518)) or the bi-uniform polygonal constrained
+  algorithm ([Spitler, et al. 2022a](https://doi.org/10.22488/okstate.22.000016)) or the bi-uniform polygonal constrained
   rectangular search (BUPCRS) ([Cook 2021](https://hdl.handle.net/11244/335489)). Both configurations are adapted to the
-  user-specified property boundaries and no-drill zones, if any. [Spitler, et al. 2022a](https://doi.org/10.15121/1811518)
+  user-specified property boundaries and no-drill zones, if any. [Spitler, et al. 2022a](https://doi.org/10.22488/okstate.22.000016)
   gives an example where the RowWise algorithm saves 12-18% compared to the BUPCRS algorithm. The RowWise algorithm takes
   longer to run, though.
 - A set of search routines can be used to size different types of configurations:
@@ -102,13 +102,13 @@ the following packages:
 
 **Users** - Install `GHEDesigner` via the package installer for Python ([pip][#pip]):
 
-```angular2html
+```
 pip install ghedesigner
 ```
 
 **Developers** - Clone the repository to via git:
 
-```angular2html
+```
 git clone https://github.com/betsrg/ghedesigner
 ```
 
@@ -155,8 +155,8 @@ IGSHPA Research Conference Proceedings. Pp. 53-60. Las Vegas. Dec. 6-8. https://
 Spitler, J.D., T.N. West, X. Liu and I. Borshon. 2022b. An open library of g-functions for 34,321 configurations. IGSHPA
 Research Conference Proceedings. Pp. 264-271. Las Vegas. Dec. 6-8  https://doi.org/10.22488/okstate.22.000040
 
-Xu, X. and J. D. Spitler. 2006. _Modelling of Vertical Ground Loop Heat Exchangers with Variable Convective Resistance
-and Thermal Mass of the Fluid_. 10th International Conference on Thermal Energy Storage - Ecostock 2006, Pomona,
+Xu, X. and J. D. Spitler. 2006. Modelling of Vertical Ground Loop Heat Exchangers with Variable Convective Resistance
+and Thermal Mass of the Fluid. 10th International Conference on Thermal Energy Storage - Ecostock 2006, Pomona,
 NJ. https://hvac.okstate.edu/sites/default/files/pubs/papers/2006/07-Xu_Spitler_06.pdf
 
 [#pygfunction]: https://github.com/MassimoCimmino/pygfunction
