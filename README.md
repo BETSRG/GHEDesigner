@@ -112,7 +112,7 @@ pip install ghedesigner
 git clone https://github.com/betsrg/ghedesigner
 ```
 
-## Questions?
+## Questions
 
 If there are any questions, comments or concerns please [create][#create] an issue, comment on an [open][#issue] issue,
 comment on a [closed][#closed] issue.

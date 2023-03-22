@@ -165,8 +165,8 @@ Quick Start
 
    git clone https://github.com/betsrg/ghedesigner
 
-Questions?
-----------
+Questions
+---------
 
 If there are any questions, comments or concerns please
 `create <https://github.com/betsrg/ghedesigner/issues/new>`__ an issue,
