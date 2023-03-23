@@ -19,7 +19,7 @@ jobs:
 
       - name: Install Pip Dependencies
         shell: bash
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt && pip install wheel
 
       - name: Build the Wheel
         shell: bash
