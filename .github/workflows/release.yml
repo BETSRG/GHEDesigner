@@ -27,6 +27,8 @@ jobs:
 
       - name: Deploy on PyPi
         uses: pypa/gh-action-pypi-publish@release/v1
+        permissions:
+          id-token: write
         with:
           user: __token__
           password: ${{ secrets.PYPIPW }}
