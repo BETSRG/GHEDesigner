@@ -159,7 +159,7 @@ Quick Start
 
    pip install ghedesigner
 
-**Developers** - Clone the repository to via git:
+**Developers** - Clone the repository via git:
 
 ::
 

@@ -34,5 +34,12 @@ setup(
     author_email='spitler@okstate.edu',
     entry_points={
         'console_scripts': ['ghedesigner=ghedesigner.manager:run_manager_from_cli']
-    }
+    },
+    python_requires='>=3.8',
+    classifiers=[
+        'Topic :: Scientific/Engineering',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10'
+    ]
 )

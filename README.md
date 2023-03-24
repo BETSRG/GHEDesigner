@@ -106,7 +106,7 @@ the following packages:
 pip install ghedesigner
 ```
 
-**Developers** - Clone the repository to via git:
+**Developers** - Clone the repository via git:
 
 ```
 git clone https://github.com/betsrg/ghedesigner
