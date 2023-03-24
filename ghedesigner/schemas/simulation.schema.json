@@ -30,7 +30,7 @@
       "type": "string",
       "enum": [
         "HYBRID",
-        "TIMESTEP"
+        "HOURLY"
       ],
       "default": "HYBRID",
       "description": "This field is currently unused.\n\nSimulation timestep used in ground heat exchanger sizing.\n\n'HYBRID' is the only option currently avaliable."
