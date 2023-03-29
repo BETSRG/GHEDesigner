@@ -269,10 +269,16 @@ def point_polygon_check(contour, point):
         By = B[1]
 
         if between(Py, Ay, By):  # points inside vertical range
-            if (((Py == Ay) and (By >= Ay)) or ((Py == By) and (Ay >= By))): continue
-            ## calc cross product `PA X PB`, P lays on left side of AB if c > 0
+            if (((Py == Ay) and (By >= Ay)) or ((Py == By) and (Ay >= By))):
+                continue
+
+            # calc cross product `PA X PB`, P lays on left side of AB if c > 0
             c = (Ax - Px) * (By - Py) - (Bx - Px) * (Ay - Py)
-            if (c == 0): return 0
-            if ((Ay < By) == (c > 0)): inside = not inside
+
+            if (c == 0):
+                return 0
+
+            if ((Ay < By) == (c > 0)):
+                inside = not inside
 
     return -1 if inside else 1

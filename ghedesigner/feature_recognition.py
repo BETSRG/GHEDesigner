@@ -1,5 +1,4 @@
-import cv2
-import numpy as np
+from ghedesigner.shape import point_polygon_check
 
 
 def scale_coordinates(coordinates, scale):
@@ -11,35 +10,27 @@ def scale_coordinates(coordinates, scale):
     return new_coordinates
 
 
-def remove_cutout(coordinates, boundary=None, remove_inside=True, keep_contour=True):
-    if boundary is None:
-        boundary = []
-
-    # cv2.pointPolygonTest only takes integers, so we scale by 10000 and then
-    # scale back to keep precision
-    scale = 10000.0
-    coordinates = scale_coordinates(coordinates, scale)
-    boundary = scale_coordinates(boundary, scale)
-
-    _boundary = np.array(boundary, dtype=np.uint64)
-
-    # https://stackoverflow.com/a/50670359/11637415
-    # Positive - point is inside the contour
-    # Negative - point is outside the contour
-    # Zero - point is on the contour
+def remove_cutout(coordinates, boundary, remove_inside=True, keep_contour=True):
 
     inside_points_idx = []
     outside_points_idx = []
     boundary_points_idx = []
+
+    INSIDE = 1
+    OUTSIDE = -1
+    ON_EDGE = 0
+
     for idx, coordinate in enumerate(coordinates):
         coordinate = coordinates[idx]
-        dist = cv2.pointPolygonTest(_boundary, coordinate, False)
-        if dist > 0.0:
+        ret = point_polygon_check(boundary, coordinate)
+        if ret == INSIDE:
             inside_points_idx.append(idx)
-        elif dist < 0.0:
+        elif ret == OUTSIDE:
             outside_points_idx.append(idx)
-        elif dist == 0.0:
+        elif ret == ON_EDGE:
             boundary_points_idx.append(idx)
+        else:
+            raise ValueError("Something bad happened")
 
     new_coordinates = []
     for idx, _ in enumerate(coordinates):
@@ -67,8 +58,6 @@ def remove_cutout(coordinates, boundary=None, remove_inside=True, keep_contour=T
                 continue
             else:
                 new_coordinates.append(coordinates[idx])
-
-    new_coordinates = scale_coordinates(new_coordinates, 1 / scale)
 
     return new_coordinates
 

@@ -107,7 +107,6 @@ the following packages:
 - [click][#click] (>=8.1.3)
 - [jsonschema][#jsonschema] (>=4.17.3)
 - [numpy][#numpy] (>=1.24.2)
-- [opencv-python][#opencv] (==4.7.0.68)
 - [pygfunction][#pygfunction] (>=2.2.2)
 - [scipy][#scipy] (>=1.10.0)
 
@@ -177,8 +176,6 @@ NJ. https://hvac.okstate.edu/sites/default/files/pubs/papers/2006/07-Xu_Spitler_
 [#numpy]: https://numpy.org/doc/stable/
 
 [#scipy]: https://docs.scipy.org/doc/scipy/
-
-[#opencv]: https://pypi.org/project/opencv-python/
 
 [#click]: https://click.palletsprojects.com/en/8.1.x/
 
