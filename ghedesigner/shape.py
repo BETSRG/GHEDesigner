@@ -215,3 +215,64 @@ def vector_intersect(l1, l2, intersection_tolerance):
     rx = (c2 - c1) / (a1 - a2)
     ry = a1 * (c2 - c1) / (a1 - a2) + c1
     return [[rx, ry]]
+
+
+def point_polygon_check(contour, point):
+    """
+    Mimics pointPolygonTest from OpenCV-Python
+
+    Adapted from the methods outlined in the links below.
+    https://stackoverflow.com/a/63436180/5965685
+    https://stackoverflow.com/a/17693146/5965685
+
+    :param contour: list of tuples containing (x, y) contour boundary points
+    :param point: tuple containing the (x, y) point to test
+
+    :returns: -1 if outside, 0 if on edge, 1 if inside
+    :rtype: int
+    """
+
+    # check if on edge
+    # use Pythagoras to check whether the distance between the test point
+    # and the line vertices add to the distance between the line vertices
+    # if they are within tolerance, the point is colinear
+    # if not, it is off the line
+
+    def distance(pt_1, pt_2) -> float:
+        return sqrt((pt_1[0] - pt_2[0]) ** 2 + (pt_1[1] - pt_2[1]) ** 2)
+
+    on_edge_tolerance = 0.001
+
+    for idx, vertex in enumerate(contour):
+        A = contour[idx - 1]
+        B = vertex
+        test_dist = distance(A, point) + distance(B, point)
+        AB_dist = distance(A, B)
+
+        if abs(test_dist - AB_dist) < on_edge_tolerance:
+            return 0
+
+    # if made it to here, not on edge and check if inside/outside
+    def between(p, a, b) -> bool:
+        return ((p >= a) and (p <= b)) or ((p <= a) and (p >= b))
+
+    inside = True
+    Px = point[0]
+    Py = point[1]
+
+    for idx, vertex in enumerate(contour):
+        A = contour[idx - 1]
+        B = vertex
+        Ax = A[0]
+        Ay = A[1]
+        Bx = B[0]
+        By = B[1]
+
+        if between(Py, Ay, By):  # points inside vertical range
+            if (((Py == Ay) and (By >= Ay)) or ((Py == By) and (Ay >= By))): continue
+            ## calc cross product `PA X PB`, P lays on left side of AB if c > 0
+            c = (Ax - Px) * (By - Py) - (Bx - Px) * (Ay - Py)
+            if (c == 0): return 0
+            if ((Ay < By) == (c > 0)): inside = not inside
+
+    return -1 if inside else 1
