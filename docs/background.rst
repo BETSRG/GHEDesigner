@@ -143,8 +143,6 @@ Python 3.8 and 3.9. GHEDesigner is dependent on the following packages:
 -  `click <https://click.palletsprojects.com/en/8.1.x/>`__ (>=8.1.3)
 -  `jsonschema <https://pypi.org/project/jsonschema/>`__ (>=4.17.3)
 -  `numpy <https://numpy.org/doc/stable/>`__ (>=1.24.2)
--  `opencv-python <https://pypi.org/project/opencv-python/>`__
-   (==4.7.0.68)
 -  `pygfunction <https://github.com/MassimoCimmino/pygfunction>`__
    (>=2.2.2)
 -  `scipy <https://docs.scipy.org/doc/scipy/>`__ (>=1.10.0)

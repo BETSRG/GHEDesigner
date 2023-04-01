@@ -215,3 +215,70 @@ def vector_intersect(l1, l2, intersection_tolerance):
     rx = (c2 - c1) / (a1 - a2)
     ry = a1 * (c2 - c1) / (a1 - a2) + c1
     return [[rx, ry]]
+
+
+def point_polygon_check(contour, point):
+    """
+    Mimics pointPolygonTest from OpenCV-Python
+
+    Adapted from the methods outlined in the links below.
+    https://stackoverflow.com/a/63436180/5965685
+    https://stackoverflow.com/a/17693146/5965685
+
+    :param contour: list of tuples containing (x, y) contour boundary points
+    :param point: tuple containing the (x, y) point to test
+
+    :returns: -1 if outside, 0 if on edge, 1 if inside
+    :rtype: int
+    """
+
+    # check if on edge
+    # use Pythagoras to check whether the distance between the test point
+    # and the line vertices add to the distance between the line vertices
+    # if they are within tolerance, the point is co-linear
+    # if not, it is off the line
+
+    def distance(pt_1, pt_2) -> float:
+        return sqrt((pt_1[0] - pt_2[0]) ** 2 + (pt_1[1] - pt_2[1]) ** 2)
+
+    on_edge_tolerance = 0.001
+
+    for idx, vertex in enumerate(contour):
+        v1 = contour[idx - 1]
+        v2 = vertex
+        test_dist = distance(v1, point) + distance(v2, point)
+        v12_dist = distance(v1, v2)
+
+        if abs(test_dist - v12_dist) < on_edge_tolerance:
+            return 0
+
+    # if made it to here, not on edge and check if inside/outside
+    def between(p, a, b) -> bool:
+        return ((p >= a) and (p <= b)) or ((p <= a) and (p >= b))
+
+    inside = True
+    px = point[0]
+    py = point[1]
+
+    for idx, vertex in enumerate(contour):
+        v1 = contour[idx - 1]
+        v2 = vertex
+        v1x = v1[0]
+        v1y = v1[1]
+        v2x = v2[0]
+        v2y = v2[1]
+
+        if between(py, v1y, v2y):  # points inside vertical range
+            if ((py == v1y) and (v2y >= v1y)) or ((py == v2y) and (v1y >= v2y)):
+                continue
+
+            # calc cross product `PA X PB`, P lays on left side of AB if c > 0
+            c = (v1x - px) * (v2y - py) - (v2x - px) * (v1y - py)
+
+            if c == 0:
+                return 0
+
+            if (v1y < v2y) == (c > 0):
+                inside = not inside
+
+    return -1 if inside else 1
