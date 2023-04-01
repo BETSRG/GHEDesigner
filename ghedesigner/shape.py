@@ -235,7 +235,7 @@ def point_polygon_check(contour, point):
     # check if on edge
     # use Pythagoras to check whether the distance between the test point
     # and the line vertices add to the distance between the line vertices
-    # if they are within tolerance, the point is colinear
+    # if they are within tolerance, the point is co-linear
     # if not, it is off the line
 
     def distance(pt_1, pt_2) -> float:
@@ -244,12 +244,12 @@ def point_polygon_check(contour, point):
     on_edge_tolerance = 0.001
 
     for idx, vertex in enumerate(contour):
-        A = contour[idx - 1]
-        B = vertex
-        test_dist = distance(A, point) + distance(B, point)
-        AB_dist = distance(A, B)
+        v1 = contour[idx - 1]
+        v2 = vertex
+        test_dist = distance(v1, point) + distance(v2, point)
+        v12_dist = distance(v1, v2)
 
-        if abs(test_dist - AB_dist) < on_edge_tolerance:
+        if abs(test_dist - v12_dist) < on_edge_tolerance:
             return 0
 
     # if made it to here, not on edge and check if inside/outside
@@ -257,28 +257,28 @@ def point_polygon_check(contour, point):
         return ((p >= a) and (p <= b)) or ((p <= a) and (p >= b))
 
     inside = True
-    Px = point[0]
-    Py = point[1]
+    px = point[0]
+    py = point[1]
 
     for idx, vertex in enumerate(contour):
-        A = contour[idx - 1]
-        B = vertex
-        Ax = A[0]
-        Ay = A[1]
-        Bx = B[0]
-        By = B[1]
+        v1 = contour[idx - 1]
+        v2 = vertex
+        v1x = v1[0]
+        v1y = v1[1]
+        v2x = v2[0]
+        v2y = v2[1]
 
-        if between(Py, Ay, By):  # points inside vertical range
-            if (((Py == Ay) and (By >= Ay)) or ((Py == By) and (Ay >= By))):
+        if between(py, v1y, v2y):  # points inside vertical range
+            if ((py == v1y) and (v2y >= v1y)) or ((py == v2y) and (v1y >= v2y)):
                 continue
 
             # calc cross product `PA X PB`, P lays on left side of AB if c > 0
-            c = (Ax - Px) * (By - Py) - (Bx - Px) * (Ay - Py)
+            c = (v1x - px) * (v2y - py) - (v2x - px) * (v1y - py)
 
-            if (c == 0):
+            if c == 0:
                 return 0
 
-            if ((Ay < By) == (c > 0)):
+            if (v1y < v2y) == (c > 0):
                 inside = not inside
 
     return -1 if inside else 1
