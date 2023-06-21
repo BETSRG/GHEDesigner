@@ -55,8 +55,8 @@ class RadialNumericalBH(object):
         self.num_grout_cells = 27
         self.num_soil_cells = 500
 
-        self.num_cells = self.num_fluid_cells + self.num_conv_cells + self.num_fluid_cells + self.num_grout_cells \
-                         + self.num_soil_cells + 1
+        self.num_cells = self.num_fluid_cells + self.num_conv_cells + self.num_fluid_cells
+        self.num_cells += self.num_grout_cells + self.num_soil_cells + 1
 
         # Geometry and grid procedure
 
@@ -326,10 +326,12 @@ class RadialNumericalBH(object):
         _center_cell = radial_cell[:, 1: self.num_cells - 1]
         _east_cell = radial_cell[:, 2: self.num_cells - 0]
 
-        fe_1 = log(radial_cell[self.r_out_idx, 0] / radial_cell[self.r_center_idx, 0]) \
-               / (TWO_PI * radial_cell[self.k_idx, 0])
-        fe_2 = log(radial_cell[self.r_center_idx, 1] / radial_cell[self.r_in_idx, 1]) \
-               / (TWO_PI * radial_cell[self.k_idx, 1])
+        fe_1 = log(radial_cell[self.r_out_idx, 0] / radial_cell[self.r_center_idx, 0])
+        fe_1 /= (TWO_PI * radial_cell[self.k_idx, 0])
+
+        fe_2 = log(radial_cell[self.r_center_idx, 1] / radial_cell[self.r_in_idx, 1])
+        fe_2 /= (TWO_PI * radial_cell[self.k_idx, 1])
+
         ae = 1 / (fe_1 + fe_2)
         ad = radial_cell[self.rho_cp_idx, 0] * radial_cell[self.volume_idx, 0] / time_step
         _d[0] = -ae / ad - 1
