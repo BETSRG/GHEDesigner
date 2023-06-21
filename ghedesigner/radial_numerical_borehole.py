@@ -58,6 +58,8 @@ class RadialNumericalBH(object):
         self.num_cells = self.num_fluid_cells + self.num_conv_cells + self.num_fluid_cells
         self.num_cells += self.num_grout_cells + self.num_soil_cells + 1
 
+        self.bh_wall_idx = self.num_fluid_cells + self.num_conv_cells + self.num_pipe_cells + self.num_grout_cells
+
         # Geometry and grid procedure
 
         # far-field radius is set to 10m; the soil region is represented by
@@ -93,6 +95,7 @@ class RadialNumericalBH(object):
 
         # other
         self.g = np.array([], dtype=self.dtype)
+        self.g_bhw = np.array([], dtype=self.dtype)
         self.lntts = np.array([], dtype=self.dtype)
         self.c_0 = TWO_PI * single_u_tube.soil.k
         soil_diffusivity = single_u_tube.k_s / single_u_tube.soil.rhoCp
@@ -282,7 +285,7 @@ class RadialNumericalBH(object):
             )
         cell_summation += num_soil_cells
 
-    def calc_sts_g_functions(self, single_u_tube, final_time=None, calculate_at_bh_wall=False) -> tuple:
+    def calc_sts_g_functions(self, single_u_tube, final_time=None) -> tuple:
 
         self.partial_init(single_u_tube)
 
@@ -301,6 +304,7 @@ class RadialNumericalBH(object):
             final_time = self.calc_time_in_sec
 
         g = []
+        g_bhw = []
         lntts = []
 
         _dl = np.zeros(self.num_cells - 1)
@@ -380,48 +384,12 @@ class RadialNumericalBH(object):
 
             radial_cell[self.temperature_idx, :] = _b
 
-            if calculate_at_bh_wall:
-                raise ValueError(
-                    "This portion of the code does not currently run with this "
-                    "vectorized radial numerical implementation."
-                )
-                # bh_wall_temp = 0
-                #
-                # # calculate bh wall temp
-                # for idx, _ in enumerate(self.cells):
-                #     west_cell = self.cells[idx]
-                #     east_cell = self.cells[idx + 1]
-                #
-                #     if (
-                #         west_cell.type == RadialCellType.GROUT
-                #         and east_cell.type == RadialCellType.SOIL
-                #     ):
-                #         west_conductance_num = 2 * pi * west_cell.conductivity
-                #         west_conductance_den = log(
-                #             west_cell.outer_radius / west_cell.inner_radius
-                #         )
-                #         west_conductance = west_conductance_num / west_conductance_den
-                #
-                #         east_conductance_num = 2 * pi * east_cell.conductivity
-                #         east_conductance_den = log(
-                #             east_cell.center_radius / west_cell.inner_radius
-                #         )
-                #         east_conductance = east_conductance_num / east_conductance_den
-                #
-                #         bh_wall_temp_num_1 = west_conductance * west_cell.temperature
-                #         bh_wall_temp_num_2 = east_conductance * east_cell.temperature
-                #         bh_wall_temp_num = bh_wall_temp_num_1 + bh_wall_temp_num_2
-                #         bh_wall_temp_den = west_conductance + east_conductance
-                #         bh_wall_temp = bh_wall_temp_num / bh_wall_temp_den
-                #
-                #         break
-                #
-                # g.append(self.c_0 * ((bh_wall_temp - init_temp) / heat_flux))
-            else:
-                g.append(
-                    self.c_0
-                    * ((radial_cell[self.temperature_idx, 0] - init_temp) / heat_flux - resist_bh_effective)
-                )
+            # compute standard g-functions
+            g.append(self.c_0 * ((radial_cell[self.temperature_idx, 0] - init_temp) / heat_flux - resist_bh_effective))
+
+            # compute g-functions at bh wall
+            bh_wall_temp = radial_cell[self.temperature_idx, self.bh_wall_idx]
+            g_bhw.append(self.c_0 * ((bh_wall_temp - init_temp) / heat_flux))
 
             lntts.append(log(time / self.t_s))
 
@@ -430,13 +398,17 @@ class RadialNumericalBH(object):
 
         # quickly chop down the total values to a more manageable set
         num_intervals = 30
-        g_sts_temp = interp1d(lntts, g)
+        g_tmp = interp1d(lntts, g)
         uniform_lntts_vals = np.linspace(lntts[0], lntts[-1], num_intervals)
-        uniform_g_vals = g_sts_temp(uniform_lntts_vals)
+        uniform_g_vals = g_tmp(uniform_lntts_vals)
+
+        g_bhw_tmp = interp1d(lntts, g_bhw)
+        uniform_g_bhw_vals = g_bhw_tmp(uniform_lntts_vals)
 
         # set the final arrays and interpolator objects
         self.lntts = np.array(uniform_lntts_vals)
         self.g = np.array(uniform_g_vals)
+        self.g_bhw = np.array(uniform_g_bhw_vals)
         self.g_sts = interp1d(self.lntts, self.g)
 
         return self.lntts, self.g
