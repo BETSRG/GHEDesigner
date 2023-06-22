@@ -136,12 +136,17 @@ class OutputManager:
 
     @staticmethod
     def get_g_function_data(design):
-        csv_array = [["ln(t/ts)", f"H:{design.ghe.bhe.b.H:0.2f}"]]
-        ghe_gf_adjusted = design.ghe.grab_g_function(design.ghe.B_spacing / float(design.ghe.bhe.b.H))
-        gfunction_log_vals = ghe_gf_adjusted.x
-        gfunction_g_vals = ghe_gf_adjusted.y
-        for log_val, g_val in zip(gfunction_log_vals, gfunction_g_vals):
-            csv_array.append([log_val, g_val])
+        title = f"H:{design.ghe.bhe.b.H:0.2f}"
+        csv_array = [["ln(t/ts)", f"{title}", f"{title}_bhw"]]
+        gf_adjusted, gf_bhw_adjusted = design.ghe.grab_g_function(design.ghe.B_spacing / float(design.ghe.bhe.b.H))
+
+        gf_log_vals = gf_adjusted.x
+        gf_g_vals = gf_adjusted.y
+
+        gf_bhw_g_vals = gf_bhw_adjusted.y
+
+        for log_val, g_val, g_bhw_val in zip(gf_log_vals, gf_g_vals, gf_bhw_g_vals):
+            csv_array.append([log_val, g_val, g_bhw_val])
         return csv_array
 
     @staticmethod
