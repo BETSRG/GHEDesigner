@@ -1,3 +1,4 @@
+from enum import auto, IntEnum
 from math import exp, log, pi, sqrt
 
 import numpy as np
@@ -6,6 +7,16 @@ from scipy.linalg.lapack import dgtsv
 
 from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.constants import TWO_PI
+
+
+class CellProps(IntEnum):
+    R_IN = 0
+    R_CENTER = auto()
+    R_OUT = auto()
+    K = auto()
+    RHO_CP = auto()
+    TEMP = auto()
+    VOL = auto()
 
 
 class RadialNumericalBH(object):
@@ -18,15 +29,6 @@ class RadialNumericalBH(object):
 
     def __init__(self, single_u_tube: SingleUTube):
         self.single_u_tube = single_u_tube
-
-        self.r_in_idx = 0
-        self.r_center_idx = 1
-        self.r_out_idx = 2
-        self.k_idx = 3
-        self.rho_cp_idx = 4
-        self.temperature_idx = 5
-        self.volume_idx = 6
-        self.num_cell_props = 7
 
         # "The one dimensional model has a fluid core, an equivalent convective
         # resistance layer, a tube layer, a grout layer and is surrounded by the
@@ -261,7 +263,7 @@ class RadialNumericalBH(object):
 
         # Pass radial cell by reference and fill here so that it can be
         # destroyed when this method returns
-        radial_cell = np.zeros(shape=(self.num_cell_props, self.num_cells), dtype=np.double)
+        radial_cell = np.zeros(shape=(len(CellProps), self.num_cells), dtype=np.double)
         self.fill_radial_cell(radial_cell, resist_p_eq, resist_f_eq, resist_tg_eq)
 
         if final_time is None:
@@ -294,22 +296,22 @@ class RadialNumericalBH(object):
         _center_cell = radial_cell[:, 1: self.num_cells - 1]
         _east_cell = radial_cell[:, 2: self.num_cells - 0]
 
-        fe_1 = log(radial_cell[self.r_out_idx, 0] / radial_cell[self.r_center_idx, 0])
-        fe_1 /= (TWO_PI * radial_cell[self.k_idx, 0])
+        fe_1 = log(radial_cell[CellProps.R_OUT, 0] / radial_cell[CellProps.R_CENTER, 0])
+        fe_1 /= (TWO_PI * radial_cell[CellProps.K, 0])
 
-        fe_2 = log(radial_cell[self.r_center_idx, 1] / radial_cell[self.r_in_idx, 1])
-        fe_2 /= (TWO_PI * radial_cell[self.k_idx, 1])
+        fe_2 = log(radial_cell[CellProps.R_CENTER, 1] / radial_cell[CellProps.R_IN, 1])
+        fe_2 /= (TWO_PI * radial_cell[CellProps.K, 1])
 
         ae = 1 / (fe_1 + fe_2)
-        ad = radial_cell[self.rho_cp_idx, 0] * radial_cell[self.volume_idx, 0] / time_step
+        ad = radial_cell[CellProps.RHO_CP, 0] * radial_cell[CellProps.VOL, 0] / time_step
         _d[0] = -ae / ad - 1
         _du[0] = ae / ad
 
         def fill_f1(fx_1, cell):
-            fx_1[:] = np.log(cell[self.r_out_idx, :] / cell[self.r_center_idx, :]) / (TWO_PI * cell[self.k_idx, :])
+            fx_1[:] = np.log(cell[CellProps.R_OUT, :] / cell[CellProps.R_CENTER, :]) / (TWO_PI * cell[CellProps.K, :])
 
         def fill_f2(fx_2, cell):
-            fx_2[:] = np.log(cell[self.r_center_idx, :] / cell[self.r_in_idx, :]) / (TWO_PI * cell[self.k_idx, :])
+            fx_2[:] = np.log(cell[CellProps.R_CENTER, :] / cell[CellProps.R_IN, :]) / (TWO_PI * cell[CellProps.K, :])
 
         fill_f1(_fe_1, _center_cell)
         fill_f2(_fe_2, _east_cell)
@@ -319,7 +321,7 @@ class RadialNumericalBH(object):
         fill_f2(_fw_2, _center_cell)
         _aw[:] = -1.0 / (_fw_1 + _fw_2)
 
-        _ad[:] = (_center_cell[self.rho_cp_idx, :] * _center_cell[self.volume_idx, :] / time_step)
+        _ad[:] = (_center_cell[CellProps.RHO_CP, :] * _center_cell[CellProps.VOL, :] / time_step)
         _dl[0: self.num_cells - 2] = -_aw / _ad
         _d[1: self.num_cells - 1] = _aw / _ad - _ae / _ad - 1.0
         _du[1: self.num_cells - 1] = _ae / _ad
@@ -330,29 +332,29 @@ class RadialNumericalBH(object):
 
             # For the idx == 0 case:
 
-            _b[0] = -radial_cell[self.temperature_idx, 0] - heat_flux / ad
+            _b[0] = -radial_cell[CellProps.TEMP, 0] - heat_flux / ad
 
             # For the idx == n-1 case
 
             _dl[self.num_cells - 2] = 0.0
             _d[self.num_cells - 1] = 1.0
-            _b[self.num_cells - 1] = radial_cell[self.temperature_idx, self.num_cells - 1]
+            _b[self.num_cells - 1] = radial_cell[CellProps.TEMP, self.num_cells - 1]
 
             # Now handle the 1 to n-2 cases with numpy slicing and vectorization
-            _b[1: self.num_cells - 1] = -radial_cell[self.temperature_idx, 1: self.num_cells - 1]
+            _b[1: self.num_cells - 1] = -radial_cell[CellProps.TEMP, 1: self.num_cells - 1]
 
             # Tri-diagonal matrix solver
             # High level interface to LAPACK routine
             # https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.lapack.dgtsv.html#scipy.linalg.lapack.dgtsv
             dgtsv(_dl, _d, _du, _b, overwrite_b=1)  # TODO: Do we really need lapack just to do a TDMA solution?
 
-            radial_cell[self.temperature_idx, :] = _b
+            radial_cell[CellProps.TEMP, :] = _b
 
             # compute standard g-functions
-            g.append(self.c_0 * ((radial_cell[self.temperature_idx, 0] - init_temp) / heat_flux - resist_bh_effective))
+            g.append(self.c_0 * ((radial_cell[CellProps.TEMP, 0] - init_temp) / heat_flux - resist_bh_effective))
 
             # compute g-functions at bh wall
-            bh_wall_temp = radial_cell[self.temperature_idx, self.bh_wall_idx]
+            bh_wall_temp = radial_cell[CellProps.TEMP, self.bh_wall_idx]
             g_bhw.append(self.c_0 * ((bh_wall_temp - init_temp) / heat_flux))
 
             lntts.append(log(time / self.t_s))
