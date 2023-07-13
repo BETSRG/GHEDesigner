@@ -1,3 +1,4 @@
+from enum import auto, IntEnum
 from math import exp, log, pi, sqrt
 
 import numpy as np
@@ -8,12 +9,14 @@ from ghedesigner.borehole_heat_exchangers import SingleUTube
 from ghedesigner.constants import TWO_PI
 
 
-class RadialCellType(object):
-    FLUID = 1
-    CONVECTION = 2
-    PIPE = 3
-    GROUT = 4
-    SOIL = 5
+class CellProps(IntEnum):
+    R_IN = 0
+    R_CENTER = auto()
+    R_OUT = auto()
+    K = auto()
+    RHO_CP = auto()
+    TEMP = auto()
+    VOL = auto()
 
 
 class RadialNumericalBH(object):
@@ -24,26 +27,8 @@ class RadialNumericalBH(object):
     Energy Storage-EcoStock. Pomona, NJ, May 31-June 2.
     """
 
-    def __init__(
-            self,
-            single_u_tube: SingleUTube,
-            ground_init_temp: float = 20.0,
-            data_type: np.dtype = np.double,
-    ):
+    def __init__(self, single_u_tube: SingleUTube):
         self.single_u_tube = single_u_tube
-        self.dtype = data_type
-
-        self.cell_inputs = {
-            "type": 0,
-            "inner-radius": 1,
-            "center-radius": 2,
-            "outer-radius": 3,
-            "thickness": 4,
-            "conductivity": 5,
-            "heat-capacity": 6,
-            "initial-temperature": 7,
-            "volume": 8,
-        }
 
         # "The one dimensional model has a fluid core, an equivalent convective
         # resistance layer, a tube layer, a grout layer and is surrounded by the
@@ -56,9 +41,10 @@ class RadialNumericalBH(object):
         self.num_grout_cells = 27
         self.num_soil_cells = 500
 
-        self.num_cells = \
-            self.num_fluid_cells + self.num_conv_cells + self.num_fluid_cells + self.num_grout_cells + \
-            self.num_soil_cells + 1
+        self.num_cells = self.num_fluid_cells + self.num_conv_cells + self.num_fluid_cells
+        self.num_cells += self.num_grout_cells + self.num_soil_cells + 1
+
+        self.bh_wall_idx = self.num_fluid_cells + self.num_conv_cells + self.num_pipe_cells + self.num_grout_cells
 
         # Geometry and grid procedure
 
@@ -91,11 +77,12 @@ class RadialNumericalBH(object):
         self.thickness_fluid = (self.r_in_convection - self.r_fluid) / self.num_fluid_cells
 
         # other
-        self.init_temp = ground_init_temp
+        self.init_temp = 20
 
         # other
-        self.g = np.array([], dtype=self.dtype)
-        self.lntts = np.array([], dtype=self.dtype)
+        self.g = np.array([], dtype=np.double)
+        self.g_bhw = np.array([], dtype=np.double)
+        self.lntts = np.array([], dtype=np.double)
         self.c_0 = TWO_PI * single_u_tube.soil.k
         soil_diffusivity = single_u_tube.k_s / single_u_tube.soil.rhoCp
         self.t_s = single_u_tube.b.H ** 2 / (9 * soil_diffusivity)
@@ -126,16 +113,14 @@ class RadialNumericalBH(object):
 
         # load fluid cells
         for idx in range(cell_summation, num_fluid_cells + cell_summation):
-            cell_type = RadialCellType.FLUID
-            thickness = self.thickness_fluid
-            center_radius = self.r_fluid + idx * thickness
+            center_radius = self.r_fluid + idx * self.thickness_fluid
 
             if idx == 0:
                 inner_radius = center_radius
             else:
-                inner_radius = center_radius - thickness / 2.0
+                inner_radius = center_radius - self.thickness_fluid / 2.0
 
-            outer_radius = center_radius + thickness / 2.0
+            outer_radius = center_radius + self.thickness_fluid / 2.0
 
             # The equivalent thermal mass of the fluid can be calculated from
             # equation (2)
@@ -150,17 +135,15 @@ class RadialNumericalBH(object):
             volume = pi * (outer_radius ** 2 - inner_radius ** 2)
             radial_cell[:, idx] = np.array(
                 [
-                    cell_type,
                     inner_radius,
                     center_radius,
                     outer_radius,
-                    thickness,
                     k_eq,
                     rho_cp_eq,
                     self.init_temp,
                     volume,
                 ],
-                dtype=self.dtype,
+                dtype=np.double,
             )
         cell_summation += num_fluid_cells
 
@@ -170,27 +153,23 @@ class RadialNumericalBH(object):
         # load convection cells
         for idx in range(cell_summation, num_conv_cells + cell_summation):
             j = idx - cell_summation
-            cell_type = RadialCellType.CONVECTION
-            thickness = self.thickness_conv
-            inner_radius = self.r_in_convection + j * thickness
-            center_radius = inner_radius + thickness / 2.0
-            outer_radius = inner_radius + thickness
+            inner_radius = self.r_in_convection + j * self.thickness_conv
+            center_radius = inner_radius + self.thickness_conv / 2.0
+            outer_radius = inner_radius + self.thickness_conv
             k_eq = log(self.r_in_tube / self.r_in_convection) / (TWO_PI * resist_f_eq)
             rho_cp = 1.0
             volume = pi * (outer_radius ** 2 - inner_radius ** 2)
             radial_cell[:, idx] = np.array(
                 [
-                    cell_type,
                     inner_radius,
                     center_radius,
                     outer_radius,
-                    thickness,
                     k_eq,
                     rho_cp,
                     self.init_temp,
                     volume,
                 ],
-                dtype=self.dtype,
+                dtype=np.double,
             )
         cell_summation += num_conv_cells
 
@@ -200,27 +179,23 @@ class RadialNumericalBH(object):
         # load pipe cells
         for idx in range(cell_summation, num_pipe_cells + cell_summation):
             j = idx - cell_summation
-            cell_type = RadialCellType.PIPE
-            thickness = self.thickness_pipe
-            inner_radius = self.r_in_tube + j * thickness
-            center_radius = inner_radius + thickness / 2.0
-            outer_radius = inner_radius + thickness
+            inner_radius = self.r_in_tube + j * self.thickness_pipe
+            center_radius = inner_radius + self.thickness_pipe / 2.0
+            outer_radius = inner_radius + self.thickness_pipe
             conductivity = log(self.r_borehole / self.r_in_tube) / (TWO_PI * resist_p_eq)
             rho_cp = self.single_u_tube.pipe.rhoCp
             volume = pi * (outer_radius ** 2 - inner_radius ** 2)
             radial_cell[:, idx] = np.array(
                 [
-                    cell_type,
                     inner_radius,
                     center_radius,
                     outer_radius,
-                    thickness,
                     conductivity,
                     rho_cp,
                     self.init_temp,
                     volume,
                 ],
-                dtype=self.dtype,
+                dtype=np.double,
             )
         cell_summation += num_pipe_cells
 
@@ -230,27 +205,23 @@ class RadialNumericalBH(object):
         # load grout cells
         for idx in range(cell_summation, num_grout_cells + cell_summation):
             j = idx - cell_summation
-            cell_type = RadialCellType.GROUT
-            thickness = self.thickness_grout
-            inner_radius = self.r_out_tube + j * thickness
-            center_radius = inner_radius + thickness / 2.0
-            outer_radius = inner_radius + thickness
+            inner_radius = self.r_out_tube + j * self.thickness_grout
+            center_radius = inner_radius + self.thickness_grout / 2.0
+            outer_radius = inner_radius + self.thickness_grout
             conductivity = log(self.r_borehole / self.r_in_tube) / (TWO_PI * resist_tg_eq)
             rho_cp = self.single_u_tube.grout.rhoCp
             volume = pi * (outer_radius ** 2 - inner_radius ** 2)
             radial_cell[:, idx] = np.array(
                 [
-                    cell_type,
                     inner_radius,
                     center_radius,
                     outer_radius,
-                    thickness,
                     conductivity,
                     rho_cp,
                     self.init_temp,
                     volume,
                 ],
-                dtype=self.dtype,
+                dtype=np.double,
             )
         cell_summation += num_grout_cells
 
@@ -260,31 +231,27 @@ class RadialNumericalBH(object):
         # load soil cells
         for idx in range(cell_summation, num_soil_cells + cell_summation):
             j = idx - cell_summation
-            cell_type = RadialCellType.SOIL
-            thickness = self.thickness_soil
-            inner_radius = self.r_borehole + j * thickness
-            center_radius = inner_radius + thickness / 2.0
-            outer_radius = inner_radius + thickness
+            inner_radius = self.r_borehole + j * self.thickness_soil
+            center_radius = inner_radius + self.thickness_soil / 2.0
+            outer_radius = inner_radius + self.thickness_soil
             conductivity = self.single_u_tube.soil.k
             rho_cp = self.single_u_tube.soil.rhoCp
             volume = pi * (outer_radius ** 2 - inner_radius ** 2)
             radial_cell[:, idx] = np.array(
                 [
-                    cell_type,
                     inner_radius,
                     center_radius,
                     outer_radius,
-                    thickness,
                     conductivity,
                     rho_cp,
                     self.init_temp,
                     volume,
                 ],
-                dtype=self.dtype,
+                dtype=np.double,
             )
         cell_summation += num_soil_cells
 
-    def calc_sts_g_functions(self, single_u_tube, final_time=None, calculate_at_bh_wall=False) -> tuple:
+    def calc_sts_g_functions(self, single_u_tube, final_time=None) -> tuple:
 
         self.partial_init(single_u_tube)
 
@@ -296,15 +263,14 @@ class RadialNumericalBH(object):
 
         # Pass radial cell by reference and fill here so that it can be
         # destroyed when this method returns
-        radial_cell = np.zeros(
-            shape=(len(self.cell_inputs), self.num_cells), dtype=self.dtype
-        )
+        radial_cell = np.zeros(shape=(len(CellProps), self.num_cells), dtype=np.double)
         self.fill_radial_cell(radial_cell, resist_p_eq, resist_f_eq, resist_tg_eq)
 
         if final_time is None:
             final_time = self.calc_time_in_sec
 
         g = []
+        g_bhw = []
         lntts = []
 
         _dl = np.zeros(self.num_cells - 1)
@@ -318,18 +284,7 @@ class RadialNumericalBH(object):
         time = 1e-12 - 120
         time_step = 120
 
-        # type_idx = self.cell_inputs["type"]
-        r_in_idx = self.cell_inputs["inner-radius"]
-        r_center_idx = self.cell_inputs["center-radius"]
-        r_out_idx = self.cell_inputs["outer-radius"]
-        # thickness_idx = self.cell_inputs["thickness"]
-        k_idx = self.cell_inputs["conductivity"]
-        rho_cp_idx = self.cell_inputs["heat-capacity"]
-        temperature_idx = self.cell_inputs["initial-temperature"]
-        previous_temperature_idx = self.cell_inputs["initial-temperature"]
-        volume_idx = self.cell_inputs["volume"]
-
-        _fe_1 = np.zeros(shape=(self.num_cells - 2), dtype=self.dtype)
+        _fe_1 = np.zeros(shape=(self.num_cells - 2), dtype=np.double)
         _fe_2 = np.zeros_like(_fe_1)
         _ae = np.zeros_like(_fe_2)
         _fw_1 = np.zeros_like(_ae)
@@ -341,18 +296,22 @@ class RadialNumericalBH(object):
         _center_cell = radial_cell[:, 1: self.num_cells - 1]
         _east_cell = radial_cell[:, 2: self.num_cells - 0]
 
-        fe_1 = log(radial_cell[r_out_idx, 0] / radial_cell[r_center_idx, 0]) / (TWO_PI * radial_cell[k_idx, 0])
-        fe_2 = log(radial_cell[r_center_idx, 1] / radial_cell[r_in_idx, 1]) / (TWO_PI * radial_cell[k_idx, 1])
+        fe_1 = log(radial_cell[CellProps.R_OUT, 0] / radial_cell[CellProps.R_CENTER, 0])
+        fe_1 /= (TWO_PI * radial_cell[CellProps.K, 0])
+
+        fe_2 = log(radial_cell[CellProps.R_CENTER, 1] / radial_cell[CellProps.R_IN, 1])
+        fe_2 /= (TWO_PI * radial_cell[CellProps.K, 1])
+
         ae = 1 / (fe_1 + fe_2)
-        ad = radial_cell[rho_cp_idx, 0] * radial_cell[volume_idx, 0] / time_step
+        ad = radial_cell[CellProps.RHO_CP, 0] * radial_cell[CellProps.VOL, 0] / time_step
         _d[0] = -ae / ad - 1
         _du[0] = ae / ad
 
         def fill_f1(fx_1, cell):
-            fx_1[:] = np.log(cell[r_out_idx, :] / cell[r_center_idx, :]) / (TWO_PI * cell[k_idx, :])
+            fx_1[:] = np.log(cell[CellProps.R_OUT, :] / cell[CellProps.R_CENTER, :]) / (TWO_PI * cell[CellProps.K, :])
 
         def fill_f2(fx_2, cell):
-            fx_2[:] = np.log(cell[r_center_idx, :] / cell[r_in_idx, :]) / (TWO_PI * cell[k_idx, :])
+            fx_2[:] = np.log(cell[CellProps.R_CENTER, :] / cell[CellProps.R_IN, :]) / (TWO_PI * cell[CellProps.K, :])
 
         fill_f1(_fe_1, _center_cell)
         fill_f2(_fe_2, _east_cell)
@@ -362,7 +321,7 @@ class RadialNumericalBH(object):
         fill_f2(_fw_2, _center_cell)
         _aw[:] = -1.0 / (_fw_1 + _fw_2)
 
-        _ad[:] = (_center_cell[rho_cp_idx, :] * _center_cell[volume_idx, :] / time_step)
+        _ad[:] = (_center_cell[CellProps.RHO_CP, :] * _center_cell[CellProps.VOL, :] / time_step)
         _dl[0: self.num_cells - 2] = -_aw / _ad
         _d[1: self.num_cells - 1] = _aw / _ad - _ae / _ad - 1.0
         _du[1: self.num_cells - 1] = _ae / _ad
@@ -373,67 +332,30 @@ class RadialNumericalBH(object):
 
             # For the idx == 0 case:
 
-            _b[0] = -radial_cell[previous_temperature_idx, 0] - heat_flux / ad
+            _b[0] = -radial_cell[CellProps.TEMP, 0] - heat_flux / ad
 
             # For the idx == n-1 case
 
             _dl[self.num_cells - 2] = 0.0
             _d[self.num_cells - 1] = 1.0
-            _b[self.num_cells - 1] = radial_cell[previous_temperature_idx, self.num_cells - 1]
+            _b[self.num_cells - 1] = radial_cell[CellProps.TEMP, self.num_cells - 1]
 
             # Now handle the 1 to n-2 cases with numpy slicing and vectorization
-            _b[1: self.num_cells - 1] = -radial_cell[previous_temperature_idx, 1: self.num_cells - 1]
+            _b[1: self.num_cells - 1] = -radial_cell[CellProps.TEMP, 1: self.num_cells - 1]
 
             # Tri-diagonal matrix solver
             # High level interface to LAPACK routine
             # https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.lapack.dgtsv.html#scipy.linalg.lapack.dgtsv
             dgtsv(_dl, _d, _du, _b, overwrite_b=1)  # TODO: Do we really need lapack just to do a TDMA solution?
 
-            radial_cell[previous_temperature_idx, :] = _b
-            radial_cell[temperature_idx, :] = _b
+            radial_cell[CellProps.TEMP, :] = _b
 
-            if calculate_at_bh_wall:
-                raise ValueError(
-                    "This portion of the code does not currently run with this "
-                    "vectorized radial numerical implementation."
-                )
-                # bh_wall_temp = 0
-                #
-                # # calculate bh wall temp
-                # for idx, _ in enumerate(self.cells):
-                #     west_cell = self.cells[idx]
-                #     east_cell = self.cells[idx + 1]
-                #
-                #     if (
-                #         west_cell.type == RadialCellType.GROUT
-                #         and east_cell.type == RadialCellType.SOIL
-                #     ):
-                #         west_conductance_num = 2 * pi * west_cell.conductivity
-                #         west_conductance_den = log(
-                #             west_cell.outer_radius / west_cell.inner_radius
-                #         )
-                #         west_conductance = west_conductance_num / west_conductance_den
-                #
-                #         east_conductance_num = 2 * pi * east_cell.conductivity
-                #         east_conductance_den = log(
-                #             east_cell.center_radius / west_cell.inner_radius
-                #         )
-                #         east_conductance = east_conductance_num / east_conductance_den
-                #
-                #         bh_wall_temp_num_1 = west_conductance * west_cell.temperature
-                #         bh_wall_temp_num_2 = east_conductance * east_cell.temperature
-                #         bh_wall_temp_num = bh_wall_temp_num_1 + bh_wall_temp_num_2
-                #         bh_wall_temp_den = west_conductance + east_conductance
-                #         bh_wall_temp = bh_wall_temp_num / bh_wall_temp_den
-                #
-                #         break
-                #
-                # g.append(self.c_0 * ((bh_wall_temp - init_temp) / heat_flux))
-            else:
-                g.append(
-                    self.c_0
-                    * ((radial_cell[temperature_idx, 0] - init_temp) / heat_flux - resist_bh_effective)
-                )
+            # compute standard g-functions
+            g.append(self.c_0 * ((radial_cell[CellProps.TEMP, 0] - init_temp) / heat_flux - resist_bh_effective))
+
+            # compute g-functions at bh wall
+            bh_wall_temp = radial_cell[CellProps.TEMP, self.bh_wall_idx]
+            g_bhw.append(self.c_0 * ((bh_wall_temp - init_temp) / heat_flux))
 
             lntts.append(log(time / self.t_s))
 
@@ -442,13 +364,17 @@ class RadialNumericalBH(object):
 
         # quickly chop down the total values to a more manageable set
         num_intervals = 30
-        g_sts_temp = interp1d(lntts, g)
+        g_tmp = interp1d(lntts, g)
         uniform_lntts_vals = np.linspace(lntts[0], lntts[-1], num_intervals)
-        uniform_g_vals = g_sts_temp(uniform_lntts_vals)
+        uniform_g_vals = g_tmp(uniform_lntts_vals)
+
+        g_bhw_tmp = interp1d(lntts, g_bhw)
+        uniform_g_bhw_vals = g_bhw_tmp(uniform_lntts_vals)
 
         # set the final arrays and interpolator objects
         self.lntts = np.array(uniform_lntts_vals)
         self.g = np.array(uniform_g_vals)
+        self.g_bhw = np.array(uniform_g_bhw_vals)
         self.g_sts = interp1d(self.lntts, self.g)
 
         return self.lntts, self.g

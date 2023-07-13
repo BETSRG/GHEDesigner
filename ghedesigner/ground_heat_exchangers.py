@@ -115,7 +115,14 @@ class BaseGHE:
             self.radial_numerical.g.tolist(),
         )
 
-        return g
+        g_bhw = self.combine_sts_lts(
+            self.gFunction.log_time,
+            g_function_corrected,
+            self.radial_numerical.lntts.tolist(),
+            self.radial_numerical.g_bhw.tolist(),
+        )
+
+        return g, g_bhw
 
     def cost(self, max_eft, min_eft):
         delta_t_max = max_eft - self.sim_params.max_EFT_allowable
@@ -271,7 +278,7 @@ class GHE(BaseGHE):
         g_function = dict()
         g_function['coordinates (x[m], y[m])'] = [(x, y) for x, y in self.gFunction.bore_locations]  # TODO: Verify form
         b_over_h = self.B_spacing / self.bhe.b.H
-        g = self.grab_g_function(b_over_h)
+        g, _ = self.grab_g_function(b_over_h)
         total_g_values = g.x.size
         number_lts_g_values = 27
         number_sts_g_values = 50
@@ -303,7 +310,7 @@ class GHE(BaseGHE):
         self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
         # Combine the short and long-term g-functions. The long term g-function
         # is interpolated for specific B/H and rb/H values.
-        g = self.grab_g_function(b_over_h)
+        g, _ = self.grab_g_function(b_over_h)
 
         if method == TimestepType.HYBRID:
             q_dot = self.hybrid_load.load[2:] * 1000.0  # convert to Watts
