@@ -17,6 +17,7 @@ class TimestepType(Enum):
     HOURLY = auto()
     HYBRID = auto()
 
+
 class DesignGeomType(Enum):
     BIRECTANGLE = auto()
     BIRECTANGLECONSTRAINED = auto()
