@@ -371,7 +371,7 @@ class GHE(BaseGHE):
 
         return output
 
-    def simulate(self, method: TimestepType, load_aggregation= False):
+    def simulate(self, method: TimestepType, load_aggregation=False):
         b = self.B_spacing
         b_over_h = b / self.bhe.b.H
 
@@ -391,7 +391,7 @@ class GHE(BaseGHE):
 
             hp_eft, d_tb = self._simulate_detailed(q_dot, time_values, g)
         elif method == TimestepType.HOURLY:
-            if load_aggregation == False:
+            if not load_aggregation:
                 n_months = self.sim_params.end_month - self.sim_params.start_month + 1
                 n_hours = int(n_months / 12.0 * 8760.0)
                 q_dot = self.hourly_extraction_ground_loads
@@ -410,7 +410,7 @@ class GHE(BaseGHE):
 
                 hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
 
-            elif load_aggregation == True:
+            else:  #load_aggregation:
                 n_months = self.sim_params.end_month - self.sim_params.start_month + 1
                 n_hours = int(n_months / 12.0 * 8760.0)
                 q_dot = self.hourly_extraction_ground_loads
