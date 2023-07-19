@@ -14,10 +14,9 @@ class DoubleUTubeConnType(Enum):
 
 
 class TimestepType(Enum):
-    HOURLY = auto()
+    HOURLY_NO_LOAD_AGGREGATION = auto()
     HYBRID = auto()
-    DYNAMIC = auto()
-
+    HOURLY_LOAD_AGGREGATION = auto()
 
 class DesignGeomType(Enum):
     BIRECTANGLE = auto()
