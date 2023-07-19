@@ -371,7 +371,7 @@ class GHE(BaseGHE):
 
         return output
 
-    def simulate(self, method: TimestepType):
+    def simulate(self, method: TimestepType, load_aggregation= False):
         b = self.B_spacing
         b_over_h = b / self.bhe.b.H
 
@@ -390,39 +390,40 @@ class GHE(BaseGHE):
             self.loading = q_dot
 
             hp_eft, d_tb = self._simulate_detailed(q_dot, time_values, g)
-        elif method == TimestepType.HOURLY_NO_LOAD_AGGREGATION:
-            n_months = self.sim_params.end_month - self.sim_params.start_month + 1
-            n_hours = int(n_months / 12.0 * 8760.0)
-            q_dot = self.hourly_extraction_ground_loads
-            # How many times does q need to be repeated?
-            n_years = ceil(n_hours / 8760)
-            if len(q_dot) // 8760 < n_years:
-                q_dot = q_dot * n_years
-            else:
-                n_hours = len(q_dot)
-            q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
-            # print("Times:",self.times)
-            if len(self.times) == 0:
-                self.times = np.arange(1, n_hours + 1, 1)
-            t = self.times
-            self.loading = q_dot
+        elif method == TimestepType.HOURLY:
+            if load_aggregation == False:
+                n_months = self.sim_params.end_month - self.sim_params.start_month + 1
+                n_hours = int(n_months / 12.0 * 8760.0)
+                q_dot = self.hourly_extraction_ground_loads
+                # How many times does q need to be repeated?
+                n_years = ceil(n_hours / 8760)
+                if len(q_dot) // 8760 < n_years:
+                    q_dot = q_dot * n_years
+                else:
+                    n_hours = len(q_dot)
+                q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
+                # print("Times:",self.times)
+                if len(self.times) == 0:
+                    self.times = np.arange(1, n_hours + 1, 1)
+                t = self.times
+                self.loading = q_dot
 
-            hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
+                hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
 
-        elif method == TimestepType.HOURLY_LOAD_AGGREGATION:
-            n_months = self.sim_params.end_month - self.sim_params.start_month + 1
-            n_hours = int(n_months / 12.0 * 8760.0)
-            q_dot = self.hourly_extraction_ground_loads
-            # How many times does q need to be repeated?
-            n_years = ceil(n_hours / 8760)
-            if len(q_dot) // 8760 < n_years:
-                q_dot = q_dot * n_years
-            else:
-                n_hours = len(q_dot)
-            if len(self.times) == 0:
-                self.times = np.arange(1, n_hours + 1, 1)
-            q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
-            hp_eft, d_tb = self.simulate_dynamic_la(g, q_dot)
+            elif load_aggregation == True:
+                n_months = self.sim_params.end_month - self.sim_params.start_month + 1
+                n_hours = int(n_months / 12.0 * 8760.0)
+                q_dot = self.hourly_extraction_ground_loads
+                # How many times does q need to be repeated?
+                n_years = ceil(n_hours / 8760)
+                if len(q_dot) // 8760 < n_years:
+                    q_dot = q_dot * n_years
+                else:
+                    n_hours = len(q_dot)
+                if len(self.times) == 0:
+                    self.times = np.arange(1, n_hours + 1, 1)
+                q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
+                hp_eft, d_tb = self.simulate_dynamic_la(g, q_dot)
 
         else:
             raise ValueError("Only hybrid or hourly methods available.")
