@@ -703,6 +703,10 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
         print(f"No input file found at {input_file_path}, aborting", file=stderr)
         return 1
 
+    if output_directory is None:
+        print("Output directory must be passed as an argument, aborting", file=stderr)
+        return 1
+
     # validate inputs against schema before doing anything
     if validate_input_file(input_file_path) != 0:
         return 1
@@ -860,8 +864,8 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
 
 
 @click.command(name="GHEDesignerCommandLine")
-@click.argument("input-path", type=click.Path(exists=True))
-@click.argument("output-directory", type=click.Path(exists=True), required=False)
+@click.argument("input-path", type=click.Path(exists=True), required=True)
+@click.argument("output-directory", type=click.Path(exists=False), required=False)
 @click.version_option(VERSION)
 @click.option(
     "--validate",
@@ -882,10 +886,11 @@ def run_manager_from_cli(input_path, output_directory, validate):
             print("Schema validation error. See previous error message for details.", file=stderr)
             return 1
 
-    output_path = Path(output_directory).resolve()
+    if output_directory is None:
+        print('Output directory path must be passed as an argument, aborting', file=stderr)
+        return 1
 
-    if not input_path.exists():
-        print(f'Input file does not exist. Input file path: "{str(input_path)}"', file=stderr)
+    output_path = Path(output_directory).resolve()
 
     return run_manager_from_cli_worker(input_path, output_path)
 
