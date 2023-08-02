@@ -861,7 +861,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
 
 @click.command(name="GHEDesignerCommandLine")
 @click.argument("input-path", type=click.Path(exists=True), required=True)
-@click.argument("output-directory", required=True)
+@click.argument("output-directory", required=False)
 @click.version_option(VERSION)
 @click.option(
     "--validate",
@@ -881,6 +881,10 @@ def run_manager_from_cli(input_path, output_directory, validate):
         except ValidationError:
             print("Schema validation error. See previous error message for details.", file=stderr)
             return 1
+
+    if output_directory is None:
+        print('Output directory path must be passed as an argument.')
+        return 1
 
     output_path = Path(output_directory).resolve()
 
