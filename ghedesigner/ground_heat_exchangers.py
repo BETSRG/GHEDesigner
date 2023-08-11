@@ -127,8 +127,7 @@ class BaseGHE:
     def cost(self, max_eft, min_eft):
         delta_t_max = max_eft - self.sim_params.max_EFT_allowable
         delta_t_min = self.sim_params.min_EFT_allowable - min_eft
-
-        t_excess = max([delta_t_max, delta_t_min])
+        t_excess = delta_t_max if abs(delta_t_max) > abs(delta_t_min) else delta_t_min
         return t_excess
 
     def _simulate_detailed(
