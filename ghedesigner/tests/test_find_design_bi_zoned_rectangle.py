@@ -32,8 +32,8 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
         self.assertAlmostEqual(134.66, u_tube_height, delta=0.01)
-        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(123 + 1, len(selected_coordinates))
+        nbh = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(123 + 1, len(nbh))
 
     def test_double_u_tube(self):
         ghe = GHEManager()
@@ -54,8 +54,8 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
         self.assertAlmostEqual(131.12, u_tube_height, delta=0.01)
-        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(113 + 1, len(selected_coordinates))
+        nbh = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(113 + 1, len(nbh))
 
     def test_coaxial(self):
         ghe = GHEManager()
@@ -76,5 +76,5 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
         self.assertAlmostEqual(131.81, u_tube_height, delta=0.01)
-        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(118 + 1, len(selected_coordinates))
+        nbh = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(118 + 1, len(nbh))
