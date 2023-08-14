@@ -1,0 +1,262 @@
+;Ver 5.1
+;Borehole Profile and Monthly Loadings Table
+;===========================================
+Units IN (IP : 1; SI : 2)               = 2
+Units OUT (IP : 1; SI : 2)              = 2
+;COMMON VERTICAL BH VARIABLES
+Field Configuration                     = Rectangle Configuration  81 : 9 X 9
+Depth of the borehole                   = {borehole_depth}
+Bore hole spacing                       = {borehole_spacing}
+Radius of the borehole                  = {borehole_radius}
+Borehole thermal resistance             = {borehole_effective_resistance}
+U-TUBE
+Pipe Type/Size Selection                : 11
+U-Tube Inside Diameter                  = {pipe_inner_diameter}
+U-Tube Outside Diameter                 = {pipe_outer_diameter}
+Shank Spacing Selection                 : B
+Shank Spacing                           = {shank_spacing}
+Pipe Conductivity                       = {pipe_thermal_conductivity}
+;DOUBLE U-TUBE
+Double U-Tube Inside Diameter           = {pipe_inner_diameter}
+Double U-Tube Outside Diameter          = {pipe_outer_diameter}
+Double U-Tube Shank Spacing             = {shank_spacing}
+Double U-Tube Pipe Conductivity         = {pipe_thermal_conductivity}
+;CONCENTRIC
+Inner Tube Inside Diameter              = 0.02500122
+Inner Tube Outside Diameter             = 0.03299968
+Outer Tube Inside Diameter              = 0.08700008
+Outer Tube Inside Diameter              = 0.0999998
+Inner Pipe Conductivity                 = 0.389475
+Outer Pipe Conductivity                 = 0.389475
+;STANDING COLUMN WELL
+Inner Tube Inside Diameter = 0.0727456
+Inner Tube Outside Diameter				= 0.0889
+Bleed Strategy							= 1
+Bleed Rate (%)							= 10
+Bleed Tmin								= 4.44444444444444
+Bleed Tmax                                = 21.1111111111111
+Ground Porosity	(%)						= 27
+Hydraulic Conductivity					= 0
+;COMMON HORIZONTAL BH VARIABLES
+Model Configuration = Horizontal Straight: 7 (trenches)
+Tube Inside Diameter					= 0.0218186
+Tube Outside Diameter					= 0.02667
+Line Spacing							= 3.048
+Depth									= 1.524
+Trench/Line Length						= 28.956
+Total pipe Length						= 202.692
+Pipe Conductivity						= 0.3899943
+;STRAIGHT HORIZONTAL
+Tube Configuration						= Single
+Shank Spacing							= 0.3048
+Fluid Factor							= 1
+;SLINKY
+Orientation							= Horizontal
+Ring Diameter							= 1.1
+Pitch									= 0.460000000000001
+;PROPERTIES
+Soil type currently entered = Average Rock
+Thermal conductivity of the ground      = {soil_thermal_conductivity}
+Ground Volumetric heat capacity         = {soil_volumetric_heat_capacity}
+Undisturbed ground temperature          = {soil_undisturbed_ground_temp}
+Soil record currently entered 			= United States, Sioux Falls-Foss Field
+Ground Cover selected					= Short Grass
+Average Annual ground temperature		= {soil_undisturbed_ground_temp}
+Fluid type currently entered =15% Pure Water
+Fluid Conductivity                      = {fluid_thermal_conductivity}
+Fluid Volumetric heat capacity          = {fluid_volumetric_heat_capacity}
+Fluid Viscosity                         = {fluid_viscosity}
+Density of the fluid                    = {fluid_density}
+Mass flow rate of the fluid             = 0.0243
+Grout Conductivity                      = {grout_thermal_conductivity}
+Grout Volumetric heat capacity          = {grout_volumetric_heat_capacity}
+Convection Coefficient                  = 3585
+Convection Coefficient at Inside InnerPipe= 1388.0001714756
+Convection Coefficient at Outside InnerPipe= 68.7600127982121
+Fluid Factor                            = 1
+g-function number                       = 1540
+;
+;
+;Antifreeze and Numerical Model Related Variables
+Average Temperature for thermophysical properties calculation    = 20.0000
+Volumetric Heat Capacity of Pipe   = 1542.0000
+Volumetric Heat Capacity of Pipe of double U-tube  = 1542.9982
+Volumetric Heat Capacity of Inner Pipe   = 1541.9989
+Volumetric Heat Capacity of Outer Pipe   = 1541.9989
+Volumetric Heat Capacity of Horizontal Pipe   = 1541.9989
+Freezing point of the fluid = 0.000
+Boolean to check if the fluid was chosen from library = False
+Fluid type represented in numbers    = 0
+Concentration of fluid in the mixture   = 15.00
+;
+;Monthly Loadings
+;==================
+;
+ GLHE Loads
+;Month     Total Heating     Total Cooling     Peak Heating     Peak Cooling
+;===========================================================================
+{january_glhe_loads}
+{february_glhe_loads}
+{march_glhe_loads}
+{april_glhe_loads}
+{may_glhe_loads}
+{june_glhe_loads}
+{july_glhe_loads}
+{august_glhe_loads}
+{september_glhe_loads}
+{october_glhe_loads}
+{november_glhe_loads}
+{december_glhe_loads}
+;
+;
+ HeatPump Loads
+;Month     Total Heating     Total Cooling     Peak Heating     Peak Cooling
+;===========================================================================
+January            0.00              0.00              0.00              0.00
+February           0.00              0.00              0.00              0.00
+March              0.00              0.00              0.00              0.00
+April              0.00              0.00              0.00              0.00
+May                0.00              0.00              0.00              0.00
+June               0.00              0.00              0.00              0.00
+July               0.00              0.00              0.00              0.00
+August             0.00              0.00              0.00              0.00
+September          0.00              0.00              0.00              0.00
+October            0.00              0.00              0.00              0.00
+November           0.00              0.00              0.00              0.00
+December           0.00              0.00              0.00              0.00
+;
+;
+Peak_Heating Hours = {peak_heating_hrs}
+Peak_Cooling Hours = {peak_cooling_hrs}
+;
+;
+First month you want data for   = {start_month}
+Last month you want data for    = {end_month}
+Maximum entering fluid temperature  = {maximum_allowable_hp_eft}
+Minimum entering fluid temperature  = {minimum_allowable_hp_eft}
+;
+;
+;Heat pump curve fit equations and coefficients:
+Heatpump selected = ClimateMaster : TS024_ECM_MOTOR@6GPM_610CFM
+;
+;Cooling:  Heat of Rejection = QC[a+b(EFT)+c(EFT^2)]
+;                      Power = QC[d+e(EFT)+f(EFT^2)]
+a = 1.0924400000
+b = 0.0003143610
+c = 0.0001144560
+d = 0.0955068000
+e = 0.0003059820
+f = 0.0001123770
+;
+;Heating:  Heat of Absorption = QH[a+b(EFT)+c(EFT^2)]
+;                       Power = QH[d+e(EFT)+f(EFT^2)]
+u = 0.7054590000
+v = 0.0054469600
+w = -0.0000772000
+x = 0.3099770000
+y = -0.0067573500
+z = 0.0000978000
+;
+;
+Output data filename = glhewin.glo
+;
+;
+Output File Preferences
+0
+0
+1
+1
+1
+1
+0
+1
+;
+Default
+Default file for User Manual.
+;
+  BH#,  x(m),  y(m),  z(m),  length(m),inclination angle (° from vertical), direction angle (°CW from N)
+1, 0.3048, 0.3048, 1.524, 128.016, 0, 0
+;
+;
+Rectangle Configuration  81 : 9 X 9
+1540
+0.0384566535
+81
+76
+-15.8083218117276        -2.05947640836559
+-15.6591723869985        -1.99141288403241
+-15.5100229622694        -1.92146116508962
+-15.3608735375402        -1.84913769239652
+-15.2117241128111        -1.77417717059555
+-15.062574688082         -1.69643645380878
+-14.9134252633528        -1.61585348342476
+-14.7642758386237        -1.53242586963699
+-14.6151264138946        -1.44619776103247
+-14.4659769891654        -1.35725050429469
+-14.3168275644363        -1.26569514440618
+-14.1676781397072        -1.17166596443479
+-14.018528714978         -1.07531489812124
+-13.8693792902489        -0.976807056073799
+-13.7202298655197        -0.876317836219883
+-13.5710804407906        -0.77403209044706
+-13.4219310160615        -0.670145544837171
+-13.2727815913323        -0.564868158536055
+-13.1236321666032        -0.458428505227888
+-12.9744827418741        -0.351077787458262
+-12.8253333171449        -0.243091940119124
+-12.6761838924158        -0.134770530597779
+-12.5270344676867        -0.0264317643073233
+-12.3778850429575        0.0815963120893552
+-12.2287356182284        0.188987561110643
+-12.0795861934993        0.295431059233935
+-11.9304367687701        0.400644310844896
+-11.781287344041         0.504384796137088
+-11.6321379193118        0.606458604706435
+-11.4829884945827        0.706725394932013
+-11.3338390698536        0.805099463038197
+-11.1846896451244        0.901547209593662
+-11.0355402203953        0.996081682465973
+-10.8863907956662        1.08875511016465
+-10.737241370937         1.17965040777272
+-10.5880919462079        1.26887255874882
+-10.4389425214788        1.35654059225785
+-10.2897930967496        1.44278064014334
+-10.1406436720205        1.52772032017404
+-9.99149424729136        1.6114844901747
+-9.84234482256222        1.69419227235592
+-9.69319539783308        1.77595516067742
+-9.54404597310395        1.8568759903308
+-9.39489654837481        1.93704855153794
+-9.24574712364568        2.01655765594478
+-9.09659769891654        2.09547949954205
+-8.94744827418741        2.17388220323291
+-8.79829884945827        2.25182644495322
+-8.64914942472913        2.32936612458905
+-8.5                     2.40654902310964
+-8.5                     2.53898624376497
+-7.8                     2.89140111519477
+-7.2                     3.21968170842605
+-6.5                     3.7115310193913
+-5.9                     4.33389681594616
+-5.2                     5.52386017155887
+-4.5                     7.5831138309953
+-3.963                   10.07536366325
+-3.27                    14.9134512045648
+-2.864                   18.7876041390221
+-2.577                   22.0091280078258
+-2.171                   27.147817409614
+-1.884                   31.1348238454623
+-1.191                   41.0844030403243
+-0.497                   50.3462015555944
+-0.274                   52.9723708922598
+-0.051                   55.3095770689046
+0.196                    57.5634325672691
+0.419                    59.2666972518633
+0.642                    60.7096500249517
+0.873                    61.9231439668271
+1.112                    62.9160248577259
+1.335                    63.6508347807828
+1.679                    64.4783952296293
+2.028                    65.043396372547
+2.275                    65.3227270729693
+3.003                    65.7841116635371

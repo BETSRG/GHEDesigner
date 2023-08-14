@@ -21,6 +21,7 @@ from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
 from ghedesigner.validate import validate_input_file
+from ghedesigner.convert import write_glhepro_file
 
 
 class GHEManager:
@@ -874,7 +875,15 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
     show_default=False,
     help="Validate input and exit."
 )
-def run_manager_from_cli(input_path, output_directory, validate):
+@click.option(
+    "-c",
+    "--convert",
+    default=False,
+    is_flag=True,
+    show_default=False,
+    help="Convert output to GLHEPro input file."
+)
+def run_manager_from_cli(input_path, output_directory, validate, convert):
     input_path = Path(input_path).resolve()
 
     if validate:
@@ -884,6 +893,14 @@ def run_manager_from_cli(input_path, output_directory, validate):
             return 0
         except ValidationError:
             print("Schema validation error. See previous error message for details.", file=stderr)
+            return 1
+
+    if convert:
+        try:
+            write_glhepro_file(input_path)
+            return 0
+        except:
+            print("Error", file=stderr)
             return 1
 
     if output_directory is None:
