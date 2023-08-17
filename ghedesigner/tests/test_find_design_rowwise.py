@@ -69,8 +69,8 @@ class TestFindRowWiseDesign(GHEBaseTest):
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
         self.assertAlmostEqual(199.53, u_tube_height, delta=0.01)
-        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(38 + 1, len(selected_coordinates))
+        nbh = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(38 + 1, len(nbh))
 
     def test_find_row_wise_design_with_perimeter(self):
         ghe = GHEManager()
@@ -94,5 +94,5 @@ class TestFindRowWiseDesign(GHEBaseTest):
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
         self.assertAlmostEqual(197.60, u_tube_height, delta=0.01)
-        selected_coordinates = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(38 + 1, len(selected_coordinates))
+        nbh = ghe.results.borehole_location_data_rows  # includes a header row
+        self.assertEqual(38 + 1, len(nbh))

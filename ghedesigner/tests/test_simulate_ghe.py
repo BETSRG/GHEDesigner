@@ -173,6 +173,7 @@ class TestGHE(GHEBaseTest):
 
         ghe.size(method=TimestepType.HYBRID)
 
+        self.assertEqual(ghe.nbh, 156)
         self.assertAlmostEqual(ghe.bhe.b.H, 130.24, delta=0.01)
 
     def test_double_u_tube(self):
@@ -217,6 +218,7 @@ class TestGHE(GHEBaseTest):
 
         ghe.size(method=TimestepType.HYBRID)
 
+        self.assertEqual(ghe.nbh, 156)
         self.assertAlmostEqual(ghe.bhe.b.H, 122.10, delta=0.01)
 
     def test_coaxial_tube(self):
@@ -261,4 +263,5 @@ class TestGHE(GHEBaseTest):
 
         ghe.size(method=TimestepType.HYBRID)
 
+        self.assertEqual(ghe.nbh, 156)
         self.assertAlmostEqual(ghe.bhe.b.H, 124.79, delta=0.01)
