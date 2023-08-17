@@ -65,8 +65,8 @@ class TestLoads(GHEBaseTest):
     def test_imbalance_cooling_loads(self):
         num_hr_in_month = 730
         load = 20000
-        jan = feb = mar = octo = nov = dec = [load] * num_hr_in_month
-        apr = may = jun = jul = aug = sept = [load] * num_hr_in_month
+        jan = feb = mar = octo = nov = dec = [-load] * num_hr_in_month
+        apr = may = jun = jul = aug = sept = [-load] * num_hr_in_month
         all_months = [jan, feb, mar, apr, may, jun, jul, aug, sept, octo, nov, dec]
         hourly_loads = [val for month in all_months for val in month]
 
@@ -87,6 +87,6 @@ class TestLoads(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(132.1, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(128.8, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(11, len(nbh))
+        self.assertEqual(9, len(nbh))
