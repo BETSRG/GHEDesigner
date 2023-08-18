@@ -158,7 +158,7 @@ def write_idf(summary_path: Path):
     pipe_outer_dia = data['ghe_system']['pipe_geometry']['pipe_outer_diameter']['value']
     pipe_inner_dia = data['ghe_system']['pipe_geometry']['pipe_inner_diameter']['value']
     pipe_thickness = (pipe_outer_dia - pipe_inner_dia) / 2.0
-    shank_space = data['ghe_system']['shank_spacing']['value']
+    shank_space = data['ghe_system']['shank_spacing']['value'] + pipe_outer_dia
 
     prpoerties = [
         ('GroundHeatExchanger:Vertical:Properties', ''),
