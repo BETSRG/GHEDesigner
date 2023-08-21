@@ -893,7 +893,7 @@ def run_manager_from_cli(input_path, output_directory, validate, convert):
             return 1
 
     if convert:
-        if convert=="IDF":
+        if convert == "IDF":
             try:
                 write_idf(input_path)
                 print("Ouput converted to IDF objects.")
