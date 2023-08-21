@@ -876,14 +876,11 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
     help="Validate input and exit."
 )
 @click.option(
-    "-f",
-    "--to-idf",
-    default=False,
-    is_flag=True,
-    show_default=False,
-    help="Convert output to EnergyPlus IDF objects."
+    "-c",
+    "--convert",
+    help="Convert output to specified format. Options supported: 'IDF'."
 )
-def run_manager_from_cli(input_path, output_directory, validate, to_idf):
+def run_manager_from_cli(input_path, output_directory, validate, convert):
     input_path = Path(input_path).resolve()
 
     if validate:
@@ -895,13 +892,18 @@ def run_manager_from_cli(input_path, output_directory, validate, to_idf):
             print("Schema validation error. See previous error message for details.", file=stderr)
             return 1
 
-    if to_idf:
-        try:
-            write_idf(input_path)
-            print("Ouput converted to IDF objects.")
-            return 0
-        except:
-            print("Convertion to IDF error.", file=stderr)
+    if convert:
+        if convert=="IDF":
+            try:
+                write_idf(input_path)
+                print("Ouput converted to IDF objects.")
+                return 0
+            except:
+                print("Convertion to IDF error.", file=stderr)
+                return 1
+
+        else:
+            print(f"Unsupported conversion format type: {format}", file=stderr)
             return 1
 
     if output_directory is None:
