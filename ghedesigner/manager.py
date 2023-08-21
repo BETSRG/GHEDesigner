@@ -20,6 +20,7 @@ from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained, Geo
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
+from ghedesigner.utilities import write_idf
 from ghedesigner.validate import validate_input_file
 
 
@@ -874,7 +875,12 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
     show_default=False,
     help="Validate input and exit."
 )
-def run_manager_from_cli(input_path, output_directory, validate):
+@click.option(
+    "-c",
+    "--convert",
+    help="Convert output to specified format. Options supported: 'IDF'."
+)
+def run_manager_from_cli(input_path, output_directory, validate, convert):
     input_path = Path(input_path).resolve()
 
     if validate:
@@ -884,6 +890,20 @@ def run_manager_from_cli(input_path, output_directory, validate):
             return 0
         except ValidationError:
             print("Schema validation error. See previous error message for details.", file=stderr)
+            return 1
+
+    if convert:
+        if convert == "IDF":
+            try:
+                write_idf(input_path)
+                print("Ouput converted to IDF objects.")
+                return 0
+            except:
+                print("Convertion to IDF error.", file=stderr)
+                return 1
+
+        else:
+            print(f"Unsupported conversion format type: {format}", file=stderr)
             return 1
 
     if output_directory is None:
