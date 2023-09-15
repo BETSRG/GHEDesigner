@@ -209,21 +209,21 @@ class Bisection1D:
             # This domain does not bracket the solution
             if t_0_upper < 0.0 and t_m1 < 0.0:
                 msg = (
-                    "Based on the loads provided, the excess temperatures "
-                    "for the minimum and maximum number of boreholes falls "
-                    'below 0. This means that the loads are "miniscule" or '
-                    "that the lower end of the domain needs to contain "
+                    "Based on the loads provided, the excess temperatures \n"
+                    "for the minimum and maximum number of boreholes falls \n"
+                    'below 0. This means that the loads are "miniscule" or \n'
+                    "that the lower end of the domain needs to fewer \n"
                     "less boreholes."
                 )
                 raise ValueError(msg)
             if t_0_upper > 0.0 and t_m1 > 0.0:
                 msg = (
-                    "Based on the loads provided, the excess temperatures "
-                    "for the minimum and maximum number of boreholes falls "
-                    'above 0. This means that the loads are "astronomical" '
-                    "or that the higher end of the domain needs to contain "
-                    "more boreholes. Consider increasing the available land"
-                    " area, or decreasing the minimum allowable borehole "
+                    "Based on the loads provided, the excess temperatures \n"
+                    "for the minimum and maximum number of boreholes falls \n"
+                    'above 0. This means that the loads are "astronomical" \n'
+                    "or that the higher end of the domain needs to contain \n"
+                    "more boreholes. Consider increasing the available land \n"
+                    "area, or decreasing the minimum allowable borehole \n"
                     "spacing."
                 )
                 raise ValueError(msg)
