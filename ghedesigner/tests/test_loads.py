@@ -33,7 +33,7 @@ class TestLoads(GHEBaseTest):
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
         self.assertEqual(7, len(nbh))
 
-    def test_imbalance_heating_loads(self):
+    def test_imbalanced_heating_loads(self):
         num_hr_in_month = 730
         load = 20000
         jan = feb = mar = octo = nov = dec = [load] * num_hr_in_month
@@ -62,7 +62,7 @@ class TestLoads(GHEBaseTest):
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
         self.assertEqual(11, len(nbh))
 
-    def test_imbalance_cooling_loads(self):
+    def test_imbalanced_cooling_loads(self):
         num_hr_in_month = 730
         load = 20000
         jan = feb = mar = octo = nov = dec = [-load] * num_hr_in_month

@@ -10,12 +10,14 @@ def square_and_near_square(lower: int, upper: int, b: float):
     if upper < lower:
         raise ValueError("The lower argument should be less than or equal to" "the upper.")
 
-    field_descriptors = ["1X1", "1X2", "1X3"]
-    coordinates_domain = [
-        [[0, 0]],
-        [[0, 0], [0, b]],
-        [[0, 0], [0, b], [0, 2 * b]]
-    ]
+    field_descriptors = []
+    coordinates_domain = []
+    # field_descriptors = ["1X1", "1X2", "1X3"]
+    # coordinates_domain = [
+    #     [[0, 0]],
+    #     [[0, 0], [0, b]],
+    #     [[0, 0], [0, b], [0, 2 * b]]
+    # ]
 
     for i in range(lower, upper + 1):
         for j in range(2):

@@ -61,6 +61,11 @@ expected_demo_results_dict = {
             'active_borehole_length': 134.10,
             'number_of_boreholes': 67
         },
+    'input_bldg0000056_odd_loads':
+        {
+            'active_borehole_length': 78.29,
+            'number_of_boreholes': 2
+        },
 }
 
 
@@ -88,5 +93,5 @@ class TestDemoFiles(GHEBaseTest):
                 expected_length = expected_results['active_borehole_length']
                 expected_nbh = expected_results['number_of_boreholes']
 
-                self.assertAlmostEquals(actual_length, expected_length, delta=0.01)
+                self.assertAlmostEqual(actual_length, expected_length, delta=0.01)
                 self.assertEqual(actual_nbh, expected_nbh)

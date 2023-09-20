@@ -26,15 +26,15 @@ class TestShapes(TestCase):
 
         # center, should be inside
         point = (0, 0)
-        self.assertEquals(point_polygon_check(hegaxon, point), INSIDE)
+        self.assertEqual(point_polygon_check(hegaxon, point), INSIDE)
 
         # on top edge
         point = (0, sqrt(3))
-        self.assertEquals(point_polygon_check(hegaxon, point), ON_EDGE)
+        self.assertEqual(point_polygon_check(hegaxon, point), ON_EDGE)
 
         # above top, outside
         point = (0, 4)
-        self.assertEquals(point_polygon_check(hegaxon, point), OUTSIDE)
+        self.assertEqual(point_polygon_check(hegaxon, point), OUTSIDE)
 
         # non-convex L-shape
         l_shape = [(0, 0), (4, 0), (4, 4), (3, 4), (3, 1), (0, 1)]
@@ -51,16 +51,16 @@ class TestShapes(TestCase):
 
         # inside
         point = (0.5, 0.5)
-        self.assertEquals(point_polygon_check(l_shape, point), INSIDE)
+        self.assertEqual(point_polygon_check(l_shape, point), INSIDE)
 
         # on edge
         point = (2, 0)
-        self.assertEquals(point_polygon_check(l_shape, point), ON_EDGE)
+        self.assertEqual(point_polygon_check(l_shape, point), ON_EDGE)
 
         # above
         point = (2, 2)
-        self.assertEquals(point_polygon_check(l_shape, point), OUTSIDE)
+        self.assertEqual(point_polygon_check(l_shape, point), OUTSIDE)
 
         # below
         point = (-2, 2)
-        self.assertEquals(point_polygon_check(l_shape, point), OUTSIDE)
+        self.assertEqual(point_polygon_check(l_shape, point), OUTSIDE)

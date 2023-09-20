@@ -431,7 +431,7 @@ class HybridLoad:
         # simulation
         # This routine is taking loads applied to the ground NOT to a heat pump.
 
-        warn_msg_neg_timestep = "A negative time step has been generated in the hybrid loading scheme. " \
+        warn_msg_neg_timestep = "A negative time step has been generated in the hybrid loading scheme. \n" \
                                 "This will reduce the accuracy of the simulation."
 
         # First, begin array with zero load before simulation starts.
