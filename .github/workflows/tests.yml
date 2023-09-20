@@ -22,4 +22,4 @@ jobs:
           pip install install -r requirements.txt
       - name: Unit tests
         run: |
-          nosetests -v
+          python -m pytest -v
