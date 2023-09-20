@@ -51,12 +51,12 @@ class DesignBase:
         self.flow_type = flow_type
         if self.method == "hourly":
             msg = (
-                "Note: It is not recommended to perform a field selection ",
-                "with the hourly simulation due to computation time. If ",
-                "the goal is to validate the selected field with the ",
-                "hourly simulation, the better solution is to utilize the ",
-                "hybrid simulation to automatically select the field. Then ",
-                "perform a sizing routine on the selected GHE with the ",
+                "Note: It is not recommended to perform a field selection \n",
+                "with the hourly simulation due to computation time. If \n",
+                "the goal is to validate the selected field with the \n",
+                "hourly simulation, the better solution is to utilize the \n",
+                "hybrid simulation to automatically select the field. Then \n",
+                "perform a sizing routine on the selected GHE with the \n",
                 "hourly simulation."
             )
             # Wrap the text to a 50 char line width and print it

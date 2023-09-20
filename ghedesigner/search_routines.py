@@ -498,9 +498,9 @@ class RowWiseModifiedBisectionSearch:
         # the given constraints cannot find a satisfactory field.
         if t_upper > 0.0 and t_lower > 0.0:
             msg = (
-                "Based on the loads provided, the excess temperatures for the minimum and maximum number of boreholes"
-                "fall above 0. This means that the loads are too large for the corresponding simulation parameters."
-                "Please double check the loadings or adjust those parameters."
+                "Based on the loads provided, the excess temperatures for the minimum and maximum number \n"
+                "of boreholes fall above 0. This means that the loads are too large for the corresponding \n "
+                "simulation parameters. Please double check the loadings or adjust those parameters."
             )
             raise ValueError(msg)
         # If the excess temperature is > 0 when utilizing the largest field and depth but < 0 when using the largest
@@ -705,8 +705,8 @@ class RowWiseModifiedBisectionSearch:
         # calculation.
         else:
             msg = (
-                "There seems to be an issue calculating excess temperatures. Check that you have the correct"
-                "package version. If this is a recurring issue, please contact the current package management for "
+                "There seems to be an issue calculating excess temperatures. Check that you have the correct \n"
+                "package version. If this is a recurring issue, please contact the current package management for \n"
                 "assistance."
             )
             raise ValueError(msg)
