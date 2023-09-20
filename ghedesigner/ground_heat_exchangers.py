@@ -365,15 +365,15 @@ class GHE(BaseGHE):
         # TODO: revaluate whether these warnings are appropriate
         if returned_height == self.sim_params.min_height:
             warnings.warn(
-                "The minimum height provided to size this ground heat"
-                " exchanger is not shallow enough. Provide a "
-                "shallower allowable depth or decrease the size of "
+                "The minimum height provided to size this ground heat \n"
+                " exchanger is not shallow enough. Provide a \n"
+                "shallower allowable depth or decrease the size of \n"
                 "the heat exchanger."
             )
         if returned_height == self.sim_params.max_height:
             warnings.warn(
-                "The maximum height provided to size this ground "
-                "heat exchanger is not deep enough. Provide a deeper "
-                "allowable depth or increase the size of the heat "
+                "The maximum height provided to size this ground \n"
+                "heat exchanger is not deep enough. Provide a deeper \n"
+                "allowable depth or increase the size of the heat \n"
                 "exchanger."
             )

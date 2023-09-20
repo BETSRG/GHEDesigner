@@ -269,9 +269,24 @@ class Bisection1D:
         keys = list(self.calculated_temperatures.keys())
         values = list(self.calculated_temperatures.values())
 
+        # theoretically, the biggest negative value should be the field that is just undersized
         negative_excess_values = [v for v in values if v <= 0.0]
-
         excess_of_interest = max(negative_excess_values)
+
+        # but some conditions don't yield this result
+        # adding a check here to ensure we pick the smallest field with
+        # negative excess temperature
+        num_bh = [len(self.coordinates_domain[x]) for x in keys]
+        sorted_num_bh, sorted_values = (list(t) for t in zip(*sorted(zip(num_bh, values))))
+        for nbh, val in zip(sorted_num_bh, sorted_values):
+            if val < 0:
+                if excess_of_interest != val:
+                    print('Loads resulted in odd behavior requiring the selected field configuration \n'
+                          'to be reset to the smallest field with negative excess temperature. \n'
+                          'Please forward the inputs to the developers for investigation.')
+                excess_of_interest = val
+                break
+
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
         selected_coordinates = self.coordinates_domain[selection_key]
