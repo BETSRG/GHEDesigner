@@ -212,8 +212,8 @@ class Bisection1D:
                     "Based on the loads provided, the excess temperatures \n"
                     "for the minimum and maximum number of boreholes falls \n"
                     'below 0. This means that the loads are "miniscule" or \n'
-                    "that the lower end of the domain needs to fewer \n"
-                    "less boreholes."
+                    "that the lower end of the domain needs to contain \n"
+                    "fewer boreholes."
                 )
                 raise ValueError(msg)
             if t_0_upper > 0.0 and t_m1 > 0.0:
