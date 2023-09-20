@@ -16,9 +16,9 @@ setup(
     install_requires=[
         'click>=8.1.7',
         'jsonschema>=4.19.1',
-        'numpy>=1.16.0',
+        'numpy>=1.24.2',
         'pygfunction>=2.2.2',
-        'scipy>=1.11.2'
+        'scipy>=1.10.1'
     ],
     url='https://github.com/BETSRG/GHEDesigner',
     description=short_description,
