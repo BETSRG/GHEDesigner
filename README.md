@@ -104,11 +104,11 @@ include:
 GHEDesigner is supported for Python versions >= 3.8, and is tested with Python 3.8 and 3.9. GHEDesigner is dependent on
 the following packages:
 
-- [click][#click] (>=8.1.3)
-- [jsonschema][#jsonschema] (>=4.17.3)
+- [click][#click] (>=8.1.7)
+- [jsonschema][#jsonschema] (>=4.19.1)
 - [numpy][#numpy] (>=1.24.2)
 - [pygfunction][#pygfunction] (>=2.2.2)
-- [scipy][#scipy] (>=1.10.0)
+- [scipy][#scipy] (>=1.10.1)
 
 ## Quick Start
 
