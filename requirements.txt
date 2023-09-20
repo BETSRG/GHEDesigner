@@ -1,9 +1,9 @@
 # library dependencies
 click>=8.1.7
 jsonschema>=4.19.1
-numpy>=1.26.0
+numpy>=1.24.2
 pygfunction>=2.2.2
-scipy>=1.11.2
+scipy>=1.10.1
 
 # docs dependencies
 sphinx>=7.2.6
