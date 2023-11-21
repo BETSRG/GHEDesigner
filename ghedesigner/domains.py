@@ -386,6 +386,8 @@ def polygonal_land_constraint(b_min, b_max_x, b_max_y, property_boundary, no_go_
             for no_go_zone in no_go_boundaries:
                 new_coordinates = remove_cutout(new_coordinates, no_go_zone, remove_inside=True,
                                                 keep_contour=False)
+            if len(new_coordinates) == 0:
+                continue
             new_coordinates_domain.append(new_coordinates)
         coordinates_domain_nested_cutout.append(new_coordinates_domain)
 
