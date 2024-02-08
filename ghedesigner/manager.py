@@ -684,7 +684,7 @@ class GHEManager:
             'simulation': self._simulation_parameters.to_input(),
             'geometric_constraints': d_geo,
             'design': d_des,
-            'loads': {'ground_loads': self._ground_loads}
+            'loads': {'ground_loads': list(self._ground_loads)}
         }
 
         with open(output_file_path, 'w') as f:
