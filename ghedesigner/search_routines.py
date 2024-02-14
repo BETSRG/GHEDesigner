@@ -172,7 +172,14 @@ class Bisection1D:
     def search(self):
 
         x_l_idx = 0
-        x_r_idx = len(self.coordinates_domain) - 1
+
+        # find upper bound that respects max_boreholes
+        if self.sim_params.max_boreholes is not None:
+            num_coordinates_in_each = [len(x) for x in self.coordinates_domain]
+            x_r_idx = [idx for idx, x in enumerate(num_coordinates_in_each) if x < self.sim_params.max_boreholes][-1]
+        else:
+            x_r_idx = len(self.coordinates_domain) - 1
+
         if self.disp:
             print("Do some initial checks before searching.")
         # Get the lowest possible excess temperature from minimum height at the

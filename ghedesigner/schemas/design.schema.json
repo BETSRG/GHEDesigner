@@ -24,6 +24,10 @@
       "type": "number",
       "units": "C",
       "description": "Minimum heat pump entering fluid temperature."
+    },
+    "max_boreholes": {
+      "type": "number",
+      "description": "Maximum number of boreholes in search."
     }
   },
   "required": [
