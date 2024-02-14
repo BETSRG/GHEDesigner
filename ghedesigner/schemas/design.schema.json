@@ -27,7 +27,7 @@
     },
     "max_boreholes": {
       "type": "number",
-      "description": "Maximum number of boreholes in search."
+      "description": "Maximum number of boreholes in search. Optional.\n\nApplies to rectangular and near-square design algorithms.\n\nIf unspecified, the search space will be bounded by the size of the GHE boundary."
     }
   },
   "required": [
