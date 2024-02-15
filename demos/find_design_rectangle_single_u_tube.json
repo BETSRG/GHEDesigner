@@ -43,7 +43,8 @@
     "flow_rate": 0.2,
     "flow_type": "BOREHOLE",
     "max_eft": 35.0,
-    "min_eft": 5.0
+    "min_eft": 5.0,
+    "max_boreholes": 200
   },
   "loads": {
     "ground_loads": [

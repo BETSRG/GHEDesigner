@@ -7,6 +7,7 @@ class SimulationParameters:
             min_entering_fluid_temp_allow,
             max_height,
             min_height,
+            max_boreholes=None
     ):
         # Simulation parameters not found in other objects
         # ------------------------------------------------
@@ -19,6 +20,7 @@ class SimulationParameters:
         # Maximum and minimum allowable heights
         self.max_height = max_height  # in meters
         self.min_height = min_height  # in meters
+        self.max_boreholes = max_boreholes
 
     def as_dict(self) -> dict:
         output = dict()
@@ -29,6 +31,9 @@ class SimulationParameters:
         output['min_eft_allowable'] = {'value': self.min_EFT_allowable, 'units': 'C'}
         output['maximum_height'] = {'value': self.max_height, 'units': 'm'}
         output['minimum_height'] = {'value': self.min_height, 'units': 'm'}
+
+        if self.max_boreholes is not None:
+            output['maximum_boreholes'] = {'value': self.max_boreholes, 'units': '-'}
         return output
 
     def to_input(self) -> dict:
