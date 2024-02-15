@@ -215,26 +215,25 @@ class Bisection1D:
         else:
             # This domain does not bracket the solution
             if t_0_upper < 0.0 and t_m1 < 0.0:
-                msg = (
-                    "Based on the loads provided, the excess temperatures \n"
-                    "for the minimum and maximum number of boreholes falls \n"
-                    'below 0. This means that the loads are "miniscule" or \n'
-                    "that the lower end of the domain needs to contain \n"
-                    "fewer boreholes."
+                # this case seems odd. is it even possible to get here?
+                print(
+                    "The optimal design requires fewer or shorter boreholes \n"
+                    "than what is possible based on the current design parameters. \n"
+                    "Smallest possible configuration is selected."
                 )
-                raise ValueError(msg)
+                selection_key = 0
+                return selection_key, self.coordinates_domain[selection_key]
             if t_0_upper > 0.0 and t_m1 > 0.0:
-                msg = (
-                    "Based on the loads provided, the excess temperatures \n"
-                    "for the minimum and maximum number of boreholes falls \n"
-                    'above 0. This means that the loads are "astronomical" \n'
-                    "or that the higher end of the domain needs to contain \n"
-                    "more boreholes. Consider increasing the available land \n"
-                    "area, or decreasing the minimum allowable borehole \n"
-                    "spacing."
+                print(
+                    "The optimal design requires more or deeper boreholes \n"
+                    "than what is possible based on the current design parameters. \n"
+                    "Consider increasing the available land area, \n"
+                    "increasing the maximum borehole depth, \n"
+                    "or decreasing the minimum borehole spacing. \n"
+                    "Largest possible configuration is selected."
                 )
-                raise ValueError(msg)
-            return None, None
+                selection_key = len(self.coordinates_domain) - 1
+                return selection_key, self.coordinates_domain[selection_key]
 
         if self.disp:
             print("Beginning bisection search...")
@@ -504,12 +503,15 @@ class RowWiseModifiedBisectionSearch:
         # If the excess temperature is >0 utilizing the largest field and largest depth, then notify the user that
         # the given constraints cannot find a satisfactory field.
         if t_upper > 0.0 and t_lower > 0.0:
-            msg = (
-                "Based on the loads provided, the excess temperatures for the minimum and maximum number \n"
-                "of boreholes fall above 0. This means that the loads are too large for the corresponding \n "
-                "simulation parameters. Please double check the loadings or adjust those parameters."
+            print(
+                "The optimal design requires more or deeper boreholes \n"
+                "than what is possible based on the current design parameters. \n"
+                "Consider increasing the available land area, \n"
+                "increasing the maximum borehole depth, \n"
+                "or decreasing the minimum borehole spacing. \n"
+                "Largest possible configuration is selected."
             )
-            raise ValueError(msg)
+            return upper_field, upper_field_specifier
         # If the excess temperature is > 0 when utilizing the largest field and depth but < 0 when using the largest
         # depth and smallest field, then fields should be searched between the two target depths.
         elif t_upper < 0.0 < t_lower:
