@@ -216,25 +216,28 @@ class Bisection1D:
             # This domain does not bracket the solution
             if t_0_upper < 0.0 and t_m1 < 0.0:
                 # this case seems odd. is it even possible to get here?
-                print(
-                    "The optimal design requires fewer or shorter boreholes \n"
-                    "than what is possible based on the current design parameters. \n"
-                    "Smallest possible configuration is selected."
-                )
-                selection_key = 0
-                return selection_key, self.coordinates_domain[selection_key]
+                condition_msg = "The optimal design requires fewer or shorter boreholes \n" \
+                                "than what is possible based on the current design parameters."
+                print(condition_msg)
+                if self.sim_params.continue_if_design_unmet:
+                    print("Smallest available configuration selected.")
+                    selection_key = 0
+                    return selection_key, self.coordinates_domain[selection_key]
+                else:
+                    raise ValueError("Search failed.")
             if t_0_upper > 0.0 and t_m1 > 0.0:
-                print(
-                    "The optimal design requires more or deeper boreholes \n"
-                    "than what is possible based on the current design parameters. \n"
-                    "Consider increasing the available land area, \n"
-                    "increasing the maximum borehole depth, \n"
-                    "or decreasing the minimum borehole spacing. \n"
-                    "Largest possible configuration is selected."
-                )
-                selection_key = len(self.coordinates_domain) - 1
-                return selection_key, self.coordinates_domain[selection_key]
-
+                condition_msg = "The optimal design requires more or deeper boreholes \n" \
+                                "than what is possible based on the current design parameters. \n" \
+                                "Consider increasing the available land area, \n" \
+                                "increasing the maximum borehole depth, \n" \
+                                "or decreasing the maximum borehole spacing."
+                print(condition_msg)
+                if self.sim_params.continue_if_design_unmet:
+                    print("Largest available configuration selected.")
+                    selection_key = len(self.coordinates_domain) - 1
+                    return selection_key, self.coordinates_domain[selection_key]
+                else:
+                    raise ValueError("Search failed.")
         if self.disp:
             print("Beginning bisection search...")
 
@@ -503,15 +506,18 @@ class RowWiseModifiedBisectionSearch:
         # If the excess temperature is >0 utilizing the largest field and largest depth, then notify the user that
         # the given constraints cannot find a satisfactory field.
         if t_upper > 0.0 and t_lower > 0.0:
-            print(
-                "The optimal design requires more or deeper boreholes \n"
-                "than what is possible based on the current design parameters. \n"
-                "Consider increasing the available land area, \n"
-                "increasing the maximum borehole depth, \n"
-                "or decreasing the minimum borehole spacing. \n"
-                "Largest possible configuration is selected."
-            )
-            return upper_field, upper_field_specifier
+            condition_msg = "The optimal design requires more or deeper boreholes \n" \
+                            "than what is possible based on the current design parameters. \n" \
+                            "Consider increasing the available land area, \n" \
+                            "increasing the maximum borehole depth, \n" \
+                            "or decreasing the maximum borehole spacing."
+            print(condition_msg)
+            if self.sim_params.continue_if_design_unmet:
+                print("Largest available configuration selected.")
+                return upper_field, upper_field_specifier
+            else:
+                raise ValueError("Search failed.")
+
         # If the excess temperature is > 0 when utilizing the largest field and depth but < 0 when using the largest
         # depth and smallest field, then fields should be searched between the two target depths.
         elif t_upper < 0.0 < t_lower:
