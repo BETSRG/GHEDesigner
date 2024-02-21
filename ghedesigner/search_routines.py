@@ -214,8 +214,7 @@ class Bisection1D:
             pass
         else:
             # This domain does not bracket the solution
-            if t_0_upper < 0.0 and t_m1 < 0.0:
-                # this case seems odd. is it even possible to get here?
+            if t_0_upper < 0.0 and t_m1 < 0.0 and t_0_lower < 0.0:
                 condition_msg = "The optimal design requires fewer or shorter boreholes \n" \
                                 "than what is possible based on the current design parameters."
                 print(condition_msg)
