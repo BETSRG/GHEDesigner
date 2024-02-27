@@ -213,8 +213,8 @@ class Bisection1D:
                 print("Perform the integer bisection search routine.")
             pass
         else:
-            # This domain does not bracket the solution
-            if t_0_upper < 0.0 and t_m1 < 0.0 and t_0_lower < 0.0:
+            # solution doesn't lie within bounds
+            if t_0_lower < 0.0:
                 condition_msg = "The optimal design requires fewer or shorter boreholes \n" \
                                 "than what is possible based on the current design parameters."
                 print(condition_msg)
@@ -224,7 +224,7 @@ class Bisection1D:
                     return selection_key, self.coordinates_domain[selection_key]
                 else:
                     raise ValueError("Search failed.")
-            if t_0_upper > 0.0 and t_m1 > 0.0:
+            elif t_m1 > 0.0:
                 condition_msg = "The optimal design requires more or deeper boreholes \n" \
                                 "than what is possible based on the current design parameters. \n" \
                                 "Consider increasing the available land area, \n" \
@@ -237,6 +237,10 @@ class Bisection1D:
                     return selection_key, self.coordinates_domain[selection_key]
                 else:
                     raise ValueError("Search failed.")
+            else:
+                # if we've gotten here, everything should be good for the bisection search.
+                # can add catches for other cases here if they pop up.
+                pass
         if self.disp:
             print("Beginning bisection search...")
 
