@@ -7,7 +7,8 @@ class SimulationParameters:
             min_entering_fluid_temp_allow,
             max_height,
             min_height,
-            max_boreholes=None
+            max_boreholes=None,
+            continue_if_design_unmet=False
     ):
         # Simulation parameters not found in other objects
         # ------------------------------------------------
@@ -21,6 +22,7 @@ class SimulationParameters:
         self.max_height = max_height  # in meters
         self.min_height = min_height  # in meters
         self.max_boreholes = max_boreholes
+        self.continue_if_design_unmet = continue_if_design_unmet
 
     def as_dict(self) -> dict:
         output = dict()

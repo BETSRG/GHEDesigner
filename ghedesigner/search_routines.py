@@ -213,29 +213,38 @@ class Bisection1D:
                 print("Perform the integer bisection search routine.")
             pass
         else:
-            # This domain does not bracket the solution
-            if t_0_upper < 0.0 and t_m1 < 0.0:
-                msg = (
-                    "Based on the loads provided, the excess temperatures \n"
-                    "for the minimum and maximum number of boreholes falls \n"
-                    'below 0. This means that the loads are "miniscule" or \n'
-                    "that the lower end of the domain needs to contain \n"
-                    "fewer boreholes."
-                )
-                raise ValueError(msg)
-            if t_0_upper > 0.0 and t_m1 > 0.0:
-                msg = (
-                    "Based on the loads provided, the excess temperatures \n"
-                    "for the minimum and maximum number of boreholes falls \n"
-                    'above 0. This means that the loads are "astronomical" \n'
-                    "or that the higher end of the domain needs to contain \n"
-                    "more boreholes. Consider increasing the available land \n"
-                    "area, or decreasing the minimum allowable borehole \n"
-                    "spacing."
-                )
-                raise ValueError(msg)
-            return None, None
-
+            # solution doesn't lie within bounds
+            if t_0_lower < 0.0:
+                condition_msg = "The optimal design requires fewer or shorter boreholes \n" \
+                                "than what is possible based on the current design parameters."
+                print(condition_msg)
+                if self.sim_params.continue_if_design_unmet:
+                    print("Smallest available configuration selected.")
+                    selection_key = 0
+                    self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.min_height,
+                                        self.fieldDescriptors[selection_key])
+                    return selection_key, self.coordinates_domain[selection_key]
+                else:
+                    raise ValueError("Search failed.")
+            elif t_m1 > 0.0:
+                condition_msg = "The optimal design requires more or deeper boreholes \n" \
+                                "than what is possible based on the current design parameters. \n" \
+                                "Consider increasing the available land area, \n" \
+                                "increasing the maximum borehole depth, \n" \
+                                "or decreasing the maximum borehole spacing."
+                print(condition_msg)
+                if self.sim_params.continue_if_design_unmet:
+                    print("Largest available configuration selected.")
+                    selection_key = len(self.coordinates_domain) - 1
+                    self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.max_height,
+                                        self.fieldDescriptors[selection_key])
+                    return selection_key, self.coordinates_domain[selection_key]
+                else:
+                    raise ValueError("Search failed.")
+            else:
+                # if we've gotten here, everything should be good for the bisection search.
+                # can add catches for other cases here if they pop up.
+                pass
         if self.disp:
             print("Beginning bisection search...")
 
@@ -267,9 +276,7 @@ class Bisection1D:
 
         coordinates = self.coordinates_domain[i]
 
-        h = self.sim_params.max_height
-
-        self.calculate_excess(coordinates, h, field_specifier=self.fieldDescriptors[i])
+        self.calculate_excess(coordinates, self.sim_params.max_height, self.fieldDescriptors[i])
         # Make sure the field being returned pertains to the index which is the
         # closest to 0 but also negative (the maximum of all 0 or negative
         # excess temperatures)
@@ -285,7 +292,7 @@ class Bisection1D:
         # negative excess temperature
         num_bh = [len(self.coordinates_domain[x]) for x in keys]
         sorted_num_bh, sorted_values = (list(t) for t in zip(*sorted(zip(num_bh, values))))
-        for nbh, val in zip(sorted_num_bh, sorted_values):
+        for _, val in zip(sorted_num_bh, sorted_values):
             if val < 0:
                 if excess_of_interest != val:
                     print('Loads resulted in odd behavior requiring the selected field configuration \n'
@@ -296,11 +303,9 @@ class Bisection1D:
 
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
-        selected_coordinates = self.coordinates_domain[selection_key]
-
-        self.initialize_ghe(selected_coordinates, h, field_specifier=self.fieldDescriptors[selection_key])
-
-        return selection_key, selected_coordinates
+        self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.max_height,
+                            self.fieldDescriptors[selection_key])
+        return selection_key, self.coordinates_domain[selection_key]
 
 
 # This is the search algorithm used for finding row-wise fields
@@ -504,12 +509,18 @@ class RowWiseModifiedBisectionSearch:
         # If the excess temperature is >0 utilizing the largest field and largest depth, then notify the user that
         # the given constraints cannot find a satisfactory field.
         if t_upper > 0.0 and t_lower > 0.0:
-            msg = (
-                "Based on the loads provided, the excess temperatures for the minimum and maximum number \n"
-                "of boreholes fall above 0. This means that the loads are too large for the corresponding \n "
-                "simulation parameters. Please double check the loadings or adjust those parameters."
-            )
-            raise ValueError(msg)
+            condition_msg = "The optimal design requires more or deeper boreholes \n" \
+                            "than what is possible based on the current design parameters. \n" \
+                            "Consider increasing the available land area, \n" \
+                            "increasing the maximum borehole depth, \n" \
+                            "or decreasing the maximum borehole spacing."
+            print(condition_msg)
+            if self.sim_params.continue_if_design_unmet:
+                print("Largest available configuration selected.")
+                return upper_field, upper_field_specifier
+            else:
+                raise ValueError("Search failed.")
+
         # If the excess temperature is > 0 when utilizing the largest field and depth but < 0 when using the largest
         # depth and smallest field, then fields should be searched between the two target depths.
         elif t_upper < 0.0 < t_lower:
