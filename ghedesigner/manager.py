@@ -643,6 +643,8 @@ class GHEManager:
 
         if self._simulation_parameters.max_boreholes is not None:
             d_des['max_boreholes'] = self._simulation_parameters.max_boreholes
+        if self._simulation_parameters.continue_if_design_unmet is True:
+            d_des['continue_if_design_unmet'] = self._simulation_parameters.continue_if_design_unmet
 
         # pipe data
         d_pipe = {'rho_cp': self._pipe.rhoCp, 'roughness': self._pipe.roughness}
