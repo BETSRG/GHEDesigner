@@ -206,8 +206,8 @@ class Bisection1D:
         if check_bracket(sign(t_0_lower), sign(t_0_upper)):
             if self.disp:
                 print("Size between min and max of lower bound in domain.")
-            self.initialize_ghe(self.coordinates_domain[0], self.sim_params.max_height)
-            return 0, self.coordinates_domain[0]
+            self.initialize_ghe(self.coordinates_domain[x_l_idx], self.sim_params.max_height)
+            return x_l_idx, self.coordinates_domain[x_l_idx]
         elif check_bracket(sign(t_0_upper), sign(t_m1)):
             if self.disp:
                 print("Perform the integer bisection search routine.")
@@ -220,7 +220,7 @@ class Bisection1D:
                 print(condition_msg)
                 if self.sim_params.continue_if_design_unmet:
                     print("Smallest available configuration selected.")
-                    selection_key = 0
+                    selection_key = x_l_idx
                     self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.min_height,
                                         self.fieldDescriptors[selection_key])
                     return selection_key, self.coordinates_domain[selection_key]
@@ -235,7 +235,7 @@ class Bisection1D:
                 print(condition_msg)
                 if self.sim_params.continue_if_design_unmet:
                     print("Largest available configuration selected.")
-                    selection_key = len(self.coordinates_domain) - 1
+                    selection_key = x_r_idx
                     self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.max_height,
                                         self.fieldDescriptors[selection_key])
                     return selection_key, self.coordinates_domain[selection_key]
