@@ -427,7 +427,7 @@ class OutputManager:
         o += self.d_row(width, "Active Borehole Length, m:", design.ghe.bhe.b.H, f_int)
         o += self.d_row(width, "Borehole Diameter, mm:", design.ghe.bhe.b.r_b * 1000 * 2.0, f_2f)
         o += self.d_row(width, "Borehole Spacing, m:", design.ghe.B_spacing, f_3f)
-        o += self.d_row(width, 'Borhole Depth, m:', design.ghe.bhe.b.D, f_2f)
+        o += self.d_row(width, 'Borehole Depth, m:', design.ghe.bhe.b.D, f_2f)
         o += self.d_row(width, "Total Drilling, m:", design.ghe.bhe.b.H * len(design.ghe.gFunction.bore_locations),
                         f_int)
 
