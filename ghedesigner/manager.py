@@ -268,7 +268,7 @@ class GHEManager:
 
     def set_simulation_parameters(
             self, num_months: int, max_eft: float, min_eft: float, max_height: float, min_height: float,
-            max_boreholes: int = None
+            max_boreholes: int = None, continue_if_design_unmet: bool = False
     ) -> int:
         """
         Sets the simulation parameters
@@ -278,7 +278,8 @@ class GHEManager:
         :param min_eft: minimum heat pump entering fluid temperature, in C.
         :param max_height: maximum height of borehole, in m.
         :param min_height: minimum height of borehole, in m.
-        :param max_boreholes: maximum boreholes in search algorithms
+        :param max_boreholes: maximum boreholes in search algorithms.
+        :param continue_if_design_unmet: continues to process if design unmet.
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -289,7 +290,8 @@ class GHEManager:
             min_eft,
             max_height,
             min_height,
-            max_boreholes
+            max_boreholes,
+            continue_if_design_unmet
         )
         return 0
 
@@ -788,13 +790,16 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
 
     ghe.set_ground_loads_from_hourly_list(ground_load_props)
     max_bh = design_props["max_boreholes"] if "max_boreholes" in design_props.keys() else None
+    continue_if_design_unmet = design_props[
+        "continue_if_design_unmet"] if "continue_if_design_unmet" in design_props.keys() else False
     ghe.set_simulation_parameters(
         num_months=sim_props["num_months"],
         max_eft=design_props["max_eft"],
         min_eft=design_props["min_eft"],
         max_height=constraint_props["max_height"],
         min_height=constraint_props["min_height"],
-        max_boreholes=max_bh
+        max_boreholes=max_bh,
+        continue_if_design_unmet=continue_if_design_unmet
     )
 
     if ghe.set_design_geometry_type(constraint_props["method"], throw=False) != 0:
