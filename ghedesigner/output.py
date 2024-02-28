@@ -442,10 +442,14 @@ class OutputManager:
             o += self.d_row(width, "Pipe Outer Diameter, mm:", design.ghe.bhe.pipe.r_out * 1000 * 2.0, f_2f, n_tabs=1)
             o += self.d_row(width, "Pipe Inner Diameter, mm:", design.ghe.bhe.pipe.r_in * 1000 * 2.0, f_2f, n_tabs=1)
         else:
-            o += self.d_row(width, "Outer Pipe Outer Diameter, mm:", design.ghe.bhe.pipe.r_out[1] * 1000 * 2.0, f_2f, n_tabs=1)
-            o += self.d_row(width, "Outer Pipe Inner Diameter, mm:", design.ghe.bhe.pipe.r_out[0] * 1000 * 2.0, f_2f, n_tabs=1)
-            o += self.d_row(width, "Inner Pipe Outer Diameter, mm:", design.ghe.bhe.pipe.r_in[1] * 1000 * 2.0, f_2f, n_tabs=1)
-            o += self.d_row(width, "Inner Pipe Inner Diameter, mm:", design.ghe.bhe.pipe.r_in[0] * 1000 * 2.0, f_2f, n_tabs=1)
+            o += self.d_row(width, "Outer Pipe Outer Diameter, mm:", design.ghe.bhe.pipe.r_out[1] * 1000 * 2.0, f_2f,
+                            n_tabs=1)
+            o += self.d_row(width, "Outer Pipe Inner Diameter, mm:", design.ghe.bhe.pipe.r_out[0] * 1000 * 2.0, f_2f,
+                            n_tabs=1)
+            o += self.d_row(width, "Inner Pipe Outer Diameter, mm:", design.ghe.bhe.pipe.r_in[1] * 1000 * 2.0, f_2f,
+                            n_tabs=1)
+            o += self.d_row(width, "Inner Pipe Inner Diameter, mm:", design.ghe.bhe.pipe.r_in[0] * 1000 * 2.0, f_2f,
+                            n_tabs=1)
 
         o += self.d_row(width, "Pipe Roughness, m:", design.ghe.bhe.pipe.roughness, f_sci, n_tabs=1)
         if isinstance(design.ghe.bhe.pipe.k, float):
@@ -454,7 +458,8 @@ class OutputManager:
             o += self.d_row(width, "Inner Pipe Thermal Conductivity, W/m-K:", design.ghe.bhe.pipe.k[0], f_3f, n_tabs=1)
             o += self.d_row(width, "Outer Pipe Thermal Conductivity, W/m-K:", design.ghe.bhe.pipe.k[1], f_3f, n_tabs=1)
 
-        o += self.d_row(width, "Pipe Volumetric Heat Capacity, kJ/m3-K:", design.ghe.bhe.pipe.rhoCp / 1000, f_2f, n_tabs=1)
+        o += self.d_row(width, "Pipe Volumetric Heat Capacity, kJ/m3-K:", design.ghe.bhe.pipe.rhoCp / 1000, f_2f,
+                        n_tabs=1)
         o += self.d_row(width, "Shank Spacing, mm:", design.ghe.bhe.pipe.s * 1000, f_2f, n_tabs=1)
         o += self.d_row(width, "Grout Thermal Conductivity, W/(m-K):", design.ghe.bhe.grout.k, f_3f, n_tabs=1)
         o += self.d_row(width, "Grout Volumetric Heat Capacity, kJ/m3-K:", design.ghe.bhe.grout.rhoCp / 1000, f_2f,

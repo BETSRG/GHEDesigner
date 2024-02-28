@@ -1,4 +1,3 @@
-import warnings
 from math import ceil, floor
 
 import numpy as np

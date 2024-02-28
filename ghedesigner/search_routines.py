@@ -221,7 +221,8 @@ class Bisection1D:
                 if self.sim_params.continue_if_design_unmet:
                     print("Smallest available configuration selected.")
                     selection_key = 0
-                    self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.min_height, self.fieldDescriptors[selection_key])
+                    self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.min_height,
+                                        self.fieldDescriptors[selection_key])
                     return selection_key, self.coordinates_domain[selection_key]
                 else:
                     raise ValueError("Search failed.")
@@ -235,7 +236,8 @@ class Bisection1D:
                 if self.sim_params.continue_if_design_unmet:
                     print("Largest available configuration selected.")
                     selection_key = len(self.coordinates_domain) - 1
-                    self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.max_height, self.fieldDescriptors[selection_key])
+                    self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.max_height,
+                                        self.fieldDescriptors[selection_key])
                     return selection_key, self.coordinates_domain[selection_key]
                 else:
                     raise ValueError("Search failed.")
@@ -301,7 +303,8 @@ class Bisection1D:
 
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
-        self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.max_height, self.fieldDescriptors[selection_key])
+        self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.max_height,
+                            self.fieldDescriptors[selection_key])
         return selection_key, self.coordinates_domain[selection_key]
 
 
