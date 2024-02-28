@@ -221,6 +221,7 @@ class Bisection1D:
                 if self.sim_params.continue_if_design_unmet:
                     print("Smallest available configuration selected.")
                     selection_key = 0
+                    self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.min_height, self.fieldDescriptors[selection_key])
                     return selection_key, self.coordinates_domain[selection_key]
                 else:
                     raise ValueError("Search failed.")
@@ -234,6 +235,7 @@ class Bisection1D:
                 if self.sim_params.continue_if_design_unmet:
                     print("Largest available configuration selected.")
                     selection_key = len(self.coordinates_domain) - 1
+                    self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.max_height, self.fieldDescriptors[selection_key])
                     return selection_key, self.coordinates_domain[selection_key]
                 else:
                     raise ValueError("Search failed.")
@@ -272,9 +274,7 @@ class Bisection1D:
 
         coordinates = self.coordinates_domain[i]
 
-        h = self.sim_params.max_height
-
-        self.calculate_excess(coordinates, h, field_specifier=self.fieldDescriptors[i])
+        self.calculate_excess(coordinates, self.sim_params.max_height, self.fieldDescriptors[i])
         # Make sure the field being returned pertains to the index which is the
         # closest to 0 but also negative (the maximum of all 0 or negative
         # excess temperatures)
@@ -290,7 +290,7 @@ class Bisection1D:
         # negative excess temperature
         num_bh = [len(self.coordinates_domain[x]) for x in keys]
         sorted_num_bh, sorted_values = (list(t) for t in zip(*sorted(zip(num_bh, values))))
-        for nbh, val in zip(sorted_num_bh, sorted_values):
+        for _, val in zip(sorted_num_bh, sorted_values):
             if val < 0:
                 if excess_of_interest != val:
                     print('Loads resulted in odd behavior requiring the selected field configuration \n'
@@ -301,11 +301,8 @@ class Bisection1D:
 
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
-        selected_coordinates = self.coordinates_domain[selection_key]
-
-        self.initialize_ghe(selected_coordinates, h, field_specifier=self.fieldDescriptors[selection_key])
-
-        return selection_key, selected_coordinates
+        self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.max_height, self.fieldDescriptors[selection_key])
+        return selection_key, self.coordinates_domain[selection_key]
 
 
 # This is the search algorithm used for finding row-wise fields
