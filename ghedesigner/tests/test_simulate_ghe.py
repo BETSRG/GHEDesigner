@@ -97,7 +97,7 @@ class TestGHE(GHEBaseTest):
 
         # Inputs related to fluid
         # -----------------------
-        v_flow_borehole = 0.2  # System volumetric flow rate (L/s)
+        v_flow_borehole = 0.5  # System volumetric flow rate (L/s)
 
         # -----------------------
         # Fluid properties
@@ -168,13 +168,13 @@ class TestGHE(GHEBaseTest):
 
         max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HYBRID)
 
-        self.assertAlmostEqual(39.07, max_hp_eft, delta=0.01)
-        self.assertAlmostEqual(16.66, min_hp_eft, delta=0.01)
+        self.assertAlmostEqual(39.74, max_hp_eft, delta=0.01)
+        self.assertAlmostEqual(16.31, min_hp_eft, delta=0.01)
 
         ghe.size(method=TimestepType.HYBRID)
 
         self.assertEqual(ghe.nbh, 156)
-        self.assertAlmostEqual(ghe.bhe.b.H, 130.24, delta=0.01)
+        self.assertAlmostEqual(ghe.bhe.b.H, 136.86, delta=0.01)
 
     def test_double_u_tube(self):
         # Define a borehole
@@ -213,13 +213,13 @@ class TestGHE(GHEBaseTest):
 
         max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HYBRID)
 
-        self.assertAlmostEqual(37.97, max_hp_eft, delta=0.01)
-        self.assertAlmostEqual(16.95, min_hp_eft, delta=0.01)
+        self.assertAlmostEqual(38.29, max_hp_eft, delta=0.01)
+        self.assertAlmostEqual(16.79, min_hp_eft, delta=0.01)
 
         ghe.size(method=TimestepType.HYBRID)
 
         self.assertEqual(ghe.nbh, 156)
-        self.assertAlmostEqual(ghe.bhe.b.H, 122.10, delta=0.01)
+        self.assertAlmostEqual(ghe.bhe.b.H, 125.33, delta=0.01)
 
     def test_coaxial_tube(self):
         # Define a borehole
@@ -258,10 +258,10 @@ class TestGHE(GHEBaseTest):
 
         max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HYBRID)
 
-        self.assertAlmostEqual(38.04, max_hp_eft, delta=0.01)
-        self.assertAlmostEqual(17.18, min_hp_eft, delta=0.01)
+        self.assertAlmostEqual(36.94, max_hp_eft, delta=0.01)
+        self.assertAlmostEqual(17.53, min_hp_eft, delta=0.01)
 
         ghe.size(method=TimestepType.HYBRID)
 
         self.assertEqual(ghe.nbh, 156)
-        self.assertAlmostEqual(ghe.bhe.b.H, 124.79, delta=0.01)
+        self.assertAlmostEqual(ghe.bhe.b.H, 115.47, delta=0.01)

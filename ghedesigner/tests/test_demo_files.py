@@ -8,62 +8,62 @@ from ghedesigner.tests.ghe_base_case import GHEBaseTest
 expected_demo_results_dict = {
     'find_design_bi_rectangle_constrained_single_u_tube':
         {
-            'active_borehole_length': 133.24,
-            'number_of_boreholes': 76
+            'active_borehole_length': 134.79,
+            'number_of_boreholes': 72
         },
     'find_design_bi_rectangle_double_u_tube_series':
         {
-            'active_borehole_length': 130.35,
+            'active_borehole_length': 124.45,
             'number_of_boreholes': 77
         },
     'find_design_bi_rectangle_single_u_tube':
         {
-            'active_borehole_length': 124.25,
+            'active_borehole_length': 117.57,
             'number_of_boreholes': 88
         },
     'find_design_bi_zoned_rectangle_single_u_tube':
         {
-            'active_borehole_length': 130.44,
-            'number_of_boreholes': 72
+            'active_borehole_length': 128.87,
+            'number_of_boreholes': 68
         },
     'find_design_near_square_coaxial':
         {
-            'active_borehole_length': 124.55,
-            'number_of_boreholes': 156
+            'active_borehole_length': 134.89,
+            'number_of_boreholes': 132
         },
     'find_design_near_square_double_u_tube':
         {
-            'active_borehole_length': 133.48,
+            'active_borehole_length': 128.39,
             'number_of_boreholes': 144
         },
     'find_design_near_square_single_u_tube':
         {
-            'active_borehole_length': 130.20,
+            'active_borehole_length': 123.86,
             'number_of_boreholes': 156
         },
     'find_design_rectangle_coaxial':
         {
-            'active_borehole_length': 95.39,
-            'number_of_boreholes': 110
+            'active_borehole_length': 92.34,
+            'number_of_boreholes': 99
         },
     'find_design_rectangle_double_u_tube':
         {
-            'active_borehole_length': 118.52,
-            'number_of_boreholes': 88
+            'active_borehole_length': 129.69,
+            'number_of_boreholes': 77
         },
     'find_design_rectangle_single_u_tube':
         {
-            'active_borehole_length': 128.50,
+            'active_borehole_length': 121.49,
             'number_of_boreholes': 88
         },
     'find_design_rowwise_single_u_tube':
         {
-            'active_borehole_length': 134.10,
-            'number_of_boreholes': 67
+            'active_borehole_length': 133.07,
+            'number_of_boreholes': 63
         },
     'input_bldg0000056_odd_loads':
         {
-            'active_borehole_length': 78.29,
+            'active_borehole_length': 74.29,
             'number_of_boreholes': 2
         },
 }
@@ -80,6 +80,7 @@ class TestDemoFiles(GHEBaseTest):
                 demo_file_path = self.demos_path / f
                 out_dir = self.demo_output_parent_dir / time_str / f.replace('.json', '')
                 os.makedirs(out_dir)
+                print(f"Running: {demo_file_path}")
                 self.assertEqual(0, run_manager_from_cli_worker(input_file_path=demo_file_path,
                                                                 output_directory=out_dir))
 
@@ -94,4 +95,4 @@ class TestDemoFiles(GHEBaseTest):
                 expected_nbh = expected_results['number_of_boreholes']
 
                 self.assertAlmostEqual(actual_length, expected_length, delta=0.01)
-                self.assertEqual(actual_nbh, expected_nbh)
+                self.assertEqual(expected_nbh, actual_nbh)

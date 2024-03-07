@@ -15,9 +15,9 @@
     "undisturbed_temp": 10.87
   },
   "pipe": {
-    "inner_diameter": 0.0218186,
-    "outer_diameter": 0.02667,
-    "shank_spacing": 0.05120894,
+    "inner_diameter": 0.0354,
+    "outer_diameter": 0.04,
+    "shank_spacing": 0.02,
     "roughness": 1e-06,
     "conductivity": 0.398,
     "rho_cp": 1542000,
@@ -25,7 +25,7 @@
   },
   "borehole": {
     "buried_depth": 1.0,
-    "diameter": 0.127
+    "diameter": 0.14
   },
   "simulation": {
     "num_months": 240

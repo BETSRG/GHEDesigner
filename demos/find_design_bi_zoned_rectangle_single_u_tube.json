@@ -15,9 +15,9 @@
     "undisturbed_temp": 18.3
   },
   "pipe": {
-    "inner_diameter": 0.0216,
-    "outer_diameter": 0.02667,
-    "shank_spacing": 0.0323,
+    "inner_diameter": 0.0354,
+    "outer_diameter": 0.04,
+    "shank_spacing": 0.02,
     "roughness": 0.000001,
     "conductivity": 0.4,
     "rho_cp": 1542000,
@@ -25,7 +25,7 @@
   },
   "borehole": {
     "buried_depth": 2.0,
-    "diameter": 0.150
+    "diameter": 0.14
   },
   "simulation": {
     "num_months": 240
@@ -41,7 +41,7 @@
     "method": "BIZONEDRECTANGLE"
   },
   "design": {
-    "flow_rate": 0.2,
+    "flow_rate": 0.5,
     "flow_type": "BOREHOLE",
     "max_eft": 35.0,
     "min_eft": 5.0
