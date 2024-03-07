@@ -40,7 +40,7 @@ class TestEquivalentPipes(GHEBaseTest):
 
         # Fluid properties
         fluid = GHEFluid(fluid_str="Water", percent=0.0)
-        v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
+        v_flow_borehole = 0.8  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
