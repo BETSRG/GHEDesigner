@@ -5,25 +5,25 @@
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Horizontal length of property boundary defining surface area\n\navaliable for ground heat exchanger."
+      "description": "Horizontal length of property boundary defining surface area\n\navailable for ground heat exchanger."
     },
     "width": {
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Horizontal width of property boundary defining surface area\n\navaliable for ground heat exchanger."
+      "description": "Horizontal width of property boundary defining surface area\n\navailable for ground heat exchanger."
     },
     "b_min": {
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Minimum borehole-to-borehole spacaing."
+      "description": "Minimum borehole-to-borehole spacing."
     },
     "b_max": {
       "type": "number",
       "minimum": 0,
       "units": "m",
-      "description": "Maximum borehole-to-borehole spacaing."
+      "description": "Maximum borehole-to-borehole spacing."
     },
     "max_height": {
       "type": "number",

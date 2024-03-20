@@ -1,14 +1,11 @@
 from math import sqrt
-
 from unittest import TestCase
-
 
 from ghedesigner.shape import point_polygon_check
 
 
 class TestShapes(TestCase):
     def test_point_polygon_check(self):
-
         # return constants for convenience
         INSIDE = 1
         OUTSIDE = -1

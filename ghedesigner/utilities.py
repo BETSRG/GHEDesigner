@@ -2,9 +2,8 @@ from json import loads
 from math import sqrt
 from pathlib import Path
 
-from scipy.optimize import brentq
-
 import numpy as np
+from scipy.optimize import brentq
 
 
 # Time functions
@@ -119,7 +118,6 @@ def write_idf_object(data: list):
 
 
 def write_idf(summary_path: Path):
-
     data = loads(summary_path.read_text())
 
     # assuming the g-function file lives next to the summary file path...
@@ -203,8 +201,8 @@ def write_idf(summary_path: Path):
     ]
 
     for idx in range(len(g_vals)):
-        resp_factors.append((f'{lntts_vals[idx]:0.3f}', f'g-Function Ln(T/Ts) Value {idx+1}'))
-        resp_factors.append((f'{g_vals[idx]:0.3f}', f'g-Function g Value {idx+1}'))
+        resp_factors.append((f'{lntts_vals[idx]:0.3f}', f'g-Function Ln(T/Ts) Value {idx + 1}'))
+        resp_factors.append((f'{g_vals[idx]:0.3f}', f'g-Function g Value {idx + 1}'))
 
     s = ''
     s += write_idf_object(system)
