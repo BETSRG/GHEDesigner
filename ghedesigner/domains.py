@@ -378,15 +378,24 @@ def polygonal_land_constraint(b_min, b_max_x, b_max_y, property_boundary, no_go_
     for domain in coordinates_domain_nested:
         new_coordinates_domain = []
         for coordinates in domain:
+            new_coordinates = coordinates
+            all_boreholes_removed = False
             # Remove boreholes outside of property
-            new_coordinates = remove_cutout(coordinates, property_boundary, remove_inside=False)
+            for bf_outline in property_boundary:
+                new_coordinates = remove_cutout(new_coordinates, bf_outline, remove_inside=False)
+                if len(new_coordinates) == 0:
+                    all_boreholes_removed = True
+                    break
             # Remove boreholes inside of building
-            if len(new_coordinates) == 0:
+            if all_boreholes_removed:
                 continue
             for no_go_zone in no_go_boundaries:
                 new_coordinates = remove_cutout(new_coordinates, no_go_zone, remove_inside=True,
                                                 keep_contour=False)
-            if len(new_coordinates) == 0:
+                if len(new_coordinates) == 0:
+                    all_boreholes_removed = True
+                    break
+            if all_boreholes_removed:
                 continue
             new_coordinates_domain.append(new_coordinates)
         coordinates_domain_nested_cutout.append(new_coordinates_domain)

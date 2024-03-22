@@ -241,11 +241,11 @@ class DesignBiRectangleConstrained(DesignBase):
             self.geometric_constraints.no_go_boundaries,
         )
 
-    def find_design(self, disp=False) -> Bisection2D:
+    def find_design(self, disp=False) -> BisectionZD:
         if disp:
             title = "Find bi-rectangle_constrained..."
             print(title + "\n" + len(title) * "=")
-        return Bisection2D(
+        return BisectionZD(
             self.coordinates_domain_nested,
             self.fieldDescriptors,
             self.V_flow,

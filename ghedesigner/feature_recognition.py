@@ -53,14 +53,21 @@ def remove_cutout(coordinates, boundary, remove_inside=True, keep_contour=True):
 
 
 def determine_largest_rectangle(property_boundary):
-    x_max = 0
-    y_max = 0
-    for x, y in property_boundary:
-        if x > x_max:
-            x_max = x
-        if y > y_max:
-            y_max = y
+    x_max = float('-inf')
+    y_max = float('-inf')
+    x_min = float('inf')
+    y_min = float('inf')
+    for bf_outline in property_boundary:
+        for x, y in bf_outline:
+            if x > x_max:
+                x_max = x
+            if y > y_max:
+                y_max = y
+            if x < x_min:
+                x_min = x
+            if y < y_min:
+                y_min = y
 
-    rectangle = [[0, 0], [x_max, 0], [x_max, y_max], [0, y_max], [0, 0]]
+    rectangle = [[x_min, y_min], [x_max, y_min], [x_max, y_max], [x_min, y_max], [x_min, y_min]]
 
     return rectangle
