@@ -217,7 +217,7 @@ def vector_intersect(l1, l2, intersection_tolerance):
     return [[rx, ry]]
 
 
-def point_polygon_check(contour, point):
+def point_polygon_check(contour, point, on_edge_tolerance=0.001):
     """
     Mimics pointPolygonTest from OpenCV-Python
 
@@ -240,8 +240,6 @@ def point_polygon_check(contour, point):
 
     def distance(pt_1, pt_2) -> float:
         return sqrt((pt_1[0] - pt_2[0]) ** 2 + (pt_1[1] - pt_2[1]) ** 2)
-
-    on_edge_tolerance = 0.001
 
     for idx, vertex in enumerate(contour):
         v1 = contour[idx - 1]

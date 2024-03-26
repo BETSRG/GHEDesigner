@@ -8,8 +8,8 @@ from ghedesigner.tests.ghe_base_case import GHEBaseTest
 expected_demo_results_dict = {
     'find_design_bi_rectangle_constrained_single_u_tube':
         {
-            'active_borehole_length': 134.05,
-            'number_of_boreholes': 73
+            'active_borehole_length': 134.56,
+            'number_of_boreholes': 74
         },
     'find_design_bi_rectangle_double_u_tube_series':
         {

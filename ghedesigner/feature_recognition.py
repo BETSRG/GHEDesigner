@@ -1,53 +1,26 @@
 from ghedesigner.shape import point_polygon_check
 
 
-def remove_cutout(coordinates, boundary, remove_inside=True, keep_contour=True):
-    inside_points_idx = []
-    outside_points_idx = []
-    boundary_points_idx = []
+def remove_cutout(coordinates, boundaries, remove_inside=True, keep_contour=True, on_edge_tolerance=0.01):
 
+    if type(boundaries[0][0]) != list:
+        boundaries = [boundaries]
+
+    new_coordinates = []
     inside = 1
     outside = -1
     on_edge = 0
-
     for idx, coordinate in enumerate(coordinates):
         coordinate = coordinates[idx]
-        ret = point_polygon_check(boundary, coordinate)
-        if ret == inside:
-            inside_points_idx.append(idx)
-        elif ret == outside:
-            outside_points_idx.append(idx)
-        elif ret == on_edge:
-            boundary_points_idx.append(idx)
+        boundary_results = []
+        for boundary in boundaries:
+            boundary_results.append(point_polygon_check(boundary, coordinate, on_edge_tolerance=on_edge_tolerance))
+        if remove_inside:
+            if (not inside in boundary_results) and not (on_edge in boundary_results and not keep_contour):
+                new_coordinates.append(coordinate)
         else:
-            raise ValueError("Something bad happened")
-
-    new_coordinates = []
-    for idx, _ in enumerate(coordinates):
-        # if we want to remove inside points and keep contour points
-        if remove_inside and keep_contour:
-            if idx in inside_points_idx:
-                continue
-            else:
-                new_coordinates.append(coordinates[idx])
-        # if we want to remove inside points and remove contour points
-        elif remove_inside and not keep_contour:
-            if idx in inside_points_idx or idx in boundary_points_idx:
-                continue
-            else:
-                new_coordinates.append(coordinates[idx])
-        # if we want to keep outside points and remove contour points
-        elif not remove_inside and not keep_contour:
-            if idx in outside_points_idx or idx in boundary_points_idx:
-                continue
-            else:
-                new_coordinates.append(coordinates[idx])
-        # if we want to keep outside points and keep contour points
-        else:
-            if idx in outside_points_idx:
-                continue
-            else:
-                new_coordinates.append(coordinates[idx])
+            if (inside in boundary_results) or (on_edge in boundary_results and keep_contour):
+                new_coordinates.append(coordinate)
 
     return new_coordinates
 
