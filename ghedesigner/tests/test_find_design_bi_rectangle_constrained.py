@@ -88,6 +88,7 @@ no_go_zones_multiple_bf_outlines = [
     ]
 ]
 
+
 class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
 
     def test_single_u_tube(self):

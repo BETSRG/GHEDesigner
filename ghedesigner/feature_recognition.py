@@ -3,12 +3,11 @@ from ghedesigner.shape import point_polygon_check
 
 def remove_cutout(coordinates, boundaries, remove_inside=True, keep_contour=True, on_edge_tolerance=0.01):
 
-    if type(boundaries[0][0]) != list:
+    if boundaries[0][0] is not list:
         boundaries = [boundaries]
 
     new_coordinates = []
     inside = 1
-    outside = -1
     on_edge = 0
     for idx, coordinate in enumerate(coordinates):
         coordinate = coordinates[idx]
@@ -16,7 +15,7 @@ def remove_cutout(coordinates, boundaries, remove_inside=True, keep_contour=True
         for boundary in boundaries:
             boundary_results.append(point_polygon_check(boundary, coordinate, on_edge_tolerance=on_edge_tolerance))
         if remove_inside:
-            if (not inside in boundary_results) and not (on_edge in boundary_results and not keep_contour):
+            if (inside not in boundary_results) and not (on_edge in boundary_results and not keep_contour):
                 new_coordinates.append(coordinate)
         else:
             if (inside in boundary_results) or (on_edge in boundary_results and keep_contour):
