@@ -362,7 +362,8 @@ def bi_rectangle_zoned_nested(length_x, length_y, b_min, b_max_x, b_max_y):
     return bi_rectangle_zoned_nested_domain, field_descriptors
 
 
-def polygonal_land_constraint(b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries=None):
+def polygonal_land_constraint(b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries=None,
+                              keep_contour=[True, False]):
     if no_go_boundaries is None:
         no_go_boundaries = []
 
@@ -379,13 +380,16 @@ def polygonal_land_constraint(b_min, b_max_x, b_max_y, property_boundary, no_go_
         new_coordinates_domain = []
         for coordinates in domain:
             # Remove boreholes outside of property
-            new_coordinates = remove_cutout(coordinates, property_boundary, remove_inside=False)
-            # Remove boreholes inside of building
+            new_coordinates = remove_cutout(coordinates, property_boundary, remove_inside=False,
+                                            keep_contour=keep_contour[0])
             if len(new_coordinates) == 0:
                 continue
-            for no_go_zone in no_go_boundaries:
-                new_coordinates = remove_cutout(new_coordinates, no_go_zone, remove_inside=True,
-                                                keep_contour=False)
+            # Remove boreholes inside of building
+            if len(no_go_boundaries) > 0:
+                new_coordinates = remove_cutout(new_coordinates, no_go_boundaries, remove_inside=True,
+                                                keep_contour=keep_contour[1])
+            if len(new_coordinates) == 0:
+                continue
             new_coordinates_domain.append(new_coordinates)
         coordinates_domain_nested_cutout.append(new_coordinates_domain)
 
