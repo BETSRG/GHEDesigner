@@ -94,31 +94,31 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
     def test_single_u_tube(self):
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_diameter=0.0216, outer_diameter=0.02667, shank_spacing=0.0323,
+            inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.150)
+        ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_rectangle_constrained(
             b_min=5.0, b_max_x=25.0, b_max_y=25.0,
             property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
-        ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
+        ghe.set_design(flow_rate=0.5, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiRectangleConstrainedDesignSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(134.56, u_tube_height, delta=0.01)
+        self.assertAlmostEqual(132.79, u_tube_height, delta=0.01)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(74 + 1, len(nbh))
+        self.assertEqual(75, len(nbh))
 
     def test_single_u_tube_multiple_bf_outlines(self):
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_diameter=0.0216, outer_diameter=0.02667, shank_spacing=0.0323,
+            inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
@@ -135,33 +135,33 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(133.54, u_tube_height, delta=0.01)
+        self.assertAlmostEqual(133.89, u_tube_height, delta=0.01)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(75 + 1, len(nbh))
+        self.assertEqual(66, len(nbh))
 
     def test_double_u_tube(self):
         ghe = GHEManager()
         ghe.set_double_u_tube_pipe_parallel(
-            inner_diameter=0.0216, outer_diameter=0.02667, shank_spacing=0.0323,
+            inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.150)
+        ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_rectangle_constrained(
             b_min=5.0, b_max_x=25.0, b_max_y=25.0,
             property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
-        ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
+        ghe.set_design(flow_rate=0.5, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiRectangleConstrainedDesignDoubleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(134.45, u_tube_height, delta=0.01)
+        self.assertAlmostEqual(132.31, u_tube_height, delta=0.01)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(66 + 1, len(nbh))
+        self.assertEqual(67, len(nbh))
 
     def test_coaxial(self):
         ghe = GHEManager()
@@ -171,18 +171,18 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.150)
+        ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_rectangle_constrained(
             b_min=5.0, b_max_x=25.0, b_max_y=25.0,
             property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
-        ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
+        ghe.set_design(flow_rate=0.8, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiRectangleConstrainedDesignCoaxial"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(133.31, u_tube_height, delta=0.01)
+        self.assertAlmostEqual(131.03, u_tube_height, delta=0.01)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(68 + 1, len(nbh))
+        self.assertEqual(58, len(nbh))

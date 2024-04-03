@@ -8,7 +8,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe = GHEManager()
 
         # 1-1/4" in DR-11 HDPE
-        ghe.set_single_u_tube_pipe(inner_diameter=0.034036, outer_diameter=0.04216, shank_spacing=0.0226,
+        ghe.set_single_u_tube_pipe(inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
                                    roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=3.493, rho_cp=2.5797E06, undisturbed_temp=10.0)
 
@@ -41,7 +41,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe = GHEManager()
 
         # 1-1/4" in DR-11 HDPE
-        ghe.set_single_u_tube_pipe(inner_diameter=0.034036, outer_diameter=0.04216, shank_spacing=0.0226,
+        ghe.set_single_u_tube_pipe(inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
                                    roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=3.493, rho_cp=2.5797E06, undisturbed_temp=10.0)
 
@@ -74,7 +74,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe = GHEManager()
 
         # 1-1/4" in DR-11 HDPE
-        ghe.set_single_u_tube_pipe(inner_diameter=0.034036, outer_diameter=0.04216, shank_spacing=0.0226,
+        ghe.set_single_u_tube_pipe(inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
                                    roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=3.493, rho_cp=2.5797E06, undisturbed_temp=10.0)
 
