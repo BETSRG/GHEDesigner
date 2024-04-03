@@ -27,15 +27,15 @@ class TestDemoFiles(GHEBaseTest):
                 self.assertEqual(0, run_manager_from_cli_worker(input_file_path=demo_file_path,
                                                                 output_directory=out_dir))
 
-                # results_path = out_dir / 'SimulationSummary.json'
+                results_path = out_dir / 'SimulationSummary.json'
 
-                # actual_results = loads(results_path.read_text())
-                # actual_length = actual_results['ghe_system']['active_borehole_length']['value']
-                # actual_nbh = actual_results['ghe_system']['number_of_boreholes']
+                actual_results = loads(results_path.read_text())
+                actual_length = actual_results['ghe_system']['active_borehole_length']['value']
+                actual_nbh = actual_results['ghe_system']['number_of_boreholes']
 
-                # expected_results = expected_demo_results_dict[out_dir.stem]
-                # expected_length = expected_results['active_borehole_length']
-                # expected_nbh = expected_results['number_of_boreholes']
+                expected_results = expected_demo_results_dict[out_dir.stem]
+                expected_length = expected_results['active_borehole_length']
+                expected_nbh = expected_results['number_of_boreholes']
 
-                # self.assertAlmostEqual(actual_length, expected_length, delta=0.01)
-                # self.assertEqual(expected_nbh, actual_nbh)
+                self.assertAlmostEqual(actual_length, expected_length, delta=0.01)
+                self.assertEqual(expected_nbh, actual_nbh)
