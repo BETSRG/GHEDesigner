@@ -84,8 +84,17 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
         self.b_min = b_min
         self.b_max_x = b_max_x
         self.b_max_y = b_max_y
-        self.property_boundary = property_boundary
-        self.no_go_boundaries = no_go_boundaries
+
+        if len(no_go_boundaries) > 0 and isinstance(no_go_boundaries[0][0], (int, float)):
+            self.no_go_boundaries = [no_go_boundaries]
+        else:
+            self.no_go_boundaries = no_go_boundaries
+
+        if len(property_boundary) > 0 and isinstance(property_boundary[0][0], (int, float)):
+            self.property_boundary = [property_boundary]
+        else:
+            self.property_boundary = property_boundary
+
         self.type = DesignGeomType.BIRECTANGLECONSTRAINED
 
     def to_input(self) -> dict:

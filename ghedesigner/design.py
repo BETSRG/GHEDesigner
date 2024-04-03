@@ -229,7 +229,7 @@ class DesignBiRectangleConstrained(DesignBase):
                  fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsBiRectangleConstrained,
                  hourly_extraction_ground_loads: list, method: TimestepType,
-                 flow_type: FlowConfigType = FlowConfigType.BOREHOLE, load_years=None):
+                 flow_type: FlowConfigType = FlowConfigType.BOREHOLE, load_years=None, keep_contour=[True, False]):
         super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow_type, load_years)
         self.geometric_constraints = geometric_constraints
@@ -239,13 +239,14 @@ class DesignBiRectangleConstrained(DesignBase):
             self.geometric_constraints.b_max_y,
             self.geometric_constraints.property_boundary,
             self.geometric_constraints.no_go_boundaries,
+            keep_contour=keep_contour
         )
 
-    def find_design(self, disp=False) -> Bisection2D:
+    def find_design(self, disp=False) -> BisectionZD:
         if disp:
             title = "Find bi-rectangle_constrained..."
             print(title + "\n" + len(title) * "=")
-        return Bisection2D(
+        return BisectionZD(
             self.coordinates_domain_nested,
             self.fieldDescriptors,
             self.V_flow,

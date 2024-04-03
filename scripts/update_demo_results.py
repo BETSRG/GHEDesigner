@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 
-def update_results(results_dir, expected_results_path):
+def update_results(results_dir: Path, expected_results_path: Path):
 
     d_expected = {}
 
@@ -24,4 +24,4 @@ def update_results(results_dir, expected_results_path):
 
 if __name__ == "__main__":
     # python update_demo_results.py path_to_results_dir path_to_expected_results_file
-    update_results(Path(sys.argv[1]), Path(sys.argv[2]))
+    update_results(Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve())

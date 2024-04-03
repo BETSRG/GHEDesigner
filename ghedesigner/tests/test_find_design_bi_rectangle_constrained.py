@@ -43,6 +43,51 @@ no_go_zones = [[
     [95.7964135, 81.7721519]
 ]]
 
+prop_boundaries_multiple_bf_outlines = [
+    [
+        [0.0, 0.0],
+        [45.0, 0.0],
+        [90.0, 45.0],
+        [45.0, 90.0],
+        [0.0, 45.0]
+    ],
+    [
+        [0.0, 90.0],
+        [80.0, 90.0],
+        [90.0, 120.0],
+        [10.0, 115.0]
+    ],
+    [
+        [120.0, 120.0],
+        [165.0, 180.0],
+        [165.0, 237.0],
+        [140.0, 250.0],
+        [135.0, 151.0],
+        [120.0, 135.0]
+    ]
+]
+
+no_go_zones_multiple_bf_outlines = [
+    [
+        [60.0, 0.0],
+        [80.0, 0.0],
+        [80.0, 200.0],
+        [60.0, 200.0]
+    ],
+    [
+        [60.0, 100.0],
+        [80.0, 50.0],
+        [140.0, 140.0],
+        [130.0, 175.0]
+    ],
+    [
+        [0.0, 0.0],
+        [20.0, 0.0],
+        [20.0, 20.0],
+        [0.0, 20.0]
+    ]
+]
+
 
 class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
 
@@ -66,9 +111,9 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(131.55, u_tube_height, delta=0.01)
+        self.assertAlmostEqual(132.79, u_tube_height, delta=0.01)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(77, len(nbh))
+        self.assertEqual(75, len(nbh))
 
     def test_double_u_tube(self):
         ghe = GHEManager()
@@ -90,9 +135,9 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(131.30, u_tube_height, delta=0.01)
+        self.assertAlmostEqual(132.31, u_tube_height, delta=0.01)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(70, len(nbh))
+        self.assertEqual(67, len(nbh))
 
     def test_coaxial(self):
         ghe = GHEManager()
@@ -114,6 +159,6 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(133.38, u_tube_height, delta=0.01)
+        self.assertAlmostEqual(131.03, u_tube_height, delta=0.01)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
         self.assertEqual(58, len(nbh))
