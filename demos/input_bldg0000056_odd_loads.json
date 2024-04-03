@@ -15,9 +15,9 @@
     "undisturbed_temp": 10.87
   },
   "pipe": {
-    "inner_diameter": 0.0354,
-    "outer_diameter": 0.04,
-    "shank_spacing": 0.02,
+    "inner_diameter": 0.03404,
+    "outer_diameter": 0.04216,
+    "shank_spacing": 0.01856,
     "roughness": 1e-06,
     "conductivity": 0.398,
     "rho_cp": 1542000,

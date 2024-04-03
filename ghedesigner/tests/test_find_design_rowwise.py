@@ -50,7 +50,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
     def test_find_row_wise_design_wo_perimeter(self):
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_diameter=0.0354, outer_diameter=0.040, shank_spacing=0.02,
+            inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
@@ -68,14 +68,14 @@ class TestFindRowWiseDesign(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(196.53, u_tube_height, delta=0.01)
+        self.assertAlmostEqual(196.20, u_tube_height, delta=0.01)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(38 + 1, len(nbh))
+        self.assertEqual(41, len(nbh))
 
     def test_find_row_wise_design_with_perimeter(self):
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_diameter=0.0354, outer_diameter=0.040, shank_spacing=0.02,
+            inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
@@ -93,6 +93,6 @@ class TestFindRowWiseDesign(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(198.29, u_tube_height, delta=0.01)
+        self.assertAlmostEqual(197.38, u_tube_height, delta=0.01)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(37 + 1, len(nbh))
+        self.assertEqual(40, len(nbh))

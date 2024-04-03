@@ -14,7 +14,7 @@ class TestLoads(GHEBaseTest):
 
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_diameter=0.0354, outer_diameter=0.040, shank_spacing=0.02,
+            inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
@@ -29,7 +29,7 @@ class TestLoads(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(115.53, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(118.53, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
         self.assertEqual(7, len(nbh))
 
@@ -43,7 +43,7 @@ class TestLoads(GHEBaseTest):
 
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_diameter=0.0354, outer_diameter=0.040, shank_spacing=0.02,
+            inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
@@ -58,7 +58,7 @@ class TestLoads(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(127.96, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(130.40, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
         self.assertEqual(11, len(nbh))
 
@@ -72,7 +72,7 @@ class TestLoads(GHEBaseTest):
 
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_diameter=0.0354, outer_diameter=0.040, shank_spacing=0.02,
+            inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
@@ -87,6 +87,6 @@ class TestLoads(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(124.57, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(126.99, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
         self.assertEqual(9, len(nbh))

@@ -15,16 +15,16 @@ class TestComputedGFunctionSimAndSize(GHEBaseTest):
         # -------------------
         h = 100.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
-        dia = 150.0 / 1000.0  # Borehole diameter
+        dia = 140.0 / 1000.0  # Borehole diameter
         b = 5.0  # Borehole spacing (m)
 
         # Pipe dimensions
         # ---------------
-        d_out = 0.02667  # Pipe outer diameter (m)
-        d_in = 0.0216  # Pipe inner diameter (m)
+        d_out = 0.04216  # Pipe outer diameter (m)
+        d_in = 0.03404  # Pipe inner diameter (m)
         r_out = d_out / 2.0
         r_in = d_in / 2.0
-        s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
+        s = 0.01856  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Pipe positions

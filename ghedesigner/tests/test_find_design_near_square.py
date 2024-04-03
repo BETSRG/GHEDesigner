@@ -13,8 +13,8 @@ class TestFindNearSquareDesign(GHEBaseTest):
     def test_find_single_u_tube_design(self):
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_diameter=0.0354, outer_diameter=0.04,
-            shank_spacing=0.02, roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
+            inner_diameter=0.03404, outer_diameter=0.04216,
+            shank_spacing=0.01856, roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
@@ -38,14 +38,14 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.write_output_files(output_file_directory, "_SU")
         # can grab data off the outputs dict
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(u_tube_height, 132.48, delta=1e-2)
+        self.assertAlmostEqual(u_tube_height, 124.48, delta=1e-2)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(144 + 1, len(nbh))
+        self.assertEqual(157, len(nbh))
 
     def test_find_double_u_tube_parallel_design(self):
         ghe = GHEManager()
         ghe.set_double_u_tube_pipe_parallel(
-            inner_diameter=0.0354, outer_diameter=0.040, shank_spacing=0.02,
+            inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
@@ -71,14 +71,14 @@ class TestFindNearSquareDesign(GHEBaseTest):
 
         # can grab data off the outputs dict
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(u_tube_height, 128.39, delta=1e-2)
+        self.assertAlmostEqual(u_tube_height, 130.86, delta=1e-2)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(144 + 1, len(nbh))
+        self.assertEqual(145, len(nbh))
 
     def test_find_double_u_tube_series_design(self):
         ghe = GHEManager()
         ghe.set_double_u_tube_pipe_series(
-            inner_diameter=0.0354, outer_diameter=0.040, shank_spacing=0.02,
+            inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
@@ -104,7 +104,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
 
         # can grab data off the outputs dict
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(u_tube_height, 128.07, delta=1e-2)
+        self.assertAlmostEqual(u_tube_height, 130.07, delta=1e-2)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
         self.assertEqual(144 + 1, len(nbh))
 

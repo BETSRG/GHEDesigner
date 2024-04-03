@@ -47,7 +47,7 @@ class TestEquivalentPipes(GHEBaseTest):
         # Define a borehole
         h = 100.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
-        dia = 150.0 / 1000.0  # Borehole diameter
+        dia = 140.0 / 1000.0  # Borehole diameter
         borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # borehole heat exchanger
@@ -85,14 +85,14 @@ class TestEquivalentPipes(GHEBaseTest):
         # Borehole dimensions
         h = 100.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
-        dia = 150.0 / 1000.0  # Borehole diameter
+        dia = 140.0 / 1000.0  # Borehole diameter
 
         # Pipe dimensions
-        d_out = 0.02667  # Pipe outer diameter (m)
-        d_in = 0.0216  # Pipe inner diameter (m)
+        d_out = 0.04216  # Pipe outer diameter (m)
+        d_in = 0.03404  # Pipe inner diameter (m)
         r_out = d_out / 2.0
         r_in = d_in / 2.0
-        s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
+        s = 0.01856  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Thermal conductivities
@@ -120,7 +120,7 @@ class TestEquivalentPipes(GHEBaseTest):
 
         # Fluid properties
         fluid = GHEFluid(fluid_str="Water", percent=0.0)
-        v_flow_borehole = 0.2  # Volumetric flow rate per borehole (L/s)
+        v_flow_borehole = 0.5  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
