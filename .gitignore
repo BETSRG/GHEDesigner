@@ -170,3 +170,5 @@ examples/
 demo_outputs/
 .DS_Store
 notebooks/
+*.gli
+*.glo

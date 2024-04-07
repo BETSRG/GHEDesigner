@@ -8,24 +8,27 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.10' ]
+        python-version: [ '3.8', '3.9', '3.10', '3.11' ]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install the package
         run: |
           python -m pip install --upgrade pip
           pip install .
-      - name: Run a test file
-        run: |
-          ghedesigner demos/find_design_rectangle_single_u_tube.json /tmp
       - name: Test validate option
         run: |
           ghedesigner --validate demos/find_design_rectangle_single_u_tube.json
+      - name: Run a test file
+        run: |
+          ghedesigner demos/find_design_rectangle_single_u_tube.json /tmp
+      - name: Test IDF conversion option
+        run: |
+          ghedesigner --convert=IDF /tmp/SimulationSummary.json
       - name: Test version string
         run: |
           ghedesigner --version

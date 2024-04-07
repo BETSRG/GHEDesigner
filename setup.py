@@ -14,11 +14,11 @@ for specific building and property constraints."""
 setup(
     name='GHEDesigner',
     install_requires=[
-        'click>=8.1.3',
-        'jsonschema>=4.17.3',
-        'numpy>=1.24.2',
-        'pygfunction>=2.2.2',
-        'scipy>=1.10.0'
+        'click~=8.1',
+        'jsonschema~=4.19',
+        'numpy~=1.24',
+        'pygfunction~=2.2',
+        'scipy~=1.10'
     ],
     url='https://github.com/BETSRG/GHEDesigner',
     description=short_description,

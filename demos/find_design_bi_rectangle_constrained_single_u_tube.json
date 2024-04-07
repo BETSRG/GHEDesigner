@@ -1,5 +1,5 @@
 {
-  "version": "1.1",
+  "version": "1.5",
   "fluid": {
     "fluid_name": "WATER",
     "concentration_percent": 0.0,
@@ -15,17 +15,17 @@
     "undisturbed_temp": 18.3
   },
   "pipe": {
-    "inner_diameter": 0.0216,
-    "outer_diameter": 0.02667,
-    "shank_spacing": 0.0323,
-    "roughness": 0.000001,
+    "inner_diameter": 0.03404,
+    "outer_diameter": 0.04216,
+    "shank_spacing": 0.01856,
+    "roughness": 1e-06,
     "conductivity": 0.4,
     "rho_cp": 1542000,
     "arrangement": "SINGLEUTUBE"
   },
   "borehole": {
     "buried_depth": 2.0,
-    "diameter": 0.150
+    "diameter": 0.14
   },
   "simulation": {
     "num_months": 240
@@ -36,7 +36,7 @@
     "b_max_y": 25.0,
     "max_height": 135.0,
     "min_height": 60.0,
-    "property_boundary": [
+    "property_boundary": [[
       [19.46202532, 108.8860759],
       [19.67827004, 94.46835443],
       [24.65189873, 75.3164557],
@@ -55,7 +55,7 @@
       [182.2943038, 121.3670886],
       [155.0474684, 118.5696203],
       [53.19620253, 112.3291139]
-    ],
+    ]],
     "no_go_boundaries": [[
       [74.38818565, 80.69620253],
       [73.0907173, 53.36708861],
@@ -73,7 +73,7 @@
     "method": "BIRECTANGLECONSTRAINED"
   },
   "design": {
-    "flow_rate": 0.2,
+    "flow_rate": 0.5,
     "flow_type": "BOREHOLE",
     "max_eft": 35.0,
     "min_eft": 5.0

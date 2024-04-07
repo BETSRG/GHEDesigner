@@ -223,6 +223,7 @@ class OutputManager:
                 },
                 'active_borehole_length': add_with_units(design.ghe.bhe.b.H, 'm'),
                 'borehole_diameter': add_with_units(design.ghe.bhe.b.r_b * 2.0, 'm'),
+                'borehole_buried_depth': add_with_units(design.ghe.bhe.b.D, 'm'),
                 'borehole_spacing': add_with_units(design.ghe.B_spacing, 'm'),
                 'total_drilling': add_with_units(design.ghe.bhe.b.H * len(design.ghe.gFunction.bore_locations), 'm'),
                 'field_type': design.ghe.fieldType,
@@ -231,19 +232,20 @@ class OutputManager:
                 'shank_spacing': add_with_units(design.ghe.bhe.pipe.s, 'm'),
                 'pipe_geometry': pipe_geometry,
                 'pipe_roughness': add_with_units(design.ghe.bhe.pipe.roughness, 'm'),
-                'grout_thermal_conductivity': add_with_units(design.ghe.bhe.grout.k, 'W/mK'),
-                'grout_volumetric_heat_capacity': add_with_units(design.ghe.bhe.grout.rhoCp, 'kJ/m3-K'),
-                # TODO: Corrected arg to .rhoCp - verify, should be / 1000?
+                'pipe_thermal_conductivity': add_with_units(design.ghe.bhe.pipe.k, 'W/m-K'),
+                'pipe_volumetric_heat_capacity': add_with_units(design.ghe.bhe.pipe.rhoCp / 1000, 'kJ/m3-K'),
+                'grout_thermal_conductivity': add_with_units(design.ghe.bhe.grout.k, 'W/m-K', ),
+                'grout_volumetric_heat_capacity': add_with_units(design.ghe.bhe.grout.rhoCp / 1000, 'kJ/m3-K'),
                 'reynolds_number': reynolds,
                 'effective_borehole_resistance': add_with_units(design.ghe.bhe.calc_effective_borehole_resistance(),
                                                                 'W/m-K'),
                 # TODO: are the units right here?
                 'soil_thermal_conductivity': add_with_units(design.ghe.bhe.soil.k, 'W/m-K'),
-                'soil_volumetric_heat_capacity': add_with_units(design.ghe.bhe.soil.rhoCp, 'kJ/m3-K'),
-                # TODO: Should be / 1000?
+                'soil_volumetric_heat_capacity': add_with_units(design.ghe.bhe.soil.rhoCp / 1000, 'kJ/m3-K'),
                 'soil_undisturbed_ground_temp': add_with_units(design.ghe.bhe.soil.ugt, 'C'),
                 'fluid_volumetric_heat_capacity': add_with_units(design.ghe.bhe.fluid.rhoCp / 1000, 'kJ/m3-K'),
-                'fluid_thermal_conductivity': add_with_units(design.ghe.bhe.fluid.k, 'W/mK'),
+                'fluid_thermal_conductivity': add_with_units(design.ghe.bhe.fluid.k, 'W/m-K'),
+                'fluid_viscosity': add_with_units(design.ghe.bhe.fluid.dynamic_viscosity(), 'Pa-s'),
                 'fluid_mixture': design.ghe.bhe.fluid.fluid.fluid_name,  # TODO: Is this the right lookup!?!?!? :)
                 'fluid_density': add_with_units(design.ghe.bhe.fluid.rho, 'kg/m3'),
                 'fluid_mass_flow_rate_per_borehole': add_with_units(design.ghe.bhe.m_flow_borehole, 'kg/s'),
@@ -425,6 +427,7 @@ class OutputManager:
         o += self.d_row(width, "Active Borehole Length, m:", design.ghe.bhe.b.H, f_int)
         o += self.d_row(width, "Borehole Diameter, mm:", design.ghe.bhe.b.r_b * 1000 * 2.0, f_2f)
         o += self.d_row(width, "Borehole Spacing, m:", design.ghe.B_spacing, f_3f)
+        o += self.d_row(width, 'Borehole Depth, m:', design.ghe.bhe.b.D, f_2f)
         o += self.d_row(width, "Total Drilling, m:", design.ghe.bhe.b.H * len(design.ghe.gFunction.bore_locations),
                         f_int)
 
@@ -449,9 +452,17 @@ class OutputManager:
                             n_tabs=1)
 
         o += self.d_row(width, "Pipe Roughness, m:", design.ghe.bhe.pipe.roughness, f_sci, n_tabs=1)
+        if isinstance(design.ghe.bhe.pipe.k, float):
+            o += self.d_row(width, "Pipe Thermal Conductivity, W/m-K:", design.ghe.bhe.pipe.k, f_3f, n_tabs=1)
+        else:
+            o += self.d_row(width, "Inner Pipe Thermal Conductivity, W/m-K:", design.ghe.bhe.pipe.k[0], f_3f, n_tabs=1)
+            o += self.d_row(width, "Outer Pipe Thermal Conductivity, W/m-K:", design.ghe.bhe.pipe.k[1], f_3f, n_tabs=1)
+
+        o += self.d_row(width, "Pipe Volumetric Heat Capacity, kJ/m3-K:", design.ghe.bhe.pipe.rhoCp / 1000, f_2f,
+                        n_tabs=1)
         o += self.d_row(width, "Shank Spacing, mm:", design.ghe.bhe.pipe.s * 1000, f_2f, n_tabs=1)
         o += self.d_row(width, "Grout Thermal Conductivity, W/(m-K):", design.ghe.bhe.grout.k, f_3f, n_tabs=1)
-        o += self.d_row(width, "Grout Volumetric Heat Capacity, kJ/(K-m^3):", design.ghe.bhe.grout.rhoCp / 1000, f_2f,
+        o += self.d_row(width, "Grout Volumetric Heat Capacity, kJ/m3-K:", design.ghe.bhe.grout.rhoCp / 1000, f_2f,
                         n_tabs=1)
         if isinstance(design.ghe.bhe.pipe.r_out, float):
             o += self.d_row(width, "Reynold's Number:",
@@ -468,26 +479,27 @@ class OutputManager:
                                                                     design.ghe.bhe.fluid),
                             f_int, n_tabs=1)
 
-        o += self.d_row(width, "Effective Borehole Resistance, W/(m-K):",
+        o += self.d_row(width, "Effective Borehole Resistance, W/m-K:",
                         design.ghe.bhe.calc_effective_borehole_resistance(),
                         f_4f, n_tabs=1)
         # Shank Spacing, Pipe Type, etc.
 
         o += "Soil Properties: " + "\n"
-        o += self.d_row(width, "Thermal Conductivity, W/(m-K):", design.ghe.bhe.soil.k, f_3f, n_tabs=1)
-        o += self.d_row(width, "Volumetric Heat Capacity, kJ/(K-m^3):", design.ghe.bhe.soil.rhoCp / 1000, f_2f,
-                        n_tabs=1)
+        o += self.d_row(width, "Thermal Conductivity, W/m-K:", design.ghe.bhe.soil.k, f_3f, n_tabs=1)
+        o += self.d_row(width, "Volumetric Heat Capacity, kJ/m3-K:",
+                        design.ghe.bhe.soil.rhoCp / 1000, f_2f, n_tabs=1)
         o += self.d_row(width, "Undisturbed Ground Temperature, C:", design.ghe.bhe.soil.ugt, f_2f, n_tabs=1)
 
         o += "Fluid Properties" + "\n"
-        o += self.d_row(width, "Volumetric Heat Capacity, kJ/(K-m^3):", design.ghe.bhe.fluid.rhoCp / 1000, f_2f,
-                        n_tabs=1)
-        o += self.d_row(width, "Thermal Conductivity, W/(m-K):", design.ghe.bhe.fluid.k, f_2f, n_tabs=1)
+        o += self.d_row(width, "Volumetric Heat Capacity, kJ/m3-K:",
+                        design.ghe.bhe.fluid.rhoCp / 1000, f_2f, n_tabs=1)
+        o += self.d_row(width, "Thermal Conductivity, W/m-K:", design.ghe.bhe.fluid.k, f_2f, n_tabs=1)
+        o += self.d_row(width, "Viscosity, Pa-s:", design.ghe.bhe.fluid.dynamic_viscosity(), f_sci, n_tabs=1)
         o += self.d_row(width, "Fluid Mix:", design.ghe.bhe.fluid.fluid.fluid_name, f_str, n_tabs=1)
         o += self.d_row(width, "Density, kg/m^3:", design.ghe.bhe.fluid.rho, f_2f, n_tabs=1)
         o += self.d_row(width, "Mass Flow Rate Per Borehole, kg/s:", design.ghe.bhe.m_flow_borehole, f_3f, n_tabs=1)
         if hasattr(design.ghe.bhe, "h_f"):
-            o += self.d_row(width, "Fluid Convection Coefficient, W/(m-K):", design.ghe.bhe.h_f, f_int, n_tabs=1)
+            o += self.d_row(width, "Fluid Convection Coefficient, W/m-K:", design.ghe.bhe.h_f, f_int, n_tabs=1)
         o += empty_line
 
         monthly_load_values = []

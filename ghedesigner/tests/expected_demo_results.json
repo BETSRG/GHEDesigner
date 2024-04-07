@@ -1,0 +1,50 @@
+{
+  "find_design_bi_rectangle_constrained_single_u_tube": {
+    "active_borehole_length": 132.79936866478178,
+    "number_of_boreholes": 74
+  },
+  "find_design_bi_rectangle_double_u_tube_series": {
+    "active_borehole_length": 127.28198187827503,
+    "number_of_boreholes": 77
+  },
+  "find_design_bi_rectangle_single_u_tube": {
+    "active_borehole_length": 121.79696691388936,
+    "number_of_boreholes": 88
+  },
+  "find_design_bi_zoned_rectangle_single_u_tube": {
+    "active_borehole_length": 134.0152903408635,
+    "number_of_boreholes": 68
+  },
+  "find_design_near_square_coaxial": {
+    "active_borehole_length": 134.89227618557592,
+    "number_of_boreholes": 132
+  },
+  "find_design_near_square_double_u_tube": {
+    "active_borehole_length": 130.86452342334576,
+    "number_of_boreholes": 144
+  },
+  "find_design_near_square_single_u_tube": {
+    "active_borehole_length": 127.45223612385124,
+    "number_of_boreholes": 156
+  },
+  "find_design_rectangle_coaxial": {
+    "active_borehole_length": 92.34484156575012,
+    "number_of_boreholes": 99
+  },
+  "find_design_rectangle_double_u_tube": {
+    "active_borehole_length": 133.16409283116462,
+    "number_of_boreholes": 77
+  },
+  "find_design_rectangle_single_u_tube": {
+    "active_borehole_length": 126.18809010597306,
+    "number_of_boreholes": 88
+  },
+  "find_design_rowwise_single_u_tube": {
+    "active_borehole_length": 133.85630550678167,
+    "number_of_boreholes": 66
+  },
+  "input_bldg0000056_odd_loads": {
+    "active_borehole_length": 76.19700534402511,
+    "number_of_boreholes": 2
+  }
+}

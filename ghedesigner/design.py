@@ -51,12 +51,12 @@ class DesignBase:
         self.flow_type = flow_type
         if self.method == "hourly":
             msg = (
-                "Note: It is not recommended to perform a field selection ",
-                "with the hourly simulation due to computation time. If ",
-                "the goal is to validate the selected field with the ",
-                "hourly simulation, the better solution is to utilize the ",
-                "hybrid simulation to automatically select the field. Then ",
-                "perform a sizing routine on the selected GHE with the ",
+                "Note: It is not recommended to perform a field selection \n",
+                "with the hourly simulation due to computation time. If \n",
+                "the goal is to validate the selected field with the \n",
+                "hourly simulation, the better solution is to utilize the \n",
+                "hybrid simulation to automatically select the field. Then \n",
+                "perform a sizing routine on the selected GHE with the \n",
                 "hourly simulation."
             )
             # Wrap the text to a 50 char line width and print it
@@ -229,7 +229,7 @@ class DesignBiRectangleConstrained(DesignBase):
                  fluid: GHEFluid, pipe: Pipe, grout: Grout, soil: Soil, sim_params: SimulationParameters,
                  geometric_constraints: GeometricConstraintsBiRectangleConstrained,
                  hourly_extraction_ground_loads: list, method: TimestepType,
-                 flow_type: FlowConfigType = FlowConfigType.BOREHOLE, load_years=None):
+                 flow_type: FlowConfigType = FlowConfigType.BOREHOLE, load_years=None, keep_contour=[True, False]):
         super().__init__(v_flow, _borehole, bhe_type, fluid, pipe, grout, soil, sim_params, geometric_constraints,
                          hourly_extraction_ground_loads, method, flow_type, load_years)
         self.geometric_constraints = geometric_constraints
@@ -239,13 +239,14 @@ class DesignBiRectangleConstrained(DesignBase):
             self.geometric_constraints.b_max_y,
             self.geometric_constraints.property_boundary,
             self.geometric_constraints.no_go_boundaries,
+            keep_contour=keep_contour
         )
 
-    def find_design(self, disp=False) -> Bisection2D:
+    def find_design(self, disp=False) -> BisectionZD:
         if disp:
             title = "Find bi-rectangle_constrained..."
             print(title + "\n" + len(title) * "=")
-        return Bisection2D(
+        return BisectionZD(
             self.coordinates_domain_nested,
             self.fieldDescriptors,
             self.V_flow,

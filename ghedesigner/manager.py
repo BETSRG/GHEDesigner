@@ -5,7 +5,6 @@ from time import time
 from typing import List, Optional, Union
 
 import click
-
 from jsonschema import ValidationError
 
 from ghedesigner import VERSION
@@ -20,6 +19,7 @@ from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained, Geo
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
+from ghedesigner.utilities import write_idf
 from ghedesigner.validate import validate_input_file
 
 
@@ -267,7 +267,8 @@ class GHEManager:
         return 0
 
     def set_simulation_parameters(
-            self, num_months: int, max_eft: float, min_eft: float, max_height: float, min_height: float
+            self, num_months: int, max_eft: float, min_eft: float, max_height: float, min_height: float,
+            max_boreholes: int = None, continue_if_design_unmet: bool = False
     ) -> int:
         """
         Sets the simulation parameters
@@ -277,6 +278,8 @@ class GHEManager:
         :param min_eft: minimum heat pump entering fluid temperature, in C.
         :param max_height: maximum height of borehole, in m.
         :param min_height: minimum height of borehole, in m.
+        :param max_boreholes: maximum boreholes in search algorithms.
+        :param continue_if_design_unmet: continues to process if design unmet.
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -287,6 +290,8 @@ class GHEManager:
             min_eft,
             max_height,
             min_height,
+            max_boreholes,
+            continue_if_design_unmet
         )
         return 0
 
@@ -636,6 +641,11 @@ class GHEManager:
         d_des['max_eft'] = self._simulation_parameters.max_EFT_allowable
         d_des['min_eft'] = self._simulation_parameters.min_EFT_allowable
 
+        if self._simulation_parameters.max_boreholes is not None:
+            d_des['max_boreholes'] = self._simulation_parameters.max_boreholes
+        if self._simulation_parameters.continue_if_design_unmet is True:
+            d_des['continue_if_design_unmet'] = self._simulation_parameters.continue_if_design_unmet
+
         # pipe data
         d_pipe = {'rho_cp': self._pipe.rhoCp, 'roughness': self._pipe.roughness}
 
@@ -683,7 +693,7 @@ class GHEManager:
             'simulation': self._simulation_parameters.to_input(),
             'geometric_constraints': d_geo,
             'design': d_des,
-            'loads': {'ground_loads': self._ground_loads}
+            'loads': {'ground_loads': list(self._ground_loads)}
         }
 
         with open(output_file_path, 'w') as f:
@@ -701,6 +711,10 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
 
     if not input_file_path.exists():
         print(f"No input file found at {input_file_path}, aborting", file=stderr)
+        return 1
+
+    if output_directory is None:
+        print("Output directory must be passed as an argument, aborting", file=stderr)
         return 1
 
     # validate inputs against schema before doing anything
@@ -777,12 +791,17 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
     )
 
     ghe.set_ground_loads_from_hourly_list(ground_load_props)
+    max_bh = design_props["max_boreholes"] if "max_boreholes" in design_props.keys() else None
+    continue_if_design_unmet = design_props[
+        "continue_if_design_unmet"] if "continue_if_design_unmet" in design_props.keys() else False
     ghe.set_simulation_parameters(
         num_months=sim_props["num_months"],
         max_eft=design_props["max_eft"],
         min_eft=design_props["min_eft"],
         max_height=constraint_props["max_height"],
-        min_height=constraint_props["min_height"]
+        min_height=constraint_props["min_height"],
+        max_boreholes=max_bh,
+        continue_if_design_unmet=continue_if_design_unmet
     )
 
     if ghe.set_design_geometry_type(constraint_props["method"], throw=False) != 0:
@@ -860,8 +879,8 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
 
 
 @click.command(name="GHEDesignerCommandLine")
-@click.argument("input-path", type=click.Path(exists=True))
-@click.argument("output-directory", type=click.Path(exists=True), required=False)
+@click.argument("input-path", type=click.Path(exists=True), required=True)
+@click.argument("output-directory", type=click.Path(exists=False), required=False)
 @click.version_option(VERSION)
 @click.option(
     "--validate",
@@ -870,7 +889,12 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
     show_default=False,
     help="Validate input and exit."
 )
-def run_manager_from_cli(input_path, output_directory, validate):
+@click.option(
+    "-c",
+    "--convert",
+    help="Convert output to specified format. Options supported: 'IDF'."
+)
+def run_manager_from_cli(input_path, output_directory, validate, convert):
     input_path = Path(input_path).resolve()
 
     if validate:
@@ -882,10 +906,25 @@ def run_manager_from_cli(input_path, output_directory, validate):
             print("Schema validation error. See previous error message for details.", file=stderr)
             return 1
 
-    output_path = Path(output_directory).resolve()
+    if convert:
+        if convert == "IDF":
+            try:
+                write_idf(input_path)
+                print("Output converted to IDF objects.")
+                return 0
+            except:
+                print("Conversion to IDF error.", file=stderr)
+                return 1
 
-    if not input_path.exists():
-        print(f'Input file does not exist. Input file path: "{str(input_path)}"', file=stderr)
+        else:
+            print(f"Unsupported conversion format type: {format}", file=stderr)
+            return 1
+
+    if output_directory is None:
+        print('Output directory path must be passed as an argument, aborting', file=stderr)
+        return 1
+
+    output_path = Path(output_directory).resolve()
 
     return run_manager_from_cli_worker(input_path, output_path)
 

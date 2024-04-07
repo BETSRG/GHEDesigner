@@ -1,4 +1,3 @@
-import warnings
 from math import ceil, floor
 
 import numpy as np
@@ -127,13 +126,10 @@ class BaseGHE:
     def cost(self, max_eft, min_eft):
         delta_t_max = max_eft - self.sim_params.max_EFT_allowable
         delta_t_min = self.sim_params.min_EFT_allowable - min_eft
-
-        t_excess = max([delta_t_max, delta_t_min])
+        t_excess = max(delta_t_max, delta_t_min)
         return t_excess
 
-    def _simulate_detailed(
-            self, q_dot: np.ndarray, time_values: np.ndarray, g: interp1d
-    ):
+    def _simulate_detailed(self, q_dot: np.ndarray, time_values: np.ndarray, g: interp1d):
         # Perform a detailed simulation based on a numpy array of heat rejection
         # rates, Q_dot (Watts) where each load is applied at the time_value
         # (seconds). The g-function can interpolate.
@@ -453,18 +449,5 @@ class GHE(BaseGHE):
             rel_tol=1.0e-6,
             max_iter=50,
         )
-        # TODO: revaluate whether these warnings are appropriate
-        if returned_height == self.sim_params.min_height:
-            warnings.warn(
-                "The minimum height provided to size this ground heat"
-                " exchanger is not shallow enough. Provide a "
-                "shallower allowable depth or decrease the size of "
-                "the heat exchanger."
-            )
-        if returned_height == self.sim_params.max_height:
-            warnings.warn(
-                "The maximum height provided to size this ground "
-                "heat exchanger is not deep enough. Provide a deeper "
-                "allowable depth or increase the size of the heat "
-                "exchanger."
-            )
+
+        self.bhe.b.H = returned_height
