@@ -423,7 +423,7 @@ class GHEManager:
                                                                   property_boundary, no_go_boundaries)
         return 0
 
-    def set_design(self, flow_rate: float, flow_type_str: str, timestep: str, throw: bool = True) -> int:
+    def set_design(self, flow_rate: float, flow_type_str: str, timestep: str = 'HYBRID', throw: bool = True) -> int:
         """
         Set the design method.
 
