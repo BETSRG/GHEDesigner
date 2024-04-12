@@ -173,10 +173,13 @@ class BaseGHE:
 
         return hp_eft, delta_tb
 
-        # Source: Claesson, J., & Javed, S. (2012). A load-aggregation method to calculate extraction temperatures of
-        # borehole heat exchangers. ASHRAE Transactions, 118(1), 530-540.
+    # Source:
+    # 1. Claesson, J., & Javed, S. (2012). A load-aggregation method to calculate extraction temperatures of
+    # borehole heat exchangers. ASHRAE Transactions, 118(1), 530-540.
+    # 2. Mitchell, Matt S., and Jeffrey D. Spitler. "Characterization, testing, and optimization of load aggregation " \
+    # "methods for ground heat exchanger response-factor models." Science and Technology for the Built Environment 25, no. 8 (2019): 1036-1051.
 
-    def simulate_dynamic_la(self, g, q_dot_hourly: np.ndarray):
+    def simulate_dynamic_load_agg(self, g, q_dot_hourly: np.ndarray):
         rb = self.bhe.calc_effective_borehole_resistance()  # (m.k/w)
         m_dot = self.bhe.m_flow_borehole  # (kg/s)
         cp = self.bhe.fluid.cp  # (j/kg.s)
@@ -367,7 +370,7 @@ class GHE(BaseGHE):
 
         return output
 
-    def simulate(self, method: TimestepType, load_aggregation=False):
+    def simulate(self, method: TimestepType, load_aggregation=True):
         b = self.B_spacing
         b_over_h = b / self.bhe.b.H
 
@@ -419,7 +422,7 @@ class GHE(BaseGHE):
                 if len(self.times) == 0:
                     self.times = np.arange(1, n_hours + 1, 1)
                 q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
-                hp_eft, d_tb = self.simulate_dynamic_la(g, q_dot)
+                hp_eft, d_tb = self.simulate_dynamic_load_agg(g, q_dot)
 
         else:
             raise ValueError("Only hybrid or hourly methods available.")
@@ -429,11 +432,19 @@ class GHE(BaseGHE):
 
         return max(hp_eft), min(hp_eft)
 
-    def size(self, method: TimestepType) -> None:
+    def size(self, method: TimestepType, load_aggregation=True) -> None:
         # Size the ground heat exchanger
         def local_objective(h):
             self.bhe.b.H = h
-            max_hp_eft, min_hp_eft = self.simulate(method=method)
+            max_hp_eft, min_hp_eft = None, None
+            if method == TimestepType.HYBRID:
+                max_hp_eft, min_hp_eft = self.simulate(method=method)
+            elif method == TimestepType.HOURLY:
+                if not load_aggregation:
+                    max_hp_eft, min_hp_eft = self.simulate(method=method, load_aggregation=False)
+                else:
+                    max_hp_eft, min_hp_eft = self.simulate(method=method, load_aggregation=True)
+
             t_excess = self.cost(max_hp_eft, min_hp_eft)
             return t_excess
 

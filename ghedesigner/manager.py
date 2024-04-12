@@ -423,7 +423,7 @@ class GHEManager:
                                                                   property_boundary, no_go_boundaries)
         return 0
 
-    def set_design(self, flow_rate: float, flow_type_str: str, throw: bool = True) -> int:
+    def set_design(self, flow_rate: float, flow_type_str: str, timestep: str, throw: bool = True) -> int:
         """
         Set the design method.
 
@@ -453,6 +453,8 @@ class GHEManager:
                 raise ValueError(message)
             return 1
 
+        timestep_method = getattr(TimestepType, timestep)
+
         if self._geometric_constraints.type == DesignGeomType.NEARSQUARE:
             # temporary disable of the type checker because of the _geometric_constraints member
             # noinspection PyTypeChecker
@@ -468,7 +470,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=TimestepType.HYBRID,
+                method=timestep_method,
             )
         elif self._geometric_constraints.type == DesignGeomType.RECTANGLE:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -485,7 +487,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=TimestepType.HYBRID,
+                method=timestep_method,
             )
         elif self._geometric_constraints.type == DesignGeomType.BIRECTANGLE:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -502,7 +504,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=TimestepType.HYBRID,
+                method=timestep_method,
             )
         elif self._geometric_constraints.type == DesignGeomType.BIZONEDRECTANGLE:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -519,7 +521,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=TimestepType.HYBRID,
+                method=timestep_method,
             )
         elif self._geometric_constraints.type == DesignGeomType.BIRECTANGLECONSTRAINED:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -536,7 +538,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=TimestepType.HYBRID,
+                method=timestep_method
             )
         elif self._geometric_constraints.type == DesignGeomType.ROWWISE:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -553,7 +555,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=TimestepType.HYBRID,
+                method=timestep_method
             )
         else:
             message = "This design method has not been implemented"
@@ -563,7 +565,7 @@ class GHEManager:
             return 1
         return 0
 
-    def find_design(self, throw: bool = True) -> int:
+    def find_design(self, timestep: str = None, throw: bool = True) -> int:
         """
         Calls design methods to execute sizing.
 
@@ -593,10 +595,15 @@ class GHEManager:
         self._search = self._design.find_design()
         self._search.ghe.compute_g_functions()
         self._search_time = time() - start_time
-        self._search.ghe.size(method=TimestepType.HYBRID)
+        if timestep == 'HOURLY':
+            self._search.ghe.size(method=TimestepType.HOURLY, load_aggregation=True)
+        else:
+            self._search.ghe.size(method=TimestepType.HYBRID)
         return 0
 
-    def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str):
+    def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str,
+                        timestep: str):
+        timestep_method = getattr(TimestepType, timestep)
         """
         Prepares the output results.
         """
@@ -607,7 +614,7 @@ class GHEManager:
             note,
             author,
             iteration_name,
-            load_method=TimestepType.HYBRID,
+            load_method=timestep_method,
         )
 
     def write_output_files(self, output_directory: Path, output_file_suffix: str = ""):
@@ -804,6 +811,8 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
         continue_if_design_unmet=continue_if_design_unmet
     )
 
+    timestep = sim_props.get("timestep", "HYBRID").upper()
+
     if ghe.set_design_geometry_type(constraint_props["method"], throw=False) != 0:
         return 1
 
@@ -868,11 +877,12 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
     ghe.set_design(
         flow_rate=design_props["flow_rate"],
         flow_type_str=design_props["flow_type"],
+        timestep=timestep,
         throw=False
     )
 
-    ghe.find_design(throw=False)
-    ghe.prepare_results("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
+    ghe.find_design(throw=False, timestep=timestep)
+    ghe.prepare_results("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name", timestep=timestep)
     ghe.write_output_files(output_directory)
 
     return 0
