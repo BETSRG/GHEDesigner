@@ -46,5 +46,9 @@
   "input_bldg0000056_odd_loads": {
     "active_borehole_length": 76.19700534402511,
     "number_of_boreholes": 2
+  },
+  "find_design_with_hourly_load_aggregation": {
+    "active_borehole_length": 127.00232318983166,
+    "number_of_boreholes": 156
   }
 }

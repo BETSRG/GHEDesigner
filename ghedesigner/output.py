@@ -572,9 +572,6 @@ class OutputManager:
                     if len(out_array) == 0:
                         previous_temp = design.ghe.bhe.soil.ugt
                     else:
-                        # print(i)
-                        # print(len(outArray))
-                        # previousTemp = outArray[-1][1]
                         previous_temp = design.ghe.bhe.soil.ugt
                     out_array.append(
                         [

@@ -565,7 +565,7 @@ class GHEManager:
             return 1
         return 0
 
-    def find_design(self, timestep: str = None, throw: bool = True) -> int:
+    def find_design(self, timestep: str = 'HYBRID', throw: bool = True) -> int:
         """
         Calls design methods to execute sizing.
 
@@ -599,10 +599,11 @@ class GHEManager:
             self._search.ghe.size(method=TimestepType.HOURLY, load_aggregation=True)
         else:
             self._search.ghe.size(method=TimestepType.HYBRID)
+
         return 0
 
     def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str,
-                        timestep: str):
+                        timestep: str = 'HYBRID'):
         timestep_method = getattr(TimestepType, timestep)
         """
         Prepares the output results.

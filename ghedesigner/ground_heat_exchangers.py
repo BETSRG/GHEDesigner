@@ -245,6 +245,8 @@ class BaseGHE:
 
             q_n_old = q_n.copy()
 
+        hp_eft, delta_tb = list(hp_eft), list(delta_tb)
+
         return hp_eft, delta_tb
 
     def compute_g_functions(self):
@@ -401,7 +403,6 @@ class GHE(BaseGHE):
                 else:
                     n_hours = len(q_dot)
                 q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
-                # print("Times:",self.times)
                 if len(self.times) == 0:
                     self.times = np.arange(1, n_hours + 1, 1)
                 t = self.times
@@ -422,6 +423,7 @@ class GHE(BaseGHE):
                 if len(self.times) == 0:
                     self.times = np.arange(1, n_hours + 1, 1)
                 q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
+                self.loading = q_dot
                 hp_eft, d_tb = self.simulate_dynamic_load_agg(g, q_dot)
 
         else:
