@@ -20,7 +20,7 @@ class TestLoadAggregation(GHEBaseTest):
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         self.ghe_manager.set_design(flow_rate=0.5, flow_type_str="borehole", timestep='HOURLY')
         self.ghe_manager.find_design(timestep='HOURLY')
-        output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignSingleUTube"
+        output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignSingleUTubeLoadAggregation"
         self.ghe_manager.prepare_results("Project Name", "Notes", "Author", "Iteration Name", timestep='HOURLY')
         self.ghe_manager.write_output_files(output_file_directory, "")
         u_tube_height = self.ghe_manager.results.output_dict['ghe_system']['active_borehole_length']['value']
@@ -34,7 +34,7 @@ class TestLoadAggregation(GHEBaseTest):
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         self.ghe_manager.set_design(flow_rate=0.5, flow_type_str="borehole", timestep='HOURLY')
         self.ghe_manager.find_design(timestep='HOURLY')
-        output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignDoubleUTube"
+        output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignDoubleUTubeLoadAggregation"
         self.ghe_manager.prepare_results("Project Name", "Notes", "Author", "Iteration Name", timestep='HOURLY')
         self.ghe_manager.write_output_files(output_file_directory, "")
         u_tube_height = self.ghe_manager.results.output_dict['ghe_system']['active_borehole_length']['value']
@@ -48,7 +48,7 @@ class TestLoadAggregation(GHEBaseTest):
             roughness=1.0e-6, conductivity_inner=0.4, conductivity_outer=0.4, rho_cp=1542000.0)
         self.ghe_manager.set_design(flow_rate=0.8, flow_type_str="borehole", timestep='HOURLY')
         self.ghe_manager.find_design(timestep='HOURLY')
-        output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignCoaxialUTube"
+        output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignCoaxialUTubeLoadAggregation"
         self.ghe_manager.prepare_results("Project Name", "Notes", "Author", "Iteration Name", timestep='HOURLY')
         self.ghe_manager.write_output_files(output_file_directory, "")
         u_tube_height = self.ghe_manager.results.output_dict['ghe_system']['active_borehole_length']['value']
