@@ -33,7 +33,7 @@
         "HOURLY"
       ],
       "default": "HYBRID",
-      "description": "This field is currently unused.\n\nSimulation timestep used in ground heat exchanger sizing.\n\n'HYBRID' is the only option currently available."
+      "description": "Simulation timestep used in ground heat exchanger sizing.\n\nOptions include 'HYBRID' or 'HOURLY'. 'HYBRID' is the primary choice due to its faster processing. \n\n However, the option 'HOURLY' enables hourly simulation with load aggregation algorithm at a decent pace, while more accuracy in simulation is required."
     }
   },
   "required": [
