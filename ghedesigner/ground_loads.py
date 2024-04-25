@@ -288,7 +288,7 @@ class HybridLoad:
         delta_t_fluid_nom_max = max(delta_t_fluid_nom)
 
         if delta_t_fluid_nom_max > 0.0:
-            f = interp1d(delta_t_fluid_peak, hour_time)
+            f = interp1d(delta_t_fluid_peak, hour_time, fill_value="extrapolate")
             peak_duration = f(delta_t_fluid_nom_max).tolist()
         else:
             peak_duration = 1.0e-6
