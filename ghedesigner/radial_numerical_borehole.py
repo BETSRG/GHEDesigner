@@ -6,7 +6,7 @@ from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
 
 from ghedesigner.borehole_heat_exchangers import SingleUTube
-from ghedesigner.constants import TWO_PI
+from ghedesigner.constants import SEC_IN_HR, TWO_PI
 
 
 class CellProps(IntEnum):
@@ -87,7 +87,7 @@ class RadialNumericalBH(object):
         soil_diffusivity = single_u_tube.k_s / single_u_tube.soil.rhoCp
         self.t_s = single_u_tube.b.H ** 2 / (9 * soil_diffusivity)
         # default is at least 49 hours, or up to -8.6 log time
-        self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * 3600.0])
+        self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
         self.g_sts = None
 
     def partial_init(self, single_u_tube: SingleUTube):
@@ -99,7 +99,7 @@ class RadialNumericalBH(object):
         self.single_u_tube = single_u_tube
         soil_diffusivity = single_u_tube.k_s / single_u_tube.soil.rhoCp
         self.t_s = single_u_tube.b.H ** 2 / (9 * soil_diffusivity)
-        self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * 3600.0])
+        self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
 
     def fill_radial_cell(self, radial_cell, resist_p_eq, resist_f_eq, resist_tg_eq):
 
