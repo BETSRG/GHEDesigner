@@ -7,7 +7,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from ghedesigner.borehole_heat_exchangers import SingleUTube
-from ghedesigner.constants import TWO_PI
+from ghedesigner.constants import HRS_IN_DAY, SEC_IN_HR, TWO_PI
 from ghedesigner.radial_numerical_borehole import RadialNumericalBH
 from ghedesigner.simulation import SimulationParameters
 
@@ -142,11 +142,10 @@ class HybridLoad:
     def split_loads_by_month(self) -> None:
         # Split the loads into peak, total and average loads for each month
 
-        hours_in_day = 24
         # Store the index of the last months hours
         hours_in_previous_months = 0
         for i in range(1, len(self.days_in_month)):
-            hours_in_month = hours_in_day * self.days_in_month[i]
+            hours_in_month = HRS_IN_DAY * self.days_in_month[i]
             # Slice the hours in this current month
             month_rejection_loads = \
                 self.hourly_rejection_loads[hours_in_previous_months: hours_in_previous_months + hours_in_month]
@@ -176,11 +175,11 @@ class HybridLoad:
 
             # Day of month the peak heating load occurs
             # day of the month on which peak clg load occurs (e.g. 1-31)
-            self.monthly_peak_cl_day[i] = floor(month_rejection_loads.index(self.monthly_peak_cl[i]) / hours_in_day)
+            self.monthly_peak_cl_day[i] = floor(month_rejection_loads.index(self.monthly_peak_cl[i]) / HRS_IN_DAY)
             # day of the month on which peak clg load occurs (e.g. 1-31)
-            self.monthly_peak_hl_day[i] = floor(month_extraction_loads.index(self.monthly_peak_hl[i]) / hours_in_day)
+            self.monthly_peak_hl_day[i] = floor(month_extraction_loads.index(self.monthly_peak_hl[i]) / HRS_IN_DAY)
             # print("Monthly Peak HL Hour",month_extraction_loads.index(
-            # self.monthly_peak_hl[i]) / hours_in_day)
+            # self.monthly_peak_hl[i]) / HRS_IN_DAY)
             # print("Monthly Peak HL Day: ",self.monthly_peak_hl_day[i])
             # print("")
 
@@ -191,55 +190,39 @@ class HybridLoad:
         # the peak load of the month occurs on, and pulling a 48-hour load
         # profile -- the day before and the day of
 
-        hours_in_day = 24
         hours_in_year = len(self.hourly_rejection_loads)
 
         # Add the last day of the year to the beginning of the loads to account
         # for the possibility that a peak load occurs on the first day of the
         # year
 
-        hourly_rejection_loads = (self.hourly_rejection_loads[
-                                  hours_in_year - hours_in_day: hours_in_year] + self.hourly_rejection_loads)
-        hourly_extraction_loads = (self.hourly_extraction_loads[
-                                   hours_in_year - hours_in_day: hours_in_year] + self.hourly_extraction_loads)
+        hourly_rejection_loads = self.hourly_rejection_loads[hours_in_year - HRS_IN_DAY:] + \
+            self.hourly_rejection_loads
+        hourly_extraction_loads = self.hourly_extraction_loads[hours_in_year - HRS_IN_DAY:] + \
+            self.hourly_extraction_loads
 
         # Keep track of how many hours are in
         # start at 24 since we added the last day of the year to the beginning
-        hours_in_previous_months = hours_in_day
+        hours_in_previous_months = HRS_IN_DAY
         # loop over all 12 months
         for i in range(1, len(self.days_in_month)):
-            hours_in_month = hours_in_day * self.days_in_month[i]
+            hours_in_month = HRS_IN_DAY * self.days_in_month[i]
 
             # day of the month on which peak clg load occurs (e.g. 1-31)
             monthly_peak_cl_day = self.monthly_peak_cl_day[i]
             # day of the month on which peak clg load occurs (e.g. 1-31)
             monthly_peak_hl_day = self.monthly_peak_hl_day[i]
             # Get the starting hour of the day before the peak cooling load day
-            monthly_peak_cl_hour_start = (hours_in_previous_months + (monthly_peak_cl_day - 1) * hours_in_day)
+            monthly_peak_cl_hour_start = (hours_in_previous_months + (monthly_peak_cl_day - 1) * HRS_IN_DAY)
             # Get the starting hour of the day before the peak heating load day
-            monthly_peak_hl_hour_start = (hours_in_previous_months + (monthly_peak_hl_day - 1) * hours_in_day)
+            monthly_peak_hl_hour_start = (hours_in_previous_months + (monthly_peak_hl_day - 1) * HRS_IN_DAY)
 
             # monthly cooling loads (or heat rejection) in kWh
             two_day_hourly_peak_cl_load = \
-                hourly_rejection_loads[monthly_peak_cl_hour_start: monthly_peak_cl_hour_start + 2 * hours_in_day]
+                hourly_rejection_loads[monthly_peak_cl_hour_start: monthly_peak_cl_hour_start + 2 * HRS_IN_DAY]
             # monthly heating loads (or heat extraction) in kWh
             two_day_hourly_peak_hl_load = \
-                hourly_extraction_loads[monthly_peak_hl_hour_start: monthly_peak_hl_hour_start + 2 * hours_in_day]
-
-            # TODO: verify whether errors are possible here and raise exception if needed
-            # assert (len(two_day_hourly_peak_hl_load) == 2 * hours_in_day
-            #         and len(two_day_hourly_peak_cl_load) == 2 * hours_in_day)
-
-            # Double check ourselves
-            # TODO: verify whether errors are possible here and raise exception if needed
-            # monthly_peak_cl_day_start = int((monthly_peak_cl_hour_start - hours_in_day) / hours_in_day)
-            # monthly_peak_cl_hour_month = int(monthly_peak_cl_day_start - sum(self.days_in_month[0:i]))
-            # assert monthly_peak_cl_hour_month == monthly_peak_cl_day - 1
-
-            # TODO: verify whether errors are possible here and raise exception if needed
-            # monthly_peak_hl_day_start = (monthly_peak_hl_hour_start - hours_in_day) / hours_in_day
-            # monthly_peak_hl_hour_month = int(monthly_peak_hl_day_start - sum(self.days_in_month[0:i]))
-            # assert monthly_peak_hl_hour_month == monthly_peak_hl_day - 1
+                hourly_extraction_loads[monthly_peak_hl_hour_start: monthly_peak_hl_hour_start + 2 * HRS_IN_DAY]
 
             # monthly cooling loads (or heat rejection) in kWh
             self.two_day_hourly_peak_cl_loads.append(two_day_hourly_peak_cl_load)
@@ -260,7 +243,7 @@ class HybridLoad:
             # Take the last i elements of the reversed time array
             _time = hour_time[n] - hour_time[0:n]
             # _time = time_values_reversed[n - i:n]
-            g_values = g_sts(np.log((_time * 3600.0) / ts))
+            g_values = g_sts(np.log((_time * SEC_IN_HR) / ts))
             # Tb = Tg + (q_dt * g)  (Equation 2.12)
             delta_tb_i = (q_dt[0:n] / two_pi_k).dot(g_values)
             # Delta mean heat pump entering fluid temperature
@@ -281,10 +264,10 @@ class HybridLoad:
         two_pi_k = TWO_PI * self.bhe.soil.k
         resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
         g_sts = self.radial_numerical.g_sts
-        hours_in_day = 24
-        hour_time = np.array(list(range(0, 2 * hours_in_day + 1)))
+
+        hour_time = np.array(range(0, 2 * HRS_IN_DAY + 1))
         # Two day peak cooling load scaled down by average (q_max - q_avg)
-        q_peak = np.array([0.0] + [peak_load - avg_load] * (2 * hours_in_day))
+        q_peak = np.array([0.0] + [peak_load - avg_load] * (2 * HRS_IN_DAY))
         # Two day nominal cooling load (q_i - q_avg) / q_max * q_i
         q_nominal = np.array(
             [0.0]
@@ -350,7 +333,7 @@ class HybridLoad:
             current_month_avg_cl = self.monthly_avg_cl[i]
 
             if current_month_peak_cl != 0.0:
-                peak_duration, q_peak, q_nominal = self.perform_current_month_simulation(
+                peak_duration, _, _ = self.perform_current_month_simulation(
                     current_two_day_cl_load,
                     current_month_peak_cl,
                     current_month_avg_cl,
@@ -379,7 +362,7 @@ class HybridLoad:
             current_month_avg_hl = self.monthly_avg_hl[i]
 
             if current_month_peak_hl != 0.0:
-                peak_duration, q_peak, q_nominal = self.perform_current_month_simulation(
+                peak_duration, _, _ = self.perform_current_month_simulation(
                     current_two_day_hl_load,
                     current_month_peak_hl,
                     current_month_avg_hl,
@@ -477,7 +460,7 @@ class HybridLoad:
                 else:
                     current_year = self.years[(i - 1) // 12]
                 month_duration = \
-                    monthdays(i, current_year) * 24 - self.monthly_peak_cl_duration[i] - \
+                    monthdays(i, current_year) * HRS_IN_DAY - self.monthly_peak_cl_duration[i] - \
                     self.monthly_peak_hl_duration[i]
                 # gives htg load pk energy in kWh
                 month_peak_hl = self.monthly_peak_hl[i] * self.monthly_peak_hl_duration[i]
@@ -493,14 +476,14 @@ class HybridLoad:
                 # Could only be 0 when the first month has no load.
                 first_hour_heating_peak = \
                     first_month_hour(i, self.years) + \
-                    (self.monthly_peak_hl_day[i]) * 24 + 12 - (self.monthly_peak_hl_duration[i] / 2)
+                    (self.monthly_peak_hl_day[i]) * HRS_IN_DAY + 12 - (self.monthly_peak_hl_duration[i] / 2)
                 if first_hour_heating_peak < 0.0:
                     first_hour_heating_peak = 1.0e-6
                 last_hour_heating_peak = first_hour_heating_peak + self.monthly_peak_hl_duration[i]
                 if last_hour_heating_peak < 0.0:
                     last_hour_heating_peak = 1.0e-6
                 first_hour_cooling_peak = \
-                    first_month_hour(i, self.years) + (self.monthly_peak_cl_day[i]) * 24 + 12 - \
+                    first_month_hour(i, self.years) + (self.monthly_peak_cl_day[i]) * HRS_IN_DAY + 12 - \
                     self.monthly_peak_cl_duration[i] / 2
                 if first_hour_cooling_peak < 0.0:
                     first_hour_cooling_peak = 1.0e-06
@@ -509,7 +492,7 @@ class HybridLoad:
                     last_hour_cooling_peak = 1.0e-06
             else:  # peak load not used this month
 
-                month_duration = monthdays(i, current_year) * 24
+                month_duration = monthdays(i, current_year) * HRS_IN_DAY
 
                 month_load = self.monthly_cl[i] - self.monthly_hl[i]
                 month_rate = month_load / month_duration
@@ -686,7 +669,7 @@ def first_month_hour(month, years):
             else:
                 current_year = years[0]
             mi = i % 12
-            fmh = fmh + 24 * monthdays(mi, current_year)
+            fmh = fmh + HRS_IN_DAY * monthdays(mi, current_year)
     return fmh
 
 
@@ -697,7 +680,7 @@ def last_month_hour(month, years):
             current_year = years[(month - 1) // 12]
         else:
             current_year = years[0]
-        lmh = lmh + monthdays(i, current_year) * 24
+        lmh = lmh + monthdays(i, current_year) * HRS_IN_DAY
     if month == 1:
-        lmh = 31 * 24
+        lmh = 31 * HRS_IN_DAY
     return lmh

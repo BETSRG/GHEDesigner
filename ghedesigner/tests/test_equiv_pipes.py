@@ -67,8 +67,8 @@ class TestEquivalentPipes(GHEBaseTest):
 
         val = "Single U-tube equivalent parameters"
         self.log("\n" + val + "\n" + len(val) * "-")
-        self.log(
-            f"Fluid volumetric flow rate (L/s): {single_u_tube.m_flow_borehole * 1000.0 / single_u_tube.fluid.rho:0.8f}")
+        self.log(f"Fluid volumetric flow rate (L/s): "
+                 f"{single_u_tube.m_flow_borehole * 1000.0 / single_u_tube.fluid.rho:0.8f}")
         self.log(f"Diameter of inner pipe (m): {single_u_tube.r_in * 2.0:0.8f}")
         self.log(f"Diameter of outer pipe (m): {single_u_tube.r_out * 2.0:0.8f}")
         self.log(f"Shank spacing (m): {single_u_tube.pipe.s:0.8f}")
@@ -142,8 +142,8 @@ class TestEquivalentPipes(GHEBaseTest):
         single_u_tube = double_u_tube.to_single()
         val = "Single U-tube equivalent parameters"
         self.log("\n" + val + "\n" + len(val) * "-")
-        self.log(
-            f"Fluid volumetric flow rate (L/s): {single_u_tube.m_flow_borehole * 1000.0 / single_u_tube.fluid.rho:0.8f}")
+        self.log(f"Fluid volumetric flow rate (L/s): "
+                 f"{single_u_tube.m_flow_borehole * 1000.0 / single_u_tube.fluid.rho:0.8f}")
         self.log(f"Diameter of inner pipe (m): {single_u_tube.r_in * 2.0:0.8f}")
         self.log(f"Diameter of outer pipe (m): {single_u_tube.r_out * 2.0:0.8f}")
         self.log(f"Shank spacing (m): {single_u_tube.pipe.s:0.8f}")
