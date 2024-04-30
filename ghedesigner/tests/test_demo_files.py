@@ -18,6 +18,8 @@ class TestDemoFiles(GHEBaseTest):
 
         time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
+        self.failed = []
+
         for _, _, files in os.walk(self.demos_path):
             for f in files:
                 demo_file_path = self.demos_path / f
@@ -37,5 +39,14 @@ class TestDemoFiles(GHEBaseTest):
                 expected_length = expected_results['active_borehole_length']
                 expected_nbh = expected_results['number_of_boreholes']
 
-                self.assertAlmostEqual(actual_length, expected_length, delta=0.01)
-                self.assertEqual(expected_nbh, actual_nbh)
+                if abs(actual_length - expected_length) > 0.01:
+                    self.failed.append(f)
+                    continue
+
+                if abs(actual_nbh - expected_nbh) > 0:
+                    self.failed.append(f)
+                    continue
+
+        if self.failed:
+            newline = "\n"
+            self.fail(f'{newline.join(f"Failed: {f}" for f in self.failed)}')

@@ -880,7 +880,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
         throw=False
     )
 
-    ghe.find_design(timestep=timestep, throw=False)
+    ghe.find_design(throw=False)
     ghe.prepare_results("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name", timestep=timestep)
     ghe.write_output_files(output_directory)
 

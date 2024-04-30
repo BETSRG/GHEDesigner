@@ -11,7 +11,7 @@ class TestLoadAggregation(GHEBaseTest):
         self.ghe_manager.set_fluid()
         self.ghe_manager.set_borehole(height=96.0, buried_depth=2.0, diameter=0.140)
         self.ghe_manager.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
-        self.ghe_manager.set_ground_loads_from_hourly_list([x / 100 for x in self.get_atlanta_loads()])
+        self.ghe_manager.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         self.ghe_manager.set_geometry_constraints_rectangle(length=85.0, width=36.5, b_min=3.0, b_max=10.0)
 
     def test_single_u_tube(self):
@@ -62,7 +62,7 @@ class TestLoadAggregation(GHEBaseTest):
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
         self.ghe_manager.set_design(flow_rate=0.5, flow_type_str="borehole", timestep="HOURLYNOLOADAGG")
         self.ghe_manager.find_design()
-        output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignSingleUTubeLoadAggregation"
+        output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignSingleUTubeNoLoadAggregation"
         self.ghe_manager.prepare_results("Project Name", "Notes", "Author", "Iteration Name", timestep="HOURLY")
         self.ghe_manager.write_output_files(output_file_directory, "")
         u_tube_height = self.ghe_manager.results.output_dict["ghe_system"]["active_borehole_length"]["value"]

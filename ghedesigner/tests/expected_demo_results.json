@@ -43,13 +43,13 @@
     "active_borehole_length": 133.85630550678167,
     "number_of_boreholes": 66
   },
+  "find_design_with_hourly_load_aggregation": {
+    "active_borehole_length": 127.00232319547602,
+    "number_of_boreholes": 156
+  },
   "input_bldg0000056_odd_loads": {
     "active_borehole_length": 76.19700534402511,
     "number_of_boreholes": 2
-  },
-  "find_design_with_hourly_load_aggregation": {
-    "active_borehole_length": 127.00232318983166,
-    "number_of_boreholes": 156
   },
   "issue_97_interp_out_of_range": {
     "active_borehole_length": 161.53268215683158,

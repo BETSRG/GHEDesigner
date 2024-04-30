@@ -390,9 +390,8 @@ class GHE(BaseGHE):
             time_values = self.hybrid_load.hour[2:]  # convert to seconds
             self.times = time_values
             self.loading = q_dot
-
-            hp_eft, d_tb = self._simulate_detailed(q_dot, time_values, g)
-        elif method == TimestepType.HOURLY:
+            self.hp_eft, self.d_tb = self._simulate_detailed(q_dot, time_values, g)
+        elif method == TimestepType.HOURLY or method == TimestepType.HOURLYNOLOADAGG:
 
             n_months = self.sim_params.end_month - self.sim_params.start_month + 1
             n_hours = int(n_months / 12.0 * 8760.0)
@@ -408,21 +407,17 @@ class GHE(BaseGHE):
             if len(self.times) == 0:
                 self.times = np.arange(1, n_hours + 1, 1)
 
-            t = self.times
             self.loading = q_dot
 
-            if load_aggregation:
-                hp_eft, d_tb = self.simulate_dynamic_load_agg(q_dot, g)
+            if TimestepType.HOURLY:
+                self.hp_eft, self.d_tb = self.simulate_dynamic_load_agg(q_dot, g)
             else:
-                hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
+                self.hp_eft, self.d_tb = self._simulate_detailed(q_dot, self.times, g)
 
         else:
             raise ValueError("Only hybrid or hourly methods available.")
 
-        self.hp_eft = hp_eft
-        self.dTb = d_tb
-
-        return max(hp_eft), min(hp_eft)
+        return max(self.hp_eft), min(self.hp_eft)
 
     def size(self, method: TimestepType) -> None:
         # Size the ground heat exchanger
