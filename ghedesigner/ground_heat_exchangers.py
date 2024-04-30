@@ -410,7 +410,7 @@ class GHE(BaseGHE):
 
                 hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
 
-            else:       # load_aggregation:
+            else:  # load_aggregation:
                 n_months = self.sim_params.end_month - self.sim_params.start_month + 1
                 n_hours = int(n_months / 12.0 * 8760.0)
                 q_dot = self.hourly_extraction_ground_loads
