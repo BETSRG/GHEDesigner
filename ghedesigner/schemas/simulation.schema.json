@@ -30,10 +30,11 @@
       "type": "string",
       "enum": [
         "HYBRID",
-        "HOURLY"
+        "HOURLY",
+        "HOURLYNOLOADAGG"
       ],
       "default": "HYBRID",
-      "description": "Simulation timestep used in ground heat exchanger sizing.\n\nOptions include 'HYBRID' or 'HOURLY'. 'HYBRID' is the primary choice due to its faster processing. \n\n However, the option 'HOURLY' enables hourly simulation with load aggregation algorithm at a decent pace, while more accuracy in simulation is required."
+      "description": "Simulation timestep used in ground heat exchanger sizing.\n\nOptions include 'HYBRID', 'HOURLY', 'HOURLYNOLOADAGG'.\n\n'HYBRID' is the default choice due to its faster processing. \n\n However, the option 'HOURLY' enables hourly simulation with load aggregation algorithm\n\nwhen more accuracy in simulation is required."
     }
   },
   "required": [

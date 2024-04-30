@@ -424,18 +424,17 @@ class GHE(BaseGHE):
 
         return max(hp_eft), min(hp_eft)
 
-    def size(self, method: TimestepType, load_aggregation=True) -> None:
+    def size(self, method: TimestepType) -> None:
         # Size the ground heat exchanger
         def local_objective(h):
             self.bhe.b.H = h
             max_hp_eft, min_hp_eft = None, None
             if method == TimestepType.HYBRID:
-                max_hp_eft, min_hp_eft = self.simulate(method=method)
+                max_hp_eft, min_hp_eft = self.simulate(method)
             elif method == TimestepType.HOURLY:
-                if not load_aggregation:
-                    max_hp_eft, min_hp_eft = self.simulate(method=method, load_aggregation=False)
-                else:
-                    max_hp_eft, min_hp_eft = self.simulate(method=method, load_aggregation=True)
+                max_hp_eft, min_hp_eft = self.simulate(method)
+            elif method == TimestepType.HOURLYNOLOADAGG:
+                max_hp_eft, min_hp_eft = self.simulate(method, load_aggregation=False)
 
             t_excess = self.cost(max_hp_eft, min_hp_eft)
             return t_excess
