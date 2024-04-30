@@ -8,6 +8,7 @@ from math import floor
 from pathlib import Path
 
 from ghedesigner.borehole_heat_exchangers import CoaxialPipe, GHEDesignerBoreholeBase
+from ghedesigner.constants import HRS_IN_DAY
 from ghedesigner.design import AnyBisectionType
 from ghedesigner.enums import TimestepType
 
@@ -680,7 +681,7 @@ class OutputManager:
     @staticmethod
     def hours_to_month(hours):
         days_in_year = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        hours_in_year = [24 * x for x in days_in_year]
+        hours_in_year = [HRS_IN_DAY * x for x in days_in_year]
         n_years = floor(hours / sum(hours_in_year))
         frac_month = n_years * len(days_in_year)
         month_in_year = 0
@@ -697,7 +698,7 @@ class OutputManager:
     @staticmethod
     def ghe_time_convert(hours):
         days_in_year = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        hours_in_year = [24 * x for x in days_in_year]
+        hours_in_year = [HRS_IN_DAY * x for x in days_in_year]
         month_in_year = 0
         year_hour_sum = 0
         for idx, _ in enumerate(days_in_year):
@@ -708,6 +709,6 @@ class OutputManager:
             else:
                 year_hour_sum += hours_in_year[idx]
         h_l = hours - sum(hours_in_year[0:month_in_year])
-        day_in_month = floor(h_l / 24) + 1
-        hour_in_day = h_l % 24 + 1
+        day_in_month = floor(h_l / HRS_IN_DAY) + 1
+        hour_in_day = h_l % HRS_IN_DAY + 1
         return month_in_year + 1, day_in_month, hour_in_day

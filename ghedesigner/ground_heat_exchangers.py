@@ -6,7 +6,7 @@ from scipy.interpolate import interp1d
 from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import get_bhe_object
-from ghedesigner.constants import TWO_PI
+from ghedesigner.constants import SEC_IN_HR, TWO_PI
 from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ground_loads import HybridLoad
@@ -159,7 +159,7 @@ class BaseGHE:
             # Take the last i elements of the reversed time array
             _time = time_values[i] - time_values[0:i]
             # _time = time_values_reversed[n - i:n]
-            g_values = g(np.log((_time * 3600.0) / ts))
+            g_values = g(np.log((_time * SEC_IN_HR) / ts))
             # Tb = Tg + (q_dt * g)  (Equation 2.12)
             delta_tb_i = (q_dot_b_dt[0:i] / h / two_pi_k).dot(g_values)
             # Tf = Tb + q_i * R_b^* (Equation 2.13)
