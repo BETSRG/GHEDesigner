@@ -176,10 +176,11 @@ class BaseGHE:
     # Source:
     # 1. Claesson, J., & Javed, S. (2012). A load-aggregation method to calculate extraction temperatures of
     # borehole heat exchangers. ASHRAE Transactions, 118(1), 530-540.
-    # 2. Mitchell, Matt S., and Jeffrey D. Spitler. "Characterization, testing, and optimization of load aggregation " \
-    # "methods for ground heat exchanger response-factor models." Science and Technology for the Built Environment 25, no. 8 (2019): 1036-1051.
+    # 2. Mitchell, Matt S., and Jeffrey D. Spitler. "Characterization, testing, and optimization of load aggregation"
+    # "methods for ground heat exchanger response-factor models." Science and Technology for the Built Environment 25,
+    #  no. 8 (2019): 1036-1051.
 
-    def simulate_dynamic_load_agg(self, g, q_dot_hourly: np.ndarray):
+    def simulate_dynamic_load_agg(self, q_dot_hourly, g):
         rb = self.bhe.calc_effective_borehole_resistance()  # (m.k/w)
         m_dot = self.bhe.m_flow_borehole  # (kg/s)
         cp = self.bhe.fluid.cp  # (j/kg.s)
@@ -392,39 +393,28 @@ class GHE(BaseGHE):
 
             hp_eft, d_tb = self._simulate_detailed(q_dot, time_values, g)
         elif method == TimestepType.HOURLY:
-            if not load_aggregation:
-                n_months = self.sim_params.end_month - self.sim_params.start_month + 1
-                n_hours = int(n_months / 12.0 * 8760.0)
-                q_dot = self.hourly_extraction_ground_loads
-                # How many times does q need to be repeated?
-                n_years = ceil(n_hours / 8760)
-                if len(q_dot) // 8760 < n_years:
-                    q_dot = q_dot * n_years
-                else:
-                    n_hours = len(q_dot)
-                q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
-                if len(self.times) == 0:
-                    self.times = np.arange(1, n_hours + 1, 1)
-                t = self.times
-                self.loading = q_dot
 
+            n_months = self.sim_params.end_month - self.sim_params.start_month + 1
+            n_hours = int(n_months / 12.0 * 8760.0)
+            q_dot = self.hourly_extraction_ground_loads
+
+            n_years = ceil(n_hours / 8760)
+            if len(q_dot) // 8760 < n_years:
+                q_dot = q_dot * n_years
+            else:
+                n_hours = len(q_dot)
+
+            q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
+            if len(self.times) == 0:
+                self.times = np.arange(1, n_hours + 1, 1)
+
+            t = self.times
+            self.loading = q_dot
+
+            if load_aggregation:
+                hp_eft, d_tb = self.simulate_dynamic_load_agg(q_dot, g)
+            else:
                 hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
-
-            else:  # load_aggregation:
-                n_months = self.sim_params.end_month - self.sim_params.start_month + 1
-                n_hours = int(n_months / 12.0 * 8760.0)
-                q_dot = self.hourly_extraction_ground_loads
-                # How many times does q need to be repeated?
-                n_years = ceil(n_hours / 8760)
-                if len(q_dot) // 8760 < n_years:
-                    q_dot = q_dot * n_years
-                else:
-                    n_hours = len(q_dot)
-                if len(self.times) == 0:
-                    self.times = np.arange(1, n_hours + 1, 1)
-                q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
-                self.loading = q_dot
-                hp_eft, d_tb = self.simulate_dynamic_load_agg(g, q_dot)
 
         else:
             raise ValueError("Only hybrid or hourly methods available.")
