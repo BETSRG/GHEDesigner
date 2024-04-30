@@ -21,7 +21,7 @@ class TestLoadAggregation(GHEBaseTest):
         self.ghe_manager.set_design(flow_rate=0.5, flow_type_str="borehole", timestep="HOURLY")
         self.ghe_manager.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignSingleUTubeLoadAggregation"
-        self.ghe_manager.prepare_results("Project Name", "Notes", "Author", "Iteration Name", timestep="HOURLY")
+        self.ghe_manager.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         self.ghe_manager.write_output_files(output_file_directory, "")
         u_tube_height = self.ghe_manager.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(134.12, u_tube_height, delta=0.1)
@@ -35,7 +35,7 @@ class TestLoadAggregation(GHEBaseTest):
         self.ghe_manager.set_design(flow_rate=0.5, flow_type_str="borehole", timestep="HOURLY")
         self.ghe_manager.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignDoubleUTubeLoadAggregation"
-        self.ghe_manager.prepare_results("Project Name", "Notes", "Author", "Iteration Name", timestep="HOURLY")
+        self.ghe_manager.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         self.ghe_manager.write_output_files(output_file_directory, "")
         u_tube_height = self.ghe_manager.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(127.10, u_tube_height, delta=0.1)
@@ -49,7 +49,7 @@ class TestLoadAggregation(GHEBaseTest):
         self.ghe_manager.set_design(flow_rate=0.8, flow_type_str="borehole", timestep="HOURLY")
         self.ghe_manager.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignCoaxialUTubeLoadAggregation"
-        self.ghe_manager.prepare_results("Project Name", "Notes", "Author", "Iteration Name", timestep="HOURLY")
+        self.ghe_manager.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         self.ghe_manager.write_output_files(output_file_directory, "")
         u_tube_height = self.ghe_manager.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(134.80, u_tube_height, delta=0.1)
@@ -63,7 +63,7 @@ class TestLoadAggregation(GHEBaseTest):
         self.ghe_manager.set_design(flow_rate=0.5, flow_type_str="borehole", timestep="HOURLYNOLOADAGG")
         self.ghe_manager.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignSingleUTubeNoLoadAggregation"
-        self.ghe_manager.prepare_results("Project Name", "Notes", "Author", "Iteration Name", timestep="HOURLY")
+        self.ghe_manager.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         self.ghe_manager.write_output_files(output_file_directory, "")
         u_tube_height = self.ghe_manager.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(134.12, u_tube_height, delta=0.1)

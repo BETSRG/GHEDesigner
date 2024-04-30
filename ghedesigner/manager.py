@@ -600,9 +600,7 @@ class GHEManager:
 
         return 0
 
-    def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str,
-                        timestep: str = "HYBRID"):
-        timestep_method = getattr(TimestepType, timestep)
+    def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str):
         """
         Prepares the output results.
         """
@@ -613,7 +611,6 @@ class GHEManager:
             note,
             author,
             iteration_name,
-            load_method=timestep_method,
         )
 
     def write_output_files(self, output_directory: Path, output_file_suffix: str = ""):
@@ -881,7 +878,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
     )
 
     ghe.find_design(throw=False)
-    ghe.prepare_results("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name", timestep=timestep)
+    ghe.prepare_results("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
     ghe.write_output_files(output_directory)
 
     return 0
