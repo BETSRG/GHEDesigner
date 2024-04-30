@@ -373,7 +373,7 @@ class GHE(BaseGHE):
 
         return output
 
-    def simulate(self, method: TimestepType, load_aggregation=True):
+    def simulate(self, method: TimestepType):
         b = self.B_spacing
         b_over_h = b / self.bhe.b.H
 
