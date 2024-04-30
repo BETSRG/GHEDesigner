@@ -64,7 +64,7 @@ class OutputManager:
             ]
         ]
         loading_values = design.ghe.loading
-        for i, (tv, d_tb, lv) in enumerate(zip(design.ghe.times, design.ghe.dTb, loading_values)):
+        for i, (tv, d_tb, lv) in enumerate(zip(design.ghe.times, design.ghe.d_tb, loading_values)):
             if i + 1 < len(design.ghe.times):
                 current_time = tv
                 loading = loading_values[i + 1]
@@ -81,7 +81,7 @@ class OutputManager:
                 else:
                     csv_row.append(0)
                     csv_row.append(0)
-                csv_row.append(design.ghe.bhe.soil.ugt + design.ghe.dTb[i - 1])
+                csv_row.append(design.ghe.bhe.soil.ugt + design.ghe.d_tb[i - 1])
                 csv_row.append(design.ghe.hp_eft[i - 1])
                 csv_array.append(csv_row)
             else:
@@ -94,7 +94,7 @@ class OutputManager:
                 else:
                     csv_row.append(0)
                     csv_row.append(0)
-                csv_row.append(design.ghe.bhe.soil.ugt + design.ghe.dTb[i - 1])
+                csv_row.append(design.ghe.bhe.soil.ugt + design.ghe.d_tb[i - 1])
                 csv_row.append(design.ghe.hp_eft[i - 1])
                 csv_array.append(csv_row)
 
@@ -301,7 +301,7 @@ class OutputManager:
         last_month = -1
         month_tb_vals = []
         month_eft_vals = []
-        for tv, d_tb, eft in zip(design.ghe.times, design.ghe.dTb, design.ghe.hp_eft):
+        for tv, d_tb, eft in zip(design.ghe.times, design.ghe.d_tb, design.ghe.hp_eft):
             current_month = floor(self.hours_to_month(tv))
             if current_month == last_month:
                 month_tb_vals.append(d_tb)
@@ -548,7 +548,7 @@ class OutputManager:
         last_month = -1
         month_tb_vals = []
         month_eft_vals = []
-        for tv, d_tb, eft in zip(design.ghe.times, design.ghe.dTb, design.ghe.hp_eft):
+        for tv, d_tb, eft in zip(design.ghe.times, design.ghe.d_tb, design.ghe.hp_eft):
             # currentHourMonth = timeVals[i] - hTotalYear * nYears
             current_month = floor(self.hours_to_month(tv))
             # print(monthEFTVals)

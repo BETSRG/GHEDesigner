@@ -329,10 +329,11 @@ class GHE(BaseGHE):
         # hybrid load object
         self.hybrid_load = hybrid_load
 
-        # List of heat pump exiting fluid temperatures
+        # heat pump exiting fluid temperatures
         self.hp_eft = []
-        # list of change in borehole wall temperatures
-        self.dTb = []
+
+        # borehole wall temp difference
+        self.d_tb = []
 
     def as_dict(self) -> dict:
         output = dict()
@@ -409,7 +410,7 @@ class GHE(BaseGHE):
 
             self.loading = q_dot
 
-            if TimestepType.HOURLY:
+            if method == TimestepType.HOURLY:
                 self.hp_eft, self.d_tb = self.simulate_dynamic_load_agg(q_dot, g)
             else:
                 self.hp_eft, self.d_tb = self._simulate_detailed(q_dot, self.times, g)
