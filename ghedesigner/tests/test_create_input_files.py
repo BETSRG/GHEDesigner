@@ -12,7 +12,7 @@ class TestCreateInputFiles(GHEBaseTest):
     def test_num_files_match_num_tests(self):
         # update this to match the number of tests in this file
         # there should be a test corresponding to each demo file
-        num_tests = 13
+        num_tests = 14
 
         for _, _, files in os.walk(self.demos_path):
             self.assertTrue(len(files) == num_tests)
