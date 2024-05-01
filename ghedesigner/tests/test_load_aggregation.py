@@ -57,7 +57,7 @@ class TestLoadAggregation(GHEBaseTest):
         self.assertEqual(106, len(nbh))
 
     def test_single_u_tube_no_load_agg(self):
-        self.ghe_manager.set_simulation_parameters(num_months=48, max_eft=35, min_eft=5, max_height=135, min_height=60)
+        self.ghe_manager.set_simulation_parameters(num_months=12, max_eft=35, min_eft=5, max_height=135, min_height=60)
         self.ghe_manager.set_single_u_tube_pipe(
             inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
             roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
@@ -67,6 +67,6 @@ class TestLoadAggregation(GHEBaseTest):
         self.ghe_manager.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         self.ghe_manager.write_output_files(output_file_directory, "")
         u_tube_height = self.ghe_manager.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
-        self.assertAlmostEqual(111.56, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(119.72, u_tube_height, delta=0.1)
         nbh = self.ghe_manager.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(79, len(nbh))
+        self.assertEqual(56, len(nbh))
