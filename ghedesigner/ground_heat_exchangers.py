@@ -173,6 +173,83 @@ class BaseGHE:
 
         return hp_eft, delta_tb
 
+    # Source:
+    # 1. Claesson, J., & Javed, S. (2012). A load-aggregation method to calculate extraction temperatures of
+    # borehole heat exchangers. ASHRAE Transactions, 118(1), 530-540.
+    # 2. Mitchell, Matt S., and Jeffrey D. Spitler. "Characterization, testing, and optimization of load aggregation"
+    # "methods for ground heat exchanger response-factor models." Science and Technology for the Built Environment 25,
+    #  no. 8 (2019): 1036-1051.
+
+    def simulate_dynamic_load_agg(self, q_dot_hourly, g):
+        rb = self.bhe.calc_effective_borehole_resistance()  # (m.k/w)
+        m_dot = self.bhe.m_flow_borehole  # (kg/s)
+        cp = self.bhe.fluid.cp  # (j/kg.s)
+
+        tg = self.bhe.soil.ugt  # (celsius)
+        q_dot_b_watt = np.hstack((q_dot_hourly / float(self.nbh)))  # w/m
+        height = self.bhe.b.H  # (meters)
+        q_dot = q_dot_b_watt / height
+
+        two_pi_k = TWO_PI * self.bhe.soil.k  # (w/m.k)
+
+        n_max = len(q_dot)  # load_array_length
+        rate_expansion = 1.62
+        p_q = 9  # 5 # number of bins in each level
+
+        q_max = int(np.log(n_max / p_q) / np.log(rate_expansion)) + 1  # eq. 9
+        # v_max = p_q * (rate_expansion ** q - 1) / (rate_expansion - 1)
+
+        v_matrix = np.zeros((q_max, p_q + 1))  # create v matrix
+
+        q_array = np.arange(1, q_max + 1)  # creating levels
+        r_q_array = rate_expansion ** (q_array - 1)  # rate of expansion
+
+        v_matrix[0, 0] = 0  # eq. 10 top right
+
+        for i in range(1, q_max):  # eq. 10 top left
+            v_matrix[i, 0] = v_matrix[i - 1, 0] + r_q_array[i - 1] * p_q
+
+        for q in range(0, q_max):  # eq. 10 bottom
+            for p in range(1, p_q + 1):
+                v_matrix[q, p] = v_matrix[q, 0] + r_q_array[q] * p
+
+        ts = self.radial_numerical.t_s  # timescale
+
+        v_values_matrix = (v_matrix[:, 1:])  # duration matrix
+        v_array = v_values_matrix.flatten()  # duration array in 1d
+        v_array = np.hstack((0.0, v_array))  # adding beginning time
+        r_q_array_1d = np.zeros(q_max * p_q)  # duration in each level in 1d
+
+        for i in range(0, len(r_q_array)):  # making 1d array of rq
+            r_q_array_1d[i * p_q:(i + 1) * p_q] = r_q_array[i]
+
+        hp_eft = np.zeros(len(q_dot))
+        delta_tb = np.zeros(len(q_dot))
+        g_s = g(np.log((v_array[1:] * 3600.0) / ts))  # g-values
+
+        q_n = np.zeros(q_max * p_q)  # array holding current load
+        q_n_old = np.zeros(q_max * p_q)  # array holding previous load
+        q_dot = np.insert(q_dot, 0, 0)  # zero load in beginning
+
+        # simulation
+        q_n_old[0] = q_dot[0]
+        for i in range(1, len(q_dot)):
+            q_n[0] = q_dot[i]
+            q_n[1:] = q_n_old[1:] + (1 / r_q_array_1d[1:]) * (q_n_old[:-1] - q_n_old[1:])
+            q_p = np.insert(q_n, -1, 0)
+            x = (q_p[:-1] - q_p[1:])
+            delta_tb_i = np.dot(x / two_pi_k, g_s)
+            tf_bulk = tg + delta_tb_i + q_dot[i] * rb  # (equation 3.32- ms thesis jack cook)
+            tf_out = tf_bulk - q_dot_b_watt[i - 1] / (2 * m_dot * cp)  # (equation 3.33- ms thesis jack cook)
+            hp_eft[i - 1] = tf_out
+            delta_tb[i - 1] = delta_tb_i
+
+            q_n_old = q_n.copy()
+
+        hp_eft, delta_tb = list(hp_eft), list(delta_tb)
+
+        return hp_eft, delta_tb
+
     def compute_g_functions(self):
         # Compute g-functions for a bracketed solution, based on min and max
         # height
@@ -252,10 +329,11 @@ class GHE(BaseGHE):
         # hybrid load object
         self.hybrid_load = hybrid_load
 
-        # List of heat pump exiting fluid temperatures
+        # heat pump exiting fluid temperatures
         self.hp_eft = []
-        # list of change in borehole wall temperatures
-        self.dTb = []
+
+        # borehole wall temp difference
+        self.d_tb = []
 
     def as_dict(self) -> dict:
         output = dict()
@@ -313,39 +391,40 @@ class GHE(BaseGHE):
             time_values = self.hybrid_load.hour[2:]  # convert to seconds
             self.times = time_values
             self.loading = q_dot
+            self.hp_eft, self.d_tb = self._simulate_detailed(q_dot, time_values, g)
+        elif method == TimestepType.HOURLY or method == TimestepType.HOURLYNOLOADAGG:
 
-            hp_eft, d_tb = self._simulate_detailed(q_dot, time_values, g)
-        elif method == TimestepType.HOURLY:
             n_months = self.sim_params.end_month - self.sim_params.start_month + 1
             n_hours = int(n_months / 12.0 * 8760.0)
             q_dot = self.hourly_extraction_ground_loads
-            # How many times does q need to be repeated?
+
             n_years = ceil(n_hours / 8760)
             if len(q_dot) // 8760 < n_years:
                 q_dot = q_dot * n_years
             else:
                 n_hours = len(q_dot)
+
             q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
-            # print("Times:",self.times)
             if len(self.times) == 0:
                 self.times = np.arange(1, n_hours + 1, 1)
-            t = self.times
+
             self.loading = q_dot
 
-            hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
+            if method == TimestepType.HOURLY:
+                self.hp_eft, self.d_tb = self.simulate_dynamic_load_agg(q_dot, g)
+            else:
+                self.hp_eft, self.d_tb = self._simulate_detailed(q_dot, self.times, g)
+
         else:
             raise ValueError("Only hybrid or hourly methods available.")
 
-        self.hp_eft = hp_eft
-        self.dTb = d_tb
-
-        return max(hp_eft), min(hp_eft)
+        return max(self.hp_eft), min(self.hp_eft)
 
     def size(self, method: TimestepType) -> None:
         # Size the ground heat exchanger
         def local_objective(h):
             self.bhe.b.H = h
-            max_hp_eft, min_hp_eft = self.simulate(method=method)
+            max_hp_eft, min_hp_eft = self.simulate(method)
             t_excess = self.cost(max_hp_eft, min_hp_eft)
             return t_excess
 

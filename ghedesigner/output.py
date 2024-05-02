@@ -10,7 +10,6 @@ from pathlib import Path
 from ghedesigner.borehole_heat_exchangers import CoaxialPipe, GHEDesignerBoreholeBase
 from ghedesigner.constants import HRS_IN_DAY
 from ghedesigner.design import AnyBisectionType
-from ghedesigner.enums import TimestepType
 
 
 class OutputManager:
@@ -22,7 +21,6 @@ class OutputManager:
                  notes: str,
                  author: str,
                  model_name: str,
-                 load_method: TimestepType,
                  allocated_width=100,
                  ):
 
@@ -33,12 +31,12 @@ class OutputManager:
         # but then add individual public functions to write specific files
         # have one routine to write all of them
         self.text_summary = self.get_summary_text(allocated_width, project_name, model_name, notes, author, time,
-                                                  design, load_method)
+                                                  design)
         self.loading_data_rows = self.get_loading_data(design)
         self.borehole_location_data_rows = self.get_borehole_location_data(design)
         self.hourly_loading_data_rows = self.get_hourly_loading_data(design)
         self.g_function_data_rows = self.get_g_function_data(design)
-        self.output_dict = self.get_summary_object(design, time, project_name, notes, author, model_name, load_method)
+        self.output_dict = self.get_summary_object(design, time, project_name, notes, author, model_name)
 
     def write_all_output_files(self, output_directory: Path, file_suffix: str = ""):
         output_directory.mkdir(exist_ok=True)
@@ -66,7 +64,7 @@ class OutputManager:
             ]
         ]
         loading_values = design.ghe.loading
-        for i, (tv, d_tb, lv) in enumerate(zip(design.ghe.times, design.ghe.dTb, loading_values)):
+        for i, (tv, d_tb, lv) in enumerate(zip(design.ghe.times, design.ghe.d_tb, loading_values)):
             if i + 1 < len(design.ghe.times):
                 current_time = tv
                 loading = loading_values[i + 1]
@@ -83,7 +81,7 @@ class OutputManager:
                 else:
                     csv_row.append(0)
                     csv_row.append(0)
-                csv_row.append(design.ghe.bhe.soil.ugt + design.ghe.dTb[i - 1])
+                csv_row.append(design.ghe.bhe.soil.ugt + design.ghe.d_tb[i - 1])
                 csv_row.append(design.ghe.hp_eft[i - 1])
                 csv_array.append(csv_row)
             else:
@@ -96,7 +94,7 @@ class OutputManager:
                 else:
                     csv_row.append(0)
                     csv_row.append(0)
-                csv_row.append(design.ghe.bhe.soil.ugt + design.ghe.dTb[i - 1])
+                csv_row.append(design.ghe.bhe.soil.ugt + design.ghe.d_tb[i - 1])
                 csv_row.append(design.ghe.hp_eft[i - 1])
                 csv_array.append(csv_row)
 
@@ -150,23 +148,13 @@ class OutputManager:
             csv_array.append([log_val, g_val, g_bhw_val])
         return csv_array
 
-    @staticmethod
-    def get_timestep_str(load_method: TimestepType):
-        if load_method == TimestepType.HYBRID:
-            return TimestepType.HYBRID.name
-        if load_method == TimestepType.HOURLY:
-            return TimestepType.HOURLY.name
-        warnings.warn("Load method not implemented")
-        return ""
-
     def get_summary_object(self,
                            design: AnyBisectionType,
                            time: float,
                            project_name: str,
                            notes: str,
                            author: str,
-                           model_name: str,
-                           load_method: TimestepType) -> dict:
+                           model_name: str) -> dict:
         # gFunction LTS Table
         g_function_col_titles = ["ln(t/ts)"]
         for g_function_name in list(design.ghe.gFunction.g_lts):
@@ -259,7 +247,7 @@ class OutputManager:
                 'maximum_allowable_height': add_with_units(design.ghe.sim_params.max_height, 'm'),
                 'minimum_allowable_height': add_with_units(design.ghe.sim_params.min_height, 'm'),
                 'simulation_time': add_with_units(int(design.ghe.sim_params.end_month / 12), 'years'),
-                'simulation_load_method': self.get_timestep_str(load_method)
+                'simulation_load_method': design.method.name
             },
             'simulation_results': {
 
@@ -313,7 +301,7 @@ class OutputManager:
         last_month = -1
         month_tb_vals = []
         month_eft_vals = []
-        for tv, d_tb, eft in zip(design.ghe.times, design.ghe.dTb, design.ghe.hp_eft):
+        for tv, d_tb, eft in zip(design.ghe.times, design.ghe.d_tb, design.ghe.hp_eft):
             current_month = floor(self.hours_to_month(tv))
             if current_month == last_month:
                 month_tb_vals.append(d_tb)
@@ -357,7 +345,7 @@ class OutputManager:
 
         return output_dict
 
-    def get_summary_text(self, width, project_name, model_name, notes, author, time, design, load_method):
+    def get_summary_text(self, width, project_name, model_name, notes, author, time, design):
 
         f_int = ".0f"
         f_1f = ".1f"
@@ -545,8 +533,7 @@ class OutputManager:
         o += self.d_row(width, "Maximum Allowable Height, m: ", design.ghe.sim_params.max_height, f_2f)
         o += self.d_row(width, "Minimum Allowable Height, m: ", design.ghe.sim_params.min_height, f_2f)
         o += self.d_row(width, "Simulation Time, years: ", int(design.ghe.sim_params.end_month / 12), f_int)
-        load_method_string = self.get_timestep_str(load_method)
-        o += self.d_row(width, "Simulation Loading Type: ", load_method_string, f_str)
+        o += self.d_row(width, "Simulation Loading Type: ", design.method.name, f_str)
 
         o += empty_line
 
@@ -561,7 +548,7 @@ class OutputManager:
         last_month = -1
         month_tb_vals = []
         month_eft_vals = []
-        for tv, d_tb, eft in zip(design.ghe.times, design.ghe.dTb, design.ghe.hp_eft):
+        for tv, d_tb, eft in zip(design.ghe.times, design.ghe.d_tb, design.ghe.hp_eft):
             # currentHourMonth = timeVals[i] - hTotalYear * nYears
             current_month = floor(self.hours_to_month(tv))
             # print(monthEFTVals)
@@ -573,9 +560,6 @@ class OutputManager:
                     if len(out_array) == 0:
                         previous_temp = design.ghe.bhe.soil.ugt
                     else:
-                        # print(i)
-                        # print(len(outArray))
-                        # previousTemp = outArray[-1][1]
                         previous_temp = design.ghe.bhe.soil.ugt
                     out_array.append(
                         [

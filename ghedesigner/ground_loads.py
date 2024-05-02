@@ -197,9 +197,9 @@ class HybridLoad:
         # year
 
         hourly_rejection_loads = self.hourly_rejection_loads[hours_in_year - HRS_IN_DAY:] + \
-            self.hourly_rejection_loads
+                                 self.hourly_rejection_loads
         hourly_extraction_loads = self.hourly_extraction_loads[hours_in_year - HRS_IN_DAY:] + \
-            self.hourly_extraction_loads
+                                  self.hourly_extraction_loads
 
         # Keep track of how many hours are in
         # start at 24 since we added the last day of the year to the beginning

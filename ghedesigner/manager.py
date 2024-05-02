@@ -53,7 +53,7 @@ class GHEManager:
         Sets the design type.
 
         :param design_geometry_str: design geometry input string.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to False to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -84,7 +84,7 @@ class GHEManager:
         Sets the borehole pipe type.
 
         :param bh_pipe_str: pipe type input string.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to False to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -423,13 +423,14 @@ class GHEManager:
                                                                   property_boundary, no_go_boundaries)
         return 0
 
-    def set_design(self, flow_rate: float, flow_type_str: str, throw: bool = True) -> int:
+    def set_design(self, flow_rate: float, flow_type_str: str, timestep: str = "HYBRID", throw: bool = True) -> int:
         """
         Set the design method.
 
         :param flow_rate: design flow rate, in lps.
         :param flow_type_str: flow type string input.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param timestep: timestep type.
+        :param throw: By default, function will raise an exception on error, override to False to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -453,6 +454,8 @@ class GHEManager:
                 raise ValueError(message)
             return 1
 
+        timestep_method = getattr(TimestepType, timestep.upper())
+
         if self._geometric_constraints.type == DesignGeomType.NEARSQUARE:
             # temporary disable of the type checker because of the _geometric_constraints member
             # noinspection PyTypeChecker
@@ -468,7 +471,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=TimestepType.HYBRID,
+                method=timestep_method,
             )
         elif self._geometric_constraints.type == DesignGeomType.RECTANGLE:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -485,7 +488,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=TimestepType.HYBRID,
+                method=timestep_method,
             )
         elif self._geometric_constraints.type == DesignGeomType.BIRECTANGLE:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -502,7 +505,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=TimestepType.HYBRID,
+                method=timestep_method,
             )
         elif self._geometric_constraints.type == DesignGeomType.BIZONEDRECTANGLE:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -519,7 +522,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=TimestepType.HYBRID,
+                method=timestep_method,
             )
         elif self._geometric_constraints.type == DesignGeomType.BIRECTANGLECONSTRAINED:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -536,7 +539,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=TimestepType.HYBRID,
+                method=timestep_method
             )
         elif self._geometric_constraints.type == DesignGeomType.ROWWISE:
             # temporary disable of the type checker because of the _geometric_constraints member
@@ -553,7 +556,7 @@ class GHEManager:
                 self._geometric_constraints,
                 self._ground_loads,
                 flow_type=flow_type,
-                method=TimestepType.HYBRID,
+                method=timestep_method
             )
         else:
             message = "This design method has not been implemented"
@@ -567,7 +570,7 @@ class GHEManager:
         """
         Calls design methods to execute sizing.
 
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to False to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -593,7 +596,8 @@ class GHEManager:
         self._search = self._design.find_design()
         self._search.ghe.compute_g_functions()
         self._search_time = time() - start_time
-        self._search.ghe.size(method=TimestepType.HYBRID)
+        self._search.ghe.size(self._design.method)
+
         return 0
 
     def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str):
@@ -607,7 +611,6 @@ class GHEManager:
             note,
             author,
             iteration_name,
-            load_method=TimestepType.HYBRID,
         )
 
     def write_output_files(self, output_directory: Path, output_file_suffix: str = ""):
@@ -624,7 +627,7 @@ class GHEManager:
         Writes an input file based on current simulation configuration.
 
         :param output_file_path: output directory to write input file.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to False to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -804,6 +807,8 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
         continue_if_design_unmet=continue_if_design_unmet
     )
 
+    timestep = sim_props.get("timestep", "HYBRID").upper()
+
     if ghe.set_design_geometry_type(constraint_props["method"], throw=False) != 0:
         return 1
 
@@ -868,6 +873,7 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
     ghe.set_design(
         flow_rate=design_props["flow_rate"],
         flow_type_str=design_props["flow_type"],
+        timestep=timestep,
         throw=False
     )
 

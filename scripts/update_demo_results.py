@@ -19,7 +19,7 @@ def update_results(results_dir: Path, expected_results_path: Path):
         }
 
     with open(expected_results_path, "w", encoding="utf-8") as f:
-        json.dump(d_expected, f, indent=2, sort_keys=True)
+        f.write(json.dumps(d_expected, sort_keys=True, indent=2, separators=(',', ': ')))
 
 
 if __name__ == "__main__":

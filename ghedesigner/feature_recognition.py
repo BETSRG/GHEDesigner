@@ -2,7 +2,6 @@ from ghedesigner.shape import point_polygon_check
 
 
 def remove_cutout(coordinates, boundaries, remove_inside=True, keep_contour=True, on_edge_tolerance=0.01):
-
     if isinstance(boundaries[0][0], (int, float)):
         boundaries = [boundaries]
 
