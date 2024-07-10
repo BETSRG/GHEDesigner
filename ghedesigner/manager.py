@@ -709,14 +709,6 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
     :param output_directory: path to write output files.
     """
 
-    if not input_file_path.exists():
-        print(f"No input file found at {input_file_path}, aborting", file=stderr)
-        return 1
-
-    if output_directory is None:
-        print("Output directory must be passed as an argument, aborting", file=stderr)
-        return 1
-
     # validate inputs against schema before doing anything
     if validate_input_file(input_file_path) != 0:
         return 1

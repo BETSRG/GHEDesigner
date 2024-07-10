@@ -633,6 +633,10 @@ class HybridLoad:
         #       Now fill array containing step function loads
         #       Note they are paired with the ending hour, so the ith load will start with the (i-1)th time
 
+        # hacky "fix" for negative load durations
+        # to be removed (or unnecessary) once the hybrid load algorithm is revised
+        self.hour, self.load = (np.array(t) for t in zip(*sorted(zip(self.hour, self.load))))
+
         n = self.hour.size
         # Note at this point the load and hour np arrays contain zeroes in indices zero and one, then continue from
         # there.
