@@ -701,12 +701,13 @@ class GHEManager:
         return 0
 
 
-def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -> int:
+def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -> int:
     """
     Worker function to run simulation.
 
-    :param input_file_path: path to input file.
-    :param output_directory: path to write output files.
+    :param input_file_path: path to input file. Input file must exist.
+    :param output_directory: path to write output files. Output directory must be a valid path.
+                             It will be created if it does not exist.
     """
 
     # validate inputs against schema before doing anything
@@ -872,14 +873,14 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
 
 @click.command(name="GHEDesignerCommandLine")
 @click.argument("input-path", type=click.Path(exists=True), required=True)
-@click.argument("output-directory", type=click.Path(exists=False), required=False)
+@click.argument("output-directory", type=click.Path(exists=False), required=True)
 @click.version_option(VERSION)
 @click.option(
     "--validate",
     default=False,
     is_flag=True,
     show_default=False,
-    help="Validate input and exit."
+    help="Validate input file and exit."
 )
 @click.option(
     "-c",
@@ -912,13 +913,9 @@ def run_manager_from_cli(input_path, output_directory, validate, convert):
             print(f"Unsupported conversion format type: {format}", file=stderr)
             return 1
 
-    if output_directory is None:
-        print('Output directory path must be passed as an argument, aborting', file=stderr)
-        return 1
-
     output_path = Path(output_directory).resolve()
 
-    return run_manager_from_cli_worker(input_path, output_path)
+    return _run_manager_from_cli_worker(input_path, output_path)
 
 
 if __name__ == "__main__":
