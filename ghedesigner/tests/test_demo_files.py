@@ -25,7 +25,7 @@ class TestDemoFiles(GHEBaseTest):
                 os.makedirs(out_dir)
                 print(f"Running: {demo_file_path}")
                 self.assertEqual(0, _run_manager_from_cli_worker(input_file_path=demo_file_path,
-                                                                output_directory=out_dir))
+                                                                 output_directory=out_dir))
 
                 results_path = out_dir / 'SimulationSummary.json'
 
