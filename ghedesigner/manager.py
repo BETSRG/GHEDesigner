@@ -876,7 +876,7 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
 @click.argument("output-directory", type=click.Path(exists=False), required=False)
 @click.version_option(VERSION)
 @click.option(
-    "--validate",
+    "--validate-only",
     default=False,
     is_flag=True,
     show_default=False,
