@@ -887,10 +887,10 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
     "--convert",
     help="Convert output to specified format. Options supported: 'IDF'."
 )
-def run_manager_from_cli(input_path, output_directory, validate, convert):
+def run_manager_from_cli(input_path, output_directory, validate_only, convert):
     input_path = Path(input_path).resolve()
 
-    if validate:
+    if validate_only:
         try:
             validate_input_file(input_path)
             print("Valid input file.")
