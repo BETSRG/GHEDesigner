@@ -1,0 +1,37 @@
+[project]
+name = "ghedesigner"
+version = "1.5"
+description = """A ground heat exchanger design tool with the capability
+to select and size flexibly configured borehole fields that are customized
+for specific building and property constraints."""
+authors = [
+    { name = "Jeffrey D. Spitler", email = "spitler@okstate.edu" }
+]
+dependencies = [
+    'click~=8.1',
+    'jsonschema~=4.19',
+    'numpy~=1.24',
+    'pygfunction~=2.2',
+    'scipy~=1.10'
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = ["pytest >= 7.4",
+    "pytest-cov ~= 4.1",
+    "pre-commit ~= 3.5",
+    # "jupyterlab ~= 4.0",
+    "mkdocs-material ~= 9.5"
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["ghedesigner"]
