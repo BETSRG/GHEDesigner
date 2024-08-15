@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.8', '3.9', '3.10', '3.11' ]
+        python-version: [ '3.9', '3.10', '3.11', '3.12' ]
 
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +22,7 @@ jobs:
           pip install .
       - name: Test validate option
         run: |
-          ghedesigner --validate demos/find_design_rectangle_single_u_tube.json
+          ghedesigner --validate-only demos/find_design_rectangle_single_u_tube.json
       - name: Run a test file
         run: |
           ghedesigner demos/find_design_rectangle_single_u_tube.json /tmp

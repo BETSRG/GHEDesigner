@@ -701,21 +701,13 @@ class GHEManager:
         return 0
 
 
-def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -> int:
+def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -> int:
     """
     Worker function to run simulation.
 
-    :param input_file_path: path to input file.
-    :param output_directory: path to write output files.
+    :param input_file_path: path to input file. Input file must exist.
+    :param output_directory: path to write output files. Output directory must be a valid path.
     """
-
-    if not input_file_path.exists():
-        print(f"No input file found at {input_file_path}, aborting", file=stderr)
-        return 1
-
-    if output_directory is None:
-        print("Output directory must be passed as an argument, aborting", file=stderr)
-        return 1
 
     # validate inputs against schema before doing anything
     if validate_input_file(input_file_path) != 0:
@@ -883,21 +875,21 @@ def run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -
 @click.argument("output-directory", type=click.Path(exists=False), required=False)
 @click.version_option(VERSION)
 @click.option(
-    "--validate",
+    "--validate-only",
     default=False,
     is_flag=True,
     show_default=False,
-    help="Validate input and exit."
+    help="Validate input file and exit."
 )
 @click.option(
     "-c",
     "--convert",
     help="Convert output to specified format. Options supported: 'IDF'."
 )
-def run_manager_from_cli(input_path, output_directory, validate, convert):
+def run_manager_from_cli(input_path, output_directory, validate_only, convert):
     input_path = Path(input_path).resolve()
 
-    if validate:
+    if validate_only:
         try:
             validate_input_file(input_path)
             print("Valid input file.")
@@ -926,7 +918,7 @@ def run_manager_from_cli(input_path, output_directory, validate, convert):
 
     output_path = Path(output_directory).resolve()
 
-    return run_manager_from_cli_worker(input_path, output_path)
+    return _run_manager_from_cli_worker(input_path, output_path)
 
 
 if __name__ == "__main__":
