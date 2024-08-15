@@ -349,7 +349,7 @@ class OutputManager:
             'min_hp_eft': add_with_units(min_eft, 'C'),
             'min_hp_eft_time': add_with_units(min_eft_time, 'months'),
             'monthly_temp_summary': {
-                'titles': ["Time", "Tbw", "Max hp_eft", "Min hp_eft"],
+                'titles': ["Time", "BH Wall Temp", "Max HP EFT", "Min HP EFT"],
                 'units': ["(months)", "(C)", "(C)", "(C)"],
                 'data': out_array
             }
@@ -480,7 +480,7 @@ class OutputManager:
                                                                     design.ghe.bhe.fluid),
                             f_int, n_tabs=1)
 
-        o += self.d_row(width, "Effective Borehole Resistance, W/m-K:",
+        o += self.d_row(width, "Effective Borehole Resistance, K/(W/m):",
                         design.ghe.bhe.calc_effective_borehole_resistance(),
                         f_4f, n_tabs=1)
         # Shank Spacing, Pipe Type, etc.
@@ -540,8 +540,8 @@ class OutputManager:
         o += self.create_title(width, "Simulation Parameters")
         o += self.d_row(width, "Start Month: ", design.ghe.sim_params.start_month, f_int)
         o += self.d_row(width, "End Month: ", design.ghe.sim_params.end_month, f_int)
-        o += self.d_row(width, "Maximum Allowable hp_eft, C: ", design.ghe.sim_params.max_EFT_allowable, f_2f)
-        o += self.d_row(width, "Minimum Allowable hp_eft, C: ", design.ghe.sim_params.min_EFT_allowable, f_2f)
+        o += self.d_row(width, "Maximum Allowable HP EFT, C: ", design.ghe.sim_params.max_EFT_allowable, f_2f)
+        o += self.d_row(width, "Minimum Allowable HP EFT, C: ", design.ghe.sim_params.min_EFT_allowable, f_2f)
         o += self.d_row(width, "Maximum Allowable Height, m: ", design.ghe.sim_params.max_height, f_2f)
         o += self.d_row(width, "Minimum Allowable Height, m: ", design.ghe.sim_params.min_height, f_2f)
         o += self.d_row(width, "Simulation Time, years: ", int(design.ghe.sim_params.end_month / 12), f_int)
@@ -592,7 +592,7 @@ class OutputManager:
                 n_years += 1
 
         header_array = [
-            ["Time", "Tbw", "Max hp_eft", "Min hp_eft"],
+            ["Time", "BH Wall Temp", "Max HP EFT", "Min HP EFT"],
             ["(months)", "(C)", "(C)", "(C)"],
         ]
         eft_table_formats = [f_int, f_2f, f_2f, f_2f]
@@ -604,10 +604,10 @@ class OutputManager:
         min_eft_time = design.ghe.times[design.ghe.hp_eft.index(min(design.ghe.hp_eft))]
         max_eft_time = self.hours_to_month(max_eft_time)
         min_eft_time = self.hours_to_month(min_eft_time)
-        o += self.d_row(width, "Max hp_eft, C:", max_eft, f_3f)
-        o += self.d_row(width, "Max hp_eft Time, Months:", max_eft_time, f_3f)
-        o += self.d_row(width, "Min hp_eft, C:", min_eft, f_3f)
-        o += self.d_row(width, "Min hp_eft Time, Months:", min_eft_time, f_3f)
+        o += self.d_row(width, "Max HP EFT, C:", max_eft, f_3f)
+        o += self.d_row(width, "Max HP EFT Time, Months:", max_eft_time, f_3f)
+        o += self.d_row(width, "Min HP EFT, C:", min_eft, f_3f)
+        o += self.d_row(width, "Min HP EFT Time, Months:", min_eft_time, f_3f)
 
         o += self.create_table(eft_table_title, header_array, out_array, width, eft_table_formats, filler_symbol="-",
                                centering="^")
