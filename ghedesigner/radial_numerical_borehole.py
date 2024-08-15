@@ -60,19 +60,19 @@ class RadialNumericalBH(object):
         self.r_out_tube = sqrt(2) * single_u_tube.pipe.r_out
 
         # inner tube radius is set to r_out_tube-t_p
-        self.thickness_pipe = single_u_tube.pipe.r_out - single_u_tube.pipe.r_in
-        self.r_in_tube = self.r_out_tube - self.thickness_pipe
+        self.t_pipe_wall_actual = single_u_tube.pipe.r_out - single_u_tube.pipe.r_in
+        self.r_in_tube = self.r_out_tube - self.t_pipe_wall_actual
 
         # r_in_convection is set to r_in_tube - 1/4 * t
-        self.r_in_convection = self.r_in_tube - self.thickness_pipe / 4.0
+        self.r_in_convection = self.r_in_tube - self.t_pipe_wall_actual / 4.0
 
         # r_fluid is set to r_in_convection - 3/4 * t
-        self.r_fluid = self.r_in_convection - (3.0 / 4.0 * self.thickness_pipe)
+        self.r_fluid = self.r_in_convection - (3.0 / 4.0 * self.t_pipe_wall_actual)
 
         # Thicknesses of the grid regions
         self.thickness_soil = (self.r_far_field - self.r_borehole) / self.num_soil_cells
         self.thickness_grout = (self.r_borehole - self.r_out_tube) / self.num_grout_cells
-        # pipe thickness is equivalent to original tube thickness
+        self.thickness_pipe = self.t_pipe_wall_actual / self.num_pipe_cells
         self.thickness_conv = (self.r_in_tube - self.r_in_convection) / self.num_conv_cells
         self.thickness_fluid = (self.r_in_convection - self.r_fluid) / self.num_fluid_cells
 
