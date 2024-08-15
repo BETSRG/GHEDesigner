@@ -82,7 +82,7 @@ def field_optimization_wp_space_fr(
     max_hole = np.array(remove_duplicates(max_hole, p_space * x_s))
 
     field = max_hole
-    field_name = "P" + str(p_space) + "_S" + str(space) + "_rt" + str(max_rt)
+    field_name = f"P{p_space:0.1f}_S{space:0.1f}_rt{max_rt:0.1f}"
     return [field, field_name]
 
 
@@ -154,7 +154,7 @@ def field_optimization_fr(
     max_hole = np.array(remove_duplicates(max_hole, x_s * 1.2))
 
     field = max_hole
-    field_name = "S" + str(space) + "_rt" + str(max_rt)
+    field_name = f"S_{space:0.1f}_rt{max_rt:0.1f}"
     return [field, field_name]
 
 
