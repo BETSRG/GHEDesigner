@@ -3,7 +3,7 @@ from datetime import datetime
 from json import loads
 from pathlib import Path
 
-from ghedesigner.manager import run_manager_from_cli_worker
+from ghedesigner.manager import _run_manager_from_cli_worker
 from ghedesigner.tests.ghe_base_case import GHEBaseTest
 
 # results can be updated with the update_demo_results.py file in /scripts
@@ -24,8 +24,8 @@ class TestDemoFiles(GHEBaseTest):
                 out_dir = self.demo_output_parent_dir / time_str / f.replace('.json', '')
                 os.makedirs(out_dir)
                 print(f"Running: {demo_file_path}")
-                self.assertEqual(0, run_manager_from_cli_worker(input_file_path=demo_file_path,
-                                                                output_directory=out_dir))
+                self.assertEqual(0, _run_manager_from_cli_worker(input_file_path=demo_file_path,
+                                                                 output_directory=out_dir))
 
                 results_path = out_dir / 'SimulationSummary.json'
 
