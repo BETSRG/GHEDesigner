@@ -707,6 +707,7 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
 
     :param input_file_path: path to input file. Input file must exist.
     :param output_directory: path to write output files. Output directory must be a valid path.
+                             It will be created if it does not exist.
     """
 
     # validate inputs against schema before doing anything
