@@ -57,20 +57,20 @@ class RadialNumericalBH(object):
         # outer tube radius is set to sqrt(2) * r_p_o, tube region has 4 cells
         self.r_out_tube = sqrt(2) * single_u_tube.pipe.r_out
 
-        # inner tube radius is set to r_out_tube-t_p
-        self.thickness_pipe = single_u_tube.pipe.r_out - single_u_tube.pipe.r_in
-        self.r_in_tube = self.r_out_tube - self.thickness_pipe
+        # inner tube radius is set to r_out_tube - t_p
+        self.t_pipe_wall_actual = single_u_tube.pipe.r_out - single_u_tube.pipe.r_in
+        self.r_in_tube = self.r_out_tube - self.t_pipe_wall_actual
 
-        # r_in_convection is set to r_in_tube - 1/4 * t
-        self.r_in_convection = self.r_in_tube - self.thickness_pipe / 4.0
+        # r_in_convection is set to r_in_tube - 1/4 * t_p
+        self.r_in_convection = self.r_in_tube - self.t_pipe_wall_actual / 4.0
 
-        # r_fluid is set to r_in_convection - 3/4 * t
-        self.r_fluid = self.r_in_convection - (3.0 / 4.0 * self.thickness_pipe)
+        # r_fluid is set to r_in_convection - 3/4 * t_p
+        self.r_fluid = self.r_in_convection - (3.0 / 4.0 * self.t_pipe_wall_actual)
 
         # Thicknesses of the grid regions
         self.thickness_soil_cell = (self.r_far_field - self.r_borehole) / self.num_soil_cells
         self.thickness_grout_cell = (self.r_borehole - self.r_out_tube) / self.num_grout_cells
-        # pipe thickness is equivalent to original tube thickness
+        self.thickness_pipe_cell = (self.r_out_tube - self.r_in_tube) / self.num_pipe_cells
         self.thickness_conv_cell = (self.r_in_tube - self.r_in_convection) / self.num_conv_cells
         self.thickness_fluid_cell = (self.r_in_convection - self.r_fluid) / self.num_fluid_cells
 
@@ -105,14 +105,9 @@ class RadialNumericalBH(object):
 
         # load fluid cells
         for idx in range(cell_summation, self.num_fluid_cells + cell_summation):
-            center_radius = self.r_fluid + idx * self.thickness_fluid_cell
-
-            if idx == 0:
-                inner_radius = center_radius
-            else:
-                inner_radius = center_radius - self.thickness_fluid_cell / 2.0
-
-            outer_radius = center_radius + self.thickness_fluid_cell / 2.0
+            inner_radius = self.r_fluid + idx * self.thickness_fluid_cell
+            center_radius = inner_radius + self.thickness_fluid_cell / 2.0
+            outer_radius = inner_radius + self.thickness_fluid_cell
 
             # The equivalent thermal mass of the fluid can be calculated from
             # equation (2)
@@ -165,9 +160,9 @@ class RadialNumericalBH(object):
         # load pipe cells
         for idx in range(cell_summation, self.num_pipe_cells + cell_summation):
             j = idx - cell_summation
-            inner_radius = self.r_in_tube + j * self.thickness_pipe
-            center_radius = inner_radius + self.thickness_pipe / 2.0
-            outer_radius = inner_radius + self.thickness_pipe
+            inner_radius = self.r_in_tube + j * self.thickness_pipe_cell
+            center_radius = inner_radius + self.thickness_pipe_cell / 2.0
+            outer_radius = inner_radius + self.thickness_pipe_cell
             conductivity = log(self.r_borehole / self.r_in_tube) / (TWO_PI * resist_p_eq)
             rho_cp = self.single_u_tube.pipe.rhoCp
             volume = pi * (outer_radius ** 2 - inner_radius ** 2)
