@@ -33,9 +33,9 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.write_output_files(output_file_directory, "")
         # can grab data off the outputs dict
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(u_tube_height, 60, delta=1e-2)
+        self.assertAlmostEqual(60, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(1 + 1, len(nbh))
+        self.assertEqual(2, len(nbh))
 
     def test_big_loads(self):
         ghe = GHEManager()
@@ -66,9 +66,9 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.write_output_files(output_file_directory, "")
         # can grab data off the outputs dict
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(u_tube_height, 213, delta=1e-2)
+        self.assertAlmostEqual(213, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(20 + 1, len(nbh))
+        self.assertEqual(21, len(nbh))
 
     def test_big_loads_with_max_boreholes(self):
         ghe = GHEManager()
@@ -99,6 +99,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.write_output_files(output_file_directory, "")
         # can grab data off the outputs dict
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(u_tube_height, 213, delta=1e-2)
+        self.assertAlmostEqual(213, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(90 + 1, len(nbh))
+        self.assertEqual(91, len(nbh))

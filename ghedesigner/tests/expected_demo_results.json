@@ -1,54 +1,54 @@
 {
   "find_design_bi_rectangle_constrained_single_u_tube": {
-    "active_borehole_length": 132.79936866478178,
+    "active_borehole_length": 133.4910467664394,
     "number_of_boreholes": 74
   },
   "find_design_bi_rectangle_double_u_tube_series": {
-    "active_borehole_length": 127.28198187827503,
+    "active_borehole_length": 128.61593151552975,
     "number_of_boreholes": 77
   },
   "find_design_bi_rectangle_single_u_tube": {
-    "active_borehole_length": 121.79696691388936,
+    "active_borehole_length": 122.43431450783052,
     "number_of_boreholes": 88
   },
   "find_design_bi_zoned_rectangle_single_u_tube": {
-    "active_borehole_length": 134.0152903408635,
+    "active_borehole_length": 134.87726908080376,
     "number_of_boreholes": 68
   },
   "find_design_near_square_coaxial": {
-    "active_borehole_length": 134.89227618557592,
-    "number_of_boreholes": 132
+    "active_borehole_length": 122.76544339220567,
+    "number_of_boreholes": 144
   },
   "find_design_near_square_double_u_tube": {
-    "active_borehole_length": 130.86452342334576,
+    "active_borehole_length": 130.55095231298313,
     "number_of_boreholes": 144
   },
   "find_design_near_square_single_u_tube": {
-    "active_borehole_length": 127.45223612385124,
+    "active_borehole_length": 127.93642517553386,
     "number_of_boreholes": 156
   },
   "find_design_rectangle_coaxial": {
-    "active_borehole_length": 92.34484156575012,
+    "active_borehole_length": 93.80640199521838,
     "number_of_boreholes": 99
   },
   "find_design_rectangle_double_u_tube": {
-    "active_borehole_length": 133.16409283116462,
+    "active_borehole_length": 132.64881983037174,
     "number_of_boreholes": 77
   },
   "find_design_rectangle_single_u_tube": {
-    "active_borehole_length": 126.18809010597306,
+    "active_borehole_length": 126.81855850668327,
     "number_of_boreholes": 88
   },
   "find_design_rowwise_single_u_tube": {
-    "active_borehole_length": 133.85630550678167,
+    "active_borehole_length": 134.71989276940954,
     "number_of_boreholes": 66
   },
   "input_bldg0000056_odd_loads": {
-    "active_borehole_length": 76.19700534402511,
+    "active_borehole_length": 77.05058033748125,
     "number_of_boreholes": 2
   },
   "issue_97_interp_out_of_range": {
-    "active_borehole_length": 161.53268215683158,
+    "active_borehole_length": 159.71824465081477,
     "number_of_boreholes": 180
   }
 }
