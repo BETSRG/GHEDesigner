@@ -99,126 +99,77 @@ class RadialNumericalBH(object):
         self.t_s = single_u_tube.b.H ** 2 / (9 * soil_diffusivity)
         self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
 
-    def fill_radial_cells(self, resist_f_eq, resist_pg_eq):
+    def fill_radial_cells(self, resist_f_effective, resist_pg_effective):
 
         radial_cells = np.zeros(shape=(len(CellProps), self.num_cells), dtype=np.double)
 
         cell_summation = 0
 
-        # load fluid cells
-        for idx in range(cell_summation, self.num_fluid_cells + cell_summation):
-            inner_radius = self.r_fluid + idx * self.thickness_fluid_cell
-            center_radius = inner_radius + self.thickness_fluid_cell / 2.0
-            outer_radius = inner_radius + self.thickness_fluid_cell
-
-            # The equivalent thermal mass of the fluid can be calculated from
-            # equation (2)
-            # pi (r_in_conv ** 2 - r_f **2) C_eq_f = 2pi r_p_in**2 * C_f
-            rho_cp_eq = 2.0 * (self.single_u_tube.pipe.r_in ** 2) * self.single_u_tube.fluid.rhoCp
-            rho_cp_eq /= (self.r_convection ** 2) - (self.r_fluid ** 2)
-            conductivity = 200
-
+        def fill_single_cell(inner_radius, thickness, conductivity, rho_cp):
+            center_radius = inner_radius + thickness / 2.0
+            outer_radius = inner_radius + thickness
             volume = pi * (outer_radius ** 2 - inner_radius ** 2)
-            radial_cells[:, idx] = np.array(
-                [
-                    inner_radius,
-                    center_radius,
-                    outer_radius,
-                    conductivity,
-                    rho_cp_eq,
-                    self.init_temp,
-                    volume,
-                ],
-                dtype=np.double,
-            )
+            return np.array([
+                inner_radius,
+                center_radius,
+                outer_radius,
+                conductivity,
+                rho_cp,
+                self.init_temp,
+                volume
+            ], dtype=np.double)
+
+        # load fluid cells
+        # The equivalent thermal mass of the fluid can be calculated from
+        # equation (2)
+        # pi (r_in_conv ** 2 - r_f **2) C_eq_f = 2pi r_p_in**2 * C_f
+        rho_cp_eq_fluid = 2.0 * (self.single_u_tube.pipe.r_in ** 2) * self.single_u_tube.fluid.rhoCp
+        rho_cp_eq_fluid /= (self.r_convection ** 2) - (self.r_fluid ** 2)
+        conductivity_fluid = 200
+        for idx in range(cell_summation, self.num_fluid_cells + cell_summation):
+            inner_radius_fluid_cell = self.r_fluid + idx * self.thickness_fluid_cell
+            radial_cells[:, idx] = fill_single_cell(inner_radius_fluid_cell, self.thickness_fluid_cell,
+                                                    conductivity_fluid, rho_cp_eq_fluid)
+
         cell_summation += self.num_fluid_cells
 
         # load convection cells
+        conductivity_conv = log(self.r_in_tube / self.r_convection) / (TWO_PI * resist_f_effective)
+        rho_cp_conv = 1.0
         for j, idx in enumerate(range(cell_summation, self.num_conv_cells + cell_summation)):
-            inner_radius = self.r_convection + j * self.thickness_conv_cell
-            center_radius = inner_radius + self.thickness_conv_cell / 2.0
-            outer_radius = inner_radius + self.thickness_conv_cell
-            conductivity = log(self.r_in_tube / self.r_convection) / (TWO_PI * resist_f_eq)
-            rho_cp = 1.0
-            volume = pi * (outer_radius ** 2 - inner_radius ** 2)
-            radial_cells[:, idx] = np.array(
-                [
-                    inner_radius,
-                    center_radius,
-                    outer_radius,
-                    conductivity,
-                    rho_cp,
-                    self.init_temp,
-                    volume,
-                ],
-                dtype=np.double,
-            )
+            inner_radius_conv_cell = self.r_convection + j * self.thickness_conv_cell
+            radial_cells[:, idx] = fill_single_cell(inner_radius_conv_cell, self.thickness_conv_cell,
+                                                    conductivity_conv, rho_cp_conv)
+
         cell_summation += self.num_conv_cells
 
         # load pipe cells
+        conductivity_pipe_grout = log(self.r_borehole / self.r_in_tube) / (TWO_PI * resist_pg_effective)
+        rho_cp_pipe = self.single_u_tube.pipe.rhoCp
         for j, idx in enumerate(range(cell_summation, self.num_pipe_cells + cell_summation)):
-            inner_radius = self.r_in_tube + j * self.thickness_pipe_cell
-            center_radius = inner_radius + self.thickness_pipe_cell / 2.0
-            outer_radius = inner_radius + self.thickness_pipe_cell
-            conductivity = log(self.r_borehole / self.r_in_tube) / (TWO_PI * resist_pg_eq)
-            rho_cp = self.single_u_tube.pipe.rhoCp
-            volume = pi * (outer_radius ** 2 - inner_radius ** 2)
-            radial_cells[:, idx] = np.array(
-                [
-                    inner_radius,
-                    center_radius,
-                    outer_radius,
-                    conductivity,
-                    rho_cp,
-                    self.init_temp,
-                    volume,
-                ],
-                dtype=np.double,
-            )
+            inner_radius_pipe_cell = self.r_in_tube + j * self.thickness_pipe_cell
+            radial_cells[:, idx] = fill_single_cell(inner_radius_pipe_cell, self.thickness_pipe_cell,
+                                                    conductivity_pipe_grout, rho_cp_pipe)
+
         cell_summation += self.num_pipe_cells
 
         # load grout cells
+        rho_cp_grout = self.single_u_tube.grout.rhoCp
         for j, idx in enumerate(range(cell_summation, self.num_grout_cells + cell_summation)):
-            inner_radius = self.r_out_tube + j * self.thickness_grout_cell
-            center_radius = inner_radius + self.thickness_grout_cell / 2.0
-            outer_radius = inner_radius + self.thickness_grout_cell
-            conductivity = log(self.r_borehole / self.r_in_tube) / (TWO_PI * resist_pg_eq)
-            rho_cp = self.single_u_tube.grout.rhoCp
-            volume = pi * (outer_radius ** 2 - inner_radius ** 2)
-            radial_cells[:, idx] = np.array(
-                [
-                    inner_radius,
-                    center_radius,
-                    outer_radius,
-                    conductivity,
-                    rho_cp,
-                    self.init_temp,
-                    volume,
-                ],
-                dtype=np.double,
-            )
+            inner_radius_grout_cell = self.r_out_tube + j * self.thickness_grout_cell
+            radial_cells[:, idx] = fill_single_cell(inner_radius_grout_cell, self.thickness_grout_cell,
+                                                    conductivity_pipe_grout, rho_cp_grout)
+
         cell_summation += self.num_grout_cells
 
         # load soil cells
+        conductivity_soil = self.single_u_tube.soil.k
+        rho_cp_soil = self.single_u_tube.soil.rhoCp
         for j, idx in enumerate(range(cell_summation, self.num_soil_cells + cell_summation)):
-            inner_radius = self.r_borehole + j * self.thickness_soil_cell
-            center_radius = inner_radius + self.thickness_soil_cell / 2.0
-            outer_radius = inner_radius + self.thickness_soil_cell
-            conductivity = self.single_u_tube.soil.k
-            rho_cp = self.single_u_tube.soil.rhoCp
-            volume = pi * (outer_radius ** 2 - inner_radius ** 2)
-            radial_cells[:, idx] = np.array(
-                [
-                    inner_radius,
-                    center_radius,
-                    outer_radius,
-                    conductivity,
-                    rho_cp,
-                    self.init_temp,
-                    volume,
-                ],
-                dtype=np.double,
-            )
+            inner_radius_soil_cell = self.r_borehole + j * self.thickness_soil_cell
+            radial_cells[:, idx] = fill_single_cell(inner_radius_soil_cell, self.thickness_soil_cell,
+                                                    conductivity_soil, rho_cp_soil)
+
         cell_summation += self.num_soil_cells
 
         return radial_cells
