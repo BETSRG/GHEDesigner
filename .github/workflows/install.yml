@@ -17,23 +17,22 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: yezz123/setup-uv@v4
       - name: Install the package
         run: |
-          uv version
-          uv sync
+          python -m pip install --upgrade pip
+          pip install .
       - name: Validate an input file
         run: |
-          uv run ghedesigner --validate-only demos/find_design_rectangle_single_u_tube.json
+          ghedesigner --validate-only demos/find_design_rectangle_single_u_tube.json
       - name: Run a sample file
         run: |
-          uv run ghedesigner demos/find_design_rectangle_single_u_tube.json ./tmp
+          ghedesigner demos/find_design_rectangle_single_u_tube.json ./tmp
       - name: Confirm IDF conversion option
         run: |
-          uv run ghedesigner --convert=IDF ./tmp/SimulationSummary.json
+          ghedesigner --convert=IDF ./tmp/SimulationSummary.json
       - name: GHED version string
         run: |
-          uv run ghedesigner --version
+          ghedesigner --version
       - name: GHED help
         run: |
           ghedesigner --help
