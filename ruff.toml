@@ -1,13 +1,14 @@
+# https://docs.astral.sh/ruff/settings/
 fix = true
 line-length = 120
 
+# https://docs.astral.sh/ruff/settings/#format
 [format]
-# preview = true
 docstring-code-format = true
+quote-style = "preserve"
 
 # https://docs.astral.sh/ruff/linter/#rule-selection
 [lint]
-# preview = true
 # Enable these rules
 extend-select = [
     "A",   # flake8-builtins
@@ -40,7 +41,7 @@ extend-select = [
     "UP",  # pyupgrade
 ]
 # except for these specific errors
-extend-ignore = [
+ignore = [
     "A001",    # builtin-variable-shadowing
     "ARG001",  # unused-function-argument
     "ARG002",  # unused-method-argument
@@ -69,24 +70,3 @@ extend-ignore = [
     "S701",    # jinja2-autoescape-false
     "SIM108",  # if-else-block-instead-of-if-exp
 ]
-
-# [lint.per-file-ignores]
-# "**/tests/test_*" = [
-#     "S101", # assert
-#     "S105", # hardcoded-password-string
-#     "S307", # suspicious-eval-usage
-# ]
-# "seed/**/migrations/*" = [
-#     "ARG001", # unused-function-argument
-#     "RUF012", # mutable-class-default
-# ]
-# "seed/models/__init__.py" = [
-#     "F401", # unused-import
-#     "F403", # undefined-local-with-import-star
-#     "I001", # unsorted-imports
-# ]
-
-# [lint.pylint]
-# # Raise the allowed limits the least possible amount https://docs.astral.sh/ruff/settings/#pylint-max-branches
-# max-statements = 58
-# max-branches = 24
