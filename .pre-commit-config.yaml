@@ -1,0 +1,37 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-ast
+      - id: check-added-large-files
+        args: ['--maxkb=5000']
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-toml
+      - id: check-yaml
+      - id: check-json
+      - id: name-tests-test
+        args: ["--pytest-test-first"]
+      - id: fix-byte-order-marker
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: detect-private-key
+  # - repo: meta
+    # hooks:
+      # - id: check-useless-excludes # Ensure the exclude syntax is correct
+      # - id: check-hooks-apply # Fails if a hook doesn't apply to any file
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.23.7
+    hooks:
+      - id: typos
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.2
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix, --output-format=full]
+      # Run the formatter
+      - id: ruff-format
