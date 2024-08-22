@@ -24,13 +24,13 @@ jobs:
           uv sync
       - name: Validate an input file
         run: |
-          uv run ghedesigner --validate demos/find_design_rectangle_single_u_tube.json
+          uv run ghedesigner --validate-only demos/find_design_rectangle_single_u_tube.json
       - name: Run a sample file
         run: |
-          uv run ghedesigner demos/find_design_rectangle_single_u_tube.json /tmp
+          uv run ghedesigner demos/find_design_rectangle_single_u_tube.json ./tmp
       - name: Confirm IDF conversion option
         run: |
-          uv run ghedesigner --convert=IDF /tmp/SimulationSummary.json
+          uv run ghedesigner --convert=IDF ./tmp/SimulationSummary.json
       - name: GHED version string
         run: |
           uv run ghedesigner --version
