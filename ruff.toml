@@ -41,32 +41,33 @@ extend-select = [
     "UP",  # pyupgrade
 ]
 # except for these specific errors
+# https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
 ignore = [
-    "A001",    # builtin-variable-shadowing
-    "ARG001",  # unused-function-argument
-    "ARG002",  # unused-method-argument
-    "ARG003",  # unused-class-method-argument
-    "BLE001",  # blind-except
+    # "A001",    # builtin-variable-shadowing
+    # "ARG001",  # unused-function-argument
+    # "ARG002",  # unused-method-argument
+    # "ARG003",  # unused-class-method-argument
+    # "BLE001",  # blind-except
     "COM812",  # missing-trailing-comma
     "COM819",  # prohibited-trailing-comma
     # "E501",    # line-too-long
     "ISC001",  # single-line-implicit-string-concatenation
-    "N806",    # non-lowercase-variable-in-function
-    "PLC1901", # compare-to-empty-string (preview)
-    "PLR0402", # manual-from-import
-    "PLR0911", # too-many-return-statements
-    "PLR0912", # too-many-branches
-    "PLR0913", # too-many-arguments
-    "PLR0915", # too-many-statements
-    "PLR2004", # magic-value-comparison
-    "PT009",   # pytest-unittest-assertion
-    "Q000",    # bad-quotes-inline-string
-    "RUF012",  # mutable-class-default
-    "S106",    # hardcoded-password-func-arg
-    "S311",    # suspicious-non-cryptographic-random-usage
-    "S320",    # suspicious-xmle-tree-usage
-    "S603",    # subprocess-without-shell-equals-true
-    "S607",    # start-process-with-partial-path
-    "S701",    # jinja2-autoescape-false
-    "SIM108",  # if-else-block-instead-of-if-exp
+    # "N806",    # non-lowercase-variable-in-function
+    # "PLC1901", # compare-to-empty-string (preview)
+    # "PLR0402", # manual-from-import
+    # "PLR0911", # too-many-return-statements
+    # "PLR0912", # too-many-branches
+    # "PLR0913", # too-many-arguments
+    # "PLR0915", # too-many-statements
+    # "PLR2004", # magic-value-comparison
+    # "PT009",   # pytest-unittest-assertion
+    # "Q000",    # bad-quotes-inline-string
+    # "RUF012",  # mutable-class-default
+    # "S106",    # hardcoded-password-func-arg
+    # "S311",    # suspicious-non-cryptographic-random-usage
+    # "S320",    # suspicious-xmle-tree-usage
+    # "S603",    # subprocess-without-shell-equals-true
+    # "S607",    # start-process-with-partial-path
+    # "S701",    # jinja2-autoescape-false
+    # "SIM108",  # if-else-block-instead-of-if-exp
 ]
