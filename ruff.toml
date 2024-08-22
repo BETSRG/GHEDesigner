@@ -40,7 +40,7 @@ extend-select = [
     "UP",  # pyupgrade
 ]
 # except for these specific errors
-ignore = [
+extend-ignore = [
     "A001",    # builtin-variable-shadowing
     "ARG001",  # unused-function-argument
     "ARG002",  # unused-method-argument
@@ -48,7 +48,7 @@ ignore = [
     "BLE001",  # blind-except
     "COM812",  # missing-trailing-comma
     "COM819",  # prohibited-trailing-comma
-    "E501",    # line-too-long
+    # "E501",    # line-too-long
     "ISC001",  # single-line-implicit-string-concatenation
     "N806",    # non-lowercase-variable-in-function
     "PLC1901", # compare-to-empty-string (preview)
