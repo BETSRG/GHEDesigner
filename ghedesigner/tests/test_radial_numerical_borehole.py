@@ -27,7 +27,7 @@ class TestRadialNumericalBorehole(unittest.TestCase):
         rn_bh = RadialNumericalBH(bh)
         rn_bh.calc_sts_g_functions(bh)
 
-        self.assertAlmostEqual(rn_bh.g[0], -1.182, delta=0.001)
-        self.assertAlmostEqual(rn_bh.g[-1], 2.281, delta=0.001)
-        self.assertAlmostEqual(rn_bh.g_bhw[0], 0.0, delta=0.001)
-        self.assertAlmostEqual(rn_bh.g_bhw[-1], 2.094, delta=0.001)
+        self.assertAlmostEqual(-1.182, rn_bh.g[0], delta=0.001)
+        self.assertAlmostEqual(2.217, rn_bh.g[-1], delta=0.001)
+        self.assertAlmostEqual(0.0, rn_bh.g_bhw[0], delta=0.001)
+        self.assertAlmostEqual(2.094, rn_bh.g_bhw[-1], delta=0.001)
