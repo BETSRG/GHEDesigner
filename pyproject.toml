@@ -46,3 +46,6 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["ghedesigner"]
+
+[project.scripts]
+ghedesigner = "ghedesigner.manager:run_manager_from_cli"
