@@ -12,7 +12,7 @@ expected_results_path = Path(__file__).parent / "expected_demo_results.json"
 expected_demo_results_dict = loads(expected_results_path.read_text())
 
 
-def abs_error_with_tolerance(val_1, val_2, delta=0):
+def abs_error_within_tolerance(val_1, val_2, delta=0):
     return True if abs(val_1 - val_2) <= delta else False
 
 
@@ -47,9 +47,10 @@ class TestDemoFiles(GHEBaseTest):
             expected_length = expected_results['active_borehole_length']
             expected_nbh = expected_results['number_of_boreholes']
 
-            check_len = abs_error_with_tolerance(actual_length, expected_length, delta=0.1)
-            check_nbh = abs_error_with_tolerance(actual_nbh, expected_nbh)
-            if not check_len or not check_nbh:
+            len_passes = abs_error_within_tolerance(actual_length, expected_length, delta=0.1)
+            nbh_passes = abs_error_within_tolerance(actual_nbh, expected_nbh)
+
+            if not len_passes or not nbh_passes:
                 failed_tests.append(out_dir.stem)
 
         if failed_tests:

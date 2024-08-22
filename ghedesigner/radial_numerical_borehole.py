@@ -41,10 +41,10 @@ class RadialNumericalBH(object):
         self.num_grout_cells = 27
         self.num_soil_cells = 500
 
-        self.num_cells = self.num_fluid_cells + self.num_conv_cells + self.num_pipe_cells
-        self.num_cells += self.num_grout_cells + self.num_soil_cells
-
-        self.bh_wall_idx = self.num_fluid_cells + self.num_conv_cells + self.num_pipe_cells + self.num_grout_cells
+        self.num_cells = sum((self.num_fluid_cells, self.num_conv_cells, self.num_pipe_cells,
+                              self.num_grout_cells, self.num_soil_cells))
+        self.bh_wall_idx = sum((self.num_fluid_cells, self.num_conv_cells,
+                                self.num_pipe_cells, self.num_grout_cells))
 
         # Geometry and grid procedure
 
