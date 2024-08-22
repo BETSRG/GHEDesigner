@@ -6,7 +6,11 @@ from pathlib import Path
 
 def update_results(results_dir: Path, expected_results_path: Path):
 
+    d_current = {}
     d_expected = {}
+
+    with open(expected_results_path, "r", encoding="utf-8") as f:
+        d_current = json.load(f)
 
     for p in results_dir.iterdir():
         this_dir = results_dir / p
@@ -18,8 +22,10 @@ def update_results(results_dir: Path, expected_results_path: Path):
             "number_of_boreholes": d["ghe_system"]["number_of_boreholes"]
         }
 
+    d_current.update(d_expected)
+
     with open(expected_results_path, "w", encoding="utf-8") as f:
-        json.dump(d_expected, f, indent=2, sort_keys=True)
+        json.dump(d_current, f, indent=2, sort_keys=True)
 
 
 if __name__ == "__main__":

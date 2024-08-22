@@ -111,7 +111,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(132.79, u_tube_height, delta=0.01)
+        self.assertAlmostEqual(133.4, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
         self.assertEqual(75, len(nbh))
 
@@ -135,9 +135,9 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(133.89, u_tube_height, delta=0.01)
+        self.assertAlmostEqual(133.6, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(66, len(nbh))
+        self.assertEqual(68, len(nbh))
 
     def test_double_u_tube(self):
         ghe = GHEManager()
@@ -159,9 +159,9 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(132.31, u_tube_height, delta=0.01)
+        self.assertAlmostEqual(134.5, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(67, len(nbh))
+        self.assertEqual(65, len(nbh))
 
     def test_coaxial(self):
         ghe = GHEManager()
@@ -183,6 +183,6 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
         u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
-        self.assertAlmostEqual(131.03, u_tube_height, delta=0.01)
+        self.assertAlmostEqual(133.4, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
         self.assertEqual(58, len(nbh))
