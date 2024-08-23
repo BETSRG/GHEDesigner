@@ -101,14 +101,14 @@ include:
 
 ## Requirements
 
-GHEDesigner is supported for Python versions >= 3.8, and is tested with Python 3.8 and 3.9. GHEDesigner is dependent on
+GHEDesigner is supported for Python versions >= 3.9, and is tested with Python 3.9-3.12. GHEDesigner is dependent on
 the following packages:
 
-- [click][#click] (>=8.1.7)
-- [jsonschema][#jsonschema] (>=4.19.1)
-- [numpy][#numpy] (>=1.24.2)
-- [pygfunction][#pygfunction] (>=2.2.2)
-- [scipy][#scipy] (>=1.10.1)
+- [click][#click] (~=8.0)
+- [jsonschema][#jsonschema] (~=4.19)
+- [numpy][#numpy] (~=1.26)
+- [pygfunction][#pygfunction] (~=2.2)
+- [scipy][#scipy] (~=1.13)
 
 ## Quick Start
 
@@ -123,6 +123,11 @@ pip install ghedesigner
 ```
 git clone https://github.com/betsrg/ghedesigner
 ```
+
+[Uv](https://docs.astral.sh/uv/) is how developers will manage the project. After cloning, ensure you have
+[uv installed](https://docs.astral.sh/uv/#getting-started), then run `uv sync` to install all development dependencies.
+Developers may then call `uv run pytest` (which will take several minutes to run) to confirm all dev dependencies are
+installed and everything is working as expected.
 
 ## Questions
 
