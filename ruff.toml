@@ -41,27 +41,37 @@ extend-select = [
     "UP",  # pyupgrade
 ]
 # except for these specific errors
-# https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+# Ruff has a list of linting rules to ignore when using the Ruff formatter (as we are): https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
 ignore = [
     # "A001",    # builtin-variable-shadowing
     # "ARG001",  # unused-function-argument
     # "ARG002",  # unused-method-argument
     # "ARG003",  # unused-class-method-argument
     # "BLE001",  # blind-except
-    "COM812",  # missing-trailing-comma
-    "COM819",  # prohibited-trailing-comma
-    # "E501",    # line-too-long
-    "ISC001",  # single-line-implicit-string-concatenation
+    "COM812",    # missing-trailing-comma
+    "COM819",    # prohibited-trailing-comma
+    "D206",      # indent-with-spaces
+    "D300",      # triple-single-quotes
+    "E111",      # indentation-with-invalid-multiple
+    "E114",      # indentation-with-invalid-multiple-comment
+    "E117",      # over-indented
+    "E501",    # line-too-long
+    "ISC001",    # single-line-implicit-string-concatenation
+    "ISC002",    # multi-line-implicit-string-concatenation
     # "N806",    # non-lowercase-variable-in-function
     # "PLC1901", # compare-to-empty-string (preview)
     # "PLR0402", # manual-from-import
     # "PLR0911", # too-many-return-statements
-    # "PLR0912", # too-many-branches
-    # "PLR0913", # too-many-arguments
-    # "PLR0915", # too-many-statements
+    "PLR0912", # too-many-branches
+    "PLR0913", # too-many-arguments
+    "PLR0915", # too-many-statements
     # "PLR2004", # magic-value-comparison
     # "PT009",   # pytest-unittest-assertion
-    # "Q000",    # bad-quotes-inline-string
+    "Q000",      # bad-quotes-inline-string
+    "Q001",      # bad-quotes-multiline-string
+    "Q002",      # bad-quotes-docstring
+    "Q003",      # avoidable-escaped-quote
+    "Q004",      # unnecessary-escaped-quote
     # "RUF012",  # mutable-class-default
     # "S106",    # hardcoded-password-func-arg
     # "S311",    # suspicious-non-cryptographic-random-usage
@@ -70,4 +80,5 @@ ignore = [
     # "S607",    # start-process-with-partial-path
     # "S701",    # jinja2-autoescape-false
     # "SIM108",  # if-else-block-instead-of-if-exp
+    "W191",      # tab-indentation
 ]
