@@ -2,38 +2,37 @@ from math import ceil, sqrt
 from typing import Optional
 
 from ghedesigner.borehole_heat_exchangers import GHEBorehole
-from ghedesigner.enums import BHPipeType, TimestepType, FlowConfigType
+from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
-from ghedesigner.media import Grout, Pipe, Soil, GHEFluid
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
 from ghedesigner.simulation import SimulationParameters
-from ghedesigner.utilities import eskilson_log_times, borehole_spacing, check_bracket, sign
+from ghedesigner.utilities import borehole_spacing, check_bracket, eskilson_log_times, sign
 
 
 class Bisection1D:
     def __init__(
-            self,
-            coordinates_domain: list,
-            field_descriptors: list,
-            v_flow: float,
-            borehole: GHEBorehole,
-            bhe_type: BHPipeType,
-            fluid: GHEFluid,
-            pipe: Pipe,
-            grout: Grout,
-            soil: Soil,
-            sim_params: SimulationParameters,
-            hourly_extraction_ground_loads: list,
-            method: TimestepType,
-            flow_type: FlowConfigType.BOREHOLE,
-            max_iter=15,
-            disp=False,
-            search=True,
-            field_type="N/A",
-            load_years=None,
+        self,
+        coordinates_domain: list,
+        field_descriptors: list,
+        v_flow: float,
+        borehole: GHEBorehole,
+        bhe_type: BHPipeType,
+        fluid: GHEFluid,
+        pipe: Pipe,
+        grout: Grout,
+        soil: Soil,
+        sim_params: SimulationParameters,
+        hourly_extraction_ground_loads: list,
+        method: TimestepType,
+        flow_type: FlowConfigType.BOREHOLE,
+        max_iter=15,
+        disp=False,
+        search=True,
+        field_type="N/A",
+        load_years=None,
     ):
-
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
         if load_years is None:
@@ -170,7 +169,6 @@ class Bisection1D:
         return t_excess
 
     def search(self):
-
         x_l_idx = 0
 
         # find upper bound that respects max_boreholes
@@ -211,40 +209,47 @@ class Bisection1D:
         elif check_bracket(sign(t_0_upper), sign(t_m1)):
             if self.disp:
                 print("Perform the integer bisection search routine.")
-            pass
-        else:
-            # solution doesn't lie within bounds
-            if t_0_lower < 0.0:
-                condition_msg = "The optimal design requires fewer or shorter boreholes \n" \
-                                "than what is possible based on the current design parameters."
-                print(condition_msg)
-                if self.sim_params.continue_if_design_unmet:
-                    print("Smallest available configuration selected.")
-                    selection_key = x_l_idx
-                    self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.min_height,
-                                        self.fieldDescriptors[selection_key])
-                    return selection_key, self.coordinates_domain[selection_key]
-                else:
-                    raise ValueError("Search failed.")
-            elif t_m1 > 0.0:
-                condition_msg = "The optimal design requires more or deeper boreholes \n" \
-                                "than what is possible based on the current design parameters. \n" \
-                                "Consider increasing the available land area, \n" \
-                                "increasing the maximum borehole depth, \n" \
-                                "or decreasing the maximum borehole spacing."
-                print(condition_msg)
-                if self.sim_params.continue_if_design_unmet:
-                    print("Largest available configuration selected.")
-                    selection_key = x_r_idx
-                    self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.max_height,
-                                        self.fieldDescriptors[selection_key])
-                    return selection_key, self.coordinates_domain[selection_key]
-                else:
-                    raise ValueError("Search failed.")
+        elif t_0_lower < 0.0:
+            condition_msg = (
+                "The optimal design requires fewer or shorter boreholes \n"
+                "than what is possible based on the current design parameters."
+            )
+            print(condition_msg)
+            if self.sim_params.continue_if_design_unmet:
+                print("Smallest available configuration selected.")
+                selection_key = x_l_idx
+                self.initialize_ghe(
+                    self.coordinates_domain[selection_key],
+                    self.sim_params.min_height,
+                    self.fieldDescriptors[selection_key],
+                )
+                return selection_key, self.coordinates_domain[selection_key]
             else:
-                # if we've gotten here, everything should be good for the bisection search.
-                # can add catches for other cases here if they pop up.
-                pass
+                raise ValueError("Search failed.")
+        elif t_m1 > 0.0:
+            condition_msg = (
+                "The optimal design requires more or deeper boreholes \n"
+                "than what is possible based on the current design parameters. \n"
+                "Consider increasing the available land area, \n"
+                "increasing the maximum borehole depth, \n"
+                "or decreasing the maximum borehole spacing."
+            )
+            print(condition_msg)
+            if self.sim_params.continue_if_design_unmet:
+                print("Largest available configuration selected.")
+                selection_key = x_r_idx
+                self.initialize_ghe(
+                    self.coordinates_domain[selection_key],
+                    self.sim_params.max_height,
+                    self.fieldDescriptors[selection_key],
+                )
+                return selection_key, self.coordinates_domain[selection_key]
+            else:
+                raise ValueError("Search failed.")
+        else:
+            # if we've gotten here, everything should be good for the bisection search.
+            # can add catches for other cases here if they pop up.
+            pass
         if self.disp:
             print("Beginning bisection search...")
 
@@ -255,7 +260,8 @@ class Bisection1D:
         while i < self.max_iter:
             c_idx = ceil((x_l_idx + x_r_idx) / 2)
             # if the solution is no longer making progress break the while
-            if c_idx == x_l_idx or c_idx == x_r_idx:
+            # if c_idx == x_l_idx or c_idx == x_r_idx:
+            if c_idx in (x_l_idx, x_r_idx):
                 break
 
             c_t_excess = self.calculate_excess(
@@ -295,43 +301,45 @@ class Bisection1D:
         for _, val in zip(sorted_num_bh, sorted_values):
             if val < 0:
                 if excess_of_interest != val:
-                    print('Loads resulted in odd behavior requiring the selected field configuration \n'
-                          'to be reset to the smallest field with negative excess temperature. \n'
-                          'Please forward the inputs to the developers for investigation.')
+                    print(
+                        'Loads resulted in odd behavior requiring the selected field configuration \n'
+                        'to be reset to the smallest field with negative excess temperature. \n'
+                        'Please forward the inputs to the developers for investigation.'
+                    )
                 excess_of_interest = val
                 break
 
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
-        self.initialize_ghe(self.coordinates_domain[selection_key], self.sim_params.max_height,
-                            self.fieldDescriptors[selection_key])
+        self.initialize_ghe(
+            self.coordinates_domain[selection_key], self.sim_params.max_height, self.fieldDescriptors[selection_key]
+        )
         return selection_key, self.coordinates_domain[selection_key]
 
 
 # This is the search algorithm used for finding row-wise fields
 class RowWiseModifiedBisectionSearch:
     def __init__(
-            self,
-            v_flow: float,
-            borehole: GHEBorehole,
-            bhe_type: BHPipeType,
-            fluid: GHEFluid,
-            pipe: Pipe,
-            grout: Grout,
-            soil: Soil,
-            sim_params: SimulationParameters,
-            hourly_extraction_ground_loads: list,
-            geometric_constraints,
-            method: TimestepType,
-            flow_type: FlowConfigType.BOREHOLE,
-            max_iter: int = 10,
-            disp: bool = False,
-            search: bool = True,
-            advanced_tracking: bool = True,
-            field_type: str = "rowwise",
-            load_years=None,
+        self,
+        v_flow: float,
+        borehole: GHEBorehole,
+        bhe_type: BHPipeType,
+        fluid: GHEFluid,
+        pipe: Pipe,
+        grout: Grout,
+        soil: Soil,
+        sim_params: SimulationParameters,
+        hourly_extraction_ground_loads: list,
+        geometric_constraints,
+        method: TimestepType,
+        flow_type: FlowConfigType.BOREHOLE,
+        max_iter: int = 10,
+        disp: bool = False,
+        search: bool = True,
+        advanced_tracking: bool = True,
+        field_type: str = "rowwise",
+        load_years=None,
     ):
-
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
         if load_years is None:
@@ -362,8 +370,9 @@ class RowWiseModifiedBisectionSearch:
             self.checkedFields = []
         if search:
             self.selected_coordinates, self.selected_specifier = self.search()
-            self.initialize_ghe(self.selected_coordinates, self.sim_params.max_height,
-                                field_specifier=self.selected_specifier)
+            self.initialize_ghe(
+                self.selected_coordinates, self.sim_params.max_height, field_specifier=self.selected_specifier
+            )
 
     def retrieve_flow(self, coordinates, rho):
         if self.flow_type == FlowConfigType.BOREHOLE:
@@ -435,21 +444,18 @@ class RowWiseModifiedBisectionSearch:
         return t_excess
 
     def search(self):
-
         spacing_start = self.geometricConstraints.min_spacing
         spacing_stop = self.geometricConstraints.max_spacing
         spacing_step = self.geometricConstraints.spacing_step
         rotate_step = self.geometricConstraints.rotate_step
-        prop_bound, ng_zones = gen_shape(self.geometricConstraints.property_boundary,
-                                         self.geometricConstraints.no_go_boundaries)
+        prop_bound, ng_zones = gen_shape(
+            self.geometricConstraints.property_boundary, self.geometricConstraints.no_go_boundaries
+        )
         rotate_start = self.geometricConstraints.min_rotation
         rotate_stop = self.geometricConstraints.max_rotation
         perimeter_spacing_ratio = self.geometricConstraints.perimeter_spacing_ratio
 
-        if perimeter_spacing_ratio is None:
-            use_perimeter = False
-        else:
-            use_perimeter = True
+        use_perimeter = perimeter_spacing_ratio is not None
 
         selected_coordinates = None
         selected_specifier = None
@@ -509,11 +515,13 @@ class RowWiseModifiedBisectionSearch:
         # If the excess temperature is >0 utilizing the largest field and largest depth, then notify the user that
         # the given constraints cannot find a satisfactory field.
         if t_upper > 0.0 and t_lower > 0.0:
-            condition_msg = "The optimal design requires more or deeper boreholes \n" \
-                            "than what is possible based on the current design parameters. \n" \
-                            "Consider increasing the available land area, \n" \
-                            "increasing the maximum borehole depth, \n" \
-                            "or decreasing the maximum borehole spacing."
+            condition_msg = (
+                "The optimal design requires more or deeper boreholes \n"
+                "than what is possible based on the current design parameters. \n"
+                "Consider increasing the available land area, \n"
+                "increasing the maximum borehole depth, \n"
+                "or decreasing the maximum borehole spacing."
+            )
             print(condition_msg)
             if self.sim_params.continue_if_design_unmet:
                 print("Largest available configuration selected.")
@@ -558,9 +566,7 @@ class RowWiseModifiedBisectionSearch:
                     )
 
                 # Getting the three field's excess temperature
-                t_e1 = self.calculate_excess(
-                    f1, self.sim_params.max_height, field_specifier=f1_specifier
-                )
+                t_e1 = self.calculate_excess(f1, self.sim_params.max_height, field_specifier=f1_specifier)
 
                 if self.advanced_tracking:
                     self.advanced_tracking.append([spacing_m, f1_specifier, len(f1), t_e1])
@@ -574,7 +580,8 @@ class RowWiseModifiedBisectionSearch:
                     low_e = t_e1
 
                 spacing_m = (spacing_low + spacing_high) * 0.5
-                if abs(low_e - high_e) < 1E-10:  # Error tolerance
+                error_tolerance = 1e-10
+                if abs(low_e - high_e) < error_tolerance:
                     break
 
                 i += 1
@@ -631,12 +638,11 @@ class RowWiseModifiedBisectionSearch:
                     best_drilling = total_drilling
                     best_excess = t_e
                     best_spacing = ts
-                else:
-                    if t_e <= 0.0 and total_drilling < best_drilling:
-                        best_drilling = total_drilling
-                        best_field = field
-                        best_excess = t_e
-                        best_spacing = ts
+                elif t_e <= 0.0 and total_drilling < best_drilling:
+                    best_drilling = total_drilling
+                    best_field = field
+                    best_excess = t_e
+                    best_spacing = ts
             selected_coordinates = best_field
             selected_temp_excess = best_excess
             selected_spacing = best_spacing
@@ -645,7 +651,6 @@ class RowWiseModifiedBisectionSearch:
         # in the user's best interest to return a field smaller than the smallest one. This is done by removing
         # boreholes from the field.
         elif t_lower < 0.0 and t_upper < 0.0:
-
             original_coordinates = lower_field
 
             # Function For Sorting Boreholes Based on Proximity to a Point
@@ -653,7 +658,8 @@ class RowWiseModifiedBisectionSearch:
                 def dist(o_p):
                     return sqrt(
                         (target_point[0] - o_p[0]) * (target_point[0] - o_p[0])
-                        + (target_point[1] - o_p[1]) * (target_point[1] - o_p[1]))
+                        + (target_point[1] - o_p[1]) * (target_point[1] - o_p[1])
+                    )
 
                 distances = map(dist, other_points)
                 if method == "ascending":
@@ -684,7 +690,7 @@ class RowWiseModifiedBisectionSearch:
             if t_e_single <= 0:
                 selected_temp_excess = t_e_single
                 selected_specifier = "1X1"
-                selected_coordinates = starting_field[len(starting_field) - 1:]
+                selected_coordinates = starting_field[len(starting_field) - 1 :]
                 selected_spacing = spacing_stop
             else:
                 # Perform a bisection search between nbh values to find the smallest satisfactory field
@@ -697,15 +703,11 @@ class RowWiseModifiedBisectionSearch:
                 i = 0
                 while i < self.max_iter:
                     nbh = (nbh_max + nbh_min) // 2
-                    current_field = starting_field[nbh_start - nbh:]
+                    current_field = starting_field[nbh_start - nbh :]
                     f_s = lower_field_specifier + f"_BR{nbh_start - nbh}"
-                    t_e = self.calculate_excess(
-                        current_field, self.sim_params.max_height, field_specifier=f_s
-                    )
+                    t_e = self.calculate_excess(current_field, self.sim_params.max_height, field_specifier=f_s)
                     if self.advanced_tracking:
-                        self.advanced_tracking.append(
-                            [spacing_stop, lower_field_specifier + "_" + str(nbh), nbh, t_e]
-                        )
+                        self.advanced_tracking.append([spacing_stop, lower_field_specifier + "_" + str(nbh), nbh, t_e])
                         self.checkedFields.append(current_field)
                     if t_e <= 0.0:
                         # highT_e = T_e
@@ -743,24 +745,24 @@ class RowWiseModifiedBisectionSearch:
 
 class Bisection2D(Bisection1D):
     def __init__(
-            self,
-            coordinates_domain_nested: list,
-            field_descriptors: list,
-            v_flow: float,
-            borehole: GHEBorehole,
-            bhe_type,
-            fluid: GHEFluid,
-            pipe: Pipe,
-            grout: Grout,
-            soil: Soil,
-            sim_params: SimulationParameters,
-            hourly_extraction_ground_loads: list,
-            method: TimestepType,
-            flow_type: FlowConfigType.BOREHOLE,
-            max_iter=15,
-            disp=False,
-            field_type="N/A",
-            load_years=None,
+        self,
+        coordinates_domain_nested: list,
+        field_descriptors: list,
+        v_flow: float,
+        borehole: GHEBorehole,
+        bhe_type,
+        fluid: GHEFluid,
+        pipe: Pipe,
+        grout: Grout,
+        soil: Soil,
+        sim_params: SimulationParameters,
+        hourly_extraction_ground_loads: list,
+        method: TimestepType,
+        flow_type: FlowConfigType.BOREHOLE,
+        max_iter=15,
+        disp=False,
+        field_type="N/A",
+        load_years=None,
     ):
         if load_years is None:
             load_years = [2019]
@@ -817,24 +819,24 @@ class Bisection2D(Bisection1D):
 
 class BisectionZD(Bisection1D):
     def __init__(
-            self,
-            coordinates_domain_nested: list,
-            field_descriptors: list,
-            v_flow: float,
-            borehole: GHEBorehole,
-            bhe_type,
-            fluid: GHEFluid,
-            pipe: Pipe,
-            grout: Grout,
-            soil: Soil,
-            sim_params: SimulationParameters,
-            hourly_extraction_ground_loads: list,
-            method: TimestepType,
-            flow_type: FlowConfigType.BOREHOLE,
-            max_iter=15,
-            disp=False,
-            field_type="N/A",
-            load_years=None,
+        self,
+        coordinates_domain_nested: list,
+        field_descriptors: list,
+        v_flow: float,
+        borehole: GHEBorehole,
+        bhe_type,
+        fluid: GHEFluid,
+        pipe: Pipe,
+        grout: Grout,
+        soil: Soil,
+        sim_params: SimulationParameters,
+        hourly_extraction_ground_loads: list,
+        method: TimestepType,
+        flow_type: FlowConfigType.BOREHOLE,
+        max_iter=15,
+        disp=False,
+        field_type="N/A",
+        load_years=None,
     ):
         if load_years is None:
             load_years = [2019]
@@ -894,7 +896,6 @@ class BisectionZD(Bisection1D):
         old_height = 99999
 
         while i < len(self.coordinates_domain_nested) and i < max_iter:
-
             self.coordinates_domain = self.coordinates_domain_nested[i]
             self.fieldDescriptors = self.nested_fieldDescriptors[i]
             self.calculated_temperatures = {}
@@ -934,16 +935,12 @@ class BisectionZD(Bisection1D):
         excess_of_interest = max(negative_excess_values)
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
-        selected_coordinates = self.coordinates_domain_nested[selection_key_outer][
-            selection_key
-        ]
+        selected_coordinates = self.coordinates_domain_nested[selection_key_outer][selection_key]
 
         self.initialize_ghe(
             selected_coordinates,
             self.sim_params.max_height,
-            field_specifier=self.nested_fieldDescriptors[selection_key_outer][
-                selection_key
-            ],
+            field_specifier=self.nested_fieldDescriptors[selection_key_outer][selection_key],
         )
         self.ghe.compute_g_functions()
         self.ghe.size(method=TimestepType.HYBRID)

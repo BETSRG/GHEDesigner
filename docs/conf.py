@@ -6,17 +6,15 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import datetime
 import importlib
-
 from pathlib import Path
 from sys import path
 
+from ghedesigner import VERSION
+
 root_dir = Path(__file__).parent.parent.resolve()
 path.insert(0, str(root_dir))
-
-import datetime
-
-from ghedesigner import VERSION
 
 
 def get_author_names():
@@ -38,7 +36,8 @@ def get_author_names():
 author_names, copyright_names = get_author_names()
 
 project = 'GHEDesigner'
-copyright = f'{datetime.date.today().year}, {copyright_names}'
+copyright = f'{datetime.date.today().year}, {copyright_names}'  # noqa: A001
+# TODO: determine why Ruff is upset about "copyright" and fix it.
 author = author_names
 release = VERSION
 
@@ -60,6 +59,7 @@ html_static_path = ['_static']
 # PATCH `sphinx-jsonschema`
 # to render the extra `units`` schema properties
 
+
 def _patched_sphinx_jsonschema_simpletype(self, schema):
     """Render the *extra* ``units`` and ``tags`` schema properties for every object."""
     rows = _original_sphinx_jsonschema_simpletype(self, schema)
@@ -74,5 +74,5 @@ def _patched_sphinx_jsonschema_simpletype(self, schema):
 
 
 sjs_wide_format = importlib.import_module("sphinx-jsonschema.wide_format")
-_original_sphinx_jsonschema_simpletype = sjs_wide_format.WideFormat._simpletype  # type: ignore
-sjs_wide_format.WideFormat._simpletype = _patched_sphinx_jsonschema_simpletype  # type: ignore
+_original_sphinx_jsonschema_simpletype = sjs_wide_format.WideFormat._simpletype
+sjs_wide_format.WideFormat._simpletype = _patched_sphinx_jsonschema_simpletype

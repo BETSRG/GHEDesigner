@@ -2,7 +2,7 @@ from math import atan, cos, pi, sin, sqrt
 
 import numpy as np
 
-from ghedesigner.constants import DEG_TO_RAD, RAD_TO_DEG, PI_OVER_2
+from ghedesigner.constants import DEG_TO_RAD, PI_OVER_2, RAD_TO_DEG
 from ghedesigner.shape import Shapes, sort_intersections
 
 
@@ -11,8 +11,8 @@ def gen_shape(prop_bound, ng_zones=None):
     r_a = [Shapes(prop_bound)]
     if ng_zones is not None:
         r_n = []
-        for ngZone in ng_zones:
-            r_n.append(Shapes(ngZone))
+        for ng_zone in ng_zones:
+            r_n.append(Shapes(ng_zone))
         r_a.append(r_n)
     else:
         r_a.append(None)
@@ -20,13 +20,13 @@ def gen_shape(prop_bound, ng_zones=None):
 
 
 def field_optimization_wp_space_fr(
-        p_space,
-        space_start,
-        rotate_step,
-        prop_bound,
-        ng_zones=None,
-        rotate_start=None,
-        rotate_stop=None,
+    p_space,
+    space_start,
+    rotate_step,
+    prop_bound,
+    ng_zones=None,
+    rotate_start=None,
+    rotate_stop=None,
 ):
     """Optimizes a Field by iterating over input values w/o perimeter spacing
 
@@ -87,13 +87,13 @@ def field_optimization_wp_space_fr(
 
 
 def field_optimization_fr(
-        space_start,
-        rotate_step,
-        prop_bound,
-        ng_zones=None,
-        rotate_start=None,
-        rotate_stop=None,
-        intersection_tolerance=1e-5,
+    space_start,
+    rotate_step,
+    prop_bound,
+    ng_zones=None,
+    rotate_start=None,
+    rotate_stop=None,
+    intersection_tolerance=1e-5,
 ):
     """Optimizes a Field by iterating over input values w/o perimeter spacing
 
@@ -112,12 +112,7 @@ def field_optimization_fr(
         rotate_start = -90.0 * DEG_TO_RAD
     if rotate_stop is None:
         rotate_stop = PI_OVER_2
-    if (
-            rotate_start > PI_OVER_2
-            or rotate_start < -PI_OVER_2
-            or rotate_stop > PI_OVER_2
-            or rotate_stop < -PI_OVER_2
-    ):
+    if rotate_start > PI_OVER_2 or rotate_start < -PI_OVER_2 or rotate_stop > PI_OVER_2 or rotate_stop < -PI_OVER_2:
         raise ValueError("Invalid Rotation")
 
     # Target Spacing iterates
@@ -188,7 +183,7 @@ def find_duplicates(borefield, space, disp=False):
                 continue
             else:
                 dist = sq_dist(borehole_1, borehole_2)
-            if abs(dist) < (space * 10 ** -1):
+            if abs(dist) < (space * 10**-1):
                 duplicate_pairs.append((i, j))
     if disp:
         # pad with '-' align in center
@@ -250,14 +245,14 @@ def remove_duplicates(borefield, space, disp=False):
 
 
 def two_space_gen_bhc(
-        field,
-        y_space,
-        x_space,
-        no_go=None,
-        rotate=0,
-        p_space=None,
-        i_space=None,
-        intersection_tolerance=1e-5,
+    field,
+    y_space,
+    x_space,
+    no_go=None,
+    rotate=0,
+    p_space=None,
+    i_space=None,
+    intersection_tolerance=1e-5,
 ):
     """Generates a borefield that has perimeter spacing
 
@@ -316,10 +311,7 @@ def remove_points_too_close(field, holes, i_space, no_go_zones=None):
     len_field = len(field)
     for i in range(len_field):
         p1 = field[i]
-        if i == len_field - 1:
-            p2 = field[0]
-        else:
-            p2 = field[i + 1]
+        p2 = field[0] if i == len_field - 1 else field[i + 1]
         remove_points_close_too_line(p1, p2, holes, i_space)
     if no_go_zones is not None:
         len_no_go_zones = len(no_go_zones)
@@ -328,10 +320,7 @@ def remove_points_too_close(field, holes, i_space, no_go_zones=None):
             len_ng = len(ng)
             for j in range(len_ng):
                 p1 = ng[j]
-                if j == len_ng - 1:
-                    p2 = ng[0]
-                else:
-                    p2 = ng[j + 1]
+                p2 = ng[0] if j == len_ng - 1 else ng[j + 1]
                 remove_points_close_too_line(p1, p2, holes, i_space)
 
 
@@ -428,12 +417,12 @@ def perimeter_distribute(field, space, r):
 
 
 def gen_borehole_config(
-        field,
-        y_space,
-        x_space,
-        no_go=None,
-        rotate=0,
-        intersection_tolerance=1e-6,
+    field,
+    y_space,
+    x_space,
+    no_go=None,
+    rotate=0,
+    intersection_tolerance=1e-6,
 ):
     """
     Function generates a series of x,y points representing a field of boreholes
@@ -461,18 +450,12 @@ def gen_borehole_config(
     lowest_vert = None
     highest_vert = None
     for vert in field.c:
-        if vert[0] != 0:
-            phi = atan(vert[1] / vert[0])
-        else:
-            phi = PI_OVER_2
+        phi = atan(vert[1] / vert[0]) if vert[0] != 0 else PI_OVER_2
         dist_vert = sqrt(vert[1] ** 2 + vert[0] ** 2)
         ref_angle = phi
         if phi > PI_OVER_2:
             if phi > pi:
-                if phi > 3 * PI_OVER_2:
-                    ref_angle = 2 * rotate + 3 * PI_OVER_2 - phi
-                else:
-                    ref_angle = 2 * rotate + pi - phi
+                ref_angle = 2 * rotate + 3 * PI_OVER_2 - phi if phi > 3 * PI_OVER_2 else 2 * rotate + pi - phi
             else:
                 ref_angle = pi - phi + 2 * rotate
         yp = dist_vert * sin(ref_angle - rotate)
@@ -498,7 +481,6 @@ def gen_borehole_config(
     point_shift = 1000.0
 
     for _ in range(num_rows + 1):
-
         # Row Defined by two points
         if row_space[1] == 0:
             row = [
@@ -523,9 +505,9 @@ def gen_borehole_config(
 
         # Checks for edge case where a single intersection is reported as two and treats it as one
         if (
-                len_f_inters > 1
-                and abs(f_inters[0][0] - f_inters[1][0]) <= intersection_tolerance
-                and abs(f_inters[0][1] - f_inters[1][1]) <= intersection_tolerance
+            len_f_inters > 1
+            and abs(f_inters[0][0] - f_inters[1][0]) <= intersection_tolerance
+            and abs(f_inters[0][1] - f_inters[1][1]) <= intersection_tolerance
         ):
             fi = 0
             fij = 0
@@ -535,9 +517,8 @@ def gen_borehole_config(
                         fij += 1
                         continue
                     if (
-                            abs(f_inters[fi][0] - f_inters[fij][0]) <= intersection_tolerance
-                            and abs(f_inters[fi][1] - f_inters[fij][1])
-                            <= intersection_tolerance
+                        abs(f_inters[fi][0] - f_inters[fij][0]) <= intersection_tolerance
+                        and abs(f_inters[fi][1] - f_inters[fij][1]) <= intersection_tolerance
                     ):
                         f_inters.pop(fij)
                         if fi >= fij:
@@ -561,20 +542,16 @@ def gen_borehole_config(
             boreholes)] = highest_vert """
         # Handles cases with odd number of intersections
         if len_f_inters % 2 == 0:
-
             # Specific case with two intersections
-            if len_f_inters == 2:
-
+            if len_f_inters == 2:  # noqa: SIM102
                 # Checks for the edge case where two intersections are very close together and replaces them with one
                 # point
                 if (
-                        sqrt(
-                            (f_inters[0][0] - f_inters[1][0])
-                            * (f_inters[0][0] - f_inters[1][0])
-                            + (f_inters[0][1] - f_inters[1][1])
-                            * (f_inters[0][1] - f_inters[1][1])
-                        )
-                        < x_space
+                    sqrt(
+                        (f_inters[0][0] - f_inters[1][0]) * (f_inters[0][0] - f_inters[1][0])
+                        + (f_inters[0][1] - f_inters[1][1]) * (f_inters[0][1] - f_inters[1][1])
+                    )
+                    < x_space
                 ):
                     ins = False
                     for ng_shape in no_go:
@@ -586,24 +563,19 @@ def gen_borehole_config(
 
             i = 0
             while i < len_f_inters - 1:
-
                 left_offset = [0, 0]
                 right_offset = [0, 0]
 
                 # Checks if there is enough distance between this point and another and then will offset the point if
                 # there is not enough room
                 dls_check = sqrt(
-                    (f_inters[i][0] - f_inters[i - 1][0])
-                    * (f_inters[i][0] - f_inters[i - 1][0])
-                    + (f_inters[i][1] - f_inters[i - 1][1])
-                    * (f_inters[i][1] - f_inters[i - 1][1])
+                    (f_inters[i][0] - f_inters[i - 1][0]) * (f_inters[i][0] - f_inters[i - 1][0])
+                    + (f_inters[i][1] - f_inters[i - 1][1]) * (f_inters[i][1] - f_inters[i - 1][1])
                 )
 
                 drs_check = sqrt(
-                    (f_inters[i][0] - f_inters[i + 1][0])
-                    * (f_inters[i][0] - f_inters[i + 1][0])
-                    + (f_inters[i][1] - f_inters[i + 1][1])
-                    * (f_inters[i][1] - f_inters[i + 1][1])
+                    (f_inters[i][0] - f_inters[i + 1][0]) * (f_inters[i][0] - f_inters[i + 1][0])
+                    + (f_inters[i][1] - f_inters[i + 1][1]) * (f_inters[i][1] - f_inters[i + 1][1])
                 )
 
                 if i > 0 and (dls := dls_check) < x_space:
@@ -634,18 +606,18 @@ def gen_borehole_config(
                 if len(boreholes) == 0:
                     boreholes[len(boreholes)] = f_inters[0]
                 if not (
-                        boreholes[len(boreholes) - 1][0] == f_inters[0][0]
-                        and boreholes[len(boreholes) - 1][1] == f_inters[0][1]
+                    boreholes[len(boreholes) - 1][0] == f_inters[0][0]
+                    and boreholes[len(boreholes) - 1][1] == f_inters[0][1]
                 ):
                     boreholes[len(boreholes)] = f_inters[0]
         else:
             i = 0
             while i < len_f_inters - 1:
                 if field.point_intersect(
-                        [
-                            (f_inters[i][0] + f_inters[i + 1][0]) / 2,
-                            (f_inters[i][1] + f_inters[i + 1][1]) / 2,
-                        ]
+                    [
+                        (f_inters[i][0] + f_inters[i + 1][0]) / 2,
+                        (f_inters[i][1] + f_inters[i + 1][1]) / 2,
+                    ]
                 ):
                     process_rows(
                         row,
@@ -685,29 +657,24 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
         distribute(row_sx, row_ex, row_space, r_a, rotate)
         return r_a
     num_col = int(
-        sqrt(
-            (row_sx[0] - row_ex[0]) * (row_sx[0] - row_ex[0])
-            + (row_sx[1] - row_ex[1]) * (row_sx[1] - row_ex[1])
-        )
+        sqrt((row_sx[0] - row_ex[0]) * (row_sx[0] - row_ex[0]) + (row_sx[1] - row_ex[1]) * (row_sx[1] - row_ex[1]))
         // row_space
     )
 
     inters = [
         point
         for shape in no_go
-        for point in shape.line_intersect(
-            row, rotate=rotate, intersection_tolerance=intersection_tolerance
-        )
+        for point in shape.line_intersect(row, rotate=rotate, intersection_tolerance=intersection_tolerance)
     ]
     inters = sort_intersections(inters, rotate)
     num_inters = len(inters)
 
-    if num_inters > 1:
+    if num_inters > 1:  # noqa: SIM102
         if less_than(
-                inters[0],
-                row_sx,
-                rotate=rotate,
-                intersection_tolerance=intersection_tolerance,
+            inters[0],
+            row_sx,
+            rotate=rotate,
+            intersection_tolerance=intersection_tolerance,
         ) and less_than(
             row_ex,
             inters[len(inters) - 1],
@@ -717,10 +684,10 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
             inside = False
             for _ in inters:
                 if less_than(
-                        row_sx,
-                        inters[0],
-                        rotate=rotate,
-                        intersection_tolerance=intersection_tolerance,
+                    row_sx,
+                    inters[0],
+                    rotate=rotate,
+                    intersection_tolerance=intersection_tolerance,
                 ) and less_than(
                     inters[0],
                     row_ex,
@@ -730,10 +697,8 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
                     inside = True
             if not inside:
                 point_in = False
-                for ngShape in no_go:
-                    if ngShape.point_intersect(
-                            [(row_ex[0] + row_sx[0]) / 2, (row_ex[1] + row_sx[1]) / 2]
-                    ):
+                for ng_shape in no_go:
+                    if ng_shape.point_intersect([(row_ex[0] + row_sx[0]) / 2, (row_ex[1] + row_sx[1]) / 2]):
                         point_in = True
                 if point_in:
                     return []
@@ -747,16 +712,18 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
     inters = inters[indices]
     num_inters = len(inters)
     for i in range(num_inters - 1):
-        space = sqrt((inters[i + 1][0] - inters[i][0]) * (inters[i + 1][0] - inters[i][0])
-                     + (inters[i + 1][1] - inters[i][1]) * (inters[i + 1][1] - inters[i][1]))
+        space = sqrt(
+            (inters[i + 1][0] - inters[i][0]) * (inters[i + 1][0] - inters[i][0])
+            + (inters[i + 1][1] - inters[i][1]) * (inters[i + 1][1] - inters[i][1])
+        )
         if space < row_space:
             i_none = False
             for shape in no_go:
                 if shape.point_intersect(
-                        [
-                            (inters[i + 1][0] + inters[i][0]) / 2,
-                            (inters[i + 1][1] + inters[i][1]) / 2,
-                        ]
+                    [
+                        (inters[i + 1][0] + inters[i][0]) / 2,
+                        (inters[i + 1][1] + inters[i][1]) / 2,
+                    ]
                 ):
                     i_none = True
             if i_none:
@@ -768,36 +735,48 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
     if num_col < 1:
         ins = False
         for shape in no_go:
-            if shape.point_intersect(
-                    [(row_ex[0] + row_sx[0]) / 2, (row_ex[1] + row_sx[1]) / 2]
-            ):
+            if shape.point_intersect([(row_ex[0] + row_sx[0]) / 2, (row_ex[1] + row_sx[1]) / 2]):
                 ins = True
         if not ins:
             if len(r_a) == 0 or not (
-                    r_a[len(r_a) - 1][0] == (row_ex[0] + row_sx[0]) / 2
-                    and r_a[len(r_a) - 1][1] == (row_ex[1] + row_sx[1]) / 2
+                r_a[len(r_a) - 1][0] == (row_ex[0] + row_sx[0]) / 2
+                and r_a[len(r_a) - 1][1] == (row_ex[1] + row_sx[1]) / 2
             ):
                 r_a[len(r_a)] = [(row_ex[0] + row_sx[0]) / 2, (row_ex[1] + row_sx[1]) / 2]
             return r_a
-    else:
-        if num_inters == 0:
-            if not_inside(row_sx, no_go) and not_inside(row_ex, no_go):
-                distribute(row_sx, row_ex, row_space, r_a, rotate)
-        elif num_inters == 2:
+    elif num_inters == 0:
+        if not_inside(row_sx, no_go) and not_inside(row_ex, no_go):
+            distribute(row_sx, row_ex, row_space, r_a, rotate)
+    elif num_inters == 2:
+        distribute(row_sx, inters[0], row_space, r_a, rotate)
+        distribute(inters[1], row_ex, row_space, r_a, rotate)
+    elif num_inters == 1:
+        ins = False
+        for shape in no_go:
+            if shape.point_intersect([(inters[0][0] + row_sx[0]) / 2, (inters[0][1] + row_sx[1]) / 2]):
+                ins = True
+        if not ins:
             distribute(row_sx, inters[0], row_space, r_a, rotate)
-            distribute(inters[1], row_ex, row_space, r_a, rotate)
-        elif num_inters == 1:
-            ins = False
-            for shape in no_go:
-                if shape.point_intersect(
-                        [(inters[0][0] + row_sx[0]) / 2, (inters[0][1] + row_sx[1]) / 2]
-                ):
-                    ins = True
-            if not ins:
+        else:
+            distribute(inters[0], row_ex, row_space, r_a, rotate)
+    elif num_inters % 2 == 0:
+        i = 0
+        while i < num_inters:
+            if i == 0:
                 distribute(row_sx, inters[0], row_space, r_a, rotate)
+                i = 1
+                continue
+            elif i == num_inters - 1:
+                distribute(inters[num_inters - 1], row_ex, row_space, r_a, rotate)
             else:
-                distribute(inters[0], row_ex, row_space, r_a, rotate)
-        elif num_inters % 2 == 0:
+                distribute(inters[i], inters[i + 1], row_space, r_a, rotate)
+            i += 2
+    else:
+        ins = False
+        for shape in no_go:
+            if shape.point_intersect([(inters[0][0] + row_sx[0]) / 2, (inters[0][1] + row_sx[1]) / 2]):
+                ins = True
+        if not ins:
             i = 0
             while i < num_inters:
                 if i == 0:
@@ -805,44 +784,25 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
                     i = 1
                     continue
                 elif i == num_inters - 1:
-                    distribute(inters[num_inters - 1], row_ex, row_space, r_a, rotate)
+                    i += 2
+                    continue
                 else:
                     distribute(inters[i], inters[i + 1], row_space, r_a, rotate)
                 i += 2
         else:
-            ins = False
-            for shape in no_go:
-                if shape.point_intersect(
-                        [(inters[0][0] + row_sx[0]) / 2, (inters[0][1] + row_sx[1]) / 2]
-                ):
-                    ins = True
-            if not ins:
-                i = 0
-                while i < num_inters:
-                    if i == 0:
-                        distribute(row_sx, inters[0], row_space, r_a, rotate)
-                        i = 1
-                        continue
-                    elif i == num_inters - 1:
-                        i += 2
-                        continue
-                    else:
-                        distribute(inters[i], inters[i + 1], row_space, r_a, rotate)
+            i = 0
+            while i < num_inters:
+                if i == 0:
+                    distribute(inters[0], inters[1], row_space, r_a, rotate)
+                    i = 2
+                    continue
+                elif i == num_inters - 1:
+                    distribute(inters[i], row_ex, row_space, r_a, rotate)
                     i += 2
-            else:
-                i = 0
-                while i < num_inters:
-                    if i == 0:
-                        distribute(inters[0], inters[1], row_space, r_a, rotate)
-                        i = 2
-                        continue
-                    elif i == num_inters - 1:
-                        distribute(inters[i], row_ex, row_space, r_a, rotate)
-                        i += 2
-                        continue
-                    else:
-                        distribute(inters[i], inters[i + 1], row_space, r_a, rotate)
-                    i += 2
+                    continue
+                else:
+                    distribute(inters[i], inters[i + 1], row_space, r_a, rotate)
+                i += 2
 
     return r_a
 
@@ -877,40 +837,20 @@ def less_than(p1, p2, rotate=0, intersection_tolerance=1e-5):
 
     if rotate >= 0:
         if dx_sign == 0:
-            if dy_sign == 1:
-                return True
-            else:
-                return False
-        elif dy_sign == 0:
-            if dx_sign == 1:
-                return True
-            else:
-                return False
-        elif dx_sign == dy_sign:
-            if dx_sign == 1:
-                return True
-            else:
-                return False
+            return dy_sign == 1
+        elif dy_sign in (0, dx_sign):
+            return dx_sign == 1
         else:
             raise ValueError("Slope between points does not match field orientation.")
+    elif dx_sign == 0:
+        if dy_sign == 1:
+            return False
+        else:
+            return False
+    elif dy_sign == 0 or dx_sign != dy_sign:
+        return dx_sign == 1
     else:
-        if dx_sign == 0:
-            if dy_sign == 1:
-                return False
-            else:
-                return False
-        elif dy_sign == 0:
-            if dx_sign == 1:
-                return True
-            else:
-                return False
-        elif dx_sign != dy_sign:
-            if dx_sign == 1:
-                return True
-            else:
-                return False
-        else:
-            raise ValueError("Slope between points does not match field orientation.")
+        raise ValueError("Slope between points does not match field orientation.")
 
 
 def distribute(x1, x2, spacing, r, rotate):
@@ -931,24 +871,17 @@ def distribute(x1, x2, spacing, r, rotate):
     """
     dx = sqrt((x1[0] - x2[0]) * (x1[0] - x2[0]) + (x1[1] - x2[1]) * (x1[1] - x2[1]))
     if dx < spacing:
-        if len(r) == 0 or not (
-                r[len(r) - 1][0] == (x1[0] + x2[0]) / 2
-                and r[len(r) - 1][1] == (x1[1] + x2[1]) / 2
-        ):
+        if len(r) == 0 or not (r[len(r) - 1][0] == (x1[0] + x2[0]) / 2 and r[len(r) - 1][1] == (x1[1] + x2[1]) / 2):
             r[len(r)] = [(x1[0] + x2[0]) / 2, (x1[1] + x2[1]) / 2]
         return
     current_x = x1
     act_num_col = int(dx // spacing)
     act_space = dx / act_num_col
+    tolerance = 1e-8
     while (
-            sqrt(
-                (current_x[0] - x2[0]) * (current_x[0] - x2[0])
-                + (current_x[1] - x2[1]) * (current_x[1] - x2[1])
-            )
-    ) >= 1e-8:
-        if len(r) == 0 or not (
-                r[len(r) - 1][0] == current_x[0] and r[len(r) - 1][1] == current_x[1]
-        ):
+        sqrt((current_x[0] - x2[0]) * (current_x[0] - x2[0]) + (current_x[1] - x2[1]) * (current_x[1] - x2[1]))
+    ) >= tolerance:
+        if len(r) == 0 or not (r[len(r) - 1][0] == current_x[0] and r[len(r) - 1][1] == current_x[1]):
             r[len(r)] = [current_x[0], current_x[1]]
         current_x[0] += act_space * cos(rotate)
         current_x[1] += act_space * sin(rotate)

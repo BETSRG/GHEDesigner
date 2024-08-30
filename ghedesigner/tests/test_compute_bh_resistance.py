@@ -1,8 +1,8 @@
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, SingleUTube
 from ghedesigner.enums import DoubleUTubeConnType
-from ghedesigner.media import Pipe, Grout, GHEFluid, Soil
-from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
 class TestBHResistance(GHEBaseTest):
@@ -118,8 +118,9 @@ class TestBHResistance(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho  # mass flow rate (kg/s)
 
         # Series
-        double_u_tube_series = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil,
-                                             DoubleUTubeConnType.SERIES)
+        double_u_tube_series = MultipleUTube(
+            m_flow_borehole, fluid, borehole, pipe, grout, soil, DoubleUTubeConnType.SERIES
+        )
         r_b_series = double_u_tube_series.calc_effective_borehole_resistance()
         re = MultipleUTube.compute_reynolds(double_u_tube_series.m_flow_pipe, r_in, fluid)
         m_dot = double_u_tube_series.m_flow_pipe
@@ -141,8 +142,9 @@ class TestBHResistance(GHEBaseTest):
         self.assertTrue(self.rel_error_within_tol(r_b_series, 0.1624, 0.01))
 
         # Parallel
-        double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil,
-                                               DoubleUTubeConnType.PARALLEL)
+        double_u_tube_parallel = MultipleUTube(
+            m_flow_borehole, fluid, borehole, pipe, grout, soil, DoubleUTubeConnType.PARALLEL
+        )
         r_b_parallel = double_u_tube_parallel.calc_effective_borehole_resistance()
         re = MultipleUTube.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
         m_dot = double_u_tube_parallel.m_flow_pipe
@@ -286,8 +288,20 @@ class TestBHResistance(GHEBaseTest):
         rb_glhepro_double = [0.1502, 0.1597, 0.1635, 0.1720, 0.1868, 0.2037, 0.2329, 0.2615, 0.2879, 0.3287]
 
         re_glhepro_coaxial = [8607, 7747, 6886, 6025, 5164, 4304, 3443, 2582, 2496, 2410, 2324, 2238]
-        rb_glhepro_coaxial = [0.1055, 0.1066, 0.1081, 0.1102, 0.1131, 0.1176, 0.1249, 0.1386, 0.1406, 0.1428, 0.1452,
-                              0.1781]
+        rb_glhepro_coaxial = [
+            0.1055,
+            0.1066,
+            0.1081,
+            0.1102,
+            0.1131,
+            0.1176,
+            0.1249,
+            0.1386,
+            0.1406,
+            0.1428,
+            0.1452,
+            0.1781,
+        ]
 
         # Single and Double U-tubes
         borehole_values["Single U-tube"] = {"V_dot": [], "Rb": [], "Re": []}

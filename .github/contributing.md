@@ -1,10 +1,10 @@
 # Contributing to *ghedt*
 
-`ghedt` welcomes and appreciates bug reports, suggestions and contributions from 
-everyone. 
+`ghedt` welcomes and appreciates bug reports, suggestions and contributions from
+everyone.
 
-This guide describes how to report bugs, suggest new features and contribute 
-code to `ghedt`. 
+This guide describes how to report bugs, suggest new features and contribute
+code to `ghedt`.
 
 ## Reporting bugs
 
@@ -28,16 +28,16 @@ problem, follow the steps outlined in the contribution workflow.
 
 ## Fork, clone and configure the repository
 
-If you are a developer and are interested in contributing to *ghedt* by 
-modifying the code, the first step will likely be to [fork][#fork] the 
+If you are a developer and are interested in contributing to *ghedt* by
+modifying the code, the first step will likely be to [fork][#fork] the
 repository.
 
-1. [Fork][#fork] the repository to your own Github profile. You will be able to 
-   alter any of the code in your own repository but will only be able to modify 
+1. [Fork][#fork] the repository to your own Github profile. You will be able to
+   alter any of the code in your own repository but will only be able to modify
    the code in my repository via pull requests.
 2. [Clone][#clone] the forked repository on your personal computer: `git clone https://github.com/YOUR-USERNAME/ghedt`
 3. [Configure][#Configure] my repository as a remote fork: `git remote add upstream https://github.com/BETSRG/GHEDTOSU`.
-   With my repository configured as a fork you will be able to keep your main 
+   With my repository configured as a fork you will be able to keep your main
    branch up to date with mine.
 
 ## Contribution workflow
@@ -52,27 +52,27 @@ the enhancement yourself, provide a step-by-step plan for the implementation.
 4. **Create (checkout) a new branch from the master.** The branch name should
 follow the naming convention: `issue#_shortDescription`. For example:
 issue1_loadAggregation. The following is how to checkout, push a branch to your
-remote repository, and then set the local branch to an upstream branch. 
+remote repository, and then set the local branch to an upstream branch.
 ```angular2html
 git checkout -b $branchName &&
 git push -u origin $branchName &&
 git branch --set-upstream-to=origin/$branchName $branchName
 ```
-To list all the branches, run the following command. Now you should be able to 
-see that you have the new branch you created checked out, and that there is an 
-upstream branch as well. 
+To list all the branches, run the following command. Now you should be able to
+see that you have the new branch you created checked out, and that there is an
+upstream branch as well.
 ```angular2html
 git branch -a
 ```
 5. Implement unit tests for new features. If necessary, update already
 implement tests to cover the new features.
-6. Before submitting a [pull request][#pull_request], **merge the master to your 
+6. Before submitting a [pull request][#pull_request], **merge the master to your
 branch.**
 7. Once the branch is merged, **delete the branch and close the issue.**
 
 ## Managing branches
 
-This section describes various features regarding [git branches][#git_branches]. 
+This section describes various features regarding [git branches][#git_branches].
 
 ### Create a branch
 
@@ -81,7 +81,7 @@ shows examples for how to create a branch from the command line.
 
 ## Styleguide
 
-`ghedt` follows the [PEP8 style guide][#pep]. 
+`ghedt` follows the [PEP8 style guide][#pep].
 
 ## References
 

@@ -6,10 +6,9 @@ from ghedesigner.constants import PI_OVER_2, TWO_PI
 
 
 class Shapes:
-
     def __init__(self, c):
         """
-         constructs a shape object
+        constructs a shape object
         """
         self.c = np.array(c)
         # print(c)
@@ -52,10 +51,10 @@ class Shapes:
                 if len(r) == 1:
                     r = r[0]
                     if (
-                            (r[0] - max(c2[0], c1[0])) > intersection_tolerance
-                            or (r[0] - min(c2[0], c1[0])) < -1 * intersection_tolerance
-                            or (r[1] - max(c2[1], c1[1])) > intersection_tolerance
-                            or (r[1] - min(c2[1], c1[1])) < -1 * intersection_tolerance
+                        (r[0] - max(c2[0], c1[0])) > intersection_tolerance
+                        or (r[0] - min(c2[0], c1[0])) < -1 * intersection_tolerance
+                        or (r[1] - max(c2[1], c1[1])) > intersection_tolerance
+                        or (r[1] - min(c2[1], c1[1])) < -1 * intersection_tolerance
                     ):
                         continue
                     r_a.append(r)
@@ -70,10 +69,10 @@ class Shapes:
                 if len(r) == 1:
                     r = r[0]
                     if (
-                            (r[0] - max(c2[0], c1[0])) > intersection_tolerance
-                            or (r[0] - min(c2[0], c1[0])) < -1 * intersection_tolerance
-                            or (r[1] - max(c2[1], c1[1])) > intersection_tolerance
-                            or (r[1] - min(c2[1], c1[1])) < -1 * intersection_tolerance
+                        (r[0] - max(c2[0], c1[0])) > intersection_tolerance
+                        or (r[0] - min(c2[0], c1[0])) < -1 * intersection_tolerance
+                        or (r[1] - max(c2[1], c1[1])) > intersection_tolerance
+                        or (r[1] - min(c2[1], c1[1])) < -1 * intersection_tolerance
                     ):
                         continue
                     r_a.append(r)
@@ -116,12 +115,8 @@ class Shapes:
                     i -= 1
                     break
             i += 1
-        if len(inters) % 2 == 0:
-            # print(len(inters))
-            return False
-        else:
-            # print("returning True")
-            return True
+        return len(inters) % 2 != 0
+        # False if even, True if odd
 
     def get_area(self):
         """
@@ -143,27 +138,19 @@ def sort_intersections(r_a, rotate):
     if len(r_a) == 0:
         return r_a
     vals = [0] * len(r_a)
-    i = 0
-    for inter in r_a:
-        if inter[0] == 0:
-            phi = PI_OVER_2
-        else:
-            phi = atan(inter[1] / inter[0])
+    for i, inter in enumerate(r_a):
+        phi = PI_OVER_2 if inter[0] == 0 else atan(inter[1] / inter[0])
         dist_inter = sqrt(inter[1] ** 2 + inter[0] ** 2)
         ref_ang = PI_OVER_2 - phi
         # sign = 1
         if phi > PI_OVER_2:
-            if phi > pi:
-                if phi > 3 * PI_OVER_2:
-                    ref_ang = TWO_PI - phi
-                else:
-                    ref_ang = 3.0 * PI_OVER_2 - phi
+            if phi > pi:  # noqa: SIM108
+                ref_ang = TWO_PI - phi if phi > 3 * PI_OVER_2 else 3.0 * PI_OVER_2 - phi
             else:
                 ref_ang = pi - phi
         # if phi > pi/2 + rotate and phi < 3*pi/2 + rotate:
         # sign = -1
         vals[i] = dist_inter * sin(ref_ang + rotate)
-        i += 1
     zipped = sorted(zip(vals, r_a))
     r_a = [row for _, row in zipped]
     return r_a

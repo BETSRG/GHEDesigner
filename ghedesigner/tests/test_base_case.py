@@ -20,12 +20,12 @@ class GHEBaseTest(TestCase):
                 GHEBaseTest.LogMessageTypes.Debug: "DEBUG",
                 GHEBaseTest.LogMessageTypes.Info: "INFO",
                 GHEBaseTest.LogMessageTypes.Warning: "WARNING",
-                GHEBaseTest.LogMessageTypes.Error: "ERROR"
+                GHEBaseTest.LogMessageTypes.Error: "ERROR",
             }
             return strs[message_type_enum]
 
     def setup_log_file(self) -> None:
-        global LOG_FILE
+        global LOG_FILE  # noqa: PLW0603
         cur_file = Path(__file__).resolve()
         tests_directory = cur_file.parent
         log_directory = tests_directory / 'test_logs'

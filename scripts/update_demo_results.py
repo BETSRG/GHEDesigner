@@ -1,15 +1,13 @@
 import json
 import sys
-
 from pathlib import Path
 
 
 def update_results(results_dir: Path, expected_results_path: Path):
-
     d_current = {}
     d_expected = {}
 
-    with open(expected_results_path, "r", encoding="utf-8") as f:
+    with open(expected_results_path, encoding="utf-8") as f:
         d_current = json.load(f)
 
     for p in results_dir.iterdir():
@@ -19,7 +17,7 @@ def update_results(results_dir: Path, expected_results_path: Path):
         key = this_dir.stem
         d_expected[key] = {
             "active_borehole_length": d["ghe_system"]["active_borehole_length"]["value"],
-            "number_of_boreholes": d["ghe_system"]["number_of_boreholes"]
+            "number_of_boreholes": d["ghe_system"]["number_of_boreholes"],
         }
 
     d_current.update(d_expected)

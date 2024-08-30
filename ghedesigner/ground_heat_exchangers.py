@@ -18,22 +18,21 @@ from ghedesigner.utilities import solve_root
 
 class BaseGHE:
     def __init__(
-            self,
-            v_flow_system: float,
-            b_spacing: float,
-            bhe_type: BHPipeType,
-            fluid,
-            borehole: GHEBorehole,
-            pipe: Pipe,
-            grout: Grout,
-            soil: Soil,
-            g_function: GFunction,
-            sim_params: SimulationParameters,
-            hourly_extraction_ground_loads: list,
-            field_type="N/A",
-            field_specifier="N/A",
+        self,
+        v_flow_system: float,
+        b_spacing: float,
+        bhe_type: BHPipeType,
+        fluid,
+        borehole: GHEBorehole,
+        pipe: Pipe,
+        grout: Grout,
+        soil: Soil,
+        g_function: GFunction,
+        sim_params: SimulationParameters,
+        hourly_extraction_ground_loads: list,
+        field_type="N/A",
+        field_specifier="N/A",
     ):
-
         self.fieldType = field_type
         self.fieldSpecifier = field_specifier
         self.V_flow_system = v_flow_system
@@ -65,7 +64,7 @@ class BaseGHE:
         self.loading = None
 
     def as_dict(self) -> dict:
-        output = dict()
+        output = {}
         output['title'] = f"GHEDesigner GHE Output - Version {VERSION}"
         output['number_of_boreholes'] = len(self.gFunction.bore_locations)
         output['borehole_depth'] = {'value': self.bhe.b.H, 'units': 'm'}
@@ -101,9 +100,7 @@ class BaseGHE:
         # interpolate for the Long time step g-function
         g_function, rb_value, _, _ = self.gFunction.g_function_interpolation(b_over_h)
         # correct the long time step for borehole radius
-        g_function_corrected = self.gFunction.borehole_radius_correction(
-            g_function, rb_value, self.bhe.b.r_b
-        )
+        g_function_corrected = self.gFunction.borehole_radius_correction(g_function, rb_value, self.bhe.b.r_b)
         # Don't Update the HybridLoad (its dependent on the STS) because
         # it doesn't change the results much, and it slows things down a lot
         # combine the short and long time step g-function
@@ -143,7 +140,7 @@ class BaseGHE:
         q_dot_b = np.hstack((0.0, q_dot / float(self.nbh)))
         time_values = np.hstack((0.0, time_values))
 
-        q_dot_b_dt = np.hstack((q_dot_b[1:] - q_dot_b[:-1]))
+        q_dot_b_dt = np.hstack(q_dot_b[1:] - q_dot_b[:-1])
 
         ts = self.radial_numerical.t_s  # (-)
         two_pi_k = TWO_PI * self.bhe.soil.k  # (W/m.K)
@@ -204,21 +201,21 @@ class BaseGHE:
 
 class GHE(BaseGHE):
     def __init__(
-            self,
-            v_flow_system: float,
-            b_spacing: float,
-            bhe_type: BHPipeType,
-            fluid,
-            borehole: GHEBorehole,
-            pipe: Pipe,
-            grout: Grout,
-            soil: Soil,
-            g_function: GFunction,
-            sim_params: SimulationParameters,
-            hourly_extraction_ground_loads: list,
-            field_type="N/A",
-            field_specifier="N/A",
-            load_years=None,
+        self,
+        v_flow_system: float,
+        b_spacing: float,
+        bhe_type: BHPipeType,
+        fluid,
+        borehole: GHEBorehole,
+        pipe: Pipe,
+        grout: Grout,
+        soil: Soil,
+        g_function: GFunction,
+        sim_params: SimulationParameters,
+        hourly_extraction_ground_loads: list,
+        field_type="N/A",
+        field_specifier="N/A",
+        load_years=None,
     ):
         BaseGHE.__init__(
             self,
@@ -243,11 +240,8 @@ class GHE(BaseGHE):
             load_years = [2019]
 
         hybrid_load = HybridLoad(
-            self.hourly_extraction_ground_loads,
-            self.bhe_eq,
-            self.radial_numerical,
-            sim_params,
-            years=load_years)
+            self.hourly_extraction_ground_loads, self.bhe_eq, self.radial_numerical, sim_params, years=load_years
+        )
 
         # hybrid load object
         self.hybrid_load = hybrid_load
@@ -258,10 +252,10 @@ class GHE(BaseGHE):
         self.dTb = []
 
     def as_dict(self) -> dict:
-        output = dict()
+        output = {}
         output['base'] = super().as_dict()
 
-        results = dict()
+        results = {}
         if len(self.hp_eft) > 0:
             max_hp_eft = max(self.hp_eft)
             min_hp_eft = min(self.hp_eft)
@@ -271,8 +265,8 @@ class GHE(BaseGHE):
             results['excess_fluid_temperature'] = {'value': t_excess, 'units': 'C'}
         results['peak_load_analysis'] = self.hybrid_load.as_dict()
 
-        g_function = dict()
-        g_function['coordinates (x[m], y[m])'] = [(x, y) for x, y in self.gFunction.bore_locations]  # TODO: Verify form
+        g_function = {}
+        g_function['coordinates (x[m], y[m])'] = list(self.gFunction.bore_locations)  # TODO: Verify form
         b_over_h = self.B_spacing / self.bhe.b.H
         g, _ = self.grab_g_function(b_over_h)
         total_g_values = g.x.size
@@ -284,8 +278,8 @@ class GHE(BaseGHE):
         for idx in range(0, (total_g_values - number_lts_g_values), sts_step_size):
             lntts.append(g.x[idx].tolist())
             g_values.append(g.y[idx].tolist())
-        lntts += g.x[total_g_values - number_lts_g_values: total_g_values].tolist()
-        g_values += g.y[total_g_values - number_lts_g_values: total_g_values].tolist()
+        lntts += g.x[total_g_values - number_lts_g_values : total_g_values].tolist()
+        g_values += g.y[total_g_values - number_lts_g_values : total_g_values].tolist()
         pairs = zip(lntts, g_values)
         for lntts_val, g_val in pairs:
             output += f"{lntts_val:0.4f}\t{g_val:0.4f}"

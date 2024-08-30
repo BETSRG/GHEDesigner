@@ -1,4 +1,4 @@
-from enum import auto, IntEnum
+from enum import IntEnum, auto
 from math import exp, log, pi, sqrt
 
 import numpy as np
@@ -19,7 +19,7 @@ class CellProps(IntEnum):
     VOL = auto()
 
 
-class RadialNumericalBH(object):
+class RadialNumericalBH:
     """
     X. Xu and Jeffrey D. Spitler. 2006. 'Modeling of Vertical Ground Loop Heat
     Exchangers with Variable Convective Resistance and Thermal Mass of the
@@ -41,10 +41,10 @@ class RadialNumericalBH(object):
         self.num_grout_cells = 27
         self.num_soil_cells = 500
 
-        self.num_cells = sum((self.num_fluid_cells, self.num_conv_cells, self.num_pipe_cells,
-                              self.num_grout_cells, self.num_soil_cells))
-        self.bh_wall_idx = sum((self.num_fluid_cells, self.num_conv_cells,
-                                self.num_pipe_cells, self.num_grout_cells))
+        self.num_cells = sum(
+            (self.num_fluid_cells, self.num_conv_cells, self.num_pipe_cells, self.num_grout_cells, self.num_soil_cells)
+        )
+        self.bh_wall_idx = sum((self.num_fluid_cells, self.num_conv_cells, self.num_pipe_cells, self.num_grout_cells))
 
         # Geometry and grid procedure
 
@@ -83,7 +83,7 @@ class RadialNumericalBH(object):
         self.lntts = np.array([], dtype=np.double)
         self.c_0 = TWO_PI * single_u_tube.soil.k
         soil_diffusivity = single_u_tube.k_s / single_u_tube.soil.rhoCp
-        self.t_s = single_u_tube.b.H ** 2 / (9 * soil_diffusivity)
+        self.t_s = single_u_tube.b.H**2 / (9 * soil_diffusivity)
         # default is at least 49 hours, or up to -8.6 log time
         self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
         self.g_sts = None
@@ -96,11 +96,10 @@ class RadialNumericalBH(object):
         # - This is here partially because equivalent boreholes are generated.
         self.single_u_tube = single_u_tube
         soil_diffusivity = single_u_tube.k_s / single_u_tube.soil.rhoCp
-        self.t_s = single_u_tube.b.H ** 2 / (9 * soil_diffusivity)
+        self.t_s = single_u_tube.b.H**2 / (9 * soil_diffusivity)
         self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
 
     def fill_radial_cells(self, resist_f_effective, resist_pg_effective):
-
         radial_cells = np.zeros(shape=(len(CellProps), self.num_cells), dtype=np.double)
 
         cell_summation = 0
@@ -108,28 +107,24 @@ class RadialNumericalBH(object):
         def fill_single_cell(inner_radius, thickness, conductivity, rho_cp):
             center_radius = inner_radius + thickness / 2.0
             outer_radius = inner_radius + thickness
-            volume = pi * (outer_radius ** 2 - inner_radius ** 2)
-            return np.array([
-                inner_radius,
-                center_radius,
-                outer_radius,
-                conductivity,
-                rho_cp,
-                self.init_temp,
-                volume
-            ], dtype=np.double)
+            volume = pi * (outer_radius**2 - inner_radius**2)
+            return np.array(
+                [inner_radius, center_radius, outer_radius, conductivity, rho_cp, self.init_temp, volume],
+                dtype=np.double,
+            )
 
         # load fluid cells
         # The equivalent thermal mass of the fluid can be calculated from
         # equation (2)
         # pi (r_in_conv ** 2 - r_f **2) C_eq_f = 2pi r_p_in**2 * C_f
-        rho_cp_eq_fluid = 2.0 * (self.single_u_tube.pipe.r_in ** 2) * self.single_u_tube.fluid.rhoCp
-        rho_cp_eq_fluid /= (self.r_convection ** 2) - (self.r_fluid ** 2)
+        rho_cp_eq_fluid = 2.0 * (self.single_u_tube.pipe.r_in**2) * self.single_u_tube.fluid.rhoCp
+        rho_cp_eq_fluid /= (self.r_convection**2) - (self.r_fluid**2)
         conductivity_fluid = 200
         for idx in range(cell_summation, self.num_fluid_cells + cell_summation):
             inner_radius_fluid_cell = self.r_fluid + idx * self.thickness_fluid_cell
-            radial_cells[:, idx] = fill_single_cell(inner_radius_fluid_cell, self.thickness_fluid_cell,
-                                                    conductivity_fluid, rho_cp_eq_fluid)
+            radial_cells[:, idx] = fill_single_cell(
+                inner_radius_fluid_cell, self.thickness_fluid_cell, conductivity_fluid, rho_cp_eq_fluid
+            )
 
         cell_summation += self.num_fluid_cells
 
@@ -138,8 +133,9 @@ class RadialNumericalBH(object):
         rho_cp_conv = 1.0
         for j, idx in enumerate(range(cell_summation, self.num_conv_cells + cell_summation)):
             inner_radius_conv_cell = self.r_convection + j * self.thickness_conv_cell
-            radial_cells[:, idx] = fill_single_cell(inner_radius_conv_cell, self.thickness_conv_cell,
-                                                    conductivity_conv, rho_cp_conv)
+            radial_cells[:, idx] = fill_single_cell(
+                inner_radius_conv_cell, self.thickness_conv_cell, conductivity_conv, rho_cp_conv
+            )
 
         cell_summation += self.num_conv_cells
 
@@ -148,8 +144,9 @@ class RadialNumericalBH(object):
         rho_cp_pipe = self.single_u_tube.pipe.rhoCp
         for j, idx in enumerate(range(cell_summation, self.num_pipe_cells + cell_summation)):
             inner_radius_pipe_cell = self.r_in_tube + j * self.thickness_pipe_cell
-            radial_cells[:, idx] = fill_single_cell(inner_radius_pipe_cell, self.thickness_pipe_cell,
-                                                    conductivity_pipe_grout, rho_cp_pipe)
+            radial_cells[:, idx] = fill_single_cell(
+                inner_radius_pipe_cell, self.thickness_pipe_cell, conductivity_pipe_grout, rho_cp_pipe
+            )
 
         cell_summation += self.num_pipe_cells
 
@@ -157,8 +154,9 @@ class RadialNumericalBH(object):
         rho_cp_grout = self.single_u_tube.grout.rhoCp
         for j, idx in enumerate(range(cell_summation, self.num_grout_cells + cell_summation)):
             inner_radius_grout_cell = self.r_out_tube + j * self.thickness_grout_cell
-            radial_cells[:, idx] = fill_single_cell(inner_radius_grout_cell, self.thickness_grout_cell,
-                                                    conductivity_pipe_grout, rho_cp_grout)
+            radial_cells[:, idx] = fill_single_cell(
+                inner_radius_grout_cell, self.thickness_grout_cell, conductivity_pipe_grout, rho_cp_grout
+            )
 
         cell_summation += self.num_grout_cells
 
@@ -167,15 +165,15 @@ class RadialNumericalBH(object):
         rho_cp_soil = self.single_u_tube.soil.rhoCp
         for j, idx in enumerate(range(cell_summation, self.num_soil_cells + cell_summation)):
             inner_radius_soil_cell = self.r_borehole + j * self.thickness_soil_cell
-            radial_cells[:, idx] = fill_single_cell(inner_radius_soil_cell, self.thickness_soil_cell,
-                                                    conductivity_soil, rho_cp_soil)
+            radial_cells[:, idx] = fill_single_cell(
+                inner_radius_soil_cell, self.thickness_soil_cell, conductivity_soil, rho_cp_soil
+            )
 
         cell_summation += self.num_soil_cells
 
         return radial_cells
 
     def calc_sts_g_functions(self, single_u_tube, final_time=None) -> tuple:
-
         self.partial_init(single_u_tube)
 
         # effective borehole resistance
@@ -215,15 +213,15 @@ class RadialNumericalBH(object):
         _aw = np.zeros_like(_fw_2)
         _ad = np.zeros_like(_aw)
 
-        _west_cell = radial_cells[:, 0: self.num_cells - 2]
-        _center_cell = radial_cells[:, 1: self.num_cells - 1]
-        _east_cell = radial_cells[:, 2: self.num_cells - 0]
+        _west_cell = radial_cells[:, 0 : self.num_cells - 2]
+        _center_cell = radial_cells[:, 1 : self.num_cells - 1]
+        _east_cell = radial_cells[:, 2 : self.num_cells - 0]
 
         fe_1 = log(radial_cells[CellProps.R_OUT, 0] / radial_cells[CellProps.R_CENTER, 0])
-        fe_1 /= (TWO_PI * radial_cells[CellProps.K, 0])
+        fe_1 /= TWO_PI * radial_cells[CellProps.K, 0]
 
         fe_2 = log(radial_cells[CellProps.R_CENTER, 1] / radial_cells[CellProps.R_IN, 1])
-        fe_2 /= (TWO_PI * radial_cells[CellProps.K, 1])
+        fe_2 /= TWO_PI * radial_cells[CellProps.K, 1]
 
         ae = 1 / (fe_1 + fe_2)
         ad = radial_cells[CellProps.RHO_CP, 0] * radial_cells[CellProps.VOL, 0] / time_step
@@ -244,13 +242,12 @@ class RadialNumericalBH(object):
         fill_f2(_fw_2, _center_cell)
         _aw[:] = -1.0 / (_fw_1 + _fw_2)
 
-        _ad[:] = (_center_cell[CellProps.RHO_CP, :] * _center_cell[CellProps.VOL, :] / time_step)
-        _dl[0: self.num_cells - 2] = -_aw / _ad
-        _d[1: self.num_cells - 1] = _aw / _ad - _ae / _ad - 1.0
-        _du[1: self.num_cells - 1] = _ae / _ad
+        _ad[:] = _center_cell[CellProps.RHO_CP, :] * _center_cell[CellProps.VOL, :] / time_step
+        _dl[0 : self.num_cells - 2] = -_aw / _ad
+        _d[1 : self.num_cells - 1] = _aw / _ad - _ae / _ad - 1.0
+        _du[1 : self.num_cells - 1] = _ae / _ad
 
         while True:
-
             time += time_step
 
             # For the idx == 0 case:
@@ -264,7 +261,7 @@ class RadialNumericalBH(object):
             _b[self.num_cells - 1] = radial_cells[CellProps.TEMP, self.num_cells - 1]
 
             # Now handle the 1 to n-2 cases with numpy slicing and vectorization
-            _b[1: self.num_cells - 1] = -radial_cells[CellProps.TEMP, 1: self.num_cells - 1]
+            _b[1 : self.num_cells - 1] = -radial_cells[CellProps.TEMP, 1 : self.num_cells - 1]
 
             # Tri-diagonal matrix solver
             # High level interface to LAPACK routine

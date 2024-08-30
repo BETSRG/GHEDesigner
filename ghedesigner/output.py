@@ -14,26 +14,26 @@ from ghedesigner.enums import TimestepType
 
 
 class OutputManager:
-
-    def __init__(self,
-                 design: AnyBisectionType,
-                 time: float,
-                 project_name: str,
-                 notes: str,
-                 author: str,
-                 model_name: str,
-                 load_method: TimestepType,
-                 allocated_width=100,
-                 ):
-
+    def __init__(
+        self,
+        design: AnyBisectionType,
+        time: float,
+        project_name: str,
+        notes: str,
+        author: str,
+        model_name: str,
+        load_method: TimestepType,
+        allocated_width=100,
+    ):
         # this constructor should take all the args to build out a full output manager
         # then the client code can decide what to do -- just access data through functions?
         # write all the data to files in a directory?
         # make individual hidden worker functions to build out each part
         # but then add individual public functions to write specific files
         # have one routine to write all of them
-        self.text_summary = self.get_summary_text(allocated_width, project_name, model_name, notes, author, time,
-                                                  design, load_method)
+        self.text_summary = self.get_summary_text(
+            allocated_width, project_name, model_name, notes, author, time, design, load_method
+        )
         self.loading_data_rows = self.get_loading_data(design)
         self.borehole_location_data_rows = self.get_borehole_location_data(design)
         self.hourly_loading_data_rows = self.get_hourly_loading_data(design)
@@ -43,8 +43,10 @@ class OutputManager:
     def write_all_output_files(self, output_directory: Path, file_suffix: str = ""):
         output_directory.mkdir(exist_ok=True)
         (output_directory / f"SimulationSummary{file_suffix}.txt").write_text(self.text_summary)
-        with open(os.path.join(output_directory, f"TimeDependentValues{file_suffix}.csv"), "w", newline="") as csv1OF:
-            csv.writer(csv1OF).writerows(self.loading_data_rows)
+        with open(
+            os.path.join(output_directory, f"TimeDependentValues{file_suffix}.csv"), "w", newline=""
+        ) as csv1_output_file:
+            csv.writer(csv1_output_file).writerows(self.loading_data_rows)
         with open(os.path.join(output_directory, f"BoreFieldData{file_suffix}.csv"), "w", newline="") as f_csv:
             csv.writer(f_csv).writerows(self.borehole_location_data_rows)
         with open(os.path.join(output_directory, f"Loadings{file_suffix}.csv"), "w", newline="") as f_csv:
@@ -74,7 +76,7 @@ class OutputManager:
                 normalized_loading = loading / (design.ghe.bhe.b.H * design.ghe.nbh)
                 wall_temperature = design.ghe.bhe.soil.ugt + d_tb
                 hp_eft_val = design.ghe.hp_eft[i]
-                csv_row = list()
+                csv_row = []
                 csv_row.append(tv)
                 csv_row.append(self.hours_to_month(tv))
                 if i > 1:
@@ -87,7 +89,7 @@ class OutputManager:
                 csv_row.append(design.ghe.hp_eft[i - 1])
                 csv_array.append(csv_row)
             else:
-                csv_row = list()
+                csv_row = []
                 csv_row.append(tv)
                 csv_row.append(self.hours_to_month(tv))
                 if i > 1:
@@ -106,7 +108,7 @@ class OutputManager:
                 normalized_loading = loading / (design.ghe.bhe.b.H * design.ghe.nbh)
                 wall_temperature = design.ghe.bhe.soil.ugt + d_tb
                 hp_eft_val = design.ghe.hp_eft[i]
-            csv_row = list()
+            csv_row = []
             csv_row.append(current_time)
             csv_row.append(current_month)
             csv_row.append(loading)
@@ -118,18 +120,16 @@ class OutputManager:
 
     @staticmethod
     def get_borehole_location_data(design):
-        csv_array = list()
+        csv_array = []
         csv_array.append(["x", "y"])
-        for bL in design.ghe.gFunction.bore_locations:
-            csv_array.append([bL[0], bL[1]])
+        for bore_location in design.ghe.gFunction.bore_locations:
+            csv_array.append([bore_location[0], bore_location[1]])
         return csv_array
 
     def get_hourly_loading_data(self, design):
         hourly_loadings = design.ghe.hourly_extraction_ground_loads
-        csv_array = list()
-        csv_array.append(
-            ["Month", "Day", "Hour", "Time (Hours)", "Loading (W) (Extraction)"]
-        )
+        csv_array = []
+        csv_array.append(["Month", "Day", "Hour", "Time (Hours)", "Loading (W) (Extraction)"])
         for hour, hour_load in enumerate(hourly_loadings):
             month, day_in_month, hour_in_day = self.ghe_time_convert(hour)
             csv_array.append([month, day_in_month, hour_in_day, hour, hour_load])
@@ -159,14 +159,16 @@ class OutputManager:
         warnings.warn("Load method not implemented")
         return ""
 
-    def get_summary_object(self,
-                           design: AnyBisectionType,
-                           time: float,
-                           project_name: str,
-                           notes: str,
-                           author: str,
-                           model_name: str,
-                           load_method: TimestepType) -> dict:
+    def get_summary_object(
+        self,
+        design: AnyBisectionType,
+        time: float,
+        project_name: str,
+        notes: str,
+        author: str,
+        model_name: str,
+        load_method: TimestepType,
+    ) -> dict:
         # gFunction LTS Table
         g_function_col_titles = ["ln(t/ts)"]
         for g_function_name in list(design.ghe.gFunction.g_lts):
@@ -175,7 +177,7 @@ class OutputManager:
         g_function_data = []
         ghe_gf = design.ghe.gFunction.g_function_interpolation(float(design.ghe.B_spacing) / design.ghe.bhe.b.H)[0]
         for i in range(len(design.ghe.gFunction.log_time)):
-            gf_row = list()
+            gf_row = []
             gf_row.append(design.ghe.gFunction.log_time[i])
             for g_function_name in list(design.ghe.gFunction.g_lts):
                 gf_row.append(design.ghe.gFunction.g_lts[g_function_name][i])
@@ -187,11 +189,13 @@ class OutputManager:
 
         # these are dependent on the # pipes in each borehole, so precalculate
         if isinstance(design.ghe.bhe.pipe.r_out, float):
-            pipe_geometry = {'pipe_outer_diameter': add_with_units(design.ghe.bhe.pipe.r_out * 2.0, 'm'),
-                             'pipe_inner_diameter': add_with_units(design.ghe.bhe.pipe.r_in * 2.0, 'm')}
-            reynolds = GHEDesignerBoreholeBase.compute_reynolds(design.ghe.bhe.m_flow_borehole,
-                                                                design.ghe.bhe.pipe.r_in,
-                                                                design.ghe.bhe.fluid)
+            pipe_geometry = {
+                'pipe_outer_diameter': add_with_units(design.ghe.bhe.pipe.r_out * 2.0, 'm'),
+                'pipe_inner_diameter': add_with_units(design.ghe.bhe.pipe.r_in * 2.0, 'm'),
+            }
+            reynolds = GHEDesignerBoreholeBase.compute_reynolds(
+                design.ghe.bhe.m_flow_borehole, design.ghe.bhe.pipe.r_in, design.ghe.bhe.fluid
+            )
         else:
             pipe_geometry = {
                 'inner_pipe_inner_diameter': add_with_units(design.ghe.bhe.pipe.r_in[0] * 2.0, 'm'),
@@ -199,10 +203,9 @@ class OutputManager:
                 'outer_pipe_inner_diameter': add_with_units(design.ghe.bhe.pipe.r_out[0] * 2.0, 'm'),
                 'outer_pipe_outer_diameter': add_with_units(design.ghe.bhe.pipe.r_out[1] * 2.0, 'm'),
             }
-            reynolds = CoaxialPipe.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
-                                                               design.ghe.bhe.r_in_out,
-                                                               design.ghe.bhe.r_out_in,
-                                                               design.ghe.bhe.fluid)
+            reynolds = CoaxialPipe.compute_reynolds_concentric(
+                design.ghe.bhe.m_flow_borehole, design.ghe.bhe.r_in_out, design.ghe.bhe.r_out_in, design.ghe.bhe.fluid
+            )
         # build out the actual output dictionary
         output_dict = {
             'project_name': project_name,
@@ -214,14 +217,10 @@ class OutputManager:
             'design_selection_search_log': {
                 'titles': ["Field", "Excess Temperature", "Max Temperature", "Min Temperature"],
                 'units': [" ", "(C)", "(C)", "(C)"],
-                'data': design.searchTracker
+                'data': design.searchTracker,
             },
             'ghe_system': {
-                'search_log': {
-                    'titles': g_function_col_titles,
-                    'units': None,
-                    'data': g_function_data
-                },
+                'search_log': {'titles': g_function_col_titles, 'units': None, 'data': g_function_data},
                 'active_borehole_length': add_with_units(design.ghe.bhe.b.H, 'm'),
                 'borehole_diameter': add_with_units(design.ghe.bhe.b.r_b * 2.0, 'm'),
                 'borehole_buried_depth': add_with_units(design.ghe.bhe.b.D, 'm'),
@@ -235,11 +234,15 @@ class OutputManager:
                 'pipe_roughness': add_with_units(design.ghe.bhe.pipe.roughness, 'm'),
                 'pipe_thermal_conductivity': add_with_units(design.ghe.bhe.pipe.k, 'W/m-K'),
                 'pipe_volumetric_heat_capacity': add_with_units(design.ghe.bhe.pipe.rhoCp / 1000, 'kJ/m3-K'),
-                'grout_thermal_conductivity': add_with_units(design.ghe.bhe.grout.k, 'W/m-K', ),
+                'grout_thermal_conductivity': add_with_units(
+                    design.ghe.bhe.grout.k,
+                    'W/m-K',
+                ),
                 'grout_volumetric_heat_capacity': add_with_units(design.ghe.bhe.grout.rhoCp / 1000, 'kJ/m3-K'),
                 'reynolds_number': reynolds,
-                'effective_borehole_resistance': add_with_units(design.ghe.bhe.calc_effective_borehole_resistance(),
-                                                                'W/m-K'),
+                'effective_borehole_resistance': add_with_units(
+                    design.ghe.bhe.calc_effective_borehole_resistance(), 'W/m-K'
+                ),
                 # TODO: are the units right here?
                 'soil_thermal_conductivity': add_with_units(design.ghe.bhe.soil.k, 'W/m-K'),
                 'soil_volumetric_heat_capacity': add_with_units(design.ghe.bhe.soil.rhoCp / 1000, 'kJ/m3-K'),
@@ -259,12 +262,9 @@ class OutputManager:
                 'maximum_allowable_height': add_with_units(design.ghe.sim_params.max_height, 'm'),
                 'minimum_allowable_height': add_with_units(design.ghe.sim_params.min_height, 'm'),
                 'simulation_time': add_with_units(int(design.ghe.sim_params.end_month / 12), 'years'),
-                'simulation_load_method': self.get_timestep_str(load_method)
+                'simulation_load_method': self.get_timestep_str(load_method),
             },
-            'simulation_results': {
-
-            }
-
+            'simulation_results': {},
         }
 
         # potentially add convection coefficient -- not sure why we wouldn't do it
@@ -277,8 +277,18 @@ class OutputManager:
         n_months = len(design.ghe.hybrid_load.monthly_cl) - 1
         n_years = int(n_months / 12)
         months = n_years * [
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December",
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
         ]
         start_ind = 1
         stop_ind = n_months
@@ -291,7 +301,8 @@ class OutputManager:
                     design.ghe.hybrid_load.monthly_peak_hl[i],
                     design.ghe.hybrid_load.monthly_peak_hl_duration[i],
                     design.ghe.hybrid_load.monthly_peak_cl[i],
-                    design.ghe.hybrid_load.monthly_peak_cl_duration[i]]
+                    design.ghe.hybrid_load.monthly_peak_cl_duration[i],
+                ]
             )
         output_dict['ghe_system']['glhe_monthly_loads'] = {
             'titles': [
@@ -304,7 +315,7 @@ class OutputManager:
                 "PC Duration",
             ],
             'units': ["", "kWh", "kWh", "kW", "hr", "kW", "hr"],
-            'data': monthly_load_values
+            'data': monthly_load_values,
         }
 
         # add simulation results stuff
@@ -320,10 +331,7 @@ class OutputManager:
                 month_eft_vals.append(eft)
             elif current_month != last_month:
                 if len(month_tb_vals) > 0:
-                    if len(out_array) == 0:
-                        previous_temp = design.ghe.bhe.soil.ugt
-                    else:
-                        previous_temp = design.ghe.bhe.soil.ugt
+                    previous_temp = design.ghe.bhe.soil.ugt
                     out_array.append(
                         [
                             current_month,
@@ -351,14 +359,13 @@ class OutputManager:
             'monthly_temp_summary': {
                 'titles': ["Time", "BH Wall Temp", "Max HP EFT", "Min HP EFT"],
                 'units': ["(months)", "(C)", "(C)", "(C)"],
-                'data': out_array
-            }
+                'data': out_array,
+            },
         }
 
         return output_dict
 
     def get_summary_text(self, width, project_name, model_name, notes, author, time, design, load_method):
-
         f_int = ".0f"
         f_1f = ".1f"
         f_2f = ".2f"
@@ -390,12 +397,14 @@ class OutputManager:
         ]
         try:
             design_values = design.searchTracker
-        except:
+        except Exception as e:  # noqa: BLE001
+            print(f"Error getting design values: {e}")
             design_values = ""
         design_formats = [f_str, f_2f, f_2f, f_2f]
 
-        o += self.create_table("Field Search Log", design_header, design_values, width, design_formats,
-                               filler_symbol="-", centering="^")
+        o += self.create_table(
+            "Field Search Log", design_header, design_values, width, design_formats, filler_symbol="-", centering="^"
+        )
 
         o += empty_line
         o += self.create_title(width, "GHE System", filler_symbol="-")
@@ -413,15 +422,22 @@ class OutputManager:
         g_function_data = []
         ghe_gf = design.ghe.gFunction.g_function_interpolation(float(design.ghe.B_spacing) / design.ghe.bhe.b.H)[0]
         for i in range(len(design.ghe.gFunction.log_time)):
-            gf_row = list()
+            gf_row = []
             gf_row.append(design.ghe.gFunction.log_time[i])
             for g_function_name in list(design.ghe.gFunction.g_lts):
                 gf_row.append(design.ghe.gFunction.g_lts[g_function_name][i])
             gf_row.append(ghe_gf[i])
             g_function_data.append(gf_row)
 
-        o += self.create_table("gFunction LTS Values", [g_function_col_titles], g_function_data, width,
-                               g_function_table_formats, filler_symbol="-", centering="^")
+        o += self.create_table(
+            "gFunction LTS Values",
+            [g_function_col_titles],
+            g_function_data,
+            width,
+            g_function_table_formats,
+            filler_symbol="-",
+            centering="^",
+        )
         o += empty_line
 
         o += self.create_title(width, "System Parameters", filler_symbol="-")
@@ -429,8 +445,9 @@ class OutputManager:
         o += self.d_row(width, "Borehole Diameter, mm:", design.ghe.bhe.b.r_b * 1000 * 2.0, f_2f)
         o += self.d_row(width, "Borehole Spacing, m:", design.ghe.B_spacing, f_3f)
         o += self.d_row(width, 'Borehole Depth, m:', design.ghe.bhe.b.D, f_2f)
-        o += self.d_row(width, "Total Drilling, m:", design.ghe.bhe.b.H * len(design.ghe.gFunction.bore_locations),
-                        f_int)
+        o += self.d_row(
+            width, "Total Drilling, m:", design.ghe.bhe.b.H * len(design.ghe.gFunction.bore_locations), f_int
+        )
 
         o += "Field Geometry: " + "\n"
         o += self.d_row(width, "Field Type:", design.ghe.fieldType, f_str, n_tabs=1)
@@ -443,14 +460,18 @@ class OutputManager:
             o += self.d_row(width, "Pipe Outer Diameter, mm:", design.ghe.bhe.pipe.r_out * 1000 * 2.0, f_2f, n_tabs=1)
             o += self.d_row(width, "Pipe Inner Diameter, mm:", design.ghe.bhe.pipe.r_in * 1000 * 2.0, f_2f, n_tabs=1)
         else:
-            o += self.d_row(width, "Outer Pipe Outer Diameter, mm:", design.ghe.bhe.pipe.r_out[1] * 1000 * 2.0, f_2f,
-                            n_tabs=1)
-            o += self.d_row(width, "Outer Pipe Inner Diameter, mm:", design.ghe.bhe.pipe.r_out[0] * 1000 * 2.0, f_2f,
-                            n_tabs=1)
-            o += self.d_row(width, "Inner Pipe Outer Diameter, mm:", design.ghe.bhe.pipe.r_in[1] * 1000 * 2.0, f_2f,
-                            n_tabs=1)
-            o += self.d_row(width, "Inner Pipe Inner Diameter, mm:", design.ghe.bhe.pipe.r_in[0] * 1000 * 2.0, f_2f,
-                            n_tabs=1)
+            o += self.d_row(
+                width, "Outer Pipe Outer Diameter, mm:", design.ghe.bhe.pipe.r_out[1] * 1000 * 2.0, f_2f, n_tabs=1
+            )
+            o += self.d_row(
+                width, "Outer Pipe Inner Diameter, mm:", design.ghe.bhe.pipe.r_out[0] * 1000 * 2.0, f_2f, n_tabs=1
+            )
+            o += self.d_row(
+                width, "Inner Pipe Outer Diameter, mm:", design.ghe.bhe.pipe.r_in[1] * 1000 * 2.0, f_2f, n_tabs=1
+            )
+            o += self.d_row(
+                width, "Inner Pipe Inner Diameter, mm:", design.ghe.bhe.pipe.r_in[0] * 1000 * 2.0, f_2f, n_tabs=1
+            )
 
         o += self.d_row(width, "Pipe Roughness, m:", design.ghe.bhe.pipe.roughness, f_sci, n_tabs=1)
         if isinstance(design.ghe.bhe.pipe.k, float):
@@ -459,41 +480,54 @@ class OutputManager:
             o += self.d_row(width, "Inner Pipe Thermal Conductivity, W/m-K:", design.ghe.bhe.pipe.k[0], f_3f, n_tabs=1)
             o += self.d_row(width, "Outer Pipe Thermal Conductivity, W/m-K:", design.ghe.bhe.pipe.k[1], f_3f, n_tabs=1)
 
-        o += self.d_row(width, "Pipe Volumetric Heat Capacity, kJ/m3-K:", design.ghe.bhe.pipe.rhoCp / 1000, f_2f,
-                        n_tabs=1)
+        o += self.d_row(
+            width, "Pipe Volumetric Heat Capacity, kJ/m3-K:", design.ghe.bhe.pipe.rhoCp / 1000, f_2f, n_tabs=1
+        )
         o += self.d_row(width, "Shank Spacing, mm:", design.ghe.bhe.pipe.s * 1000, f_2f, n_tabs=1)
         o += self.d_row(width, "Grout Thermal Conductivity, W/(m-K):", design.ghe.bhe.grout.k, f_3f, n_tabs=1)
-        o += self.d_row(width, "Grout Volumetric Heat Capacity, kJ/m3-K:", design.ghe.bhe.grout.rhoCp / 1000, f_2f,
-                        n_tabs=1)
+        o += self.d_row(
+            width, "Grout Volumetric Heat Capacity, kJ/m3-K:", design.ghe.bhe.grout.rhoCp / 1000, f_2f, n_tabs=1
+        )
         if isinstance(design.ghe.bhe.pipe.r_out, float):
-            o += self.d_row(width, "Reynold's Number:",
-                            GHEDesignerBoreholeBase.compute_reynolds(design.ghe.bhe.m_flow_borehole,
-                                                                     design.ghe.bhe.pipe.r_in,
-                                                                     design.ghe.bhe.fluid),
-                            f_int, n_tabs=1)
+            o += self.d_row(
+                width,
+                "Reynold's Number:",
+                GHEDesignerBoreholeBase.compute_reynolds(
+                    design.ghe.bhe.m_flow_borehole, design.ghe.bhe.pipe.r_in, design.ghe.bhe.fluid
+                ),
+                f_int,
+                n_tabs=1,
+            )
         else:
+            o += self.d_row(
+                width,
+                "Reynold's Number:",
+                CoaxialPipe.compute_reynolds_concentric(
+                    design.ghe.bhe.m_flow_borehole,
+                    design.ghe.bhe.r_in_out,
+                    design.ghe.bhe.r_out_in,
+                    design.ghe.bhe.fluid,
+                ),
+                f_int,
+                n_tabs=1,
+            )
 
-            o += self.d_row(width, "Reynold's Number:",
-                            CoaxialPipe.compute_reynolds_concentric(design.ghe.bhe.m_flow_borehole,
-                                                                    design.ghe.bhe.r_in_out,
-                                                                    design.ghe.bhe.r_out_in,
-                                                                    design.ghe.bhe.fluid),
-                            f_int, n_tabs=1)
-
-        o += self.d_row(width, "Effective Borehole Resistance, K/(W/m):",
-                        design.ghe.bhe.calc_effective_borehole_resistance(),
-                        f_4f, n_tabs=1)
+        o += self.d_row(
+            width,
+            "Effective Borehole Resistance, K/(W/m):",
+            design.ghe.bhe.calc_effective_borehole_resistance(),
+            f_4f,
+            n_tabs=1,
+        )
         # Shank Spacing, Pipe Type, etc.
 
         o += "Soil Properties: " + "\n"
         o += self.d_row(width, "Thermal Conductivity, W/m-K:", design.ghe.bhe.soil.k, f_3f, n_tabs=1)
-        o += self.d_row(width, "Volumetric Heat Capacity, kJ/m3-K:",
-                        design.ghe.bhe.soil.rhoCp / 1000, f_2f, n_tabs=1)
+        o += self.d_row(width, "Volumetric Heat Capacity, kJ/m3-K:", design.ghe.bhe.soil.rhoCp / 1000, f_2f, n_tabs=1)
         o += self.d_row(width, "Undisturbed Ground Temperature, C:", design.ghe.bhe.soil.ugt, f_2f, n_tabs=1)
 
         o += "Fluid Properties" + "\n"
-        o += self.d_row(width, "Volumetric Heat Capacity, kJ/m3-K:",
-                        design.ghe.bhe.fluid.rhoCp / 1000, f_2f, n_tabs=1)
+        o += self.d_row(width, "Volumetric Heat Capacity, kJ/m3-K:", design.ghe.bhe.fluid.rhoCp / 1000, f_2f, n_tabs=1)
         o += self.d_row(width, "Thermal Conductivity, W/m-K:", design.ghe.bhe.fluid.k, f_2f, n_tabs=1)
         o += self.d_row(width, "Viscosity, Pa-s:", design.ghe.bhe.fluid.dynamic_viscosity(), f_sci, n_tabs=1)
         o += self.d_row(width, "Fluid Mix:", design.ghe.bhe.fluid.fluid.fluid_name, f_str, n_tabs=1)
@@ -507,8 +541,18 @@ class OutputManager:
         n_months = len(design.ghe.hybrid_load.monthly_cl) - 1
         n_years = int(n_months / 12)
         months = n_years * [
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December",
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
         ]
 
         start_ind = 1
@@ -522,7 +566,7 @@ class OutputManager:
                     design.ghe.hybrid_load.monthly_peak_hl[i],
                     design.ghe.hybrid_load.monthly_peak_hl_duration[i],
                     design.ghe.hybrid_load.monthly_peak_cl[i],
-                    design.ghe.hybrid_load.monthly_peak_cl_duration[i]
+                    design.ghe.hybrid_load.monthly_peak_cl_duration[i],
                 ]
             )
         month_header = [
@@ -532,8 +576,15 @@ class OutputManager:
 
         month_table_formats = [f_str, f_1f, f_1f, f_1f, f_1f, f_1f, f_1f]
 
-        o += self.create_table("GLHE Monthly Loads", month_header, monthly_load_values, width, month_table_formats,
-                               filler_symbol="-", centering="^")
+        o += self.create_table(
+            "GLHE Monthly Loads",
+            month_header,
+            monthly_load_values,
+            width,
+            month_table_formats,
+            filler_symbol="-",
+            centering="^",
+        )
 
         o += empty_line
 
@@ -570,13 +621,7 @@ class OutputManager:
                 month_eft_vals.append(eft)
             elif current_month != last_month:
                 if len(month_tb_vals) > 0:
-                    if len(out_array) == 0:
-                        previous_temp = design.ghe.bhe.soil.ugt
-                    else:
-                        # print(i)
-                        # print(len(outArray))
-                        # previousTemp = outArray[-1][1]
-                        previous_temp = design.ghe.bhe.soil.ugt
+                    previous_temp = design.ghe.bhe.soil.ugt
                     out_array.append(
                         [
                             current_month,
@@ -609,8 +654,9 @@ class OutputManager:
         o += self.d_row(width, "Min HP EFT, C:", min_eft, f_3f)
         o += self.d_row(width, "Min HP EFT Time, Months:", min_eft_time, f_3f)
 
-        o += self.create_table(eft_table_title, header_array, out_array, width, eft_table_formats, filler_symbol="-",
-                               centering="^")
+        o += self.create_table(
+            eft_table_title, header_array, out_array, width, eft_table_formats, filler_symbol="-", centering="^"
+        )
 
         # strip out all trailing whitespace
         o = re.sub(r"\s+\n", "\n", o)
@@ -634,8 +680,8 @@ class OutputManager:
                 left_over -= 1
             try:
                 r_s += "{:{c}{w}{fm}}".format(data, c=centering, w=width, fm=d_f)
-            except:
-                print("Output Row creation error: ", d_f)
+            except Exception as e:  # noqa: BLE001
+                print("Output Row creation error: ", d_f, e)
                 raise ValueError
 
         r_s += "\n"
@@ -649,8 +695,8 @@ class OutputManager:
         blank_line = OutputManager.create_line(allocated_width)
         r_s += blank_line
         header_format = ["s"] * n_cols
-        for colT in col_titles:
-            r_s += OutputManager.create_row(allocated_width, colT, header_format, centering="^")
+        for col_title in col_titles:
+            r_s += OutputManager.create_row(allocated_width, col_title, header_format, centering="^")
         r_s += blank_line
         for row in rows:
             r_s += OutputManager.create_row(allocated_width, row, col_formats, centering=centering)
@@ -690,7 +736,7 @@ class OutputManager:
         month_in_year = 0
         for idx, _ in enumerate(days_in_year):
             hours_left = hours - n_years * sum(hours_in_year)
-            if sum(hours_in_year[0: idx + 1]) >= hours_left:
+            if sum(hours_in_year[0 : idx + 1]) >= hours_left:
                 month_in_year = idx
                 break
         frac_month += month_in_year

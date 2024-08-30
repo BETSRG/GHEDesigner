@@ -1,14 +1,14 @@
 class SimulationParameters:
     def __init__(
-            self,
-            start_month,
-            end_month,
-            max_entering_fluid_temp_allow,
-            min_entering_fluid_temp_allow,
-            max_height,
-            min_height,
-            max_boreholes=None,
-            continue_if_design_unmet=False
+        self,
+        start_month,
+        end_month,
+        max_entering_fluid_temp_allow,
+        min_entering_fluid_temp_allow,
+        max_height,
+        min_height,
+        max_boreholes=None,
+        continue_if_design_unmet=False,
     ):
         # Simulation parameters not found in other objects
         # ------------------------------------------------
@@ -25,7 +25,7 @@ class SimulationParameters:
         self.continue_if_design_unmet = continue_if_design_unmet
 
     def as_dict(self) -> dict:
-        output = dict()
+        output = {}
         output['type'] = str(self.__class__)
         output['start_month'] = self.start_month
         output['end_month'] = self.end_month

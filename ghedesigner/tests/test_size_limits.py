@@ -1,22 +1,28 @@
 from ghedesigner.manager import GHEManager
-from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
 class TestFindNearSquareDesign(GHEBaseTest):
-
     def test_small_loads(self):
         ghe = GHEManager()
 
         # 1-1/4" in DR-11 HDPE
-        ghe.set_single_u_tube_pipe(inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
-                                   roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
-        ghe.set_soil(conductivity=3.493, rho_cp=2.5797E06, undisturbed_temp=10.0)
+        ghe.set_single_u_tube_pipe(
+            inner_diameter=0.03404,
+            outer_diameter=0.04216,
+            shank_spacing=0.01856,
+            roughness=1.0e-6,
+            conductivity=0.4,
+            rho_cp=1542000.0,
+        )
+        ghe.set_soil(conductivity=3.493, rho_cp=2.5797e06, undisturbed_temp=10.0)
 
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
         ghe.set_borehole(height=152.4, buried_depth=2.0, diameter=0.152)
-        ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=213, min_height=60,
-                                      continue_if_design_unmet=True)
+        ghe.set_simulation_parameters(
+            num_months=240, max_eft=35, min_eft=5, max_height=213, min_height=60, continue_if_design_unmet=True
+        )
 
         ghe.set_ground_loads_from_hourly_list([1.0e2] * 8760)
 
@@ -41,15 +47,22 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe = GHEManager()
 
         # 1-1/4" in DR-11 HDPE
-        ghe.set_single_u_tube_pipe(inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
-                                   roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
-        ghe.set_soil(conductivity=3.493, rho_cp=2.5797E06, undisturbed_temp=10.0)
+        ghe.set_single_u_tube_pipe(
+            inner_diameter=0.03404,
+            outer_diameter=0.04216,
+            shank_spacing=0.01856,
+            roughness=1.0e-6,
+            conductivity=0.4,
+            rho_cp=1542000.0,
+        )
+        ghe.set_soil(conductivity=3.493, rho_cp=2.5797e06, undisturbed_temp=10.0)
 
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
         ghe.set_borehole(height=152.4, buried_depth=2.0, diameter=0.152)
-        ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=213, min_height=60,
-                                      continue_if_design_unmet=True)
+        ghe.set_simulation_parameters(
+            num_months=240, max_eft=35, min_eft=5, max_height=213, min_height=60, continue_if_design_unmet=True
+        )
 
         ghe.set_ground_loads_from_hourly_list([1.0e6] * 8760)
 
@@ -74,15 +87,28 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe = GHEManager()
 
         # 1-1/4" in DR-11 HDPE
-        ghe.set_single_u_tube_pipe(inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
-                                   roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
-        ghe.set_soil(conductivity=3.493, rho_cp=2.5797E06, undisturbed_temp=10.0)
+        ghe.set_single_u_tube_pipe(
+            inner_diameter=0.03404,
+            outer_diameter=0.04216,
+            shank_spacing=0.01856,
+            roughness=1.0e-6,
+            conductivity=0.4,
+            rho_cp=1542000.0,
+        )
+        ghe.set_soil(conductivity=3.493, rho_cp=2.5797e06, undisturbed_temp=10.0)
 
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
         ghe.set_borehole(height=152.4, buried_depth=2.0, diameter=0.152)
-        ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=213, min_height=60,
-                                      max_boreholes=100, continue_if_design_unmet=True)
+        ghe.set_simulation_parameters(
+            num_months=240,
+            max_eft=35,
+            min_eft=5,
+            max_height=213,
+            min_height=60,
+            max_boreholes=100,
+            continue_if_design_unmet=True,
+        )
 
         ghe.set_ground_loads_from_hourly_list([1.0e6] * 8760)
 

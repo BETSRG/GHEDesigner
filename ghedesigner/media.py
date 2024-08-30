@@ -6,9 +6,7 @@ from ghedesigner.enums import FluidType
 
 
 class GHEFluid(Fluid):
-
     def __init__(self, fluid_str: str, percent: float, temperature: float = 20):
-
         fluid_str = fluid_str.upper()
         if fluid_str == FluidType.ETHYLALCOHOL.name:
             self.fluid_type = FluidType.ETHYLALCOHOL
@@ -28,7 +26,7 @@ class GHEFluid(Fluid):
             FluidType.ETHYLENEGLYCOL.name: "MEG",
             FluidType.METHYLALCOHOL.name: "MMA",
             FluidType.PROPYLENEGLYCOL.name: "MPG",
-            FluidType.WATER.name: "WATER"
+            FluidType.WATER.name: "WATER",
         }
 
         super().__init__(fluid_map[fluid_str], percent, temperature)
@@ -36,9 +34,11 @@ class GHEFluid(Fluid):
         self.temperature = temperature
 
     def to_input(self):
-        return {'fluid_name': self.fluid_type.name,
-                'concentration_percent': self.concentration_percent,
-                'temperature': self.temperature}
+        return {
+            'fluid_name': self.fluid_type.name,
+            'concentration_percent': self.concentration_percent,
+            'temperature': self.temperature,
+        }
 
 
 class ThermalProperty:
@@ -47,7 +47,7 @@ class ThermalProperty:
         self.rhoCp = rho_cp  # Volumetric heat capacity (J/K.m3)
 
     def as_dict(self) -> dict:
-        output = dict()
+        output = {}
         output['type'] = str(self.__class__)
         output['thermal_conductivity'] = {'value': self.k, 'units': 'W/m-K'}
         output['volumetric_heat_capacity'] = {'value': self.rhoCp, 'units': 'J/K-m3'}
@@ -78,7 +78,7 @@ class Pipe(ThermalProperty):
             self.n_pipes = 1
 
     def as_dict(self) -> dict:
-        output = dict()
+        output = {}
         output['base'] = super().as_dict()
         output['pipe_center_positions'] = str(self.pos)
         if type(self.r_in) is float:
