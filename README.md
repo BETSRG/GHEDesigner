@@ -104,7 +104,7 @@ include:
 GHEDesigner is supported for Python versions >= 3.9, and is tested with Python 3.9-3.12. GHEDesigner is dependent on
 the following packages:
 
-- [click][#click] (~=8.0)
+- [click][#click] (~=8.1)
 - [jsonschema][#jsonschema] (~=4.19)
 - [numpy][#numpy] (~=1.26)
 - [pygfunction][#pygfunction] (~=2.2)
@@ -124,12 +124,12 @@ pip install ghedesigner
 git clone https://github.com/betsrg/ghedesigner
 ```
 
-- [Uv](https://docs.astral.sh/uv/) is used to manage the project & dependencies. After cloning, ensure you have
+- [Uv](https://docs.astral.sh/uv/) is used to manage the project & dependencies (and may be used to [manage Python](https://docs.astral.sh/uv/guides/install-python/) if you want). After cloning, ensure you have
 [uv installed](https://docs.astral.sh/uv/getting-started/installation/), then run `uv sync` to install the package and all development dependencies.
-    - Some Windows users have reported version conflicts using the default strategy. If this occurs, consider changing the [resolution strategy](https://docs.astral.sh/uv/concepts/resolution/#resolution-strategy) using `uv sync --resolution=lowest-direct`
-- Developers can then call `uv run pytest` (which may take 30 minutes to run the full test suite) to confirm all dev dependencies are
+    - Some Windows developers have reported version conflicts using the default strategy. If this occurs, consider changing the [resolution strategy](https://docs.astral.sh/uv/concepts/resolution/#resolution-strategy) using `uv sync --resolution=lowest-direct`
+- Developers can then call `uv run pytest` (which may take 10-30 minutes to run the full test suite) to confirm all dev dependencies are
 installed and everything is working as expected.
-- Activate [pre-commit](https://pre-commit.com/) with: `uv run pre-commit install`
+- Activate [pre-commit](https://pre-commit.com/) (only required once, after cloning the repo) with: `uv run pre-commit install`
 - Before pushing to Github, run pre-commit on all files with `uv run pre-commit run -a` to highlight any linting/formatting errors that will cause CI to fail
 
 ## Questions
