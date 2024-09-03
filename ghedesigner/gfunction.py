@@ -348,8 +348,9 @@ class GFunction:
             try:
                 d = float(key_split[3])
                 ds_tmp[height] = d
-            except Exception as e:  # noqa: BLE001
-                print(e)
+            except ValueError:
+                # print(f"key_split[3] not a float: {key_split[3]}. Probably not a problem, skipping.")
+                pass  # skip this key
 
         # every B-spacing should be the same for each file
         b = float(next(iter(g_values.keys())).split("_")[0])
@@ -360,9 +361,8 @@ class GFunction:
         # fill the burial depth dictionary with sorted heights
         try:
             ds = {key: ds_tmp[key] for key in keys}
-        except Exception as e:  # noqa: BLE001
-            # if there's no D provided, make it 2
-            print(e)
+        except KeyError:
+            print("No burial depth value found, assuming 2 m for all heights.")
             ds = {key: 2.0 for key in keys}
         r_bs = {key: r_bs_tmp[key] for key in keys}
 
