@@ -1,8 +1,9 @@
-from json import loads, dumps
+from __future__ import annotations
+
+from json import dumps, loads
 from pathlib import Path
 from sys import exit, stderr
 from time import time
-from typing import List, Optional, Union
 
 import click
 from jsonschema import ValidationError
@@ -10,12 +11,26 @@ from jsonschema import ValidationError
 from ghedesigner import VERSION
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.constants import DEG_TO_RAD
-from ghedesigner.design import AnyBisectionType, DesignBase, DesignNearSquare, DesignRectangle, DesignBiRectangle
-from ghedesigner.design import DesignBiZoned, DesignBiRectangleConstrained, DesignRowWise
-from ghedesigner.enums import BHPipeType, TimestepType, DesignGeomType, FlowConfigType
-from ghedesigner.geometry import GeometricConstraints, GeometricConstraintsRectangle, GeometricConstraintsNearSquare
-from ghedesigner.geometry import GeometricConstraintsBiRectangle, GeometricConstraintsBiZoned
-from ghedesigner.geometry import GeometricConstraintsBiRectangleConstrained, GeometricConstraintsRowWise
+from ghedesigner.design import (
+    AnyBisectionType,
+    DesignBase,
+    DesignBiRectangle,
+    DesignBiRectangleConstrained,
+    DesignBiZoned,
+    DesignNearSquare,
+    DesignRectangle,
+    DesignRowWise,
+)
+from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.geometry import (
+    GeometricConstraints,
+    GeometricConstraintsBiRectangle,
+    GeometricConstraintsBiRectangleConstrained,
+    GeometricConstraintsBiZoned,
+    GeometricConstraintsNearSquare,
+    GeometricConstraintsRectangle,
+    GeometricConstraintsRowWise,
+)
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
@@ -24,25 +39,24 @@ from ghedesigner.validate import validate_input_file
 
 
 class GHEManager:
-
     def __init__(self):
-        self._fluid: Optional[GHEFluid] = None
-        self._grout: Optional[Grout] = None
-        self._soil: Optional[Soil] = None
-        self._pipe: Optional[Pipe] = None
-        self.pipe_type: Optional[BHPipeType] = None
-        self._borehole: Optional[GHEBorehole] = None
-        self._simulation_parameters: Optional[SimulationParameters] = None
-        self._ground_loads: Optional[List[float]] = None
+        self._fluid: GHEFluid | None = None
+        self._grout: Grout | None = None
+        self._soil: Soil | None = None
+        self._pipe: Pipe | None = None
+        self.pipe_type: BHPipeType | None = None
+        self._borehole: GHEBorehole | None = None
+        self._simulation_parameters: SimulationParameters | None = None
+        self._ground_loads: list[float | None] = None
         # OK so geometric_constraints is tricky.  We have base classes, yay!
         # Unfortunately, the functionality between the child classes is not actually
         # collapsed into a base class function ... yet.  So there will be complaints
         # about types temporarily.  It's going in the right direction though.
-        self.geom_type: Optional[DesignGeomType] = None
-        self._geometric_constraints: Optional[GeometricConstraints] = None
-        self._design: Optional[DesignBase] = None
-        self._search: Optional[AnyBisectionType] = None
-        self.results: Optional[OutputManager] = None
+        self.geom_type: DesignGeomType | None = None
+        self._geometric_constraints: GeometricConstraints | None = None
+        self._design: DesignBase | None = None
+        self._search: AnyBisectionType | None = None
+        self.results: OutputManager | None = None
 
         # some things for results
         self._search_time: int = 0
@@ -106,8 +120,13 @@ class GHEManager:
 
         return 0
 
-    def set_fluid(self, fluid_name: str = "Water", concentration_percent: float = 0.0, temperature: float = 20.0,
-                  throw: bool = True) -> int:
+    def set_fluid(
+        self,
+        fluid_name: str = "Water",
+        concentration_percent: float = 0.0,
+        temperature: float = 20.0,
+        throw: bool = True,
+    ) -> int:
         """
         Sets the fluid instance.
 
@@ -119,9 +138,7 @@ class GHEManager:
         :rtype: int
         """
         try:
-            self._fluid = GHEFluid(fluid_str=fluid_name,
-                                   percent=concentration_percent,
-                                   temperature=temperature)
+            self._fluid = GHEFluid(fluid_str=fluid_name, percent=concentration_percent, temperature=temperature)
             return 0
         except ValueError:
             message = "Invalid fluid property input data."
@@ -155,8 +172,15 @@ class GHEManager:
         self._soil = Soil(conductivity, rho_cp, undisturbed_temp)
         return 0
 
-    def set_single_u_tube_pipe(self, inner_diameter: float, outer_diameter: float, shank_spacing: float,
-                               roughness: float, conductivity: float, rho_cp: float) -> int:
+    def set_single_u_tube_pipe(
+        self,
+        inner_diameter: float,
+        outer_diameter: float,
+        shank_spacing: float,
+        roughness: float,
+        conductivity: float,
+        rho_cp: float,
+    ) -> int:
         """
         Sets the pipe instance for a single u-tube pipe.
 
@@ -178,8 +202,15 @@ class GHEManager:
         self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, roughness, conductivity, rho_cp)
         return 0
 
-    def set_double_u_tube_pipe_parallel(self, inner_diameter: float, outer_diameter: float, shank_spacing: float,
-                                        roughness: float, conductivity: float, rho_cp: float) -> int:
+    def set_double_u_tube_pipe_parallel(
+        self,
+        inner_diameter: float,
+        outer_diameter: float,
+        shank_spacing: float,
+        roughness: float,
+        conductivity: float,
+        rho_cp: float,
+    ) -> int:
         """
         Sets the pipe instance for a double u-tube pipe in a parallel configuration.
 
@@ -201,8 +232,15 @@ class GHEManager:
         self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, roughness, conductivity, rho_cp)
         return 0
 
-    def set_double_u_tube_pipe_series(self, inner_diameter: float, outer_diameter: float, shank_spacing: float,
-                                      roughness: float, conductivity: float, rho_cp: float) -> int:
+    def set_double_u_tube_pipe_series(
+        self,
+        inner_diameter: float,
+        outer_diameter: float,
+        shank_spacing: float,
+        roughness: float,
+        conductivity: float,
+        rho_cp: float,
+    ) -> int:
         """
         Sets the pipe instance for a double u-tube pipe in a series configuration.
 
@@ -224,10 +262,17 @@ class GHEManager:
         self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, roughness, conductivity, rho_cp)
         return 0
 
-    def set_coaxial_pipe(self, inner_pipe_d_in: float, inner_pipe_d_out: float, outer_pipe_d_in: float,
-                         outer_pipe_d_out: float, roughness: float, conductivity_inner: float,
-                         conductivity_outer: float,
-                         rho_cp: float) -> int:
+    def set_coaxial_pipe(
+        self,
+        inner_pipe_d_in: float,
+        inner_pipe_d_out: float,
+        outer_pipe_d_in: float,
+        outer_pipe_d_out: float,
+        roughness: float,
+        conductivity_inner: float,
+        conductivity_outer: float,
+        rho_cp: float,
+    ) -> int:
         """
         Sets the pipe instance for a coaxial pipe.
 
@@ -267,8 +312,14 @@ class GHEManager:
         return 0
 
     def set_simulation_parameters(
-            self, num_months: int, max_eft: float, min_eft: float, max_height: float, min_height: float,
-            max_boreholes: int = None, continue_if_design_unmet: bool = False
+        self,
+        num_months: int,
+        max_eft: float,
+        min_eft: float,
+        max_height: float,
+        min_height: float,
+        max_boreholes: int | None = None,
+        continue_if_design_unmet: bool = False,
     ) -> int:
         """
         Sets the simulation parameters
@@ -284,18 +335,11 @@ class GHEManager:
         :rtype: int
         """
         self._simulation_parameters = SimulationParameters(
-            1,
-            num_months,
-            max_eft,
-            min_eft,
-            max_height,
-            min_height,
-            max_boreholes,
-            continue_if_design_unmet
+            1, num_months, max_eft, min_eft, max_height, min_height, max_boreholes, continue_if_design_unmet
         )
         return 0
 
-    def set_ground_loads_from_hourly_list(self, hourly_ground_loads: List[float]) -> int:
+    def set_ground_loads_from_hourly_list(self, hourly_ground_loads: list[float]) -> int:
         """
         Sets the ground loads based on a list input.
 
@@ -335,8 +379,9 @@ class GHEManager:
         self._geometric_constraints = GeometricConstraintsRectangle(width, length, b_min, b_max)
         return 0
 
-    def set_geometry_constraints_bi_rectangle(self, length: float, width: float, b_min: float,
-                                              b_max_x: float, b_max_y: float) -> int:
+    def set_geometry_constraints_bi_rectangle(
+        self, length: float, width: float, b_min: float, b_max_x: float, b_max_y: float
+    ) -> int:
         """
         Sets the geometry constraints for the bi-rectangle design method.
 
@@ -352,8 +397,9 @@ class GHEManager:
         self._geometric_constraints = GeometricConstraintsBiRectangle(width, length, b_min, b_max_x, b_max_y)
         return 0
 
-    def set_geometry_constraints_bi_zoned_rectangle(self, length: float, width: float, b_min: float,
-                                                    b_max_x: float, b_max_y: float) -> int:
+    def set_geometry_constraints_bi_zoned_rectangle(
+        self, length: float, width: float, b_min: float, b_max_x: float, b_max_y: float
+    ) -> int:
         """
         Sets the geometry constraints for the bi-zoned rectangle design method.
 
@@ -369,8 +415,9 @@ class GHEManager:
         self._geometric_constraints = GeometricConstraintsBiZoned(width, length, b_min, b_max_x, b_max_y)
         return 0
 
-    def set_geometry_constraints_bi_rectangle_constrained(self, b_min: float, b_max_x: float, b_max_y: float,
-                                                          property_boundary: list, no_go_boundaries: list) -> int:
+    def set_geometry_constraints_bi_rectangle_constrained(
+        self, b_min: float, b_max_x: float, b_max_y: float, property_boundary: list, no_go_boundaries: list
+    ) -> int:
         """
         Sets the geometry constraints for the bi-rectangle constrained design method.
 
@@ -383,14 +430,23 @@ class GHEManager:
         :rtype: int
         """
         self.geom_type = DesignGeomType.BIRECTANGLECONSTRAINED
-        self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(b_min, b_max_x, b_max_y,
-                                                                                 property_boundary, no_go_boundaries)
+        self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(
+            b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries
+        )
         return 0
 
-    def set_geometry_constraints_rowwise(self, perimeter_spacing_ratio: Union[float, None],
-                                         max_spacing: float, min_spacing: float, spacing_step: float,
-                                         max_rotation: float, min_rotation: float, rotate_step: float,
-                                         property_boundary: list, no_go_boundaries: list) -> int:
+    def set_geometry_constraints_rowwise(
+        self,
+        perimeter_spacing_ratio: float | None,
+        max_spacing: float,
+        min_spacing: float,
+        spacing_step: float,
+        max_rotation: float,
+        min_rotation: float,
+        rotate_step: float,
+        property_boundary: list,
+        no_go_boundaries: list,
+    ) -> int:
         """
         Sets the geometry constraints for the row-wise design method.
 
@@ -417,10 +473,17 @@ class GHEManager:
         min_rotation = min_rotation * DEG_TO_RAD
 
         self.geom_type = DesignGeomType.ROWWISE
-        self._geometric_constraints = GeometricConstraintsRowWise(perimeter_spacing_ratio,
-                                                                  min_spacing, max_spacing, spacing_step,
-                                                                  min_rotation, max_rotation, rotate_step,
-                                                                  property_boundary, no_go_boundaries)
+        self._geometric_constraints = GeometricConstraintsRowWise(
+            perimeter_spacing_ratio,
+            min_spacing,
+            max_spacing,
+            spacing_step,
+            min_rotation,
+            max_rotation,
+            rotate_step,
+            property_boundary,
+            no_go_boundaries,
+        )
         return 0
 
     def set_design(self, flow_rate: float, flow_type_str: str, throw: bool = True) -> int:
@@ -572,17 +635,19 @@ class GHEManager:
         :rtype: int
         """
 
-        if any([x is None for x in [
-            self._fluid,
-            self._grout,
-            self._soil,
-            self._pipe,
-            self._borehole,
-            self._simulation_parameters,
-            self._ground_loads,
-            self._geometric_constraints,
-            self._design,
-        ]]):
+        if not all(
+            [
+                self._fluid,
+                self._grout,
+                self._soil,
+                self._pipe,
+                self._borehole,
+                self._simulation_parameters,
+                self._ground_loads,
+                self._geometric_constraints,
+                self._design,
+            ]
+        ):
             message = "All GHE properties must be set before GHEManager.find_design is called."
             print(message, file=stderr)
             if throw:
@@ -693,7 +758,7 @@ class GHEManager:
             'simulation': self._simulation_parameters.to_input(),
             'geometric_constraints': d_geo,
             'design': d_des,
-            'loads': {'ground_loads': list(self._ground_loads)}
+            'loads': {'ground_loads': list(self._ground_loads)},
         }
 
         with open(output_file_path, 'w') as f:
@@ -744,7 +809,7 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             shank_spacing=pipe_props["shank_spacing"],
             roughness=pipe_props["roughness"],
             conductivity=pipe_props["conductivity"],
-            rho_cp=pipe_props["rho_cp"]
+            rho_cp=pipe_props["rho_cp"],
         )
     elif ghe.pipe_type == BHPipeType.DOUBLEUTUBEPARALLEL:
         ghe.set_double_u_tube_pipe_parallel(
@@ -753,7 +818,7 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             shank_spacing=pipe_props["shank_spacing"],
             roughness=pipe_props["roughness"],
             conductivity=pipe_props["conductivity"],
-            rho_cp=pipe_props["rho_cp"]
+            rho_cp=pipe_props["rho_cp"],
         )
     elif ghe.pipe_type == BHPipeType.DOUBLEUTUBESERIES:
         ghe.set_double_u_tube_pipe_series(
@@ -762,7 +827,7 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             shank_spacing=pipe_props["shank_spacing"],
             roughness=pipe_props["roughness"],
             conductivity=pipe_props["conductivity"],
-            rho_cp=pipe_props["rho_cp"]
+            rho_cp=pipe_props["rho_cp"],
         )
     elif ghe.pipe_type == BHPipeType.COAXIAL:
         ghe.set_coaxial_pipe(
@@ -773,19 +838,18 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             roughness=pipe_props["roughness"],
             conductivity_inner=pipe_props["conductivity_inner"],
             conductivity_outer=pipe_props["conductivity_outer"],
-            rho_cp=pipe_props["rho_cp"]
+            rho_cp=pipe_props["rho_cp"],
         )
 
     ghe.set_borehole(
         height=constraint_props["max_height"],
         buried_depth=borehole_props["buried_depth"],
-        diameter=borehole_props["diameter"]
+        diameter=borehole_props["diameter"],
     )
 
     ghe.set_ground_loads_from_hourly_list(ground_load_props)
-    max_bh = design_props["max_boreholes"] if "max_boreholes" in design_props.keys() else None
-    continue_if_design_unmet = design_props[
-        "continue_if_design_unmet"] if "continue_if_design_unmet" in design_props.keys() else False
+    max_bh = design_props.get("max_boreholes", None)
+    continue_if_design_unmet = design_props.get("continue_if_design_unmet", False)
     ghe.set_simulation_parameters(
         num_months=sim_props["num_months"],
         max_eft=design_props["max_eft"],
@@ -793,7 +857,7 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         max_height=constraint_props["max_height"],
         min_height=constraint_props["min_height"],
         max_boreholes=max_bh,
-        continue_if_design_unmet=continue_if_design_unmet
+        continue_if_design_unmet=continue_if_design_unmet,
     )
 
     if ghe.set_design_geometry_type(constraint_props["method"], throw=False) != 0:
@@ -807,17 +871,14 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             b_max=constraint_props["b_max"],
         )
     elif ghe.geom_type == DesignGeomType.NEARSQUARE:
-        ghe.set_geometry_constraints_near_square(
-            b=constraint_props["b"],
-            length=constraint_props["length"]
-        )
+        ghe.set_geometry_constraints_near_square(b=constraint_props["b"], length=constraint_props["length"])
     elif ghe.geom_type == DesignGeomType.BIRECTANGLE:
         ghe.set_geometry_constraints_bi_rectangle(
             length=constraint_props["length"],
             width=constraint_props["width"],
             b_min=constraint_props["b_min"],
             b_max_x=constraint_props["b_max_x"],
-            b_max_y=constraint_props["b_max_y"]
+            b_max_y=constraint_props["b_max_y"],
         )
     elif ghe.geom_type == DesignGeomType.BIZONEDRECTANGLE:
         ghe.set_geometry_constraints_bi_zoned_rectangle(
@@ -825,7 +886,7 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             width=constraint_props["width"],
             b_min=constraint_props["b_min"],
             b_max_x=constraint_props["b_max_x"],
-            b_max_y=constraint_props["b_max_y"]
+            b_max_y=constraint_props["b_max_y"],
         )
     elif ghe.geom_type == DesignGeomType.BIRECTANGLECONSTRAINED:
         ghe.set_geometry_constraints_bi_rectangle_constrained(
@@ -833,14 +894,11 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             b_max_x=constraint_props["b_max_x"],
             b_max_y=constraint_props["b_max_y"],
             property_boundary=constraint_props["property_boundary"],
-            no_go_boundaries=constraint_props["no_go_boundaries"]
+            no_go_boundaries=constraint_props["no_go_boundaries"],
         )
     elif ghe.geom_type == DesignGeomType.ROWWISE:
-        # We are using perimeter calculations if present
-        if "perimeter_spacing_ratio" in constraint_props.keys():
-            perimeter_spacing_ratio = constraint_props["perimeter_spacing_ratio"]
-        else:
-            perimeter_spacing_ratio = None
+        # use perimeter calculations if present
+        perimeter_spacing_ratio = constraint_props.get("perimeter_spacing_ratio", None)
 
         ghe.set_geometry_constraints_rowwise(
             perimeter_spacing_ratio=perimeter_spacing_ratio,
@@ -851,17 +909,13 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             min_rotation=constraint_props["min_rotation"],
             rotate_step=constraint_props["rotate_step"],
             property_boundary=constraint_props["property_boundary"],
-            no_go_boundaries=constraint_props["no_go_boundaries"]
+            no_go_boundaries=constraint_props["no_go_boundaries"],
         )
     else:
         print("Geometry constraint method not supported.", file=stderr)
         return 1
 
-    ghe.set_design(
-        flow_rate=design_props["flow_rate"],
-        flow_type_str=design_props["flow_type"],
-        throw=False
-    )
+    ghe.set_design(flow_rate=design_props["flow_rate"], flow_type_str=design_props["flow_type"], throw=False)
 
     ghe.find_design(throw=False)
     ghe.prepare_results("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
@@ -874,18 +928,8 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
 @click.argument("input-path", type=click.Path(exists=True), required=True)
 @click.argument("output-directory", type=click.Path(exists=False), required=False)
 @click.version_option(VERSION)
-@click.option(
-    "--validate-only",
-    default=False,
-    is_flag=True,
-    show_default=False,
-    help="Validate input file and exit."
-)
-@click.option(
-    "-c",
-    "--convert",
-    help="Convert output to specified format. Options supported: 'IDF'."
-)
+@click.option("--validate-only", default=False, is_flag=True, show_default=False, help="Validate input file and exit.")
+@click.option("-c", "--convert", help="Convert output to specified format. Options supported: 'IDF'.")
 def run_manager_from_cli(input_path, output_directory, validate_only, convert):
     input_path = Path(input_path).resolve()
 
@@ -904,8 +948,8 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
                 write_idf(input_path)
                 print("Output converted to IDF objects.")
                 return 0
-            except:
-                print("Conversion to IDF error.", file=stderr)
+            except Exception as e:  # noqa: BLE001
+                print(f"Conversion to IDF error: {e}", file=stderr)
                 return 1
 
         else:

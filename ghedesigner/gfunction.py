@@ -11,22 +11,22 @@ from ghedesigner.enums import BHPipeType
 
 
 def calculate_g_function(
-        m_flow_borehole,
-        bhe_type: BHPipeType,
-        time_values,
-        coordinates,
-        borehole,
-        fluid,
-        pipe,
-        grout,
-        soil,
-        n_segments=8,
-        end_length_ratio=0.02,
-        segments="unequal",
-        solver="equivalent",
-        boundary="MIFT",
-        segment_ratios=None,
-        disp=False,
+    m_flow_borehole,
+    bhe_type: BHPipeType,
+    time_values,
+    coordinates,
+    borehole,
+    fluid,
+    pipe,
+    grout,
+    soil,
+    n_segments=8,
+    end_length_ratio=0.02,
+    segments="unequal",
+    solver="equivalent",
+    boundary="MIFT",
+    segment_ratios=None,
+    disp=False,
 ):
     bore_field = []
     bhe_objects = []
@@ -54,8 +54,6 @@ def calculate_g_function(
     elif segments == "unequal":
         if segment_ratios is None:
             segment_ratios = gt.utilities.segment_ratios(n_segments, end_length_ratio=end_length_ratio)
-        else:
-            segment_ratios = segment_ratios
         options = {
             "nSegments": n_segments,
             "segment_ratios": segment_ratios,
@@ -64,7 +62,7 @@ def calculate_g_function(
     else:
         raise ValueError("Equal or Unequal are acceptable options " "for segments.")
 
-    if boundary == "UHTR" or boundary == "UBWT":
+    if boundary in ("UHTR", "UBWT"):
         gfunc = gt.gfunction.gFunction(
             bore_field,
             alpha,
@@ -91,23 +89,23 @@ def calculate_g_function(
 
 
 def calc_g_func_for_multiple_lengths(
-        b: float,
-        h_values: list,
-        r_b,
-        depth,
-        m_flow_borehole,
-        bhe_type: BHPipeType,
-        log_time,
-        coordinates,
-        fluid,
-        pipe,
-        grout,
-        soil,
-        n_segments=8,
-        segments="unequal",
-        solver="equivalent",
-        boundary="MIFT",
-        segment_ratios=None,
+    b: float,
+    h_values: list,
+    r_b,
+    depth,
+    m_flow_borehole,
+    bhe_type: BHPipeType,
+    log_time,
+    coordinates,
+    fluid,
+    pipe,
+    grout,
+    soil,
+    n_segments=8,
+    segments="unequal",
+    solver="equivalent",
+    boundary="MIFT",
+    segment_ratios=None,
 ):
     d = {"g": {}, "bore_locations": coordinates, "logtime": log_time}
 
@@ -116,7 +114,7 @@ def calc_g_func_for_multiple_lengths(
 
         alpha = soil.k / soil.rhoCp
 
-        ts = h ** 2 / (9.0 * alpha)  # Bore field characteristic time
+        ts = h**2 / (9.0 * alpha)  # Bore field characteristic time
         time_values = np.exp(log_time) * ts
 
         gfunc = calculate_g_function(
@@ -149,13 +147,13 @@ def calc_g_func_for_multiple_lengths(
 
 class GFunction:
     def __init__(
-            self,
-            b: float,
-            r_b_values: dict,
-            d_values: dict,
-            g_lts: dict,
-            log_time: list,
-            bore_locations: list,
+        self,
+        b: float,
+        r_b_values: dict,
+        d_values: dict,
+        g_lts: dict,
+        log_time: list,
+        bore_locations: list,
     ):
         self.B: float = b  # a B spacing in the borefield
         # r_b (borehole radius) value keyed by height
@@ -173,22 +171,22 @@ class GFunction:
         self.interpolation_table: dict = {}
 
     def g_function_interpolation(self, b_over_h: float, kind="default"):
-
         # the g-functions are stored in a dictionary based on heights, so an
         # equivalent height can be found
         h_eq = 1 / b_over_h * self.B
 
+        tolerance = 0.001
+
         # Determine if we are out of range and need to extrapolate
         height_values = list(self.g_lts.keys())
         # If we are close to the outer bounds, then set H_eq as outer bounds
-        if abs(h_eq - max(height_values)) < 1.0e-6:
+        close_tolerance = 1.0e-6
+        if abs(h_eq - max(height_values)) < close_tolerance:
             h_eq = max(height_values)
-        if abs(h_eq - min(height_values)) < 1.0e-6:
+        if abs(h_eq - min(height_values)) < close_tolerance:
             h_eq = min(height_values)
 
-        if min(height_values) <= h_eq <= max(height_values):
-            fill_value = ""
-        elif abs(min(height_values) - h_eq) < 0.001:
+        if min(height_values) <= h_eq <= max(height_values) or abs(min(height_values) - h_eq) < tolerance:
             fill_value = ""
         else:
             fill_value = "extrapolate"
@@ -196,35 +194,30 @@ class GFunction:
 
         # if the interpolation kind is default, use what we know about the
         # accuracy of interpolation to choose a technique
+
         if kind == "default":
             num_curves = len(height_values)
-            if num_curves >= 5:
+            if num_curves >= 5:  # noqa: PLR2004
                 kind = "cubic"
-            elif num_curves >= 3:
+            elif num_curves >= 3:  # noqa: PLR2004
                 kind = "quadratic"
-            elif num_curves == 2:
+            elif num_curves == 2:  # noqa: PLR2004
                 kind = "linear"
+            elif (h_eq - height_values[0]) / height_values[0] < tolerance or min(height_values) - h_eq < tolerance:
+                g_function = self.g_lts[height_values[0]]
+                rb = self.r_b_values[height_values[0]]
+                d = self.D_values[height_values[0]]
+                return g_function, rb, d, h_eq
             else:
-                if (h_eq - height_values[0]) / height_values[0] < 0.001:
-                    g_function = self.g_lts[height_values[0]]
-                    rb = self.r_b_values[height_values[0]]
-                    d = self.D_values[height_values[0]]
-                    return g_function, rb, d, h_eq
-                elif min(height_values) - h_eq < 0.001:
-                    g_function = self.g_lts[height_values[0]]
-                    rb = self.r_b_values[height_values[0]]
-                    d = self.D_values[height_values[0]]
-                    return g_function, rb, d, h_eq
-                else:
-                    raise ValueError(
-                        "The interpolation requires two g-function curves "
-                        "if the requested B/H is not already computed.")
+                raise ValueError(
+                    "The interpolation requires two g-function curves " "if the requested B/H is not already computed."
+                )
 
         # Automatically adjust interpolation if necessary
         # Lagrange also needs 2
         interpolation_kinds = {"linear": 2, "quadratic": 3, "cubic": 4, "lagrange": 2}
         curves_by_kind = {2: "linear", 3: "quadratic", 4: "cubic"}
-        if len(height_values) < 2:
+        if len(height_values) < 2:  # noqa: PLR2004
             raise ValueError("Interpolation requires two g-function curves.")
         else:
             # If the number of required curves for the interpolation type is
@@ -247,10 +240,7 @@ class GFunction:
                     g_value = self.g_lts[key][i]
                     x.append(height_value)
                     y.append(g_value)
-                if kind == "lagrange":
-                    f = lagrange(x, y)
-                else:
-                    f = interp1d(x, y, kind=kind, fill_value=fill_value)
+                f = lagrange(x, y) if kind == "lagrange" else interp1d(x, y, kind=kind, fill_value=fill_value)
                 self.interpolation_table["g"].append(f)
             # create interpolation tables for 'D' and 'r_b' by height
             keys = list(self.r_b_values.keys())
@@ -262,8 +252,8 @@ class GFunction:
                 rb_values.append(self.r_b_values[h])
                 try:
                     d_values.append(self.D_values[h])
-                except:
-                    pass
+                except Exception as e:  # noqa: BLE001
+                    print(e)
             if kind == "lagrange":
                 rb_f = lagrange(height_values, rb_values)
             else:
@@ -276,14 +266,15 @@ class GFunction:
                 else:
                     d_f = interp1d(height_values, d_values, kind=kind, fill_value=fill_value)
                 self.interpolation_table["D"] = d_f
-            except:
-                pass
+            except Exception as e:  # noqa: BLE001
+                print(e)
 
         # create the g-function by interpolating at each ln(t/ts) value
         rb_value = self.interpolation_table["rb"](h_eq)
         try:
             d_value = self.interpolation_table["D"](h_eq)
-        except:
+        except Exception as e:  # noqa: BLE001
+            print(f"Error occurred while interpolating D: {e}")
             d_value = None
         g_function: list = []
         for i in range(len(self.log_time)):
@@ -333,9 +324,7 @@ class GFunction:
         """
         log_time = data["logtime"]
 
-        bore_locations = data[
-            "bore_locations"
-        ]  # store the bore locations in the object
+        bore_locations = data["bore_locations"]  # store the bore locations in the object
         g_values: dict = data["g"]  # pull the g-functions into the g_values
         # a temporary g-function dictionary that might be out of order
         g_tmp: dict = {}
@@ -348,7 +337,7 @@ class GFunction:
             # do the g-function dictionary
             key_split = key.split("_")
             # get the current height
-            height = float((key_split[1]))
+            height = float(key_split[1])
             # create a g-function list associated with this height key
             g_tmp[height] = g_values[key]
             # create an r_b value associated with this height key
@@ -359,20 +348,21 @@ class GFunction:
             try:
                 d = float(key_split[3])
                 ds_tmp[height] = d
-            except:
-                pass
+            except ValueError:
+                # print(f"key_split[3] not a float: {key_split[3]}. Probably not a problem, skipping.")
+                pass  # skip this key
 
         # every B-spacing should be the same for each file
-        b = float(list(g_values.keys())[0].split("_")[0])
+        b = float(next(iter(g_values.keys())).split("_")[0])
 
-        keys = sorted(list(g_tmp.keys()), key=int)  # sort the heights in order
+        keys = sorted(g_tmp.keys(), key=int)  # sort the heights in order
         # fill the g-function dictionary with sorted heights
         g = {key: g_tmp[key] for key in keys}
         # fill the burial depth dictionary with sorted heights
         try:
             ds = {key: ds_tmp[key] for key in keys}
-        except:
-            # if there's no D provided, make it 2
+        except KeyError:
+            print("No burial depth value found, assuming 2 m for all heights.")
             ds = {key: 2.0 for key in keys}
         r_bs = {key: r_bs_tmp[key] for key in keys}
 
@@ -382,7 +372,7 @@ class GFunction:
             "d_values": ds,
             "g_lts": g,
             "log_time": log_time,
-            "bore_locations": bore_locations
+            "bore_locations": bore_locations,
         }
 
         return geothermal_g_input

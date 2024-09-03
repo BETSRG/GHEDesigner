@@ -4,9 +4,9 @@ from ghedesigner.borehole import GHEBorehole
 from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.gfunction import GFunction
 from ghedesigner.ground_heat_exchangers import GHE
-from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.simulation import SimulationParameters
-from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
 class TestComputedGFunctionSimAndSize(GHEBaseTest):

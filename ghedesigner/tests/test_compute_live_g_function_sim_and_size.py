@@ -3,9 +3,9 @@ from ghedesigner.coordinates import rectangle
 from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ground_heat_exchangers import GHE
-from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.simulation import SimulationParameters
-from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.utilities import eskilson_log_times
 
 
@@ -137,7 +137,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # Simulate after computing just one g-function
         max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HYBRID)
 
-        self.log("Min EFT: {0:0.3f}\nMax EFT: {1:0.3f}".format(min_hp_eft, max_hp_eft))
+        self.log(f"Min EFT: {min_hp_eft:0.3f}\nMax EFT: {max_hp_eft:0.3f}")
 
         # Compute a range of g-functions for interpolation
         h_values = [24.0, 48.0, 96.0, 192.0, 384.0]

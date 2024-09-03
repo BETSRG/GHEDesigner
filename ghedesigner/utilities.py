@@ -10,8 +10,35 @@ from scipy.optimize import brentq
 # --------------
 def eskilson_log_times():
     # Return a list of Eskilson's original 27 dimensionless points in time
-    return [-8.5, -7.8, -7.2, -6.5, -5.9, -5.2, -4.5, -3.963, -3.27, -2.864, -2.577, -2.171, -1.884, -1.191,
-            -0.497, -0.274, -0.051, 0.196, 0.419, 0.642, 0.873, 1.112, 1.335, 1.679, 2.028, 2.275, 3.003]
+    return [
+        -8.5,
+        -7.8,
+        -7.2,
+        -6.5,
+        -5.9,
+        -5.2,
+        -4.5,
+        -3.963,
+        -3.27,
+        -2.864,
+        -2.577,
+        -2.171,
+        -1.884,
+        -1.191,
+        -0.497,
+        -0.274,
+        -0.051,
+        0.196,
+        0.419,
+        0.642,
+        0.873,
+        1.112,
+        1.335,
+        1.679,
+        2.028,
+        2.275,
+        3.003,
+    ]
 
 
 # Spatial functions
@@ -46,15 +73,8 @@ def sign(x: float) -> int:
 
 
 def check_bracket(sign_x_l, sign_x_r) -> bool:
-    if sign_x_l < 0 < sign_x_r:
-        # Bracketed the root
-        return True
-    elif sign_x_r < 0 < sign_x_l:
-        # Bracketed the root
-        return True
-    else:
-        # The root has not been bracketed, this method will return false.
-        return False
+    return sign_x_l < 0 < sign_x_r or sign_x_r < 0 < sign_x_l
+    # True if bracketed the root
 
 
 def solve_root(x, objective_function, lower=None, upper=None, abs_tol=1.0e-6, rel_tol=1.0e-6, max_iter=50):
@@ -64,12 +84,8 @@ def solve_root(x, objective_function, lower=None, upper=None, abs_tol=1.0e-6, re
     # Define a lower and upper for thermal conductivities
     if lower is None:
         lower = x / 100.0
-    else:
-        lower = lower
     if upper is None:
         upper = x * 10.0
-    else:
-        upper = upper
     # Check objective function upper and lower bounds to make sure the root is
     # bracketed
     minus = objective_function(lower)
@@ -100,8 +116,7 @@ def write_idf_object(data: list):
         comment_col_no = 30
         num_mid_pad = comment_col_no - num_leading_pad_spaces - len_val
 
-        if num_mid_pad < 2:
-            num_mid_pad = 2
+        num_mid_pad = max(num_mid_pad, 2)
 
         mid_pad = ' ' * num_mid_pad
 
@@ -143,7 +158,7 @@ def write_idf(summary_path: Path):
         ('Ground Temp Obj Name', 'Undisturbed Ground Temperature Model Name'),
         (f'{soil_k:0.3f}', 'Ground Thermal Conductivity {W/m-K}'),
         (f'{soil_rho_cp:0.3e}', 'Ground Thermal Heat Capacity {J/m3-K}'),
-        ('g-functions Obj Name', 'GHE:Vertical:ResponseFactors Object Name')
+        ('g-functions Obj Name', 'GHE:Vertical:ResponseFactors Object Name'),
     ]
 
     bh_depth = data['ghe_system']['borehole_buried_depth']['value']
@@ -185,7 +200,7 @@ def write_idf(summary_path: Path):
         (f'{soil_cp:0.2f}', 'Soil Specific Heat {J/kg-K}'),
         (f'{ugt}', 'Average Soil Surface Temperature {C}'),
         ('0', 'Average Amplitude of Surface Temperature {deltaC}'),
-        ('0', 'Phase Shift of Minimum Surface Temperature {days}')
+        ('0', 'Phase Shift of Minimum Surface Temperature {days}'),
     ]
 
     ref_ratio = (bh_dia / 2.0) / bh_length

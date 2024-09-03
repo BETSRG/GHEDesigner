@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-
 from pathlib import Path
 
 
@@ -22,8 +21,8 @@ def update_version(new_version_str: str):
             demo_file_path = demos_dir / f
             demo_contents = demo_file_path.read_text()
             demo_contents = re.sub(r"\"version\": \".+\",\n", f"\"version\": \"{new_version_str}\",\n", demo_contents)
-            with open(demo_file_path, 'w') as f:
-                f.write(demo_contents)
+            with open(demo_file_path, 'w') as output_file:
+                output_file.write(demo_contents)
 
 
 if __name__ == "__main__":

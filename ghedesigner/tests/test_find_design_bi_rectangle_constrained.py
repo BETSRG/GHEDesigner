@@ -5,7 +5,7 @@
 # This search is described in section 4.4.5 from pages 146-148 in Cook (2021).
 
 from ghedesigner.manager import GHEManager
-from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.tests.test_base_case import GHEBaseTest
 
 prop_boundary = [
     [19.46202532, 108.8860759],
@@ -25,77 +25,50 @@ prop_boundary = [
     [182.2943038, 115.7721519],
     [182.2943038, 121.3670886],
     [155.0474684, 118.5696203],
-    [53.19620253, 112.3291139]
+    [53.19620253, 112.3291139],
 ]
 
-no_go_zones = [[
-    [74.38818565, 80.69620253],
-    [73.0907173, 53.36708861],
-    [93.85021097, 52.50632911],
-    [120.0158228, 53.15189873],
-    [121.5295359, 62.18987342],
-    [128.8818565, 63.26582278],
-    [128.8818565, 78.5443038],
-    [129.0981013, 80.91139241],
-    [108.5548523, 81.34177215],
-    [104.0137131, 110],
-    [95.58016878, 110],
-    [95.7964135, 81.7721519]
-]]
+no_go_zones = [
+    [
+        [74.38818565, 80.69620253],
+        [73.0907173, 53.36708861],
+        [93.85021097, 52.50632911],
+        [120.0158228, 53.15189873],
+        [121.5295359, 62.18987342],
+        [128.8818565, 63.26582278],
+        [128.8818565, 78.5443038],
+        [129.0981013, 80.91139241],
+        [108.5548523, 81.34177215],
+        [104.0137131, 110],
+        [95.58016878, 110],
+        [95.7964135, 81.7721519],
+    ]
+]
 
 prop_boundaries_multiple_bf_outlines = [
-    [
-        [0.0, 0.0],
-        [45.0, 0.0],
-        [90.0, 45.0],
-        [45.0, 90.0],
-        [0.0, 45.0]
-    ],
-    [
-        [0.0, 90.0],
-        [80.0, 90.0],
-        [90.0, 120.0],
-        [10.0, 115.0]
-    ],
-    [
-        [120.0, 120.0],
-        [165.0, 180.0],
-        [165.0, 237.0],
-        [140.0, 250.0],
-        [135.0, 151.0],
-        [120.0, 135.0]
-    ]
+    [[0.0, 0.0], [45.0, 0.0], [90.0, 45.0], [45.0, 90.0], [0.0, 45.0]],
+    [[0.0, 90.0], [80.0, 90.0], [90.0, 120.0], [10.0, 115.0]],
+    [[120.0, 120.0], [165.0, 180.0], [165.0, 237.0], [140.0, 250.0], [135.0, 151.0], [120.0, 135.0]],
 ]
 
 no_go_zones_multiple_bf_outlines = [
-    [
-        [60.0, 0.0],
-        [80.0, 0.0],
-        [80.0, 200.0],
-        [60.0, 200.0]
-    ],
-    [
-        [60.0, 100.0],
-        [80.0, 50.0],
-        [140.0, 140.0],
-        [130.0, 175.0]
-    ],
-    [
-        [0.0, 0.0],
-        [20.0, 0.0],
-        [20.0, 20.0],
-        [0.0, 20.0]
-    ]
+    [[60.0, 0.0], [80.0, 0.0], [80.0, 200.0], [60.0, 200.0]],
+    [[60.0, 100.0], [80.0, 50.0], [140.0, 140.0], [130.0, 175.0]],
+    [[0.0, 0.0], [20.0, 0.0], [20.0, 20.0], [0.0, 20.0]],
 ]
 
 
 class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
-
     def test_single_u_tube(self):
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
-            roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
+            inner_diameter=0.03404,
+            outer_diameter=0.04216,
+            shank_spacing=0.01856,
+            roughness=1.0e-6,
+            conductivity=0.4,
+            rho_cp=1542000.0,
+        )
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
@@ -103,8 +76,8 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_rectangle_constrained(
-            b_min=5.0, b_max_x=25.0, b_max_y=25.0,
-            property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
+            b_min=5.0, b_max_x=25.0, b_max_y=25.0, property_boundary=prop_boundary, no_go_boundaries=no_go_zones
+        )
         ghe.set_design(flow_rate=0.5, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiRectangleConstrainedDesignSingleUTube"
@@ -118,8 +91,13 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
     def test_single_u_tube_multiple_bf_outlines(self):
         ghe = GHEManager()
         ghe.set_single_u_tube_pipe(
-            inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
-            roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
+            inner_diameter=0.03404,
+            outer_diameter=0.04216,
+            shank_spacing=0.01856,
+            roughness=1.0e-6,
+            conductivity=0.4,
+            rho_cp=1542000.0,
+        )
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
@@ -127,8 +105,12 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_rectangle_constrained(
-            b_min=5.0, b_max_x=25.0, b_max_y=25.0,
-            property_boundary=prop_boundaries_multiple_bf_outlines, no_go_boundaries=no_go_zones_multiple_bf_outlines)
+            b_min=5.0,
+            b_max_x=25.0,
+            b_max_y=25.0,
+            property_boundary=prop_boundaries_multiple_bf_outlines,
+            no_go_boundaries=no_go_zones_multiple_bf_outlines,
+        )
         ghe.set_design(flow_rate=0.2, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiRectangleConstrainedDesignSingleUTube"
@@ -142,8 +124,13 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
     def test_double_u_tube(self):
         ghe = GHEManager()
         ghe.set_double_u_tube_pipe_parallel(
-            inner_diameter=0.03404, outer_diameter=0.04216, shank_spacing=0.01856,
-            roughness=1.0e-6, conductivity=0.4, rho_cp=1542000.0)
+            inner_diameter=0.03404,
+            outer_diameter=0.04216,
+            shank_spacing=0.01856,
+            roughness=1.0e-6,
+            conductivity=0.4,
+            rho_cp=1542000.0,
+        )
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
@@ -151,8 +138,8 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_rectangle_constrained(
-            b_min=5.0, b_max_x=25.0, b_max_y=25.0,
-            property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
+            b_min=5.0, b_max_x=25.0, b_max_y=25.0, property_boundary=prop_boundary, no_go_boundaries=no_go_zones
+        )
         ghe.set_design(flow_rate=0.5, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiRectangleConstrainedDesignDoubleUTube"
@@ -166,8 +153,15 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
     def test_coaxial(self):
         ghe = GHEManager()
         ghe.set_coaxial_pipe(
-            inner_pipe_d_in=0.0442, inner_pipe_d_out=0.050, outer_pipe_d_in=0.0974, outer_pipe_d_out=0.11,
-            roughness=1.0e-6, conductivity_inner=0.4, conductivity_outer=0.4, rho_cp=1542000.0)
+            inner_pipe_d_in=0.0442,
+            inner_pipe_d_out=0.050,
+            outer_pipe_d_in=0.0974,
+            outer_pipe_d_out=0.11,
+            roughness=1.0e-6,
+            conductivity_inner=0.4,
+            conductivity_outer=0.4,
+            rho_cp=1542000.0,
+        )
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
@@ -175,8 +169,8 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=135, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_bi_rectangle_constrained(
-            b_min=5.0, b_max_x=25.0, b_max_y=25.0,
-            property_boundary=prop_boundary, no_go_boundaries=no_go_zones)
+            b_min=5.0, b_max_x=25.0, b_max_y=25.0, property_boundary=prop_boundary, no_go_boundaries=no_go_zones
+        )
         ghe.set_design(flow_rate=0.8, flow_type_str="borehole")
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiRectangleConstrainedDesignCoaxial"

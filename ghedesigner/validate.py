@@ -2,10 +2,9 @@ import sys
 from json import loads
 from pathlib import Path
 
-from jsonschema import validate, ValidationError
+from jsonschema import ValidationError, validate
 
 from ghedesigner.enums import BHPipeType, DesignGeomType
-
 
 # Note: JSON schema does not currently have a good way to handle case-insensitive enums.
 #       Some fields are upper-cased manually here for validation purposes.
@@ -31,7 +30,7 @@ def validate_file_structure(instance: dict) -> int:
     return validate_schema_instance(
         schema_file_name="file_structure.schema.json",
         instance=instance,
-        error_msg="Errors in input file structure. See demo files for examples."
+        error_msg="Errors in input file structure. See demo files for examples.",
     )
 
 
@@ -39,25 +38,19 @@ def validate_fluid(instance: dict) -> int:
     fluid_name = str(instance["fluid_name"]).upper()
     instance["fluid_name"] = fluid_name
     return validate_schema_instance(
-        schema_file_name="fluid.schema.json",
-        instance=instance,
-        error_msg="Errors in \"fluid\" input object."
+        schema_file_name="fluid.schema.json", instance=instance, error_msg="Errors in \"fluid\" input object."
     )
 
 
 def validate_grout(instance: dict) -> int:
     return validate_schema_instance(
-        schema_file_name="grout.schema.json",
-        instance=instance,
-        error_msg="Errors in \"grout\" input object."
+        schema_file_name="grout.schema.json", instance=instance, error_msg="Errors in \"grout\" input object."
     )
 
 
 def validate_soil(instance: dict) -> int:
     return validate_schema_instance(
-        schema_file_name="soil.schema.json",
-        instance=instance,
-        error_msg="Errors in \"soil\" input object."
+        schema_file_name="soil.schema.json", instance=instance, error_msg="Errors in \"soil\" input object."
     )
 
 
@@ -69,25 +62,21 @@ def validate_pipe(instance: dict) -> int:
         BHPipeType.SINGLEUTUBE.name: "pipe_single_double_u_tube.schema.json",
         BHPipeType.DOUBLEUTUBESERIES.name: "pipe_single_double_u_tube.schema.json",
         BHPipeType.DOUBLEUTUBEPARALLEL.name: "pipe_single_double_u_tube.schema.json",
-        BHPipeType.COAXIAL.name: "pipe_coaxial.schema.json"
+        BHPipeType.COAXIAL.name: "pipe_coaxial.schema.json",
     }
 
-    if pipe_arrangement not in schema_map.keys():
+    if pipe_arrangement not in schema_map:
         print("Pipe arrangement not found.", file=sys.stderr)
         return 1
 
     return validate_schema_instance(
-        schema_file_name=schema_map[pipe_arrangement],
-        instance=instance,
-        error_msg="Errors in \"pipe\" input object."
+        schema_file_name=schema_map[pipe_arrangement], instance=instance, error_msg="Errors in \"pipe\" input object."
     )
 
 
 def validate_borehole(instance: dict) -> int:
     return validate_schema_instance(
-        schema_file_name="borehole.schema.json",
-        instance=instance,
-        error_msg="Errors in \"borehole\" input object."
+        schema_file_name="borehole.schema.json", instance=instance, error_msg="Errors in \"borehole\" input object."
     )
 
 
@@ -97,9 +86,7 @@ def validate_simulation(instance: dict) -> int:
         instance["timestep"] = timestep
 
     return validate_schema_instance(
-        schema_file_name="simulation.schema.json",
-        instance=instance,
-        error_msg="Errors in \"simulation\" input object."
+        schema_file_name="simulation.schema.json", instance=instance, error_msg="Errors in \"simulation\" input object."
     )
 
 
@@ -116,14 +103,14 @@ def validate_geometric(instance: dict) -> int:
         DesignGeomType.ROWWISE.name: "geometric_rowwise.schema.json",
     }
 
-    if method not in schema_map.keys():
+    if method not in schema_map:
         print("Geometric constraint method not recognized.", file=sys.stderr)
         return 1
 
     return validate_schema_instance(
         schema_file_name=schema_map[method],
         instance=instance,
-        error_msg="Errors in \"geometric_constraints\" input object."
+        error_msg="Errors in \"geometric_constraints\" input object.",
     )
 
 
@@ -131,9 +118,7 @@ def validate_design(instance: dict) -> int:
     flow_type = str(instance["flow_type"]).upper()
     instance["flow_type"] = flow_type
     return validate_schema_instance(
-        schema_file_name="design.schema.json",
-        instance=instance,
-        error_msg="Errors in \"design\" input object."
+        schema_file_name="design.schema.json", instance=instance, error_msg="Errors in \"design\" input object."
     )
 
 

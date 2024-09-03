@@ -2,12 +2,11 @@ import unittest
 
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import SingleUTube
-from ghedesigner.media import GHEFluid, Pipe, Grout, Soil
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.radial_numerical_borehole import RadialNumericalBH
 
 
 class TestRadialNumericalBorehole(unittest.TestCase):
-
     def test_calc_sts_g_functions(self):
         fluid = GHEFluid(fluid_str='WATER', percent=0)
         borehole = GHEBorehole(height=100.0, buried_depth=2.0, radius=0.075, x=0.0, y=0.0)

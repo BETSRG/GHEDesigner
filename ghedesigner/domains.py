@@ -1,7 +1,7 @@
 from math import ceil, floor
 
-from ghedesigner.coordinates import rectangle, transpose_coordinates, zoned_rectangle, l_shape, c_shape, lop_u
-from ghedesigner.feature_recognition import remove_cutout, determine_largest_rectangle
+from ghedesigner.coordinates import c_shape, l_shape, lop_u, rectangle, transpose_coordinates, zoned_rectangle
+from ghedesigner.feature_recognition import determine_largest_rectangle, remove_cutout
 
 
 def square_and_near_square(lower: int, upper: int, b: float):
@@ -57,9 +57,9 @@ def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, di
 
     _iter = 0
 
-    for N in range(n_min, n_max + 1):
+    for num_borehole in range(n_min, n_max + 1):
         # Check to see if we bracket
-        b = length_1 / (N - 1)
+        b = length_1 / (num_borehole - 1)
         n_2 = floor((length_2 / b) + 1)
 
         if _iter == 0:
@@ -80,16 +80,16 @@ def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, di
         if n_2_old == n_2:
             pass
         else:
-            r = rectangle(N, n_2, b, b)
+            r = rectangle(num_borehole, n_2, b, b)
             if disp:
-                print(f"{N}\t{n_2}\t{b}\t{b}")
+                print(f"{num_borehole}\t{n_2}\t{b}\t{b}")
             if transpose:
                 r = transpose_coordinates(r)
             rectangle_domain.append(r)
-            field_descriptors.append(f"{N}X{n_2}_B{b:0.2f}")
+            field_descriptors.append(f"{num_borehole}X{n_2}_B{b:0.2f}")
             n_2_old = n_2
 
-        N += 1
+        num_borehole += 1  # noqa: PLW2901
 
     return rectangle_domain, field_descriptors
 
@@ -120,7 +120,6 @@ def bi_rectangular(length_x, length_y, b_min, b_max_x, b_max_y, transpose=False,
     n_min = ceil(n_1_min)
     n_max = floor(n_1_max)
     for n_1 in range(n_min, n_max + 1):
-
         n_2 = ceil((length_2 / b_max_2) + 1)
         b_2 = length_2 / (n_2 - 1)
 
@@ -151,7 +150,7 @@ def bi_rectangular(length_x, length_y, b_min, b_max_x, b_max_y, transpose=False,
         bi_rectangle_domain.append(coordinates)
         field_descriptors.append(f"{n_1}X{n_2}_B1{b_1:0.2f}_B2{b_2:0.2f}")
 
-        n_1 += 1
+        n_1 += 1  # noqa: PLW2901
 
     return bi_rectangle_domain, field_descriptors
 
@@ -183,8 +182,9 @@ def bi_rectangle_nested(length_x, length_y, b_min, b_max_x, b_max_y, disp=False)
 
     for n_2 in range(n_min, n_max + 1):
         b_2 = length_2 / (n_2 - 1)
-        bi_rectangle_domain, f_d = bi_rectangular(length_1, length_2, b_min, b_max_1,
-                                                  b_2, transpose=transpose, disp=disp)
+        bi_rectangle_domain, f_d = bi_rectangular(
+            length_1, length_2, b_min, b_max_1, b_2, transpose=transpose, disp=disp
+        )
         # print("Bi-Rectangular: ",bi_rectangle_domain)
         bi_rectangle_nested_domain.append(bi_rectangle_domain)
         # fieldDescriptors.append(
@@ -222,7 +222,6 @@ def zoned_rectangle_domain(length_x, length_y, n_x, n_y, transpose=False):
     field_descriptors.append(f"{n_1}X{n_2}_{n_i1}X{n_i2}_B1{b_1:0.2f}_B2{b_2:0.2f}")
 
     while n_i1 < (n_1 - 2) or n_i2 < (n_2 - 2):
-
         ratio = b_1 / b_2
 
         # general case where we can reduce in either direction
@@ -338,8 +337,9 @@ def bi_rectangle_zoned_nested(length_x, length_y, b_min, b_max_x, b_max_y):
             index_l += 1
 
         if i % 2 == 0:
-            bi_rectangle_zoned_domain, f_ds = zoned_rectangle_domain(length_1, length_2, n_1_values[j], n_2_values[k],
-                                                                     transpose=transpose)
+            bi_rectangle_zoned_domain, f_ds = zoned_rectangle_domain(
+                length_1, length_2, n_1_values[j], n_2_values[k], transpose=transpose
+            )
             domain.extend(bi_rectangle_zoned_domain)
             f_d.extend(f_ds)
             if j < len(n_1_values) - 1:
@@ -347,8 +347,9 @@ def bi_rectangle_zoned_nested(length_x, length_y, b_min, b_max_x, b_max_y):
             else:
                 k += 1
         else:
-            bi_rectangle_zoned_domain, f_ds = zoned_rectangle_domain(length_1, length_2, n_1_values[j], n_2_values[k],
-                                                                     transpose=transpose)
+            bi_rectangle_zoned_domain, f_ds = zoned_rectangle_domain(
+                length_1, length_2, n_1_values[j], n_2_values[k], transpose=transpose
+            )
             domain.extend(bi_rectangle_zoned_domain)
             f_d.extend(f_ds)
             if k < len(n_2_values) - 1:
@@ -362,8 +363,9 @@ def bi_rectangle_zoned_nested(length_x, length_y, b_min, b_max_x, b_max_y):
     return bi_rectangle_zoned_nested_domain, field_descriptors
 
 
-def polygonal_land_constraint(b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries=None,
-                              keep_contour=[True, False]):
+def polygonal_land_constraint(
+    b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries=None, keep_contour=[True, False]
+):
     if no_go_boundaries is None:
         no_go_boundaries = []
 
@@ -380,14 +382,16 @@ def polygonal_land_constraint(b_min, b_max_x, b_max_y, property_boundary, no_go_
         new_coordinates_domain = []
         for coordinates in domain:
             # Remove boreholes outside of property
-            new_coordinates = remove_cutout(coordinates, property_boundary, remove_inside=False,
-                                            keep_contour=keep_contour[0])
+            new_coordinates = remove_cutout(
+                coordinates, property_boundary, remove_inside=False, keep_contour=keep_contour[0]
+            )
             if len(new_coordinates) == 0:
                 continue
             # Remove boreholes inside of building
             if len(no_go_boundaries) > 0:
-                new_coordinates = remove_cutout(new_coordinates, no_go_boundaries, remove_inside=True,
-                                                keep_contour=keep_contour[1])
+                new_coordinates = remove_cutout(
+                    new_coordinates, no_go_boundaries, remove_inside=True, keep_contour=keep_contour[1]
+                )
             if len(new_coordinates) == 0:
                 continue
             new_coordinates_domain.append(new_coordinates)

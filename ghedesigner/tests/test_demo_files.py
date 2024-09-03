@@ -4,7 +4,7 @@ from json import loads
 from pathlib import Path
 
 from ghedesigner.manager import _run_manager_from_cli_worker
-from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.tests.test_base_case import GHEBaseTest
 
 # results can be updated with the update_demo_results.py file in /scripts
 # comment the 'self.assert' statements below to generate an updated set of results first
@@ -13,13 +13,11 @@ expected_demo_results_dict = loads(expected_results_path.read_text())
 
 
 def abs_error_within_tolerance(val_1, val_2, delta=0):
-    return True if abs(val_1 - val_2) <= delta else False
+    return bool(abs(val_1 - val_2) <= delta)
 
 
 class TestDemoFiles(GHEBaseTest):
-
     def test_demo_files(self):
-
         time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
         # run demo files first
@@ -29,8 +27,9 @@ class TestDemoFiles(GHEBaseTest):
                 out_dir = self.demo_output_parent_dir / time_str / f.replace('.json', '')
                 os.makedirs(out_dir)
                 print(f"Running: {demo_file_path}")
-                self.assertEqual(0, _run_manager_from_cli_worker(input_file_path=demo_file_path,
-                                                                 output_directory=out_dir))
+                self.assertEqual(
+                    0, _run_manager_from_cli_worker(input_file_path=demo_file_path, output_directory=out_dir)
+                )
 
         failed_tests = []
 

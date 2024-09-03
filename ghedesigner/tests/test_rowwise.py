@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from ghedesigner.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_borehole_config, gen_shape
-from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
 class TestRowWise(GHEBaseTest):
@@ -17,12 +17,12 @@ class TestRowWise(GHEBaseTest):
         # Load Property Boundary
         property_boundary_file = self.test_data_directory / 'polygon_property_boundary.csv'
         prop_polygon_df: pd.DataFrame = pd.read_csv(str(property_boundary_file))
-        self.prop_polygon_ar: list = prop_polygon_df.values.tolist()
+        self.prop_polygon_ar: list = prop_polygon_df.to_numpy().tolist()
 
         # Load Building
         building_file = self.test_data_directory / 'polygon_building.csv'
         build_polygon_df: pd.DataFrame = pd.read_csv(str(building_file))
-        self.building_polygon_ar: list = build_polygon_df.values.tolist()
+        self.building_polygon_ar: list = build_polygon_df.to_numpy().tolist()
 
         # Establish Properties
         self.buildings = None
@@ -31,16 +31,16 @@ class TestRowWise(GHEBaseTest):
         self.target_spacing_start = 10.0  # in meters
         self.target_spacing_stop = 20.0  # in meters
         self.target_spacing_step = 1  # in meters
-        self.target_spacing_number = \
+        self.target_spacing_number = (
             int((self.target_spacing_stop - self.target_spacing_start) / self.target_spacing_step) + 1
+        )
         self.rotation_step = 1  # in degrees
         self.rotation_start = -90 * (pi / 180)  # in radians
         self.rotation_stop = 90 * (pi / 180)  # in radians
-        self.number_of_rotations = (int((self.rotation_stop - self.rotation_start) / (self.rotation_step * 0.5)) + 1)
+        self.number_of_rotations = int((self.rotation_stop - self.rotation_start) / (self.rotation_step * 0.5)) + 1
         self.property, self.buildings = gen_shape(self.prop_polygon_ar, ng_zones=[self.building_polygon_ar])
 
     def test_shape_methods(self):
-
         reference_values = self.reference_values
         area_1 = self.property.get_area()
         area_2 = self.buildings[0].get_area()
@@ -119,7 +119,6 @@ class TestRowWise(GHEBaseTest):
         check_intersections(s2e3_ref_y, shape_2_ex_3_y)
 
     def test_borehole_config(self):
-
         target_spacing = (self.target_spacing_start + self.target_spacing_stop) / 2
         rotations = np.linspace(self.rotation_start, self.rotation_stop, num=self.number_of_rotations)
         num_bhs = [
@@ -139,9 +138,9 @@ class TestRowWise(GHEBaseTest):
             self.assertAlmostEqual(rv, nbh, delta=0.001)
 
     def test_normal_spacing(self):
-
-        target_spacings = np.linspace(self.target_spacing_start, self.target_spacing_stop,
-                                      num=self.target_spacing_number)
+        target_spacings = np.linspace(
+            self.target_spacing_start, self.target_spacing_stop, num=self.target_spacing_number
+        )
         num_bhs = [
             len(
                 field_optimization_fr(
@@ -160,7 +159,6 @@ class TestRowWise(GHEBaseTest):
             self.assertAlmostEqual(rv, nbh, delta=0.001)
 
     def test_perimeter_spacing(self):
-
         target_spacings = np.linspace(
             self.target_spacing_start,
             self.target_spacing_stop,
