@@ -3,7 +3,6 @@
 ![PyPI](https://img.shields.io/pypi/v/ghedesigner)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/ghedesigner?label=PyPI%20Downloads)
 ![Python Versions](https://img.shields.io/pypi/pyversions/ghedesigner)
-[![Flake8](https://github.com/BETSRG/GHEDesigner/actions/workflows/flake8.yml/badge.svg)](https://github.com/BETSRG/GHEDesigner/actions/workflows/flake8.yml)
 [![Tests](https://github.com/BETSRG/GHEDesigner/actions/workflows/tests.yml/badge.svg)](https://github.com/BETSRG/GHEDesigner/actions/workflows/tests.yml)
 
 ## Documentation
