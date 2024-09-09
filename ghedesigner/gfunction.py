@@ -1,3 +1,4 @@
+import logging
 import warnings
 from math import log
 
@@ -8,6 +9,9 @@ from scipy.interpolate import interp1d, lagrange
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import get_bhe_object
 from ghedesigner.enums import BHPipeType
+
+logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
+logger = logging.getLogger(__name__)
 
 
 def calculate_g_function(
@@ -253,7 +257,7 @@ class GFunction:
                 try:
                     d_values.append(self.D_values[h])
                 except Exception as e:  # noqa: BLE001
-                    print(e)
+                    logger.warn(e)
             if kind == "lagrange":
                 rb_f = lagrange(height_values, rb_values)
             else:
@@ -267,7 +271,7 @@ class GFunction:
                     d_f = interp1d(height_values, d_values, kind=kind, fill_value=fill_value)
                 self.interpolation_table["D"] = d_f
             except Exception as e:  # noqa: BLE001
-                print(e)
+                logger.warn(e)
 
         # create the g-function by interpolating at each ln(t/ts) value
         rb_value = self.interpolation_table["rb"](h_eq)
@@ -362,7 +366,7 @@ class GFunction:
         try:
             ds = {key: ds_tmp[key] for key in keys}
         except KeyError:
-            print("No burial depth value found, assuming 2 m for all heights.")
+            logger.info("No burial depth value found, assuming 2 m for all heights.")
             ds = {key: 2.0 for key in keys}
         r_bs = {key: r_bs_tmp[key] for key in keys}
 

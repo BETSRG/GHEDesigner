@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from json import dumps, loads
 from pathlib import Path
 from sys import exit, stderr
@@ -36,6 +37,9 @@ from ghedesigner.output import OutputManager
 from ghedesigner.simulation import SimulationParameters
 from ghedesigner.utilities import write_idf
 from ghedesigner.validate import validate_input_file
+
+logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
+logger = logging.getLogger(__name__)
 
 
 class GHEManager:
@@ -949,7 +953,7 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
                 print("Output converted to IDF objects.")
                 return 0
             except Exception as e:  # noqa: BLE001
-                print(f"Conversion to IDF error: {e}", file=stderr)
+                logger.warn(f"Conversion to IDF error: {e}", file=stderr)
                 return 1
 
         else:
