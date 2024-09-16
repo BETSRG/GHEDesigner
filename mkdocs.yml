@@ -1,0 +1,27 @@
+# https://www.mkdocs.org/user-guide/configuration/
+# https://squidfunk.github.io/mkdocs-material/creating-your-site/#advanced-configuration
+
+site_name: GHE Designer
+repo_url: https://github.com/BETSRG/GHEDesigner
+# site_url: https://github.com/BETSRG/GHEDesigner
+
+theme:
+  name: material
+
+plugins:
+  - search
+  # - json-schema:
+  #     json_schema: "ghedesigner/schemas/borehole.schema.json"
+  #     markdown_tag: BoreholeSchema
+  # - render_swagger:
+  #     allow_arbitrary_locations: true
+  - schema_reader:
+      include:
+        - "ghedesigner/schemas/"
+        # - "ghedesigner/schemas/borehole.schema.json"
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            # https://mkdocstrings.github.io/griffe/reference/docstrings/
+            docstring_style: sphinx
