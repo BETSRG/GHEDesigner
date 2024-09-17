@@ -10,15 +10,9 @@ theme:
 
 plugins:
   - search
-  # - json-schema:
-  #     json_schema: "ghedesigner/schemas/borehole.schema.json"
-  #     markdown_tag: BoreholeSchema
-  # - render_swagger:
-  #     allow_arbitrary_locations: true
   - schema_reader:
       include:
         - "ghedesigner/schemas/"
-        # - "ghedesigner/schemas/borehole.schema.json"
   - mkdocstrings:
       handlers:
         python:
