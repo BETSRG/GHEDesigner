@@ -125,8 +125,8 @@ class OutputManager:
 
     @staticmethod
     def get_g_function_data(design):
-        title = f"H:{design.ghe.bhe.b.H:0.2f}"
-        csv_array = [["ln(t/ts)", f"{title}", f"{title}_bhw"]]
+        title = f"H: {design.ghe.bhe.b.H:0.2f} m"
+        csv_array = [["ln(t/ts)", f"{title}", f"{title} bhw"]]
         gf_adjusted, gf_bhw_adjusted = design.ghe.grab_g_function(design.ghe.B_spacing / float(design.ghe.bhe.b.H))
 
         gf_log_vals = gf_adjusted.x
@@ -160,8 +160,8 @@ class OutputManager:
         # gFunction LTS Table
         g_function_col_titles = ["ln(t/ts)"]
         for g_function_name in list(design.ghe.gFunction.g_lts):
-            g_function_col_titles.append("H:" + str(round(g_function_name, 0)) + "m")
-        g_function_col_titles.append("H:" + str(round(design.ghe.bhe.b.H, 2)) + "m")
+            g_function_col_titles.append(f"H: {g_function_name:0.2f} m")
+        g_function_col_titles.append(f"H: {design.ghe.bhe.b.H:0.2f} m")
         g_function_data = []
         ghe_gf = design.ghe.gFunction.g_function_interpolation(float(design.ghe.B_spacing) / design.ghe.bhe.b.H)[0]
         for i in range(len(design.ghe.gFunction.log_time)):
@@ -400,8 +400,8 @@ class OutputManager:
         g_function_col_titles = ["ln(t/ts)"]
 
         for g_function_name in list(design.ghe.gFunction.g_lts):
-            g_function_col_titles.append("H:" + str(round(g_function_name, 0)) + "m")
-        g_function_col_titles.append("H:" + str(round(design.ghe.bhe.b.H, 2)) + "m")
+            g_function_col_titles.append(f"H: {g_function_name:0.2f} m")
+        g_function_col_titles.append(f"H: {design.ghe.bhe.b.H:0.2f} m")
 
         g_function_data = []
         ghe_gf = design.ghe.gFunction.g_function_interpolation(float(design.ghe.B_spacing) / design.ghe.bhe.b.H)[0]
