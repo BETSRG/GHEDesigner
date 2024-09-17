@@ -6,6 +6,7 @@ from unittest import TestCase
 
 LOG_FILE: Optional[Path] = None
 
+time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 class GHEBaseTest(TestCase):
     class LogMessageTypes(Enum):
@@ -34,15 +35,16 @@ class GHEBaseTest(TestCase):
         LOG_FILE = log_directory / f"{date_time_string}.log"
         self.log("Tests Initialized")
 
-    def setUp(self) -> None:
+    @classmethod
+    def setUpClass(cls) -> None:
         cur_file = Path(__file__).resolve()
-        self.tests_directory = cur_file.parent
-        self.test_data_directory = self.tests_directory / 'test_data'
-        self.project_root_directory = self.tests_directory.parent
-        self.test_outputs_directory = self.tests_directory / 'test_outputs'
-        self.test_outputs_directory.mkdir(exist_ok=True)
-        self.demos_path = Path(__file__).parent.parent.parent / "demos"
-        self.demo_output_parent_dir = Path(__file__).parent.parent.parent / "demo_outputs"
+        cls.tests_directory = cur_file.parent
+        cls.test_data_directory = cls.tests_directory / 'test_data'
+        cls.project_root_directory = cls.tests_directory.parent
+        cls.test_outputs_directory = cls.tests_directory / 'test_outputs' / time_str
+        cls.test_outputs_directory.mkdir(exist_ok=True, parents=True)
+        cls.demos_path = Path(__file__).parent.parent.parent / "demos"
+        cls.demo_output_parent_dir = Path(__file__).parent.parent.parent / "demo_outputs"
 
     # noinspection PyMethodMayBeStatic
     def log(self, message, message_type: LogMessageTypes = LogMessageTypes.Info):
