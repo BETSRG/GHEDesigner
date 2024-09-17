@@ -107,12 +107,15 @@ def calc_g_func_for_multiple_lengths(
     boundary="MIFT",
     segment_ratios=None,
 ):
-    d = {"g": {}, "bore_locations": coordinates, "logtime": log_time}
+
+    r_b_values = {}
+    d_values = {}
+    g_lts_values = {}
+
+    alpha = soil.k / soil.rhoCp
 
     for h in h_values:
-        _borehole = GHEBorehole(h, depth, r_b, 0.0, 0.0)
-
-        alpha = soil.k / soil.rhoCp
+        borehole = GHEBorehole(h, depth, r_b, 0.0, 0.0)
 
         ts = h**2 / (9.0 * alpha)  # Bore field characteristic time
         time_values = np.exp(log_time) * ts
@@ -122,7 +125,7 @@ def calc_g_func_for_multiple_lengths(
             bhe_type,
             time_values,
             coordinates,
-            _borehole,
+            borehole,
             fluid,
             pipe,
             grout,
@@ -134,11 +137,20 @@ def calc_g_func_for_multiple_lengths(
             segment_ratios=segment_ratios,
         )
 
-        key = f"{b}_{h}_{r_b}_{d}"
+        r_b_values[h] = r_b
+        d_values[h] = depth
+        g_lts_values[h] = gfunc.gFunc.tolist()
 
-        d["g"][key] = gfunc.gFunc.tolist()
+    geothermal_g_input = {
+        "b": b,
+        "r_b_values": r_b_values,
+        "d_values": d_values,
+        "g_lts": g_lts_values,
+        "log_time": log_time,
+        "bore_locations": coordinates,
+    }
 
-    geothermal_g_input = GFunction.configure_database_file_for_usage(d)
+    # geothermal_g_input = GFunction.configure_database_file_for_usage(d)
     # Initialize the gFunction object
     g_function = GFunction(**geothermal_g_input)
 
@@ -307,72 +319,3 @@ class GFunction:
         for g in g_function:
             g_function_corrected.append(g - log(rb_star / rb))
         return g_function_corrected
-
-    @staticmethod
-    def configure_database_file_for_usage(data) -> dict:
-        """
-        This method is called upon initialization of the object.
-        Read the cpgfunction output dictionary into the borefield class for easy
-        access of information
-        Parameters
-        ----------
-        data: dict
-            A dictionary which is in the output format of cpgfunction.
-        Returns
-        -------
-            a dictionary for input to this object
-        """
-        log_time = data["logtime"]
-
-        bore_locations = data["bore_locations"]  # store the bore locations in the object
-        g_values: dict = data["g"]  # pull the g-functions into the g_values
-        # a temporary g-function dictionary that might be out of order
-        g_tmp: dict = {}
-        # a temporary burial depth dictionary that may be out of order
-        ds_tmp: dict = {}
-        # the borehole radius dictionary that may be out of order
-        r_bs_tmp: dict = {}
-
-        for key in g_values:
-            # do the g-function dictionary
-            key_split = key.split("_")
-            # get the current height
-            height = float(key_split[1])
-            # create a g-function list associated with this height key
-            g_tmp[height] = g_values[key]
-            # create an r_b value associated with this height key
-            r_b = float(key_split[2])
-            r_bs_tmp[height] = r_b
-            # the D value is recently added to the key value for the saved
-            # g-functions computed
-            try:
-                d = float(key_split[3])
-                ds_tmp[height] = d
-            except ValueError:
-                # print(f"key_split[3] not a float: {key_split[3]}. Probably not a problem, skipping.")
-                pass  # skip this key
-
-        # every B-spacing should be the same for each file
-        b = float(next(iter(g_values.keys())).split("_")[0])
-
-        keys = sorted(g_tmp.keys(), key=int)  # sort the heights in order
-        # fill the g-function dictionary with sorted heights
-        g = {key: g_tmp[key] for key in keys}
-        # fill the burial depth dictionary with sorted heights
-        try:
-            ds = {key: ds_tmp[key] for key in keys}
-        except KeyError:
-            print("No burial depth value found, assuming 2 m for all heights.")
-            ds = {key: 2.0 for key in keys}
-        r_bs = {key: r_bs_tmp[key] for key in keys}
-
-        geothermal_g_input = {
-            "b": b,
-            "r_b_values": r_bs,
-            "d_values": ds,
-            "g_lts": g,
-            "log_time": log_time,
-            "bore_locations": bore_locations,
-        }
-
-        return geothermal_g_input
