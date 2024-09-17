@@ -18,7 +18,7 @@ def abs_error_within_tolerance(val_1, val_2, delta: float = 0):
 
 class TestDemoFiles(GHEBaseTest):
     def test_demo_files(self):
-        time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # run demo files first
         for _, _, files in os.walk(self.demos_path):
