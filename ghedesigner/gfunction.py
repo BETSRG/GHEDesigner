@@ -108,7 +108,6 @@ def calc_g_func_for_multiple_lengths(
     segment_ratios=None,
 ):
     r_b_values = {}
-    d_values = {}
     g_lts_values = {}
 
     alpha = soil.k / soil.rhoCp
@@ -137,19 +136,17 @@ def calc_g_func_for_multiple_lengths(
         )
 
         r_b_values[h] = r_b
-        d_values[h] = depth
         g_lts_values[h] = gfunc.gFunc.tolist()
 
     geothermal_g_input = {
         "b": b,
         "r_b_values": r_b_values,
-        "d_values": d_values,
+        "d": depth,
         "g_lts": g_lts_values,
         "log_time": log_time,
         "bore_locations": coordinates,
     }
 
-    # geothermal_g_input = GFunction.configure_database_file_for_usage(d)
     # Initialize the gFunction object
     g_function = GFunction(**geothermal_g_input)
 
@@ -160,8 +157,8 @@ class GFunction:
     def __init__(
         self,
         b: float,
+        d: float,
         r_b_values: dict,
-        d_values: dict,
         g_lts: dict,
         log_time: list,
         bore_locations: list,
@@ -169,7 +166,7 @@ class GFunction:
         self.B: float = b  # a B spacing in the borefield
         # r_b (borehole radius) value keyed by height
         self.r_b_values: dict = r_b_values
-        self.D_values: dict = d_values  # D (burial depth) value keyed by height
+        self.d: float = d  # burial depth
         self.g_lts: dict = g_lts  # g-functions (LTS) keyed by height
         # ln(t/ts) values that apply to all the heights
         self.log_time: list = log_time
@@ -217,8 +214,7 @@ class GFunction:
             elif (h_eq - height_values[0]) / height_values[0] < tolerance or min(height_values) - h_eq < tolerance:
                 g_function = self.g_lts[height_values[0]]
                 rb = self.r_b_values[height_values[0]]
-                d = self.D_values[height_values[0]]
-                return g_function, rb, d, h_eq
+                return g_function, rb, self.d, h_eq
             else:
                 raise ValueError(
                     "The interpolation requires two g-function curves " "if the requested B/H is not already computed."
@@ -257,42 +253,24 @@ class GFunction:
             keys = list(self.r_b_values.keys())
             height_values: list = []
             rb_values: list = []
-            d_values: list = []
             for h in keys:
                 height_values.append(float(h))
                 rb_values.append(self.r_b_values[h])
-                try:
-                    d_values.append(self.D_values[h])
-                except Exception as e:  # noqa: BLE001
-                    print(e)
             if kind == "lagrange":
                 rb_f = lagrange(height_values, rb_values)
             else:
                 # interpolation function for rb values by H equivalent
                 rb_f = interp1d(height_values, rb_values, kind=kind, fill_value=fill_value)
             self.interpolation_table["rb"] = rb_f
-            try:
-                if kind == "lagrange":
-                    d_f = lagrange(height_values, d_values)
-                else:
-                    d_f = interp1d(height_values, d_values, kind=kind, fill_value=fill_value)
-                self.interpolation_table["D"] = d_f
-            except Exception as e:  # noqa: BLE001
-                print(e)
 
         # create the g-function by interpolating at each ln(t/ts) value
         rb_value = self.interpolation_table["rb"](h_eq)
-        try:
-            d_value = self.interpolation_table["D"](h_eq)
-        except Exception as e:  # noqa: BLE001
-            print(f"Error occurred while interpolating D: {e}")
-            d_value = None
         g_function: list = []
         for i in range(len(self.log_time)):
             f = self.interpolation_table["g"][i]
             g = f(h_eq).tolist()
             g_function.append(g)
-        return g_function, rb_value, d_value, h_eq
+        return g_function, rb_value, self.d, h_eq
 
     @staticmethod
     def borehole_radius_correction(g_function: list, rb: float, rb_star: float):
