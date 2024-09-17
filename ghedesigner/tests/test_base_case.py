@@ -8,6 +8,7 @@ LOG_FILE: Optional[Path] = None
 
 time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
 
+
 class GHEBaseTest(TestCase):
     class LogMessageTypes(Enum):
         Debug = "DEBUG"
