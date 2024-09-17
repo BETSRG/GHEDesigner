@@ -107,7 +107,6 @@ def calc_g_func_for_multiple_lengths(
     boundary="MIFT",
     segment_ratios=None,
 ):
-
     r_b_values = {}
     d_values = {}
     g_lts_values = {}
