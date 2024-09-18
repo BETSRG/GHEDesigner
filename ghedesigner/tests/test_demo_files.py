@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from json import loads
 from pathlib import Path
@@ -19,23 +18,18 @@ def abs_error_within_tolerance(val_1, val_2, delta: float = 0):
 class TestDemoFiles(GHEBaseTest):
     def test_demo_files(self):
         time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-        # run demo files first
-        for _, _, files in os.walk(self.demos_path):
-            for f in files:
-                demo_file_path = self.demos_path / f
-                out_dir = self.demo_output_parent_dir / time_str / f.replace('.json', '')
-                os.makedirs(out_dir)
-                print(f"Running: {demo_file_path}")
-                self.assertEqual(
-                    0, _run_manager_from_cli_worker(input_file_path=demo_file_path, output_directory=out_dir)
-                )
-
         failed_tests = []
 
-        # check the outputs
-        for _, _, files in os.walk(self.demos_path):
-            out_dir = self.demo_output_parent_dir / time_str / f.replace('.json', '')
+        # run demo files first
+        for file in self.demos_path.glob('*.json'):
+            demo_file_path = self.demos_path / file
+            out_dir = self.demo_output_parent_dir / time_str / file.stem
+            out_dir.mkdir(parents=True, exist_ok=True)
+            print(f"Running: {demo_file_path}")
+            self.assertEqual(0, _run_manager_from_cli_worker(input_file_path=demo_file_path, output_directory=out_dir))
+
+            # check the outputs
+            out_dir = self.demo_output_parent_dir / time_str / file.stem
             results_path = out_dir / 'SimulationSummary.json'
 
             actual_results = loads(results_path.read_text())
