@@ -76,9 +76,7 @@ class OutputManager:
                 normalized_loading = loading / (design.ghe.bhe.b.H * design.ghe.nbh)
                 wall_temperature = design.ghe.bhe.soil.ugt + d_tb
                 hp_eft_val = design.ghe.hp_eft[i]
-                csv_row = []
-                csv_row.append(tv)
-                csv_row.append(self.hours_to_month(tv))
+                csv_row = [tv, self.hours_to_month(tv)]
                 if i > 1:
                     csv_row.append(lv)
                     csv_row.append(lv / (design.ghe.bhe.b.H * design.ghe.nbh))
@@ -89,9 +87,7 @@ class OutputManager:
                 csv_row.append(design.ghe.hp_eft[i - 1])
                 csv_array.append(csv_row)
             else:
-                csv_row = []
-                csv_row.append(tv)
-                csv_row.append(self.hours_to_month(tv))
+                csv_row = [tv, self.hours_to_month(tv)]
                 if i > 1:
                     csv_row.append(lv)
                     csv_row.append(lv / (design.ghe.bhe.b.H * design.ghe.nbh))
@@ -108,28 +104,20 @@ class OutputManager:
                 normalized_loading = loading / (design.ghe.bhe.b.H * design.ghe.nbh)
                 wall_temperature = design.ghe.bhe.soil.ugt + d_tb
                 hp_eft_val = design.ghe.hp_eft[i]
-            csv_row = []
-            csv_row.append(current_time)
-            csv_row.append(current_month)
-            csv_row.append(loading)
-            csv_row.append(normalized_loading)
-            csv_row.append(wall_temperature)
-            csv_row.append(hp_eft_val)
+            csv_row = [current_time, current_month, loading, normalized_loading, wall_temperature, hp_eft_val]
             csv_array.append(csv_row)
         return csv_array
 
     @staticmethod
     def get_borehole_location_data(design):
-        csv_array = []
-        csv_array.append(["x", "y"])
+        csv_array = [["x", "y"]]
         for bore_location in design.ghe.gFunction.bore_locations:
             csv_array.append([bore_location[0], bore_location[1]])
         return csv_array
 
     def get_hourly_loading_data(self, design):
         hourly_loadings = design.ghe.hourly_extraction_ground_loads
-        csv_array = []
-        csv_array.append(["Month", "Day", "Hour", "Time (Hours)", "Loading (W) (Extraction)"])
+        csv_array = [["Month", "Day", "Hour", "Time (Hours)", "Loading (W) (Extraction)"]]
         for hour, hour_load in enumerate(hourly_loadings):
             month, day_in_month, hour_in_day = self.ghe_time_convert(hour)
             csv_array.append([month, day_in_month, hour_in_day, hour, hour_load])
@@ -137,8 +125,8 @@ class OutputManager:
 
     @staticmethod
     def get_g_function_data(design):
-        title = f"H:{design.ghe.bhe.b.H:0.2f}"
-        csv_array = [["ln(t/ts)", f"{title}", f"{title}_bhw"]]
+        title = f"H: {design.ghe.bhe.b.H:0.2f} m"
+        csv_array = [["ln(t/ts)", f"{title}", f"{title} bhw"]]
         gf_adjusted, gf_bhw_adjusted = design.ghe.grab_g_function(design.ghe.B_spacing / float(design.ghe.bhe.b.H))
 
         gf_log_vals = gf_adjusted.x
@@ -172,13 +160,12 @@ class OutputManager:
         # gFunction LTS Table
         g_function_col_titles = ["ln(t/ts)"]
         for g_function_name in list(design.ghe.gFunction.g_lts):
-            g_function_col_titles.append("H:" + str(round(g_function_name, 0)) + "m")
-        g_function_col_titles.append("H:" + str(round(design.ghe.bhe.b.H, 2)) + "m")
+            g_function_col_titles.append(f"H: {g_function_name:0.2f} m")
+        g_function_col_titles.append(f"H: {design.ghe.bhe.b.H:0.2f} m")
         g_function_data = []
         ghe_gf = design.ghe.gFunction.g_function_interpolation(float(design.ghe.B_spacing) / design.ghe.bhe.b.H)[0]
         for i in range(len(design.ghe.gFunction.log_time)):
-            gf_row = []
-            gf_row.append(design.ghe.gFunction.log_time[i])
+            gf_row = [design.ghe.gFunction.log_time[i]]
             for g_function_name in list(design.ghe.gFunction.g_lts):
                 gf_row.append(design.ghe.gFunction.g_lts[g_function_name][i])
             gf_row.append(ghe_gf[i])
@@ -234,10 +221,7 @@ class OutputManager:
                 'pipe_roughness': add_with_units(design.ghe.bhe.pipe.roughness, 'm'),
                 'pipe_thermal_conductivity': add_with_units(design.ghe.bhe.pipe.k, 'W/m-K'),
                 'pipe_volumetric_heat_capacity': add_with_units(design.ghe.bhe.pipe.rhoCp / 1000, 'kJ/m3-K'),
-                'grout_thermal_conductivity': add_with_units(
-                    design.ghe.bhe.grout.k,
-                    'W/m-K',
-                ),
+                'grout_thermal_conductivity': add_with_units(design.ghe.bhe.grout.k, 'W/m-K'),
                 'grout_volumetric_heat_capacity': add_with_units(design.ghe.bhe.grout.rhoCp / 1000, 'kJ/m3-K'),
                 'reynolds_number': reynolds,
                 'effective_borehole_resistance': add_with_units(
@@ -416,14 +400,13 @@ class OutputManager:
         g_function_col_titles = ["ln(t/ts)"]
 
         for g_function_name in list(design.ghe.gFunction.g_lts):
-            g_function_col_titles.append("H:" + str(round(g_function_name, 0)) + "m")
-        g_function_col_titles.append("H:" + str(round(design.ghe.bhe.b.H, 2)) + "m")
+            g_function_col_titles.append(f"H: {g_function_name:0.2f} m")
+        g_function_col_titles.append(f"H: {design.ghe.bhe.b.H:0.2f} m")
 
         g_function_data = []
         ghe_gf = design.ghe.gFunction.g_function_interpolation(float(design.ghe.B_spacing) / design.ghe.bhe.b.H)[0]
         for i in range(len(design.ghe.gFunction.log_time)):
-            gf_row = []
-            gf_row.append(design.ghe.gFunction.log_time[i])
+            gf_row = [design.ghe.gFunction.log_time[i]]
             for g_function_name in list(design.ghe.gFunction.g_lts):
                 gf_row.append(design.ghe.gFunction.g_lts[g_function_name][i])
             gf_row.append(ghe_gf[i])

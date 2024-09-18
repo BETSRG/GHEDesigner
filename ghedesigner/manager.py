@@ -940,10 +940,10 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
     if validate_only:
         try:
             validate_input_file(input_path)
-            print("Valid input file.")
+            logger.info("Valid input file.")
             return 0
         except ValidationError:
-            print("Schema validation error. See previous error message for details.", file=stderr)
+            logger.error("Schema validation error. See previous error message for details.", file=stderr)
             return 1
 
     if convert:
@@ -953,7 +953,7 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
                 print("Output converted to IDF objects.")
                 return 0
             except Exception as e:  # noqa: BLE001
-                logger.warn(f"Conversion to IDF error: {e}", file=stderr)
+                logger.warning(f"Conversion to IDF error: {e}", file=stderr)
                 return 1
 
         else:

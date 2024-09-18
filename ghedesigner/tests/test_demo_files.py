@@ -12,13 +12,13 @@ expected_results_path = Path(__file__).parent / "expected_demo_results.json"
 expected_demo_results_dict = loads(expected_results_path.read_text())
 
 
-def abs_error_within_tolerance(val_1, val_2, delta=0):
+def abs_error_within_tolerance(val_1, val_2, delta: float = 0):
     return bool(abs(val_1 - val_2) <= delta)
 
 
 class TestDemoFiles(GHEBaseTest):
     def test_demo_files(self):
-        time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # run demo files first
         for _, _, files in os.walk(self.demos_path):
