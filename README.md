@@ -7,7 +7,7 @@
 
 ## Documentation
 
-Project documentation is available at [https://github.com/BETSRG/GHEDesigner](https://github.com/BETSRG/GHEDesigner)
+Project documentation is available at [https://betsrg.github.io/GHEDesigner/](https://betsrg.github.io/GHEDesigner/)
 
 
 ## Introduction
@@ -113,8 +113,12 @@ the following packages:
 
 **Users** - Install `GHEDesigner` via the package installer for Python ([pip][#pip]):
 
-```
+```bash
 pip install ghedesigner
+```
+Run a demo file using GHEDesigner:
+```bash
+ghedesigner demos/find_design_rectangle_single_u_tube.json ./tmp
 ```
 
 **Developers** - Clone the repository via git:
@@ -154,36 +158,36 @@ indirect costs to Dr. Jeffrey D. Spitler.
 
 ## References
 
-Cimmino, M. 2018. pygfunction: an open-source toolbox for the evaluation of thermal. eSim 2018, Montreál, IBPSA Canada.
+- Cimmino, M. 2018. pygfunction: an open-source toolbox for the evaluation of thermal. eSim 2018, Montreál, IBPSA Canada.
 492-501. http://www.ibpsa.org/proceedings/eSimPapers/2018/2-3-A-4.pdf
 
-Claesson, J. and G. Hellström. 2011. Multipole method to calculate borehole thermal resistances in a borehole heat
+- Claesson, J. and G. Hellström. 2011. Multipole method to calculate borehole thermal resistances in a borehole heat
 exchanger. HVAC&R Research 17(6): 895-911. https://doi.org/10.1080/10789669.2011.609927
 
-Cook, J.C. (2021). Development of Computer Programs for Fast Computation of g-Functions and Automated Ground Heat
+- Cook, J.C. (2021). Development of Computer Programs for Fast Computation of g-Functions and Automated Ground Heat
 Exchanger Design. Master's Thesis, Oklahoma State University, Stillwater, OK. https://hdl.handle.net/11244/335489
 
-Cullin, J.R. and J.D. Spitler. 2011. A Computationally Efficient Hybrid Time Step Methodology for Simulation of Ground
+- Cullin, J.R. and J.D. Spitler. 2011. A Computationally Efficient Hybrid Time Step Methodology for Simulation of Ground
 Heat Exchangers. Geothermics. 40(2): 144-156. https://doi.org/10.1016/j.geothermics.2011.01.001
 
-Liu X., J. Degraw, M. Malhotra, W. Forman, M. Adams, G. Accawi, B. Brass, N. Kunwar, J. New, J. Guo. 2022. Development
+- Liu X., J. Degraw, M. Malhotra, W. Forman, M. Adams, G. Accawi, B. Brass, N. Kunwar, J. New, J. Guo. 2022. Development
 of a Web-based Screening Tool for Ground Source Heat Pump Applications. 2022. IGSHPA Research Conference Proceedings.
 Pp. 280-290. December 6-8. Las Vegas. http://dx.doi.org/10.22488/okstate.22.000042
 
-Prieto, C. and M. Cimmino. 2021. Thermal interactions in large irregular fields of geothermal boreholes: the method of
+- Prieto, C. and M. Cimmino. 2021. Thermal interactions in large irregular fields of geothermal boreholes: the method of
 equivalent boreholes. Journal of Building Performance Simulation 14(4):
 446-460. https://doi.org/10.1080/19401493.2021.1968953
 
-Spitler, J. D., J. Cook, T. West and X. Liu 2021. G-Function Library for Modeling Vertical Bore Ground Heat Exchanger,
+- Spitler, J. D., J. Cook, T. West and X. Liu 2021. G-Function Library for Modeling Vertical Bore Ground Heat Exchanger,
 Oak Ridge National Laboratory. https://doi.org/10.15121/1811518
 
-Spitler, J.D., T.N. West and X. Liu. 2022a. Ground Heat Exchanger Design Tool with RowWise Placement of Boreholes.
+- Spitler, J.D., T.N. West and X. Liu. 2022a. Ground Heat Exchanger Design Tool with RowWise Placement of Boreholes.
 IGSHPA Research Conference Proceedings. Pp. 53-60. Las Vegas. Dec. 6-8. https://doi.org/10.22488/okstate.22.000016
 
-Spitler, J.D., T.N. West, X. Liu and I. Borshon. 2022b. An open library of g-functions for 34,321 configurations. IGSHPA
+- Spitler, J.D., T.N. West, X. Liu and I. Borshon. 2022b. An open library of g-functions for 34,321 configurations. IGSHPA
 Research Conference Proceedings. Pp. 264-271. Las Vegas. Dec. 6-8  https://doi.org/10.22488/okstate.22.000040
 
-Xu, X. and J. D. Spitler. 2006. Modelling of Vertical Ground Loop Heat Exchangers with Variable Convective Resistance
+- Xu, X. and J. D. Spitler. 2006. Modelling of Vertical Ground Loop Heat Exchangers with Variable Convective Resistance
 and Thermal Mass of the Fluid. 10th International Conference on Thermal Energy Storage - Ecostock 2006, Pomona,
 NJ. https://hvac.okstate.edu/sites/default/files/pubs/papers/2006/07-Xu_Spitler_06.pdf
 
