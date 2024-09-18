@@ -1,6 +1,6 @@
 # Command Line Interface
 
-This library comes with a command line interface. Once this library is pip installed, a new binary executable will be available with the name `ghedesigner`. The command has a help argument with output similar to this (execute manually to verify latest syntax)::
+This library comes with a command line interface. Once this library is pip installed, a new binary executable will be available with the name `ghedesigner`. The command has a help argument with output similar to this (execute manually to verify latest syntax):
 ```bash
   $ ghedesigner --help
   Usage: ghedesigner [OPTIONS] INPUT_PATH [OUTPUT_DIRECTORY]
