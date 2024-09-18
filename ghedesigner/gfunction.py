@@ -1,3 +1,4 @@
+import logging
 import warnings
 from math import log
 
@@ -8,6 +9,9 @@ from scipy.interpolate import interp1d, lagrange
 from ghedesigner.borehole import GHEBorehole
 from ghedesigner.borehole_heat_exchangers import get_bhe_object
 from ghedesigner.enums import BHPipeType
+
+logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
+logger = logging.getLogger(__name__)
 
 
 def calculate_g_function(

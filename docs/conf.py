@@ -18,7 +18,7 @@ path.insert(0, str(root_dir))
 
 
 def get_author_names():
-    with open(Path(__file__).parent.parent / "contributors.txt") as f:
+    with open(root_dir / "contributors.txt") as f:
         lines = f.readlines()
 
     # get author names
@@ -37,7 +37,7 @@ author_names, copyright_names = get_author_names()
 
 project = 'GHEDesigner'
 copyright = f'{datetime.date.today().year}, {copyright_names}'  # noqa: A001
-# TODO: determine why Ruff is upset about "copyright" and fix it.
+# TODO: determine why Ruff is upset about "copyright" and fix it. https://docs.astral.sh/ruff/rules/builtin-variable-shadowing/
 author = author_names
 release = VERSION
 
@@ -74,5 +74,5 @@ def _patched_sphinx_jsonschema_simpletype(self, schema):
 
 
 sjs_wide_format = importlib.import_module("sphinx-jsonschema.wide_format")
-_original_sphinx_jsonschema_simpletype = sjs_wide_format.WideFormat._simpletype
-sjs_wide_format.WideFormat._simpletype = _patched_sphinx_jsonschema_simpletype
+_original_sphinx_jsonschema_simpletype = sjs_wide_format.WideFormat._simpletype  # type: ignore # noqa: PGH003
+sjs_wide_format.WideFormat._simpletype = _patched_sphinx_jsonschema_simpletype  # type: ignore # noqa: PGH003
