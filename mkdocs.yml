@@ -19,3 +19,9 @@ plugins:
           options:
             # https://mkdocstrings.github.io/griffe/reference/docstrings/
             docstring_style: sphinx
+
+nav:
+  - Home: index.md
+  - Using the CLI: cli.md
+  - Examples: examples.md
+  - Design Manager: manager.md
