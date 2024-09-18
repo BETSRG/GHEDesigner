@@ -5,11 +5,6 @@
 ![Python Versions](https://img.shields.io/pypi/pyversions/ghedesigner)
 [![Tests](https://github.com/BETSRG/GHEDesigner/actions/workflows/tests.yml/badge.svg)](https://github.com/BETSRG/GHEDesigner/actions/workflows/tests.yml)
 
-## Documentation
-
-Project documentation is available at [https://betsrg.github.io/GHEDesigner/](https://betsrg.github.io/GHEDesigner/)
-
-
 ## Introduction
 
 GHEDesigner is a Python package for designing ground heat exchangers (GHE) used with ground source heat pump (GSHP)
