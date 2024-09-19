@@ -175,16 +175,16 @@ def find_duplicates(borefield, space, disp=False):
         A list of tuples where the tuples are pairs of duplicates
     """
 
+    square_space_tol = (space * 10**-1) ** 2
+
     duplicate_pairs = []  # define an empty list to be appended to
     for i, borehole_1 in enumerate(borefield):
-        for j in range(i, len(borefield)):  # only loop unique interactions
+        for j in range(i + 1, len(borefield)):  # only loop unique interactions
             borehole_2 = borefield[j]
-            if i == j:  # skip the borehole itself
-                continue
-            else:
-                dist = sq_dist(borehole_1, borehole_2)
-            if abs(dist) < (space * 10**-1):
+            ssq_dist = sum_sq_dist(borehole_1, borehole_2)
+            if ssq_dist < square_space_tol:
                 duplicate_pairs.append((i, j))
+
     if disp:
         # pad with '-' align in center
         output = f"{'*gt.boreholes.find_duplicates()*' :-^50}"
@@ -194,9 +194,14 @@ def find_duplicates(borefield, space, disp=False):
     return duplicate_pairs
 
 
-def sq_dist(p1, p2):
+def sum_sq_dist(p1, p2):
+    """Returns the **sum of squared** cartesian distance between two points"""
+    return (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
+
+
+def pts_dist(p1, p2):
     """Returns the cartesian distance between two points"""
-    return sqrt((p1[0] - p2[0]) * (p1[0] - p2[0]) + (p1[1] - p2[1]) * (p1[1] - p2[1]))
+    return sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
 def remove_duplicates(borefield, space, disp=False):
@@ -363,9 +368,9 @@ def dist_from_line(p1, p2, other_point):
     num = abs(dxl * dy - dx * dyl)
     den = sqrt(dxl * dxl + dyl * dyl)
     dp = num / den
-    dist_l = sq_dist(p1, p2)
-    d01 = sq_dist(p1, other_point)
-    d02 = sq_dist(p2, other_point)
+    dist_l = pts_dist(p1, p2)
+    d01 = pts_dist(p1, other_point)
+    d02 = pts_dist(p2, other_point)
     if d01 * d01 - dp * dp < 0:
         return d01
     if sqrt(d01 * d01 - dp * dp) / dist_l > 1:
@@ -397,7 +402,7 @@ def perimeter_distribute(field, space, r):
         dy = vert2[1] - vert1[1]
 
         # Checking how many boreholes can be distributed along the line
-        dist = sq_dist(vert1, vert2)
+        dist = pts_dist(vert1, vert2)
         num_holes = int(dist // space)
 
         # Distributing the spacing to the x and y directions
