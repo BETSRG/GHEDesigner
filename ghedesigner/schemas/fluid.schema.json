@@ -17,12 +17,12 @@
       "type": "number",
       "maximum": 60,
       "minimum": 0,
-      "units": "percent",
-      "description": "Mass fraction concentration percent of circulation fluid.\n\ne.g.: '0' indicates pure water; '20' indicates 20% antifreeze, 80% pure water."
+      "format": "Percent",
+      "description": "Mass fraction concentration percent of circulation fluid. e.g.: '0' indicates pure water; '20' indicates 20% antifreeze, 80% pure water."
     },
     "temperature": {
       "type": "number",
-      "units": "C",
+      "format": "Centigrade",
       "description": "Average design fluid temperature at peak conditions."
     }
   },

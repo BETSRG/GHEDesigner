@@ -5,8 +5,8 @@
     "flow_rate": {
       "type": "number",
       "minimum": 0,
-      "units": "l/s",
-      "description": "Volumetric design flow rate. Value specified will be either\n\nthe system or per-borehole flow rate depending on the 'flow_type' set."
+      "format": "Liters/Second",
+      "description": "Volumetric design flow rate. Value specified will be either the system or per-borehole flow rate depending on the 'flow_type' set."
     },
     "flow_type": {
       "type": "string",
@@ -14,25 +14,25 @@
         "BOREHOLE",
         "SYSTEM"
       ],
-      "description": "Indicates whether the design volumetric flow rate set on on\n\na per-borehole or system basis."
+      "description": "Indicates whether the design volumetric flow rate set on on a per-borehole or system basis."
     },
     "max_eft": {
       "type": "number",
-      "units": "C",
+      "format": "Centigrade",
       "description": "Maximum heat pump entering fluid temperature."
     },
     "min_eft": {
       "type": "number",
-      "units": "C",
+      "format": "Centigrade",
       "description": "Minimum heat pump entering fluid temperature."
     },
     "max_boreholes": {
       "type": "number",
-      "description": "Maximum number of boreholes in search. Optional.\n\nApplies to rectangular and near-square design algorithms.\n\nIf unspecified, the search space will be bounded by the size of the GHE boundary."
+      "description": "Maximum number of boreholes in search. Optional. Applies to rectangular and near-square design algorithms. If unspecified, the search space will be bounded by the size of the GHE boundary."
     },
       "continue_if_design_unmet": {
         "type": "boolean",
-        "description": "Causes to return the best available borehole \n\nfield configuration rather than fail if design conditions \n\nare unmet. \n\nOptional. Default False."
+        "description": "Causes to return the best available borehole  field configuration rather than fail if design conditions  are unmet.  Optional. Default False."
       }
   },
   "required": [

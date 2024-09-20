@@ -7,17 +7,17 @@
       "items": {
         "type": "number"
       },
-      "units": "W",
+      "format": "Watts",
       "minItems": 8760,
       "maxItems": 8760,
-      "description": "Annual, hourly heat extraction and heat rejection loads of the\n\nground heat exchanger. Positive value indicate heat extraction,\n\nnegative values indicate heat rejection."
+      "description": "Annual, hourly heat extraction and heat rejection loads of the ground heat exchanger. Positive value indicate heat extraction, negative values indicate heat rejection."
     },
     "heat_pump_loads": {
       "type": "array",
       "items": {
         "type": "number"
       },
-      "units": "W",
+      "format": "Watts",
       "minItems": 8760,
       "maxItems": 8760,
       "description": "This field is currently unused."

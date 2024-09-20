@@ -3,7 +3,6 @@
 
 site_name: GHE Designer
 repo_url: https://github.com/BETSRG/GHEDesigner
-# site_url: https://github.com/BETSRG/GHEDesigner
 
 theme:
   name: material
@@ -25,3 +24,8 @@ nav:
   - Using the CLI: cli.md
   - Examples: examples.md
   - Design Manager: manager.md
+
+# Add these dirs/files to live updating during development (in addition to docs & this file)
+# https://www.mkdocs.org/user-guide/configuration/#watch
+watch:
+  - ghedesigner/

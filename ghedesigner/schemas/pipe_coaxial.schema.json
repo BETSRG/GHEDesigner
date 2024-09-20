@@ -5,49 +5,49 @@
     "inner_pipe_d_in": {
       "type": "number",
       "minimum": 0,
-      "units": "m",
+      "format": "Meters",
       "description": "Inner pipe inner diameter."
     },
     "inner_pipe_d_out": {
       "type": "number",
       "minimum": 0,
-      "units": "m",
+      "format": "Meters",
       "description": "Inner pipe outer diameter."
     },
     "outer_pipe_d_in": {
       "type": "number",
       "minimum": 0,
-      "units": "m",
+      "format": "Meters",
       "description": "Outer pipe inner diameter."
     },
     "outer_pipe_d_out": {
       "type": "number",
       "minimum": 0,
-      "units": "m",
+      "format": "Meters",
       "description": "Outer pipe outer diameter."
     },
     "roughness": {
       "type": "number",
       "minimum": 0,
-      "units": "m",
+      "format": "Meters",
       "description": "Surface roughness."
     },
     "conductivity_inner": {
       "type": "number",
       "minimum": 0,
-      "units": "W/m-K",
+      "format": "W/Meters-K",
       "description": "Thermal conductivity of inner pipe."
     },
     "conductivity_outer": {
       "type": "number",
       "minimum": 0,
-      "units": "W/m-K",
+      "format": "Watts/Meter-Kelvin",
       "description": "Thermal conductivity of outer pipe."
     },
     "rho_cp": {
       "type": "number",
       "minimum": 0,
-      "units": "J/m^3-K",
+      "format": "Joules/Meter^3-Kelvin",
       "description": "Volumetric heat capacity."
     },
     "arrangement": {

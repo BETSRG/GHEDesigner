@@ -5,37 +5,37 @@
     "inner_diameter": {
       "type": "number",
       "minimum": 0,
-      "units": "m",
+      "format": "Meters",
       "description": "Inner diameter of pipe."
     },
     "outer_diameter": {
       "type": "number",
       "minimum": 0,
-      "units": "m",
+      "format": "Meters",
       "description": "Outer diameter of pipe."
     },
     "shank_spacing": {
       "type": "number",
       "minimum": 0,
-      "units": "m",
-      "description": "Spacing between up/down legs of u-tube pipe, as measured from nearest\n\nouter surfaces of each pipe (o<-- s -->o)."
+      "format": "Meters",
+      "description": "Spacing between up/down legs of u-tube pipe, as measured from nearest outer surfaces of each pipe (o<-- s -->o)."
     },
     "roughness": {
       "type": "number",
       "minimum": 0,
-      "units": "m",
+      "format": "Meters",
       "description": "Surface roughness of pipe."
     },
     "conductivity": {
       "type": "number",
       "minimum": 0,
-      "units": "W/m-K",
+      "format": "Watts/Meter-Kelvin",
       "description": "Thermal conductivity."
     },
     "rho_cp": {
       "type": "number",
       "minimum": 0,
-      "units": "J/m^3-K",
+      "format": "Joules/Meter^3-Kelvin",
       "description": "Volumetric heat capacity."
     },
     "arrangement": {
