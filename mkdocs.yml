@@ -3,7 +3,6 @@
 
 site_name: GHE Designer
 repo_url: https://github.com/BETSRG/GHEDesigner
-# site_url: https://github.com/BETSRG/GHEDesigner
 
 theme:
   name: material
