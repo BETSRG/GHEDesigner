@@ -5,12 +5,12 @@
     "buried_depth": {
       "type": "number",
       "minimum": 0,
-      "units": "m",
+      "format": "Meters",
       "description": "Depth of top of borehole below the ground surface."
     },
     "diameter": {
       "type": "number",
-      "units": "m",
+      "format": "Meters",
       "description": "Diameter of borehole."
     }
   },

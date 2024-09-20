@@ -24,7 +24,7 @@
     "num_months": {
       "type": "number",
       "minimum": 1,
-      "units": "months",
+      "format": "Months",
       "description": "Number of months used in ground heat exchanger sizing."
     },
     "timestep": {
@@ -34,7 +34,7 @@
         "HOURLY"
       ],
       "default": "HYBRID",
-      "description": "This field is currently unused.\n\nSimulation timestep used in ground heat exchanger sizing.\n\n'HYBRID' is the only option currently available."
+      "description": "This field is currently unused. Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently available."
     }
   },
   "required": [

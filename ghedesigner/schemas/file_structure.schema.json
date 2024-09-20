@@ -32,7 +32,7 @@
     },
     "geometric_constraints": {
       "type": "object",
-      "description": "Object used to define geometric constraint parameters for\n\nthe selected design algorithm."
+      "description": "Object used to define geometric constraint parameters for the selected design algorithm."
     },
     "design": {
       "type": "object",

@@ -5,13 +5,13 @@
     "conductivity": {
       "type": "number",
       "minimum": 0,
-      "units": "W/m-K",
+      "format": "Watts/Meter-Kelvin",
       "description": "Thermal conductivity."
     },
     "rho_cp": {
       "type": "number",
       "minimum": 0,
-      "units": "J/m^3-K",
+      "format": "Joules/Meter^3-Kelvin",
       "description": "Volumetric heat capacity."
     }
   },
