@@ -3,8 +3,6 @@ class SimulationParameters:
         self,
         start_month,
         end_month,
-        # max_height,
-        # min_height,
         max_boreholes=None,
         continue_if_design_unmet=False,
     ):
