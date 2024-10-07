@@ -25,7 +25,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.140)
+        ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=48)
         ghe.set_ground_loads_from_hourly_list(self.get_multiyear_loads())
         ghe.set_geometry_constraints_near_square(max_height=135, min_height=60, b=5.0, length=155)  # borehole spacing and field side length
@@ -53,7 +53,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.140)
+        ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=48)
         ghe.set_ground_loads_from_hourly_list(self.get_multiyear_loads())
         ghe.set_geometry_constraints_near_square(max_height=135, min_height=60, b=5.0, length=155)  # borehole spacing and field side length
@@ -83,7 +83,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.140)
+        ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=48)
         ghe.set_ground_loads_from_hourly_list(self.get_multiyear_loads())
         ghe.set_geometry_constraints_near_square(max_height=135, min_height=60, b=5.0, length=155)  # borehole spacing and field side length

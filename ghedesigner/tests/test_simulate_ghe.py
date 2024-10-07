@@ -113,20 +113,14 @@ class TestGHE(GHEBaseTest):
         start_month = 1
         n_years = 20
         end_month = n_years * 12
-        # Maximum and minimum allowable fluid temperatures
-        max_eft_allowable = 35  # degrees Celsius
-        min_eft_allowable = 5  # degrees Celsius
-        # Maximum and minimum allowable heights
-        max_height = 384  # in meters
-        min_height = 24  # in meters
+
         self.sim_params = SimulationParameters(
             start_month,
-            end_month,
-            max_eft_allowable,
-            min_eft_allowable,
-            max_height,
-            min_height,
+            end_month
         )
+
+        self.sim_params.set_design_temps(35, 5)
+        self.sim_params.set_design_heights(384, 24)
 
         # Process loads from file
         self.hourly_extraction_ground_loads = self.get_atlanta_loads()

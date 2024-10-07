@@ -1,8 +1,6 @@
 class SimulationParameters:
     def __init__(
         self,
-        # max_height,
-        # min_height,
         num_months: int,
         max_boreholes=None,
         continue_if_design_unmet=False,

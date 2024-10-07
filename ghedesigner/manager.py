@@ -301,7 +301,7 @@ class GroundHeatExchanger:
         self._pipe = Pipe((0, 0), r_inner, r_outer, 0, roughness, k_p, rho_cp)
         return 0
 
-    def set_borehole(self, height: float, buried_depth: float, diameter: float) -> int:
+    def set_borehole(self, buried_depth: float, diameter: float) -> int:
         """
         Sets the borehole instance
 
@@ -312,7 +312,7 @@ class GroundHeatExchanger:
         :rtype: int
         """
         radius = diameter / 2.0
-        self._borehole = GHEBorehole(height, buried_depth, radius, x=0.0, y=0.0)
+        self._borehole = GHEBorehole(100, buried_depth, radius, x=0.0, y=0.0)
         return 0
 
     def set_simulation_parameters(

@@ -19,7 +19,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
 
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(height=152.4, buried_depth=2.0, diameter=0.152)
+        ghe.set_borehole(buried_depth=2.0, diameter=0.152)
         ghe.set_simulation_parameters(
             num_months=240, continue_if_design_unmet=True
         )
@@ -59,7 +59,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
 
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(height=152.4, buried_depth=2.0, diameter=0.152)
+        ghe.set_borehole(buried_depth=2.0, diameter=0.152)
         ghe.set_simulation_parameters(
             num_months=240, continue_if_design_unmet=True
         )
@@ -99,7 +99,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
 
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
-        ghe.set_borehole(height=152.4, buried_depth=2.0, diameter=0.152)
+        ghe.set_borehole(buried_depth=2.0, diameter=0.152)
         ghe.set_simulation_parameters(
             num_months=240,
             max_boreholes=100,
