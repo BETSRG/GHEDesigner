@@ -11,7 +11,14 @@ class TestNewWorkflows(GHEBaseTest):
         system.set_simulation_parameters(num_months=240)
 
         # read building loads
+        heat_pump = HeatPump("load 1")
+        heat_pump.set_loads_from_file("ghedesigner/tests/test_data/ground_loads.csv")
+        heat_pump.set_fixed_cop(3)
+        heat_pump.do_sizing()
+
         # size building heat pump
+        building = Building("building")
+        building.add_heat_pump(heat_pump)
 
         # size ghe
         ghe = GroundHeatExchanger()
@@ -36,3 +43,4 @@ class TestNewWorkflows(GHEBaseTest):
         ghe.write_output_files(output_file_directory, "")
 
         # simulate hourly
+        system.simulate()
