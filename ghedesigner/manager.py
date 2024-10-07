@@ -318,8 +318,6 @@ class GroundHeatExchanger:
     def set_simulation_parameters(
         self,
         num_months: int,
-        max_eft: float,
-        min_eft: float,
         max_height: float,
         min_height: float,
         max_boreholes: int | None = None,
@@ -329,8 +327,6 @@ class GroundHeatExchanger:
         Sets the simulation parameters
 
         :param num_months: number of months in simulation.
-        :param max_eft: maximum heat pump entering fluid temperature, in C.
-        :param min_eft: minimum heat pump entering fluid temperature, in C.
         :param max_height: maximum height of borehole, in m.
         :param min_height: minimum height of borehole, in m.
         :param max_boreholes: maximum boreholes in search algorithms.
@@ -339,7 +335,7 @@ class GroundHeatExchanger:
         :rtype: int
         """
         self._simulation_parameters = SimulationParameters(
-            1, num_months, max_eft, min_eft, max_height, min_height, max_boreholes, continue_if_design_unmet
+            1, num_months, max_height, min_height, max_boreholes, continue_if_design_unmet
         )
         return 0
 
@@ -490,16 +486,21 @@ class GroundHeatExchanger:
         )
         return 0
 
-    def set_design(self, flow_rate: float, flow_type_str: str, throw: bool = True) -> int:
+    def set_design(self, flow_rate: float, flow_type_str: str,
+                   max_eft: float, min_eft: float, throw: bool = True) -> int:
         """
         Set the design method.
 
         :param flow_rate: design flow rate, in lps.
         :param flow_type_str: flow type string input.
+        :param max_eft: maximum heat pump entering fluid temperature, in C.
+        :param min_eft: minimum heat pump entering fluid temperature, in C.
         :param throw: By default, function will raise an exception on error, override to false to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+
+        self._simulation_parameters.set_design_temps(max_eft, min_eft)
 
         flow_type_str = flow_type_str.upper()
         if flow_type_str == FlowConfigType.SYSTEM.name:
@@ -856,8 +857,6 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
     continue_if_design_unmet = design_props.get("continue_if_design_unmet", False)
     ghe.set_simulation_parameters(
         num_months=sim_props["num_months"],
-        max_eft=design_props["max_eft"],
-        min_eft=design_props["min_eft"],
         max_height=constraint_props["max_height"],
         min_height=constraint_props["min_height"],
         max_boreholes=max_bh,
