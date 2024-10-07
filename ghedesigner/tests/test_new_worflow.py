@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from ghedesigner.building import Building
 from ghedesigner.heat_pump import HeatPump
 from ghedesigner.manager import GroundHeatExchanger
 from ghedesigner.system import System
@@ -15,7 +16,7 @@ class TestNewWorkflows(GHEBaseTest):
 
         # read building loads
         heat_pump = HeatPump("load 1")
-        building_loads_path = Path.cwd() / "ghedesigner" / "tests" / "test_data" / "ground_loads.csv"
+        building_loads_path = Path(__file__).parent / "test_data" / "ground_loads.csv"
         heat_pump.set_loads_from_file(building_loads_path)
         heat_pump.set_fixed_cop(3)
         heat_pump.do_sizing()
