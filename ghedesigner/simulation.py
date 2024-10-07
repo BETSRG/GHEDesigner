@@ -1,19 +1,15 @@
 class SimulationParameters:
     def __init__(
         self,
-        start_month,
-        end_month,
         # max_height,
         # min_height,
+        num_months: int,
         max_boreholes=None,
         continue_if_design_unmet=False,
     ):
         # Simulation parameters not found in other objects
-        # ------------------------------------------------
-        # Simulation start month and end month
-        self.start_month = start_month
-        self.end_month = end_month
-
+        self.start_month = 1
+        self.end_month = num_months
         self.max_boreholes = max_boreholes
         self.continue_if_design_unmet = continue_if_design_unmet
 
@@ -28,8 +24,6 @@ class SimulationParameters:
     def as_dict(self) -> dict:
         output = {}
         output['type'] = str(self.__class__)
-        output['start_month'] = self.start_month
-        output['end_month'] = self.end_month
         output['max_eft_allowable'] = {'value': self.max_EFT_allowable, 'units': 'C'}
         output['min_eft_allowable'] = {'value': self.min_EFT_allowable, 'units': 'C'}
         output['maximum_height'] = {'value': self.max_height, 'units': 'm'}
@@ -39,5 +33,5 @@ class SimulationParameters:
             output['maximum_boreholes'] = {'value': self.max_boreholes, 'units': '-'}
         return output
 
-    def to_input(self) -> dict:
-        return {'num_months': self.end_month}
+    # def to_input(self) -> dict:
+    #     return {'num_months': self.end_month}

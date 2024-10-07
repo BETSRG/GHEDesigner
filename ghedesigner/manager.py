@@ -324,14 +324,13 @@ class GroundHeatExchanger:
         """
         Sets the simulation parameters
 
-        :param num_months: number of months in simulation.
         :param max_boreholes: maximum boreholes in search algorithms.
         :param continue_if_design_unmet: continues to process if design unmet.
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
         self._simulation_parameters = SimulationParameters(
-            1, num_months, max_boreholes, continue_if_design_unmet
+            num_months, max_boreholes, continue_if_design_unmet
         )
         return 0
 
@@ -685,6 +684,9 @@ class GroundHeatExchanger:
         self._search.ghe.size(method=TimestepType.HYBRID)
         return 0
 
+    def get_ghe(self):
+        return self._search.ghe
+
     def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str):
         """
         Prepares the output results.
@@ -875,7 +877,6 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
     max_bh = design_props.get("max_boreholes", None)
     continue_if_design_unmet = design_props.get("continue_if_design_unmet", False)
     ghe.set_simulation_parameters(
-        num_months=sim_props["num_months"],
         max_boreholes=max_bh,
         continue_if_design_unmet=continue_if_design_unmet,
     )
