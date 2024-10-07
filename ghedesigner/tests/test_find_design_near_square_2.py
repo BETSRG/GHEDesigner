@@ -1,10 +1,10 @@
-from ghedesigner.manager import GHEManager
+from ghedesigner.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
 class TestNearSquare(GHEBaseTest):
     def test_design_selection_system(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -32,7 +32,7 @@ class TestNearSquare(GHEBaseTest):
         self.assertEqual(145, len(nbh))
 
     def test_design_selection_borehole(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,

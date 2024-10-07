@@ -3,7 +3,7 @@ from json import dumps, loads
 
 from recursive_diff import recursive_eq
 
-from ghedesigner.manager import GHEManager
+from ghedesigner.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
@@ -55,7 +55,7 @@ class TestCreateInputFiles(GHEBaseTest):
             ]
         ]
 
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -138,7 +138,7 @@ class TestCreateInputFiles(GHEBaseTest):
             ]
         ]
 
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -175,7 +175,7 @@ class TestCreateInputFiles(GHEBaseTest):
         recursive_eq(d_demo, d_new)
 
     def test_create_input_file_bi_zoned_rectangle_single_u_tube(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -210,7 +210,7 @@ class TestCreateInputFiles(GHEBaseTest):
         recursive_eq(d_demo, d_new)
 
     def test_create_input_file_bi_rectangle_single_u_tube(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -241,7 +241,7 @@ class TestCreateInputFiles(GHEBaseTest):
         recursive_eq(d_demo, d_new)
 
     def test_create_input_file_bi_rectangle_double_u_tube(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_double_u_tube_pipe_series(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -272,7 +272,7 @@ class TestCreateInputFiles(GHEBaseTest):
         recursive_eq(d_demo, d_new)
 
     def test_create_input_file_near_square_coaxial(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_coaxial_pipe(
             inner_pipe_d_in=0.0442,
             inner_pipe_d_out=0.050,
@@ -305,7 +305,7 @@ class TestCreateInputFiles(GHEBaseTest):
         recursive_eq(d_demo, d_new)
 
     def test_create_input_file_near_square_double_u_tube(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_double_u_tube_pipe_parallel(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -336,7 +336,7 @@ class TestCreateInputFiles(GHEBaseTest):
         recursive_eq(d_demo, d_new)
 
     def test_create_input_file_near_square_single_u_tube(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -367,7 +367,7 @@ class TestCreateInputFiles(GHEBaseTest):
         recursive_eq(d_demo, d_new)
 
     def test_create_input_file_rectangle_coaxial(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_coaxial_pipe(
             inner_pipe_d_in=0.0442,
             inner_pipe_d_out=0.050,
@@ -400,7 +400,7 @@ class TestCreateInputFiles(GHEBaseTest):
         recursive_eq(d_demo, d_new)
 
     def test_create_input_file_rectangle_double_u_tube(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_double_u_tube_pipe_parallel(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -431,7 +431,7 @@ class TestCreateInputFiles(GHEBaseTest):
         recursive_eq(d_demo, d_new)
 
     def test_create_input_file_rectangle_single_u_tube(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,

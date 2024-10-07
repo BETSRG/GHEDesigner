@@ -1,4 +1,4 @@
-from ghedesigner.manager import GHEManager
+from ghedesigner.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
@@ -11,7 +11,7 @@ class TestLoads(GHEBaseTest):
         all_months = [jan, feb, mar, apr, may, jun, jul, aug, sept, octo, nov, dec]
         hourly_loads = [val for month in all_months for val in month]
 
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -45,7 +45,7 @@ class TestLoads(GHEBaseTest):
         all_months = [jan, feb, mar, apr, may, jun, jul, aug, sept, octo, nov, dec]
         hourly_loads = [val for month in all_months for val in month]
 
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -79,7 +79,7 @@ class TestLoads(GHEBaseTest):
         all_months = [jan, feb, mar, apr, may, jun, jul, aug, sept, octo, nov, dec]
         hourly_loads = [val for month in all_months for val in month]
 
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,

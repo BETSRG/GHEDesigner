@@ -3,14 +3,14 @@
 
 # This search is described in section 4.3.2 of Cook (2021) from pages 123-129.
 
-from ghedesigner.manager import GHEManager
+from ghedesigner.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.utilities import length_of_side
 
 
 class TestFindNearSquareDesign(GHEBaseTest):
     def test_find_single_u_tube_design(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -47,7 +47,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         self.assertEqual(157, len(nbh))
 
     def test_find_double_u_tube_parallel_design(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_double_u_tube_pipe_parallel(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -85,7 +85,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         self.assertEqual(145, len(nbh))
 
     def test_find_double_u_tube_series_design(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_double_u_tube_pipe_series(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -123,7 +123,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         self.assertEqual(145, len(nbh))
 
     def test_find_coaxial_pipe_design(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_coaxial_pipe(
             inner_pipe_d_in=0.0442,
             inner_pipe_d_out=0.050,

@@ -42,7 +42,7 @@ logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
 logger = logging.getLogger(__name__)
 
 
-class GHEManager:
+class GroundHeatExchanger:
     def __init__(self):
         self._fluid: GHEFluid | None = None
         self._grout: Grout | None = None
@@ -784,7 +784,7 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
 
     inputs = loads(input_file_path.read_text())
 
-    ghe = GHEManager()
+    ghe = GroundHeatExchanger()
 
     version = inputs['version']
 

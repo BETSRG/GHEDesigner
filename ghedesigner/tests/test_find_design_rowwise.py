@@ -1,4 +1,4 @@
-from ghedesigner.manager import GHEManager
+from ghedesigner.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 prop_boundary = [
@@ -50,7 +50,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
     # design interface with a single U-tube borehole heat exchanger.
 
     def test_find_row_wise_design_wo_perimeter(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -87,7 +87,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
         self.assertEqual(41, len(nbh))
 
     def test_find_row_wise_design_with_perimeter(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,

@@ -1,10 +1,10 @@
-from ghedesigner.manager import GHEManager
+from ghedesigner.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
 class TestFindNearSquareDesign(GHEBaseTest):
     def test_small_loads(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
 
         # 1-1/4" in DR-11 HDPE
         ghe.set_single_u_tube_pipe(
@@ -44,7 +44,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         self.assertEqual(2, len(nbh))
 
     def test_big_loads(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
 
         # 1-1/4" in DR-11 HDPE
         ghe.set_single_u_tube_pipe(
@@ -84,7 +84,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         self.assertEqual(21, len(nbh))
 
     def test_big_loads_with_max_boreholes(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
 
         # 1-1/4" in DR-11 HDPE
         ghe.set_single_u_tube_pipe(

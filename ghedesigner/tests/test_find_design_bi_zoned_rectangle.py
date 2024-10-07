@@ -4,7 +4,7 @@
 
 # This search is described in section 4.4.3 from pages 138-143 in Cook (2021).
 
-from ghedesigner.manager import GHEManager
+from ghedesigner.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 # This file contains three examples utilizing the bi-zoned rectangle design algorithm for a single U, double U,
@@ -13,7 +13,7 @@ from ghedesigner.tests.test_base_case import GHEBaseTest
 
 class TestFindBiZonedRectangleDesign(GHEBaseTest):
     def test_single_u_tube(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -40,7 +40,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
         self.assertEqual(124, len(nbh))
 
     def test_double_u_tube(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_double_u_tube_pipe_parallel(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -67,7 +67,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
         self.assertEqual(105, len(nbh))
 
     def test_coaxial(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_coaxial_pipe(
             inner_pipe_d_in=0.0442,
             inner_pipe_d_out=0.050,

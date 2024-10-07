@@ -1,10 +1,10 @@
-from ghedesigner.manager import GHEManager
+from ghedesigner.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
 class TestFindRectangleDesign(GHEBaseTest):
     def test_single_u_tube(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -31,7 +31,7 @@ class TestFindRectangleDesign(GHEBaseTest):
         self.assertEqual(181, len(nbh))
 
     def test_double_u_tube(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_double_u_tube_pipe_parallel(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -58,7 +58,7 @@ class TestFindRectangleDesign(GHEBaseTest):
         self.assertEqual(145, len(nbh))
 
     def test_coaxial_pipe(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_coaxial_pipe(
             inner_pipe_d_in=0.0442,
             inner_pipe_d_out=0.050,

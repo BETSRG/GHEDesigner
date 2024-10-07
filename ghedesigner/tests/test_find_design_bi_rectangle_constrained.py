@@ -4,7 +4,7 @@
 
 # This search is described in section 4.4.5 from pages 146-148 in Cook (2021).
 
-from ghedesigner.manager import GHEManager
+from ghedesigner.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 prop_boundary = [
@@ -60,7 +60,7 @@ no_go_zones_multiple_bf_outlines = [
 
 class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
     def test_single_u_tube(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -89,7 +89,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         self.assertEqual(75, len(nbh))
 
     def test_single_u_tube_multiple_bf_outlines(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_single_u_tube_pipe(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -122,7 +122,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         self.assertEqual(68, len(nbh))
 
     def test_double_u_tube(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_double_u_tube_pipe_parallel(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
@@ -151,7 +151,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         self.assertEqual(65, len(nbh))
 
     def test_coaxial(self):
-        ghe = GHEManager()
+        ghe = GroundHeatExchanger()
         ghe.set_coaxial_pipe(
             inner_pipe_d_in=0.0442,
             inner_pipe_d_out=0.050,
