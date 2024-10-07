@@ -318,8 +318,6 @@ class GroundHeatExchanger:
     def set_simulation_parameters(
         self,
         num_months: int,
-        max_height: float,
-        min_height: float,
         max_boreholes: int | None = None,
         continue_if_design_unmet: bool = False,
     ) -> int:
@@ -327,15 +325,13 @@ class GroundHeatExchanger:
         Sets the simulation parameters
 
         :param num_months: number of months in simulation.
-        :param max_height: maximum height of borehole, in m.
-        :param min_height: minimum height of borehole, in m.
         :param max_boreholes: maximum boreholes in search algorithms.
         :param continue_if_design_unmet: continues to process if design unmet.
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
         self._simulation_parameters = SimulationParameters(
-            1, num_months, max_height, min_height, max_boreholes, continue_if_design_unmet
+            1, num_months, max_boreholes, continue_if_design_unmet
         )
         return 0
 
@@ -352,22 +348,28 @@ class GroundHeatExchanger:
         self._ground_loads = hourly_ground_loads
         return 0
 
-    def set_geometry_constraints_near_square(self, b: float, length: float) -> int:
+    def set_geometry_constraints_near_square(self, max_height: float, min_height: float, b: float, length: float) -> int:
         """
         Sets the geometry constraints for the near-square design method.
 
+        :param max_height: maximum height of borehole, in m.
+        :param min_height: minimum height of borehole, in m.
         :param b: borehole-to-borehole spacing, in m.
         :param length: side length of the sizing domain, in m.
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+        self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsNearSquare(b, length)
         return 0
 
-    def set_geometry_constraints_rectangle(self, length: float, width: float, b_min: float, b_max: float) -> int:
+    def set_geometry_constraints_rectangle(self, max_height: float, min_height: float,
+                                           length: float, width: float, b_min: float, b_max: float) -> int:
         """
         Sets the geometry constraints for the rectangle design method.
 
+        :param max_height: maximum height of borehole, in m.
+        :param min_height: minimum height of borehole, in m.
         :param length: side length of the sizing domain, in m.
         :param width: side width of the sizing domain, in m.
         :param b_min: minimum borehole-to-borehole spacing, in m.
@@ -376,15 +378,19 @@ class GroundHeatExchanger:
         :rtype: int
         """
         self.geom_type = DesignGeomType.RECTANGLE
+        self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsRectangle(width, length, b_min, b_max)
         return 0
 
     def set_geometry_constraints_bi_rectangle(
-        self, length: float, width: float, b_min: float, b_max_x: float, b_max_y: float
+        self, max_height: float, min_height: float, length: float,
+        width: float, b_min: float, b_max_x: float, b_max_y: float
     ) -> int:
         """
         Sets the geometry constraints for the bi-rectangle design method.
 
+        :param max_height: maximum height of borehole, in m.
+        :param min_height: minimum height of borehole, in m.
         :param length: side length of the sizing domain, in m.
         :param width: side width of the sizing domain, in m.
         :param b_min: minimum borehole-to-borehole spacing, in m.
@@ -394,15 +400,19 @@ class GroundHeatExchanger:
         :rtype: int
         """
         self.geom_type = DesignGeomType.BIRECTANGLE
+        self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsBiRectangle(width, length, b_min, b_max_x, b_max_y)
         return 0
 
     def set_geometry_constraints_bi_zoned_rectangle(
-        self, length: float, width: float, b_min: float, b_max_x: float, b_max_y: float
+        self, max_height: float, min_height: float, length: float,
+        width: float, b_min: float, b_max_x: float, b_max_y: float
     ) -> int:
         """
         Sets the geometry constraints for the bi-zoned rectangle design method.
 
+        :param max_height: maximum height of borehole, in m.
+        :param min_height: minimum height of borehole, in m.
         :param length: side length of the sizing domain, in m.
         :param width: side width of the sizing domain, in m.
         :param b_min: minimum borehole-to-borehole spacing, in m.
@@ -412,15 +422,19 @@ class GroundHeatExchanger:
         :rtype: int
         """
         self.geom_type = DesignGeomType.BIZONEDRECTANGLE
+        self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsBiZoned(width, length, b_min, b_max_x, b_max_y)
         return 0
 
     def set_geometry_constraints_bi_rectangle_constrained(
-        self, b_min: float, b_max_x: float, b_max_y: float, property_boundary: list, no_go_boundaries: list
+        self, max_height: float, min_height: float, b_min: float,
+        b_max_x: float, b_max_y: float, property_boundary: list, no_go_boundaries: list
     ) -> int:
         """
         Sets the geometry constraints for the bi-rectangle constrained design method.
 
+        :param max_height: maximum height of borehole, in m.
+        :param min_height: minimum height of borehole, in m.
         :param b_min: minimum borehole-to-borehole spacing, in m.
         :param b_max_x: maximum borehole-to-borehole spacing in the x-direction, in m.
         :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
@@ -430,6 +444,7 @@ class GroundHeatExchanger:
         :rtype: int
         """
         self.geom_type = DesignGeomType.BIRECTANGLECONSTRAINED
+        self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(
             b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries
         )
@@ -437,6 +452,8 @@ class GroundHeatExchanger:
 
     def set_geometry_constraints_rowwise(
         self,
+        max_height: float,
+        min_height: float,
         perimeter_spacing_ratio: float | None,
         max_spacing: float,
         min_spacing: float,
@@ -449,7 +466,8 @@ class GroundHeatExchanger:
     ) -> int:
         """
         Sets the geometry constraints for the row-wise design method.
-
+        :param max_height: maximum height of borehole, in m.
+        :param min_height: minimum height of borehole, in m.
         :param perimeter_spacing_ratio: the ratio between the minimum spacing between
             boreholes placed along the property and no-go zones and the standard borehole-to-borehole
             spacing used for internal boreholes.
@@ -473,6 +491,7 @@ class GroundHeatExchanger:
         min_rotation = min_rotation * DEG_TO_RAD
 
         self.geom_type = DesignGeomType.ROWWISE
+        self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsRowWise(
             perimeter_spacing_ratio,
             min_spacing,
@@ -857,8 +876,6 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
     continue_if_design_unmet = design_props.get("continue_if_design_unmet", False)
     ghe.set_simulation_parameters(
         num_months=sim_props["num_months"],
-        max_height=constraint_props["max_height"],
-        min_height=constraint_props["min_height"],
         max_boreholes=max_bh,
         continue_if_design_unmet=continue_if_design_unmet,
     )
