@@ -63,7 +63,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
         ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.140)
-        ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=200, min_height=60)
+        ghe.set_simulation_parameters(num_months=240, max_height=200, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_rowwise(
             perimeter_spacing_ratio=None,
@@ -76,7 +76,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             property_boundary=prop_boundary,
             no_go_boundaries=no_go_zones,
         )
-        ghe.set_design(flow_rate=0.5, flow_type_str="borehole")
+        ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRowWiseDesignWithoutPerimeterSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
@@ -100,7 +100,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
         ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.140)
-        ghe.set_simulation_parameters(num_months=240, max_eft=35, min_eft=5, max_height=200, min_height=60)
+        ghe.set_simulation_parameters(num_months=240, max_height=200, min_height=60)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
         ghe.set_geometry_constraints_rowwise(
             perimeter_spacing_ratio=0.8,
@@ -113,7 +113,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             property_boundary=prop_boundary,
             no_go_boundaries=no_go_zones,
         )
-        ghe.set_design(flow_rate=0.5, flow_type_str="borehole")
+        ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRowWiseDesignWithPerimeterSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
