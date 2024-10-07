@@ -21,12 +21,12 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_fluid()
         ghe.set_borehole(height=152.4, buried_depth=2.0, diameter=0.152)
         ghe.set_simulation_parameters(
-            num_months=240, max_height=213, min_height=60, continue_if_design_unmet=True
+            num_months=240, continue_if_design_unmet=True
         )
 
         ghe.set_ground_loads_from_hourly_list([1.0e2] * 8760)
 
-        ghe.set_geometry_constraints_near_square(b=6.096, length=20)
+        ghe.set_geometry_constraints_near_square(max_height=135, min_height=60, b=6.096, length=20)
         ghe.set_design(flow_rate=1.0, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
 
@@ -61,12 +61,12 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_fluid()
         ghe.set_borehole(height=152.4, buried_depth=2.0, diameter=0.152)
         ghe.set_simulation_parameters(
-            num_months=240, max_height=213, min_height=60, continue_if_design_unmet=True
+            num_months=240, continue_if_design_unmet=True
         )
 
         ghe.set_ground_loads_from_hourly_list([1.0e6] * 8760)
 
-        ghe.set_geometry_constraints_near_square(b=6.096, length=20)
+        ghe.set_geometry_constraints_near_square(max_height=213, min_height=60, b=6.096, length=20)
         ghe.set_design(flow_rate=1.0, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
 
@@ -102,15 +102,13 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_borehole(height=152.4, buried_depth=2.0, diameter=0.152)
         ghe.set_simulation_parameters(
             num_months=240,
-            max_height=213,
-            min_height=60,
             max_boreholes=100,
             continue_if_design_unmet=True,
         )
 
         ghe.set_ground_loads_from_hourly_list([1.0e6] * 8760)
 
-        ghe.set_geometry_constraints_near_square(b=6.096, length=100)
+        ghe.set_geometry_constraints_near_square(max_height=213, min_height=60, b=6.096, length=100)
         ghe.set_design(flow_rate=1.0, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
 

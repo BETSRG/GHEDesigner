@@ -17,9 +17,9 @@ class TestNearSquare(GHEBaseTest):
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
         ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.140)
-        ghe.set_simulation_parameters(num_months=240, max_height=135, min_height=60)
+        ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_near_square(b=5.0, length=155)  # borehole spacing and field side length
+        ghe.set_geometry_constraints_near_square(max_height=135, min_height=60, b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "system" flow?
         ghe.set_design(flow_rate=31.2, flow_type_str="system", max_eft=35, min_eft=5)
         ghe.find_design()
@@ -45,9 +45,9 @@ class TestNearSquare(GHEBaseTest):
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
         ghe.set_borehole(height=96.0, buried_depth=2.0, diameter=0.140)
-        ghe.set_simulation_parameters(num_months=240, max_height=135, min_height=60)
+        ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_near_square(b=5.0, length=155)  # borehole spacing and field side length
+        ghe.set_geometry_constraints_near_square(max_height=135, min_height=60, b=5.0, length=155)  # borehole spacing and field side length
         # perform a design search assuming "borehole" flow?
         ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
