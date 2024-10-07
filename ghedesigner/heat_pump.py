@@ -30,13 +30,13 @@ class HeatPump:
     def do_sizing(self):
         pass
 
-    def calculate(self, simulation_time: float, inlet_temperature: float, flow_rate: float) -> float:
-        building_load = self.load_function(simulation_time)
+    def calculate(self, simulation_time_hours: float, loop_inlet_temp: float, flow_rate: float) -> float:
+        building_load = self.load_function(simulation_time_hours)
         if flow_rate == 0.0 or building_load == 0.0:
-            return inlet_temperature
+            return loop_inlet_temp
         if building_load > 0:  # heating the building, taking energy from loop
             loop_load = building_load - (building_load / self.cop)
         else:  # cooling the building, adding energy to loop
             loop_load = building_load + (building_load / self.cop)
         cp = 4100
-        return inlet_temperature + loop_load / (flow_rate * cp)
+        return loop_inlet_temp + loop_load / (flow_rate * cp)
