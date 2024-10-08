@@ -7,9 +7,9 @@ from json import dumps
 from math import floor
 from pathlib import Path
 
-from ghedesigner.borehole_heat_exchangers import CoaxialPipe, GHEDesignerBoreholeBase
+from ghedesigner.ghe.borehole_heat_exchangers import CoaxialPipe, GHEDesignerBoreholeBase
 from ghedesigner.constants import HRS_IN_DAY
-from ghedesigner.design import AnyBisectionType
+from ghedesigner.ghe.geometry.design import AnyBisectionType
 from ghedesigner.enums import TimestepType
 
 

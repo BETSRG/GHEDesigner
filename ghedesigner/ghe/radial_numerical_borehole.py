@@ -5,7 +5,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
 
-from ghedesigner.borehole_heat_exchangers import SingleUTube
+from ghedesigner.ghe.borehole_heat_exchangers import SingleUTube
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
 
 

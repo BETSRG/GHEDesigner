@@ -10,9 +10,9 @@ import click
 from jsonschema import ValidationError
 
 from ghedesigner import VERSION
-from ghedesigner.borehole import GHEBorehole
+from ghedesigner.ghe.borehole import GHEBorehole
 from ghedesigner.constants import DEG_TO_RAD
-from ghedesigner.design import (
+from ghedesigner.ghe.geometry.design import (
     AnyBisectionType,
     DesignBase,
     DesignBiRectangle,
@@ -23,7 +23,7 @@ from ghedesigner.design import (
     DesignRowWise,
 )
 from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
-from ghedesigner.geometry import (
+from ghedesigner.ghe.geometry.geometry import (
     GeometricConstraints,
     GeometricConstraintsBiRectangle,
     GeometricConstraintsBiRectangleConstrained,
@@ -34,7 +34,7 @@ from ghedesigner.geometry import (
 )
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
-from ghedesigner.simulation import SimulationParameters
+from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.utilities import write_idf
 from ghedesigner.validate import validate_input_file
 

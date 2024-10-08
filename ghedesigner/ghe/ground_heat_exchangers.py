@@ -4,15 +4,15 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from ghedesigner import VERSION
-from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import get_bhe_object
+from ghedesigner.ghe.borehole import GHEBorehole
+from ghedesigner.ghe.borehole_heat_exchangers import get_bhe_object
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
 from ghedesigner.enums import BHPipeType, TimestepType
-from ghedesigner.gfunction import GFunction, calc_g_func_for_multiple_lengths
-from ghedesigner.ground_loads import HybridLoad
+from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
+from ghedesigner.ghe.ground_loads import HybridLoad
 from ghedesigner.media import Grout, Pipe, Soil
-from ghedesigner.radial_numerical_borehole import RadialNumericalBH
-from ghedesigner.simulation import SimulationParameters
+from ghedesigner.ghe.radial_numerical_borehole import RadialNumericalBH
+from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.utilities import solve_root
 
 

@@ -6,7 +6,7 @@ import numpy as np
 import pygfunction as gt
 from numpy import log, pi, sqrt
 
-from ghedesigner.borehole import GHEBorehole
+from ghedesigner.ghe.borehole import GHEBorehole
 from ghedesigner.constants import TWO_PI
 from ghedesigner.enums import BHPipeType, DoubleUTubeConnType
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil

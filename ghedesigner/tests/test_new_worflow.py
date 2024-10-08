@@ -2,7 +2,7 @@ from pathlib import Path
 
 from ghedesigner.building import Building
 from ghedesigner.heat_pump import HeatPump
-from ghedesigner.manager import GroundHeatExchanger
+from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.system import System
 from ghedesigner.tests.test_base_case import GHEBaseTest
 

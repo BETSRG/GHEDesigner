@@ -6,10 +6,10 @@ from math import floor
 import numpy as np
 from scipy.interpolate import interp1d
 
-from ghedesigner.borehole_heat_exchangers import SingleUTube
+from ghedesigner.ghe.borehole_heat_exchangers import SingleUTube
 from ghedesigner.constants import HRS_IN_DAY, SEC_IN_HR, TWO_PI
-from ghedesigner.radial_numerical_borehole import RadialNumericalBH
-from ghedesigner.simulation import SimulationParameters
+from ghedesigner.ghe.radial_numerical_borehole import RadialNumericalBH
+from ghedesigner.ghe.simulation import SimulationParameters
 
 
 class HybridLoad:

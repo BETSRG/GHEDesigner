@@ -6,8 +6,8 @@ import numpy as np
 import pygfunction as gt
 from scipy.interpolate import interp1d, lagrange
 
-from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import get_bhe_object
+from ghedesigner.ghe.borehole import GHEBorehole
+from ghedesigner.ghe.borehole_heat_exchangers import get_bhe_object
 from ghedesigner.enums import BHPipeType
 
 logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")

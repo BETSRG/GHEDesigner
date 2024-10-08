@@ -2,8 +2,8 @@ from abc import abstractmethod
 from math import floor
 from typing import Union
 
-from ghedesigner.borehole import GHEBorehole
-from ghedesigner.domains import (
+from ghedesigner.ghe.borehole import GHEBorehole
+from ghedesigner.ghe.geometry.domains import (
     bi_rectangle_nested,
     bi_rectangle_zoned_nested,
     polygonal_land_constraint,
@@ -11,7 +11,7 @@ from ghedesigner.domains import (
     square_and_near_square,
 )
 from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
-from ghedesigner.geometry import (
+from ghedesigner.ghe.geometry.geometry import (
     GeometricConstraints,
     GeometricConstraintsBiRectangle,
     GeometricConstraintsBiRectangleConstrained,
@@ -21,8 +21,8 @@ from ghedesigner.geometry import (
     GeometricConstraintsRowWise,
 )
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-from ghedesigner.search_routines import Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch
-from ghedesigner.simulation import SimulationParameters
+from ghedesigner.ghe.search_routines import Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch
+from ghedesigner.ghe.simulation import SimulationParameters
 
 AnyBisectionType = Union[Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch]
 
