@@ -1,5 +1,5 @@
-from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, SingleUTube
+from ghedesigner.ghe.borehole import GHEBorehole
+from ghedesigner.ghe.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, SingleUTube
 from ghedesigner.enums import DoubleUTubeConnType
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
