@@ -110,14 +110,11 @@ class TestGHE(GHEBaseTest):
         # Simulation start month and end month
         # --------------------------------
         # Simulation start month and end month
-        start_month = 1
+        # start_month = 1
         n_years = 20
-        end_month = n_years * 12
+        num_months = n_years * 12
 
-        self.sim_params = SimulationParameters(
-            start_month,
-            end_month
-        )
+        self.sim_params = SimulationParameters(num_months)
 
         self.sim_params.set_design_temps(35, 5)
         self.sim_params.set_design_heights(384, 24)

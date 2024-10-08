@@ -80,14 +80,11 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # Simulation start month and end month
         # --------------------------------
         # Simulation start month and end month
-        start_month = 1
+        # start_month = 1
         n_years = 20
-        end_month = n_years * 12
+        num_months = n_years * 12
 
-        sim_params = SimulationParameters(
-            start_month,
-            end_month,
-        )
+        sim_params = SimulationParameters(num_months)
 
         sim_params.set_design_temps(35, 5)
         sim_params.set_design_heights(384, 24)
