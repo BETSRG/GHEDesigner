@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from copy import deepcopy
 from typing import Optional, Tuple
 
@@ -6,52 +5,13 @@ import numpy as np
 import pygfunction as gt
 from numpy import log, pi, sqrt
 
+from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
 from ghedesigner.ghe.borehole import GHEBorehole
 from ghedesigner.constants import TWO_PI
 from ghedesigner.enums import BHPipeType, DoubleUTubeConnType
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.utilities import solve_root
 
-
-class GHEDesignerBoreholeBase:
-    def __init__(
-        self,
-        m_flow_borehole: float,
-        fluid: GHEFluid,
-        _borehole: GHEBorehole,
-        pipe: Pipe,
-        grout: Grout,
-        soil: Soil,
-    ):
-        self.m_flow_borehole = m_flow_borehole
-        self.borehole = _borehole
-        self.pipe = pipe
-        self.soil = soil
-        self.grout = grout
-        self.fluid = fluid
-
-    @abstractmethod
-    def calc_fluid_pipe_resistance(self) -> float:
-        pass
-
-    @abstractmethod
-    def calc_effective_borehole_resistance(self) -> float:
-        pass
-
-    @staticmethod
-    def compute_fluid_resistance(h_conv: float, radius: float) -> float:
-        return 1 / (h_conv * TWO_PI * radius)
-
-    @staticmethod
-    def compute_reynolds(m_flow_pipe: float, r_in: float, fluid: GHEFluid) -> float:
-        # Hydraulic diameter
-        dia_hydraulic = 2.0 * r_in
-        # Fluid velocity
-        vol_flow_rate = m_flow_pipe / fluid.rho
-        area_cr_inner = pi * r_in**2
-        velocity = vol_flow_rate / area_cr_inner
-        # Reynolds number
-        return fluid.rho * velocity * dia_hydraulic / fluid.mu
 
 
 class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
@@ -148,7 +108,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         # Place single u-tubes at a B-spacing
         # Total horizontal space (m)
         # TODO: investigate why this deepcopy is required
-        _borehole = deepcopy(self.borehole)
+        _borehole = deepcopy(self.b)
         spacing = _borehole.r_b * 2 - (n * r_p_o_prime * 2)
         # If the spacing is negative, then the borehole is not large enough,
         # therefore, the borehole will be increased if necessary
