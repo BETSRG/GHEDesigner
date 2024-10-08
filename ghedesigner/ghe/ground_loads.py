@@ -8,7 +8,6 @@ from scipy.interpolate import interp1d
 
 from ghedesigner.ghe.single_u_borehole import SingleUTube
 from ghedesigner.constants import HRS_IN_DAY, SEC_IN_HR, TWO_PI
-from ghedesigner.ghe.radial_numerical_borehole import RadialNumericalBH
 from ghedesigner.ghe.simulation import SimulationParameters
 
 
@@ -17,7 +16,7 @@ class HybridLoad:
         self,
         raw_loads: list,
         bhe: SingleUTube,
-        radial_numerical: RadialNumericalBH,
+        radial_numerical: SingleUTube,
         sim_params: SimulationParameters,
         years=None,
     ):

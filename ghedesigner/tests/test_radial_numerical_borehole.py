@@ -4,7 +4,6 @@ from pygfunction.boreholes import Borehole
 
 from ghedesigner.ghe.single_u_borehole import SingleUTube
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-from ghedesigner.ghe.radial_numerical_borehole import RadialNumericalBH
 
 
 class TestRadialNumericalBorehole(unittest.TestCase):
@@ -24,10 +23,9 @@ class TestRadialNumericalBorehole(unittest.TestCase):
         soil = Soil(k=2.0, rho_cp=3901000, ugt=20)
         m_dot_bh = 0.5
         bh = SingleUTube(m_dot_bh, fluid, borehole, pipe, grout, soil)
-        rn_bh = RadialNumericalBH(bh)
-        rn_bh.calc_sts_g_functions(bh)
+        bh.calc_sts_g_functions()
 
-        self.assertAlmostEqual(-1.182, rn_bh.g[0], delta=0.001)
-        self.assertAlmostEqual(2.217, rn_bh.g[-1], delta=0.001)
-        self.assertAlmostEqual(0.0, rn_bh.g_bhw[0], delta=0.001)
-        self.assertAlmostEqual(2.094, rn_bh.g_bhw[-1], delta=0.001)
+        self.assertAlmostEqual(-1.182, bh.g[0], delta=0.001)
+        self.assertAlmostEqual(2.217, bh.g[-1], delta=0.001)
+        self.assertAlmostEqual(0.0, bh.g_bhw[0], delta=0.001)
+        self.assertAlmostEqual(2.094, bh.g_bhw[-1], delta=0.001)

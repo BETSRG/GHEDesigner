@@ -11,7 +11,6 @@ from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_loads import HybridLoad
 from ghedesigner.media import Grout, Pipe, Soil
-from ghedesigner.ghe.radial_numerical_borehole import RadialNumericalBH
 from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.utilities import solve_root
 
@@ -50,8 +49,7 @@ class BaseGHE:
         self.bhe_eq = self.bhe.to_single()
 
         # Radial numerical short time step
-        self.radial_numerical = RadialNumericalBH(self.bhe_eq)
-        self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
+        self.bhe_eq.calc_sts_g_functions()
 
         # gFunction object
         self.gFunction = g_function
@@ -107,15 +105,15 @@ class BaseGHE:
         g = self.combine_sts_lts(
             self.gFunction.log_time,
             g_function_corrected,
-            self.radial_numerical.lntts.tolist(),
-            self.radial_numerical.g.tolist(),
+            self.bhe_eq.lntts.tolist(),
+            self.bhe_eq.g.tolist(),
         )
 
         g_bhw = self.combine_sts_lts(
             self.gFunction.log_time,
             g_function_corrected,
-            self.radial_numerical.lntts.tolist(),
-            self.radial_numerical.g_bhw.tolist(),
+            self.bhe_eq.lntts.tolist(),
+            self.bhe_eq.g_bhw.tolist(),
         )
 
         return g, g_bhw
@@ -142,7 +140,7 @@ class BaseGHE:
 
         q_dot_b_dt = np.hstack(q_dot_b[1:] - q_dot_b[:-1])
 
-        ts = self.radial_numerical.t_s  # (-)
+        ts = self.bhe_eq.t_s  # (-)
         two_pi_k = TWO_PI * self.bhe.soil.k  # (W/m.K)
         h = self.bhe.b.H  # (meters)
         tg = self.bhe.soil.ugt  # (Celsius)
@@ -240,7 +238,7 @@ class GHE(BaseGHE):
             load_years = [2019]
 
         hybrid_load = HybridLoad(
-            self.hourly_extraction_ground_loads, self.bhe_eq, self.radial_numerical, sim_params, years=load_years
+            self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, sim_params, years=load_years
         )
 
         # hybrid load object
@@ -297,7 +295,7 @@ class GHE(BaseGHE):
         # Solve for equivalent single U-tube
         self.bhe_eq = self.bhe.to_single()
         # Update short time step object with equivalent single u-tube
-        self.radial_numerical.calc_sts_g_functions(self.bhe_eq)
+        self.bhe_eq.calc_sts_g_functions()
         # Combine the short and long-term g-functions. The long term g-function
         # is interpolated for specific B/H and rb/H values.
         g, _ = self.grab_g_function(b_over_h)
