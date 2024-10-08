@@ -1,10 +1,10 @@
-from ghedesigner.borehole import GHEBorehole
-from ghedesigner.coordinates import rectangle
+from ghedesigner.ghe.borehole import GHEBorehole
+from ghedesigner.ghe.geometry.coordinates import rectangle
 from ghedesigner.enums import BHPipeType, TimestepType
-from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
-from ghedesigner.ground_heat_exchangers import GHE
+from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
+from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-from ghedesigner.simulation import SimulationParameters
+from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.utilities import eskilson_log_times
 
