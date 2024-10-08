@@ -29,7 +29,6 @@ class GHEDesignerBoreholeBase:
         self.soil = soil
         self.grout = grout
         self.fluid = fluid
-        self.b = _borehole
 
     @abstractmethod
     def calc_fluid_pipe_resistance(self) -> float:
@@ -149,7 +148,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         # Place single u-tubes at a B-spacing
         # Total horizontal space (m)
         # TODO: investigate why this deepcopy is required
-        _borehole = deepcopy(self.b)
+        _borehole = deepcopy(self.borehole)
         spacing = _borehole.r_b * 2 - (n * r_p_o_prime * 2)
         # If the spacing is negative, then the borehole is not large enough,
         # therefore, the borehole will be increased if necessary
@@ -345,7 +344,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         self.r_in_in, self.r_in_out = self.r_inner
         self.r_out_in, self.r_out_out = self.r_outer
 
-        self.b = _borehole  # pygfunction borehole
+        self.borehole = _borehole  # pygfunction borehole
 
         # Declare variables that are computed in compute_resistance()
         self.R_p_in = 0.0

@@ -16,7 +16,7 @@ class TestNewWorkflows(GHEBaseTest):
 
         # read building loads
         heat_pump = HeatPump("load 1")
-        building_loads_path = Path(__file__).parent / "test_data" / "ground_loads.csv"
+        building_loads_path = Path(__file__).parent / "test_data" / "test_bldg_loads.csv"
         heat_pump.set_loads_from_file(building_loads_path)
         heat_pump.set_fixed_cop(3)
         heat_pump.do_sizing()
@@ -45,7 +45,7 @@ class TestNewWorkflows(GHEBaseTest):
         ghe.set_geometry_constraints_rectangle(max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0)
         ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
-        output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignSingleUTube"
+        output_file_directory = self.test_outputs_directory / "TestNewWorkflow"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
 

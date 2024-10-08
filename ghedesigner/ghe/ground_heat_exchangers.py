@@ -359,4 +359,8 @@ class GHE(BaseGHE):
         self.bhe.b.H = returned_height
 
     def calculate(self, hour_index: int, inlet_temp: float, flow_rate: float) -> float:
-        return 3.14
+
+        effectivness = 0.5
+        soil_temp = 20
+
+        return effectivness * (soil_temp - inlet_temp) + inlet_temp
