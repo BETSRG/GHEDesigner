@@ -3,7 +3,7 @@ from json import dumps, loads
 
 from recursive_diff import recursive_eq
 
-from ghedesigner.manager import GroundHeatExchanger
+from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 

@@ -3,7 +3,7 @@
 
 # This search is described in section 4.3.2 of Cook (2021) from pages 123-129.
 
-from ghedesigner.manager import GroundHeatExchanger
+from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.utilities import length_of_side
 

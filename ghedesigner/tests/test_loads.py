@@ -1,4 +1,4 @@
-from ghedesigner.manager import GroundHeatExchanger
+from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 

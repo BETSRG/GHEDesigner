@@ -4,7 +4,7 @@
 
 # This search is described in section 4.4.5 from pages 146-148 in Cook (2021).
 
-from ghedesigner.manager import GroundHeatExchanger
+from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 prop_boundary = [

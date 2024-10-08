@@ -4,7 +4,7 @@
 
 # This search is described in section 4.4.3 from pages 138-143 in Cook (2021).
 
-from ghedesigner.manager import GroundHeatExchanger
+from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 # This file contains three examples utilizing the bi-zoned rectangle design algorithm for a single U, double U,

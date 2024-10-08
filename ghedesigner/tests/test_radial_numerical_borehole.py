@@ -1,9 +1,9 @@
 import unittest
 
-from ghedesigner.borehole import GHEBorehole
-from ghedesigner.borehole_heat_exchangers import SingleUTube
+from ghedesigner.ghe.borehole import GHEBorehole
+from ghedesigner.ghe.borehole_heat_exchangers import SingleUTube
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-from ghedesigner.radial_numerical_borehole import RadialNumericalBH
+from ghedesigner.ghe.radial_numerical_borehole import RadialNumericalBH
 
 
 class TestRadialNumericalBorehole(unittest.TestCase):

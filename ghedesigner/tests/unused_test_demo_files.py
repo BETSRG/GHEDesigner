@@ -2,7 +2,7 @@ from datetime import datetime
 from json import loads
 from pathlib import Path
 
-from ghedesigner.manager import _run_manager_from_cli_worker
+from ghedesigner.ghe.manager import _run_manager_from_cli_worker
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 # results can be updated with the update_demo_results.py file in /scripts

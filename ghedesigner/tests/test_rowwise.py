@@ -3,7 +3,7 @@ from math import pi
 import numpy as np
 import pandas as pd
 
-from ghedesigner.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_borehole_config, gen_shape
+from ghedesigner.ghe.geometry.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_borehole_config, gen_shape
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 

@@ -4,7 +4,7 @@
 
 # This search is described in section 4.4.2 of Cook (2021) from pages 134-138.
 
-from ghedesigner.manager import GroundHeatExchanger
+from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
