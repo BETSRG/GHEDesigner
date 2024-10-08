@@ -27,7 +27,7 @@ class TestHeatPump(TestCase):
 
     def test_load_lookup(self):
         heat_pump = HeatPump("load 1")
-        building_loads_path = Path(__file__).parent / "test_data" / "ground_loads.csv"
+        building_loads_path = Path(__file__).parent / "test_data" / "test_bldg_loads.csv"
         heat_pump.set_loads_from_file(building_loads_path)
         heat_pump.set_fixed_cop(3)
         loop_flow = 1.05
