@@ -1,6 +1,7 @@
 import unittest
 
-from ghedesigner.ghe.borehole import GHEBorehole
+from pygfunction.boreholes import Borehole
+
 from ghedesigner.ghe.single_u_borehole import SingleUTube
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.ghe.radial_numerical_borehole import RadialNumericalBH
@@ -9,7 +10,7 @@ from ghedesigner.ghe.radial_numerical_borehole import RadialNumericalBH
 class TestRadialNumericalBorehole(unittest.TestCase):
     def test_calc_sts_g_functions(self):
         fluid = GHEFluid(fluid_str='WATER', percent=0)
-        borehole = GHEBorehole(height=100.0, buried_depth=2.0, radius=0.075, x=0.0, y=0.0)
+        borehole = Borehole(H=100.0, D=2.0, r_b=0.075, x=0.0, y=0.0)
         grout = Grout(k=2.0, rho_cp=2000000.0)
 
         r_out = 0.04216 / 2.0

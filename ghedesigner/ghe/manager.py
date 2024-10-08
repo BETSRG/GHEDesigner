@@ -10,7 +10,7 @@ import click
 from jsonschema import ValidationError
 
 from ghedesigner import VERSION
-from ghedesigner.ghe.borehole import GHEBorehole
+from pygfunction.boreholes import Borehole
 from ghedesigner.constants import DEG_TO_RAD
 from ghedesigner.ghe.geometry.design import (
     AnyBisectionType,
@@ -49,7 +49,7 @@ class GroundHeatExchanger:
         self._soil: Soil | None = None
         self._pipe: Pipe | None = None
         self.pipe_type: BHPipeType | None = None
-        self._borehole: GHEBorehole | None = None
+        self._borehole: Borehole | None = None
         self._simulation_parameters: SimulationParameters | None = None
         self._ground_loads: list[float | None] = None
         # OK so geometric_constraints is tricky.  We have base classes, yay!
@@ -312,7 +312,7 @@ class GroundHeatExchanger:
         :rtype: int
         """
         radius = diameter / 2.0
-        self._borehole = GHEBorehole(100, buried_depth, radius, x=0.0, y=0.0)
+        self._borehole = Borehole(100, buried_depth, radius, x=0.0, y=0.0)
         return 0
 
     def set_simulation_parameters(
@@ -780,8 +780,8 @@ class GroundHeatExchanger:
             'grout': self._grout.to_input(),
             'soil': self._soil.to_input(),
             'pipe': d_pipe,
-            'borehole': self._borehole.to_input(),
-            'simulation': self._simulation_parameters.to_input(),
+            # 'borehole': self._borehole.to_input(),
+            # 'simulation': self._simulation_parameters.to_input(),
             'geometric_constraints': d_geo,
             'design': d_des,
             'loads': {'ground_loads': list(self._ground_loads)},

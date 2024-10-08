@@ -1,8 +1,8 @@
-from ghedesigner.ghe.borehole import GHEBorehole
+from pygfunction.boreholes import Borehole
+
 from ghedesigner.ghe.single_u_borehole import SingleUTube
 from ghedesigner.ghe.multi_u_borehole import MultipleUTube
 from ghedesigner.ghe.coaxial_borehole import CoaxialPipe
-
 from ghedesigner.ghe.geometry.coordinates import rectangle
 from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
@@ -127,7 +127,7 @@ class TestGHE(GHEBaseTest):
 
     def test_single_u_tube(self):
         # Define a borehole
-        borehole = GHEBorehole(self.H, self.D, self.dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(self.H, self.D, self.dia / 2.0, x=0.0, y=0.0)
 
         # Initialize GHE object
         g_function = calc_g_func_for_multiple_lengths(
@@ -172,7 +172,7 @@ class TestGHE(GHEBaseTest):
 
     def test_double_u_tube(self):
         # Define a borehole
-        borehole = GHEBorehole(self.H, self.D, self.dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(self.H, self.D, self.dia / 2.0, x=0.0, y=0.0)
 
         # Initialize GHE object
         g_function = calc_g_func_for_multiple_lengths(
@@ -217,7 +217,7 @@ class TestGHE(GHEBaseTest):
 
     def test_coaxial_tube(self):
         # Define a borehole
-        borehole = GHEBorehole(self.H, self.D, self.dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(self.H, self.D, self.dia / 2.0, x=0.0, y=0.0)
 
         # Initialize GHE object
         g_function = calc_g_func_for_multiple_lengths(

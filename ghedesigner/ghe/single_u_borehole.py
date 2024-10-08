@@ -1,7 +1,9 @@
+import pygfunction as gt
+from pygfunction.boreholes import Borehole
+
 from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
 from ghedesigner.media import GHEFluid, Pipe, Grout, Soil
-from ghedesigner.ghe.borehole import GHEBorehole
-import pygfunction as gt
+
 
 
 class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
@@ -9,7 +11,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self,
         m_flow_borehole: float,
         fluid: GHEFluid,
-        _borehole: GHEBorehole,
+        _borehole: Borehole,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,

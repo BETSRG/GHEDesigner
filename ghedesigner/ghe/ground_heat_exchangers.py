@@ -2,9 +2,9 @@ from math import ceil, floor
 
 import numpy as np
 from scipy.interpolate import interp1d
+from pygfunction.boreholes import Borehole
 
 from ghedesigner import VERSION
-from ghedesigner.ghe.borehole import GHEBorehole
 from ghedesigner.ghe.coaxial_borehole import get_bhe_object
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
 from ghedesigner.enums import BHPipeType, TimestepType
@@ -23,7 +23,7 @@ class BaseGHE:
         b_spacing: float,
         bhe_type: BHPipeType,
         fluid,
-        borehole: GHEBorehole,
+        borehole: Borehole,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
@@ -206,7 +206,7 @@ class GHE(BaseGHE):
         b_spacing: float,
         bhe_type: BHPipeType,
         fluid,
-        borehole: GHEBorehole,
+        borehole: Borehole,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,

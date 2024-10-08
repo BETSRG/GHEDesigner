@@ -1,4 +1,5 @@
-from ghedesigner.ghe.borehole import GHEBorehole
+from pygfunction.boreholes import Borehole
+
 from ghedesigner.ghe.single_u_borehole import SingleUTube
 from ghedesigner.ghe.multi_u_borehole import MultipleUTube
 from ghedesigner.ghe.coaxial_borehole import CoaxialPipe
@@ -58,7 +59,7 @@ class TestBHResistance(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(h, d, dia / 2.0, x=0.0, y=0.0)
         coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
         r_b = coaxial.calc_effective_borehole_resistance()
 
@@ -88,7 +89,7 @@ class TestBHResistance(GHEBaseTest):
         h = 100.0  # borehole length (m)
         d = 2.0  # borehole buried depth (m)
         dia = 0.150  # borehole diameter (m)
-        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # pipe
         d_out = 0.02667  # pipe outer diameter (m)
@@ -212,7 +213,7 @@ class TestBHResistance(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         single_u_tube = SingleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
@@ -319,7 +320,7 @@ class TestBHResistance(GHEBaseTest):
             m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho
 
             # Define a borehole
-            borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
+            borehole = Borehole(h, d, dia / 2.0, x=0.0, y=0.0)
             single_u_tube = SingleUTube(m_flow_borehole, fluid, borehole, pipe_s, grout, soil)
 
             # check Reynolds numbers
@@ -388,7 +389,7 @@ class TestBHResistance(GHEBaseTest):
             borehole_values["Coaxial"]["V_dot"].append(V_flow_borehole)
 
             # Define a borehole
-            borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
+            borehole = Borehole(h, d, dia / 2.0, x=0.0, y=0.0)
             coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
             # check Reynolds number

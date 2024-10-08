@@ -2,7 +2,8 @@ from abc import abstractmethod
 from math import floor
 from typing import Union
 
-from ghedesigner.ghe.borehole import GHEBorehole
+from pygfunction.boreholes import Borehole
+
 from ghedesigner.ghe.geometry.domains import (
     bi_rectangle_nested,
     bi_rectangle_zoned_nested,
@@ -31,7 +32,7 @@ class DesignBase:
     def __init__(
         self,
         v_flow: float,
-        _borehole: GHEBorehole,
+        _borehole: Borehole,
         bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
@@ -86,7 +87,7 @@ class DesignNearSquare(DesignBase):
     def __init__(
         self,
         v_flow: float,
-        _borehole: GHEBorehole,
+        _borehole: Borehole,
         bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
@@ -155,7 +156,7 @@ class DesignRectangle(DesignBase):
     def __init__(
         self,
         v_flow: float,
-        _borehole: GHEBorehole,
+        _borehole: Borehole,
         bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
@@ -219,7 +220,7 @@ class DesignBiRectangle(DesignBase):
     def __init__(
         self,
         v_flow: float,
-        _borehole: GHEBorehole,
+        _borehole: Borehole,
         bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
@@ -285,7 +286,7 @@ class DesignBiZoned(DesignBase):
     def __init__(
         self,
         v_flow: float,
-        _borehole: GHEBorehole,
+        _borehole: Borehole,
         bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
@@ -349,7 +350,7 @@ class DesignBiRectangleConstrained(DesignBase):
     def __init__(
         self,
         v_flow: float,
-        _borehole: GHEBorehole,
+        _borehole: Borehole,
         bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
@@ -416,7 +417,7 @@ class DesignRowWise(DesignBase):
     def __init__(
         self,
         v_flow: float,
-        _borehole: GHEBorehole,
+        _borehole: Borehole,
         bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,

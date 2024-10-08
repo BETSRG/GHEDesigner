@@ -1,7 +1,8 @@
 from math import ceil, sqrt
 from typing import Optional
 
-from ghedesigner.ghe.borehole import GHEBorehole
+from pygfunction.boreholes import Borehole
+
 from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
@@ -17,7 +18,7 @@ class Bisection1D:
         coordinates_domain: list,
         field_descriptors: list,
         v_flow: float,
-        borehole: GHEBorehole,
+        borehole: Borehole,
         bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
@@ -322,7 +323,7 @@ class RowWiseModifiedBisectionSearch:
     def __init__(
         self,
         v_flow: float,
-        borehole: GHEBorehole,
+        borehole: Borehole,
         bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
@@ -749,7 +750,7 @@ class Bisection2D(Bisection1D):
         coordinates_domain_nested: list,
         field_descriptors: list,
         v_flow: float,
-        borehole: GHEBorehole,
+        borehole: Borehole,
         bhe_type,
         fluid: GHEFluid,
         pipe: Pipe,
@@ -823,7 +824,7 @@ class BisectionZD(Bisection1D):
         coordinates_domain_nested: list,
         field_descriptors: list,
         v_flow: float,
-        borehole: GHEBorehole,
+        borehole: Borehole,
         bhe_type,
         fluid: GHEFluid,
         pipe: Pipe,

@@ -1,4 +1,5 @@
-from ghedesigner.ghe.borehole import GHEBorehole
+from pygfunction.boreholes import Borehole
+
 from ghedesigner.ghe.coaxial_borehole import CoaxialPipe, MultipleUTube
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
@@ -48,7 +49,7 @@ class TestEquivalentPipes(GHEBaseTest):
         h = 100.0  # Borehole length (m)
         d = 2.0  # Borehole buried depth (m)
         dia = 140.0 / 1000.0  # Borehole diameter
-        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # borehole heat exchanger
         coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
@@ -127,7 +128,7 @@ class TestEquivalentPipes(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # Double U-tube defaults to parallel
         double_u_tube = MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)

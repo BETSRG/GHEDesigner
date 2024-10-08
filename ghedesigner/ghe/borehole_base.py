@@ -1,8 +1,9 @@
 from abc import abstractmethod
 
+from pygfunction.boreholes import Borehole
+
 from ghedesigner.constants import TWO_PI, pi
 from ghedesigner.media import GHEFluid, Pipe, Grout, Soil
-from ghedesigner.ghe.borehole import GHEBorehole
 
 
 class GHEDesignerBoreholeBase:
@@ -10,7 +11,7 @@ class GHEDesignerBoreholeBase:
         self,
         m_flow_borehole: float,
         fluid: GHEFluid,
-        _borehole: GHEBorehole,
+        _borehole: Borehole,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,

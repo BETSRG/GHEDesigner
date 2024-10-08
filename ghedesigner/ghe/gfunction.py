@@ -5,8 +5,8 @@ from math import log
 import numpy as np
 import pygfunction as gt
 from scipy.interpolate import interp1d, lagrange
+from pygfunction.boreholes import Borehole
 
-from ghedesigner.ghe.borehole import GHEBorehole
 from ghedesigner.ghe.coaxial_borehole import get_bhe_object
 from ghedesigner.enums import BHPipeType
 
@@ -42,7 +42,7 @@ def calculate_g_function(
     orientation = borehole.orientation
 
     for x, y in coordinates:
-        _borehole = GHEBorehole(h, d, r_b, x, y, tilt, orientation)
+        _borehole = Borehole(h, d, r_b, x, y, tilt, orientation)
         bore_field.append(_borehole)
         # Initialize pipe model
         if boundary == "MIFT":
@@ -117,7 +117,7 @@ def calc_g_func_for_multiple_lengths(
     alpha = soil.k / soil.rhoCp
 
     for h in h_values:
-        borehole = GHEBorehole(h, depth, r_b, 0.0, 0.0)
+        borehole = Borehole(h, depth, r_b, 0.0, 0.0)
 
         ts = h**2 / (9.0 * alpha)  # Bore field characteristic time
         time_values = np.exp(log_time) * ts

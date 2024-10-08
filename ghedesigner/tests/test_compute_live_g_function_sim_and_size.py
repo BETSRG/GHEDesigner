@@ -1,4 +1,5 @@
-from ghedesigner.ghe.borehole import GHEBorehole
+from pygfunction.boreholes import Borehole
+
 from ghedesigner.ghe.geometry.coordinates import rectangle
 from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
@@ -75,7 +76,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(h, d, dia / 2.0, x=0.0, y=0.0)
 
         # Simulation start month and end month
         # --------------------------------

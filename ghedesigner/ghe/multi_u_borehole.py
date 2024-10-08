@@ -2,10 +2,9 @@ from copy import deepcopy
 from typing import Optional, Tuple
 
 from numpy import sqrt, log
+from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import pi, TWO_PI
-
-from ghedesigner.ghe.borehole import GHEBorehole
 from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
 from ghedesigner.ghe.single_u_borehole import SingleUTube
 from ghedesigner.enums import DoubleUTubeConnType
@@ -121,7 +120,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         self,
         m_flow_borehole: float,
         fluid: GHEFluid,
-        _borehole: GHEBorehole,
+        _borehole: Borehole,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,

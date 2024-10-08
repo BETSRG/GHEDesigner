@@ -4,10 +4,10 @@ from typing import Tuple
 import numpy as np
 import pygfunction as gt
 from numpy import log, pi
+from pygfunction.boreholes import Borehole
 
 from ghedesigner.ghe.multi_u_borehole import GHEDesignerBoreholeWithMultiplePipes, MultipleUTube
 from ghedesigner.ghe.single_u_borehole import SingleUTube
-from ghedesigner.ghe.borehole import GHEBorehole
 from ghedesigner.constants import TWO_PI
 from ghedesigner.enums import BHPipeType, DoubleUTubeConnType
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
@@ -15,7 +15,7 @@ from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 
 class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
     def __init__(
-        self, m_flow_borehole: float, fluid: GHEFluid, _borehole: GHEBorehole, pipe: Pipe, grout: Grout, soil: Soil
+        self, m_flow_borehole: float, fluid: GHEFluid, _borehole: Borehole, pipe: Pipe, grout: Grout, soil: Soil
     ):
         self.m_flow_borehole = m_flow_borehole
         # Store Thermal properties
@@ -190,7 +190,7 @@ def get_bhe_object(
     bhe_type: BHPipeType,
     m_flow_borehole: float,
     fluid: GHEFluid,
-    _borehole: GHEBorehole,
+    _borehole: Borehole,
     pipe: Pipe,
     grout: Grout,
     soil: Soil,
