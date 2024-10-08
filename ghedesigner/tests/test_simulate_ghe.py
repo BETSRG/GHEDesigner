@@ -1,5 +1,8 @@
 from ghedesigner.ghe.borehole import GHEBorehole
-from ghedesigner.ghe.borehole_heat_exchangers import CoaxialPipe, MultipleUTube, SingleUTube
+from ghedesigner.ghe.single_u_borehole import SingleUTube
+from ghedesigner.ghe.multi_u_borehole import MultipleUTube
+from ghedesigner.ghe.coaxial_borehole import CoaxialPipe
+
 from ghedesigner.ghe.geometry.coordinates import rectangle
 from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths

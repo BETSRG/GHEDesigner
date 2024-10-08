@@ -1,7 +1,7 @@
 from math import ceil, sqrt
 from typing import Optional
 
-from ghedesigner.ghe.borehole_heat_exchangers import GHEBorehole
+from ghedesigner.ghe.borehole import GHEBorehole
 from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE

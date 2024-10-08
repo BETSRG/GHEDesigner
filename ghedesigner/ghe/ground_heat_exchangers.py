@@ -5,7 +5,7 @@ from scipy.interpolate import interp1d
 
 from ghedesigner import VERSION
 from ghedesigner.ghe.borehole import GHEBorehole
-from ghedesigner.ghe.borehole_heat_exchangers import get_bhe_object
+from ghedesigner.ghe.coaxial_borehole import get_bhe_object
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
 from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
