@@ -22,7 +22,10 @@ from ghedesigner.ghe.geometry.geometry import (
     GeometricConstraintsRowWise,
 )
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-from ghedesigner.ghe.search_routines import Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch
+from ghedesigner.ghe.bisection_1d_search import Bisection1D
+from ghedesigner.ghe.bisection_2d_search import Bisection2D
+from ghedesigner.ghe.bisection_zd_search import BisectionZD
+from ghedesigner.ghe.rowwise_search import RowWiseModifiedBisectionSearch
 from ghedesigner.ghe.simulation import SimulationParameters
 
 AnyBisectionType = Union[Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch]
