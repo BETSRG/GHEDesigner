@@ -1,7 +1,7 @@
 import unittest
 
 from ghedesigner.ghe.borehole import GHEBorehole
-from ghedesigner.ghe.borehole_heat_exchangers import SingleUTube
+from ghedesigner.ghe.single_u_borehole import SingleUTube
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.ghe.radial_numerical_borehole import RadialNumericalBH
 
