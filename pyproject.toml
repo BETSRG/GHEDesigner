@@ -49,5 +49,5 @@ packages = ["ghedesigner"]
 [project.scripts]
 ghedesigner = "ghedesigner.manager:run_manager_from_cli"
 
-[project.gui_scripts]
+[project.gui-scripts]
 ghedesigner_gui = "ghedesigner.gui.runner:main_gui"
