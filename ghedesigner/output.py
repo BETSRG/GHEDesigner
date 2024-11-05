@@ -41,7 +41,7 @@ class OutputManager:
         self.output_dict = self.get_summary_object(design, time, project_name, notes, author, model_name, load_method)
 
     def write_all_output_files(self, output_directory: Path, file_suffix: str = ""):
-        output_directory.mkdir(exist_ok=True)
+        output_directory.mkdir(exist_ok=True, parents=True)
         (output_directory / f"SimulationSummary{file_suffix}.txt").write_text(self.text_summary)
         with open(
             os.path.join(output_directory, f"TimeDependentValues{file_suffix}.csv"), "w", newline=""
