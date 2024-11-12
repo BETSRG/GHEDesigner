@@ -19,7 +19,7 @@ class GHEFluid(Fluid):
         elif fluid_str == FluidType.WATER.name:
             self.fluid_type = FluidType.WATER
         else:
-            raise ValueError(f"FluidType \"{fluid_str}\" not implemented")
+            raise ValueError(f'FluidType "{fluid_str}" not implemented')
 
         fluid_map = {
             FluidType.ETHYLALCOHOL.name: "MEA",
@@ -35,9 +35,9 @@ class GHEFluid(Fluid):
 
     def to_input(self):
         return {
-            'fluid_name': self.fluid_type.name,
-            'concentration_percent': self.concentration_percent,
-            'temperature': self.temperature,
+            "fluid_name": self.fluid_type.name,
+            "concentration_percent": self.concentration_percent,
+            "temperature": self.temperature,
         }
 
 
@@ -48,13 +48,13 @@ class ThermalProperty:
 
     def as_dict(self) -> dict:
         output = {}
-        output['type'] = str(self.__class__)
-        output['thermal_conductivity'] = {'value': self.k, 'units': 'W/m-K'}
-        output['volumetric_heat_capacity'] = {'value': self.rhoCp, 'units': 'J/K-m3'}
+        output["type"] = str(self.__class__)
+        output["thermal_conductivity"] = {"value": self.k, "units": "W/m-K"}
+        output["volumetric_heat_capacity"] = {"value": self.rhoCp, "units": "J/K-m3"}
         return output
 
     def to_input(self) -> dict:
-        return {'conductivity': self.k, 'rho_cp': self.rhoCp}
+        return {"conductivity": self.k, "rho_cp": self.rhoCp}
 
 
 class Grout(ThermalProperty):
@@ -79,17 +79,17 @@ class Pipe(ThermalProperty):
 
     def as_dict(self) -> dict:
         output = {}
-        output['base'] = super().as_dict()
-        output['pipe_center_positions'] = str(self.pos)
+        output["base"] = super().as_dict()
+        output["pipe_center_positions"] = str(self.pos)
         if type(self.r_in) is float:
             output["pipe_inner_diameter"] = str(self.r_in * 2.0)
             output["pipe_outer_diameter"] = str(self.r_out * 2.0)
         else:
             output["pipe_inner_diameters"] = str([x * 2.0 for x in self.r_in])
             output["pipe_outer_diameters"] = str([x * 2.0 for x in self.r_out])
-        output['shank_spacing_pipe_to_pipe'] = {'value': self.s, 'units': 'm'}
-        output['pipe_roughness'] = {'value': self.roughness, 'units': 'm'}
-        output['number_of_pipes'] = self.n_pipes
+        output["shank_spacing_pipe_to_pipe"] = {"value": self.s, "units": "m"}
+        output["pipe_roughness"] = {"value": self.roughness, "units": "m"}
+        output["number_of_pipes"] = self.n_pipes
         return output
 
     @staticmethod
@@ -114,8 +114,8 @@ class Soil(ThermalProperty):
 
     def as_dict(self) -> dict:
         output = super().as_dict()
-        output['undisturbed_ground_temperature'] = {'value': self.ugt, 'units': 'C'}
+        output["undisturbed_ground_temperature"] = {"value": self.ugt, "units": "C"}
         return output
 
     def to_input(self) -> dict:
-        return {'conductivity': self.k, 'rho_cp': self.rhoCp, 'undisturbed_temp': self.ugt}
+        return {"conductivity": self.k, "rho_cp": self.rhoCp, "undisturbed_temp": self.ugt}

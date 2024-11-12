@@ -25,7 +25,7 @@ class GeometricConstraintsNearSquare(GeometricConstraints):
         self.type = DesignGeomType.NEARSQUARE
 
     def to_input(self) -> dict:
-        return {'length': self.length, 'b': self.b, 'method': DesignGeomType.NEARSQUARE.name}
+        return {"length": self.length, "b": self.b, "method": DesignGeomType.NEARSQUARE.name}
 
 
 class GeometricConstraintsRectangle(GeometricConstraints):
@@ -43,11 +43,11 @@ class GeometricConstraintsRectangle(GeometricConstraints):
 
     def to_input(self) -> dict:
         return {
-            'length': self.length,
-            'width': self.width,
-            'b_min': self.b_min,
-            'b_max': self.b_max_x,
-            'method': DesignGeomType.RECTANGLE.name,
+            "length": self.length,
+            "width": self.width,
+            "b_min": self.b_min,
+            "b_max": self.b_max_x,
+            "method": DesignGeomType.RECTANGLE.name,
         }
 
 
@@ -67,12 +67,12 @@ class GeometricConstraintsBiRectangle(GeometricConstraints):
 
     def to_input(self) -> dict:
         return {
-            'length': self.length,
-            'width': self.width,
-            'b_min': self.b_min,
-            'b_max_x': self.b_max_x,
-            'b_max_y': self.b_max_y,
-            'method': DesignGeomType.BIRECTANGLE.name,
+            "length": self.length,
+            "width": self.width,
+            "b_min": self.b_min,
+            "b_max_x": self.b_max_x,
+            "b_max_y": self.b_max_y,
+            "method": DesignGeomType.BIRECTANGLE.name,
         }
 
 
@@ -101,12 +101,12 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
 
     def to_input(self) -> dict:
         return {
-            'b_min': self.b_min,
-            'b_max_x': self.b_max_x,
-            'b_max_y': self.b_max_y,
-            'property_boundary': self.property_boundary,
-            'no_go_boundaries': self.no_go_boundaries,
-            'method': DesignGeomType.BIRECTANGLECONSTRAINED.name,
+            "b_min": self.b_min,
+            "b_max_x": self.b_max_x,
+            "b_max_y": self.b_max_y,
+            "property_boundary": self.property_boundary,
+            "no_go_boundaries": self.no_go_boundaries,
+            "method": DesignGeomType.BIRECTANGLECONSTRAINED.name,
         }
 
 
@@ -121,12 +121,12 @@ class GeometricConstraintsBiZoned(GeometricConstraintsBiRectangle):
 
     def to_input(self) -> dict:
         return {
-            'length': self.length,
-            'width': self.width,
-            'b_min': self.b_min,
-            'b_max_x': self.b_max_x,
-            'b_max_y': self.b_max_y,
-            'method': DesignGeomType.BIZONEDRECTANGLE.name,
+            "length": self.length,
+            "width": self.width,
+            "b_min": self.b_min,
+            "b_max_x": self.b_max_x,
+            "b_max_y": self.b_max_y,
+            "method": DesignGeomType.BIZONEDRECTANGLE.name,
         }
 
 
@@ -161,14 +161,14 @@ class GeometricConstraintsRowWise(GeometricConstraints):
 
     def to_input(self) -> dict:
         return {
-            'perimeter_spacing_ratio': self.perimeter_spacing_ratio,
-            'min_spacing': self.min_spacing,
-            'max_spacing': self.max_spacing,
-            'spacing_step': self.spacing_step,
-            'min_rotation': self.min_rotation * RAD_TO_DEG,
-            'max_rotation': self.max_rotation * RAD_TO_DEG,
-            'rotate_step': self.rotate_step,
-            'property_boundary': self.property_boundary,
-            'no_go_boundaries': self.no_go_boundaries,
-            'method': DesignGeomType.ROWWISE.name,
+            "perimeter_spacing_ratio": self.perimeter_spacing_ratio,
+            "min_spacing": self.min_spacing,
+            "max_spacing": self.max_spacing,
+            "spacing_step": self.spacing_step,
+            "min_rotation": self.min_rotation * RAD_TO_DEG,
+            "max_rotation": self.max_rotation * RAD_TO_DEG,
+            "rotate_step": self.rotate_step,
+            "property_boundary": self.property_boundary,
+            "no_go_boundaries": self.no_go_boundaries,
+            "method": DesignGeomType.ROWWISE.name,
         }

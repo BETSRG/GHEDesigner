@@ -22,10 +22,10 @@ def remove_cutout(coordinates, boundaries, remove_inside=True, keep_contour=True
 
 
 def determine_largest_rectangle(property_boundary):
-    x_max = float('-inf')
-    y_max = float('-inf')
-    x_min = float('inf')
-    y_min = float('inf')
+    x_max = float("-inf")
+    y_max = float("-inf")
+    x_min = float("inf")
+    y_min = float("inf")
     for bf_outline in property_boundary:
         for x, y in bf_outline:
             x_max = max(x, x_max)

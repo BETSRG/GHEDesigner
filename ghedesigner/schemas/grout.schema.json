@@ -15,8 +15,5 @@
       "description": "Volumetric heat capacity."
     }
   },
-  "required": [
-    "conductivity",
-    "rho_cp"
-  ]
+  "required": ["conductivity", "rho_cp"]
 }

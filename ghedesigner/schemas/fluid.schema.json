@@ -26,9 +26,5 @@
       "description": "Average design fluid temperature at peak conditions."
     }
   },
-  "required": [
-    "fluid_name",
-    "concentration_percent",
-    "temperature"
-  ]
+  "required": ["fluid_name", "concentration_percent", "temperature"]
 }

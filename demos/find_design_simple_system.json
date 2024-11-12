@@ -1,9 +1,8 @@
 {
-  "version": "2.0",
   "fluids": {
     "pure water": {
       "fluid_name": "WATER",
-      "concentration_percent": 0.0,
+      "concentration_percent": 0,
       "temperature": 20
     }
   },
@@ -19,11 +18,11 @@
   },
   "ground-heat-exchanger": {
     "grout": {
-      "conductivity": 1.0,
+      "conductivity": 1,
       "rho_cp": 3901000
     },
     "soil": {
-      "conductivity": 2.0,
+      "conductivity": 2,
       "rho_cp": 2343493,
       "undisturbed_temp": 18.3
     },
@@ -31,29 +30,29 @@
       "inner_diameter": 0.03404,
       "outer_diameter": 0.04216,
       "shank_spacing": 0.01856,
-      "roughness": 1e-06,
+      "roughness": 0.000001,
       "conductivity": 0.4,
       "rho_cp": 1542000,
       "arrangement": "SINGLEUTUBE"
     },
     "borehole": {
-      "buried_depth": 2.0,
+      "buried_depth": 2,
       "diameter": 0.14
     },
     "geometric_constraints": {
       "length": 100,
       "width": 100,
-      "b_min": 3.0,
-      "b_max": 10.0,
-      "max_height": 135.0,
-      "min_height": 60.0,
+      "b_min": 3,
+      "b_max": 10,
+      "max_height": 135,
+      "min_height": 60,
       "method": "RECTANGLE"
     },
     "design": {
       "flow_rate": 0.5,
       "flow_type": "BOREHOLE",
-      "max_eft": 35.0,
-      "min_eft": 5.0,
+      "max_eft": 35,
+      "min_eft": 5,
       "max_boreholes": 200
     }
   },
@@ -66,8 +65,5 @@
     "hydraulic-run": true,
     "simulation-months": 240
   },
-  "topology": [
-    "building",
-    "ghe"
-  ]
+  "topology": ["building", "ghe"]
 }

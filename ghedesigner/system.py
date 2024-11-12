@@ -3,6 +3,7 @@ from typing import Optional
 from ghedesigner.building import Building
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 
+
 class System:
     def __init__(self) -> None:
         self.num_months = 0

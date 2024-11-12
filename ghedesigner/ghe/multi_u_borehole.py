@@ -1,17 +1,16 @@
 from copy import deepcopy
 from typing import Optional, Tuple
 
-from numpy import sqrt, log
+import pygfunction as gt
+from numpy import log, sqrt
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.constants import pi, TWO_PI
+from ghedesigner.constants import TWO_PI, pi
+from ghedesigner.enums import DoubleUTubeConnType
 from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
 from ghedesigner.ghe.single_u_borehole import SingleUTube
-from ghedesigner.enums import DoubleUTubeConnType
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.utilities import solve_root
-from ghedesigner.media import Pipe, GHEFluid, Grout, Soil
-
-import pygfunction as gt
 
 
 class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):

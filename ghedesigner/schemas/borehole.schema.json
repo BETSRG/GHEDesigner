@@ -14,8 +14,5 @@
       "description": "Diameter of borehole."
     }
   },
-  "required": [
-    "buried_depth",
-    "diameter"
-  ]
+  "required": ["buried_depth", "diameter"]
 }

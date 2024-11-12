@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from ghedesigner.gui.main_window import GHEDesignerWindow
 
 

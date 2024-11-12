@@ -3,7 +3,12 @@ from math import pi
 import numpy as np
 import pandas as pd
 
-from ghedesigner.ghe.geometry.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_borehole_config, gen_shape
+from ghedesigner.ghe.geometry.rowwise import (
+    field_optimization_fr,
+    field_optimization_wp_space_fr,
+    gen_borehole_config,
+    gen_shape,
+)
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
@@ -11,16 +16,16 @@ class TestRowWise(GHEBaseTest):
     def setUp(self) -> None:
         super().setUp()
         # Reference Values
-        reference_data_file = self.test_data_directory / 'rowwise_reference_values.csv'
+        reference_data_file = self.test_data_directory / "rowwise_reference_values.csv"
         self.reference_values = pd.read_csv(str(reference_data_file))
 
         # Load Property Boundary
-        property_boundary_file = self.test_data_directory / 'polygon_property_boundary.csv'
+        property_boundary_file = self.test_data_directory / "polygon_property_boundary.csv"
         prop_polygon_df: pd.DataFrame = pd.read_csv(str(property_boundary_file))
         self.prop_polygon_ar: list = prop_polygon_df.to_numpy().tolist()
 
         # Load Building
-        building_file = self.test_data_directory / 'polygon_building.csv'
+        building_file = self.test_data_directory / "polygon_building.csv"
         build_polygon_df: pd.DataFrame = pd.read_csv(str(building_file))
         self.building_polygon_ar: list = build_polygon_df.to_numpy().tolist()
 
@@ -49,13 +54,13 @@ class TestRowWise(GHEBaseTest):
 
         pint_11 = self.property.point_intersect([100.0, 70.0])
         pint_12 = self.property.point_intersect([20.0, 80.0])
-        self.assertEqual(pint_11, reference_values["test_shape_methods_point_intersections"][0])
-        self.assertEqual(pint_12, reference_values["test_shape_methods_point_intersections"][1])
+        assert pint_11 == reference_values["test_shape_methods_point_intersections"][0]
+        assert pint_12 == reference_values["test_shape_methods_point_intersections"][1]
 
         pint_21 = self.buildings[0].point_intersect([100.0, 70.0])
         pint_22 = self.buildings[0].point_intersect([20.0, 80.0])
-        self.assertEqual(pint_21, reference_values["test_shape_methods_point_intersections"][2])
-        self.assertEqual(pint_22, reference_values["test_shape_methods_point_intersections"][3])
+        assert pint_21 == reference_values["test_shape_methods_point_intersections"][2]
+        assert pint_22 == reference_values["test_shape_methods_point_intersections"][3]
 
         shape_1_ex_1 = self.property.line_intersect([60.0, 30.0, 110.0, 130.0])
         shape_1_ex_2 = self.property.line_intersect([60.0, 55.0, 110.0, 50.0])
@@ -84,7 +89,7 @@ class TestRowWise(GHEBaseTest):
         def check_intersections(ref_list, generated_list):
             ref_list_length = np.count_nonzero(~np.isnan(ref_list))
             generated_list_length = len(generated_list)
-            self.assertEqual(ref_list_length, generated_list_length)
+            assert ref_list_length == generated_list_length
             if ref_list_length == generated_list_length and generated_list_length > 0:
                 for i in range(generated_list_length):
                     self.assertAlmostEqual(ref_list[i], generated_list[i], delta=0.001)

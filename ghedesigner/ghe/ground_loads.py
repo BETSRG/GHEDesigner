@@ -6,9 +6,9 @@ from math import floor
 import numpy as np
 from scipy.interpolate import interp1d
 
-from ghedesigner.ghe.single_u_borehole import SingleUTube
 from ghedesigner.constants import HRS_IN_DAY, SEC_IN_HR, TWO_PI
 from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.ghe.single_u_borehole import SingleUTube
 
 
 class HybridLoad:
@@ -120,8 +120,8 @@ class HybridLoad:
 
     def as_dict(self) -> dict:
         output = {}
-        output['type'] = str(self.__class__)
-        output['results'] = self.create_dataframe_of_peak_analysis()
+        output["type"] = str(self.__class__)
+        output["results"] = self.create_dataframe_of_peak_analysis()
         return output
 
     @staticmethod
@@ -675,7 +675,7 @@ def first_month_hour(month, years):
         for i in range(1, month):
             current_year = years[(month - 1) // 12] if len(years) > 1 else years[0]
             mi = i % 12
-            fmh = fmh + HRS_IN_DAY * monthdays(mi, current_year)
+            fmh += HRS_IN_DAY * monthdays(mi, current_year)
     return fmh
 
 
@@ -683,7 +683,7 @@ def last_month_hour(month, years):
     lmh = 0
     for i in range(1, month + 1):
         current_year = years[(month - 1) // 12] if len(years) > 1 else years[0]
-        lmh = lmh + monthdays(i, current_year) * HRS_IN_DAY
+        lmh += monthdays(i, current_year) * HRS_IN_DAY
     if month == 1:
         lmh = 31 * HRS_IN_DAY
     return lmh

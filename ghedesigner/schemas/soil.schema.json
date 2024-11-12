@@ -20,9 +20,5 @@
       "description": "Undisturbed, far-field soil temperature."
     }
   },
-  "required": [
-    "conductivity",
-    "rho_cp",
-    "undisturbed_temp"
-  ]
+  "required": ["conductivity", "rho_cp", "undisturbed_temp"]
 }

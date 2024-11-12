@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 from json import loads
 from pathlib import Path
@@ -38,19 +39,19 @@ def validate_fluid(instance: dict) -> int:
     fluid_name = str(instance["fluid_name"]).upper()
     instance["fluid_name"] = fluid_name
     return validate_schema_instance(
-        schema_file_name="fluid.schema.json", instance=instance, error_msg="Errors in \"fluid\" input object."
+        schema_file_name="fluid.schema.json", instance=instance, error_msg='Errors in "fluid" input object.'
     )
 
 
 def validate_grout(instance: dict) -> int:
     return validate_schema_instance(
-        schema_file_name="grout.schema.json", instance=instance, error_msg="Errors in \"grout\" input object."
+        schema_file_name="grout.schema.json", instance=instance, error_msg='Errors in "grout" input object.'
     )
 
 
 def validate_soil(instance: dict) -> int:
     return validate_schema_instance(
-        schema_file_name="soil.schema.json", instance=instance, error_msg="Errors in \"soil\" input object."
+        schema_file_name="soil.schema.json", instance=instance, error_msg='Errors in "soil" input object.'
     )
 
 
@@ -70,13 +71,13 @@ def validate_pipe(instance: dict) -> int:
         return 1
 
     return validate_schema_instance(
-        schema_file_name=schema_map[pipe_arrangement], instance=instance, error_msg="Errors in \"pipe\" input object."
+        schema_file_name=schema_map[pipe_arrangement], instance=instance, error_msg='Errors in "pipe" input object.'
     )
 
 
 def validate_borehole(instance: dict) -> int:
     return validate_schema_instance(
-        schema_file_name="borehole.schema.json", instance=instance, error_msg="Errors in \"borehole\" input object."
+        schema_file_name="borehole.schema.json", instance=instance, error_msg='Errors in "borehole" input object.'
     )
 
 
@@ -86,7 +87,7 @@ def validate_simulation(instance: dict) -> int:
         instance["timestep"] = timestep
 
     return validate_schema_instance(
-        schema_file_name="simulation.schema.json", instance=instance, error_msg="Errors in \"simulation\" input object."
+        schema_file_name="simulation.schema.json", instance=instance, error_msg='Errors in "simulation" input object.'
     )
 
 
@@ -110,7 +111,7 @@ def validate_geometric(instance: dict) -> int:
     return validate_schema_instance(
         schema_file_name=schema_map[method],
         instance=instance,
-        error_msg="Errors in \"geometric_constraints\" input object.",
+        error_msg='Errors in "geometric_constraints" input object.',
     )
 
 
@@ -118,7 +119,7 @@ def validate_design(instance: dict) -> int:
     flow_type = str(instance["flow_type"]).upper()
     instance["flow_type"] = flow_type
     return validate_schema_instance(
-        schema_file_name="design.schema.json", instance=instance, error_msg="Errors in \"design\" input object."
+        schema_file_name="design.schema.json", instance=instance, error_msg='Errors in "design" input object.'
     )
 
 

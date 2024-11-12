@@ -4,11 +4,11 @@ from math import log
 
 import numpy as np
 import pygfunction as gt
-from scipy.interpolate import interp1d, lagrange
 from pygfunction.boreholes import Borehole
+from scipy.interpolate import interp1d, lagrange
 
-from ghedesigner.ghe.coaxial_borehole import get_bhe_object
 from ghedesigner.enums import BHPipeType
+from ghedesigner.ghe.coaxial_borehole import get_bhe_object
 
 logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ def calculate_g_function(
             "disp": disp,
         }
     else:
-        raise ValueError("Equal or Unequal are acceptable options " "for segments.")
+        raise ValueError("Equal or Unequal are acceptable options for segments.")
 
     if boundary in ("UHTR", "UBWT"):
         gfunc = gt.gfunction.gFunction(
@@ -221,7 +221,7 @@ class GFunction:
                 return g_function, rb, self.d, h_eq
             else:
                 raise ValueError(
-                    "The interpolation requires two g-function curves " "if the requested B/H is not already computed."
+                    "The interpolation requires two g-function curves if the requested B/H is not already computed."
                 )
 
         # Automatically adjust interpolation if necessary

@@ -10,10 +10,7 @@
     },
     "flow_type": {
       "type": "string",
-      "enum": [
-        "BOREHOLE",
-        "SYSTEM"
-      ],
+      "enum": ["BOREHOLE", "SYSTEM"],
       "description": "Indicates whether the design volumetric flow rate set on on a per-borehole or system basis."
     },
     "max_eft": {
@@ -30,15 +27,10 @@
       "type": "number",
       "description": "Maximum number of boreholes in search. Optional. Applies to rectangular and near-square design algorithms. If unspecified, the search space will be bounded by the size of the GHE boundary."
     },
-      "continue_if_design_unmet": {
-        "type": "boolean",
-        "description": "Causes to return the best available borehole  field configuration rather than fail if design conditions  are unmet.  Optional. Default False."
-      }
+    "continue_if_design_unmet": {
+      "type": "boolean",
+      "description": "Causes to return the best available borehole  field configuration rather than fail if design conditions  are unmet.  Optional. Default False."
+    }
   },
-  "required": [
-    "flow_rate",
-    "flow_type",
-    "max_eft",
-    "min_eft"
-  ]
+  "required": ["flow_rate", "flow_type", "max_eft", "min_eft"]
 }

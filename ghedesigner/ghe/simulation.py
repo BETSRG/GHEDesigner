@@ -21,14 +21,14 @@ class SimulationParameters:
 
     def as_dict(self) -> dict:
         output = {}
-        output['type'] = str(self.__class__)
-        output['max_eft_allowable'] = {'value': self.max_EFT_allowable, 'units': 'C'}
-        output['min_eft_allowable'] = {'value': self.min_EFT_allowable, 'units': 'C'}
-        output['maximum_height'] = {'value': self.max_height, 'units': 'm'}
-        output['minimum_height'] = {'value': self.min_height, 'units': 'm'}
+        output["type"] = str(self.__class__)
+        output["max_eft_allowable"] = {"value": self.max_EFT_allowable, "units": "C"}
+        output["min_eft_allowable"] = {"value": self.min_EFT_allowable, "units": "C"}
+        output["maximum_height"] = {"value": self.max_height, "units": "m"}
+        output["minimum_height"] = {"value": self.min_height, "units": "m"}
 
         if self.max_boreholes is not None:
-            output['maximum_boreholes'] = {'value': self.max_boreholes, 'units': '-'}
+            output["maximum_boreholes"] = {"value": self.max_boreholes, "units": "-"}
         return output
 
     # def to_input(self) -> dict:

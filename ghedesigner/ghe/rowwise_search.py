@@ -4,11 +4,11 @@ from typing import Optional
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
+from ghedesigner.ghe.geometry.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-from ghedesigner.ghe.geometry.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
 from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.utilities import borehole_spacing, eskilson_log_times
 
 
@@ -79,7 +79,7 @@ class RowWiseModifiedBisectionSearch:
             v_flow_borehole = self.V_flow / len(coordinates)
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
         else:
-            raise ValueError("The flow argument should be either `borehole`" "or `system`.")
+            raise ValueError("The flow argument should be either `borehole` or `system`.")
         return v_flow_system, m_flow_borehole
 
     def initialize_ghe(self, coordinates, h, field_specifier="N/A"):

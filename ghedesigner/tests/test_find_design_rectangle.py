@@ -19,16 +19,18 @@ class TestFindRectangleDesign(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_rectangle(max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0)
+        ghe.set_geometry_constraints_rectangle(
+            max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0
+        )
         ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(120.9, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(181, len(nbh))
+        assert len(nbh) == 181
 
     def test_double_u_tube(self):
         ghe = GroundHeatExchanger()
@@ -46,16 +48,18 @@ class TestFindRectangleDesign(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_rectangle(max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0)
+        ghe.set_geometry_constraints_rectangle(
+            max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0
+        )
         ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignDoubleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(126.8, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(145, len(nbh))
+        assert len(nbh) == 145
 
     def test_coaxial_pipe(self):
         ghe = GroundHeatExchanger()
@@ -75,13 +79,15 @@ class TestFindRectangleDesign(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_rectangle(max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0)
+        ghe.set_geometry_constraints_rectangle(
+            max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0
+        )
         ghe.set_design(flow_rate=0.8, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignCoaxialUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(119.4, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(145, len(nbh))
+        assert len(nbh) == 145

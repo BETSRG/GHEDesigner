@@ -1,3 +1,3 @@
-## Full documentation of the GHEManager class
+## Full documentation of the GroundHeatExchanger class
 
-::: ghedesigner.manager.GHEManager
+::: ghedesigner.ghe.manager.GroundHeatExchanger

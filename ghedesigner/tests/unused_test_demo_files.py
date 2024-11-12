@@ -2,6 +2,8 @@ from datetime import datetime
 from json import loads
 from pathlib import Path
 
+import pytest
+
 from ghedesigner.ghe.manager import _run_manager_from_cli_worker
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
@@ -21,24 +23,24 @@ class TestDemoFiles(GHEBaseTest):
         failed_tests = []
 
         # run demo files first
-        for file in self.demos_path.glob('*.json'):
+        for file in self.demos_path.glob("*.json"):
             demo_file_path = self.demos_path / file
             out_dir = self.demo_output_parent_dir / time_str / file.stem
             out_dir.mkdir(parents=True, exist_ok=True)
             print(f"Running: {demo_file_path}")
-            self.assertEqual(0, _run_manager_from_cli_worker(input_file_path=demo_file_path, output_directory=out_dir))
+            assert _run_manager_from_cli_worker(input_file_path=demo_file_path, output_directory=out_dir) == 0
 
             # check the outputs
             out_dir = self.demo_output_parent_dir / time_str / file.stem
-            results_path = out_dir / 'SimulationSummary.json'
+            results_path = out_dir / "SimulationSummary.json"
 
             actual_results = loads(results_path.read_text())
-            actual_length = actual_results['ghe_system']['active_borehole_length']['value']
-            actual_nbh = actual_results['ghe_system']['number_of_boreholes']
+            actual_length = actual_results["ghe_system"]["active_borehole_length"]["value"]
+            actual_nbh = actual_results["ghe_system"]["number_of_boreholes"]
 
             expected_results = expected_demo_results_dict[out_dir.stem]
-            expected_length = expected_results['active_borehole_length']
-            expected_nbh = expected_results['number_of_boreholes']
+            expected_length = expected_results["active_borehole_length"]
+            expected_nbh = expected_results["number_of_boreholes"]
 
             len_passes = abs_error_within_tolerance(actual_length, expected_length, delta=0.1)
             nbh_passes = abs_error_within_tolerance(actual_nbh, expected_nbh)
@@ -47,7 +49,6 @@ class TestDemoFiles(GHEBaseTest):
                 failed_tests.append(out_dir.stem)
 
         if failed_tests:
-            print(f"Demo tests failed: {failed_tests}")
-            self.assertTrue(False)
+            pytest.fail(f"Demo tests failed: {failed_tests}")
         else:
-            self.assertTrue(True)
+            assert True

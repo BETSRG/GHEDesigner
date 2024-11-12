@@ -5,8 +5,8 @@ from pygfunction.boreholes import Borehole
 from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.utilities import borehole_spacing, check_bracket, eskilson_log_times, sign
 
 
@@ -108,7 +108,7 @@ class Bisection1D:
             v_flow_borehole = self.V_flow / len(coordinates)
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
         else:
-            raise ValueError("The flow argument should be either `borehole`" "or `system`.")
+            raise ValueError("The flow argument should be either `borehole` or `system`.")
         return v_flow_system, m_flow_borehole
 
     def initialize_ghe(self, coordinates, h, field_specifier="N/A"):
@@ -301,9 +301,9 @@ class Bisection1D:
             if val < 0:
                 if excess_of_interest != val:
                     print(
-                        'Loads resulted in odd behavior requiring the selected field configuration \n'
-                        'to be reset to the smallest field with negative excess temperature. \n'
-                        'Please forward the inputs to the developers for investigation.'
+                        "Loads resulted in odd behavior requiring the selected field configuration \n"
+                        "to be reset to the smallest field with negative excess temperature. \n"
+                        "Please forward the inputs to the developers for investigation."
                     )
                 excess_of_interest = val
                 break

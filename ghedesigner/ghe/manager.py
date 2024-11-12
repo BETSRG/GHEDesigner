@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from __future__ import annotations
 
 import logging
@@ -8,10 +9,11 @@ from time import time
 
 import click
 from jsonschema import ValidationError
+from pygfunction.boreholes import Borehole
 
 from ghedesigner import VERSION
-from pygfunction.boreholes import Borehole
 from ghedesigner.constants import DEG_TO_RAD
+from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.geometry.design import (
     AnyBisectionType,
     DesignBase,
@@ -22,7 +24,6 @@ from ghedesigner.ghe.geometry.design import (
     DesignRectangle,
     DesignRowWise,
 )
-from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.geometry.geometry import (
     GeometricConstraints,
     GeometricConstraintsBiRectangle,
@@ -32,9 +33,9 @@ from ghedesigner.ghe.geometry.geometry import (
     GeometricConstraintsRectangle,
     GeometricConstraintsRowWise,
 )
+from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
-from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.utilities import write_idf
 from ghedesigner.validate import validate_input_file
 
@@ -116,7 +117,7 @@ class GroundHeatExchanger:
         elif bh_pipe_str == BHPipeType.COAXIAL.name:
             self.pipe_type = BHPipeType.COAXIAL
         else:
-            message = f"Borehole pipe type \"{bh_pipe_str}\" not supported."
+            message = f'Borehole pipe type "{bh_pipe_str}" not supported.'
             print(message, file=stderr)
             if throw:
                 raise ValueError(message)
@@ -305,7 +306,6 @@ class GroundHeatExchanger:
         """
         Sets the borehole instance
 
-        :param height: height, or active length, of the borehole, in m.
         :param buried_depth: depth of top of borehole below the ground surface, in m.
         :param diameter: diameter of the borehole, in m.
         :returns: Zero if successful, nonzero if failure
@@ -324,14 +324,13 @@ class GroundHeatExchanger:
         """
         Sets the simulation parameters
 
+        :param num_months: number of months.
         :param max_boreholes: maximum boreholes in search algorithms.
         :param continue_if_design_unmet: continues to process if design unmet.
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
-        self._simulation_parameters = SimulationParameters(
-            num_months, max_boreholes, continue_if_design_unmet
-        )
+        self._simulation_parameters = SimulationParameters(num_months, max_boreholes, continue_if_design_unmet)
         return 0
 
     def set_ground_loads_from_hourly_list(self, hourly_ground_loads: list[float]) -> int:
@@ -347,7 +346,9 @@ class GroundHeatExchanger:
         self._ground_loads = hourly_ground_loads
         return 0
 
-    def set_geometry_constraints_near_square(self, max_height: float, min_height: float, b: float, length: float) -> int:
+    def set_geometry_constraints_near_square(
+        self, max_height: float, min_height: float, b: float, length: float
+    ) -> int:
         """
         Sets the geometry constraints for the near-square design method.
 
@@ -362,8 +363,9 @@ class GroundHeatExchanger:
         self._geometric_constraints = GeometricConstraintsNearSquare(b, length)
         return 0
 
-    def set_geometry_constraints_rectangle(self, max_height: float, min_height: float,
-                                           length: float, width: float, b_min: float, b_max: float) -> int:
+    def set_geometry_constraints_rectangle(
+        self, max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
+    ) -> int:
         """
         Sets the geometry constraints for the rectangle design method.
 
@@ -382,8 +384,14 @@ class GroundHeatExchanger:
         return 0
 
     def set_geometry_constraints_bi_rectangle(
-        self, max_height: float, min_height: float, length: float,
-        width: float, b_min: float, b_max_x: float, b_max_y: float
+        self,
+        max_height: float,
+        min_height: float,
+        length: float,
+        width: float,
+        b_min: float,
+        b_max_x: float,
+        b_max_y: float,
     ) -> int:
         """
         Sets the geometry constraints for the bi-rectangle design method.
@@ -404,8 +412,14 @@ class GroundHeatExchanger:
         return 0
 
     def set_geometry_constraints_bi_zoned_rectangle(
-        self, max_height: float, min_height: float, length: float,
-        width: float, b_min: float, b_max_x: float, b_max_y: float
+        self,
+        max_height: float,
+        min_height: float,
+        length: float,
+        width: float,
+        b_min: float,
+        b_max_x: float,
+        b_max_y: float,
     ) -> int:
         """
         Sets the geometry constraints for the bi-zoned rectangle design method.
@@ -426,8 +440,14 @@ class GroundHeatExchanger:
         return 0
 
     def set_geometry_constraints_bi_rectangle_constrained(
-        self, max_height: float, min_height: float, b_min: float,
-        b_max_x: float, b_max_y: float, property_boundary: list, no_go_boundaries: list
+        self,
+        max_height: float,
+        min_height: float,
+        b_min: float,
+        b_max_x: float,
+        b_max_y: float,
+        property_boundary: list,
+        no_go_boundaries: list,
     ) -> int:
         """
         Sets the geometry constraints for the bi-rectangle constrained design method.
@@ -504,8 +524,9 @@ class GroundHeatExchanger:
         )
         return 0
 
-    def set_design(self, flow_rate: float, flow_type_str: str,
-                   max_eft: float, min_eft: float, throw: bool = True) -> int:
+    def set_design(
+        self, flow_rate: float, flow_type_str: str, max_eft: float, min_eft: float, throw: bool = True
+    ) -> int:
         """
         Set the design method.
 
@@ -526,7 +547,7 @@ class GroundHeatExchanger:
         elif flow_type_str == FlowConfigType.BOREHOLE.name:
             flow_type = FlowConfigType.BOREHOLE
         else:
-            message = f"FlowConfig \"{flow_type_str}\" is not implemented."
+            message = f'FlowConfig "{flow_type_str}" is not implemented.'
             print(message, file=stderr)
             if throw:
                 raise ValueError(message)
@@ -724,71 +745,70 @@ class GroundHeatExchanger:
         #       SimulationParameters and GeometricConstraints
         #       these should be consolidated
         d_geo = self._geometric_constraints.to_input()
-        d_geo['max_height'] = self._simulation_parameters.max_height
-        d_geo['min_height'] = self._simulation_parameters.min_height
+        d_geo["max_height"] = self._simulation_parameters.max_height
+        d_geo["min_height"] = self._simulation_parameters.min_height
 
         # TODO: data held in different places
         d_des = self._design.to_input()
-        d_des['max_eft'] = self._simulation_parameters.max_EFT_allowable
-        d_des['min_eft'] = self._simulation_parameters.min_EFT_allowable
+        d_des["max_eft"] = self._simulation_parameters.max_EFT_allowable
+        d_des["min_eft"] = self._simulation_parameters.min_EFT_allowable
 
         if self._simulation_parameters.max_boreholes is not None:
-            d_des['max_boreholes'] = self._simulation_parameters.max_boreholes
+            d_des["max_boreholes"] = self._simulation_parameters.max_boreholes
         if self._simulation_parameters.continue_if_design_unmet is True:
-            d_des['continue_if_design_unmet'] = self._simulation_parameters.continue_if_design_unmet
+            d_des["continue_if_design_unmet"] = self._simulation_parameters.continue_if_design_unmet
 
         # pipe data
-        d_pipe = {'rho_cp': self._pipe.rhoCp, 'roughness': self._pipe.roughness}
+        d_pipe = {"rho_cp": self._pipe.rhoCp, "roughness": self._pipe.roughness}
 
         if self.pipe_type in [BHPipeType.SINGLEUTUBE, BHPipeType.DOUBLEUTUBEPARALLEL, BHPipeType.DOUBLEUTUBESERIES]:
-            d_pipe['inner_diameter'] = self._pipe.r_in * 2.0
-            d_pipe['outer_diameter'] = self._pipe.r_out * 2.0
-            d_pipe['shank_spacing'] = self._pipe.s
-            d_pipe['conductivity'] = self._pipe.k
+            d_pipe["inner_diameter"] = self._pipe.r_in * 2.0
+            d_pipe["outer_diameter"] = self._pipe.r_out * 2.0
+            d_pipe["shank_spacing"] = self._pipe.s
+            d_pipe["conductivity"] = self._pipe.k
         elif self.pipe_type == BHPipeType.COAXIAL:
-            d_pipe['inner_pipe_d_in'] = self._pipe.r_in[0] * 2.0
-            d_pipe['inner_pipe_d_out'] = self._pipe.r_in[1] * 2.0
-            d_pipe['outer_pipe_d_in'] = self._pipe.r_out[0] * 2.0
-            d_pipe['outer_pipe_d_out'] = self._pipe.r_out[1] * 2.0
-            d_pipe['conductivity_inner'] = self._pipe.k[0]
-            d_pipe['conductivity_outer'] = self._pipe.k[1]
+            d_pipe["inner_pipe_d_in"] = self._pipe.r_in[0] * 2.0
+            d_pipe["inner_pipe_d_out"] = self._pipe.r_in[1] * 2.0
+            d_pipe["outer_pipe_d_in"] = self._pipe.r_out[0] * 2.0
+            d_pipe["outer_pipe_d_out"] = self._pipe.r_out[1] * 2.0
+            d_pipe["conductivity_inner"] = self._pipe.k[0]
+            d_pipe["conductivity_outer"] = self._pipe.k[1]
         else:
-            message = 'Invalid pipe type'
+            message = "Invalid pipe type"
             print(message, file=stderr)
             if throw:
                 raise ValueError(message)
             return 1
 
         if self.pipe_type == BHPipeType.SINGLEUTUBE:
-            d_pipe['arrangement'] = BHPipeType.SINGLEUTUBE.name
+            d_pipe["arrangement"] = BHPipeType.SINGLEUTUBE.name
         elif self.pipe_type == BHPipeType.DOUBLEUTUBEPARALLEL:
-            d_pipe['arrangement'] = BHPipeType.DOUBLEUTUBEPARALLEL.name
+            d_pipe["arrangement"] = BHPipeType.DOUBLEUTUBEPARALLEL.name
         elif self.pipe_type == BHPipeType.DOUBLEUTUBESERIES:
-            d_pipe['arrangement'] = BHPipeType.DOUBLEUTUBESERIES.name
+            d_pipe["arrangement"] = BHPipeType.DOUBLEUTUBESERIES.name
         elif self.pipe_type == BHPipeType.COAXIAL:
-            d_pipe['arrangement'] = BHPipeType.COAXIAL.name
+            d_pipe["arrangement"] = BHPipeType.COAXIAL.name
         else:
-            message = 'Invalid pipe type'
+            message = "Invalid pipe type"
             print(message, file=stderr)
             if throw:
                 raise ValueError(message)
             return 1
 
         d = {
-            'version': VERSION,
-            'fluid': self._fluid.to_input(),
-            'grout': self._grout.to_input(),
-            'soil': self._soil.to_input(),
-            'pipe': d_pipe,
+            "fluid": self._fluid.to_input(),
+            "grout": self._grout.to_input(),
+            "soil": self._soil.to_input(),
+            "pipe": d_pipe,
             # 'borehole': self._borehole.to_input(),
             # 'simulation': self._simulation_parameters.to_input(),
-            'geometric_constraints': d_geo,
-            'design': d_des,
-            'loads': {'ground_loads': list(self._ground_loads)},
+            "geometric_constraints": d_geo,
+            "design": d_des,
+            "loads": {"ground_loads": list(self._ground_loads)},
         }
 
-        with open(output_file_path, 'w') as f:
-            f.write(dumps(d, sort_keys=True, indent=2, separators=(',', ': ')))
+        with open(output_file_path, "w") as f:
+            f.write(dumps(d, sort_keys=True, indent=2, separators=(",", ": ")))
         return 0
 
 
@@ -808,20 +828,15 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
 
     ghe = GroundHeatExchanger()
 
-    version = inputs['version']
-
-    if version != VERSION:
-        print("Mismatched version, could be a problem", file=stderr)
-
-    fluid_props = inputs['fluid']  # type: dict
-    grout_props = inputs['grout']  # type: dict
-    soil_props = inputs['soil']  # type: dict
-    pipe_props = inputs['pipe']  # type: dict
-    borehole_props = inputs['borehole']  # type: dict
-    sim_props = inputs['simulation']  # type: dict
-    constraint_props = inputs['geometric_constraints']  # type: dict
-    design_props = inputs['design']  # type: dict
-    ground_load_props = inputs['loads']['ground_loads']  # type: list
+    fluid_props = inputs["fluid"]  # type: dict
+    grout_props = inputs["grout"]  # type: dict
+    soil_props = inputs["soil"]  # type: dict
+    pipe_props = inputs["pipe"]  # type: dict
+    borehole_props = inputs["borehole"]  # type: dict
+    # sim_props = inputs['simulation']  # type: dict
+    constraint_props = inputs["geometric_constraints"]  # type: dict
+    design_props = inputs["design"]  # type: dict
+    ground_load_props = inputs["loads"]["ground_loads"]  # type: list
 
     ghe.set_fluid(**fluid_props, throw=False)
     ghe.set_grout(**grout_props)
@@ -868,7 +883,6 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         )
 
     ghe.set_borehole(
-        height=constraint_props["max_height"],
         buried_depth=borehole_props["buried_depth"],
         diameter=borehole_props["diameter"],
     )
@@ -978,7 +992,7 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
             return 1
 
     if output_directory is None:
-        print('Output directory path must be passed as an argument, aborting', file=stderr)
+        print("Output directory path must be passed as an argument, aborting", file=stderr)
         return 1
 
     output_path = Path(output_directory).resolve()

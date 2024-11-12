@@ -1,1 +1,3 @@
-VERSION = "2.0"
+import importlib.metadata
+
+VERSION = importlib.metadata.version("ghedesigner")

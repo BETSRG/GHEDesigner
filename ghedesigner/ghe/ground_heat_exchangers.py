@@ -1,17 +1,17 @@
 from math import ceil, floor
 
 import numpy as np
-from scipy.interpolate import interp1d
 from pygfunction.boreholes import Borehole
+from scipy.interpolate import interp1d
 
 from ghedesigner import VERSION
-from ghedesigner.ghe.coaxial_borehole import get_bhe_object
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
 from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.ghe.coaxial_borehole import get_bhe_object
 from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_loads import HybridLoad
-from ghedesigner.media import Grout, Pipe, Soil
 from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.media import Grout, Pipe, Soil
 from ghedesigner.utilities import solve_root
 
 
@@ -63,13 +63,13 @@ class BaseGHE:
 
     def as_dict(self) -> dict:
         output = {}
-        output['title'] = f"GHEDesigner GHE Output - Version {VERSION}"
-        output['number_of_boreholes'] = len(self.gFunction.bore_locations)
-        output['borehole_depth'] = {'value': self.bhe.b.H, 'units': 'm'}
-        output['borehole_spacing'] = {'value': self.B_spacing, 'units': 'm'}
-        output['borehole_heat_exchanger'] = self.bhe.as_dict()
-        output['equivalent_borehole_heat_exchanger'] = self.bhe_eq.as_dict()
-        output['simulation_parameters'] = self.sim_params.as_dict()
+        output["title"] = f"GHEDesigner GHE Output - Version {VERSION}"
+        output["number_of_boreholes"] = len(self.gFunction.bore_locations)
+        output["borehole_depth"] = {"value": self.bhe.b.H, "units": "m"}
+        output["borehole_spacing"] = {"value": self.B_spacing, "units": "m"}
+        output["borehole_heat_exchanger"] = self.bhe.as_dict()
+        output["equivalent_borehole_heat_exchanger"] = self.bhe_eq.as_dict()
+        output["simulation_parameters"] = self.sim_params.as_dict()
         return output
 
     @staticmethod
@@ -251,20 +251,20 @@ class GHE(BaseGHE):
 
     def as_dict(self) -> dict:
         output = {}
-        output['base'] = super().as_dict()
+        output["base"] = super().as_dict()
 
         results = {}
         if len(self.hp_eft) > 0:
             max_hp_eft = max(self.hp_eft)
             min_hp_eft = min(self.hp_eft)
-            results['max_hp_entering_temp'] = {'value': max_hp_eft, 'units': 'C'}
-            results['min_hp_entering_temp'] = {'value': min_hp_eft, 'units': 'C'}
+            results["max_hp_entering_temp"] = {"value": max_hp_eft, "units": "C"}
+            results["min_hp_entering_temp"] = {"value": min_hp_eft, "units": "C"}
             t_excess = self.cost(max_hp_eft, min_hp_eft)
-            results['excess_fluid_temperature'] = {'value': t_excess, 'units': 'C'}
-        results['peak_load_analysis'] = self.hybrid_load.as_dict()
+            results["excess_fluid_temperature"] = {"value": t_excess, "units": "C"}
+        results["peak_load_analysis"] = self.hybrid_load.as_dict()
 
         g_function = {}
-        g_function['coordinates (x[m], y[m])'] = list(self.gFunction.bore_locations)  # TODO: Verify form
+        g_function["coordinates (x[m], y[m])"] = list(self.gFunction.bore_locations)  # TODO: Verify form
         b_over_h = self.B_spacing / self.bhe.b.H
         g, _ = self.grab_g_function(b_over_h)
         total_g_values = g.x.size
@@ -281,10 +281,10 @@ class GHE(BaseGHE):
         pairs = zip(lntts, g_values)
         for lntts_val, g_val in pairs:
             output += f"{lntts_val:0.4f}\t{g_val:0.4f}"
-        g_function['lntts, g'] = [*pairs]
+        g_function["lntts, g"] = [*pairs]
 
-        results['g_function_information'] = g_function
-        output['simulation_results'] = results
+        results["g_function_information"] = g_function
+        output["simulation_results"] = results
 
         return output
 
@@ -356,9 +356,8 @@ class GHE(BaseGHE):
 
         self.bhe.b.H = returned_height
 
-    def calculate(self, hour_index: int, inlet_temp: float, flow_rate: float) -> float:
-
-        effectivness = 0.5
+    def calculate(self, _hour_index: int, inlet_temp: float, _flow_rate: float) -> float:
+        effectiveness = 0.5
         soil_temp = 20
 
-        return effectivness * (soil_temp - inlet_temp) + inlet_temp
+        return effectiveness * (soil_temp - inlet_temp) + inlet_temp

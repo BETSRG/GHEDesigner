@@ -3,28 +3,25 @@ name: PyPIRelease
 on:
   push:
     tags:
-      - '*'
+      - "*"
 
 jobs:
   release:
-    runs-on: ubuntu-20.04
-
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.9
-
-      - name: Install Pip Dependencies
-        shell: bash
-        run: pip install wheel
-
+          python-version: 3.13
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v3
+        with:
+          poetry-version: latest
+      - name: Install the project dependencies
+        run: poetry install
       - name: Build the Wheel
-        shell: bash
-        run: rm -rf dist/ build/ && python3 setup.py bdist_wheel sdist
-
+        run: poetry build
       - name: Deploy on PyPi
         uses: pypa/gh-action-pypi-publish@release/v1
         with:

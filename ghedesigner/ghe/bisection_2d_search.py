@@ -1,9 +1,9 @@
 from pygfunction.boreholes import Borehole
 
+from ghedesigner.enums import FlowConfigType, TimestepType
 from ghedesigner.ghe.bisection_1d_search import Bisection1D
-from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 
 
 class Bisection2D(Bisection1D):

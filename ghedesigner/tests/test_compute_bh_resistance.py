@@ -1,10 +1,9 @@
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.ghe.single_u_borehole import SingleUTube
-from ghedesigner.ghe.multi_u_borehole import MultipleUTube
-from ghedesigner.ghe.coaxial_borehole import CoaxialPipe
-
 from ghedesigner.enums import DoubleUTubeConnType
+from ghedesigner.ghe.coaxial_borehole import CoaxialPipe
+from ghedesigner.ghe.multi_u_borehole import MultipleUTube
+from ghedesigner.ghe.single_u_borehole import SingleUTube
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
@@ -80,9 +79,9 @@ class TestBHResistance(GHEBaseTest):
         self.log("-" * 30)
         self.log(f"Borehole thermal resistance: {r_b:0.4f} m.K/W")
 
-        self.assertTrue(self.rel_error_within_tol(coaxial.h_f_in, 2255, 0.01))
-        self.assertTrue(self.rel_error_within_tol(coaxial.h_f_a_in, 670, 0.15))
-        self.assertTrue(self.rel_error_within_tol(r_b, 0.1078, 0.01))
+        assert self.rel_error_within_tol(coaxial.h_f_in, 2255, 0.01)
+        assert self.rel_error_within_tol(coaxial.h_f_a_in, 670, 0.15)
+        assert self.rel_error_within_tol(r_b, 0.1078, 0.01)
 
     def test_bh_resistance_double_u_tube(self):
         # borehole
@@ -141,9 +140,9 @@ class TestBHResistance(GHEBaseTest):
         self.log(f"Borehole thermal resistance: {r_b_series:0.4f} m.K/W")
 
         # test values pinned to current performance because GLHEPro doesn't offer a series connection
-        self.assertTrue(self.rel_error_within_tol(re, 11744.0, 0.01))
-        self.assertTrue(self.rel_error_within_tol(h_f, 2529.0, 0.01))
-        self.assertTrue(self.rel_error_within_tol(r_b_series, 0.1624, 0.01))
+        assert self.rel_error_within_tol(re, 11744.0, 0.01)
+        assert self.rel_error_within_tol(h_f, 2529.0, 0.01)
+        assert self.rel_error_within_tol(r_b_series, 0.1624, 0.01)
 
         # Parallel
         double_u_tube_parallel = MultipleUTube(
@@ -165,9 +164,9 @@ class TestBHResistance(GHEBaseTest):
         self.log(f"Borehole thermal resistance: {r_b_parallel:0.4f} m.K/W")
 
         # test values from GLHEPro v5.1
-        self.assertTrue(self.rel_error_within_tol(re, 5820.0, 0.01))
-        self.assertTrue(self.rel_error_within_tol(h_f, 1288.0, 0.01))
-        self.assertTrue(self.rel_error_within_tol(r_b_parallel, 0.1591, 0.005))
+        assert self.rel_error_within_tol(re, 5820.0, 0.01)
+        assert self.rel_error_within_tol(h_f, 1288.0, 0.01)
+        assert self.rel_error_within_tol(r_b_parallel, 0.1591, 0.005)
 
     def test_bh_resistance_single_u_tube(self):
         # Borehole dimensions
@@ -225,9 +224,9 @@ class TestBHResistance(GHEBaseTest):
         r_b = single_u_tube.calc_effective_borehole_resistance()
 
         # comparison values from GLHEPro v5.1
-        self.assertTrue(self.rel_error_within_tol(re, 11748.0, 0.005))
-        self.assertTrue(self.rel_error_within_tol(h_f, 2538.0, 0.005))
-        self.assertTrue(self.rel_error_within_tol(r_b, 0.2073, 0.005))
+        assert self.rel_error_within_tol(re, 11748.0, 0.005)
+        assert self.rel_error_within_tol(h_f, 2538.0, 0.005)
+        assert self.rel_error_within_tol(r_b, 0.2073, 0.005)
 
         self.log(single_u_tube)
         self.log(f"Reynolds number: {re}")
@@ -326,12 +325,12 @@ class TestBHResistance(GHEBaseTest):
             # check Reynolds numbers
             re = SingleUTube.compute_reynolds(single_u_tube.m_flow_borehole, r_in, fluid)
             borehole_values["Single U-tube"]["Re"].append(re)
-            self.assertTrue(self.rel_error_within_tol(re, re_glhepro_single[idx], 0.01))
+            assert self.rel_error_within_tol(re, re_glhepro_single[idx], 0.01)
 
             # check BH resistance
             resist_bh = single_u_tube.calc_effective_borehole_resistance()
             borehole_values["Single U-tube"]["Rb"].append(resist_bh)
-            self.assertTrue(self.rel_error_within_tol(resist_bh, rb_glhepro_single[idx], 0.01))
+            assert self.rel_error_within_tol(resist_bh, rb_glhepro_single[idx], 0.01)
 
             # Define a borehole
             double_u_tube_parallel = MultipleUTube(m_flow_borehole, fluid, borehole, pipe_d, grout, soil)
@@ -339,12 +338,12 @@ class TestBHResistance(GHEBaseTest):
             # check Reynolds numbers
             re = MultipleUTube.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
             borehole_values["Double U-tube"]["Re"].append(re)
-            self.assertTrue(self.rel_error_within_tol(re, re_glhepro_double[idx], 0.01))
+            assert self.rel_error_within_tol(re, re_glhepro_double[idx], 0.01)
 
             # check BH resistance
             resist_bh = double_u_tube_parallel.calc_effective_borehole_resistance()
             borehole_values["Double U-tube"]["Rb"].append(resist_bh)
-            self.assertTrue(self.rel_error_within_tol(resist_bh, rb_glhepro_double[idx], 0.05))
+            assert self.rel_error_within_tol(resist_bh, rb_glhepro_double[idx], 0.05)
 
         # Pipe dimensions
         # Inner pipe radii
@@ -395,13 +394,13 @@ class TestBHResistance(GHEBaseTest):
             # check Reynolds number
             re = CoaxialPipe.compute_reynolds_concentric(coaxial.m_flow_borehole, r_in_out, r_out_in, fluid)
             borehole_values["Coaxial"]["Re"].append(re)
-            self.assertTrue(self.rel_error_within_tol(re, re_glhepro_coaxial[idx], 0.01))
+            assert self.rel_error_within_tol(re, re_glhepro_coaxial[idx], 0.01)
 
             resist_bh = coaxial.calc_effective_borehole_resistance()
             borehole_values["Coaxial"]["Rb"].append(resist_bh)
 
             if V_flow_borehole > 0.4:
-                self.assertTrue(self.rel_error_within_tol(resist_bh, rb_glhepro_coaxial[idx], 0.02))
+                assert self.rel_error_within_tol(resist_bh, rb_glhepro_coaxial[idx], 0.02)
 
         # Note: DO NOT DELETE THIS SECTION
         #       Uncomment the code and pip install matplotlib if you want to regenerate the plots

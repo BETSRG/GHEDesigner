@@ -548,7 +548,7 @@ def gen_borehole_config(
         # Handles cases with odd number of intersections
         if len_f_inters % 2 == 0:
             # Specific case with two intersections
-            if len_f_inters == 2:  # noqa: SIM102
+            if len_f_inters == 2:  # noqa: PLR2004, SIM102
                 # Checks for the edge case where two intersections are very close together and replaces them with one
                 # point
                 if (
@@ -752,7 +752,7 @@ def process_rows(row, row_sx, row_ex, no_go, row_space, r_a, rotate, intersectio
     elif num_inters == 0:
         if not_inside(row_sx, no_go) and not_inside(row_ex, no_go):
             distribute(row_sx, row_ex, row_space, r_a, rotate)
-    elif num_inters == 2:
+    elif num_inters == 2:  # noqa: PLR2004
         distribute(row_sx, inters[0], row_space, r_a, rotate)
         distribute(inters[1], row_ex, row_space, r_a, rotate)
     elif num_inters == 1:

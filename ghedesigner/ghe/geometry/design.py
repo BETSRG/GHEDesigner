@@ -4,6 +4,10 @@ from typing import Union
 
 from pygfunction.boreholes import Borehole
 
+from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
+from ghedesigner.ghe.bisection_1d_search import Bisection1D
+from ghedesigner.ghe.bisection_2d_search import Bisection2D
+from ghedesigner.ghe.bisection_zd_search import BisectionZD
 from ghedesigner.ghe.geometry.domains import (
     bi_rectangle_nested,
     bi_rectangle_zoned_nested,
@@ -11,7 +15,6 @@ from ghedesigner.ghe.geometry.domains import (
     rectangular,
     square_and_near_square,
 )
-from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
 from ghedesigner.ghe.geometry.geometry import (
     GeometricConstraints,
     GeometricConstraintsBiRectangle,
@@ -21,12 +24,9 @@ from ghedesigner.ghe.geometry.geometry import (
     GeometricConstraintsRectangle,
     GeometricConstraintsRowWise,
 )
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-from ghedesigner.ghe.bisection_1d_search import Bisection1D
-from ghedesigner.ghe.bisection_2d_search import Bisection2D
-from ghedesigner.ghe.bisection_zd_search import BisectionZD
 from ghedesigner.ghe.rowwise_search import RowWiseModifiedBisectionSearch
 from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 
 AnyBisectionType = Union[Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch]
 
@@ -83,7 +83,7 @@ class DesignBase:
         pass
 
     def to_input(self) -> dict:
-        return {'flow_rate': self.V_flow, 'flow_type': self.flow_type.name}
+        return {"flow_rate": self.V_flow, "flow_type": self.flow_type.name}
 
 
 class DesignNearSquare(DesignBase):

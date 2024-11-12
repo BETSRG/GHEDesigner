@@ -20,9 +20,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
         ghe.set_borehole(buried_depth=2.0, diameter=0.152)
-        ghe.set_simulation_parameters(
-            num_months=240, continue_if_design_unmet=True
-        )
+        ghe.set_simulation_parameters(num_months=240, continue_if_design_unmet=True)
 
         ghe.set_ground_loads_from_hourly_list([1.0e2] * 8760)
 
@@ -38,10 +36,10 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.prepare_results(project_name, note, author, iteration_name)
         ghe.write_output_files(output_file_directory, "")
         # can grab data off the outputs dict
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(60, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(2, len(nbh))
+        assert len(nbh) == 2
 
     def test_big_loads(self):
         ghe = GroundHeatExchanger()
@@ -60,9 +58,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
         ghe.set_fluid()
         ghe.set_borehole(buried_depth=2.0, diameter=0.152)
-        ghe.set_simulation_parameters(
-            num_months=240, continue_if_design_unmet=True
-        )
+        ghe.set_simulation_parameters(num_months=240, continue_if_design_unmet=True)
 
         ghe.set_ground_loads_from_hourly_list([1.0e6] * 8760)
 
@@ -78,10 +74,10 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.prepare_results(project_name, note, author, iteration_name)
         ghe.write_output_files(output_file_directory, "")
         # can grab data off the outputs dict
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(213, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(21, len(nbh))
+        assert len(nbh) == 21
 
     def test_big_loads_with_max_boreholes(self):
         ghe = GroundHeatExchanger()
@@ -120,7 +116,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.prepare_results(project_name, note, author, iteration_name)
         ghe.write_output_files(output_file_directory, "")
         # can grab data off the outputs dict
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(213, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(91, len(nbh))
+        assert len(nbh) == 91
