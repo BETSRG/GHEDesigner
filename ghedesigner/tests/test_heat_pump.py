@@ -19,7 +19,7 @@ class TestHeatPump(TestCase):
     def test_fixed_cop_cooling(self):
         heat_pump = HeatPump("load 1")
         heat_pump.set_loads_from_lambda(
-            lambda _: -1000  # 1 kW, positive indicating heating the building, taking energy from loop
+            lambda _: -1000  # 1 kW, negative indicating cooling the building, add energy to the loop
         )
         heat_pump.set_fixed_cop(10)  # COP of 10, meaning loop load should be 1100
         loop_flow = 11 / 41  # made up to get the m_dot*cp to come out as 1100, thus Q/m_dot_cp is 1, so DT = 1
