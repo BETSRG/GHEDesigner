@@ -125,7 +125,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         grout: Grout,
         soil: Soil,
         config=DoubleUTubeConnType.PARALLEL,
-    ):
+    ) -> None:
         self.R_p = 0.0
         self.R_f = 0.0
         self.R_fp = 0.0

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 
 from ghedesigner.constants import RAD_TO_DEG
@@ -5,8 +7,8 @@ from ghedesigner.enums import DesignGeomType
 
 
 class GeometricConstraints:
-    def __init__(self):
-        self.type = None
+    def __init__(self) -> None:
+        self.type: DesignGeomType | None = None
 
     @abstractmethod
     def to_input(self):
@@ -15,10 +17,10 @@ class GeometricConstraints:
 
 class GeometricConstraintsNearSquare(GeometricConstraints):
     """
-    Geometric constrains for near square design algorithm
+    Geometric constraints for near square design algorithm
     """
 
-    def __init__(self, b: float, length: float):
+    def __init__(self, b: float, length: float) -> None:
         super().__init__()
         self.b = b
         self.length = length
@@ -33,7 +35,7 @@ class GeometricConstraintsRectangle(GeometricConstraints):
     Geometric constraints for rectangular design algorithm
     """
 
-    def __init__(self, width: float, length: float, b_min: float, b_max_x: float):
+    def __init__(self, width: float, length: float, b_min: float, b_max_x: float) -> None:
         super().__init__()
         self.width = width
         self.length = length
@@ -56,7 +58,7 @@ class GeometricConstraintsBiRectangle(GeometricConstraints):
     Geometric constraints for bi-rectangle design algorithm
     """
 
-    def __init__(self, width: float, length: float, b_min: float, b_max_x: float, b_max_y: float):
+    def __init__(self, width: float, length: float, b_min: float, b_max_x: float, b_max_y: float) -> None:
         super().__init__()
         self.width = width
         self.length = length
@@ -81,7 +83,7 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
     Geometric constraints for bi-rectangle constrained design algorithm
     """
 
-    def __init__(self, b_min: float, b_max_x: float, b_max_y: float, property_boundary, no_go_boundaries):
+    def __init__(self, b_min: float, b_max_x: float, b_max_y: float, property_boundary, no_go_boundaries) -> None:
         super().__init__()
         self.b_min = b_min
         self.b_max_x = b_max_x
@@ -115,7 +117,7 @@ class GeometricConstraintsBiZoned(GeometricConstraintsBiRectangle):
     Geometric constraints for bi-zoned design algorithm
     """
 
-    def __init__(self, width: float, length: float, b_min: float, b_max_x: float, b_max_y: float):
+    def __init__(self, width: float, length: float, b_min: float, b_max_x: float, b_max_y: float) -> None:
         super().__init__(width, length, b_min, b_max_x, b_max_y)
         self.type = DesignGeomType.BIZONEDRECTANGLE
 
@@ -146,7 +148,7 @@ class GeometricConstraintsRowWise(GeometricConstraints):
         rotate_step: float,
         property_boundary,
         no_go_boundaries,
-    ):
+    ) -> None:
         super().__init__()
         self.perimeter_spacing_ratio = perimeter_spacing_ratio
         self.min_spacing = min_spacing

@@ -31,7 +31,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
-    ):
+    ) -> None:
         GHEDesignerBoreholeBase.__init__(self, m_flow_borehole, fluid, _borehole, pipe, grout, soil)
         self.R_p = 0.0
         self.R_f = 0.0

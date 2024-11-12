@@ -13,7 +13,7 @@ from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
     def __init__(
         self, m_flow_borehole: float, fluid: GHEFluid, _borehole: Borehole, pipe: Pipe, grout: Grout, soil: Soil
-    ):
+    ) -> None:
         self.m_flow_borehole = m_flow_borehole
         # Store Thermal properties
         self.soil = soil
@@ -151,19 +151,20 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         return fluid.rho * velocity * dia_hydraulic / fluid.mu
 
     def as_dict(self) -> dict:
-        blob = {}
-        blob["type"] = str(self.__class__)
-        blob["mass_flow_borehole"] = {"value": self.m_flow_borehole, "units": "kg/s"}
-        blob["mass_flow_pipe"] = {"value": self.m_flow_borehole, "units": "kg/s"}
-        # blob['borehole'] = self.as_dict()
-        blob["soil"] = self.soil.as_dict()
-        blob["grout"] = self.grout.as_dict()
-        blob["pipe"] = self.pipe.as_dict()
-        # blob['fluid'] = self.fluid.as_dict()
         reynold_no = self.compute_reynolds_concentric(
             self.m_flow_borehole, self.pipe.r_in, self.pipe.roughness, self.fluid
         )
-        blob["reynolds"] = {"value": reynold_no, "units": ""}
+        blob = {
+            "type": str(self.__class__),
+            "mass_flow_borehole": {"value": self.m_flow_borehole, "units": "kg/s"},
+            "mass_flow_pipe": {"value": self.m_flow_borehole, "units": "kg/s"},
+            "soil": self.soil.as_dict(),
+            "grout": self.grout.as_dict(),
+            "pipe": self.pipe.as_dict(),
+            "reynolds": {"value": reynold_no, "units": ""},
+        }
+        # blob['borehole'] = self.as_dict()
+        # blob['fluid'] = self.fluid.as_dict()
         # blob['convection_coefficient'] = {'value': self.h_f, 'units': 'W/m2-K'}
         # blob['pipe_resistance'] = {'value': self.R_p, 'units': 'm-K/W'}
         # blob['fluid_resistance'] = {'value': self.R_f, 'units': 'm-K/W'}

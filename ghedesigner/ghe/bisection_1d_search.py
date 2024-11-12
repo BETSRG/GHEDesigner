@@ -31,7 +31,7 @@ class Bisection1D:
         search=True,
         field_type="N/A",
         load_years=None,
-    ):
+    ) -> None:
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
         if load_years is None:

@@ -2,7 +2,7 @@ from ghedesigner.heat_pump import HeatPump
 
 
 class Building:
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
         self.heat_pumps: list[HeatPump] = []
 

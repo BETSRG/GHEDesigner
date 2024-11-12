@@ -8,12 +8,12 @@ code to `ghedt`.
 
 ## Reporting bugs
 
-Bugs are reported on the [issue tracker][#issue_tracker].
+Bugs are reported on the [issue tracker][issue_tracker].
 
 Follow these steps when submitting a bug report:
 
 1. **Make sure the bug has not been already reported.** Run a quick search
-   through the [issue tracker][#issue_tracker].
+   through the [issue tracker][issue_tracker].
    If an open issue is related to your problem, consider adding your input to that
    issue. If you find a closed issue related to your problem, open a new issue
    and link to the closed issue.
@@ -29,14 +29,14 @@ problem, follow the steps outlined in the contribution workflow.
 ## Fork, clone and configure the repository
 
 If you are a developer and are interested in contributing to _ghedt_ by
-modifying the code, the first step will likely be to [fork][#fork] the
+modifying the code, the first step will likely be to [fork][fork] the
 repository.
 
-1. [Fork][#fork] the repository to your own GitHub profile. You will be able to
+1. [Fork][fork] the repository to your own GitHub profile. You will be able to
    alter any of the code in your own repository but will only be able to modify
    the code in my repository via pull requests.
-2. [Clone][#clone] the forked repository on your personal computer: `git clone https://github.com/YOUR-USERNAME/ghedt`
-3. [Configure][#configure] my repository as a remote fork: `git remote add upstream https://github.com/BETSRG/GHEDTOSU`.
+2. [Clone][clone] the forked repository on your personal computer: `git clone https://github.com/YOUR-USERNAME/ghedt`
+3. [Configure][configure] my repository as a remote fork: `git remote add upstream https://github.com/BETSRG/GHEDTOSU`.
    With my repository configured as a fork you will be able to keep your main
    branch up to date with mine.
 
@@ -44,7 +44,7 @@ repository.
 
 This section outlines the steps for contributing to _ghedt_.
 
-1. **Open a new [issue][#issue_tracker].**
+1. **Open a new [issue][issue_tracker].**
 2. **Use a short and descriptive title.** When proposing an enhancement,
    describe in details what the enhancement would entail. If you plan to implement
    the enhancement yourself, provide a step-by-step plan for the implementation.
@@ -70,13 +70,13 @@ git branch -a
 
 5. Implement unit tests for new features. If necessary, update already
    implement tests to cover the new features.
-6. Before submitting a [pull request][#pull_request], **merge the master to your
+6. Before submitting a [pull request][pull_request], **merge the master to your
    branch.**
 7. Once the branch is merged, **delete the branch and close the issue.**
 
 ## Managing branches
 
-This section describes various features regarding [git branches][#git_branches].
+This section describes various features regarding [git branches][git_branches].
 
 ### Create a branch
 
@@ -85,18 +85,18 @@ shows examples for how to create a branch from the command line.
 
 ## Style guide
 
-`ghedt` follows the [PEP8 style guide][#pep].
+`ghedt` follows the [PEP8 style guide][pep].
 
 ## References
 
 This contributing outline was originally taken from [pygfunction](https://github.com/MassimoCimmino/pygfunction/blob/master/CONTRIBUTING.md).
 
-[#clone]: https://docs.github.com/en/get-started/quickstart/fork-a-repo#cloning-your-forked-repository
-[#configure]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/configuring-a-remote-for-a-fork
-[#fork]: https://docs.github.com/en/get-started/quickstart/fork-a-repo
-[#git_branches]: https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell
-[#issue_tracker]: https://github.com/BETSRG/GHEDTOSU/issues
-[#numpydoc]: https://github.com/numpy/numpy/blob/master/doc/example.py
-[#pep]: https://www.python.org/dev/peps/pep-0008
-[#pull_request]: https://github.com/BETSRG/GHEDTOSU/pulls
-[#sphinx]: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html
+[clone]: https://docs.github.com/en/get-started/quickstart/fork-a-repo#cloning-your-forked-repository
+[configure]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/configuring-a-remote-for-a-fork
+[fork]: https://docs.github.com/en/get-started/quickstart/fork-a-repo
+[git_branches]: https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell
+[issue_tracker]: https://github.com/BETSRG/GHEDTOSU/issues
+[numpydoc]: https://github.com/numpy/numpy/blob/master/doc/example.py
+[pep]: https://www.python.org/dev/peps/pep-0008
+[pull_request]: https://github.com/BETSRG/GHEDTOSU/pulls
+[sphinx]: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html

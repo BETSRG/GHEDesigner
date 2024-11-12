@@ -26,7 +26,7 @@ class BisectionZD(Bisection1D):
         disp=False,
         field_type="N/A",
         load_years=None,
-    ):
+    ) -> None:
         if load_years is None:
             load_years = [2019]
         if disp:

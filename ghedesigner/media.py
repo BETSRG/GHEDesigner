@@ -6,7 +6,7 @@ from ghedesigner.enums import FluidType
 
 
 class GHEFluid(Fluid):
-    def __init__(self, fluid_str: str, percent: float, temperature: float = 20):
+    def __init__(self, fluid_str: str, percent: float, temperature: float = 20) -> None:
         fluid_str = fluid_str.upper()
         if fluid_str == FluidType.ETHYLALCOHOL.name:
             self.fluid_type = FluidType.ETHYLALCOHOL
@@ -42,15 +42,16 @@ class GHEFluid(Fluid):
 
 
 class ThermalProperty:
-    def __init__(self, k, rho_cp):
+    def __init__(self, k, rho_cp) -> None:
         self.k = k  # Thermal conductivity (W/m.K)
         self.rhoCp = rho_cp  # Volumetric heat capacity (J/K.m3)
 
     def as_dict(self) -> dict:
-        output = {}
-        output["type"] = str(self.__class__)
-        output["thermal_conductivity"] = {"value": self.k, "units": "W/m-K"}
-        output["volumetric_heat_capacity"] = {"value": self.rhoCp, "units": "J/K-m3"}
+        output = {
+            "type": str(self.__class__),
+            "thermal_conductivity": {"value": self.k, "units": "W/m-K"},
+            "volumetric_heat_capacity": {"value": self.rhoCp, "units": "J/K-m3"},
+        }
         return output
 
     def to_input(self) -> dict:
@@ -62,7 +63,7 @@ class Grout(ThermalProperty):
 
 
 class Pipe(ThermalProperty):
-    def __init__(self, pos, r_in, r_out, s, roughness, k, rho_cp):
+    def __init__(self, pos, r_in, r_out, s, roughness, k, rho_cp) -> None:
         # Make variables from ThermalProperty available to Pipe
         super().__init__(k, rho_cp)
 
@@ -72,24 +73,25 @@ class Pipe(ThermalProperty):
         self.r_out = r_out  # Pipe outer radius (m) can be a float or list
         self.s = s  # Center pipe to center pipe shank spacing
         self.roughness = roughness  # Pipe roughness (m)
-        if type(pos) is list:
+        if isinstance(pos, list):
             self.n_pipes = int(len(pos) / 2)  # Number of pipes
         else:
             self.n_pipes = 1
 
     def as_dict(self) -> dict:
-        output = {}
-        output["base"] = super().as_dict()
-        output["pipe_center_positions"] = str(self.pos)
-        if type(self.r_in) is float:
+        output = {
+            "base": super().as_dict(),
+            "pipe_center_positions": str(self.pos),
+            "shank_spacing_pipe_to_pipe": {"value": self.s, "units": "m"},
+            "pipe_roughness": {"value": self.roughness, "units": "m"},
+            "number_of_pipes": self.n_pipes,
+        }
+        if isinstance(self.r_in, float):
             output["pipe_inner_diameter"] = str(self.r_in * 2.0)
             output["pipe_outer_diameter"] = str(self.r_out * 2.0)
         else:
             output["pipe_inner_diameters"] = str([x * 2.0 for x in self.r_in])
             output["pipe_outer_diameters"] = str([x * 2.0 for x in self.r_out])
-        output["shank_spacing_pipe_to_pipe"] = {"value": self.s, "units": "m"}
-        output["pipe_roughness"] = {"value": self.roughness, "units": "m"}
-        output["number_of_pipes"] = self.n_pipes
         return output
 
     @staticmethod
@@ -105,7 +107,7 @@ class Pipe(ThermalProperty):
 
 
 class Soil(ThermalProperty):
-    def __init__(self, k, rho_cp, ugt):
+    def __init__(self, k, rho_cp, ugt) -> None:
         # Make variables from ThermalProperty available to Pipe
         ThermalProperty.__init__(self, k, rho_cp)
 

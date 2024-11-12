@@ -166,7 +166,7 @@ class GFunction:
         g_lts: dict,
         log_time: list,
         bore_locations: list,
-    ):
+    ) -> None:
         self.B: float = b  # a B spacing in the borefield
         # r_b (borehole radius) value keyed by height
         self.r_b_values: dict = r_b_values

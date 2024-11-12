@@ -35,7 +35,7 @@ class RowWiseModifiedBisectionSearch:
         advanced_tracking: bool = True,
         field_type: str = "rowwise",
         load_years=None,
-    ):
+    ) -> None:
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
         if load_years is None:

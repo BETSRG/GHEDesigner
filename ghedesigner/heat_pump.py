@@ -5,7 +5,7 @@ LoadFunctionType = Callable[[float], float]
 
 
 class HeatPump:
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
         self.cop: float | None = None
         self.loads_list: list[float] | None = None

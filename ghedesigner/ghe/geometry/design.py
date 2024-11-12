@@ -48,7 +48,7 @@ class DesignBase:
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
-    ):
+    ) -> None:
         if load_years is None:
             load_years = [2019]
         self.load_years = load_years
@@ -103,7 +103,7 @@ class DesignNearSquare(DesignBase):
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
-    ):
+    ) -> None:
         super().__init__(
             v_flow,
             _borehole,
@@ -172,7 +172,7 @@ class DesignRectangle(DesignBase):
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
-    ):
+    ) -> None:
         super().__init__(
             v_flow,
             _borehole,
@@ -236,7 +236,7 @@ class DesignBiRectangle(DesignBase):
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
-    ):
+    ) -> None:
         super().__init__(
             v_flow,
             _borehole,
@@ -302,7 +302,7 @@ class DesignBiZoned(DesignBase):
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
-    ):
+    ) -> None:
         super().__init__(
             v_flow,
             _borehole,
@@ -367,7 +367,7 @@ class DesignBiRectangleConstrained(DesignBase):
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
         keep_contour=[True, False],
-    ):
+    ) -> None:
         super().__init__(
             v_flow,
             _borehole,
@@ -433,7 +433,7 @@ class DesignRowWise(DesignBase):
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
-    ):
+    ) -> None:
         super().__init__(
             v_flow,
             _borehole,

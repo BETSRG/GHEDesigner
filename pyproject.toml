@@ -10,11 +10,12 @@ repository = "https://github.com/BETSRG/GHEDesigner"
 documentation = "https://betsrg.github.io/GHEDesigner/"
 classifiers = [
     "Development Status :: 4 - Beta",
-    "Topic :: Scientific/Engineering",
+    "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13"
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
 ]
 
 [tool.poetry.dependencies]

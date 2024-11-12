@@ -31,7 +31,7 @@ class BaseGHE:
         hourly_extraction_ground_loads: list,
         field_type="N/A",
         field_specifier="N/A",
-    ):
+    ) -> None:
         self.fieldType = field_type
         self.fieldSpecifier = field_specifier
         self.V_flow_system = v_flow_system
@@ -62,14 +62,15 @@ class BaseGHE:
         self.loading = None
 
     def as_dict(self) -> dict:
-        output = {}
-        output["title"] = f"GHEDesigner GHE Output - Version {VERSION}"
-        output["number_of_boreholes"] = len(self.gFunction.bore_locations)
-        output["borehole_depth"] = {"value": self.bhe.b.H, "units": "m"}
-        output["borehole_spacing"] = {"value": self.B_spacing, "units": "m"}
-        output["borehole_heat_exchanger"] = self.bhe.as_dict()
-        output["equivalent_borehole_heat_exchanger"] = self.bhe_eq.as_dict()
-        output["simulation_parameters"] = self.sim_params.as_dict()
+        output = {
+            "title": f"GHEDesigner GHE Output - Version {VERSION}",
+            "number_of_boreholes": len(self.gFunction.bore_locations),
+            "borehole_depth": {"value": self.bhe.b.H, "units": "m"},
+            "borehole_spacing": {"value": self.B_spacing, "units": "m"},
+            "borehole_heat_exchanger": self.bhe.as_dict(),
+            "equivalent_borehole_heat_exchanger": self.bhe_eq.as_dict(),
+            "simulation_parameters": self.sim_params.as_dict(),
+        }
         return output
 
     @staticmethod
@@ -214,7 +215,7 @@ class GHE(BaseGHE):
         field_type="N/A",
         field_specifier="N/A",
         load_years=None,
-    ):
+    ) -> None:
         BaseGHE.__init__(
             self,
             v_flow_system,
@@ -250,8 +251,9 @@ class GHE(BaseGHE):
         self.dTb = []
 
     def as_dict(self) -> dict:
-        output = {}
-        output["base"] = super().as_dict()
+        output = {
+            "base": super().as_dict(),
+        }
 
         results = {}
         if len(self.hp_eft) > 0:
@@ -263,8 +265,9 @@ class GHE(BaseGHE):
             results["excess_fluid_temperature"] = {"value": t_excess, "units": "C"}
         results["peak_load_analysis"] = self.hybrid_load.as_dict()
 
-        g_function = {}
-        g_function["coordinates (x[m], y[m])"] = list(self.gFunction.bore_locations)  # TODO: Verify form
+        g_function = {
+            "coordinates (x[m], y[m])": list(self.gFunction.bore_locations),
+        }
         b_over_h = self.B_spacing / self.bhe.b.H
         g, _ = self.grab_g_function(b_over_h)
         total_g_values = g.x.size
@@ -280,6 +283,7 @@ class GHE(BaseGHE):
         g_values += g.y[total_g_values - number_lts_g_values : total_g_values].tolist()
         pairs = zip(lntts, g_values)
         for lntts_val, g_val in pairs:
+            # TODO why is this attempting to append a string to a dictionary??
             output += f"{lntts_val:0.4f}\t{g_val:0.4f}"
         g_function["lntts, g"] = [*pairs]
 

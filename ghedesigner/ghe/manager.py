@@ -43,6 +43,12 @@ logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
 logger = logging.getLogger(__name__)
 
 
+def report_error(message: str, throw: bool = True):
+    print(message, file=stderr)
+    if throw:
+        raise ValueError(message)
+
+
 class GroundHeatExchanger:
     def __init__(self) -> None:
         self._fluid: GHEFluid | None = None
@@ -52,7 +58,7 @@ class GroundHeatExchanger:
         self.pipe_type: BHPipeType | None = None
         self._borehole: Borehole | None = None
         self._simulation_parameters: SimulationParameters | None = None
-        self._ground_loads: list[float | None] = None
+        self._ground_loads: list[float] | None = None
         # OK so geometric_constraints is tricky.  We have base classes, yay!
         # Unfortunately, the functionality between the child classes is not actually
         # collapsed into a base class function ... yet.  So there will be complaints
@@ -64,7 +70,7 @@ class GroundHeatExchanger:
         self.results: OutputManager | None = None
 
         # some things for results
-        self._search_time: int = 0
+        self._search_time: float = 0.0
         self.summary_results: dict = {}
 
     def set_design_geometry_type(self, design_geometry_str: str, throw: bool = True) -> int:
@@ -76,26 +82,14 @@ class GroundHeatExchanger:
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
-        design_geometry_str = str(design_geometry_str).upper()
-        if design_geometry_str == DesignGeomType.BIRECTANGLE.name:
-            self.geom_type = DesignGeomType.BIRECTANGLE
-        elif design_geometry_str == DesignGeomType.BIRECTANGLECONSTRAINED.name:
-            self.geom_type = DesignGeomType.BIRECTANGLECONSTRAINED
-        elif design_geometry_str == DesignGeomType.BIZONEDRECTANGLE.name:
-            self.geom_type = DesignGeomType.BIZONEDRECTANGLE
-        elif design_geometry_str == DesignGeomType.NEARSQUARE.name:
-            self.geom_type = DesignGeomType.NEARSQUARE
-        elif design_geometry_str == DesignGeomType.RECTANGLE.name:
-            self.geom_type = DesignGeomType.RECTANGLE
-        elif design_geometry_str == DesignGeomType.ROWWISE.name:
-            self.geom_type = DesignGeomType.ROWWISE
-        else:
-            message = "Geometry constraint method not supported."
-            print(message, file=stderr)
-            if throw:
-                raise ValueError(message)
+        geometry_map = {geom.name: geom for geom in DesignGeomType}
+        geom_type = geometry_map.get(design_geometry_str.upper())
+
+        if not geom_type:
+            report_error("Geometry constraint method not supported.", throw)
             return 1
 
+        self.geom_type = geom_type
         return 0
 
     def set_pipe_type(self, bh_pipe_str: str, throw: bool = True) -> int:
@@ -107,22 +101,14 @@ class GroundHeatExchanger:
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
-        bh_pipe_str = str(bh_pipe_str).upper()
-        if bh_pipe_str == BHPipeType.SINGLEUTUBE.name:
-            self.pipe_type = BHPipeType.SINGLEUTUBE
-        elif bh_pipe_str == BHPipeType.DOUBLEUTUBEPARALLEL.name:
-            self.pipe_type = BHPipeType.DOUBLEUTUBEPARALLEL
-        elif bh_pipe_str == BHPipeType.DOUBLEUTUBESERIES.name:
-            self.pipe_type = BHPipeType.DOUBLEUTUBESERIES
-        elif bh_pipe_str == BHPipeType.COAXIAL.name:
-            self.pipe_type = BHPipeType.COAXIAL
-        else:
-            message = f'Borehole pipe type "{bh_pipe_str}" not supported.'
-            print(message, file=stderr)
-            if throw:
-                raise ValueError(message)
+        pipe_type_map = {pipe.name: pipe for pipe in BHPipeType}
+        pipe_type = pipe_type_map.get(bh_pipe_str.upper())
+
+        if not pipe_type:
+            report_error(f'Borehole pipe type "{bh_pipe_str}" not supported.', throw)
             return 1
 
+        self.pipe_type = pipe_type
         return 0
 
     def set_fluid(
@@ -146,10 +132,7 @@ class GroundHeatExchanger:
             self._fluid = GHEFluid(fluid_str=fluid_name, percent=concentration_percent, temperature=temperature)
             return 0
         except ValueError:
-            message = "Invalid fluid property input data."
-            print(message, file=stderr)
-            if throw:
-                raise ValueError(message)
+            report_error("Invalid fluid property input data.", throw)
             return 1
 
     def set_grout(self, conductivity: float, rho_cp: float) -> int:
@@ -347,7 +330,7 @@ class GroundHeatExchanger:
         return 0
 
     def set_geometry_constraints_near_square(
-        self, max_height: float, min_height: float, b: float, length: float
+        self, max_height: float, min_height: float, b: float, length: float, throw: bool = True
     ) -> int:
         """
         Sets the geometry constraints for the near-square design method.
@@ -356,9 +339,18 @@ class GroundHeatExchanger:
         :param min_height: minimum height of borehole, in m.
         :param b: borehole-to-borehole spacing, in m.
         :param length: side length of the sizing domain, in m.
+        :param throw: By default, function will raise an exception on error, override to false to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+        if not self._simulation_parameters:
+            report_error(
+                "GHE simulation parameters must be defined before "
+                "GroundHeatExchanger.set_geometry_constraints_near_square is called.",
+                throw,
+            )
+            return 1
+
         self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsNearSquare(b, length)
         return 0
@@ -541,114 +533,30 @@ class GroundHeatExchanger:
 
         self._simulation_parameters.set_design_temps(max_eft, min_eft)
 
-        flow_type_str = flow_type_str.upper()
-        if flow_type_str == FlowConfigType.SYSTEM.name:
-            flow_type = FlowConfigType.SYSTEM
-        elif flow_type_str == FlowConfigType.BOREHOLE.name:
-            flow_type = FlowConfigType.BOREHOLE
-        else:
-            message = f'FlowConfig "{flow_type_str}" is not implemented.'
-            print(message, file=stderr)
-            if throw:
-                raise ValueError(message)
+        flow_type_map = {flow.name: flow for flow in FlowConfigType}
+        flow_type = flow_type_map.get(flow_type_str.upper())
+        if not flow_type:
+            report_error(f'FlowConfig "{flow_type_str}" is not implemented.', throw)
             return 1
 
         if self._geometric_constraints.type is None:
-            message = "Geometric constraints must be set before `set_design` is called."
-            print(message, file=stderr)
-            if throw:
-                raise ValueError(message)
+            report_error("Geometric constraints must be set before `set_design` is called.", throw)
             return 1
 
-        if self._geometric_constraints.type == DesignGeomType.NEARSQUARE:
+        if self._geometric_constraints.type in DesignGeomType:
+            design_classes = {
+                DesignGeomType.NEARSQUARE: DesignNearSquare,
+                DesignGeomType.RECTANGLE: DesignRectangle,
+                DesignGeomType.BIRECTANGLE: DesignBiRectangle,
+                DesignGeomType.BIZONEDRECTANGLE: DesignBiZoned,
+                DesignGeomType.BIRECTANGLECONSTRAINED: DesignBiRectangleConstrained,
+                DesignGeomType.ROWWISE: DesignRowWise,
+            }
+            selected_class = design_classes[self._geometric_constraints.type]
+
             # temporary disable of the type checker because of the _geometric_constraints member
             # noinspection PyTypeChecker
-            self._design = DesignNearSquare(
-                flow_rate,
-                self._borehole,
-                self.pipe_type,
-                self._fluid,
-                self._pipe,
-                self._grout,
-                self._soil,
-                self._simulation_parameters,
-                self._geometric_constraints,
-                self._ground_loads,
-                flow_type=flow_type,
-                method=TimestepType.HYBRID,
-            )
-        elif self._geometric_constraints.type == DesignGeomType.RECTANGLE:
-            # temporary disable of the type checker because of the _geometric_constraints member
-            # noinspection PyTypeChecker
-            self._design = DesignRectangle(
-                flow_rate,
-                self._borehole,
-                self.pipe_type,
-                self._fluid,
-                self._pipe,
-                self._grout,
-                self._soil,
-                self._simulation_parameters,
-                self._geometric_constraints,
-                self._ground_loads,
-                flow_type=flow_type,
-                method=TimestepType.HYBRID,
-            )
-        elif self._geometric_constraints.type == DesignGeomType.BIRECTANGLE:
-            # temporary disable of the type checker because of the _geometric_constraints member
-            # noinspection PyTypeChecker
-            self._design = DesignBiRectangle(
-                flow_rate,
-                self._borehole,
-                self.pipe_type,
-                self._fluid,
-                self._pipe,
-                self._grout,
-                self._soil,
-                self._simulation_parameters,
-                self._geometric_constraints,
-                self._ground_loads,
-                flow_type=flow_type,
-                method=TimestepType.HYBRID,
-            )
-        elif self._geometric_constraints.type == DesignGeomType.BIZONEDRECTANGLE:
-            # temporary disable of the type checker because of the _geometric_constraints member
-            # noinspection PyTypeChecker
-            self._design = DesignBiZoned(
-                flow_rate,
-                self._borehole,
-                self.pipe_type,
-                self._fluid,
-                self._pipe,
-                self._grout,
-                self._soil,
-                self._simulation_parameters,
-                self._geometric_constraints,
-                self._ground_loads,
-                flow_type=flow_type,
-                method=TimestepType.HYBRID,
-            )
-        elif self._geometric_constraints.type == DesignGeomType.BIRECTANGLECONSTRAINED:
-            # temporary disable of the type checker because of the _geometric_constraints member
-            # noinspection PyTypeChecker
-            self._design = DesignBiRectangleConstrained(
-                flow_rate,
-                self._borehole,
-                self.pipe_type,
-                self._fluid,
-                self._pipe,
-                self._grout,
-                self._soil,
-                self._simulation_parameters,
-                self._geometric_constraints,
-                self._ground_loads,
-                flow_type=flow_type,
-                method=TimestepType.HYBRID,
-            )
-        elif self._geometric_constraints.type == DesignGeomType.ROWWISE:
-            # temporary disable of the type checker because of the _geometric_constraints member
-            # noinspection PyTypeChecker
-            self._design = DesignRowWise(
+            self._design = selected_class(
                 flow_rate,
                 self._borehole,
                 self.pipe_type,
@@ -663,10 +571,7 @@ class GroundHeatExchanger:
                 method=TimestepType.HYBRID,
             )
         else:
-            message = "This design method has not been implemented"
-            print(message, file=stderr)
-            if throw:
-                raise ValueError(message)
+            report_error("This design method has not been implemented", throw)
             return 1
         return 0
 
@@ -679,27 +584,26 @@ class GroundHeatExchanger:
         :rtype: int
         """
 
-        if not all(
-            [
-                self._fluid,
-                self._grout,
-                self._soil,
-                self._pipe,
-                self._borehole,
-                self._simulation_parameters,
-                self._ground_loads,
-                self._geometric_constraints,
-                self._design,
-            ]
+        if not (
+            self._fluid
+            and self._grout
+            and self._soil
+            and self._pipe
+            and self._borehole
+            and self._simulation_parameters
+            and self._ground_loads
+            and self._geometric_constraints
+            and self._design
         ):
-            message = "All GHE properties must be set before GHEManager.find_design is called."
-            print(message, file=stderr)
-            if throw:
-                raise ValueError(message)
+            report_error("All GHE properties must be set before GroundHeatExchanger.find_design is called.", throw)
             return 1
 
         start_time = time()
         self._search = self._design.find_design()
+        if not self._search.ghe:
+            report_error("Find design failed to populate GHE.", throw)
+            return 1
+
         self._search.ghe.compute_g_functions()
         self._search_time = time() - start_time
         self._search.ghe.size(method=TimestepType.HYBRID)
@@ -729,6 +633,9 @@ class GroundHeatExchanger:
         :param output_directory: output directory for output files.
         :param output_file_suffix: adds a string suffix to the output files.
         """
+        if not self.results:
+            raise ValueError("GHE results must be prepared before GroundHeatExchanger.write_output_files is called.")
+
         self.results.write_all_output_files(output_directory=output_directory, file_suffix=output_file_suffix)
 
     def write_input_file(self, output_file_path: Path, throw: bool = True) -> int:
@@ -740,6 +647,10 @@ class GroundHeatExchanger:
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+
+        if not (self._pipe and self._design and self._simulation_parameters and self._geometric_constraints):
+            report_error("All GHE properties must be set before GroundHeatExchanger.write_input_file is called.", throw)
+            return 1
 
         # TODO: geometric constraints are currently held in two places
         #       SimulationParameters and GeometricConstraints
@@ -774,10 +685,7 @@ class GroundHeatExchanger:
             d_pipe["conductivity_inner"] = self._pipe.k[0]
             d_pipe["conductivity_outer"] = self._pipe.k[1]
         else:
-            message = "Invalid pipe type"
-            print(message, file=stderr)
-            if throw:
-                raise ValueError(message)
+            report_error("Invalid pipe type", throw)
             return 1
 
         if self.pipe_type == BHPipeType.SINGLEUTUBE:
@@ -789,10 +697,11 @@ class GroundHeatExchanger:
         elif self.pipe_type == BHPipeType.COAXIAL:
             d_pipe["arrangement"] = BHPipeType.COAXIAL.name
         else:
-            message = "Invalid pipe type"
-            print(message, file=stderr)
-            if throw:
-                raise ValueError(message)
+            report_error("Invalid pipe type", throw)
+            return 1
+
+        if not (self._fluid and self._grout and self._soil and isinstance(self._ground_loads, list)):
+            report_error("Required values have not been defined", throw)
             return 1
 
         d = {
@@ -804,7 +713,7 @@ class GroundHeatExchanger:
             # 'simulation': self._simulation_parameters.to_input(),
             "geometric_constraints": d_geo,
             "design": d_des,
-            "loads": {"ground_loads": list(self._ground_loads)},
+            "loads": {"ground_loads": self._ground_loads},
         }
 
         with open(output_file_path, "w") as f:

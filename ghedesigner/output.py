@@ -25,7 +25,7 @@ class OutputManager:
         model_name: str,
         load_method: TimestepType,
         allocated_width=100,
-    ):
+    ) -> None:
         # this constructor should take all the args to build out a full output manager
         # then the client code can decide what to do -- just access data through functions?
         # write all the data to files in a directory?

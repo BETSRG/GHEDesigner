@@ -21,7 +21,7 @@ from tkinter.ttk import LabelFrame  # ttk widgets
 class GHEDesignerWindow(Tk):
     """This form is the primary GUI entry point for the program; all control runs through here"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         The main window of the parameter estimation tool GUI workflow.
         This window is an instance of a tk.Tk object

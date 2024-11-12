@@ -4,7 +4,7 @@ class SimulationParameters:
         num_months: int,
         max_boreholes=None,
         continue_if_design_unmet=False,
-    ):
+    ) -> None:
         # Simulation parameters not found in other objects
         self.start_month = 1
         self.end_month = num_months
@@ -20,12 +20,13 @@ class SimulationParameters:
         self.min_height = min_height  # in meters
 
     def as_dict(self) -> dict:
-        output = {}
-        output["type"] = str(self.__class__)
-        output["max_eft_allowable"] = {"value": self.max_EFT_allowable, "units": "C"}
-        output["min_eft_allowable"] = {"value": self.min_EFT_allowable, "units": "C"}
-        output["maximum_height"] = {"value": self.max_height, "units": "m"}
-        output["minimum_height"] = {"value": self.min_height, "units": "m"}
+        output = {
+            "type": str(self.__class__),
+            "max_eft_allowable": {"value": self.max_EFT_allowable, "units": "C"},
+            "min_eft_allowable": {"value": self.min_EFT_allowable, "units": "C"},
+            "maximum_height": {"value": self.max_height, "units": "m"},
+            "minimum_height": {"value": self.min_height, "units": "m"},
+        }
 
         if self.max_boreholes is not None:
             output["maximum_boreholes"] = {"value": self.max_boreholes, "units": "-"}

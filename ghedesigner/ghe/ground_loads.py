@@ -19,7 +19,7 @@ class HybridLoad:
         radial_numerical: SingleUTube,
         sim_params: SimulationParameters,
         years=None,
-    ):
+    ) -> None:
         # Split the hourly loads into heating and cooling (kW)
         if years is None:
             years = [2019]
@@ -119,9 +119,10 @@ class HybridLoad:
         self.process_month_loads()
 
     def as_dict(self) -> dict:
-        output = {}
-        output["type"] = str(self.__class__)
-        output["results"] = self.create_dataframe_of_peak_analysis()
+        output = {
+            "type": str(self.__class__),
+            "results": self.create_dataframe_of_peak_analysis(),
+        }
         return output
 
     @staticmethod
