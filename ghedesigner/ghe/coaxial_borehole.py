@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import numpy as np
 import pygfunction as gt
 from numpy import log, pi
@@ -171,7 +169,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         # blob['fluid_resistance'] = {'value': self.R_f, 'units': 'm-K/W'}
         return blob
 
-    def concentric_tube_volumes(self) -> Tuple[float, float, float, float]:
+    def concentric_tube_volumes(self) -> tuple[float, float, float, float]:
         # Unpack the radii to reduce confusion in the future
         r_in_in, r_in_out = self.r_inner
         r_out_in, r_out_out = self.r_outer

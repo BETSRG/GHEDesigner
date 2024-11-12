@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from math import sqrt
-from typing import Optional
 
 from pygfunction.boreholes import Borehole
 
@@ -58,7 +59,7 @@ class RowWiseModifiedBisectionSearch:
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.max_iter = max_iter
         self.disp = disp
-        self.ghe: Optional[GHE] = None
+        self.ghe: GHE | None = None
         self.calculated_temperatures = {}
         if advanced_tracking:
             self.advanced_tracking = [["TargetSpacing", "Field Specifier", "nbh", "ExcessTemperature"]]

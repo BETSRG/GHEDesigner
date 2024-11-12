@@ -1,4 +1,4 @@
-from typing import Optional
+from __future__ import annotations
 
 from ghedesigner.building import Building
 from ghedesigner.ghe.ground_heat_exchangers import GHE
@@ -8,8 +8,8 @@ class System:
     def __init__(self) -> None:
         self.num_months = 0
         self.initial_loop_temp = 20.0
-        self.building: Optional[Building] = None
-        self.ghe: Optional[GHE] = None
+        self.building: Building | None = None
+        self.ghe: GHE | None = None
 
     def set_simulation_parameters(self, num_months: int, initial_loop_temp: float = 20):
         self.num_months = num_months

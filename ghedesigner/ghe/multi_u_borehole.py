@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from copy import deepcopy
-from typing import Optional, Tuple
 
 import pygfunction as gt
 from numpy import log, sqrt
@@ -15,7 +16,7 @@ from ghedesigner.utilities import solve_root
 
 class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
     @staticmethod
-    def calc_mass_flow_pipe(m_flow_borehole: float, config: Optional[DoubleUTubeConnType] = None) -> float:
+    def calc_mass_flow_pipe(m_flow_borehole: float, config: DoubleUTubeConnType | None = None) -> float:
         if config == DoubleUTubeConnType.SERIES or config is None:
             return m_flow_borehole
         elif config == DoubleUTubeConnType.PARALLEL:
@@ -182,7 +183,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         resist_bh_effective = self.effective_borehole_thermal_resistance(self.m_flow_borehole, self.fluid.cp)
         return resist_bh_effective
 
-    def u_tube_volumes(self) -> Tuple[float, float, float, float]:
+    def u_tube_volumes(self) -> tuple[float, float, float, float]:
         # Compute volumes for U-tube geometry
         # Effective parameters
         n = self.nPipes * 2  # Total number of tubes

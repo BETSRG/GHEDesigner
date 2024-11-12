@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 from unittest import TestCase
 
-LOG_FILE: Optional[Path] = None
+LOG_FILE: Path | None = None
 
 time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
 

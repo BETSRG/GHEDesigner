@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 class GroundHeatExchanger:
-    def __init__(self):
+    def __init__(self) -> None:
         self._fluid: GHEFluid | None = None
         self._grout: Grout | None = None
         self._soil: Soil | None = None

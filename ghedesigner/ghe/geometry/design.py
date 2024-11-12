@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from math import floor
-from typing import Union
 
 from pygfunction.boreholes import Borehole
 
@@ -28,7 +29,7 @@ from ghedesigner.ghe.rowwise_search import RowWiseModifiedBisectionSearch
 from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 
-AnyBisectionType = Union[Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch]
+AnyBisectionType = Bisection1D | Bisection2D | BisectionZD | RowWiseModifiedBisectionSearch
 
 
 class DesignBase:
