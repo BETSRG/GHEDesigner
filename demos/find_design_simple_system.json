@@ -1,7 +1,7 @@
 {
   "topology": [
-    {"type": "building", "name": "building1"},
-    {"type": "ground-heat-exchanger", "name": "ghe1"}
+    { "type": "building", "name": "building1" },
+    { "type": "ground-heat-exchanger", "name": "ghe1" }
   ],
   "fluids": {
     "pure water": {

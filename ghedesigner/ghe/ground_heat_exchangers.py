@@ -1,7 +1,6 @@
-from math import ceil, floor
+from math import ceil
 
 import numpy as np
-from numpy.typing import NDArray
 from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d
 
@@ -59,7 +58,7 @@ class BaseGHE:
         # Hourly ground extraction loads
         # Building cooling is negative, building heating is positive
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
-        self.times = []
+        self.times = np.empty((0,), dtype=np.float64)
         self.loading = None
 
     def as_dict(self) -> dict:
@@ -150,8 +149,8 @@ class BaseGHE:
         m_dot = self.bhe.m_flow_borehole  # (kg/s)
         cp = self.bhe.fluid.cp  # (J/kg.s)
 
-        hp_eft = []
-        delta_tb: NDArray = []
+        hp_eft: list[float] = []
+        delta_tb: list[float] = []
         for i in range(1, n + 1):
             # Take the last i elements of the reversed time array
             _time = time_values[i] - time_values[0:i]
@@ -247,9 +246,9 @@ class GHE(BaseGHE):
         self.hybrid_load = hybrid_load
 
         # List of heat pump exiting fluid temperatures
-        self.hp_eft = []
+        self.hp_eft: list[float] = []
         # list of change in borehole wall temperatures
-        self.dTb = []
+        self.dTb: list[float] = []
 
     def simulate(self, method: TimestepType):
         b = self.B_spacing

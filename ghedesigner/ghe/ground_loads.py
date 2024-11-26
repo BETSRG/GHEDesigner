@@ -63,17 +63,17 @@ class HybridLoad:
         num_unique_months = len(years) * 12 + 1
 
         # monthly cooling loads (or heat rejection) in kWh
-        self.monthly_cl = [0] * num_unique_months
+        self.monthly_cl = [0.0] * num_unique_months
         # monthly heating loads (or heat extraction) in kWh
-        self.monthly_hl = [0] * num_unique_months
+        self.monthly_hl = [0.0] * num_unique_months
         # monthly peak cooling load (or heat rejection) in kW
-        self.monthly_peak_cl = [0] * num_unique_months
+        self.monthly_peak_cl = [0.0] * num_unique_months
         # monthly peak heating load (or heat extraction) in kW
-        self.monthly_peak_hl = [0] * num_unique_months
+        self.monthly_peak_hl = [0.0] * num_unique_months
         # monthly average cooling load (or heat rejection) in kW
-        self.monthly_avg_cl = [0] * num_unique_months
+        self.monthly_avg_cl = [0.0] * num_unique_months
         # monthly average heating load (or heat extraction) in kW
-        self.monthly_avg_hl = [0] * num_unique_months
+        self.monthly_avg_hl = [0.0] * num_unique_months
         # day of the month on which peak clg load occurs (e.g. 1-31)
         self.monthly_peak_cl_day = [0] * num_unique_months
         # day of the month on which peak htg load occurs (e.g. 1-31)
@@ -142,8 +142,8 @@ class HybridLoad:
     def split_loads_by_month(self) -> None:
         # Split the loads into peak, total and average loads for each month
 
-        # Store the index of the last months hours
-        hours_in_previous_months = 0
+        # Store the index of the last month's hours
+        hours_in_previous_months: int = 0
         for i in range(1, len(self.days_in_month)):
             hours_in_month = HRS_IN_DAY * self.days_in_month[i]
             # Slice the hours in this current month
@@ -374,7 +374,7 @@ class HybridLoad:
 
     def create_dataframe_of_peak_analysis(self) -> str:
         # The fields are: sum, peak, avg, peak day, peak duration
-        hybrid_time_step_fields = {
+        hybrid_time_step_fields: dict = {
             "Total": {},
             "Peak": {},
             "Average": {},

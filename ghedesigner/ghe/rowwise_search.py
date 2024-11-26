@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from math import sqrt
 
+import numpy as np
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
@@ -47,7 +48,7 @@ class RowWiseModifiedBisectionSearch:
         self.soil = soil
         self.borehole = borehole
         self.geometricConstraints = geometric_constraints
-        self.searchTracker = []
+        self.searchTracker: list[list] = []
         self.fieldType = field_type
         # Flow rate tracking
         self.V_flow = v_flow
@@ -60,10 +61,10 @@ class RowWiseModifiedBisectionSearch:
         self.max_iter = max_iter
         self.disp = disp
         self.ghe: GHE | None = None
-        self.calculated_temperatures = {}
+        self.calculated_temperatures: dict = {}
         if advanced_tracking:
             self.advanced_tracking = [["TargetSpacing", "Field Specifier", "nbh", "ExcessTemperature"]]
-            self.checkedFields = []
+            self.checkedFields: list[np.ndarray[tuple[np.float64, np.float64]]] = []
         if search:
             self.selected_coordinates, self.selected_specifier = self.search()
             self.initialize_ghe(

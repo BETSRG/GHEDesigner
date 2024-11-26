@@ -16,6 +16,7 @@ from tkinter import (
     X,
 )
 from tkinter.ttk import LabelFrame  # ttk widgets
+from typing import Any
 
 
 class GHEDesignerWindow(Tk):
@@ -32,7 +33,7 @@ class GHEDesignerWindow(Tk):
         self.title("GHEDesignerWindow")
 
         # setup event listeners
-        self._gui_queue = Queue()
+        self._gui_queue: Queue[Any] = Queue()
         self._check_queue()
 
         # define the Tk.Variable instances that will be used to communicate with the GUI widgets

@@ -1,11 +1,11 @@
 {
   "topology": [
-    {"name": "building 1", "type": "building"},
-    {"name":  "ghe 1", "type": "groundheatexchanger"},
-    {"name":  "tower 1", "type": "coolingtower"},
-    {"name": "cooler 1", "type":  "drycooler"},
-    {"name":  "boiler 1", "type":  "boiler"},
-    {"name":  "generic 1", "type": "generic"}
+    { "name": "building 1", "type": "building" },
+    { "name": "ghe 1", "type": "groundheatexchanger" },
+    { "name": "tower 1", "type": "coolingtower" },
+    { "name": "cooler 1", "type": "drycooler" },
+    { "name": "boiler 1", "type": "boiler" },
+    { "name": "generic 1", "type": "generic" }
   ],
   "buildings": {
     "building 1": {

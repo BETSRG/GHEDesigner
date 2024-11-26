@@ -1,5 +1,6 @@
 from math import ceil
 
+import numpy as np
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
@@ -25,7 +26,7 @@ class Bisection1D:
         sim_params: SimulationParameters,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType.BOREHOLE,
+        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         max_iter=15,
         disp=False,
         search=True,
@@ -37,7 +38,7 @@ class Bisection1D:
         if load_years is None:
             load_years = [2019]
         self.load_years = load_years
-        self.searchTracker = []
+        self.searchTracker: list[list] = []
         coordinates = coordinates_domain[0]
         current_field = field_descriptors[0]
         self.field_type = field_type
@@ -93,7 +94,7 @@ class Bisection1D:
             load_years=load_years,
         )
 
-        self.calculated_temperatures = {}
+        self.calculated_temperatures: dict[int, np.float64] = {}
 
         if search:
             self.selection_key, self.selected_coordinates = self.search()

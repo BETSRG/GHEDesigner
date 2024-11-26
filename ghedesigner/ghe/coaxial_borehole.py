@@ -76,7 +76,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         self.update_thermal_resistances(self.R_ff, self.R_fp)
         self.calc_effective_borehole_resistance()
 
-    def calc_fluid_pipe_resistance(self) -> None:
+    def calc_fluid_pipe_resistance(self):
         # inner pipe convection resistance
         self.h_f_in = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
             self.m_flow_borehole,
@@ -117,6 +117,8 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
 
         # outer annulus fluid to pipe thermal resistance
         self.R_fp = self.R_p_out + self.R_f_a_out
+
+        return self.R_fp
 
     def calc_effective_borehole_resistance(self) -> float:
         # TODO: should this be here?

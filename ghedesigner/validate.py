@@ -76,7 +76,8 @@ def validate_pipe(instance: dict) -> int:
 def validate_ground_heat_exchanger(instance: dict) -> int:
     return validate_schema_instance(
         schema_file_name="ground_heat_exchanger.schema.json",
-        instance=instance, error_msg='Errors in "ground-heat-exchanger" input object.'
+        instance=instance,
+        error_msg='Errors in "ground-heat-exchanger" input object.',
     )
 
 

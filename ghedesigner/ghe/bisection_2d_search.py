@@ -21,7 +21,7 @@ class Bisection2D(Bisection1D):
         sim_params: SimulationParameters,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType.BOREHOLE,
+        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         max_iter=15,
         disp=False,
         field_type="N/A",
@@ -55,6 +55,7 @@ class Bisection2D(Bisection1D):
             load_years=load_years,
         )
 
+        # TODO why is the class variable set to an empty list and not the `coordinates_domain_nested` argument?
         self.coordinates_domain_nested = []
         self.calculated_temperatures_nested = []
         # Tack on one borehole at the beginning to provide a high excess temperature

@@ -1,3 +1,4 @@
+import numpy as np
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import FlowConfigType, TimestepType
@@ -21,7 +22,7 @@ class BisectionZD(Bisection1D):
         sim_params: SimulationParameters,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType.BOREHOLE,
+        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         max_iter=15,
         disp=False,
         field_type="N/A",
@@ -57,7 +58,7 @@ class BisectionZD(Bisection1D):
 
         self.coordinates_domain_nested = coordinates_domain_nested
         self.nested_fieldDescriptors = field_descriptors
-        self.calculated_temperatures_nested = {}
+        self.calculated_temperatures_nested: dict[int, dict[int, np.float64]] = {}
         # Tack on one borehole at the beginning to provide a high excess
         # temperature
         outer_domain = [coordinates_domain_nested[0][0]]
@@ -72,7 +73,7 @@ class BisectionZD(Bisection1D):
         self.selection_key_outer, _ = self.search()
         if self.selection_key_outer > 0:
             self.selection_key_outer -= 1
-        self.calculated_heights = {}
+        self.calculated_heights: dict[int, float] = {}
 
         self.selection_key, self.selected_coordinates = self.search_successive()
 

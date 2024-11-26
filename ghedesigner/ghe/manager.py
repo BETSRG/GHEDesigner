@@ -357,7 +357,14 @@ class GroundHeatExchanger:
         return 0
 
     def set_geometry_constraints_rectangle(
-        self, max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
+        self,
+        max_height: float,
+        min_height: float,
+        length: float,
+        width: float,
+        b_min: float,
+        b_max: float,
+        throw: bool = True,
     ) -> int:
         """
         Sets the geometry constraints for the rectangle design method.
@@ -368,9 +375,16 @@ class GroundHeatExchanger:
         :param width: side width of the sizing domain, in m.
         :param b_min: minimum borehole-to-borehole spacing, in m.
         :param b_max: maximum borehole-to-borehole spacing, in m.
+        :param throw: By default, function will raise an exception on error, override to false to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+        if self._simulation_parameters is None:
+            report_error(
+                "Simulation parameters must be set before `set_geometry_constraints_rectangle` is called.", throw
+            )
+            return 1
+
         self.geom_type = DesignGeomType.RECTANGLE
         self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsRectangle(width, length, b_min, b_max)
@@ -385,6 +399,7 @@ class GroundHeatExchanger:
         b_min: float,
         b_max_x: float,
         b_max_y: float,
+        throw: bool = True,
     ) -> int:
         """
         Sets the geometry constraints for the bi-rectangle design method.
@@ -396,9 +411,16 @@ class GroundHeatExchanger:
         :param b_min: minimum borehole-to-borehole spacing, in m.
         :param b_max_x: maximum borehole-to-borehole spacing in the x-direction, in m.
         :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
+        :param throw: By default, function will raise an exception on error, override to false to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+        if self._simulation_parameters is None:
+            report_error(
+                "Simulation parameters must be set before `set_geometry_constraints_bi_rectangle` is called.", throw
+            )
+            return 1
+
         self.geom_type = DesignGeomType.BIRECTANGLE
         self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsBiRectangle(width, length, b_min, b_max_x, b_max_y)
@@ -413,6 +435,7 @@ class GroundHeatExchanger:
         b_min: float,
         b_max_x: float,
         b_max_y: float,
+        throw: bool = True,
     ) -> int:
         """
         Sets the geometry constraints for the bi-zoned rectangle design method.
@@ -424,9 +447,17 @@ class GroundHeatExchanger:
         :param b_min: minimum borehole-to-borehole spacing, in m.
         :param b_max_x: maximum borehole-to-borehole spacing in the x-direction, in m.
         :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
+        :param throw: By default, function will raise an exception on error, override to false to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+        if self._simulation_parameters is None:
+            report_error(
+                "Simulation parameters must be set before `set_geometry_constraints_bi_zoned_rectangle` is called.",
+                throw,
+            )
+            return 1
+
         self.geom_type = DesignGeomType.BIZONEDRECTANGLE
         self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsBiZoned(width, length, b_min, b_max_x, b_max_y)
@@ -441,6 +472,7 @@ class GroundHeatExchanger:
         b_max_y: float,
         property_boundary: list,
         no_go_boundaries: list,
+        throw: bool = True,
     ) -> int:
         """
         Sets the geometry constraints for the bi-rectangle constrained design method.
@@ -452,9 +484,18 @@ class GroundHeatExchanger:
         :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
         :param property_boundary: property boundary points, in m.
         :param no_go_boundaries: boundary points for no-go zones, in m.
+        :param throw: By default, function will raise an exception on error, override to false to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+        if self._simulation_parameters is None:
+            report_error(
+                "Simulation parameters must be set before `set_geometry_constraints_bi_rectangle_constrained` "
+                "is called.",
+                throw,
+            )
+            return 1
+
         self.geom_type = DesignGeomType.BIRECTANGLECONSTRAINED
         self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(
@@ -475,6 +516,7 @@ class GroundHeatExchanger:
         rotate_step: float,
         property_boundary: list,
         no_go_boundaries: list,
+        throw: bool = True,
     ) -> int:
         """
         Sets the geometry constraints for the row-wise design method.
@@ -494,9 +536,15 @@ class GroundHeatExchanger:
         :param rotate_step: step size for field rotation search.
         :param property_boundary: property boundary points.
         :param no_go_boundaries: boundary points for no-go zones.
+        :param throw: By default, function will raise an exception on error, override to false to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+        if self._simulation_parameters is None:
+            report_error(
+                "Simulation parameters must be set before `set_geometry_constraints_rowwise` is called.", throw
+            )
+            return 1
 
         # convert from degrees to radians
         max_rotation = max_rotation * DEG_TO_RAD
@@ -531,6 +579,9 @@ class GroundHeatExchanger:
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+        if self._simulation_parameters is None:
+            report_error("Simulation parameters must be set before `set_design` is called.", throw)
+            return 1
 
         self._simulation_parameters.set_design_temps(max_eft, min_eft)
 
@@ -540,7 +591,7 @@ class GroundHeatExchanger:
             report_error(f'FlowConfig "{flow_type_str}" is not implemented.', throw)
             return 1
 
-        if self._geometric_constraints.type is None:
+        if self._geometric_constraints is None:
             report_error("Geometric constraints must be set before `set_design` is called.", throw)
             return 1
 
@@ -617,6 +668,9 @@ class GroundHeatExchanger:
         """
         Prepares the output results.
         """
+        if self._search is None:
+            raise ValueError("self._search must be set before GroundHeatExchanger.prepare_results is called.")
+
         self.results = OutputManager(
             self._search,
             self._search_time,
@@ -634,7 +688,7 @@ class GroundHeatExchanger:
         :param output_directory: output directory for output files.
         :param output_file_suffix: adds a string suffix to the output files.
         """
-        if not self.results:
+        if self.results is None:
             raise ValueError("GHE results must be prepared before GroundHeatExchanger.write_output_files is called.")
 
         self.results.write_all_output_files(output_directory=output_directory, file_suffix=output_file_suffix)
@@ -739,39 +793,39 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
     ghe = GroundHeatExchanger()
 
     # now it looks like fluid is a list, so for now I'm just taking the first one
-    all_fluid_props = inputs["fluids"]  # type: dict
-    single_fluid_key = list(all_fluid_props.keys())[0]
+    all_fluid_props: dict = inputs["fluids"]
+    single_fluid_key = next(iter(all_fluid_props.keys()))
     fluid_props = all_fluid_props[single_fluid_key]
 
     # many things collected in the ground heat exchanger object
     # again, it looks like this object can be a list, so for now I'm just taking the first one
-    ghe_list = inputs['ground-heat-exchanger']
-    single_ghe_key = list(ghe_list.keys())[0]
+    ghe_list = inputs["ground-heat-exchanger"]
+    single_ghe_key = next(iter(ghe_list.keys()))
     ghe_dict = ghe_list[single_ghe_key]
 
-    grout_props = ghe_dict["grout"]  # type: dict
-    soil_props = ghe_dict["soil"]  # type: dict
-    pipe_props = ghe_dict["pipe"]  # type: dict
-    borehole_props = ghe_dict["borehole"]  # type: dict
-    # sim_props = inputs['simulation']  # type: dict
-    constraint_props = ghe_dict["geometric_constraints"]  # type: dict
-    design_props = ghe_dict["design"]  # type: dict
+    grout_props: dict = ghe_dict["grout"]
+    soil_props: dict = ghe_dict["soil"]
+    pipe_props: dict = ghe_dict["pipe"]
+    borehole_props: dict = ghe_dict["borehole"]
+    # sim_props: dict = inputs['simulation']
+    constraint_props: dict = ghe_dict["geometric_constraints"]
+    design_props: dict = ghe_dict["design"]
 
-    all_building_props = inputs['building']
-    single_building_key = list(all_building_props.keys())[0]
+    all_building_props = inputs["building"]
+    single_building_key = next(iter(all_building_props.keys()))
     single_building = all_building_props[single_building_key]
 
-    if 'loads' in inputs:
+    if "loads" in inputs:
         # maybe in this case we are just going to read ground loads directly?
-        ground_load_props = inputs["loads"]["ground_loads"]  # type: list
+        ground_load_props: list = inputs["loads"]["ground_loads"]
         ghe.set_ground_loads_from_hourly_list(ground_load_props)
     else:
-        heat_pump = HeatPump(single_building['name'])
-        heat_pump.set_fixed_cop(single_building['cop'])
-        loads_file_path = Path(single_building['loads']).resolve()
+        heat_pump = HeatPump(single_building["name"])
+        heat_pump.set_fixed_cop(single_building["cop"])
+        loads_file_path = Path(single_building["loads"]).resolve()
         heat_pump.set_loads_from_file(loads_file_path)
         # TODO: I know this is not right
-        ghe_loads_raw = loads_file_path.read_text().strip().split('\n')
+        ghe_loads_raw = loads_file_path.read_text().strip().split("\n")
         ghe_loads_float = [float(x) for x in ghe_loads_raw]
         ghe.set_ground_loads_from_hourly_list(ghe_loads_float)
 
@@ -824,11 +878,11 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         diameter=borehole_props["diameter"],
     )
 
-    max_bh = design_props.get("max_boreholes", None)
+    max_bh = design_props.get("max_boreholes")
     continue_if_design_unmet = design_props.get("continue_if_design_unmet", False)
     sim_control = inputs["simulation-control"]
     ghe.set_simulation_parameters(
-        num_months=sim_control['simulation-months'],
+        num_months=sim_control["simulation-months"],
         max_boreholes=max_bh,
         continue_if_design_unmet=continue_if_design_unmet,
     )
@@ -874,7 +928,7 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         )
     elif ghe.geom_type == DesignGeomType.ROWWISE:
         # use perimeter calculations if present
-        perimeter_spacing_ratio = constraint_props.get("perimeter_spacing_ratio", None)
+        perimeter_spacing_ratio = constraint_props.get("perimeter_spacing_ratio")
 
         ghe.set_geometry_constraints_rowwise(
             perimeter_spacing_ratio=perimeter_spacing_ratio,
@@ -893,9 +947,11 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
 
     # self, flow_rate: float, flow_type_str: str, max_eft: float, min_eft: float, throw: bool = True
     ghe.set_design(
-        flow_rate=design_props["flow_rate"], flow_type_str=design_props["flow_type"],
-        min_eft=design_props["min_eft"], max_eft=design_props["max_eft"],
-        throw=False
+        flow_rate=design_props["flow_rate"],
+        flow_type_str=design_props["flow_type"],
+        min_eft=design_props["min_eft"],
+        max_eft=design_props["max_eft"],
+        throw=False,
     )
 
     ghe.find_design(throw=False)

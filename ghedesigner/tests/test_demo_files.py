@@ -45,7 +45,7 @@ def test_demo_files(demo_file_path: Path):
     out_dir = demo_output_parent_dir / time_str / demo_file_path.stem
     out_dir.mkdir(parents=True, exist_ok=True)
     print(f"Running: {demo_file_path}")
-    assert 0 == _run_manager_from_cli_worker(input_file_path=demo_file_path, output_directory=out_dir)
+    assert _run_manager_from_cli_worker(input_file_path=demo_file_path, output_directory=out_dir) == 0
 
     # check the outputs
     results_path = out_dir / "SimulationSummary.json"

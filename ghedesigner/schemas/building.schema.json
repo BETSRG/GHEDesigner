@@ -17,11 +17,6 @@
         "type": "string"
       }
     },
-    "required": [
-      "name",
-      "loads",
-      "cop",
-      "capacity"
-    ]
+    "required": ["name", "loads", "cop", "capacity"]
   }
 }

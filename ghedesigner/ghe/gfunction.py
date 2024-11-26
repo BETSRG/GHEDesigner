@@ -255,7 +255,7 @@ class GFunction:
                 self.interpolation_table["g"].append(f)
             # create interpolation tables for 'D' and 'r_b' by height
             keys = list(self.r_b_values.keys())
-            height_values: list = []
+            height_values = []
             rb_values: list = []
             for h in keys:
                 height_values.append(float(h))
