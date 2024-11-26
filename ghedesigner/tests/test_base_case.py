@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import ClassVar
 from unittest import TestCase
 
 LOG_FILE: Path | None = None
@@ -11,6 +12,14 @@ time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
 class GHEBaseTest(TestCase):
+    # Type hints for mypy since these are dynamically created attributes
+    test_data_directory: ClassVar[Path]
+    tests_directory: ClassVar[Path]
+    project_root_directory: ClassVar[Path]
+    test_outputs_directory: ClassVar[Path]
+    demos_path: ClassVar[Path]
+    demo_output_parent_dir: ClassVar[Path]
+
     class LogMessageTypes(Enum):
         Debug = "DEBUG"
         Info = "INFO"
@@ -55,8 +64,9 @@ class GHEBaseTest(TestCase):
         date_time_string = datetime.now().strftime("%Y%m%d_%H%M%S")
         message_type_string = GHEBaseTest.LogMessageTypes.get_string(message_type)
         message_string = str(message).strip()
-        with LOG_FILE.open("a") as fp:
-            fp.write(f"{date_time_string},{message_type_string},{message_string}\n")
+        if LOG_FILE:
+            with LOG_FILE.open("a") as fp:
+                fp.write(f"{date_time_string},{message_type_string},{message_string}\n")
 
     def get_atlanta_loads(self) -> list[float]:
         # read in the csv file and convert the loads to a list of length 8760

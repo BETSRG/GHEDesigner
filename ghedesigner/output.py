@@ -139,15 +139,6 @@ class OutputManager:
             csv_array.append([log_val, g_val, g_bhw_val])
         return csv_array
 
-    @staticmethod
-    def get_timestep_str(load_method: TimestepType):
-        if load_method == TimestepType.HYBRID:
-            return TimestepType.HYBRID.name
-        if load_method == TimestepType.HOURLY:
-            return TimestepType.HOURLY.name
-        warnings.warn("Load method not implemented")
-        return ""
-
     def get_summary_object(
         self,
         design: AnyBisectionType,
@@ -160,6 +151,12 @@ class OutputManager:
     ) -> dict:
         # gFunction LTS Table
         g_function_col_titles = ["ln(t/ts)"]
+
+        if design.ghe is None:
+            message = "Design GHE is undefined in get_summary_object."
+            print(message)
+            raise ValueError(message)
+
         for g_function_name in list(design.ghe.gFunction.g_lts):
             g_function_col_titles.append(f"H: {g_function_name:0.2f} m")
         g_function_col_titles.append(f"H: {design.ghe.bhe.b.H:0.2f} m")
@@ -247,7 +244,7 @@ class OutputManager:
                 "maximum_allowable_height": add_with_units(design.ghe.sim_params.max_height, "m"),
                 "minimum_allowable_height": add_with_units(design.ghe.sim_params.min_height, "m"),
                 "simulation_time": add_with_units(int(design.ghe.sim_params.end_month / 12), "years"),
-                "simulation_load_method": self.get_timestep_str(load_method),
+                "simulation_load_method": load_method.name,
             },
             "simulation_results": {},
         }
@@ -580,7 +577,7 @@ class OutputManager:
         o += self.d_row(width, "Maximum Allowable Height, m: ", design.ghe.sim_params.max_height, f_2f)
         o += self.d_row(width, "Minimum Allowable Height, m: ", design.ghe.sim_params.min_height, f_2f)
         o += self.d_row(width, "Simulation Time, years: ", int(design.ghe.sim_params.end_month / 12), f_int)
-        load_method_string = self.get_timestep_str(load_method)
+        load_method_string = load_method.name
         o += self.d_row(width, "Simulation Loading Type: ", load_method_string, f_str)
 
         o += empty_line

@@ -269,7 +269,7 @@ class GFunction:
 
         # create the g-function by interpolating at each ln(t/ts) value
         rb_value = self.interpolation_table["rb"](h_eq)
-        g_function: list = []
+        g_function = []
         for i in range(len(self.log_time)):
             f = self.interpolation_table["g"][i]
             g = f(h_eq).tolist()

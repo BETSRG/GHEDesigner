@@ -28,7 +28,7 @@ class RowWiseModifiedBisectionSearch:
         hourly_extraction_ground_loads: list,
         geometric_constraints,
         method: TimestepType,
-        flow_type: FlowConfigType.BOREHOLE,
+        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         max_iter: int = 10,
         disp: bool = False,
         search: bool = True,
