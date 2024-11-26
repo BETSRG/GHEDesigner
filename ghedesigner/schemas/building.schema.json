@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "loads": {
+        "type": "string"
+      },
+      "cop": {
+        "type": "number"
+      },
+      "capacity": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "name",
+      "loads",
+      "cop",
+      "capacity"
+    ]
+  }
+}

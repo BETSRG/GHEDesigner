@@ -50,5 +50,9 @@
   "issue_97_interp_out_of_range": {
     "active_borehole_length": 159.71824465081477,
     "number_of_boreholes": 180
+  },
+  "find_design_simple_system": {
+    "active_borehole_length": 126.81855850837024,
+    "number_of_boreholes": 88
   }
 }

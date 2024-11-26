@@ -34,6 +34,7 @@ from ghedesigner.ghe.geometry.geometry import (
     GeometricConstraintsRowWise,
 )
 from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.heat_pump import HeatPump
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
 from ghedesigner.utilities import write_idf
@@ -737,15 +738,42 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
 
     ghe = GroundHeatExchanger()
 
-    fluid_props = inputs["fluid"]  # type: dict
-    grout_props = inputs["grout"]  # type: dict
-    soil_props = inputs["soil"]  # type: dict
-    pipe_props = inputs["pipe"]  # type: dict
-    borehole_props = inputs["borehole"]  # type: dict
+    # now it looks like fluid is a list, so for now I'm just taking the first one
+    all_fluid_props = inputs["fluids"]  # type: dict
+    single_fluid_key = list(all_fluid_props.keys())[0]
+    fluid_props = all_fluid_props[single_fluid_key]
+
+    # many things collected in the ground heat exchanger object
+    # again, it looks like this object can be a list, so for now I'm just taking the first one
+    ghe_list = inputs['ground-heat-exchanger']
+    single_ghe_key = list(ghe_list.keys())[0]
+    ghe_dict = ghe_list[single_ghe_key]
+
+    grout_props = ghe_dict["grout"]  # type: dict
+    soil_props = ghe_dict["soil"]  # type: dict
+    pipe_props = ghe_dict["pipe"]  # type: dict
+    borehole_props = ghe_dict["borehole"]  # type: dict
     # sim_props = inputs['simulation']  # type: dict
-    constraint_props = inputs["geometric_constraints"]  # type: dict
-    design_props = inputs["design"]  # type: dict
-    ground_load_props = inputs["loads"]["ground_loads"]  # type: list
+    constraint_props = ghe_dict["geometric_constraints"]  # type: dict
+    design_props = ghe_dict["design"]  # type: dict
+
+    all_building_props = inputs['building']
+    single_building_key = list(all_building_props.keys())[0]
+    single_building = all_building_props[single_building_key]
+
+    if 'loads' in inputs:
+        # maybe in this case we are just going to read ground loads directly?
+        ground_load_props = inputs["loads"]["ground_loads"]  # type: list
+        ghe.set_ground_loads_from_hourly_list(ground_load_props)
+    else:
+        heat_pump = HeatPump(single_building['name'])
+        heat_pump.set_fixed_cop(single_building['cop'])
+        loads_file_path = Path(single_building['loads']).resolve()
+        heat_pump.set_loads_from_file(loads_file_path)
+        # TODO: I know this is not right
+        ghe_loads_raw = loads_file_path.read_text().strip().split('\n')
+        ghe_loads_float = [float(x) for x in ghe_loads_raw]
+        ghe.set_ground_loads_from_hourly_list(ghe_loads_float)
 
     ghe.set_fluid(**fluid_props, throw=False)
     ghe.set_grout(**grout_props)
@@ -796,10 +824,11 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         diameter=borehole_props["diameter"],
     )
 
-    ghe.set_ground_loads_from_hourly_list(ground_load_props)
     max_bh = design_props.get("max_boreholes", None)
     continue_if_design_unmet = design_props.get("continue_if_design_unmet", False)
+    sim_control = inputs["simulation-control"]
     ghe.set_simulation_parameters(
+        num_months=sim_control['simulation-months'],
         max_boreholes=max_bh,
         continue_if_design_unmet=continue_if_design_unmet,
     )
@@ -808,7 +837,10 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         return 1
 
     if ghe.geom_type == DesignGeomType.RECTANGLE:
+        # max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
         ghe.set_geometry_constraints_rectangle(
+            min_height=constraint_props["min_height"],
+            max_height=constraint_props["max_height"],
             length=constraint_props["length"],
             width=constraint_props["width"],
             b_min=constraint_props["b_min"],
@@ -859,7 +891,12 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         print("Geometry constraint method not supported.", file=stderr)
         return 1
 
-    ghe.set_design(flow_rate=design_props["flow_rate"], flow_type_str=design_props["flow_type"], throw=False)
+    # self, flow_rate: float, flow_type_str: str, max_eft: float, min_eft: float, throw: bool = True
+    ghe.set_design(
+        flow_rate=design_props["flow_rate"], flow_type_str=design_props["flow_type"],
+        min_eft=design_props["min_eft"], max_eft=design_props["max_eft"],
+        throw=False
+    )
 
     ghe.find_design(throw=False)
     ghe.prepare_results("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")

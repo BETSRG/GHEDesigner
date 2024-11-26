@@ -2,52 +2,47 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
   "properties": {
-    "fluid": {
-      "type": "object",
-      "description": "Object used to define parameters related to the circulation fluid."
+    "topology": {
+      "type": "array",
+      "description": "A list of name/type map objects that define the system topology."
     },
-    "grout": {
+    "fluids": {
       "type": "object",
-      "description": "Object used to define parameters related to grout material."
+      "description": "A map of available fluid definition objects."
     },
-    "soil": {
+    "building": {
       "type": "object",
-      "description": "Object used to define parameters related to soil material."
+      "description": "A map of available building definition objects."
     },
-    "pipe": {
+    "ground-heat-exchanger": {
       "type": "object",
-      "description": "Object used to define parameters related the pipes."
+      "description": "A collection of objects that define a ground heat exchanger system."
     },
-    "borehole": {
+    "pump": {
       "type": "object",
-      "description": "Object used to define parameters related the borehole."
+      "description": ""
     },
-    "simulation": {
+    "towers": {
       "type": "object",
-      "description": "Object used to define parameters related to simulation."
+      "description": ""
     },
-    "geometric_constraints": {
+    "generic-loads": {
       "type": "object",
-      "description": "Object used to define geometric constraint parameters for the selected design algorithm."
+      "description": ""
     },
-    "design": {
+    "simulation-control": {
       "type": "object",
-      "description": "Object used to define parameters related to design and sizing."
-    },
-    "loads": {
-      "type": "object",
-      "description": "Object used to define loads for design and sizing."
+      "description": ""
     }
   },
   "required": [
-    "fluid",
-    "grout",
-    "soil",
-    "pipe",
-    "borehole",
-    "simulation",
-    "geometric_constraints",
-    "design",
-    "loads"
+    "topology",
+    "fluids",
+    "building",
+    "ground-heat-exchanger",
+    "pump",
+    "towers",
+    "generic-loads",
+    "simulation-control"
   ]
 }

@@ -9,7 +9,7 @@
   ],
   "buildings": {
     "building 1": {
-
+      "height": 20
     }
   },
   "fluid": {
