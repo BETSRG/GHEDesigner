@@ -822,6 +822,12 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         heat_pump = HeatPump(single_building["name"])
         heat_pump.set_fixed_cop(single_building["cop"])
         loads_file_path = Path(single_building["loads"]).resolve()
+        if not loads_file_path.exists():  # TODO: I'll try to find it relative to repo/tests/ for now...
+            this_file = Path(__file__).resolve()
+            ghe_dir = this_file.parent
+            ghe_designer_dir = ghe_dir.parent
+            tests_dir = ghe_designer_dir / "tests"
+            loads_file_path = tests_dir / single_building["loads"]
         heat_pump.set_loads_from_file(loads_file_path)
         # TODO: I know this is not right
         ghe_loads_raw = loads_file_path.read_text().strip().split("\n")
