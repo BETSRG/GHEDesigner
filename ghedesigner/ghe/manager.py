@@ -508,7 +508,7 @@ class GroundHeatExchanger:
         self,
         max_height: float,
         min_height: float,
-        perimeter_spacing_ratio: float | None,
+        perimeter_spacing_ratio: float,
         max_spacing: float,
         min_spacing: float,
         spacing_step: float,
@@ -939,7 +939,7 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         )
     elif ghe.geom_type == DesignGeomType.ROWWISE:
         # use perimeter calculations if present
-        perimeter_spacing_ratio = constraint_props.get("perimeter_spacing_ratio")
+        perimeter_spacing_ratio = constraint_props.get("perimeter_spacing_ratio", 0.0)
 
         ghe.set_geometry_constraints_rowwise(
             min_height=constraint_props["min_height"],

@@ -8,7 +8,7 @@ from ghedesigner.enums import DesignGeomType
 
 class GeometricConstraints:
     def __init__(self) -> None:
-        self.type: DesignGeomType | None = None
+        self.type: DesignGeomType = DesignGeomType.NONE
 
     @abstractmethod
     def to_input(self):

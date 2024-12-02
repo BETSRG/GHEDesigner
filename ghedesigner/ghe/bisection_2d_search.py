@@ -56,7 +56,7 @@ class Bisection2D(Bisection1D):
         )
 
         # TODO why is the class variable set to an empty list and not the `coordinates_domain_nested` argument?
-        self.coordinates_domain_nested = []
+        # self.coordinates_domain_nested = []
         self.calculated_temperatures_nested = []
         # Tack on one borehole at the beginning to provide a high excess temperature
         outer_domain = [coordinates_domain_nested[0][0]]
