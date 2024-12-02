@@ -250,6 +250,48 @@ class GHE(BaseGHE):
         # list of change in borehole wall temperatures
         self.dTb: list[float] = []
 
+    # def as_dict(self) -> dict:
+    #     output = {
+    #         "base": super().as_dict(),
+    #     }
+    #
+    #     results = {}
+    #     if len(self.hp_eft) > 0:
+    #         max_hp_eft = max(self.hp_eft)
+    #         min_hp_eft = min(self.hp_eft)
+    #         results["max_hp_entering_temp"] = {"value": max_hp_eft, "units": "C"}
+    #         results["min_hp_entering_temp"] = {"value": min_hp_eft, "units": "C"}
+    #         t_excess = self.cost(max_hp_eft, min_hp_eft)
+    #         results["excess_fluid_temperature"] = {"value": t_excess, "units": "C"}
+    #     results["peak_load_analysis"] = self.hybrid_load.as_dict()
+    #
+    #     g_function = {
+    #         "coordinates (x[m], y[m])": list(self.gFunction.bore_locations),
+    #     }
+    #     b_over_h = self.B_spacing / self.bhe.b.H
+    #     g, _ = self.grab_g_function(b_over_h)
+    #     total_g_values = g.x.size
+    #     number_lts_g_values = 27
+    #     number_sts_g_values = 50
+    #     sts_step_size = floor((total_g_values - number_lts_g_values) / number_sts_g_values)
+    #     lntts = []
+    #     g_values = []
+    #     for idx in range(0, (total_g_values - number_lts_g_values), sts_step_size):
+    #         lntts.append(g.x[idx].tolist())
+    #         g_values.append(g.y[idx].tolist())
+    #     lntts += g.x[total_g_values - number_lts_g_values : total_g_values].tolist()
+    #     g_values += g.y[total_g_values - number_lts_g_values : total_g_values].tolist()
+    #     pairs = zip(lntts, g_values)
+    #     for lntts_val, g_val in pairs:
+    #         # TODO why is this attempting to append a string to a dictionary??
+    #         output += f"{lntts_val:0.4f}\t{g_val:0.4f}"
+    #     g_function["lntts, g"] = [*pairs]
+    #
+    #     results["g_function_information"] = g_function
+    #     output["simulation_results"] = results
+    #
+    #     return output
+
     def simulate(self, method: TimestepType):
         b = self.B_spacing
         b_over_h = b / self.bhe.b.H

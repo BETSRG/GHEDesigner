@@ -66,7 +66,7 @@ class GHEDesignerWindow(Tk):
             # noinspection PyBroadException
             try:
                 task = self._gui_queue.get(block=False)
-                self.after_idle(task)
+                self.after_idle(task, [])
             except Exception:  # noqa: BLE001
                 break
         self.after(100, self._check_queue)

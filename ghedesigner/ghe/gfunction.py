@@ -255,26 +255,26 @@ class GFunction:
                 self.interpolation_table["g"].append(f)
             # create interpolation tables for 'D' and 'r_b' by height
             keys = list(self.r_b_values.keys())
-            height_values = []
+            height_values_2 = []
             rb_values: list = []
             for h in keys:
-                height_values.append(float(h))
+                height_values_2.append(float(h))
                 rb_values.append(self.r_b_values[h])
             if kind == "lagrange":
-                rb_f = lagrange(height_values, rb_values)
+                rb_f = lagrange(height_values_2, rb_values)
             else:
                 # interpolation function for rb values by H equivalent
-                rb_f = interp1d(height_values, rb_values, kind=kind, fill_value=fill_value)
+                rb_f = interp1d(height_values_2, rb_values, kind=kind, fill_value=fill_value)
             self.interpolation_table["rb"] = rb_f
 
         # create the g-function by interpolating at each ln(t/ts) value
         rb_value = self.interpolation_table["rb"](h_eq)
-        g_function = []
+        g_function_l = []
         for i in range(len(self.log_time)):
             f = self.interpolation_table["g"][i]
             g = f(h_eq).tolist()
-            g_function.append(g)
-        return g_function, rb_value, self.d, h_eq
+            g_function_l.append(g)
+        return g_function_l, rb_value, self.d, h_eq
 
     @staticmethod
     def borehole_radius_correction(g_function: list, rb: float, rb_star: float):

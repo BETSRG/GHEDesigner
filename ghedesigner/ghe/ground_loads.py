@@ -144,6 +144,7 @@ class HybridLoad:
 
         # Store the index of the last month's hours
         hours_in_previous_months: int = 0
+        i: int
         for i in range(1, len(self.days_in_month)):
             hours_in_month = HRS_IN_DAY * self.days_in_month[i]
             # Slice the hours in this current month
@@ -291,7 +292,7 @@ class HybridLoad:
 
         if delta_t_fluid_nom_max > 0.0:
             f = interp1d(delta_t_fluid_peak, hour_time, fill_value="extrapolate")
-            peak_duration = f(delta_t_fluid_nom_max).tolist()
+            peak_duration = f(delta_t_fluid_nom_max).tolist()  # TODO: tolist is not showing as available locally
         else:
             peak_duration = 1.0e-6
 

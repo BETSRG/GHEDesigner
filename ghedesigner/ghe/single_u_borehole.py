@@ -48,7 +48,8 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.calc_fluid_pipe_resistance()
 
         # Initialize pygfunction SingleUTube base class
-        super().__init__(
+        gt.pipes.SingleUTube.__init__(
+            self,
             self.pipe.pos,
             self.pipe.r_in,
             self.pipe.r_out,

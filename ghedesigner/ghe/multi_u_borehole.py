@@ -146,7 +146,8 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         # compute resistances required to construct inherited class
         self.calc_fluid_pipe_resistance()
 
-        super().__init__(
+        gt.pipes.MultipleUTube.__init__(
+            self,
             self.pipe.pos,
             self.pipe.r_in,
             self.pipe.r_out,

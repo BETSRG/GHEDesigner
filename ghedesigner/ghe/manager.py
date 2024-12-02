@@ -6,6 +6,7 @@ from json import dumps, loads
 from pathlib import Path
 from sys import exit, stderr
 from time import time
+from typing import Optional
 
 import click
 from jsonschema import ValidationError
@@ -58,7 +59,7 @@ class GroundHeatExchanger:
         self._pipe: Pipe | None = None
         self.pipe_type: BHPipeType | None = None
         self._borehole: Borehole | None = None
-        self._simulation_parameters: SimulationParameters | None = None
+        self._simulation_parameters: Optional[SimulationParameters] = None
         self._ground_loads: list[float] | None = None
         # OK so geometric_constraints is tricky.  We have base classes, yay!
         # Unfortunately, the functionality between the child classes is not actually
@@ -901,9 +902,15 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             b_max=constraint_props["b_max"],
         )
     elif ghe.geom_type == DesignGeomType.NEARSQUARE:
-        ghe.set_geometry_constraints_near_square(b=constraint_props["b"], length=constraint_props["length"])
+        ghe.set_geometry_constraints_near_square(
+            min_height=constraint_props["min_height"],
+            max_height=constraint_props["max_height"],
+            b=constraint_props["b"], length=constraint_props["length"]
+        )
     elif ghe.geom_type == DesignGeomType.BIRECTANGLE:
         ghe.set_geometry_constraints_bi_rectangle(
+            min_height=constraint_props["min_height"],
+            max_height=constraint_props["max_height"],
             length=constraint_props["length"],
             width=constraint_props["width"],
             b_min=constraint_props["b_min"],
@@ -912,6 +919,8 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         )
     elif ghe.geom_type == DesignGeomType.BIZONEDRECTANGLE:
         ghe.set_geometry_constraints_bi_zoned_rectangle(
+            min_height=constraint_props["min_height"],
+            max_height=constraint_props["max_height"],
             length=constraint_props["length"],
             width=constraint_props["width"],
             b_min=constraint_props["b_min"],
@@ -920,6 +929,8 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         )
     elif ghe.geom_type == DesignGeomType.BIRECTANGLECONSTRAINED:
         ghe.set_geometry_constraints_bi_rectangle_constrained(
+            min_height=constraint_props["min_height"],
+            max_height=constraint_props["max_height"],
             b_min=constraint_props["b_min"],
             b_max_x=constraint_props["b_max_x"],
             b_max_y=constraint_props["b_max_y"],
@@ -931,6 +942,8 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         perimeter_spacing_ratio = constraint_props.get("perimeter_spacing_ratio")
 
         ghe.set_geometry_constraints_rowwise(
+            min_height=constraint_props["min_height"],
+            max_height=constraint_props["max_height"],
             perimeter_spacing_ratio=perimeter_spacing_ratio,
             max_spacing=constraint_props["max_spacing"],
             min_spacing=constraint_props["min_spacing"],
