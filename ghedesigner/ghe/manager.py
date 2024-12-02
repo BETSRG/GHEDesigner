@@ -6,7 +6,6 @@ from json import dumps, loads
 from pathlib import Path
 from sys import exit, stderr
 from time import time
-from typing import Optional
 
 import click
 from jsonschema import ValidationError
@@ -59,7 +58,7 @@ class GroundHeatExchanger:
         self._pipe: Pipe | None = None
         self.pipe_type: BHPipeType | None = None
         self._borehole: Borehole | None = None
-        self._simulation_parameters: Optional[SimulationParameters] = None
+        self._simulation_parameters: SimulationParameters | None = None
         self._ground_loads: list[float] | None = None
         # OK so geometric_constraints is tricky.  We have base classes, yay!
         # Unfortunately, the functionality between the child classes is not actually
@@ -904,7 +903,8 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         ghe.set_geometry_constraints_near_square(
             min_height=constraint_props["min_height"],
             max_height=constraint_props["max_height"],
-            b=constraint_props["b"], length=constraint_props["length"]
+            b=constraint_props["b"],
+            length=constraint_props["length"],
         )
     elif ghe.geom_type == DesignGeomType.BIRECTANGLE:
         ghe.set_geometry_constraints_bi_rectangle(

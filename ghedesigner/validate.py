@@ -22,7 +22,7 @@ def validate_schema_instance(schema_file_name: str, instance: dict, error_msg: s
         schema = loads(schema_path.read_text())
         validate(instance=instance, schema=schema)
         return 0
-    except ValidationError as ve:
+    except ValidationError:
         print(error_msg, file=sys.stderr)
         return 1
 

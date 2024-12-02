@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import ClassVar, Type
+from typing import ClassVar
 from unittest import TestCase
 
 LOG_FILE: Path | None = None
@@ -47,7 +47,7 @@ class GHEBaseTest(TestCase):
         self.log("Tests Initialized")
 
     @classmethod
-    def setUpClass(cls: Type['GHEBaseTest']) -> None:
+    def setUpClass(cls: type[GHEBaseTest]) -> None:
         cur_file = Path(__file__).resolve()
         cls.tests_directory = cur_file.parent
         cls.test_data_directory = cls.tests_directory / "test_data"
