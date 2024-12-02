@@ -1,49 +1,64 @@
 {
-  "fluid": {
-    "fluid_name": "WATER",
-    "concentration_percent": 0,
-    "temperature": 20
+  "topology": [
+    {
+      "type": "ground-heat-exchanger",
+      "name": "ghe1"
+    }
+  ],
+  "fluids": {
+    "pure_water": {
+      "fluid_name": "WATER",
+      "concentration_percent": 0,
+      "temperature": 20
+    }
   },
-  "grout": {
-    "conductivity": 1,
-    "rho_cp": 3901000
+  "ground-heat-exchanger": {
+    "ghe1": {
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 18.3
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "geometric_constraints": {
+        "length": 100,
+        "width": 100,
+        "b_min": 2,
+        "b_max_x": 10,
+        "b_max_y": 12,
+        "max_height": 135,
+        "min_height": 60,
+        "method": "BIZONEDRECTANGLE"
+      },
+      "design": {
+        "flow_rate": 0.5,
+        "flow_type": "BOREHOLE",
+        "max_eft": 35,
+        "min_eft": 5
+      }
+    }
   },
-  "soil": {
-    "conductivity": 2,
-    "rho_cp": 2343493,
-    "undisturbed_temp": 18.3
-  },
-  "pipe": {
-    "inner_diameter": 0.03404,
-    "outer_diameter": 0.04216,
-    "shank_spacing": 0.01856,
-    "roughness": 0.000001,
-    "conductivity": 0.4,
-    "rho_cp": 1542000,
-    "arrangement": "SINGLEUTUBE"
-  },
-  "borehole": {
-    "buried_depth": 2,
-    "diameter": 0.14
-  },
-  "simulation": {
-    "num_months": 240
-  },
-  "geometric_constraints": {
-    "length": 100,
-    "width": 100,
-    "b_min": 2,
-    "b_max_x": 10,
-    "b_max_y": 12,
-    "max_height": 135,
-    "min_height": 60,
-    "method": "BIZONEDRECTANGLE"
-  },
-  "design": {
-    "flow_rate": 0.5,
-    "flow_type": "BOREHOLE",
-    "max_eft": 35,
-    "min_eft": 5
+  "simulation-control": {
+    "thermal-sizing-run": false,
+    "hourly-run": false,
+    "hydraulic-run": false,
+    "simulation-months": 240
   },
   "loads": {
     "ground_loads": [

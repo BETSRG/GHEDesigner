@@ -14,14 +14,15 @@ expected_demo_results_dict = loads(expected_results_path.read_text())
 # override this with a list of Paths to JSON config files to run, or set to None to run all demo files
 files_to_debug: list[Path] = [
     # Path(
-    #     "/home/edwin/Projects/GHEDesigner/demos/find_design_bi_rectangle_constrained_single_u_tube.json"
+    #     "/home/edwin/Projects/GHEDesigner/demos/issue_97_interp_out_of_range.json"
     # ),
     # Path(
     #     "/home/edwin/Projects/GHEDesigner/demos/find_design_simple_system.json"
     # )
-    Path(__file__).parent.parent.parent / "demos" / "find_design_simple_system.json"
+    # Path(__file__).parent.parent.parent / "demos" / "find_design_simple_system.json"
 ]
 
+limit_debug_file_count = 0
 
 def abs_error_within_tolerance(val_1, val_2, delta: float = 0):
     return bool(abs(val_1 - val_2) <= delta)
@@ -32,7 +33,10 @@ def get_test_input_files() -> list[Path]:
         return files_to_debug
     demos_path = Path(__file__).parent.parent.parent / "demos"
     demo_files = demos_path.glob("*.json")
-    return list(demo_files)
+    demo_file_list = list(demo_files)
+    if limit_debug_file_count > 0:
+        return demo_file_list[:limit_debug_file_count]
+    return demo_file_list
 
 
 @pytest.mark.parametrize("demo_file_path", get_test_input_files(), ids=lambda f: "Demo: " + f.stem)

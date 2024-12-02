@@ -812,15 +812,14 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
     constraint_props: dict = ghe_dict["geometric_constraints"]
     design_props: dict = ghe_dict["design"]
 
-    all_building_props = inputs["building"]
-    single_building_key = next(iter(all_building_props.keys()))
-    single_building = all_building_props[single_building_key]
-
     if "loads" in inputs:
         # maybe in this case we are just going to read ground loads directly?
         ground_load_props: list = inputs["loads"]["ground_loads"]
         ghe.set_ground_loads_from_hourly_list(ground_load_props)
     else:
+        all_building_props = inputs["building"]
+        single_building_key = next(iter(all_building_props.keys()))
+        single_building = all_building_props[single_building_key]
         heat_pump = HeatPump(single_building["name"])
         heat_pump.set_fixed_cop(single_building["cop"])
         loads_file_path = Path(single_building["loads"]).resolve()

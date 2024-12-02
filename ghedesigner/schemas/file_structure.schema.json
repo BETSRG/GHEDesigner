@@ -38,11 +38,7 @@
   "required": [
     "topology",
     "fluids",
-    "building",
     "ground-heat-exchanger",
-    "pump",
-    "towers",
-    "generic-loads",
     "simulation-control"
   ]
 }

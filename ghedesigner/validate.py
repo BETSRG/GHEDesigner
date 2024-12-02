@@ -22,7 +22,7 @@ def validate_schema_instance(schema_file_name: str, instance: dict, error_msg: s
         schema = loads(schema_path.read_text())
         validate(instance=instance, schema=schema)
         return 0
-    except ValidationError:
+    except ValidationError as ve:
         print(error_msg, file=sys.stderr)
         return 1
 
@@ -136,7 +136,7 @@ def validate_input_file(input_file_path: Path) -> int:
     err_count += validate_file_structure(instance)
     err_count += validate_topology(instance["topology"])
     err_count += validate_fluid(instance["fluids"])
-    err_count += validate_building(instance["building"])
+    # err_count += validate_building(instance["building"])
     # err_count += validate_pipe(instance["pipe"])
     # err_count += validate_simulation(instance["simulation"])
     # err_count += validate_geometric(instance["geometric_constraints"])
