@@ -65,7 +65,9 @@ class TestFindRowWiseDesign(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_rowwise(max_height=200, min_height=60,
+        ghe.set_geometry_constraints_rowwise(
+            max_height=200,
+            min_height=60,
             perimeter_spacing_ratio=None,
             min_spacing=10.0,
             max_spacing=20.0,
@@ -81,10 +83,10 @@ class TestFindRowWiseDesign(GHEBaseTest):
         output_file_directory = self.test_outputs_directory / "TestFindRowWiseDesignWithoutPerimeterSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(197.3, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(41, len(nbh))
+        assert len(nbh) == 41
 
     def test_find_row_wise_design_with_perimeter(self):
         ghe = GroundHeatExchanger()
@@ -102,7 +104,9 @@ class TestFindRowWiseDesign(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_rowwise(max_height=200, min_height=60,
+        ghe.set_geometry_constraints_rowwise(
+            max_height=200,
+            min_height=60,
             perimeter_spacing_ratio=0.8,
             min_spacing=10.0,
             max_spacing=20.0,
@@ -118,7 +122,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
         output_file_directory = self.test_outputs_directory / "TestFindRowWiseDesignWithPerimeterSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(198.7, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(40, len(nbh))
+        assert len(nbh) == 40

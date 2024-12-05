@@ -6,7 +6,7 @@ from ghedesigner.constants import PI_OVER_2, TWO_PI
 
 
 class Shapes:
-    def __init__(self, c):
+    def __init__(self, c) -> None:
         """
         constructs a shape object
         """

@@ -1,14 +1,16 @@
-from math import sqrt
-from typing import Optional
+from __future__ import annotations
 
+from math import sqrt
+
+import numpy as np
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
+from ghedesigner.ghe.geometry.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-from ghedesigner.ghe.geometry.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
 from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.utilities import borehole_spacing, eskilson_log_times
 
 
@@ -27,14 +29,14 @@ class RowWiseModifiedBisectionSearch:
         hourly_extraction_ground_loads: list,
         geometric_constraints,
         method: TimestepType,
-        flow_type: FlowConfigType.BOREHOLE,
+        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         max_iter: int = 10,
         disp: bool = False,
         search: bool = True,
         advanced_tracking: bool = True,
         field_type: str = "rowwise",
         load_years=None,
-    ):
+    ) -> None:
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
         if load_years is None:
@@ -46,7 +48,7 @@ class RowWiseModifiedBisectionSearch:
         self.soil = soil
         self.borehole = borehole
         self.geometricConstraints = geometric_constraints
-        self.searchTracker = []
+        self.searchTracker: list[list] = []
         self.fieldType = field_type
         # Flow rate tracking
         self.V_flow = v_flow
@@ -58,11 +60,11 @@ class RowWiseModifiedBisectionSearch:
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.max_iter = max_iter
         self.disp = disp
-        self.ghe: Optional[GHE] = None
-        self.calculated_temperatures = {}
+        self.ghe: GHE | None = None
+        self.calculated_temperatures: dict = {}
         if advanced_tracking:
             self.advanced_tracking = [["TargetSpacing", "Field Specifier", "nbh", "ExcessTemperature"]]
-            self.checkedFields = []
+            self.checkedFields: list[np.ndarray[tuple[np.float64, np.float64]]] = []
         if search:
             self.selected_coordinates, self.selected_specifier = self.search()
             self.initialize_ghe(
@@ -79,7 +81,7 @@ class RowWiseModifiedBisectionSearch:
             v_flow_borehole = self.V_flow / len(coordinates)
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
         else:
-            raise ValueError("The flow argument should be either `borehole`" "or `system`.")
+            raise ValueError("The flow argument should be either `borehole` or `system`.")
         return v_flow_system, m_flow_borehole
 
     def initialize_ghe(self, coordinates, h, field_specifier="N/A"):

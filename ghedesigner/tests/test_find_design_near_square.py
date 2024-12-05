@@ -29,7 +29,9 @@ class TestFindNearSquareDesign(GHEBaseTest):
         b = 5.0
         number_of_boreholes = 32
         length = length_of_side(number_of_boreholes, b)
-        ghe.set_geometry_constraints_near_square(max_height=135, min_height=60, b=b, length=length)  # borehole spacing and field side length
+        ghe.set_geometry_constraints_near_square(
+            max_height=135, min_height=60, b=b, length=length
+        )  # borehole spacing and field side length
         ghe.set_design(flow_rate=0.3, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
 
@@ -41,10 +43,10 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.prepare_results(project_name, note, author, iteration_name)
         ghe.write_output_files(output_file_directory, "_SU")
         # can grab data off the outputs dict
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(125.0, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(157, len(nbh))
+        assert len(nbh) == 157
 
     def test_find_double_u_tube_parallel_design(self):
         ghe = GroundHeatExchanger()
@@ -79,10 +81,10 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.write_output_files(output_file_directory, "_DU")
 
         # can grab data off the outputs dict
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(u_tube_height, 130.5, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(145, len(nbh))
+        assert len(nbh) == 145
 
     def test_find_double_u_tube_series_design(self):
         ghe = GroundHeatExchanger()
@@ -117,10 +119,10 @@ class TestFindNearSquareDesign(GHEBaseTest):
         ghe.write_output_files(output_file_directory, "_DU")
 
         # can grab data off the outputs dict
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(u_tube_height, 130.7, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(145, len(nbh))
+        assert len(nbh) == 145
 
     def test_find_coaxial_pipe_design(self):
         ghe = GroundHeatExchanger()
@@ -151,7 +153,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         output_file_directory = self.test_outputs_directory / "TestFindRectangleDesignCoaxialUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(122.7, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(145, len(nbh))
+        assert len(nbh) == 145

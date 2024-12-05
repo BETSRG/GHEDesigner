@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from math import floor
-from typing import Union
 
 from pygfunction.boreholes import Borehole
 
+from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
+from ghedesigner.ghe.bisection_1d_search import Bisection1D
+from ghedesigner.ghe.bisection_2d_search import Bisection2D
+from ghedesigner.ghe.bisection_zd_search import BisectionZD
 from ghedesigner.ghe.geometry.domains import (
     bi_rectangle_nested,
     bi_rectangle_zoned_nested,
@@ -11,7 +16,6 @@ from ghedesigner.ghe.geometry.domains import (
     rectangular,
     square_and_near_square,
 )
-from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
 from ghedesigner.ghe.geometry.geometry import (
     GeometricConstraints,
     GeometricConstraintsBiRectangle,
@@ -21,14 +25,11 @@ from ghedesigner.ghe.geometry.geometry import (
     GeometricConstraintsRectangle,
     GeometricConstraintsRowWise,
 )
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-from ghedesigner.ghe.bisection_1d_search import Bisection1D
-from ghedesigner.ghe.bisection_2d_search import Bisection2D
-from ghedesigner.ghe.bisection_zd_search import BisectionZD
 from ghedesigner.ghe.rowwise_search import RowWiseModifiedBisectionSearch
 from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 
-AnyBisectionType = Union[Bisection1D, Bisection2D, BisectionZD, RowWiseModifiedBisectionSearch]
+AnyBisectionType = Bisection1D | Bisection2D | BisectionZD | RowWiseModifiedBisectionSearch
 
 
 class DesignBase:
@@ -47,7 +48,7 @@ class DesignBase:
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
-    ):
+    ) -> None:
         if load_years is None:
             load_years = [2019]
         self.load_years = load_years
@@ -83,7 +84,7 @@ class DesignBase:
         pass
 
     def to_input(self) -> dict:
-        return {'flow_rate': self.V_flow, 'flow_type': self.flow_type.name}
+        return {"flow_rate": self.V_flow, "flow_type": self.flow_type.name}
 
 
 class DesignNearSquare(DesignBase):
@@ -102,7 +103,7 @@ class DesignNearSquare(DesignBase):
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
-    ):
+    ) -> None:
         super().__init__(
             v_flow,
             _borehole,
@@ -171,7 +172,7 @@ class DesignRectangle(DesignBase):
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
-    ):
+    ) -> None:
         super().__init__(
             v_flow,
             _borehole,
@@ -235,7 +236,7 @@ class DesignBiRectangle(DesignBase):
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
-    ):
+    ) -> None:
         super().__init__(
             v_flow,
             _borehole,
@@ -301,7 +302,7 @@ class DesignBiZoned(DesignBase):
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
-    ):
+    ) -> None:
         super().__init__(
             v_flow,
             _borehole,
@@ -366,7 +367,7 @@ class DesignBiRectangleConstrained(DesignBase):
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
         keep_contour=[True, False],
-    ):
+    ) -> None:
         super().__init__(
             v_flow,
             _borehole,
@@ -432,7 +433,7 @@ class DesignRowWise(DesignBase):
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
-    ):
+    ) -> None:
         super().__init__(
             v_flow,
             _borehole,

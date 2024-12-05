@@ -1,60 +1,63 @@
 {
-  "version": "2.0",
+  "topology": [
+    { "type": "building", "name": "building1" },
+    { "type": "ground-heat-exchanger", "name": "ghe1" }
+  ],
   "fluids": {
     "pure water": {
       "fluid_name": "WATER",
-      "concentration_percent": 0.0,
+      "concentration_percent": 0,
       "temperature": 20
     }
   },
   "building": {
-    "heat-pumps": [
-      {
-        "name": "load 1",
-        "loads": "ghedesigner/tests/test_data/ground_loads.csv",
-        "cop": 3,
-        "capacity": "AUTOSIZE"
-      }
-    ]
+    "building1": {
+      "name": "load 1",
+      "loads": "test_data/test_bldg_loads.csv",
+      "cop": 3,
+      "capacity": "AUTOSIZE"
+    }
   },
   "ground-heat-exchanger": {
-    "grout": {
-      "conductivity": 1.0,
-      "rho_cp": 3901000
-    },
-    "soil": {
-      "conductivity": 2.0,
-      "rho_cp": 2343493,
-      "undisturbed_temp": 18.3
-    },
-    "pipe": {
-      "inner_diameter": 0.03404,
-      "outer_diameter": 0.04216,
-      "shank_spacing": 0.01856,
-      "roughness": 1e-06,
-      "conductivity": 0.4,
-      "rho_cp": 1542000,
-      "arrangement": "SINGLEUTUBE"
-    },
-    "borehole": {
-      "buried_depth": 2.0,
-      "diameter": 0.14
-    },
-    "geometric_constraints": {
-      "length": 100,
-      "width": 100,
-      "b_min": 3.0,
-      "b_max": 10.0,
-      "max_height": 135.0,
-      "min_height": 60.0,
-      "method": "RECTANGLE"
-    },
-    "design": {
-      "flow_rate": 0.5,
-      "flow_type": "BOREHOLE",
-      "max_eft": 35.0,
-      "min_eft": 5.0,
-      "max_boreholes": 200
+    "ghe1": {
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 18.3
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "geometric_constraints": {
+        "length": 100,
+        "width": 100,
+        "b_min": 3,
+        "b_max": 10,
+        "max_height": 135,
+        "min_height": 60,
+        "method": "RECTANGLE"
+      },
+      "design": {
+        "flow_rate": 0.5,
+        "flow_type": "BOREHOLE",
+        "max_eft": 35,
+        "min_eft": 5,
+        "max_boreholes": 200
+      }
     }
   },
   "pump": {},
@@ -65,9 +68,5 @@
     "hourly-run": true,
     "hydraulic-run": true,
     "simulation-months": 240
-  },
-  "topology": [
-    "building",
-    "ghe"
-  ]
+  }
 }

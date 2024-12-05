@@ -1,14 +1,21 @@
 from math import ceil, floor
 
-from ghedesigner.ghe.geometry.coordinates import c_shape, l_shape, lop_u, rectangle, transpose_coordinates, zoned_rectangle
+from ghedesigner.ghe.geometry.coordinates import (
+    c_shape,
+    l_shape,
+    lop_u,
+    rectangle,
+    transpose_coordinates,
+    zoned_rectangle,
+)
 from ghedesigner.ghe.geometry.feature_recognition import determine_largest_rectangle, remove_cutout
 
 
 def square_and_near_square(lower: int, upper: int, b: float):
     if lower < 1 or upper < 1:
-        raise ValueError("The lower and upper arguments must be positive" "integer values.")
+        raise ValueError("The lower and upper arguments must be positive integer values.")
     if upper < lower:
-        raise ValueError("The lower argument should be less than or equal to" "the upper.")
+        raise ValueError("The lower argument should be less than or equal to the upper.")
 
     field_descriptors = []
     coordinates_domain = []

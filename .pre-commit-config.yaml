@@ -1,34 +1,43 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
-      - id: check-ast
       - id: check-added-large-files
-        args: ['--maxkb=5000']
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
-      - id: check-toml
-      - id: check-yaml
-      - id: check-json
-      - id: name-tests-test
-        args: ["--pytest-test-first"]
-      - id: fix-byte-order-marker
+        args: ["--maxkb=5000"]
+      - id: check-ast
+      - id: check-builtin-literals
       - id: check-case-conflict
       - id: check-docstring-first
       - id: check-executables-have-shebangs
+      - id: check-illegal-windows-names
+      - id: check-json
       - id: check-merge-conflict
+      - id: check-toml
+      - id: check-xml
+      - id: check-yaml
       - id: debug-statements
       - id: detect-private-key
-  # - repo: meta
-    # hooks:
-      # - id: check-useless-excludes # Ensure the exclude syntax is correct
-      # - id: check-hooks-apply # Fails if a hook doesn't apply to any file
+      - id: end-of-file-fixer
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
+      # - id: name-tests-test
+      #   args: ["--pytest-test-first"]
+      - id: trailing-whitespace
   - repo: https://github.com/crate-ci/typos
-    rev: v1.24.1
+    rev: v1.27.3
     hooks:
       - id: typos
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types_or: [json, markdown, toml, yaml]
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.3
+    rev: v0.7.3
     hooks:
       # Run the linter
       - id: ruff

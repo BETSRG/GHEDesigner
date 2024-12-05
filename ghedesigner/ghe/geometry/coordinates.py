@@ -1,7 +1,7 @@
-from typing import List, Tuple, Union
+from __future__ import annotations
 
 
-def transpose_coordinates(coordinates) -> List[Tuple[float, float]]:
+def transpose_coordinates(coordinates) -> list[tuple[float, float]]:
     coordinates_transposed = []
     for x, y in coordinates:
         coordinates_transposed.append((y, x))
@@ -11,10 +11,10 @@ def transpose_coordinates(coordinates) -> List[Tuple[float, float]]:
 def rectangle(
     num_bh_x: int,
     num_bh_y: int,
-    spacing_x: Union[int, float],
-    spacing_y: Union[int, float],
+    spacing_x: int | float,
+    spacing_y: int | float,
     origin=(0, 0),
-) -> List[Tuple[float, float]]:
+) -> list[tuple[float, float]]:
     """
     Creates a rectangular borehole field.
 
@@ -45,8 +45,8 @@ def rectangle(
 
 
 def open_rectangle(
-    num_bh_x: int, num_bh_y: int, spacing_x: Union[int, float], spacing_y: Union[int, float]
-) -> List[Tuple[float, float]]:
+    num_bh_x: int, num_bh_y: int, spacing_x: int | float, spacing_y: int | float
+) -> list[tuple[float, float]]:
     """
     Creates a rectangular borehole field without center boreholes.
 
@@ -82,9 +82,7 @@ def open_rectangle(
     return open_r
 
 
-def c_shape(
-    n_x_1: int, n_y: int, b_x: Union[int, float], b_y: Union[int, float], n_x_2: int
-) -> List[Tuple[float, float]]:
+def c_shape(n_x_1: int, n_y: int, b_x: int | float, b_y: int | float, n_x_2: int) -> list[tuple[float, float]]:
     c = []
     for i in range(n_x_1):
         c.append((i * b_x, 0.0))
@@ -100,9 +98,7 @@ def c_shape(
     return c
 
 
-def lop_u(
-    n_x: int, n_y_1: int, b_x: Union[int, float], b_y: Union[int, float], n_y_2: int
-) -> List[Tuple[float, float]]:
+def lop_u(n_x: int, n_y_1: int, b_x: int | float, b_y: int | float, n_y_2: int) -> list[tuple[float, float]]:
     _lop_u = []
     for i in range(n_x):
         _lop_u.append((i * b_x, 0.0))
@@ -115,7 +111,7 @@ def lop_u(
     return _lop_u
 
 
-def l_shape(n_x: int, n_y: int, b_x: Union[int, float], b_y: Union[int, float]) -> List[Tuple[float, float]]:
+def l_shape(n_x: int, n_y: int, b_x: int | float, b_y: int | float) -> list[tuple[float, float]]:
     l_shape_object = []
     for i in range(n_x):
         l_shape_object.append((i * b_x, 0.0))
@@ -126,8 +122,8 @@ def l_shape(n_x: int, n_y: int, b_x: Union[int, float], b_y: Union[int, float]) 
 
 
 def zoned_rectangle(
-    n_x: int, n_y: int, b_x: Union[int, float], b_y: Union[int, float], n_ix: int, n_it: int
-) -> List[Tuple[float, float]]:
+    n_x: int, n_y: int, b_x: int | float, b_y: int | float, n_ix: int, n_it: int
+) -> list[tuple[float, float]]:
     """
     Create a zoned rectangle
 

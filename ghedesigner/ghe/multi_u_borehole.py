@@ -1,22 +1,22 @@
+from __future__ import annotations
+
 from copy import deepcopy
-from typing import Optional, Tuple
-
-from numpy import sqrt, log
-from pygfunction.boreholes import Borehole
-
-from ghedesigner.constants import pi, TWO_PI
-from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
-from ghedesigner.ghe.single_u_borehole import SingleUTube
-from ghedesigner.enums import DoubleUTubeConnType
-from ghedesigner.utilities import solve_root
-from ghedesigner.media import Pipe, GHEFluid, Grout, Soil
 
 import pygfunction as gt
+from numpy import log, sqrt
+from pygfunction.boreholes import Borehole
+
+from ghedesigner.constants import TWO_PI, pi
+from ghedesigner.enums import DoubleUTubeConnType
+from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
+from ghedesigner.ghe.single_u_borehole import SingleUTube
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.utilities import solve_root
 
 
 class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
     @staticmethod
-    def calc_mass_flow_pipe(m_flow_borehole: float, config: Optional[DoubleUTubeConnType] = None) -> float:
+    def calc_mass_flow_pipe(m_flow_borehole: float, config: DoubleUTubeConnType | None = None) -> float:
         if config == DoubleUTubeConnType.SERIES or config is None:
             return m_flow_borehole
         elif config == DoubleUTubeConnType.PARALLEL:
@@ -125,7 +125,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         grout: Grout,
         soil: Soil,
         config=DoubleUTubeConnType.PARALLEL,
-    ):
+    ) -> None:
         self.R_p = 0.0
         self.R_f = 0.0
         self.R_fp = 0.0
@@ -146,7 +146,8 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         # compute resistances required to construct inherited class
         self.calc_fluid_pipe_resistance()
 
-        super().__init__(
+        gt.pipes.MultipleUTube.__init__(
+            self,
             self.pipe.pos,
             self.pipe.r_in,
             self.pipe.r_out,
@@ -183,7 +184,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         resist_bh_effective = self.effective_borehole_thermal_resistance(self.m_flow_borehole, self.fluid.cp)
         return resist_bh_effective
 
-    def u_tube_volumes(self) -> Tuple[float, float, float, float]:
+    def u_tube_volumes(self) -> tuple[float, float, float, float]:
         # Compute volumes for U-tube geometry
         # Effective parameters
         n = self.nPipes * 2  # Total number of tubes

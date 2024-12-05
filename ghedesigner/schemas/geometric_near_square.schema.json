@@ -32,11 +32,5 @@
       "description": "Design algorithm specified."
     }
   },
-  "required": [
-    "length",
-    "b",
-    "max_height",
-    "min_height",
-    "method"
-  ]
+  "required": ["length", "b", "max_height", "min_height", "method"]
 }

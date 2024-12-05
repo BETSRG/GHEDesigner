@@ -7,11 +7,11 @@ from json import dumps
 from math import floor
 from pathlib import Path
 
+from ghedesigner.constants import HRS_IN_DAY
+from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
 from ghedesigner.ghe.coaxial_borehole import CoaxialPipe
-from ghedesigner.constants import HRS_IN_DAY
 from ghedesigner.ghe.geometry.design import AnyBisectionType
-from ghedesigner.enums import TimestepType
 
 
 class OutputManager:
@@ -25,7 +25,7 @@ class OutputManager:
         model_name: str,
         load_method: TimestepType,
         allocated_width=100,
-    ):
+    ) -> None:
         # this constructor should take all the args to build out a full output manager
         # then the client code can decide what to do -- just access data through functions?
         # write all the data to files in a directory?
@@ -139,15 +139,6 @@ class OutputManager:
             csv_array.append([log_val, g_val, g_bhw_val])
         return csv_array
 
-    @staticmethod
-    def get_timestep_str(load_method: TimestepType):
-        if load_method == TimestepType.HYBRID:
-            return TimestepType.HYBRID.name
-        if load_method == TimestepType.HOURLY:
-            return TimestepType.HOURLY.name
-        warnings.warn("Load method not implemented")
-        return ""
-
     def get_summary_object(
         self,
         design: AnyBisectionType,
@@ -160,6 +151,12 @@ class OutputManager:
     ) -> dict:
         # gFunction LTS Table
         g_function_col_titles = ["ln(t/ts)"]
+
+        if design.ghe is None:
+            message = "Design GHE is undefined in get_summary_object."
+            print(message)
+            raise ValueError(message)
+
         for g_function_name in list(design.ghe.gFunction.g_lts):
             g_function_col_titles.append(f"H: {g_function_name:0.2f} m")
         g_function_col_titles.append(f"H: {design.ghe.bhe.b.H:0.2f} m")
@@ -173,89 +170,89 @@ class OutputManager:
             g_function_data.append(gf_row)
 
         def add_with_units(val, units):
-            return {'units': units, 'value': val}
+            return {"units": units, "value": val}
 
         # these are dependent on the # pipes in each borehole, so precalculate
         if isinstance(design.ghe.bhe.pipe.r_out, float):
             pipe_geometry = {
-                'pipe_outer_diameter': add_with_units(design.ghe.bhe.pipe.r_out * 2.0, 'm'),
-                'pipe_inner_diameter': add_with_units(design.ghe.bhe.pipe.r_in * 2.0, 'm'),
+                "pipe_outer_diameter": add_with_units(design.ghe.bhe.pipe.r_out * 2.0, "m"),
+                "pipe_inner_diameter": add_with_units(design.ghe.bhe.pipe.r_in * 2.0, "m"),
             }
             reynolds = GHEDesignerBoreholeBase.compute_reynolds(
                 design.ghe.bhe.m_flow_borehole, design.ghe.bhe.pipe.r_in, design.ghe.bhe.fluid
             )
         else:
             pipe_geometry = {
-                'inner_pipe_inner_diameter': add_with_units(design.ghe.bhe.pipe.r_in[0] * 2.0, 'm'),
-                'inner_pipe_outer_diameter': add_with_units(design.ghe.bhe.pipe.r_in[1] * 2.0, 'm'),
-                'outer_pipe_inner_diameter': add_with_units(design.ghe.bhe.pipe.r_out[0] * 2.0, 'm'),
-                'outer_pipe_outer_diameter': add_with_units(design.ghe.bhe.pipe.r_out[1] * 2.0, 'm'),
+                "inner_pipe_inner_diameter": add_with_units(design.ghe.bhe.pipe.r_in[0] * 2.0, "m"),
+                "inner_pipe_outer_diameter": add_with_units(design.ghe.bhe.pipe.r_in[1] * 2.0, "m"),
+                "outer_pipe_inner_diameter": add_with_units(design.ghe.bhe.pipe.r_out[0] * 2.0, "m"),
+                "outer_pipe_outer_diameter": add_with_units(design.ghe.bhe.pipe.r_out[1] * 2.0, "m"),
             }
             reynolds = CoaxialPipe.compute_reynolds_concentric(
                 design.ghe.bhe.m_flow_borehole, design.ghe.bhe.r_in_out, design.ghe.bhe.r_out_in, design.ghe.bhe.fluid
             )
         # build out the actual output dictionary
         output_dict = {
-            'project_name': project_name,
-            'notes': notes,
-            'model_name': model_name,
-            'simulation_time_stamp': datetime.now().strftime("%m/%d/%Y %H:%M:%S %p"),
-            'simulation_author': author,
-            'simulation_runtime': add_with_units(time, 's'),
-            'design_selection_search_log': {
-                'titles': ["Field", "Excess Temperature", "Max Temperature", "Min Temperature"],
-                'units': [" ", "(C)", "(C)", "(C)"],
-                'data': design.searchTracker,
+            "project_name": project_name,
+            "notes": notes,
+            "model_name": model_name,
+            "simulation_time_stamp": datetime.now().strftime("%m/%d/%Y %H:%M:%S %p"),
+            "simulation_author": author,
+            "simulation_runtime": add_with_units(time, "s"),
+            "design_selection_search_log": {
+                "titles": ["Field", "Excess Temperature", "Max Temperature", "Min Temperature"],
+                "units": [" ", "(C)", "(C)", "(C)"],
+                "data": design.searchTracker,
             },
-            'ghe_system': {
-                'search_log': {'titles': g_function_col_titles, 'units': None, 'data': g_function_data},
-                'active_borehole_length': add_with_units(design.ghe.bhe.b.H, 'm'),
-                'borehole_diameter': add_with_units(design.ghe.bhe.b.r_b * 2.0, 'm'),
-                'borehole_buried_depth': add_with_units(design.ghe.bhe.b.D, 'm'),
-                'borehole_spacing': add_with_units(design.ghe.B_spacing, 'm'),
-                'total_drilling': add_with_units(design.ghe.bhe.b.H * len(design.ghe.gFunction.bore_locations), 'm'),
-                'field_type': design.ghe.fieldType,
-                'field_specifier': design.ghe.fieldSpecifier,
-                'number_of_boreholes': len(design.ghe.gFunction.bore_locations),
-                'shank_spacing': add_with_units(design.ghe.bhe.pipe.s, 'm'),
-                'pipe_geometry': pipe_geometry,
-                'pipe_roughness': add_with_units(design.ghe.bhe.pipe.roughness, 'm'),
-                'pipe_thermal_conductivity': add_with_units(design.ghe.bhe.pipe.k, 'W/m-K'),
-                'pipe_volumetric_heat_capacity': add_with_units(design.ghe.bhe.pipe.rhoCp / 1000, 'kJ/m3-K'),
-                'grout_thermal_conductivity': add_with_units(design.ghe.bhe.grout.k, 'W/m-K'),
-                'grout_volumetric_heat_capacity': add_with_units(design.ghe.bhe.grout.rhoCp / 1000, 'kJ/m3-K'),
-                'reynolds_number': reynolds,
-                'effective_borehole_resistance': add_with_units(
-                    design.ghe.bhe.calc_effective_borehole_resistance(), 'W/m-K'
+            "ghe_system": {
+                "search_log": {"titles": g_function_col_titles, "units": None, "data": g_function_data},
+                "active_borehole_length": add_with_units(design.ghe.bhe.b.H, "m"),
+                "borehole_diameter": add_with_units(design.ghe.bhe.b.r_b * 2.0, "m"),
+                "borehole_buried_depth": add_with_units(design.ghe.bhe.b.D, "m"),
+                "borehole_spacing": add_with_units(design.ghe.B_spacing, "m"),
+                "total_drilling": add_with_units(design.ghe.bhe.b.H * len(design.ghe.gFunction.bore_locations), "m"),
+                "field_type": design.ghe.fieldType,
+                "field_specifier": design.ghe.fieldSpecifier,
+                "number_of_boreholes": len(design.ghe.gFunction.bore_locations),
+                "shank_spacing": add_with_units(design.ghe.bhe.pipe.s, "m"),
+                "pipe_geometry": pipe_geometry,
+                "pipe_roughness": add_with_units(design.ghe.bhe.pipe.roughness, "m"),
+                "pipe_thermal_conductivity": add_with_units(design.ghe.bhe.pipe.k, "W/m-K"),
+                "pipe_volumetric_heat_capacity": add_with_units(design.ghe.bhe.pipe.rhoCp / 1000, "kJ/m3-K"),
+                "grout_thermal_conductivity": add_with_units(design.ghe.bhe.grout.k, "W/m-K"),
+                "grout_volumetric_heat_capacity": add_with_units(design.ghe.bhe.grout.rhoCp / 1000, "kJ/m3-K"),
+                "reynolds_number": reynolds,
+                "effective_borehole_resistance": add_with_units(
+                    design.ghe.bhe.calc_effective_borehole_resistance(), "W/m-K"
                 ),
                 # TODO: are the units right here?
-                'soil_thermal_conductivity': add_with_units(design.ghe.bhe.soil.k, 'W/m-K'),
-                'soil_volumetric_heat_capacity': add_with_units(design.ghe.bhe.soil.rhoCp / 1000, 'kJ/m3-K'),
-                'soil_undisturbed_ground_temp': add_with_units(design.ghe.bhe.soil.ugt, 'C'),
-                'fluid_volumetric_heat_capacity': add_with_units(design.ghe.bhe.fluid.rhoCp / 1000, 'kJ/m3-K'),
-                'fluid_thermal_conductivity': add_with_units(design.ghe.bhe.fluid.k, 'W/m-K'),
-                'fluid_viscosity': add_with_units(design.ghe.bhe.fluid.dynamic_viscosity(), 'Pa-s'),
-                'fluid_mixture': design.ghe.bhe.fluid.fluid.fluid_name,  # TODO: Is this the right lookup!?!?!? :)
-                'fluid_density': add_with_units(design.ghe.bhe.fluid.rho, 'kg/m3'),
-                'fluid_mass_flow_rate_per_borehole': add_with_units(design.ghe.bhe.m_flow_borehole, 'kg/s'),
+                "soil_thermal_conductivity": add_with_units(design.ghe.bhe.soil.k, "W/m-K"),
+                "soil_volumetric_heat_capacity": add_with_units(design.ghe.bhe.soil.rhoCp / 1000, "kJ/m3-K"),
+                "soil_undisturbed_ground_temp": add_with_units(design.ghe.bhe.soil.ugt, "C"),
+                "fluid_volumetric_heat_capacity": add_with_units(design.ghe.bhe.fluid.rhoCp / 1000, "kJ/m3-K"),
+                "fluid_thermal_conductivity": add_with_units(design.ghe.bhe.fluid.k, "W/m-K"),
+                "fluid_viscosity": add_with_units(design.ghe.bhe.fluid.dynamic_viscosity(), "Pa-s"),
+                "fluid_mixture": design.ghe.bhe.fluid.fluid.fluid_name,  # TODO: Is this the right lookup!?!?!? :)
+                "fluid_density": add_with_units(design.ghe.bhe.fluid.rho, "kg/m3"),
+                "fluid_mass_flow_rate_per_borehole": add_with_units(design.ghe.bhe.m_flow_borehole, "kg/s"),
             },
-            'simulation_parameters': {
-                'start_month': design.ghe.sim_params.start_month,
-                'end_month': design.ghe.sim_params.end_month,
-                'maximum_allowable_hp_eft': add_with_units(design.ghe.sim_params.max_EFT_allowable, 'C'),
-                'minimum_allowable_hp_eft': add_with_units(design.ghe.sim_params.min_EFT_allowable, 'C'),
-                'maximum_allowable_height': add_with_units(design.ghe.sim_params.max_height, 'm'),
-                'minimum_allowable_height': add_with_units(design.ghe.sim_params.min_height, 'm'),
-                'simulation_time': add_with_units(int(design.ghe.sim_params.end_month / 12), 'years'),
-                'simulation_load_method': self.get_timestep_str(load_method),
+            "simulation_parameters": {
+                "start_month": design.ghe.sim_params.start_month,
+                "end_month": design.ghe.sim_params.end_month,
+                "maximum_allowable_hp_eft": add_with_units(design.ghe.sim_params.max_EFT_allowable, "C"),
+                "minimum_allowable_hp_eft": add_with_units(design.ghe.sim_params.min_EFT_allowable, "C"),
+                "maximum_allowable_height": add_with_units(design.ghe.sim_params.max_height, "m"),
+                "minimum_allowable_height": add_with_units(design.ghe.sim_params.min_height, "m"),
+                "simulation_time": add_with_units(int(design.ghe.sim_params.end_month / 12), "years"),
+                "simulation_load_method": load_method.name,
             },
-            'simulation_results': {},
+            "simulation_results": {},
         }
 
         # potentially add convection coefficient -- not sure why we wouldn't do it
         if hasattr(design.ghe.bhe, "h_f"):
             # TODO: Should be W/m2-K?
-            output_dict['ghe_system']['fluid_convection_coefficient'] = add_with_units(design.ghe.bhe.h_f, 'W/m-K')
+            output_dict["ghe_system"]["fluid_convection_coefficient"] = add_with_units(design.ghe.bhe.h_f, "W/m-K")
 
         # add monthly load summary
         monthly_load_values = []
@@ -289,8 +286,8 @@ class OutputManager:
                     design.ghe.hybrid_load.monthly_peak_cl_duration[i],
                 ]
             )
-        output_dict['ghe_system']['glhe_monthly_loads'] = {
-            'titles': [
+        output_dict["ghe_system"]["glhe_monthly_loads"] = {
+            "titles": [
                 "Month",
                 "Total Heating",
                 "Total Cooling",
@@ -299,8 +296,8 @@ class OutputManager:
                 "Peak Cooling",
                 "PC Duration",
             ],
-            'units': ["", "kWh", "kWh", "kW", "hr", "kW", "hr"],
-            'data': monthly_load_values,
+            "units": ["", "kWh", "kWh", "kW", "hr", "kW", "hr"],
+            "data": monthly_load_values,
         }
 
         # add simulation results stuff
@@ -336,15 +333,15 @@ class OutputManager:
         min_eft_time = design.ghe.times[design.ghe.hp_eft.index(min(design.ghe.hp_eft))]
         max_eft_time = self.hours_to_month(max_eft_time)
         min_eft_time = self.hours_to_month(min_eft_time)
-        output_dict['simulation_results'] = {
-            'max_hp_eft': add_with_units(max_eft, 'C'),
-            'max_hp_eft_time': add_with_units(max_eft_time, 'months'),
-            'min_hp_eft': add_with_units(min_eft, 'C'),
-            'min_hp_eft_time': add_with_units(min_eft_time, 'months'),
-            'monthly_temp_summary': {
-                'titles': ["Time", "BH Wall Temp", "Max HP EFT", "Min HP EFT"],
-                'units': ["(months)", "(C)", "(C)", "(C)"],
-                'data': out_array,
+        output_dict["simulation_results"] = {
+            "max_hp_eft": add_with_units(max_eft, "C"),
+            "max_hp_eft_time": add_with_units(max_eft_time, "months"),
+            "min_hp_eft": add_with_units(min_eft, "C"),
+            "min_hp_eft_time": add_with_units(min_eft_time, "months"),
+            "monthly_temp_summary": {
+                "titles": ["Time", "BH Wall Temp", "Max HP EFT", "Min HP EFT"],
+                "units": ["(months)", "(C)", "(C)", "(C)"],
+                "data": out_array,
             },
         }
 
@@ -428,7 +425,7 @@ class OutputManager:
         o += self.d_row(width, "Active Borehole Length, m:", design.ghe.bhe.b.H, f_int)
         o += self.d_row(width, "Borehole Diameter, mm:", design.ghe.bhe.b.r_b * 1000 * 2.0, f_2f)
         o += self.d_row(width, "Borehole Spacing, m:", design.ghe.B_spacing, f_3f)
-        o += self.d_row(width, 'Borehole Depth, m:', design.ghe.bhe.b.D, f_2f)
+        o += self.d_row(width, "Borehole Depth, m:", design.ghe.bhe.b.D, f_2f)
         o += self.d_row(
             width, "Total Drilling, m:", design.ghe.bhe.b.H * len(design.ghe.gFunction.bore_locations), f_int
         )
@@ -580,7 +577,7 @@ class OutputManager:
         o += self.d_row(width, "Maximum Allowable Height, m: ", design.ghe.sim_params.max_height, f_2f)
         o += self.d_row(width, "Minimum Allowable Height, m: ", design.ghe.sim_params.min_height, f_2f)
         o += self.d_row(width, "Simulation Time, years: ", int(design.ghe.sim_params.end_month / 12), f_int)
-        load_method_string = self.get_timestep_str(load_method)
+        load_method_string = load_method.name
         o += self.d_row(width, "Simulation Loading Type: ", load_method_string, f_str)
 
         o += empty_line
@@ -703,7 +700,7 @@ class OutputManager:
             warnings.warn("Unable to write output string with specified formatting.")
             c_spaces = 4
 
-        c_str = ' ' * c_spaces
+        c_str = " " * c_spaces
         r_s = f"{l_str}{c_str}{r_str}\n"
         return r_s
 

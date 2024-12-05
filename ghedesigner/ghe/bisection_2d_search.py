@@ -1,9 +1,9 @@
 from pygfunction.boreholes import Borehole
 
+from ghedesigner.enums import FlowConfigType, TimestepType
 from ghedesigner.ghe.bisection_1d_search import Bisection1D
-from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 
 
 class Bisection2D(Bisection1D):
@@ -21,12 +21,12 @@ class Bisection2D(Bisection1D):
         sim_params: SimulationParameters,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType.BOREHOLE,
+        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         max_iter=15,
         disp=False,
         field_type="N/A",
         load_years=None,
-    ):
+    ) -> None:
         if load_years is None:
             load_years = [2019]
         if disp:
@@ -55,7 +55,8 @@ class Bisection2D(Bisection1D):
             load_years=load_years,
         )
 
-        self.coordinates_domain_nested = []
+        # TODO why is the class variable set to an empty list and not the `coordinates_domain_nested` argument?
+        # self.coordinates_domain_nested = []
         self.calculated_temperatures_nested = []
         # Tack on one borehole at the beginning to provide a high excess temperature
         outer_domain = [coordinates_domain_nested[0][0]]

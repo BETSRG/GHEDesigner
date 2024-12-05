@@ -23,7 +23,5 @@
       "description": "This field is currently unused."
     }
   },
-  "required": [
-    "ground_loads"
-  ]
+  "required": ["ground_loads"]
 }

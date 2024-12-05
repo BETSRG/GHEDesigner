@@ -1,14 +1,14 @@
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.ghe.single_u_borehole import SingleUTube
-from ghedesigner.ghe.multi_u_borehole import MultipleUTube
+from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.ghe.coaxial_borehole import CoaxialPipe
 from ghedesigner.ghe.geometry.coordinates import rectangle
-from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.ghe.multi_u_borehole import MultipleUTube
 from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.ghe.single_u_borehole import SingleUTube
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.utilities import eskilson_log_times
 
@@ -167,7 +167,7 @@ class TestGHE(GHEBaseTest):
 
         ghe.size(method=TimestepType.HYBRID)
 
-        self.assertEqual(156, ghe.nbh)
+        assert ghe.nbh == 156
         self.assertAlmostEqual(128.0, ghe.bhe.b.H, delta=0.1)
 
     def test_double_u_tube(self):
@@ -212,7 +212,7 @@ class TestGHE(GHEBaseTest):
 
         ghe.size(method=TimestepType.HYBRID)
 
-        self.assertEqual(156, ghe.nbh)
+        assert ghe.nbh == 156
         self.assertAlmostEqual(119.2, ghe.bhe.b.H, delta=0.1)
 
     def test_coaxial_tube(self):
@@ -257,5 +257,5 @@ class TestGHE(GHEBaseTest):
 
         ghe.size(method=TimestepType.HYBRID)
 
-        self.assertEqual(156, ghe.nbh)
+        assert ghe.nbh == 156
         self.assertAlmostEqual(114.2, ghe.bhe.b.H, delta=0.1)

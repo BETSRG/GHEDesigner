@@ -28,17 +28,19 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=48)
         ghe.set_ground_loads_from_hourly_list(self.get_multiyear_loads())
-        ghe.set_geometry_constraints_near_square(max_height=135, min_height=60, b=5.0, length=155)  # borehole spacing and field side length
+        ghe.set_geometry_constraints_near_square(
+            max_height=135, min_height=60, b=5.0, length=155
+        )  # borehole spacing and field side length
         # perform a design search assuming "borehole" flow?
         ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindNearSquareMultiyearDesignSingleU"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(132.7, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(17, len(nbh))
+        assert len(nbh) == 17
 
     def test_multiyear_loading_double_u_tube(self):
         ghe = GroundHeatExchanger()
@@ -56,17 +58,19 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=48)
         ghe.set_ground_loads_from_hourly_list(self.get_multiyear_loads())
-        ghe.set_geometry_constraints_near_square(max_height=135, min_height=60, b=5.0, length=155)  # borehole spacing and field side length
+        ghe.set_geometry_constraints_near_square(
+            max_height=135, min_height=60, b=5.0, length=155
+        )  # borehole spacing and field side length
         # perform a design search assuming "borehole" flow?
         ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindNearSquareMultiyearDesignDoubleU"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(119.16, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(17, len(nbh))
+        assert len(nbh) == 17
 
     def test_multiyear_loading_coaxial(self):
         ghe = GroundHeatExchanger()
@@ -86,14 +90,16 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=48)
         ghe.set_ground_loads_from_hourly_list(self.get_multiyear_loads())
-        ghe.set_geometry_constraints_near_square(max_height=135, min_height=60, b=5.0, length=155)  # borehole spacing and field side length
+        ghe.set_geometry_constraints_near_square(
+            max_height=135, min_height=60, b=5.0, length=155
+        )  # borehole spacing and field side length
         # perform a design search assuming "borehole" flow?
         ghe.set_design(flow_rate=0.8, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindNearSquareMultiyearDesignCoaxial"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(109.8, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(13, len(nbh))
+        assert len(nbh) == 13

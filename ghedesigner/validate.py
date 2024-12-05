@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 from json import loads
 from pathlib import Path
@@ -34,23 +35,21 @@ def validate_file_structure(instance: dict) -> int:
     )
 
 
+def validate_topology(instance: dict) -> int:
+    return validate_schema_instance(
+        schema_file_name="topology.schema.json", instance=instance, error_msg='Errors in "topology" input object.'
+    )
+
+
+def validate_building(instance: dict) -> int:
+    return validate_schema_instance(
+        schema_file_name="building.schema.json", instance=instance, error_msg='Errors in "building" input object.'
+    )
+
+
 def validate_fluid(instance: dict) -> int:
-    fluid_name = str(instance["fluid_name"]).upper()
-    instance["fluid_name"] = fluid_name
     return validate_schema_instance(
-        schema_file_name="fluid.schema.json", instance=instance, error_msg="Errors in \"fluid\" input object."
-    )
-
-
-def validate_grout(instance: dict) -> int:
-    return validate_schema_instance(
-        schema_file_name="grout.schema.json", instance=instance, error_msg="Errors in \"grout\" input object."
-    )
-
-
-def validate_soil(instance: dict) -> int:
-    return validate_schema_instance(
-        schema_file_name="soil.schema.json", instance=instance, error_msg="Errors in \"soil\" input object."
+        schema_file_name="fluid.schema.json", instance=instance, error_msg='Errors in "fluid" input object.'
     )
 
 
@@ -70,13 +69,15 @@ def validate_pipe(instance: dict) -> int:
         return 1
 
     return validate_schema_instance(
-        schema_file_name=schema_map[pipe_arrangement], instance=instance, error_msg="Errors in \"pipe\" input object."
+        schema_file_name=schema_map[pipe_arrangement], instance=instance, error_msg='Errors in "pipe" input object.'
     )
 
 
-def validate_borehole(instance: dict) -> int:
+def validate_ground_heat_exchanger(instance: dict) -> int:
     return validate_schema_instance(
-        schema_file_name="borehole.schema.json", instance=instance, error_msg="Errors in \"borehole\" input object."
+        schema_file_name="ground_heat_exchanger.schema.json",
+        instance=instance,
+        error_msg='Errors in "ground-heat-exchanger" input object.',
     )
 
 
@@ -86,7 +87,7 @@ def validate_simulation(instance: dict) -> int:
         instance["timestep"] = timestep
 
     return validate_schema_instance(
-        schema_file_name="simulation.schema.json", instance=instance, error_msg="Errors in \"simulation\" input object."
+        schema_file_name="simulation.schema.json", instance=instance, error_msg='Errors in "simulation" input object.'
     )
 
 
@@ -110,7 +111,7 @@ def validate_geometric(instance: dict) -> int:
     return validate_schema_instance(
         schema_file_name=schema_map[method],
         instance=instance,
-        error_msg="Errors in \"geometric_constraints\" input object.",
+        error_msg='Errors in "geometric_constraints" input object.',
     )
 
 
@@ -118,7 +119,7 @@ def validate_design(instance: dict) -> int:
     flow_type = str(instance["flow_type"]).upper()
     instance["flow_type"] = flow_type
     return validate_schema_instance(
-        schema_file_name="design.schema.json", instance=instance, error_msg="Errors in \"design\" input object."
+        schema_file_name="design.schema.json", instance=instance, error_msg='Errors in "design" input object.'
     )
 
 
@@ -133,14 +134,13 @@ def validate_input_file(input_file_path: Path) -> int:
     # validate
     err_count = 0
     err_count += validate_file_structure(instance)
-    err_count += validate_fluid(instance["fluid"])
-    err_count += validate_grout(instance["grout"])
-    err_count += validate_soil(instance["soil"])
-    err_count += validate_pipe(instance["pipe"])
-    err_count += validate_borehole(instance["borehole"])
-    err_count += validate_simulation(instance["simulation"])
-    err_count += validate_geometric(instance["geometric_constraints"])
-    err_count += validate_design(instance["design"])
+    err_count += validate_topology(instance["topology"])
+    err_count += validate_fluid(instance["fluids"])
+    # err_count += validate_building(instance["building"])
+    # err_count += validate_pipe(instance["pipe"])
+    # err_count += validate_simulation(instance["simulation"])
+    # err_count += validate_geometric(instance["geometric_constraints"])
+    # err_count += validate_design(instance["design"])
     return err_count
 
 

@@ -1,0 +1,33 @@
+name: Test Install
+
+on: [push]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        os: ["ubuntu-latest", "windows-latest"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v3
+        with:
+          poetry-version: latest
+      - name: Install the project dependencies
+        run: poetry install
+      - name: Validate an input file
+        run: poetry run ghedesigner --validate-only demos/find_design_rectangle_single_u_tube.json
+      - name: Run a sample file
+        run: poetry run ghedesigner demos/find_design_rectangle_single_u_tube.json ./tmp
+      - name: Confirm IDF conversion option
+        run: poetry run ghedesigner --convert=IDF ./tmp/SimulationSummary.json
+      - name: GHED version string
+        run: poetry run ghedesigner --version
+      - name: GHED help
+        run: poetry run ghedesigner --help

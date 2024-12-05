@@ -8,7 +8,7 @@ from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 
 class TestRadialNumericalBorehole(unittest.TestCase):
     def test_calc_sts_g_functions(self):
-        fluid = GHEFluid(fluid_str='WATER', percent=0)
+        fluid = GHEFluid(fluid_str="WATER", percent=0)
         borehole = Borehole(H=100.0, D=2.0, r_b=0.075, x=0.0, y=0.0)
         grout = Grout(k=2.0, rho_cp=2000000.0)
 

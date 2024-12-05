@@ -25,16 +25,18 @@ class TestFindBiRectangleDesign(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_bi_rectangle(max_height=135, min_height=60, length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0)
+        ghe.set_geometry_constraints_bi_rectangle(
+            max_height=135, min_height=60, length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0
+        )
         ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiRectangleDesignSingleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(132.7, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(136, len(nbh))
+        assert len(nbh) == 136
 
     def test_double_u_tube(self):
         ghe = GroundHeatExchanger()
@@ -52,16 +54,18 @@ class TestFindBiRectangleDesign(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_bi_rectangle(max_height=135, min_height=60, length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0)
+        ghe.set_geometry_constraints_bi_rectangle(
+            max_height=135, min_height=60, length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0
+        )
         ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiRectangleDesignDoubleUTube"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(133.0, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(116, len(nbh))
+        assert len(nbh) == 116
 
     def test_coaxial(self):
         ghe = GroundHeatExchanger()
@@ -81,13 +85,15 @@ class TestFindBiRectangleDesign(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_bi_rectangle(max_height=135, min_height=60, length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0)
+        ghe.set_geometry_constraints_bi_rectangle(
+            max_height=135, min_height=60, length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0
+        )
         ghe.set_design(flow_rate=0.8, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestFindBiRectangleDesignCoaxial"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(133.0, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(101, len(nbh))
+        assert len(nbh) == 101

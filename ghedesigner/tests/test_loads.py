@@ -26,16 +26,18 @@ class TestLoads(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(hourly_loads)
-        ghe.set_geometry_constraints_rectangle(max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0)
+        ghe.set_geometry_constraints_rectangle(
+            max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0
+        )
         ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestBalancedLoads"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(118.53, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(7, len(nbh))
+        assert len(nbh) == 7
 
     def test_imbalanced_heating_loads(self):
         num_hr_in_month = 730
@@ -60,16 +62,18 @@ class TestLoads(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(hourly_loads)
-        ghe.set_geometry_constraints_rectangle(max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0)
+        ghe.set_geometry_constraints_rectangle(
+            max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0
+        )
         ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestImbalancedHeatingLoads"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(130.40, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(11, len(nbh))
+        assert len(nbh) == 11
 
     def test_imbalanced_cooling_loads(self):
         num_hr_in_month = 730
@@ -94,13 +98,15 @@ class TestLoads(GHEBaseTest):
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(hourly_loads)
-        ghe.set_geometry_constraints_rectangle(max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0)
+        ghe.set_geometry_constraints_rectangle(
+            max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0
+        )
         ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
         ghe.find_design()
         output_file_directory = self.test_outputs_directory / "TestImbalancedCoolingLoads"
         ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
         ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict['ghe_system']['active_borehole_length']['value']
+        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
         self.assertAlmostEqual(126.99, u_tube_height, delta=0.1)
         nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        self.assertEqual(9, len(nbh))
+        assert len(nbh) == 9

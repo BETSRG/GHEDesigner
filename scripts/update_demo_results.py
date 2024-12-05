@@ -1,10 +1,10 @@
+#!/usr/bin/env python
 import json
 import sys
 from pathlib import Path
 
 
 def update_results(results_dir: Path, expected_results_path: Path):
-    d_current = {}
     d_expected = {}
 
     with open(expected_results_path, encoding="utf-8") as f:

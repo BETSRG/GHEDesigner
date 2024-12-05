@@ -2,57 +2,43 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
   "properties": {
-    "version": {
-      "type": "string",
-      "description": "Version of input file."
+    "topology": {
+      "type": "array",
+      "description": "A list of name/type map objects that define the system topology."
     },
-    "fluid": {
+    "fluids": {
       "type": "object",
-      "description": "Object used to define parameters related to the circulation fluid."
+      "description": "A map of available fluid definition objects."
     },
-    "grout": {
+    "building": {
       "type": "object",
-      "description": "Object used to define parameters related to grout material."
+      "description": "A map of available building definition objects."
     },
-    "soil": {
+    "ground-heat-exchanger": {
       "type": "object",
-      "description": "Object used to define parameters related to soil material."
+      "description": "A collection of objects that define a ground heat exchanger system."
     },
-    "pipe": {
+    "pump": {
       "type": "object",
-      "description": "Object used to define parameters related the pipes."
+      "description": ""
     },
-    "borehole": {
+    "towers": {
       "type": "object",
-      "description": "Object used to define parameters related the borehole."
+      "description": ""
     },
-    "simulation": {
+    "generic-loads": {
       "type": "object",
-      "description": "Object used to define parameters related to simulation."
+      "description": ""
     },
-    "geometric_constraints": {
+    "simulation-control": {
       "type": "object",
-      "description": "Object used to define geometric constraint parameters for the selected design algorithm."
-    },
-    "design": {
-      "type": "object",
-      "description": "Object used to define parameters related to design and sizing."
-    },
-    "loads": {
-      "type": "object",
-      "description": "Object used to define loads for design and sizing."
+      "description": ""
     }
   },
   "required": [
-    "version",
-    "fluid",
-    "grout",
-    "soil",
-    "pipe",
-    "borehole",
-    "simulation",
-    "geometric_constraints",
-    "design",
-    "loads"
+    "topology",
+    "fluids",
+    "ground-heat-exchanger",
+    "simulation-control"
   ]
 }

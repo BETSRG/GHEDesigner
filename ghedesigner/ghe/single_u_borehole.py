@@ -1,5 +1,5 @@
 from enum import IntEnum, auto
-from math import sqrt, exp, pi, log
+from math import exp, log, pi, sqrt
 
 import numpy as np
 import pygfunction as gt
@@ -7,9 +7,9 @@ from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
 
-from ghedesigner.constants import TWO_PI, SEC_IN_HR
+from ghedesigner.constants import SEC_IN_HR, TWO_PI
 from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
-from ghedesigner.media import GHEFluid, Pipe, Grout, Soil
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 
 
 class CellProps(IntEnum):
@@ -31,7 +31,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
-    ):
+    ) -> None:
         GHEDesignerBoreholeBase.__init__(self, m_flow_borehole, fluid, _borehole, pipe, grout, soil)
         self.R_p = 0.0
         self.R_f = 0.0
@@ -48,7 +48,8 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.calc_fluid_pipe_resistance()
 
         # Initialize pygfunction SingleUTube base class
-        super().__init__(
+        gt.pipes.SingleUTube.__init__(
+            self,
             self.pipe.pos,
             self.pipe.r_in,
             self.pipe.r_out,
@@ -116,7 +117,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.lntts = np.array([], dtype=np.double)
         self.c_0 = TWO_PI * self.soil.k
         soil_diffusivity = self.k_s / self.soil.rhoCp
-        self.t_s = self.b.H ** 2 / (9 * soil_diffusivity)
+        self.t_s = self.b.H**2 / (9 * soil_diffusivity)
         # default is at least 49 hours, or up to -8.6 log time
         self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
         self.g_sts = None
@@ -146,7 +147,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         return self
 
     def as_dict(self) -> dict:
-        return {'type': str(self.__class__)}
+        return {"type": str(self.__class__)}
 
     def partial_init(self):
         # TODO: unravel how to eliminate this.

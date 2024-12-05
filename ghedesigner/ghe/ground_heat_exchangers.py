@@ -1,17 +1,17 @@
-from math import ceil, floor
+from math import ceil
 
 import numpy as np
-from scipy.interpolate import interp1d
 from pygfunction.boreholes import Borehole
+from scipy.interpolate import interp1d
 
 from ghedesigner import VERSION
-from ghedesigner.ghe.coaxial_borehole import get_bhe_object
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
 from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.ghe.coaxial_borehole import get_bhe_object
 from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_loads import HybridLoad
-from ghedesigner.media import Grout, Pipe, Soil
 from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.media import Grout, Pipe, Soil
 from ghedesigner.utilities import solve_root
 
 
@@ -31,7 +31,7 @@ class BaseGHE:
         hourly_extraction_ground_loads: list,
         field_type="N/A",
         field_specifier="N/A",
-    ):
+    ) -> None:
         self.fieldType = field_type
         self.fieldSpecifier = field_specifier
         self.V_flow_system = v_flow_system
@@ -58,18 +58,19 @@ class BaseGHE:
         # Hourly ground extraction loads
         # Building cooling is negative, building heating is positive
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
-        self.times = []
+        self.times = np.empty((0,), dtype=np.float64)
         self.loading = None
 
     def as_dict(self) -> dict:
-        output = {}
-        output['title'] = f"GHEDesigner GHE Output - Version {VERSION}"
-        output['number_of_boreholes'] = len(self.gFunction.bore_locations)
-        output['borehole_depth'] = {'value': self.bhe.b.H, 'units': 'm'}
-        output['borehole_spacing'] = {'value': self.B_spacing, 'units': 'm'}
-        output['borehole_heat_exchanger'] = self.bhe.as_dict()
-        output['equivalent_borehole_heat_exchanger'] = self.bhe_eq.as_dict()
-        output['simulation_parameters'] = self.sim_params.as_dict()
+        output = {
+            "title": f"GHEDesigner GHE Output - Version {VERSION}",
+            "number_of_boreholes": len(self.gFunction.bore_locations),
+            "borehole_depth": {"value": self.bhe.b.H, "units": "m"},
+            "borehole_spacing": {"value": self.B_spacing, "units": "m"},
+            "borehole_heat_exchanger": self.bhe.as_dict(),
+            "equivalent_borehole_heat_exchanger": self.bhe_eq.as_dict(),
+            "simulation_parameters": self.sim_params.as_dict(),
+        }
         return output
 
     @staticmethod
@@ -148,8 +149,8 @@ class BaseGHE:
         m_dot = self.bhe.m_flow_borehole  # (kg/s)
         cp = self.bhe.fluid.cp  # (J/kg.s)
 
-        hp_eft = []
-        delta_tb = []
+        hp_eft: list[float] = []
+        delta_tb: list[float] = []
         for i in range(1, n + 1):
             # Take the last i elements of the reversed time array
             _time = time_values[i] - time_values[0:i]
@@ -214,7 +215,7 @@ class GHE(BaseGHE):
         field_type="N/A",
         field_specifier="N/A",
         load_years=None,
-    ):
+    ) -> None:
         BaseGHE.__init__(
             self,
             v_flow_system,
@@ -245,48 +246,51 @@ class GHE(BaseGHE):
         self.hybrid_load = hybrid_load
 
         # List of heat pump exiting fluid temperatures
-        self.hp_eft = []
+        self.hp_eft: list[float] = []
         # list of change in borehole wall temperatures
-        self.dTb = []
+        self.dTb: list[float] = []
 
-    def as_dict(self) -> dict:
-        output = {}
-        output['base'] = super().as_dict()
-
-        results = {}
-        if len(self.hp_eft) > 0:
-            max_hp_eft = max(self.hp_eft)
-            min_hp_eft = min(self.hp_eft)
-            results['max_hp_entering_temp'] = {'value': max_hp_eft, 'units': 'C'}
-            results['min_hp_entering_temp'] = {'value': min_hp_eft, 'units': 'C'}
-            t_excess = self.cost(max_hp_eft, min_hp_eft)
-            results['excess_fluid_temperature'] = {'value': t_excess, 'units': 'C'}
-        results['peak_load_analysis'] = self.hybrid_load.as_dict()
-
-        g_function = {}
-        g_function['coordinates (x[m], y[m])'] = list(self.gFunction.bore_locations)  # TODO: Verify form
-        b_over_h = self.B_spacing / self.bhe.b.H
-        g, _ = self.grab_g_function(b_over_h)
-        total_g_values = g.x.size
-        number_lts_g_values = 27
-        number_sts_g_values = 50
-        sts_step_size = floor((total_g_values - number_lts_g_values) / number_sts_g_values)
-        lntts = []
-        g_values = []
-        for idx in range(0, (total_g_values - number_lts_g_values), sts_step_size):
-            lntts.append(g.x[idx].tolist())
-            g_values.append(g.y[idx].tolist())
-        lntts += g.x[total_g_values - number_lts_g_values : total_g_values].tolist()
-        g_values += g.y[total_g_values - number_lts_g_values : total_g_values].tolist()
-        pairs = zip(lntts, g_values)
-        for lntts_val, g_val in pairs:
-            output += f"{lntts_val:0.4f}\t{g_val:0.4f}"
-        g_function['lntts, g'] = [*pairs]
-
-        results['g_function_information'] = g_function
-        output['simulation_results'] = results
-
-        return output
+    # def as_dict(self) -> dict:
+    #     output = {
+    #         "base": super().as_dict(),
+    #     }
+    #
+    #     results = {}
+    #     if len(self.hp_eft) > 0:
+    #         max_hp_eft = max(self.hp_eft)
+    #         min_hp_eft = min(self.hp_eft)
+    #         results["max_hp_entering_temp"] = {"value": max_hp_eft, "units": "C"}
+    #         results["min_hp_entering_temp"] = {"value": min_hp_eft, "units": "C"}
+    #         t_excess = self.cost(max_hp_eft, min_hp_eft)
+    #         results["excess_fluid_temperature"] = {"value": t_excess, "units": "C"}
+    #     results["peak_load_analysis"] = self.hybrid_load.as_dict()
+    #
+    #     g_function = {
+    #         "coordinates (x[m], y[m])": list(self.gFunction.bore_locations),
+    #     }
+    #     b_over_h = self.B_spacing / self.bhe.b.H
+    #     g, _ = self.grab_g_function(b_over_h)
+    #     total_g_values = g.x.size
+    #     number_lts_g_values = 27
+    #     number_sts_g_values = 50
+    #     sts_step_size = floor((total_g_values - number_lts_g_values) / number_sts_g_values)
+    #     lntts = []
+    #     g_values = []
+    #     for idx in range(0, (total_g_values - number_lts_g_values), sts_step_size):
+    #         lntts.append(g.x[idx].tolist())
+    #         g_values.append(g.y[idx].tolist())
+    #     lntts += g.x[total_g_values - number_lts_g_values : total_g_values].tolist()
+    #     g_values += g.y[total_g_values - number_lts_g_values : total_g_values].tolist()
+    #     pairs = zip(lntts, g_values)
+    #     for lntts_val, g_val in pairs:
+    #         # TODO why is this attempting to append a string to a dictionary??
+    #         output += f"{lntts_val:0.4f}\t{g_val:0.4f}"
+    #     g_function["lntts, g"] = [*pairs]
+    #
+    #     results["g_function_information"] = g_function
+    #     output["simulation_results"] = results
+    #
+    #     return output
 
     def simulate(self, method: TimestepType):
         b = self.B_spacing
@@ -356,9 +360,8 @@ class GHE(BaseGHE):
 
         self.bhe.b.H = returned_height
 
-    def calculate(self, hour_index: int, inlet_temp: float, flow_rate: float) -> float:
-
-        effectivness = 0.5
+    def calculate(self, _hour_index: int, inlet_temp: float, _flow_rate: float) -> float:
+        effectiveness = 0.5
         soil_temp = 20
 
-        return effectivness * (soil_temp - inlet_temp) + inlet_temp
+        return effectiveness * (soil_temp - inlet_temp) + inlet_temp

@@ -40,11 +40,7 @@
     },
     "arrangement": {
       "type": "string",
-      "enum": [
-        "SINGLEUTUBE",
-        "DOUBLEUTUBESERIES",
-        "DOUBLEUTUBEPARALLEL"
-      ],
+      "enum": ["SINGLEUTUBE", "DOUBLEUTUBESERIES", "DOUBLEUTUBEPARALLEL"],
       "description": "Pipe arrangement specified."
     }
   },

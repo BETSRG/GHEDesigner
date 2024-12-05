@@ -1,7 +1,7 @@
 # https://www.mkdocs.org/user-guide/configuration/
 # https://squidfunk.github.io/mkdocs-material/creating-your-site/#advanced-configuration
 
-site_name: GHE Designer
+site_name: GHEDesigner
 repo_url: https://github.com/BETSRG/GHEDesigner
 
 theme:

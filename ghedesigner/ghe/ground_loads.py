@@ -6,9 +6,9 @@ from math import floor
 import numpy as np
 from scipy.interpolate import interp1d
 
-from ghedesigner.ghe.single_u_borehole import SingleUTube
 from ghedesigner.constants import HRS_IN_DAY, SEC_IN_HR, TWO_PI
 from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.ghe.single_u_borehole import SingleUTube
 
 
 class HybridLoad:
@@ -19,7 +19,7 @@ class HybridLoad:
         radial_numerical: SingleUTube,
         sim_params: SimulationParameters,
         years=None,
-    ):
+    ) -> None:
         # Split the hourly loads into heating and cooling (kW)
         if years is None:
             years = [2019]
@@ -63,17 +63,17 @@ class HybridLoad:
         num_unique_months = len(years) * 12 + 1
 
         # monthly cooling loads (or heat rejection) in kWh
-        self.monthly_cl = [0] * num_unique_months
+        self.monthly_cl = [0.0] * num_unique_months
         # monthly heating loads (or heat extraction) in kWh
-        self.monthly_hl = [0] * num_unique_months
+        self.monthly_hl = [0.0] * num_unique_months
         # monthly peak cooling load (or heat rejection) in kW
-        self.monthly_peak_cl = [0] * num_unique_months
+        self.monthly_peak_cl = [0.0] * num_unique_months
         # monthly peak heating load (or heat extraction) in kW
-        self.monthly_peak_hl = [0] * num_unique_months
+        self.monthly_peak_hl = [0.0] * num_unique_months
         # monthly average cooling load (or heat rejection) in kW
-        self.monthly_avg_cl = [0] * num_unique_months
+        self.monthly_avg_cl = [0.0] * num_unique_months
         # monthly average heating load (or heat extraction) in kW
-        self.monthly_avg_hl = [0] * num_unique_months
+        self.monthly_avg_hl = [0.0] * num_unique_months
         # day of the month on which peak clg load occurs (e.g. 1-31)
         self.monthly_peak_cl_day = [0] * num_unique_months
         # day of the month on which peak htg load occurs (e.g. 1-31)
@@ -119,9 +119,10 @@ class HybridLoad:
         self.process_month_loads()
 
     def as_dict(self) -> dict:
-        output = {}
-        output['type'] = str(self.__class__)
-        output['results'] = self.create_dataframe_of_peak_analysis()
+        output = {
+            "type": str(self.__class__),
+            "results": self.create_dataframe_of_peak_analysis(),
+        }
         return output
 
     @staticmethod
@@ -141,8 +142,9 @@ class HybridLoad:
     def split_loads_by_month(self) -> None:
         # Split the loads into peak, total and average loads for each month
 
-        # Store the index of the last months hours
-        hours_in_previous_months = 0
+        # Store the index of the last month's hours
+        hours_in_previous_months: int = 0
+        i: int
         for i in range(1, len(self.days_in_month)):
             hours_in_month = HRS_IN_DAY * self.days_in_month[i]
             # Slice the hours in this current month
@@ -290,7 +292,7 @@ class HybridLoad:
 
         if delta_t_fluid_nom_max > 0.0:
             f = interp1d(delta_t_fluid_peak, hour_time, fill_value="extrapolate")
-            peak_duration = f(delta_t_fluid_nom_max).tolist()
+            peak_duration = f(delta_t_fluid_nom_max).tolist()  # TODO: tolist is not showing as available locally
         else:
             peak_duration = 1.0e-6
 
@@ -373,7 +375,7 @@ class HybridLoad:
 
     def create_dataframe_of_peak_analysis(self) -> str:
         # The fields are: sum, peak, avg, peak day, peak duration
-        hybrid_time_step_fields = {
+        hybrid_time_step_fields: dict = {
             "Total": {},
             "Peak": {},
             "Average": {},
@@ -675,7 +677,7 @@ def first_month_hour(month, years):
         for i in range(1, month):
             current_year = years[(month - 1) // 12] if len(years) > 1 else years[0]
             mi = i % 12
-            fmh = fmh + HRS_IN_DAY * monthdays(mi, current_year)
+            fmh += HRS_IN_DAY * monthdays(mi, current_year)
     return fmh
 
 
@@ -683,7 +685,7 @@ def last_month_hour(month, years):
     lmh = 0
     for i in range(1, month + 1):
         current_year = years[(month - 1) // 12] if len(years) > 1 else years[0]
-        lmh = lmh + monthdays(i, current_year) * HRS_IN_DAY
+        lmh += monthdays(i, current_year) * HRS_IN_DAY
     if month == 1:
         lmh = 31 * HRS_IN_DAY
     return lmh

@@ -1,16 +1,28 @@
 from queue import Queue
-from tkinter import BOTH, LEFT, TOP, X  # widget sides and directions to use in widget.pack commands
-from tkinter import StringVar  # GUI variables
-from tkinter import NSEW, EW, S  # sticky cardinal directions to use in widget grid commands
-from tkinter import SUNKEN  # attributes used to modify widget appearance
-from tkinter import Tk, Button, Frame, Label, Menu  # widgets
+from tkinter import (
+    BOTH,
+    EW,
+    LEFT,
+    NSEW,
+    SUNKEN,
+    TOP,
+    Button,
+    Frame,
+    Label,
+    Menu,
+    S,
+    StringVar,
+    Tk,
+    X,
+)
 from tkinter.ttk import LabelFrame  # ttk widgets
+from typing import Any
 
 
 class GHEDesignerWindow(Tk):
     """This form is the primary GUI entry point for the program; all control runs through here"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         The main window of the parameter estimation tool GUI workflow.
         This window is an instance of a tk.Tk object
@@ -21,7 +33,7 @@ class GHEDesignerWindow(Tk):
         self.title("GHEDesignerWindow")
 
         # setup event listeners
-        self._gui_queue = Queue()
+        self._gui_queue: Queue[Any] = Queue()
         self._check_queue()
 
         # define the Tk.Variable instances that will be used to communicate with the GUI widgets
@@ -38,14 +50,14 @@ class GHEDesignerWindow(Tk):
         # window setup operations
         self._update_status_bar("Program Initialized")
         self._refresh_gui_state()
-        self.bind('<Key>', self._handle_button_pressed)
+        self.bind("<Key>", self._handle_button_pressed)
 
     def _handle_button_pressed(self, event):
         # relevant_modifiers
         # mod_shift = 0x1
         mod_control = 0x4
         # mod_alt = 0x20000
-        if event.keysym == 'e' and mod_control & event.state:
+        if event.keysym == "e" and mod_control & event.state:
             pass
 
     def _check_queue(self):
@@ -54,8 +66,8 @@ class GHEDesignerWindow(Tk):
             # noinspection PyBroadException
             try:
                 task = self._gui_queue.get(block=False)
-                self.after_idle(task)
-            except Exception:
+                self.after_idle(task, [])
+            except Exception:  # noqa: BLE001
                 break
         self.after(100, self._check_queue)
 
@@ -73,10 +85,8 @@ class GHEDesignerWindow(Tk):
 
         # main contents
         label_frame_control = LabelFrame(self, text="Stuff")
-        Label(
-            label_frame_control, text="Here is where we could put some stuff"
-        ).pack(side=TOP, padx=3, pady=3)
-        self._button_engage = Button(label_frame_control, text='Button', command=self._button)
+        Label(label_frame_control, text="Here is where we could put some stuff").pack(side=TOP, padx=3, pady=3)
+        self._button_engage = Button(label_frame_control, text="Button", command=self._button)
         self._button_engage.pack(side=TOP, padx=3, pady=3, fill=X)
         label_frame_control.grid(row=0, column=0, sticky=NSEW)
 

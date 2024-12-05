@@ -1,37 +1,44 @@
-[project]
+[tool.poetry]
 name = "ghedesigner"
-version = "1.5"
-description = """A ground heat exchanger design tool with the capability
-to select and size flexibly configured borehole fields that are customized
-for specific building and property constraints."""
-authors = [
-    { name = "Jeffrey D. Spitler", email = "spitler@okstate.edu" }
-]
-dependencies = [
-    'click~=8.1',
-    'jsonschema~=4.19',
-    'numpy~=1.26',
-    'pygfunction~=2.2',
-    'scipy~=1.13'
-]
+version = "2.0"
+description = "A ground heat exchanger design tool with the capability to select and size flexibly configured borehole fields that are customized for specific building and property constraints."
+authors = ["Jeffrey D. Spitler <spitler@okstate.edu>"]
 readme = "README.md"
-requires-python = ">= 3.9, <3.13"
+license = "BSD-3-Clause"
+
+repository = "https://github.com/BETSRG/GHEDesigner"
+documentation = "https://betsrg.github.io/GHEDesigner/"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10, <3.14"
+click = "^8.1"
+jsonschema = "^4.19"
+numpy = "^2.0.0"
+pygfunction = "^2.2"
+scipy = "^1.14"
+
+[tool.poetry.group.dev.dependencies]
+mkdocs-material = "^9.5"
+mkdocs-schema-reader = "^0.11.1"
+mkdocstrings = { version = "^0.27.0", extras = ["python"] }
+pre-commit = "^4.0.0"
+pytest = "^8.0.0"
+pytest-cov = "^6.0.0"
+pytest-xdist = "^3.6"
+recursive-diff = "^1.1.0"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.uv]
-package = true
-dev-dependencies = [
-    "mkdocs-material ~= 9.5",
-    'mkdocstrings[python] ~= 0.26.1',
-    'mkdocs-schema-reader ~= 0.11.1',
-    "pytest ~= 8.0",
-    "pytest-cov ~= 5.0",
-    "pre-commit ~= 3.5",
-    "recursive-diff >= 1.1.0",
-]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
 # https://docs.pytest.org/en/6.2.x/customize.html#pyproject-toml
 [tool.pytest.ini_options]
@@ -40,14 +47,6 @@ testpaths = "ghedesigner/tests"
 # Manually add these flags to `pytest` when running locally for coverage details.
 addopts = ["--cov=ghedesigner", "--cov-report=html"]
 
-[tool.hatch.metadata]
-allow-direct-references = true
-
-[tool.hatch.build.targets.wheel]
-packages = ["ghedesigner"]
-
-[project.scripts]
-ghedesigner = "ghedesigner.manager:run_manager_from_cli"
-
-[project.gui-scripts]
+[tool.poetry.scripts]
+ghedesigner = "ghedesigner.ghe.manager:run_manager_from_cli"
 ghedesigner_gui = "ghedesigner.gui.runner:main_gui"
