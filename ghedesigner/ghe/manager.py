@@ -798,10 +798,10 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         return 1
 
     # Process the load source, it should be a building object or a GHE with loads specified
-    ghe_contains_loads = ['loads' in ghe_dict for _, ghe_dict in inputs['ground-heat-exchanger'].items()]
+    ghe_contains_loads = ["loads" in ghe_dict for _, ghe_dict in inputs["ground-heat-exchanger"].items()]
     all_ghe_has_loads = all(ghe_contains_loads)
-    no_ghe_has_loads = all([not x for x in ghe_contains_loads])
-    building_input = 'building' in inputs
+    no_ghe_has_loads = all(not x for x in ghe_contains_loads)
+    building_input = "building" in inputs
     valid_load_source = all_ghe_has_loads ^ (building_input and no_ghe_has_loads)  # XOR because we don't want both
     if not valid_load_source:
         print("Bad load specified, need exactly one of: loads in each ghe, or building object")
@@ -836,7 +836,7 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             ghe.set_ground_loads_from_hourly_list(ghe_loads_float)
         elif comp_type == "ground-heat-exchanger":
             ghe_dict = inputs["ground-heat-exchanger"][comp_name]
-            if 'loads' in ghe_dict:
+            if "loads" in ghe_dict:
                 ground_load_props: list = ghe_dict["loads"]
                 ghe.set_ground_loads_from_hourly_list(ground_load_props)
             pipe_props: dict = ghe_dict["pipe"]
