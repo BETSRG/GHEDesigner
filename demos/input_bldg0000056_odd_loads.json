@@ -1,16 +1,15 @@
 {
+  "version" : 1,
   "topology": [
     {
       "type": "ground-heat-exchanger",
       "name": "ghe1"
     }
   ],
-  "fluids": {
-    "pure_water": {
-      "fluid_name": "WATER",
-      "concentration_percent": 0,
-      "temperature": 20
-    }
+  "fluid": {
+    "fluid_name": "WATER",
+    "concentration_percent": 0,
+    "temperature": 20
   },
   "ground-heat-exchanger": {
     "ghe1": {
@@ -48,17 +47,8 @@
         "flow_type": "BOREHOLE",
         "max_eft": 35,
         "min_eft": 5
-      }
-    }
-  },
-  "simulation-control": {
-    "thermal-sizing-run": false,
-    "hourly-run": false,
-    "hydraulic-run": false,
-    "simulation-months": 240
-  },
-  "loads": {
-    "ground_loads": [
+      },
+      "loads": [
       -126.59812476814562, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -324.56392322745535,
       -580.5516482280779, -987.4434530700498, -1491.215508253027,
       -2047.9645475879875, -2435.9291217622404, -2520.9635011415558,
@@ -2573,5 +2563,12 @@
       -2462.032170573392, -2335.7222771906477, -2125.596537974943,
       -1846.9154659651344, -1402.4305874867289
     ]
+    }
+  },
+  "simulation-control": {
+    "thermal-sizing-run": false,
+    "hourly-run": false,
+    "hydraulic-run": false,
+    "simulation-months": 240
   }
 }

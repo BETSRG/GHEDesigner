@@ -6,9 +6,9 @@
       "type": "array",
       "description": "A list of name/type map objects that define the system topology."
     },
-    "fluids": {
+    "fluid": {
       "type": "object",
-      "description": "A map of available fluid definition objects."
+      "description": "A fluid definition object."
     },
     "building": {
       "type": "object",
@@ -33,12 +33,17 @@
     "simulation-control": {
       "type": "object",
       "description": ""
+    },
+    "version": {
+      "type": "number",
+      "description": "An integer version ID for this input structure, for future-proofing."
     }
   },
   "required": [
     "topology",
-    "fluids",
+    "fluid",
     "ground-heat-exchanger",
-    "simulation-control"
+    "simulation-control",
+    "version"
   ]
 }

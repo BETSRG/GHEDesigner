@@ -1,16 +1,15 @@
 {
+  "version" : 1,
   "topology": [
     {
       "type": "ground-heat-exchanger",
       "name": "ghe1"
     }
   ],
-  "fluids": {
-    "pure_water": {
-      "fluid_name": "WATER",
-      "concentration_percent": 0,
-      "temperature": 20
-    }
+  "fluid": {
+    "fluid_name": "WATER",
+    "concentration_percent": 0,
+    "temperature": 20
   },
   "ground-heat-exchanger": {
     "ghe1": {
@@ -51,17 +50,8 @@
         "max_eft": 35,
         "min_eft": 5,
         "max_boreholes": 200
-      }
-    }
-  },
-  "simulation-control": {
-    "thermal-sizing-run": false,
-    "hourly-run": false,
-    "hydraulic-run": false,
-    "simulation-months": 240
-  },
-  "loads": {
-    "ground_loads": [
+      },
+      "loads": [
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 88964.3734177778, 122073.202982222, 63902.6904222222,
@@ -1696,5 +1686,12 @@
       13405.4243075556, 18355.4246813333, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     ]
+    }
+  },
+  "simulation-control": {
+    "thermal-sizing-run": false,
+    "hourly-run": false,
+    "hydraulic-run": false,
+    "simulation-months": 240
   }
 }
