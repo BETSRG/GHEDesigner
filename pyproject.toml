@@ -48,5 +48,5 @@ testpaths = "ghedesigner/tests"
 addopts = ["--cov=ghedesigner", "--cov-report=html"]
 
 [tool.poetry.scripts]
-ghedesigner = "ghedesigner.ghe.manager:run_manager_from_cli"
+ghedesigner = "ghedesigner.main:run_manager_from_cli"
 ghedesigner_gui = "ghedesigner.gui.runner:main_gui"
