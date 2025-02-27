@@ -66,8 +66,7 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             loads_file_path = Path(single_building["loads"]).resolve()
             if not loads_file_path.exists():  # TODO: I'll try to find it relative to repo/tests/ for now...
                 this_file = Path(__file__).resolve()
-                ghe_dir = this_file.parent
-                ghe_designer_dir = ghe_dir.parent
+                ghe_designer_dir = this_file.parent
                 tests_dir = ghe_designer_dir / "tests"
                 loads_file_path = tests_dir / single_building["loads"]
             heat_pump.set_loads_from_file(loads_file_path)

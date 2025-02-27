@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from ghedesigner.ghe.manager import _run_manager_from_cli_worker
+from ghedesigner.main import _run_manager_from_cli_worker
 
 # results can be updated with the update_demo_results.py file in /scripts
 # comment the 'self.assert' statements below to generate an updated set of results first
