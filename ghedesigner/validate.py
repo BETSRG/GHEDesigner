@@ -136,9 +136,9 @@ def validate_input_file(input_file_path: Path) -> int:
     err_count += validate_file_structure(instance)
     err_count += validate_topology(instance["topology"])
     err_count += validate_fluid(instance["fluid"])
-    # err_count += validate_building(instance["building"])
+    err_count += validate_building(instance["building"])
     # err_count += validate_pipe(instance["pipe"])
-    # err_count += validate_simulation(instance["simulation"])
+    err_count += validate_simulation(instance["simulation-control"])
     # err_count += validate_geometric(instance["geometric_constraints"])
     # err_count += validate_design(instance["design"])
     return err_count

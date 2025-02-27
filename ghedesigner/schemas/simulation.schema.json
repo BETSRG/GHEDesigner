@@ -2,26 +2,19 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
   "properties": {
-    "start_month": {
-      "type": "string",
-      "enum": [
-        "JANUARY",
-        "FEBRUARY",
-        "MARCH",
-        "APRIL",
-        "MAY",
-        "JUNE",
-        "JULY",
-        "AUGUST",
-        "SEPTEMBER",
-        "OCTOBER",
-        "NOVEMBER",
-        "DECEMBER"
-      ],
-      "default": "JANUARY",
+    "thermal-sizing-run": {
+      "type": "boolean",
+      "description": "This field is currently unused.  It will enable or disable running a sizing calculation for the ground heat exchanger"
+    },
+    "hourly-run": {
+      "type": "boolean",
       "description": "This field is currently unused."
     },
-    "num_months": {
+    "hydraulic-run": {
+      "Type": "boolean",
+      "description": "This field is currently unused"
+    },
+    "simulation-months": {
       "type": "number",
       "minimum": 1,
       "format": "Months",
@@ -34,5 +27,5 @@
       "description": "This field is currently unused. Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently available."
     }
   },
-  "required": ["num_months"]
+  "required": ["simulation-months"]
 }
