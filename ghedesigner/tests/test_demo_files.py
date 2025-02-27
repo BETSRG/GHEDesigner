@@ -19,7 +19,7 @@ files_to_debug: list[Path] = [
     # Path(
     #     "/home/edwin/Projects/GHEDesigner/demos/find_design_simple_system.json"
     # )
-    Path(__file__).parent.parent.parent / "demos" / "find_design_simple_system.json"
+    # Path(__file__).parent.parent.parent / "demos" / "find_design_rowwise_single_u_tube.json"
 ]
 
 limit_debug_file_count = 0
