@@ -484,7 +484,7 @@ class GroundHeatExchanger:
         :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
         :param property_boundary: property boundary points, in m.
         :param no_go_boundaries: boundary points for no-go zones, in m.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -515,7 +515,7 @@ class GroundHeatExchanger:
         min_rotation: float,
         rotate_step: float,
         property_boundary: list,
-        no_go_boundaries: list,
+        no_go_boundaries = None,
         throw: bool = True,
     ) -> int:
         """
@@ -771,8 +771,8 @@ class GroundHeatExchanger:
             "loads": {"ground_loads": self._ground_loads},
         }
 
-        with open(output_file_path, "w") as f:
-            f.write(dumps(d, sort_keys=True, indent=2, separators=(",", ": ")))
+        output_file_path.parent.mkdir(parents=True, exist_ok=True)
+        output_file_path.write_text(dumps(d, sort_keys=True, indent=2, separators=(",", ": ")))
         return 0
 
 
