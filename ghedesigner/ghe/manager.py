@@ -515,7 +515,7 @@ class GroundHeatExchanger:
         min_rotation: float,
         rotate_step: float,
         property_boundary: list,
-        no_go_boundaries = None,
+        no_go_boundaries=None,
         throw: bool = True,
     ) -> int:
         """

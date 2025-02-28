@@ -187,7 +187,7 @@ def find_duplicates(borefield, space, disp=False):
 
     if disp:
         # pad with '-' align in center
-        output = f"{'*gt.boreholes.find_duplicates()*' :-^50}"
+        output = f"{'*gt.boreholes.find_duplicates()*':-^50}"
         # keep a space between the function name
         print(output.replace("*", " "))
         print(f"The duplicate pairs of boreholes found: {duplicate_pairs}")
@@ -241,7 +241,7 @@ def remove_duplicates(borefield, space, disp=False):
     if disp:
         # pad with '-' align in center
         print(
-            f"{'*gt.boreholes.remove_duplicates()*' :-^50}".replace("*", " ")
+            f"{'*gt.boreholes.remove_duplicates()*':-^50}".replace("*", " ")
         )  # keep a space between the function name
         n_duplicates = len(borefield) - len(new_borefield)
         print(f"The number of duplicates removed: {n_duplicates}")

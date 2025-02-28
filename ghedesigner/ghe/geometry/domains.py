@@ -251,9 +251,7 @@ def zoned_rectangle_domain(length_x, length_y, n_x, n_y, transpose=False):
             n_i2 += 1
         else:
             raise ValueError(
-                "This function should not have ever made it to "
-                "this point, there may be a problem with the "
-                "inputs."
+                "This function should not have ever made it to this point, there may be a problem with the inputs."
             )
         z = zoned_rectangle(n_1, n_2, b_1, b_2, n_i1, n_i2)
         if transpose:
