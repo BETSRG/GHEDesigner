@@ -1,14 +1,13 @@
 {
+  "version": 1,
   "topology": [
     { "type": "building", "name": "building1" },
     { "type": "ground-heat-exchanger", "name": "ghe1" }
   ],
-  "fluids": {
-    "pure water": {
-      "fluid_name": "WATER",
-      "concentration_percent": 0,
-      "temperature": 20
-    }
+  "fluid": {
+    "fluid_name": "WATER",
+    "concentration_percent": 0,
+    "temperature": 20
   },
   "building": {
     "building1": {

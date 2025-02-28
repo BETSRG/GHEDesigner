@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from ghedesigner.ghe.manager import _run_manager_from_cli_worker
+from ghedesigner.main import _run_manager_from_cli_worker
 
 # results can be updated with the update_demo_results.py file in /scripts
 # comment the 'self.assert' statements below to generate an updated set of results first
@@ -19,7 +19,7 @@ files_to_debug: list[Path] = [
     # Path(
     #     "/home/edwin/Projects/GHEDesigner/demos/find_design_simple_system.json"
     # )
-    # Path(__file__).parent.parent.parent / "demos" / "find_design_simple_system.json"
+    # Path(__file__).parent.parent.parent / "demos" / "find_design_bi_rectangle_constrained_single_u_tube.json"
 ]
 
 limit_debug_file_count = 0
