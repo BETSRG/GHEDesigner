@@ -31,7 +31,7 @@ from ghedesigner.ghe.geometry.geometry import (
 from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
-from ghedesigner.utilities import check_max_min_args, report_error
+from ghedesigner.utilities import check_arg_bounds, report_error
 
 
 class GroundHeatExchanger:
@@ -167,7 +167,7 @@ class GroundHeatExchanger:
         :rtype: int
         """
 
-        check_max_min_args(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
+        check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
 
         r_in = inner_diameter / 2.0
         r_out = outer_diameter / 2.0
@@ -199,7 +199,7 @@ class GroundHeatExchanger:
         :rtype: int
         """
 
-        check_max_min_args(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
+        check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
 
         r_in = inner_diameter / 2.0
         r_out = outer_diameter / 2.0
@@ -231,7 +231,7 @@ class GroundHeatExchanger:
         :rtype: int
         """
 
-        check_max_min_args(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
+        check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
 
         r_in = inner_diameter / 2.0
         r_out = outer_diameter / 2.0
@@ -267,8 +267,8 @@ class GroundHeatExchanger:
         :rtype: int
         """
 
-        check_max_min_args(inner_pipe_d_in, inner_pipe_d_out, "inner_pipe_d_in", "inner_pipe_d_out")
-        check_max_min_args(outer_pipe_d_in, outer_pipe_d_out, "outer_pipe_d_in", "outer_pipe_d_out")
+        check_arg_bounds(inner_pipe_d_in, inner_pipe_d_out, "inner_pipe_d_in", "inner_pipe_d_out")
+        check_arg_bounds(outer_pipe_d_in, outer_pipe_d_out, "outer_pipe_d_in", "outer_pipe_d_out")
 
         self.pipe_type = BHPipeType.COAXIAL
 
@@ -349,7 +349,7 @@ class GroundHeatExchanger:
             )
             return 1
 
-        check_max_min_args(min_height, max_height, "min_height", "max_height")
+        check_arg_bounds(min_height, max_height, "min_height", "max_height")
 
         self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsNearSquare(b, length)
@@ -384,8 +384,8 @@ class GroundHeatExchanger:
             )
             return 1
 
-        check_max_min_args(min_height, max_height, "min_height", "max_height")
-        check_max_min_args(b_min, b_max, "b_min", "b_max")
+        check_arg_bounds(min_height, max_height, "min_height", "max_height")
+        check_arg_bounds(b_min, b_max, "b_min", "b_max")
 
         self.geom_type = DesignGeomType.RECTANGLE
         self._simulation_parameters.set_design_heights(max_height, min_height)
@@ -423,9 +423,9 @@ class GroundHeatExchanger:
             )
             return 1
 
-        check_max_min_args(min_height, max_height, "min_height", "max_height")
-        check_max_min_args(b_min, b_max_x, "b_min", "b_max_x")
-        check_max_min_args(b_min, b_max_y, "b_min", "b_max_y")
+        check_arg_bounds(min_height, max_height, "min_height", "max_height")
+        check_arg_bounds(b_min, b_max_x, "b_min", "b_max_x")
+        check_arg_bounds(b_min, b_max_y, "b_min", "b_max_y")
 
         self.geom_type = DesignGeomType.BIRECTANGLE
         self._simulation_parameters.set_design_heights(max_height, min_height)
@@ -464,9 +464,9 @@ class GroundHeatExchanger:
             )
             return 1
 
-        check_max_min_args(min_height, max_height, "min_height", "max_height")
-        check_max_min_args(b_min, b_max_x, "b_min", "b_max_x")
-        check_max_min_args(b_min, b_max_y, "b_min", "b_max_y")
+        check_arg_bounds(min_height, max_height, "min_height", "max_height")
+        check_arg_bounds(b_min, b_max_x, "b_min", "b_max_x")
+        check_arg_bounds(b_min, b_max_y, "b_min", "b_max_y")
 
         self.geom_type = DesignGeomType.BIZONEDRECTANGLE
         self._simulation_parameters.set_design_heights(max_height, min_height)
@@ -506,9 +506,9 @@ class GroundHeatExchanger:
             )
             return 1
 
-        check_max_min_args(min_height, max_height, "min_height", "max_height")
-        check_max_min_args(b_min, b_max_x, "b_min", "b_max_x")
-        check_max_min_args(b_min, b_max_y, "b_min", "b_max_y")
+        check_arg_bounds(min_height, max_height, "min_height", "max_height")
+        check_arg_bounds(b_min, b_max_x, "b_min", "b_max_x")
+        check_arg_bounds(b_min, b_max_y, "b_min", "b_max_y")
 
         self.geom_type = DesignGeomType.BIRECTANGLECONSTRAINED
         self._simulation_parameters.set_design_heights(max_height, min_height)
@@ -560,9 +560,9 @@ class GroundHeatExchanger:
             )
             return 1
 
-        check_max_min_args(min_height, max_height, "min_height", "max_height")
-        check_max_min_args(min_spacing, max_spacing, "min_spacing", "max_spacing")
-        check_max_min_args(min_rotation, max_rotation, "min_rotation", "max_rotation")
+        check_arg_bounds(min_height, max_height, "min_height", "max_height")
+        check_arg_bounds(min_spacing, max_spacing, "min_spacing", "max_spacing")
+        check_arg_bounds(min_rotation, max_rotation, "min_rotation", "max_rotation")
 
         # convert from degrees to radians
         max_rotation = max_rotation * DEG_TO_RAD
@@ -598,7 +598,7 @@ class GroundHeatExchanger:
         :rtype: int
         """
 
-        check_max_min_args(min_eft, max_eft, "min_eft", "max_eft")
+        check_arg_bounds(min_eft, max_eft, "min_eft", "max_eft")
 
         if self._simulation_parameters is None:
             report_error("Simulation parameters must be set before `set_design` is called.", throw)

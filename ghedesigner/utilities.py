@@ -241,7 +241,7 @@ def report_error(message: str, throw: bool = True):
         raise ValueError(message)
 
 
-def check_max_min_args(min_val: float, max_val: float, min_val_name: str, max_val_name: str) -> None:
+def check_arg_bounds(min_val: float, max_val: float, min_val_name: str, max_val_name: str) -> None:
     if min_val > max_val:
         # always throw error here
         report_error(f"`{min_val_name} should be less than {max_val_name}", True)
