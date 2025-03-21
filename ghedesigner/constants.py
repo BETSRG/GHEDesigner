@@ -6,3 +6,4 @@ PI_OVER_2 = pi / 2.0
 TWO_PI = 2.0 * pi
 HRS_IN_DAY = 24
 SEC_IN_HR = 3600
+NUM_MONTHS_IN_YEAR = 12
