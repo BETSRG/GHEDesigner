@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from json import loads
 from math import sqrt
 from pathlib import Path
+from sys import stderr
 
 import numpy as np
 from scipy.optimize import brentq
@@ -173,7 +176,7 @@ def write_idf(summary_path: Path):
     pipe_thickness = (pipe_outer_dia - pipe_inner_dia) / 2.0
     shank_space = data["ghe_system"]["shank_spacing"]["value"] + pipe_outer_dia
 
-    prpoerties = [
+    properties = [
         ("GroundHeatExchanger:Vertical:Properties", ""),
         ("Vert Props Name", "Name"),
         (f"{bh_depth:0.2f}", "Depth of Top of Borehole {m}"),
@@ -222,7 +225,7 @@ def write_idf(summary_path: Path):
     s = ""
     s += write_idf_object(system)
     s += "\n"
-    s += write_idf_object(prpoerties)
+    s += write_idf_object(properties)
     s += "\n"
     s += write_idf_object(ground_temps)
     s += "\n"
@@ -230,3 +233,15 @@ def write_idf(summary_path: Path):
 
     idf_path = root_dir / "out.idf"
     idf_path.write_text(s)
+
+
+def report_error(message: str, throw: bool = True):
+    print(message, file=stderr)
+    if throw:
+        raise ValueError(message)
+
+
+def check_max_min_args(min_val: float, max_val: float, min_val_name: str, max_val_name: str) -> None:
+    if min_val > max_val:
+        # always throw error here
+        report_error(f"`{min_val_name} should be less than {max_val_name}", True)

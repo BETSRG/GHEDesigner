@@ -3,12 +3,11 @@ from __future__ import annotations
 
 from json import dumps
 from pathlib import Path
-from sys import stderr
 from time import time
 
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.constants import DEG_TO_RAD
+from ghedesigner.constants import DEG_TO_RAD, NUM_MONTHS_IN_YEAR
 from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.geometry.design import (
     AnyBisectionType,
@@ -32,12 +31,7 @@ from ghedesigner.ghe.geometry.geometry import (
 from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
-
-
-def report_error(message: str, throw: bool = True):
-    print(message, file=stderr)
-    if throw:
-        raise ValueError(message)
+from ghedesigner.utilities import check_max_min_args, report_error
 
 
 class GroundHeatExchanger:
@@ -69,7 +63,7 @@ class GroundHeatExchanger:
         Sets the design type.
 
         :param design_geometry_str: design geometry input string.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -88,7 +82,7 @@ class GroundHeatExchanger:
         Sets the borehole pipe type.
 
         :param bh_pipe_str: pipe type input string.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -115,12 +109,12 @@ class GroundHeatExchanger:
         :param fluid_name: fluid name input string.
         :param concentration_percent: concentration percent of antifreeze mixture.
         :param temperature: design fluid temperature, in C.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
         try:
-            self._fluid = GHEFluid(fluid_str=fluid_name, percent=concentration_percent, temperature=temperature)
+            self._fluid = GHEFluid(fluid_name, concentration_percent, temperature)
             return 0
         except ValueError:
             report_error("Invalid fluid property input data.", throw)
@@ -173,6 +167,8 @@ class GroundHeatExchanger:
         :rtype: int
         """
 
+        check_max_min_args(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
+
         r_in = inner_diameter / 2.0
         r_out = outer_diameter / 2.0
 
@@ -203,6 +199,8 @@ class GroundHeatExchanger:
         :rtype: int
         """
 
+        check_max_min_args(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
+
         r_in = inner_diameter / 2.0
         r_out = outer_diameter / 2.0
 
@@ -232,6 +230,8 @@ class GroundHeatExchanger:
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+
+        check_max_min_args(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
 
         r_in = inner_diameter / 2.0
         r_out = outer_diameter / 2.0
@@ -266,6 +266,9 @@ class GroundHeatExchanger:
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+
+        check_max_min_args(inner_pipe_d_in, inner_pipe_d_out, "inner_pipe_d_in", "inner_pipe_d_out")
+        check_max_min_args(outer_pipe_d_in, outer_pipe_d_out, "outer_pipe_d_in", "outer_pipe_d_out")
 
         self.pipe_type = BHPipeType.COAXIAL
 
@@ -304,6 +307,10 @@ class GroundHeatExchanger:
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+
+        if (num_months % NUM_MONTHS_IN_YEAR) > 0:
+            raise ValueError(f"num_months must be a multiple of {NUM_MONTHS_IN_YEAR}")
+
         self._simulation_parameters = SimulationParameters(num_months, max_boreholes, continue_if_design_unmet)
         return 0
 
@@ -330,7 +337,7 @@ class GroundHeatExchanger:
         :param min_height: minimum height of borehole, in m.
         :param b: borehole-to-borehole spacing, in m.
         :param length: side length of the sizing domain, in m.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -341,6 +348,8 @@ class GroundHeatExchanger:
                 throw,
             )
             return 1
+
+        check_max_min_args(min_height, max_height, "min_height", "max_height")
 
         self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsNearSquare(b, length)
@@ -365,7 +374,7 @@ class GroundHeatExchanger:
         :param width: side width of the sizing domain, in m.
         :param b_min: minimum borehole-to-borehole spacing, in m.
         :param b_max: maximum borehole-to-borehole spacing, in m.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -374,6 +383,9 @@ class GroundHeatExchanger:
                 "Simulation parameters must be set before `set_geometry_constraints_rectangle` is called.", throw
             )
             return 1
+
+        check_max_min_args(min_height, max_height, "min_height", "max_height")
+        check_max_min_args(b_min, b_max, "b_min", "b_max")
 
         self.geom_type = DesignGeomType.RECTANGLE
         self._simulation_parameters.set_design_heights(max_height, min_height)
@@ -401,7 +413,7 @@ class GroundHeatExchanger:
         :param b_min: minimum borehole-to-borehole spacing, in m.
         :param b_max_x: maximum borehole-to-borehole spacing in the x-direction, in m.
         :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -410,6 +422,10 @@ class GroundHeatExchanger:
                 "Simulation parameters must be set before `set_geometry_constraints_bi_rectangle` is called.", throw
             )
             return 1
+
+        check_max_min_args(min_height, max_height, "min_height", "max_height")
+        check_max_min_args(b_min, b_max_x, "b_min", "b_max_x")
+        check_max_min_args(b_min, b_max_y, "b_min", "b_max_y")
 
         self.geom_type = DesignGeomType.BIRECTANGLE
         self._simulation_parameters.set_design_heights(max_height, min_height)
@@ -437,7 +453,7 @@ class GroundHeatExchanger:
         :param b_min: minimum borehole-to-borehole spacing, in m.
         :param b_max_x: maximum borehole-to-borehole spacing in the x-direction, in m.
         :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -447,6 +463,10 @@ class GroundHeatExchanger:
                 throw,
             )
             return 1
+
+        check_max_min_args(min_height, max_height, "min_height", "max_height")
+        check_max_min_args(b_min, b_max_x, "b_min", "b_max_x")
+        check_max_min_args(b_min, b_max_y, "b_min", "b_max_y")
 
         self.geom_type = DesignGeomType.BIZONEDRECTANGLE
         self._simulation_parameters.set_design_heights(max_height, min_height)
@@ -485,6 +505,10 @@ class GroundHeatExchanger:
                 throw,
             )
             return 1
+
+        check_max_min_args(min_height, max_height, "min_height", "max_height")
+        check_max_min_args(b_min, b_max_x, "b_min", "b_max_x")
+        check_max_min_args(b_min, b_max_y, "b_min", "b_max_y")
 
         self.geom_type = DesignGeomType.BIRECTANGLECONSTRAINED
         self._simulation_parameters.set_design_heights(max_height, min_height)
@@ -526,7 +550,7 @@ class GroundHeatExchanger:
         :param rotate_step: step size for field rotation search.
         :param property_boundary: property boundary points.
         :param no_go_boundaries: boundary points for no-go zones.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -535,6 +559,10 @@ class GroundHeatExchanger:
                 "Simulation parameters must be set before `set_geometry_constraints_rowwise` is called.", throw
             )
             return 1
+
+        check_max_min_args(min_height, max_height, "min_height", "max_height")
+        check_max_min_args(min_spacing, max_spacing, "min_spacing", "max_spacing")
+        check_max_min_args(min_rotation, max_rotation, "min_rotation", "max_rotation")
 
         # convert from degrees to radians
         max_rotation = max_rotation * DEG_TO_RAD
@@ -565,10 +593,13 @@ class GroundHeatExchanger:
         :param flow_type_str: flow type string input.
         :param max_eft: maximum heat pump entering fluid temperature, in C.
         :param min_eft: minimum heat pump entering fluid temperature, in C.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
+
+        check_max_min_args(min_eft, max_eft, "min_eft", "max_eft")
+
         if self._simulation_parameters is None:
             report_error("Simulation parameters must be set before `set_design` is called.", throw)
             return 1
@@ -621,7 +652,7 @@ class GroundHeatExchanger:
         """
         Calls design methods to execute sizing.
 
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
@@ -688,7 +719,7 @@ class GroundHeatExchanger:
         Writes an input file based on current simulation configuration.
 
         :param output_file_path: output directory to write input file.
-        :param throw: By default, function will raise an exception on error, override to false to not raise exception
+        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
         :returns: Zero if successful, nonzero if failure
         :rtype: int
         """
