@@ -44,7 +44,7 @@ class TestBHResistance(GHEBaseTest):
 
         # Thermal properties
         # Pipe
-        pipe = Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe(pos, r_inner, r_outer, s, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = Soil(k_s, rho_cp_s, ugt)
@@ -100,7 +100,8 @@ class TestBHResistance(GHEBaseTest):
         k_p = 0.4  # pipe thermal conductivity (W/m.K)
         rho_cp_p = 1542000.0  # pipe volumetric heat capacity (J/K.m3)
         epsilon = 1.0e-6  # pipe roughness (m)
-        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        ss_from_center = (s - r_out) / 2.0
+        pipe = Pipe(pos, r_in, r_out, s, ss_from_center, epsilon, k_p, rho_cp_p)
 
         # soil
         k_s = 2.0  # Ground thermal conductivity (W/m.K)
@@ -180,6 +181,7 @@ class TestBHResistance(GHEBaseTest):
         r_out = d_out / 2.0
         r_in = d_in / 2.0
         s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
+        ss_from_center = (s - r_out) / 2.0
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Pipe positions
@@ -198,7 +200,7 @@ class TestBHResistance(GHEBaseTest):
 
         # Thermal properties
         # Pipe
-        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe(pos, r_in, r_out, s, ss_from_center, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = Soil(k_s, rho_cp_s, ugt)
@@ -249,6 +251,7 @@ class TestBHResistance(GHEBaseTest):
         r_out = d_out / 2.0
         r_in = d_in / 2.0
         s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
+        ss_from_center = (s - r_out) / 2.0
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Pipe positions
@@ -269,8 +272,8 @@ class TestBHResistance(GHEBaseTest):
 
         # Thermal properties
         # Pipe
-        pipe_s = Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rho_cp_p)
-        pipe_d = Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe_s = Pipe(pos_s, r_in, r_out, s, ss_from_center, epsilon, k_p, rho_cp_p)
+        pipe_d = Pipe(pos_d, r_in, r_out, s, ss_from_center, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = Soil(k_s, rho_cp_s, ugt)
@@ -374,7 +377,7 @@ class TestBHResistance(GHEBaseTest):
 
         # Thermal properties
         # Pipe
-        pipe = Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe(pos, r_inner, r_outer, s, s, epsilon, k_p, rho_cp_p)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = Soil(k_s, rho_cp_s, ugt)

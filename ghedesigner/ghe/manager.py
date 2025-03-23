@@ -174,7 +174,8 @@ class GroundHeatExchanger:
 
         self.pipe_type = BHPipeType.SINGLEUTUBE
         pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 1)
-        self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, roughness, conductivity, rho_cp)
+        ss_from_center = (shank_spacing + outer_diameter) / 2.0
+        self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, ss_from_center, roughness, conductivity, rho_cp)
         return 0
 
     def set_double_u_tube_pipe_parallel(

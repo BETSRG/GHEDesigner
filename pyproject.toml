@@ -25,6 +25,7 @@ jsonschema = "^4.19"
 numpy = "^2.0.0"
 pygfunction = "^2.2"
 scipy = "^1.14"
+BHResist = {path = "../BHResist"}
 
 [tool.poetry.group.dev.dependencies]
 mkdocs-material = "^9.5"

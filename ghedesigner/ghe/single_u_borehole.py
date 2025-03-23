@@ -8,8 +8,8 @@ from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
 
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
-from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from bhr.borehole import Borehole as bhr
 
 
 class CellProps(IntEnum):
@@ -22,7 +22,7 @@ class CellProps(IntEnum):
     VOL = auto()
 
 
-class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
+class SingleUTube(gt.pipes.SingleUTube):
     def __init__(
         self,
         m_flow_borehole: float,
@@ -32,11 +32,11 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         grout: Grout,
         soil: Soil,
     ) -> None:
-        GHEDesignerBoreholeBase.__init__(self, m_flow_borehole, fluid, _borehole, pipe, grout, soil)
-        self.R_p = 0.0
-        self.R_f = 0.0
-        self.R_fp = 0.0
-        self.h_f = 0.0
+        # GHEDesignerBoreholeBase.__init__(self, m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+        # self.R_p = 0.0
+        # self.R_f = 0.0
+        # self.R_fp = 0.0
+        # self.h_f = 0.0
         self.fluid = fluid
         self.m_flow_borehole = m_flow_borehole
         self.borehole = _borehole
@@ -44,24 +44,39 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.soil = soil
         self.grout = grout
 
-        # compute resistances required to construct inherited class
-        self.calc_fluid_pipe_resistance()
 
-        # Initialize pygfunction SingleUTube base class
-        gt.pipes.SingleUTube.__init__(
-            self,
-            self.pipe.pos,
-            self.pipe.r_in,
-            self.pipe.r_out,
-            self.borehole,
-            self.soil.k,
-            self.grout.k,
-            self.R_fp,
+        self.bhr = bhr()
+        self.bhr.init_single_u_borehole(
+            borehole_diameter=_borehole.r_b * 2.0,
+            pipe_outer_diameter=pipe.r_out * 2.0,
+            pipe_dimension_ratio=(pipe.r_out * 2.0) / (pipe.r_out - pipe.r_in),
+            length=_borehole.H,
+            shank_space=pipe.ss_from_center,
+            pipe_conductivity=pipe.k,
+            grout_conductivity=grout.k,
+            soil_conductivity=soil.k,
+            fluid_type=fluid.name,
+            fluid_concentration=fluid.concentration_percent,
         )
 
-        # these methods must be called after inherited class construction
-        self.update_thermal_resistances(self.R_fp)
-        self.calc_effective_borehole_resistance()
+        # # compute resistances required to construct inherited class
+        # self.calc_fluid_pipe_resistance()
+
+        # # Initialize pygfunction SingleUTube base class
+        # gt.pipes.SingleUTube.__init__(
+        #     self,
+        #     self.pipe.pos,
+        #     self.pipe.r_in,
+        #     self.pipe.r_out,
+        #     self.borehole,
+        #     self.soil.k,
+        #     self.grout.k,
+        #     self.R_fp,
+        # )
+
+        # # these methods must be called after inherited class construction
+        # self.update_thermal_resistances(self.R_fp)
+        # self.calc_effective_borehole_resistance()
 
         # radial numerical initialization
         # "The one dimensional model has a fluid core, an equivalent convective
@@ -116,32 +131,32 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.g_bhw = np.array([], dtype=np.double)
         self.lntts = np.array([], dtype=np.double)
         self.c_0 = TWO_PI * self.soil.k
-        soil_diffusivity = self.k_s / self.soil.rhoCp
-        self.t_s = self.b.H**2 / (9 * soil_diffusivity)
+        soil_diffusivity = self.soil.k / self.soil.rhoCp
+        self.t_s = self.bhr._bh.bh_length**2 / (9 * soil_diffusivity)
         # default is at least 49 hours, or up to -8.6 log time
         self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
         self.g_sts = None
 
-    def calc_fluid_pipe_resistance(self) -> float:
-        self.h_f = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
-            self.m_flow_borehole,
-            self.pipe.r_in,
-            self.fluid.mu,
-            self.fluid.rho,
-            self.fluid.k,
-            self.fluid.cp,
-            self.pipe.roughness,
-        )
-        self.R_f = self.compute_fluid_resistance(self.h_f, self.pipe.r_in)
-        self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(self.pipe.r_in, self.pipe.r_out, self.pipe.k)
-        self.R_fp = self.R_f + self.R_p
-        return self.R_fp
+    # def calc_fluid_pipe_resistance(self) -> float:
+    #     self.h_f = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
+    #         self.m_flow_borehole,
+    #         self.pipe.r_in,
+    #         self.fluid.mu,
+    #         self.fluid.rho,
+    #         self.fluid.k,
+    #         self.fluid.cp,
+    #         self.pipe.roughness,
+    #     )
+    #     self.R_f = self.compute_fluid_resistance(self.h_f, self.pipe.r_in)
+    #     self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(self.pipe.r_in, self.pipe.r_out, self.pipe.k)
+    #     self.R_fp = self.R_f + self.R_p
+    #     return self.R_fp
 
-    def calc_effective_borehole_resistance(self) -> float:
-        # TODO: should this be here?
-        self._initialize_stored_coefficients()
-        resist_bh_effective = self.effective_borehole_thermal_resistance(self.m_flow_borehole, self.fluid.cp)
-        return resist_bh_effective
+    # def calc_effective_borehole_resistance(self) -> float:
+    #     # TODO: should this be here?
+    #     self._initialize_stored_coefficients()
+    #     resist_bh_effective = self.effective_borehole_thermal_resistance(self.m_flow_borehole, self.fluid.cp)
+    #     return resist_bh_effective
 
     def to_single(self):
         return self

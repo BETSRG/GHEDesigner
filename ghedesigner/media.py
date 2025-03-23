@@ -63,7 +63,7 @@ class Grout(ThermalProperty):
 
 
 class Pipe(ThermalProperty):
-    def __init__(self, pos, r_in, r_out, s, roughness, k, rho_cp) -> None:
+    def __init__(self, pos, r_in, r_out, s, ss_from_center, roughness, k, rho_cp) -> None:
         # Make variables from ThermalProperty available to Pipe
         super().__init__(k, rho_cp)
 
@@ -72,6 +72,7 @@ class Pipe(ThermalProperty):
         self.r_in = r_in  # Pipe inner radius (m) can be a float or list
         self.r_out = r_out  # Pipe outer radius (m) can be a float or list
         self.s = s  # Center pipe to center pipe shank spacing
+        self.ss_from_center = ss_from_center
         self.roughness = roughness  # Pipe roughness (m)
         if isinstance(pos, list):
             self.n_pipes = int(len(pos) / 2)  # Number of pipes
