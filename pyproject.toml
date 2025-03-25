@@ -23,9 +23,9 @@ python = ">=3.10, <3.14"
 click = "^8.1"
 jsonschema = "^4.19"
 numpy = "^2.0.0"
-pygfunction = "^2.2"
+pygfunction = {path = "../pygfunction"}
 scipy = "^1.14"
-BHResist = {path = "../BHResist"}
+BHResist = {path = "../BHResist", develop=true}
 
 [tool.poetry.group.dev.dependencies]
 mkdocs-material = "^9.5"
