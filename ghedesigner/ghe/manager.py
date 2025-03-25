@@ -9,7 +9,11 @@ from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import DEG_TO_RAD, NUM_MONTHS_IN_YEAR
 from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
-from ghedesigner.ghe.geometry.design import (
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.output import OutputManager
+from ghedesigner.utilities import check_arg_bounds, report_error
+
+from .geometry.design import (
     AnyBisectionType,
     DesignBase,
     DesignBiRectangle,
@@ -19,7 +23,7 @@ from ghedesigner.ghe.geometry.design import (
     DesignRectangle,
     DesignRowWise,
 )
-from ghedesigner.ghe.geometry.geometry import (
+from .geometry.geometry import (
     GeometricConstraints,
     GeometricConstraintsBiRectangle,
     GeometricConstraintsBiRectangleConstrained,
@@ -28,10 +32,7 @@ from ghedesigner.ghe.geometry.geometry import (
     GeometricConstraintsRectangle,
     GeometricConstraintsRowWise,
 )
-from ghedesigner.ghe.simulation import SimulationParameters
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-from ghedesigner.output import OutputManager
-from ghedesigner.utilities import check_arg_bounds, report_error
+from .simulation import SimulationParameters
 
 
 class GroundHeatExchanger:

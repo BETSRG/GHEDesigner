@@ -23,7 +23,7 @@ python = ">=3.10, <3.14"
 click = "^8.1"
 jsonschema = "^4.19"
 numpy = "^2.0.0"
-pygfunction = "^2.2"
+pygfunction = { git = "https://github.com/axelstudios/pygfunction.git", branch = "task/refactor-matplotlib" }
 scipy = "^1.14"
 
 [tool.poetry.group.dev.dependencies]

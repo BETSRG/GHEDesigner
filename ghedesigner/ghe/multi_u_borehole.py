@@ -8,10 +8,11 @@ from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import TWO_PI, pi
 from ghedesigner.enums import DoubleUTubeConnType
-from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
-from ghedesigner.ghe.single_u_borehole import SingleUTube
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.utilities import solve_root
+
+from .borehole_base import GHEDesignerBoreholeBase
+from .single_u_borehole import SingleUTube
 
 
 class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):

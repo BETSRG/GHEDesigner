@@ -1,4 +1,4 @@
-from ghedesigner.heat_pump import HeatPump
+from .heat_pump import HeatPump
 
 
 class Building:

@@ -6,12 +6,13 @@ import numpy as np
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
-from ghedesigner.ghe.geometry.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
-from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
-from ghedesigner.ghe.ground_heat_exchangers import GHE
-from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.utilities import borehole_spacing, eskilson_log_times
+
+from .geometry.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
+from .gfunction import calc_g_func_for_multiple_lengths
+from .ground_heat_exchangers import GHE
+from .simulation import SimulationParameters
 
 
 # This is the search algorithm used for finding row-wise fields

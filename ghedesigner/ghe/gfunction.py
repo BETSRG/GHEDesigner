@@ -8,7 +8,8 @@ from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d, lagrange
 
 from ghedesigner.enums import BHPipeType
-from ghedesigner.ghe.coaxial_borehole import get_bhe_object
+
+from .coaxial_borehole import get_bhe_object
 
 logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
 logger = logging.getLogger(__name__)

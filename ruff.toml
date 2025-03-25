@@ -51,6 +51,10 @@ ignore = [
 ]
 
 [lint.per-file-ignores]
+"ghedesigner/__init__.py" = [
+    "F401", # unused-import
+    "F403", # undefined-local-with-import-star
+]
 "ghedesigner/rowwise.py" = [
     "PLR2004", # magic-value-comparison
 ]

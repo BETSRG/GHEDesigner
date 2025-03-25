@@ -9,14 +9,18 @@ from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
 from ghedesigner.ghe.bisection_1d_search import Bisection1D
 from ghedesigner.ghe.bisection_2d_search import Bisection2D
 from ghedesigner.ghe.bisection_zd_search import BisectionZD
-from ghedesigner.ghe.geometry.domains import (
+from ghedesigner.ghe.rowwise_search import RowWiseModifiedBisectionSearch
+from ghedesigner.ghe.simulation import SimulationParameters
+from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+
+from .domains import (
     bi_rectangle_nested,
     bi_rectangle_zoned_nested,
     polygonal_land_constraint,
     rectangular,
     square_and_near_square,
 )
-from ghedesigner.ghe.geometry.geometry import (
+from .geometry import (
     GeometricConstraints,
     GeometricConstraintsBiRectangle,
     GeometricConstraintsBiRectangleConstrained,
@@ -25,9 +29,6 @@ from ghedesigner.ghe.geometry.geometry import (
     GeometricConstraintsRectangle,
     GeometricConstraintsRowWise,
 )
-from ghedesigner.ghe.rowwise_search import RowWiseModifiedBisectionSearch
-from ghedesigner.ghe.simulation import SimulationParameters
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 
 AnyBisectionType = Bisection1D | Bisection2D | BisectionZD | RowWiseModifiedBisectionSearch
 

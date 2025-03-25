@@ -7,8 +7,9 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from ghedesigner.constants import HRS_IN_DAY, SEC_IN_HR, TWO_PI
-from ghedesigner.ghe.simulation import SimulationParameters
-from ghedesigner.ghe.single_u_borehole import SingleUTube
+
+from .simulation import SimulationParameters
+from .single_u_borehole import SingleUTube
 
 
 class HybridLoad:
