@@ -8,9 +8,8 @@ from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
 
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
+from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-
-from .borehole_base import GHEDesignerBoreholeBase
 
 
 class CellProps(IntEnum):

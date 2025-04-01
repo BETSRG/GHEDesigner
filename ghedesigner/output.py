@@ -7,11 +7,11 @@ from json import dumps
 from math import floor
 from pathlib import Path
 
-from .constants import HRS_IN_DAY
-from .enums import TimestepType
-from .ghe.borehole_base import GHEDesignerBoreholeBase
-from .ghe.coaxial_borehole import CoaxialPipe
-from .ghe.geometry.design import AnyBisectionType
+from ghedesigner.constants import HRS_IN_DAY
+from ghedesigner.enums import TimestepType
+from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
+from ghedesigner.ghe.coaxial_borehole import CoaxialPipe
+from ghedesigner.ghe.geometry.design import AnyBisectionType
 
 
 class OutputManager:

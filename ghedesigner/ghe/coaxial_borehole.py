@@ -5,10 +5,9 @@ from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import TWO_PI
 from ghedesigner.enums import BHPipeType, DoubleUTubeConnType
+from ghedesigner.ghe.multi_u_borehole import GHEDesignerBoreholeWithMultiplePipes, MultipleUTube
+from ghedesigner.ghe.single_u_borehole import SingleUTube
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-
-from .multi_u_borehole import GHEDesignerBoreholeWithMultiplePipes, MultipleUTube
-from .single_u_borehole import SingleUTube
 
 
 class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):

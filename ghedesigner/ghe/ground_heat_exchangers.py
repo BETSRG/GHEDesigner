@@ -6,13 +6,12 @@ from scipy.interpolate import interp1d
 
 from ghedesigner.constants import SEC_IN_HR, TWO_PI, VERSION
 from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.ghe.coaxial_borehole import get_bhe_object
+from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
+from ghedesigner.ghe.ground_loads import HybridLoad
+from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.media import Grout, Pipe, Soil
 from ghedesigner.utilities import solve_root
-
-from .coaxial_borehole import get_bhe_object
-from .gfunction import GFunction, calc_g_func_for_multiple_lengths
-from .ground_loads import HybridLoad
-from .simulation import SimulationParameters
 
 
 class BaseGHE:

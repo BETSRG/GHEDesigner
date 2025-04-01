@@ -2,7 +2,7 @@ from math import cos, pi, sin
 
 from pygfunction.media import Fluid
 
-from .enums import FluidType
+from ghedesigner.enums import FluidType
 
 
 class GHEFluid(Fluid):

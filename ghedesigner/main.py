@@ -6,12 +6,12 @@ from pathlib import Path
 import click
 from jsonschema import ValidationError
 
-from .constants import VERSION
-from .enums import BHPipeType, DesignGeomType
-from .ghe.manager import GroundHeatExchanger
-from .heat_pump import HeatPump
-from .utilities import write_idf
-from .validate import validate_input_file
+from ghedesigner.constants import VERSION
+from ghedesigner.enums import BHPipeType, DesignGeomType
+from ghedesigner.ghe.manager import GroundHeatExchanger
+from ghedesigner.heat_pump import HeatPump
+from ghedesigner.utilities import write_idf
+from ghedesigner.validate import validate_input_file
 
 logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
 logger = logging.getLogger(__name__)

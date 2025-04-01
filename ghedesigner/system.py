@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from .building import Building
-from .ghe.ground_heat_exchangers import GHE
+from ghedesigner.building import Building
+from ghedesigner.ghe.ground_heat_exchangers import GHE
 
 
 class System:

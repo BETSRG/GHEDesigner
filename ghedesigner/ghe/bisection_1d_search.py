@@ -4,12 +4,11 @@ import numpy as np
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
+from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
+from ghedesigner.ghe.ground_heat_exchangers import GHE
+from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.utilities import borehole_spacing, check_bracket, eskilson_log_times, sign
-
-from .gfunction import calc_g_func_for_multiple_lengths
-from .ground_heat_exchangers import GHE
-from .simulation import SimulationParameters
 
 
 class Bisection1D:

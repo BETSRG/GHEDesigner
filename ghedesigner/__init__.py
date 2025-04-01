@@ -1,4 +1,4 @@
-from . import (
+from ghedesigner import (
     building,
     constants,
     enums,
@@ -9,5 +9,5 @@ from . import (
     utilities,
     validate,
 )
-from .constants import VERSION
-from .ghe import *
+from ghedesigner.constants import VERSION
+from ghedesigner.ghe import *

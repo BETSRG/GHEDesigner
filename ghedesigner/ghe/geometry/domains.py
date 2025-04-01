@@ -1,6 +1,6 @@
 from math import ceil, floor
 
-from .coordinates import (
+from ghedesigner.ghe.geometry.coordinates import (
     c_shape,
     l_shape,
     lop_u,
@@ -8,7 +8,7 @@ from .coordinates import (
     transpose_coordinates,
     zoned_rectangle,
 )
-from .feature_recognition import determine_largest_rectangle, remove_cutout
+from ghedesigner.ghe.geometry.feature_recognition import determine_largest_rectangle, remove_cutout
 
 
 def square_and_near_square(lower: int, upper: int, b: float):

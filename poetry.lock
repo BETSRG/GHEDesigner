@@ -1033,13 +1033,14 @@ typing_extensions = ">=4.0.1"
 
 [package.extras]
 doc = ["numpydoc (>=1.2.0)", "recommonmark (>=0.6.0)", "sphinx (>=4.4.0)"]
+plot = ["matplotlib (>=3.8.4)"]
 testing = ["matplotlib (>=3.8.4)", "pytest (>=7.1.1)", "pytest-cov (>=3.0.0)", "tox (>=3.24.5)"]
 
 [package.source]
 type = "git"
 url = "https://github.com/axelstudios/pygfunction.git"
 reference = "task/refactor-matplotlib"
-resolved_reference = "8e96aff0301facb3b2e1c335a5e03e9a6a6dc813"
+resolved_reference = "3555f729e57c42d623af37051637c531466651e7"
 
 [[package]]
 name = "pygments"
