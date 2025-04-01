@@ -4,8 +4,7 @@ import numpy as np
 from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d
 
-from ghedesigner import VERSION
-from ghedesigner.constants import SEC_IN_HR, TWO_PI
+from ghedesigner.constants import SEC_IN_HR, TWO_PI, VERSION
 from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.ghe.coaxial_borehole import get_bhe_object
 from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths

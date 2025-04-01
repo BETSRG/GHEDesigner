@@ -1,12 +1,12 @@
 import logging
+import sys
 from json import loads
 from pathlib import Path
-from sys import exit, stderr
 
 import click
 from jsonschema import ValidationError
 
-from ghedesigner import VERSION
+from ghedesigner.constants import VERSION
 from ghedesigner.enums import BHPipeType, DesignGeomType
 from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.heat_pump import HeatPump
@@ -207,7 +207,7 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
                     no_go_boundaries=constraint_props["no_go_boundaries"],
                 )
             else:
-                print("Geometry constraint method not supported.", file=stderr)
+                print("Geometry constraint method not supported.", file=sys.stderr)
                 return 1
 
             # self, flow_rate: float, flow_type_str: str, max_eft: float, min_eft: float, throw: bool = True
@@ -256,11 +256,11 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
                 return 1
 
         else:
-            print(f"Unsupported conversion format type: {format}", file=stderr)
+            print(f"Unsupported conversion format type: {format}", file=sys.stderr)
             return 1
 
     if output_directory is None:
-        print("Output directory path must be passed as an argument, aborting", file=stderr)
+        print("Output directory path must be passed as an argument, aborting", file=sys.stderr)
         return 1
 
     output_path = Path(output_directory).resolve()
@@ -269,4 +269,4 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
 
 
 if __name__ == "__main__":
-    exit(run_manager_from_cli())
+    sys.exit(run_manager_from_cli())
