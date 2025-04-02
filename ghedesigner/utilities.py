@@ -3,7 +3,7 @@ from __future__ import annotations
 from json import loads
 from math import sqrt
 from pathlib import Path
-from sys import stderr
+from typing import Any, Callable
 
 import numpy as np
 from scipy.optimize import brentq
@@ -80,7 +80,15 @@ def check_bracket(sign_x_l, sign_x_r) -> bool:
     # True if bracketed the root
 
 
-def solve_root(x, objective_function, lower=None, upper=None, abs_tol=1.0e-6, rel_tol=1.0e-6, max_iter=50):
+def solve_root(
+    x: float,
+    objective_function: Callable[..., Any],
+    lower: float | None = None,
+    upper: float | None = None,
+    abs_tol=1.0e-6,
+    rel_tol=1.0e-6,
+    max_iter=50,
+):
     # Vary flow rate to match the convective resistance
 
     # Use Brent Quadratic to find the root
@@ -108,7 +116,7 @@ def solve_root(x, objective_function, lower=None, upper=None, abs_tol=1.0e-6, re
     return x
 
 
-def write_idf_object(data: list):
+def write_idf_object(data: list) -> str:
     s = ""
     num_leading_pad_spaces = 4
     leading_pad = " " * num_leading_pad_spaces
@@ -135,7 +143,7 @@ def write_idf_object(data: list):
     return s
 
 
-def write_idf(summary_path: Path):
+def write_idf(summary_path: Path) -> None:
     data = loads(summary_path.read_text())
 
     # assuming the g-function file lives next to the summary file path...
@@ -235,13 +243,7 @@ def write_idf(summary_path: Path):
     idf_path.write_text(s)
 
 
-def report_error(message: str, throw: bool = True):
-    print(message, file=stderr)
-    if throw:
-        raise ValueError(message)
-
-
 def check_arg_bounds(min_val: float, max_val: float, min_val_name: str, max_val_name: str) -> None:
     if min_val > max_val:
         # always throw error here
-        report_error(f"`{min_val_name} should be less than {max_val_name}", True)
+        raise ValueError(f"{min_val_name} ({min_val}) should be less than or equal to {max_val_name} ({max_val})")

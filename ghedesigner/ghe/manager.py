@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from __future__ import annotations
 
 from json import dumps
@@ -28,10 +27,11 @@ from ghedesigner.ghe.geometry.geometry import (
     GeometricConstraintsRectangle,
     GeometricConstraintsRowWise,
 )
+from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
 from ghedesigner.output import OutputManager
-from ghedesigner.utilities import check_arg_bounds, report_error
+from ghedesigner.utilities import check_arg_bounds
 
 
 class GroundHeatExchanger:
@@ -44,10 +44,10 @@ class GroundHeatExchanger:
         self._borehole: Borehole | None = None
         self._simulation_parameters: SimulationParameters | None = None
         self._ground_loads: list[float] | None = None
-        # OK so geometric_constraints is tricky.  We have base classes, yay!
+        # OK so geometric_constraints is tricky. We have base classes, yay!
         # Unfortunately, the functionality between the child classes is not actually
-        # collapsed into a base class function ... yet.  So there will be complaints
-        # about types temporarily.  It's going in the right direction though.
+        # collapsed into a base class function... yet. So there will be complaints
+        # about types temporarily. It's going in the right direction though.
         self.geom_type: DesignGeomType | None = None
         self._geometric_constraints: GeometricConstraints | None = None
         self._design: DesignBase | None = None
@@ -58,92 +58,69 @@ class GroundHeatExchanger:
         self._search_time: float = 0.0
         self.summary_results: dict = {}
 
-    def set_design_geometry_type(self, design_geometry_str: str, throw: bool = True) -> int:
+    def set_design_geometry_type(self, design_geometry_str: str) -> None:
         """
         Sets the design type.
 
         :param design_geometry_str: design geometry input string.
-        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
+        :raises ValueError: If the design geometry string is not supported.
         """
         geometry_map = {geom.name: geom for geom in DesignGeomType}
         geom_type = geometry_map.get(design_geometry_str.upper())
 
         if not geom_type:
-            report_error("Geometry constraint method not supported.", throw)
-            return 1
+            raise ValueError(f"Geometry constraint method '{design_geometry_str}' not supported.")
 
         self.geom_type = geom_type
-        return 0
 
-    def set_pipe_type(self, bh_pipe_str: str, throw: bool = True) -> int:
+    def set_pipe_type(self, bh_pipe_str: str) -> None:
         """
         Sets the borehole pipe type.
 
         :param bh_pipe_str: pipe type input string.
-        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
+        :raises ValueError: If the borehole pipe type string is not supported.
         """
         pipe_type_map = {pipe.name: pipe for pipe in BHPipeType}
         pipe_type = pipe_type_map.get(bh_pipe_str.upper())
 
         if not pipe_type:
-            report_error(f'Borehole pipe type "{bh_pipe_str}" not supported.', throw)
-            return 1
+            raise ValueError(f"Borehole pipe type '{bh_pipe_str}' not supported.")
 
         self.pipe_type = pipe_type
-        return 0
 
     def set_fluid(
         self,
         fluid_name: str = "Water",
         concentration_percent: float = 0.0,
         temperature: float = 20.0,
-        throw: bool = True,
-    ) -> int:
+    ) -> None:
         """
         Sets the fluid instance.
 
         :param fluid_name: fluid name input string.
         :param concentration_percent: concentration percent of antifreeze mixture.
         :param temperature: design fluid temperature, in C.
-        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
         """
-        try:
-            self._fluid = GHEFluid(fluid_name, concentration_percent, temperature)
-            return 0
-        except ValueError:
-            report_error("Invalid fluid property input data.", throw)
-            return 1
+        self._fluid = GHEFluid(fluid_name, concentration_percent, temperature)
 
-    def set_grout(self, conductivity: float, rho_cp: float) -> int:
+    def set_grout(self, conductivity: float, rho_cp: float) -> None:
         """
         Sets the grout instance.
 
         :param conductivity: thermal conductivity, in W/m-K.
         :param rho_cp: volumetric heat capacity, in J/m^3-K.
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
         """
         self._grout = Grout(conductivity, rho_cp)
-        return 0
 
-    def set_soil(self, conductivity: float, rho_cp: float, undisturbed_temp: float) -> int:
+    def set_soil(self, conductivity: float, rho_cp: float, undisturbed_temp: float) -> None:
         """
         Sets the soil instance.
 
         :param conductivity: thermal conductivity, in W/m-K.
         :param rho_cp: volumetric heat capacity, in J/m^3-K.
         :param undisturbed_temp: undisturbed soil temperature, in C.
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
         """
         self._soil = Soil(conductivity, rho_cp, undisturbed_temp)
-        return 0
 
     def set_single_u_tube_pipe(
         self,
@@ -153,7 +130,7 @@ class GroundHeatExchanger:
         roughness: float,
         conductivity: float,
         rho_cp: float,
-    ) -> int:
+    ) -> None:
         """
         Sets the pipe instance for a single u-tube pipe.
 
@@ -163,10 +140,7 @@ class GroundHeatExchanger:
         :param roughness: pipe surface roughness, in m.
         :param conductivity: thermal conductivity, in W/m-K.
         :param rho_cp: volumetric heat capacity, in J/m^3-K.
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
         """
-
         check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
 
         r_in = inner_diameter / 2.0
@@ -175,7 +149,6 @@ class GroundHeatExchanger:
         self.pipe_type = BHPipeType.SINGLEUTUBE
         pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 1)
         self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, roughness, conductivity, rho_cp)
-        return 0
 
     def set_double_u_tube_pipe_parallel(
         self,
@@ -185,7 +158,7 @@ class GroundHeatExchanger:
         roughness: float,
         conductivity: float,
         rho_cp: float,
-    ) -> int:
+    ) -> None:
         """
         Sets the pipe instance for a double u-tube pipe in a parallel configuration.
 
@@ -195,10 +168,7 @@ class GroundHeatExchanger:
         :param roughness: pipe surface roughness, in m.
         :param conductivity: thermal conductivity, in W/m-K.
         :param rho_cp: volumetric heat capacity, in J/m^3-K.
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
         """
-
         check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
 
         r_in = inner_diameter / 2.0
@@ -207,7 +177,6 @@ class GroundHeatExchanger:
         self.pipe_type = BHPipeType.DOUBLEUTUBEPARALLEL
         pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 2)
         self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, roughness, conductivity, rho_cp)
-        return 0
 
     def set_double_u_tube_pipe_series(
         self,
@@ -217,7 +186,7 @@ class GroundHeatExchanger:
         roughness: float,
         conductivity: float,
         rho_cp: float,
-    ) -> int:
+    ) -> None:
         """
         Sets the pipe instance for a double u-tube pipe in a series configuration.
 
@@ -227,10 +196,7 @@ class GroundHeatExchanger:
         :param roughness: pipe surface roughness, in m.
         :param conductivity: thermal conductivity, in W/m-K.
         :param rho_cp: volumetric heat capacity, in J/m^3-K.
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
         """
-
         check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
 
         r_in = inner_diameter / 2.0
@@ -239,7 +205,6 @@ class GroundHeatExchanger:
         self.pipe_type = BHPipeType.DOUBLEUTUBESERIES
         pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 2)
         self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, roughness, conductivity, rho_cp)
-        return 0
 
     def set_coaxial_pipe(
         self,
@@ -251,7 +216,7 @@ class GroundHeatExchanger:
         conductivity_inner: float,
         conductivity_outer: float,
         rho_cp: float,
-    ) -> int:
+    ) -> None:
         """
         Sets the pipe instance for a coaxial pipe.
 
@@ -263,10 +228,7 @@ class GroundHeatExchanger:
         :param conductivity_inner: thermal conductivity of inner pipe, in W/m-K.
         :param conductivity_outer: thermal conductivity of outer pipe, in W/m-K.
         :param rho_cp: volumetric heat capacity, in J/m^3-K.
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
         """
-
         check_arg_bounds(inner_pipe_d_in, inner_pipe_d_out, "inner_pipe_d_in", "inner_pipe_d_out")
         check_arg_bounds(outer_pipe_d_in, outer_pipe_d_out, "outer_pipe_d_in", "outer_pipe_d_out")
 
@@ -277,59 +239,49 @@ class GroundHeatExchanger:
         r_outer = [outer_pipe_d_in / 2.0, outer_pipe_d_out / 2.0]  # The radii of the outer pipe from in to out
         k_p = [conductivity_inner, conductivity_outer]
         self._pipe = Pipe((0, 0), r_inner, r_outer, 0, roughness, k_p, rho_cp)
-        return 0
 
-    def set_borehole(self, buried_depth: float, diameter: float) -> int:
+    def set_borehole(self, buried_depth: float, diameter: float) -> None:
         """
         Sets the borehole instance
 
         :param buried_depth: depth of top of borehole below the ground surface, in m.
         :param diameter: diameter of the borehole, in m.
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
         """
         radius = diameter / 2.0
         self._borehole = Borehole(100, buried_depth, radius, x=0.0, y=0.0)
-        return 0
 
     def set_simulation_parameters(
         self,
         num_months: int,
         max_boreholes: int | None = None,
         continue_if_design_unmet: bool = False,
-    ) -> int:
+    ) -> None:
         """
         Sets the simulation parameters
 
         :param num_months: number of months.
         :param max_boreholes: maximum boreholes in search algorithms.
         :param continue_if_design_unmet: continues to process if design unmet.
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
+        :raises ValueError: If num_months is not a multiple of NUM_MONTHS_IN_YEAR.
         """
-
         if (num_months % NUM_MONTHS_IN_YEAR) > 0:
             raise ValueError(f"num_months must be a multiple of {NUM_MONTHS_IN_YEAR}")
 
         self._simulation_parameters = SimulationParameters(num_months, max_boreholes, continue_if_design_unmet)
-        return 0
 
-    def set_ground_loads_from_hourly_list(self, hourly_ground_loads: list[float]) -> int:
+    def set_ground_loads_from_hourly_list(self, hourly_ground_loads: list[float]) -> None:
         """
         Sets the ground loads based on a list input.
 
         :param hourly_ground_loads: annual, hourly ground loads, in W.
          positive values indicate heat extraction, negative values indicate heat rejection.
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
         """
         # TODO: Add API methods for different load inputs
         self._ground_loads = hourly_ground_loads
-        return 0
 
     def set_geometry_constraints_near_square(
-        self, max_height: float, min_height: float, b: float, length: float, throw: bool = True
-    ) -> int:
+        self, max_height: float, min_height: float, b: float, length: float
+    ) -> None:
         """
         Sets the geometry constraints for the near-square design method.
 
@@ -337,23 +289,18 @@ class GroundHeatExchanger:
         :param min_height: minimum height of borehole, in m.
         :param b: borehole-to-borehole spacing, in m.
         :param length: side length of the sizing domain, in m.
-        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
+        :raises AttributeError: If GHE simulation parameters are not defined before calling this method.
         """
         if not self._simulation_parameters:
-            report_error(
+            raise AttributeError(
                 "GHE simulation parameters must be defined before "
-                "GroundHeatExchanger.set_geometry_constraints_near_square is called.",
-                throw,
+                "GroundHeatExchanger.set_geometry_constraints_near_square is called."
             )
-            return 1
 
         check_arg_bounds(min_height, max_height, "min_height", "max_height")
 
         self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsNearSquare(b, length)
-        return 0
 
     def set_geometry_constraints_rectangle(
         self,
@@ -363,8 +310,7 @@ class GroundHeatExchanger:
         width: float,
         b_min: float,
         b_max: float,
-        throw: bool = True,
-    ) -> int:
+    ) -> None:
         """
         Sets the geometry constraints for the rectangle design method.
 
@@ -374,15 +320,12 @@ class GroundHeatExchanger:
         :param width: side width of the sizing domain, in m.
         :param b_min: minimum borehole-to-borehole spacing, in m.
         :param b_max: maximum borehole-to-borehole spacing, in m.
-        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
+        :raises AttributeError: If GHE simulation parameters are not defined before calling this method.
         """
         if self._simulation_parameters is None:
-            report_error(
-                "Simulation parameters must be set before `set_geometry_constraints_rectangle` is called.", throw
+            raise AttributeError(
+                "Simulation parameters must be set before `set_geometry_constraints_rectangle` is called."
             )
-            return 1
 
         check_arg_bounds(min_height, max_height, "min_height", "max_height")
         check_arg_bounds(b_min, b_max, "b_min", "b_max")
@@ -390,7 +333,6 @@ class GroundHeatExchanger:
         self.geom_type = DesignGeomType.RECTANGLE
         self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsRectangle(width, length, b_min, b_max)
-        return 0
 
     def set_geometry_constraints_bi_rectangle(
         self,
@@ -401,8 +343,7 @@ class GroundHeatExchanger:
         b_min: float,
         b_max_x: float,
         b_max_y: float,
-        throw: bool = True,
-    ) -> int:
+    ) -> None:
         """
         Sets the geometry constraints for the bi-rectangle design method.
 
@@ -413,15 +354,12 @@ class GroundHeatExchanger:
         :param b_min: minimum borehole-to-borehole spacing, in m.
         :param b_max_x: maximum borehole-to-borehole spacing in the x-direction, in m.
         :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
-        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
+        :raises AttributeError: If GHE simulation parameters are not defined before calling this method.
         """
         if self._simulation_parameters is None:
-            report_error(
-                "Simulation parameters must be set before `set_geometry_constraints_bi_rectangle` is called.", throw
+            raise AttributeError(
+                "Simulation parameters must be set before `set_geometry_constraints_bi_rectangle` is called."
             )
-            return 1
 
         check_arg_bounds(min_height, max_height, "min_height", "max_height")
         check_arg_bounds(b_min, b_max_x, "b_min", "b_max_x")
@@ -430,7 +368,6 @@ class GroundHeatExchanger:
         self.geom_type = DesignGeomType.BIRECTANGLE
         self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsBiRectangle(width, length, b_min, b_max_x, b_max_y)
-        return 0
 
     def set_geometry_constraints_bi_zoned_rectangle(
         self,
@@ -441,8 +378,7 @@ class GroundHeatExchanger:
         b_min: float,
         b_max_x: float,
         b_max_y: float,
-        throw: bool = True,
-    ) -> int:
+    ) -> None:
         """
         Sets the geometry constraints for the bi-zoned rectangle design method.
 
@@ -453,16 +389,12 @@ class GroundHeatExchanger:
         :param b_min: minimum borehole-to-borehole spacing, in m.
         :param b_max_x: maximum borehole-to-borehole spacing in the x-direction, in m.
         :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
-        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
+        :raises AttributeError: If GHE simulation parameters are not defined before calling this method.
         """
         if self._simulation_parameters is None:
-            report_error(
-                "Simulation parameters must be set before `set_geometry_constraints_bi_zoned_rectangle` is called.",
-                throw,
+            raise AttributeError(
+                "Simulation parameters must be set before `set_geometry_constraints_bi_zoned_rectangle` is called."
             )
-            return 1
 
         check_arg_bounds(min_height, max_height, "min_height", "max_height")
         check_arg_bounds(b_min, b_max_x, "b_min", "b_max_x")
@@ -471,7 +403,6 @@ class GroundHeatExchanger:
         self.geom_type = DesignGeomType.BIZONEDRECTANGLE
         self._simulation_parameters.set_design_heights(max_height, min_height)
         self._geometric_constraints = GeometricConstraintsBiZoned(width, length, b_min, b_max_x, b_max_y)
-        return 0
 
     def set_geometry_constraints_bi_rectangle_constrained(
         self,
@@ -482,8 +413,7 @@ class GroundHeatExchanger:
         b_max_y: float,
         property_boundary: list,
         no_go_boundaries: list,
-        throw: bool = True,
-    ) -> int:
+    ) -> None:
         """
         Sets the geometry constraints for the bi-rectangle constrained design method.
 
@@ -494,17 +424,13 @@ class GroundHeatExchanger:
         :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
         :param property_boundary: property boundary points, in m.
         :param no_go_boundaries: boundary points for no-go zones, in m.
-        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
+        :raises AttributeError: If GHE simulation parameters are not defined before calling this method.
         """
         if self._simulation_parameters is None:
-            report_error(
-                "Simulation parameters must be set before `set_geometry_constraints_bi_rectangle_constrained` "
-                "is called.",
-                throw,
+            raise AttributeError(
+                "Simulation parameters must be set before "
+                "`set_geometry_constraints_bi_rectangle_constrained` is called."
             )
-            return 1
 
         check_arg_bounds(min_height, max_height, "min_height", "max_height")
         check_arg_bounds(b_min, b_max_x, "b_min", "b_max_x")
@@ -515,7 +441,6 @@ class GroundHeatExchanger:
         self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(
             b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries
         )
-        return 0
 
     def set_geometry_constraints_rowwise(
         self,
@@ -530,8 +455,7 @@ class GroundHeatExchanger:
         rotate_step: float,
         property_boundary: list,
         no_go_boundaries=None,
-        throw: bool = True,
-    ) -> int:
+    ) -> None:
         """
         Sets the geometry constraints for the row-wise design method.
         :param max_height: maximum height of borehole, in m.
@@ -550,15 +474,12 @@ class GroundHeatExchanger:
         :param rotate_step: step size for field rotation search.
         :param property_boundary: property boundary points.
         :param no_go_boundaries: boundary points for no-go zones.
-        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
+        :raises AttributeError: If GHE simulation parameters are not defined before calling this method.
         """
         if self._simulation_parameters is None:
-            report_error(
-                "Simulation parameters must be set before `set_geometry_constraints_rowwise` is called.", throw
+            raise AttributeError(
+                "Simulation parameters must be set before `set_geometry_constraints_rowwise` is called."
             )
-            return 1
 
         check_arg_bounds(min_height, max_height, "min_height", "max_height")
         check_arg_bounds(min_spacing, max_spacing, "min_spacing", "max_spacing")
@@ -581,11 +502,8 @@ class GroundHeatExchanger:
             property_boundary,
             no_go_boundaries,
         )
-        return 0
 
-    def set_design(
-        self, flow_rate: float, flow_type_str: str, max_eft: float, min_eft: float, throw: bool = True
-    ) -> int:
+    def set_design(self, flow_rate: float, flow_type_str: str, max_eft: float, min_eft: float) -> None:
         """
         Set the design method.
 
@@ -593,28 +511,24 @@ class GroundHeatExchanger:
         :param flow_type_str: flow type string input.
         :param max_eft: maximum heat pump entering fluid temperature, in C.
         :param min_eft: minimum heat pump entering fluid temperature, in C.
-        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
+        :raises AttributeError: If necessary class attributes are not set.
+        :raises ValueError: If the flow type or design method are not implemented.
         """
 
         check_arg_bounds(min_eft, max_eft, "min_eft", "max_eft")
 
         if self._simulation_parameters is None:
-            report_error("Simulation parameters must be set before `set_design` is called.", throw)
-            return 1
+            raise AttributeError("Simulation parameters must be set before `set_design` is called.")
 
         self._simulation_parameters.set_design_temps(max_eft, min_eft)
 
         flow_type_map = {flow.name: flow for flow in FlowConfigType}
         flow_type = flow_type_map.get(flow_type_str.upper())
         if not flow_type:
-            report_error(f'FlowConfig "{flow_type_str}" is not implemented.', throw)
-            return 1
+            raise ValueError(f'FlowConfig "{flow_type_str}" is not implemented.')
 
         if self._geometric_constraints is None:
-            report_error("Geometric constraints must be set before `set_design` is called.", throw)
-            return 1
+            raise AttributeError("Geometric constraints must be set before `set_design` is called.")
 
         if self._geometric_constraints.type in DesignGeomType:
             design_classes = {
@@ -644,17 +558,16 @@ class GroundHeatExchanger:
                 method=TimestepType.HYBRID,
             )
         else:
-            report_error("This design method has not been implemented", throw)
-            return 1
-        return 0
+            raise ValueError(
+                f"Design method not implemented for geometric constraint type '{self._geometric_constraints.type}'"
+            )
 
-    def find_design(self, throw: bool = True) -> int:
+    def find_design(self) -> None:
         """
         Calls design methods to execute sizing.
 
-        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
+        :raises AttributeError: If necessary class attributes are not set.
+        :raises RuntimeError: If design method fails to populate GHE.
         """
 
         if not (
@@ -668,26 +581,28 @@ class GroundHeatExchanger:
             and self._geometric_constraints
             and self._design
         ):
-            report_error("All GHE properties must be set before GroundHeatExchanger.find_design is called.", throw)
-            return 1
+            raise AttributeError("All GHE properties must be set before GroundHeatExchanger.find_design is called.")
 
         start_time = time()
         self._search = self._design.find_design()
         if not self._search.ghe:
-            report_error("Find design failed to populate GHE.", throw)
-            return 1
+            raise RuntimeError("Find design failed to populate GHE.")
 
         self._search.ghe.compute_g_functions()
         self._search_time = time() - start_time
         self._search.ghe.size(method=TimestepType.HYBRID)
-        return 0
 
-    def get_ghe(self):
+    def get_ghe(self) -> GHE:
+        if not self._search or not self._search.ghe:
+            raise AttributeError("GHE has not been found yet.")
+
         return self._search.ghe
 
-    def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str):
+    def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str) -> None:
         """
         Prepares the output results.
+
+        :raises ValueError: If the search is not performed.
         """
         if self._search is None:
             raise ValueError("self._search must be set before GroundHeatExchanger.prepare_results is called.")
@@ -702,31 +617,32 @@ class GroundHeatExchanger:
             load_method=TimestepType.HYBRID,
         )
 
-    def write_output_files(self, output_directory: Path, output_file_suffix: str = ""):
+    def write_output_files(self, output_directory: Path, output_file_suffix: str = "") -> None:
         """
         Writes the output files.
 
         :param output_directory: output directory for output files.
         :param output_file_suffix: adds a string suffix to the output files.
+        :raises ValueError: If the results are not prepared.
         """
         if self.results is None:
             raise ValueError("GHE results must be prepared before GroundHeatExchanger.write_output_files is called.")
 
         self.results.write_all_output_files(output_directory=output_directory, file_suffix=output_file_suffix)
 
-    def write_input_file(self, output_file_path: Path, throw: bool = True) -> int:
+    def write_input_file(self, output_file_path: Path) -> None:
         """
         Writes an input file based on current simulation configuration.
 
         :param output_file_path: output directory to write input file.
-        :param throw: By default, function will raise an exception on error, override to `False` to not raise exception
-        :returns: Zero if successful, nonzero if failure
-        :rtype: int
+        :raises AttributeError: If necessary class attributes are not set.
+        :raises ValueError: If the pipe type is not supported.
         """
 
         if not (self._pipe and self._design and self._simulation_parameters and self._geometric_constraints):
-            report_error("All GHE properties must be set before GroundHeatExchanger.write_input_file is called.", throw)
-            return 1
+            raise AttributeError(
+                "All GHE properties must be set before GroundHeatExchanger.write_input_file is called."
+            )
 
         # TODO: geometric constraints are currently held in two places
         #       SimulationParameters and GeometricConstraints
@@ -761,8 +677,7 @@ class GroundHeatExchanger:
             d_pipe["conductivity_inner"] = self._pipe.k[0]
             d_pipe["conductivity_outer"] = self._pipe.k[1]
         else:
-            report_error("Invalid pipe type", throw)
-            return 1
+            raise ValueError(f"Invalid pipe type '{self.pipe_type.name if self.pipe_type else 'None'}'")
 
         if self.pipe_type == BHPipeType.SINGLEUTUBE:
             d_pipe["arrangement"] = BHPipeType.SINGLEUTUBE.name
@@ -772,21 +687,17 @@ class GroundHeatExchanger:
             d_pipe["arrangement"] = BHPipeType.DOUBLEUTUBESERIES.name
         elif self.pipe_type == BHPipeType.COAXIAL:
             d_pipe["arrangement"] = BHPipeType.COAXIAL.name
-        else:
-            report_error("Invalid pipe type", throw)
-            return 1
 
         if not (self._fluid and self._grout and self._soil and isinstance(self._ground_loads, list)):
-            report_error("Required values have not been defined", throw)
-            return 1
+            raise AttributeError("Required values have not been defined")
 
         d = {
             "fluid": self._fluid.to_input(),
             "grout": self._grout.to_input(),
             "soil": self._soil.to_input(),
             "pipe": d_pipe,
-            # 'borehole': self._borehole.to_input(),
-            # 'simulation': self._simulation_parameters.to_input(),
+            # "borehole": self._borehole.to_input(),
+            # "simulation": self._simulation_parameters.to_input(),
             "geometric_constraints": d_geo,
             "design": d_des,
             "loads": {"ground_loads": self._ground_loads},
@@ -794,4 +705,3 @@ class GroundHeatExchanger:
 
         output_file_path.parent.mkdir(parents=True, exist_ok=True)
         output_file_path.write_text(dumps(d, sort_keys=True, indent=2, separators=(",", ": ")))
-        return 0

@@ -214,6 +214,11 @@ def point_polygon_check(contour, point, on_edge_tolerance=0.001):
 
     :param contour: list of tuples containing (x, y) contour boundary points
     :param point: tuple containing the (x, y) point to test
+    :param on_edge_tolerance: float value representing the distance tolerance
+                               to determine whether the test point is on the edge of the polygon.
+                               Points within this distance from the edge are considered "on the edge".
+                               Defaults to 0.001.
+
 
     :returns: -1 if outside, 0 if on edge, 1 if inside
     :rtype: int
@@ -257,7 +262,7 @@ def point_polygon_check(contour, point, on_edge_tolerance=0.001):
             if ((py == v1y) and (v2y >= v1y)) or ((py == v2y) and (v1y >= v2y)):
                 continue
 
-            # calc cross product `PA X PB`, P lays on left side of AB if c > 0
+            # calc cross product `PA X PB`, P lies on left side of AB if c > 0
             c = (v1x - px) * (v2y - py) - (v2x - px) * (v1y - py)
 
             if c == 0:

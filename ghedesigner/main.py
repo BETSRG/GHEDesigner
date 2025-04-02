@@ -80,11 +80,11 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
                 ground_load_props: list = ghe_dict["loads"]
                 ghe.set_ground_loads_from_hourly_list(ground_load_props)
             pipe_props: dict = ghe_dict["pipe"]
-            ghe.set_fluid(**fluid_props, throw=False)
+            ghe.set_fluid(**fluid_props)
             ghe.set_grout(**ghe_dict["grout"])
             ghe.set_soil(**ghe_dict["soil"])
 
-            ghe.set_pipe_type(pipe_props["arrangement"], throw=False)
+            ghe.set_pipe_type(pipe_props["arrangement"])
             if ghe.pipe_type == BHPipeType.SINGLEUTUBE:
                 ghe.set_single_u_tube_pipe(
                     inner_diameter=pipe_props["inner_diameter"],
@@ -141,7 +141,9 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             )
 
             constraint_props: dict = ghe_dict["geometric_constraints"]
-            if ghe.set_design_geometry_type(constraint_props["method"], throw=False) != 0:
+            try:
+                ghe.set_design_geometry_type(constraint_props["method"])
+            except ValueError:
                 return 1
             if ghe.geom_type == DesignGeomType.RECTANGLE:
                 # max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
@@ -216,12 +218,11 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
                 flow_type_str=design_props["flow_type"],
                 min_eft=design_props["min_eft"],
                 max_eft=design_props["max_eft"],
-                throw=False,
             )
 
     # now presumably all the topological objects have been initialized
     # TODO: Switch operation here based on the simulation-control inputs, for now just finding the design by default
-    ghe.find_design(throw=False)
+    ghe.find_design()
     ghe.prepare_results("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
     ghe.write_output_files(output_directory)
     return 0
