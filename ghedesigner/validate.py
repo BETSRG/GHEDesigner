@@ -22,7 +22,7 @@ def validate_input_file(input_file_path: Path) -> ValidationResponse:
     """
     try:
         instance = loads(input_file_path.read_text())
-        schema_path = Path(__file__).parent / "schemas" / "ghedesigner.schema.json"
+        schema_path = Path(__file__).parent / "ghedesigner.schema.json"
         schema = loads(schema_path.read_text())
         validate(instance=instance, schema=schema)
         return ValidationResponse(True)
