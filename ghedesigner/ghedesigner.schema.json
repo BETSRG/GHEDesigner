@@ -542,7 +542,7 @@
           "description": "This field is currently unused."
         },
         "hydraulic-run": {
-          "Type": "boolean",
+          "type": "boolean",
           "description": "This field is currently unused"
         },
         "simulation-months": {

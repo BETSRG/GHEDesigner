@@ -10,7 +10,13 @@ from jsonschema import ValidationError, validate
 #       More details here: https://github.com/json-schema-org/community/discussions/148
 
 
-def validate_input_file(input_file_path: Path) -> int:
+class ValidationResponse:
+    def __init__(self, success: bool, message: str = ""):
+        self.success = success
+        self.message = message
+
+
+def validate_input_file(input_file_path: Path) -> ValidationResponse:
     """
     Validate input file against the schema
     """
@@ -19,23 +25,27 @@ def validate_input_file(input_file_path: Path) -> int:
         schema_path = Path(__file__).parent / "schemas" / "ghedesigner.schema.json"
         schema = loads(schema_path.read_text())
         validate(instance=instance, schema=schema)
-        return 0
+        return ValidationResponse(True)
     except ValidationError as error:
-        print("\n Validation Error:")
-        print(f"  Bad Input Location: {' → '.join(map(str, error.path)) if error.path else 'Root'}")
-        print(f"  Problematic Key: {error.path[-1] if error.path else 'N/A'}")
-        print(f"  Error: {error.message}")
+        summary = ""
+        summary += "\n Validation Error:"
+        summary += f"  Bad Input Location: {' → '.join(map(str, error.path)) if error.path else 'Root'}"
+        summary += f"  Problematic Key: {error.path[-1] if error.path else 'N/A'}"
+        summary += f"  Error: {error.message}"
         fix = "\n Suggested Fix:"
         if "required" in error.schema and isinstance(error.schema["required"], list):
-            print(f"{fix}  Ensure that the following required keys are present: {', '.join(error.schema['required'])}")
+            summary += (
+                f"{fix}  Ensure that the following required keys are present: {', '.join(error.schema['required'])}"
+            )
         elif "enum" in error.schema:
-            print(f"{fix}  Use one of the allowed values: {', '.join(map(str, error.schema['enum']))}")
+            summary += f"{fix}  Use one of the allowed values: {', '.join(map(str, error.schema['enum']))}"
         elif "type" in error.schema:
-            print(f"{fix}  Ensure the value is of type: {error.schema['type']}")
-        print("For example inputs, see the demo files.", file=sys.stderr)
-        return 1
+            summary += f"{fix}  Ensure the value is of type: {error.schema['type']}"
+        summary += "For example inputs, see the demo files."
+        return ValidationResponse(False, summary)
 
 
 if __name__ == "__main__":
     instance_path = Path(sys.argv[1]).resolve()
-    sys.exit(validate_input_file(instance_path))
+    validation_response = validate_input_file(instance_path)
+    sys.exit(0 if validation_response.success else 1)

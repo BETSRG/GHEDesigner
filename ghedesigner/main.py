@@ -4,7 +4,6 @@ from pathlib import Path
 from sys import exit, stderr
 
 import click
-from jsonschema import ValidationError
 
 from ghedesigner import VERSION
 from ghedesigner.enums import BHPipeType, DesignGeomType
@@ -26,7 +25,9 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
     """
 
     # validate inputs against schema before doing anything
-    if validate_input_file(input_file_path) != 0:
+    validation_response = validate_input_file(input_file_path)
+    if not validation_response.success:
+        print(validation_response.message, file=stderr)
         return 1
 
     inputs = loads(input_file_path.read_text())
@@ -237,11 +238,12 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
     input_path = Path(input_path).resolve()
 
     if validate_only:
-        try:
-            validate_input_file(input_path)
+        response = validate_input_file(input_path)
+        if response.success:
             logger.info("Valid input file.")
             return 0
-        except ValidationError:
+        else:
+            logger.error(response.message)
             logger.error("Schema validation error. See previous error message for details.")
             return 1
 
