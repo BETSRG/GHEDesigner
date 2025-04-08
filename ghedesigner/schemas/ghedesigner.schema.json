@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
     "topology": {
@@ -206,9 +206,12 @@
                 "description": "Outer pipe outer diameter."
               }
             },
-            "dependentRequired": {
-              "arrangement": {
-                "SINGLEUTUBE": [
+            "oneOf": [
+              {
+                "properties": {
+                  "arrangement": { "const": "SINGLEUTUBE" }
+                },
+                "required": [
                   "inner_diameter",
                   "outer_diameter",
                   "shank_spacing",
@@ -216,8 +219,13 @@
                   "conductivity",
                   "rho_cp",
                   "arrangement"
-                ],
-                "DOUBLEUTUBESERIES": [
+                ]
+              },
+              {
+                "properties": {
+                  "arrangement": { "const": "DOUBLEUTUBESERIES" }
+                },
+                "required": [
                   "inner_diameter",
                   "outer_diameter",
                   "shank_spacing",
@@ -225,8 +233,13 @@
                   "conductivity",
                   "rho_cp",
                   "arrangement"
-                ],
-                "DOUBLEUTUBEPARALLEL": [
+                ]
+              },
+              {
+                "properties": {
+                  "arrangement": { "const": "DOUBLEUTUBEPARALLEL" }
+                },
+                "required": [
                   "inner_diameter",
                   "outer_diameter",
                   "shank_spacing",
@@ -234,8 +247,13 @@
                   "conductivity",
                   "rho_cp",
                   "arrangement"
-                ],
-                "COAXIAL": [
+                ]
+              },
+              {
+                "properties": {
+                  "arrangement": { "const": "COAXIAL" }
+                },
+                "required": [
                   "inner_pipe_d_in",
                   "inner_pipe_d_out",
                   "outer_pipe_d_in",
@@ -247,7 +265,7 @@
                   "arrangement"
                 ]
               }
-            }
+            ]
           },
           "borehole": {
             "type": "object",
@@ -313,7 +331,14 @@
               },
               "method": {
                 "type": "string",
-                "const": "BIRECTANGLE",
+                "enum": [
+                  "BIRECTANGLE",
+                  "BIRECTANGLECONSTRAINED",
+                  "BIZONEDRECTANGLE",
+                  "NEARSQUARE",
+                  "RECTANGLE",
+                  "ROWWISE"
+                ],
                 "description": "Design algorithm specified."
               },
               "property_boundary": {
@@ -403,37 +428,61 @@
                 "description": "Step size for field rotation search."
               }
             },
-            "dependentRequired": {
-              "method": {
-                "BIRECTANGLE": [
+            "oneOf": [
+              {
+                "properties": { "method": { "const": "BIRECTANGLE" } },
+                "required": [
                   "length",
                   "width",
                   "b_min",
                   "b_max_x",
                   "b_max_y",
                   "max_height",
-                  "min_height"
-                ],
-                "BIRECTANGLECONSTRAINED": [
+                  "min_height",
+                  "method"
+                ]
+              },
+              {
+                "properties": {
+                  "method": { "const": "BIRECTANGLECONSTRAINED" }
+                },
+                "required": [
                   "b_min",
                   "b_max_x",
                   "b_max_y",
                   "max_height",
                   "min_height",
                   "property_boundary",
-                  "no_go_boundaries"
-                ],
-                "BIZONEDRECTANGLE": [
+                  "no_go_boundaries",
+                  "method"
+                ]
+              },
+              {
+                "properties": { "method": { "const": "BIZONEDRECTANGLE" } },
+                "required": [
                   "length",
                   "width",
                   "b_min",
                   "b_max_x",
                   "b_max_y",
                   "max_height",
-                  "min_height"
-                ],
-                "NEARSQUARE": ["length", "b", "max_height", "min_height"],
-                "RECTANGLE": [
+                  "min_height",
+                  "method"
+                ]
+              },
+              {
+                "properties": { "method": { "const": "NEARSQUARE" } },
+                "required": [
+                  "length",
+                  "b",
+                  "max_height",
+                  "min_height",
+                  "method"
+                ]
+              },
+              {
+                "properties": { "method": { "const": "RECTANGLE" } },
+                "required": [
                   "length",
                   "width",
                   "b_min",
@@ -441,8 +490,11 @@
                   "max_height",
                   "min_height",
                   "method"
-                ],
-                "ROWWISE": [
+                ]
+              },
+              {
+                "properties": { "method": { "const": "ROWWISE" } },
+                "required": [
                   "perimeter_spacing_ratio",
                   "min_spacing",
                   "max_spacing",
@@ -457,7 +509,7 @@
                   "method"
                 ]
               }
-            }
+            ]
           },
           "design": {
             "type": "object",
