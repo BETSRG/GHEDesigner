@@ -1,4 +1,4 @@
-from math import atan, cos, pi, sin, sqrt
+from math import atan, cos, inf, pi, sin, sqrt
 
 import numpy as np
 
@@ -33,7 +33,7 @@ def field_optimization_wp_space_fr(
     Parameters: p_space(float): Ratio of perimeter spacing to other target spacing space_start(float): the initial
     target spacing that the optimization program will start with rotate_step(float): the amount of rotation that will
     be changed per step (in degrees) prop_bound([[float,float]]): 2d array of floats that represent the property
-    boundary (counter clockwise) ng_zones([[[float,float]]]): 3d array representing the different zones on the
+    boundary (counterclockwise) ng_zones([[[float,float]]]): 3d array representing the different zones on the
     property where no boreholes can be placed rotate_start(float): the rotation that the field will start at (-pi/2 <
     rotateStart < pi/2) rotate_stop(float): the rotation that the field will stop at (exclusive) (-pi/2 < rotateStop
     < pi/2)
@@ -99,7 +99,7 @@ def field_optimization_fr(
 
     Parameters: space_start(float): the initial target spacing that the optimization program will start with
     rotate_step(float): the amount of rotation that will be changed per step (in degrees) prop_bound([[float,
-    float]]): 2d array of floats that represent the property boundary (counter clockwise) ng_zones([[[float,
+    float]]): 2d array of floats that represent the property boundary (counterclockwise) ng_zones([[[float,
     float]]]): 3d array representing the different zones on the property where no boreholes can be placed
     rotate_start(float): the rotation that the field will start at (-pi/2 < rotateStart < pi/2) rotate_stop(float):
     the rotation that the field will stop at (exclusive) (-pi/2 < rotateStop < pi/2) intersection_tolerance:
@@ -450,8 +450,8 @@ def gen_borehole_config(
     if no_go is None:
         no_go = []
     # Decides which vertex to start generating boreholes at by finding the "lowest" vertex relative to a rotated x-axis
-    lowest_vert_val = float("inf")
-    highest_vert_val = float("-inf")
+    lowest_vert_val = inf
+    highest_vert_val = -inf
     lowest_vert = None
     highest_vert = None
     for vert in field.c:

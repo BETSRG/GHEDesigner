@@ -24,7 +24,7 @@ repos:
       #   args: ["--pytest-test-first"]
       - id: trailing-whitespace
   - repo: https://github.com/crate-ci/typos
-    rev: v1.30.3
+    rev: v1.31.1
     hooks:
       - id: typos
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -37,7 +37,7 @@ repos:
     hooks:
       - id: mypy
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.2
+    rev: v0.11.5
     hooks:
       # Run the linter
       - id: ruff

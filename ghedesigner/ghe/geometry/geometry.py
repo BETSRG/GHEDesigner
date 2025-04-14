@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from abc import abstractmethod
 
 from ghedesigner.constants import RAD_TO_DEG

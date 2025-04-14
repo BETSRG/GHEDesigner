@@ -6,7 +6,7 @@ from time import time
 
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.constants import DEG_TO_RAD, NUM_MONTHS_IN_YEAR
+from ghedesigner.constants import DEG_TO_RAD, MONTHS_IN_YEAR
 from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.geometry.design import (
     AnyBisectionType,
@@ -262,10 +262,11 @@ class GroundHeatExchanger:
         :param num_months: number of months.
         :param max_boreholes: maximum boreholes in search algorithms.
         :param continue_if_design_unmet: continues to process if design unmet.
-        :raises ValueError: If num_months is not a multiple of NUM_MONTHS_IN_YEAR.
+        :raises ValueError: If num_months is not a multiple of MONTHS_IN_YEAR.
         """
-        if (num_months % NUM_MONTHS_IN_YEAR) > 0:
-            raise ValueError(f"num_months must be a multiple of {NUM_MONTHS_IN_YEAR}")
+
+        if (num_months % MONTHS_IN_YEAR) > 0:
+            raise ValueError(f"num_months must be a multiple of {MONTHS_IN_YEAR}")
 
         self._simulation_parameters = SimulationParameters(num_months, max_boreholes, continue_if_design_unmet)
 
@@ -530,7 +531,10 @@ class GroundHeatExchanger:
         if self._geometric_constraints is None:
             raise AttributeError("Geometric constraints must be set before `set_design` is called.")
 
-        if self._geometric_constraints.type in DesignGeomType:
+        if (
+            self._geometric_constraints.type in DesignGeomType
+            and self._geometric_constraints.type is not DesignGeomType.NONE
+        ):
             design_classes = {
                 DesignGeomType.NEARSQUARE: DesignNearSquare,
                 DesignGeomType.RECTANGLE: DesignRectangle,

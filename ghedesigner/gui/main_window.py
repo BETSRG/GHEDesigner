@@ -63,7 +63,6 @@ class GHEDesignerWindow(Tk):
     def _check_queue(self):
         """Checks the GUI queue for actions and sets a timer to check again each time"""
         while True:
-            # noinspection PyBroadException
             try:
                 task = self._gui_queue.get(block=False)
                 self.after_idle(task, [])

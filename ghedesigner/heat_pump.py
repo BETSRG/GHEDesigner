@@ -20,13 +20,15 @@ class HeatPump:
         self.load_function = load_function
 
     def get_load_from_list_at_time(self, time: float) -> float:
-        if not self.loads_list:
+        if self.loads_list is None:
             raise ValueError("Loads values are not set.")
         # Assume time in hours? No leap year? No DST?
         hour_of_year = int(time % 8760)
         return self.loads_list[hour_of_year]
 
     def set_fixed_cop(self, cop: float) -> None:
+        if cop <= 0:
+            raise ValueError("Coefficient of Performance (COP) must be greater than zero.")
         self.cop = cop
 
     def do_sizing(self) -> None:
@@ -36,16 +38,18 @@ class HeatPump:
         if not self.load_function:
             raise ValueError("Load function is not set.")
         building_load = self.load_function(simulation_time_hours)
-        if flow_rate == 0.0 or building_load == 0.0:
+        if flow_rate == 0 or building_load == 0:
             return loop_inlet_temp
 
         # Check if cop is set to avoid division by zero
         if not self.cop:
             raise ValueError("Coefficient of Performance (COP) is not set.")
 
-        if building_load > 0:  # Heating the building, taking energy from loop
+        if building_load > 0:
+            # Heating the building, taking energy from loop
             loop_load = building_load - (building_load / self.cop)
-        else:  # Cooling the building, adding energy to loop
+        else:
+            # Cooling the building, adding energy to loop
             loop_load = building_load + (building_load / self.cop)
 
         cp = 4100
