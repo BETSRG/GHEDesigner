@@ -57,7 +57,6 @@ class GHEBaseTest(TestCase):
         cls.demos_path = Path(__file__).parent.parent.parent / "demos"
         cls.demo_output_parent_dir = Path(__file__).parent.parent.parent / "demo_outputs"
 
-    # noinspection PyMethodMayBeStatic
     def log(self, message, message_type: LogMessageTypes = LogMessageTypes.Info):
         if LOG_FILE is None:
             self.setup_log_file()

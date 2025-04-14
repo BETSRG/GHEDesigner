@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 def transpose_coordinates(coordinates) -> list[tuple[float, float]]:
     coordinates_transposed = []
     for x, y in coordinates:

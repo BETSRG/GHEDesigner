@@ -6,30 +6,21 @@ from ghedesigner.enums import FluidType
 
 
 class GHEFluid(Fluid):
-    def __init__(self, fluid_str: str, percent: float, temperature: float = 20) -> None:
-        fluid_str = fluid_str.upper()
-        if fluid_str == FluidType.ETHYLALCOHOL.name:
-            self.fluid_type = FluidType.ETHYLALCOHOL
-        elif fluid_str == FluidType.ETHYLENEGLYCOL.name:
-            self.fluid_type = FluidType.ETHYLENEGLYCOL
-        elif fluid_str == FluidType.METHYLALCOHOL.name:
-            self.fluid_type = FluidType.METHYLALCOHOL
-        elif fluid_str == FluidType.PROPYLENEGLYCOL.name:
-            self.fluid_type = FluidType.PROPYLENEGLYCOL
-        elif fluid_str == FluidType.WATER.name:
-            self.fluid_type = FluidType.WATER
-        else:
-            raise ValueError(f'FluidType "{fluid_str}" not implemented')
-
-        fluid_map = {
-            FluidType.ETHYLALCOHOL.name: "MEA",
-            FluidType.ETHYLENEGLYCOL.name: "MEG",
-            FluidType.METHYLALCOHOL.name: "MMA",
-            FluidType.PROPYLENEGLYCOL.name: "MPG",
-            FluidType.WATER.name: "WATER",
+    def __init__(self, fluid_str: str, percent: float, temperature: float = 20.0) -> None:
+        fluid_type_map = {
+            FluidType.ETHYLALCOHOL.name: (FluidType.ETHYLALCOHOL, "MEA"),
+            FluidType.ETHYLENEGLYCOL.name: (FluidType.ETHYLENEGLYCOL, "MEG"),
+            FluidType.METHYLALCOHOL.name: (FluidType.METHYLALCOHOL, "MMA"),
+            FluidType.PROPYLENEGLYCOL.name: (FluidType.PROPYLENEGLYCOL, "MPG"),
+            FluidType.WATER.name: (FluidType.WATER, "WATER"),
         }
 
-        super().__init__(fluid_map[fluid_str], percent, temperature)
+        try:
+            self.fluid_type, fluid_shorthand = fluid_type_map[fluid_str.upper()]
+        except KeyError:
+            raise ValueError(f'FluidType "{fluid_str}" not implemented')
+
+        super().__init__(fluid_shorthand, percent, temperature)
         self.concentration_percent = percent
         self.temperature = temperature
 

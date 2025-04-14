@@ -12,7 +12,7 @@ class TestShapes(TestCase):
         ON_EDGE = 0
 
         # convex hexagon test shape
-        hegaxon = [(2, 0), (1, sqrt(3)), (-1, sqrt(3)), (-2, 0), (-1, -sqrt(3)), (1, -sqrt(3))]
+        hexagon = [(2, 0), (1, sqrt(3)), (-1, sqrt(3)), (-2, 0), (-1, -sqrt(3)), (1, -sqrt(3))]
         #  (-1, sqrt(3))   _______  (1, sqrt(3))
         #                /         \
         #               /           \
@@ -23,15 +23,15 @@ class TestShapes(TestCase):
 
         # center, should be inside
         point = (0, 0)
-        assert point_polygon_check(hegaxon, point) == INSIDE
+        assert point_polygon_check(hexagon, point) == INSIDE
 
         # on top edge
         point = (0, sqrt(3))
-        assert point_polygon_check(hegaxon, point) == ON_EDGE
+        assert point_polygon_check(hexagon, point) == ON_EDGE
 
         # above top, outside
         point = (0, 4)
-        assert point_polygon_check(hegaxon, point) == OUTSIDE
+        assert point_polygon_check(hexagon, point) == OUTSIDE
 
         # non-convex L-shape
         l_shape = [(0, 0), (4, 0), (4, 4), (3, 4), (3, 1), (0, 1)]

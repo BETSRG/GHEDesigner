@@ -1,4 +1,4 @@
-from math import atan, pi, sin, sqrt
+from math import atan, inf, pi, sin, sqrt
 
 import numpy as np
 
@@ -12,15 +12,10 @@ class Shapes:
         """
         self.c = np.array(c)
         # print(c)
-        xs = [0] * len(self.c)
-        ys = [0] * len(self.c)
-        for i in range(len(self.c)):
-            xs[i] = self.c[i][0]
-            ys[i] = self.c[i][1]
-        self.max_x = max(xs)
-        self.min_x = min(xs)
-        self.max_y = max(ys)
-        self.min_y = min(ys)
+        self.max_x = np.max(self.c[:, 0])
+        self.min_x = np.min(self.c[:, 0])
+        self.max_y = np.max(self.c[:, 1])
+        self.min_y = np.min(self.c[:, 1])
 
     def line_intersect(self, xy, rotate=0, intersection_tolerance=1e-6):
         """
@@ -174,22 +169,22 @@ def vector_intersect(l1, l2, intersection_tolerance):
     x11, y11, x12, y12 = l1
     x21, y21, x22, y22 = l2
     if x12 - x11 == 0:
-        a1 = float("inf")
+        a1 = inf
     else:
         a1 = (y12 - y11) / (x12 - x11)
         c1 = y11 - x11 * a1
     if x22 - x21 == 0:
-        a2 = float("inf")
+        a2 = inf
     else:
         a2 = (y22 - y21) / (x22 - x21)
         c2 = y21 - x21 * a2
-    if a1 == float("inf") or a2 == float("inf"):
-        if a1 == float("inf") and a2 == float("inf"):
+    if inf in (a1, a2):
+        if a1 == inf and a2 == inf:
             if abs(x11 - x21) < intersection_tolerance:
                 return [[x11, y11], [x12, y12]]
             else:
                 return []
-        elif a1 == float("inf"):
+        elif a1 == inf:
             return [[x11, a2 * x11 + c2]]
         else:
             return [[x21, a1 * x21 + c1]]

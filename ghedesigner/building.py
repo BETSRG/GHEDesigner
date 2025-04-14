@@ -12,5 +12,5 @@ class Building:
     def calculate(self, simulation_time: int, inlet_temperature: float, flow_rate: float) -> float:
         outlet_temperature = inlet_temperature
         for heat_pump in self.heat_pumps:
-            outlet_temperature = heat_pump.calculate(simulation_time, inlet_temperature, flow_rate)
+            outlet_temperature = heat_pump.calculate(simulation_time, outlet_temperature, flow_rate)
         return outlet_temperature

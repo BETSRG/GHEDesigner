@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from ghedesigner.building import Building
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 

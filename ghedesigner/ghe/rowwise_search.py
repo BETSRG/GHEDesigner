@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from math import sqrt
+from math import inf, sqrt
 
 import numpy as np
 from pygfunction.boreholes import Borehole
@@ -295,7 +293,7 @@ class RowWiseModifiedBisectionSearch:
                 target_spacings.append(current_spacing)
                 current_spacing += spacing_change
             best_field = None
-            best_drilling = float("inf")
+            best_drilling = inf
             best_excess = None
             best_spacing = None
             for ts in target_spacings:

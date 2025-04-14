@@ -6,7 +6,7 @@ from math import floor
 import numpy as np
 from scipy.interpolate import interp1d
 
-from ghedesigner.constants import HRS_IN_DAY, NUM_MONTHS_IN_YEAR, SEC_IN_HR, TWO_PI
+from ghedesigner.constants import HRS_IN_DAY, MONTHS_IN_YEAR, SEC_IN_HR, TWO_PI
 from ghedesigner.ghe.simulation import SimulationParameters
 from ghedesigner.ghe.single_u_borehole import SingleUTube
 
@@ -425,10 +425,10 @@ class HybridLoad:
             # Second, replicate months. [if we want to add an option where all
             # monthly loads are explicitly given, this code will be in an if block]
             for i in range(self.start_month, self.end_month + 1):
-                if i > NUM_MONTHS_IN_YEAR:
-                    mi = i % NUM_MONTHS_IN_YEAR
+                if i > MONTHS_IN_YEAR:
+                    mi = i % MONTHS_IN_YEAR
                     if mi == 0:
-                        mi = NUM_MONTHS_IN_YEAR
+                        mi = MONTHS_IN_YEAR
                     self.monthly_cl.append(self.monthly_cl[mi])
                     self.monthly_hl.append(self.monthly_hl[mi])
                     self.monthly_peak_cl.append(self.monthly_peak_cl[mi])
