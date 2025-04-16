@@ -79,6 +79,11 @@
       "additionalProperties": {
         "type": "object",
         "properties": {
+          "do-sizing": {
+            "type": "boolean",
+            "description": "A flag for whether the ground heat exchanger should be sized/designed.  If so, the design and geometric_constraints inputs are required.  If not, then the ground heat exchagner details should be specified in the pre_designed input field",
+            "default": true
+          },
           "grout": {
             "type": "object",
             "properties": {
@@ -209,7 +214,9 @@
             "oneOf": [
               {
                 "properties": {
-                  "arrangement": { "const": "SINGLEUTUBE" }
+                  "arrangement": {
+                    "const": "SINGLEUTUBE"
+                  }
                 },
                 "required": [
                   "inner_diameter",
@@ -223,7 +230,9 @@
               },
               {
                 "properties": {
-                  "arrangement": { "const": "DOUBLEUTUBESERIES" }
+                  "arrangement": {
+                    "const": "DOUBLEUTUBESERIES"
+                  }
                 },
                 "required": [
                   "inner_diameter",
@@ -237,7 +246,9 @@
               },
               {
                 "properties": {
-                  "arrangement": { "const": "DOUBLEUTUBEPARALLEL" }
+                  "arrangement": {
+                    "const": "DOUBLEUTUBEPARALLEL"
+                  }
                 },
                 "required": [
                   "inner_diameter",
@@ -251,7 +262,9 @@
               },
               {
                 "properties": {
-                  "arrangement": { "const": "COAXIAL" }
+                  "arrangement": {
+                    "const": "COAXIAL"
+                  }
                 },
                 "required": [
                   "inner_pipe_d_in",
@@ -283,6 +296,30 @@
               }
             },
             "required": ["buried_depth", "diameter"]
+          },
+          "pre_designed": {
+            "type": "object",
+            "properties": {
+              "H": {
+                "type": "number",
+                "description": "Borehole length, in meters"
+              },
+              "x": {
+                "type": "array",
+                "description": "An array of x coordinate positions, one for each borehole in the field",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "y": {
+                "type": "array",
+                "description": "An array of y coordinate positions, one for each borehole in the field",
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "required": ["H", "x", "y"]
           },
           "geometric_constraints": {
             "type": "object",
@@ -430,7 +467,11 @@
             },
             "oneOf": [
               {
-                "properties": { "method": { "const": "BIRECTANGLE" } },
+                "properties": {
+                  "method": {
+                    "const": "BIRECTANGLE"
+                  }
+                },
                 "required": [
                   "length",
                   "width",
@@ -444,7 +485,9 @@
               },
               {
                 "properties": {
-                  "method": { "const": "BIRECTANGLECONSTRAINED" }
+                  "method": {
+                    "const": "BIRECTANGLECONSTRAINED"
+                  }
                 },
                 "required": [
                   "b_min",
@@ -458,7 +501,11 @@
                 ]
               },
               {
-                "properties": { "method": { "const": "BIZONEDRECTANGLE" } },
+                "properties": {
+                  "method": {
+                    "const": "BIZONEDRECTANGLE"
+                  }
+                },
                 "required": [
                   "length",
                   "width",
@@ -471,7 +518,11 @@
                 ]
               },
               {
-                "properties": { "method": { "const": "NEARSQUARE" } },
+                "properties": {
+                  "method": {
+                    "const": "NEARSQUARE"
+                  }
+                },
                 "required": [
                   "length",
                   "b",
@@ -481,7 +532,11 @@
                 ]
               },
               {
-                "properties": { "method": { "const": "RECTANGLE" } },
+                "properties": {
+                  "method": {
+                    "const": "RECTANGLE"
+                  }
+                },
                 "required": [
                   "length",
                   "width",
@@ -493,7 +548,11 @@
                 ]
               },
               {
-                "properties": { "method": { "const": "ROWWISE" } },
+                "properties": {
+                  "method": {
+                    "const": "ROWWISE"
+                  }
+                },
                 "required": [
                   "perimeter_spacing_ratio",
                   "min_spacing",
@@ -559,14 +618,7 @@
             }
           }
         },
-        "required": [
-          "soil",
-          "grout",
-          "pipe",
-          "borehole",
-          "geometric_constraints",
-          "design"
-        ]
+        "required": ["soil", "grout", "pipe", "borehole"]
       }
     },
     "pump": {

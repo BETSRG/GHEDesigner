@@ -210,7 +210,7 @@ class GHE(BaseGHE):
         soil: Soil,
         g_function: GFunction,
         sim_params: SimulationParameters,
-        hourly_extraction_ground_loads: list,
+        hourly_extraction_ground_loads: list | None,
         field_type="N/A",
         field_specifier="N/A",
         load_years=None,
@@ -237,12 +237,15 @@ class GHE(BaseGHE):
         if load_years is None:
             load_years = [2019]
 
-        hybrid_load = HybridLoad(
-            self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, sim_params, years=load_years
-        )
+        if hourly_extraction_ground_loads:
+            hybrid_load = HybridLoad(
+                self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, sim_params, years=load_years
+            )
 
-        # hybrid load object
-        self.hybrid_load = hybrid_load
+            # hybrid load object
+            self.hybrid_load = hybrid_load
+        else:
+            self.hybrid_load = None
 
         # List of heat pump exiting fluid temperatures
         self.hp_eft: list[float] = []
@@ -338,7 +341,7 @@ class GHE(BaseGHE):
 
     def size(self, method: TimestepType) -> None:
         # Size the ground heat exchanger
-        def local_objective(h):
+        def local_objective(h: float):
             self.bhe.b.H = h
             max_hp_eft, min_hp_eft = self.simulate(method=method)
             t_excess = self.cost(max_hp_eft, min_hp_eft)

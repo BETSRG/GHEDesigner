@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "topology": [
+    { "type": "building", "name": "building1" },
+    { "type": "ground-heat-exchanger", "name": "ghe1" }
+  ],
+  "fluid": {
+    "fluid_name": "WATER",
+    "concentration_percent": 0,
+    "temperature": 20
+  },
+  "building": {
+    "building1": {
+      "name": "load 1",
+      "loads": "test_data/test_bldg_loads.csv",
+      "cop": 3,
+      "capacity": "AUTOSIZE"
+    }
+  },
+  "ground-heat-exchanger": {
+    "ghe1": {
+      "do-sizing": false,
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 18.3
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "pre_designed": {
+        "H": 150,
+        "x": [0.0],
+        "y": [0.0]
+      }
+    }
+  },
+  "simulation-control": {
+    "thermal-sizing-run": true,
+    "hourly-run": true,
+    "hydraulic-run": true,
+    "simulation-months": 240
+  }
+}

@@ -6,6 +6,8 @@ from pathlib import Path
 
 import click
 from jsonschema import ValidationError
+from pygfunction.gfunction import evaluate_g_function_MIFT
+from pygfunction.pipes import PipeTypes
 
 from ghedesigner.constants import VERSION
 from ghedesigner.enums import BHPipeType, DesignGeomType
@@ -131,101 +133,186 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
                 diameter=borehole_props["diameter"],
             )
 
-            design_props: dict = ghe_dict["design"]
-            max_bh = design_props.get("max_boreholes")
-            continue_if_design_unmet = design_props.get("continue_if_design_unmet", False)
+            need_to_design = bool(ghe_dict["do-sizing"])
+            if need_to_design:
+                design_props: dict = ghe_dict["design"]
+                max_bh = design_props.get("max_boreholes")
+                continue_if_design_unmet = design_props.get("continue_if_design_unmet", False)
+                ghe.set_simulation_parameters(
+                    num_months=sim_control["simulation-months"],
+                    max_boreholes=max_bh,
+                    continue_if_design_unmet=continue_if_design_unmet,
+                )
 
-            ghe.set_simulation_parameters(
-                num_months=sim_control["simulation-months"],
-                max_boreholes=max_bh,
-                continue_if_design_unmet=continue_if_design_unmet,
-            )
+                constraint_props: dict = ghe_dict["geometric_constraints"]
+                try:
+                    ghe.set_design_geometry_type(constraint_props["method"])
+                except ValueError:
+                    return 1
+                if ghe.geom_type == DesignGeomType.RECTANGLE:
+                    # max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
+                    ghe.set_geometry_constraints_rectangle(
+                        min_height=constraint_props["min_height"],
+                        max_height=constraint_props["max_height"],
+                        length=constraint_props["length"],
+                        width=constraint_props["width"],
+                        b_min=constraint_props["b_min"],
+                        b_max=constraint_props["b_max"],
+                    )
+                elif ghe.geom_type == DesignGeomType.NEARSQUARE:
+                    ghe.set_geometry_constraints_near_square(
+                        min_height=constraint_props["min_height"],
+                        max_height=constraint_props["max_height"],
+                        b=constraint_props["b"],
+                        length=constraint_props["length"],
+                    )
+                elif ghe.geom_type == DesignGeomType.BIRECTANGLE:
+                    ghe.set_geometry_constraints_bi_rectangle(
+                        min_height=constraint_props["min_height"],
+                        max_height=constraint_props["max_height"],
+                        length=constraint_props["length"],
+                        width=constraint_props["width"],
+                        b_min=constraint_props["b_min"],
+                        b_max_x=constraint_props["b_max_x"],
+                        b_max_y=constraint_props["b_max_y"],
+                    )
+                elif ghe.geom_type == DesignGeomType.BIZONEDRECTANGLE:
+                    ghe.set_geometry_constraints_bi_zoned_rectangle(
+                        min_height=constraint_props["min_height"],
+                        max_height=constraint_props["max_height"],
+                        length=constraint_props["length"],
+                        width=constraint_props["width"],
+                        b_min=constraint_props["b_min"],
+                        b_max_x=constraint_props["b_max_x"],
+                        b_max_y=constraint_props["b_max_y"],
+                    )
+                elif ghe.geom_type == DesignGeomType.BIRECTANGLECONSTRAINED:
+                    ghe.set_geometry_constraints_bi_rectangle_constrained(
+                        min_height=constraint_props["min_height"],
+                        max_height=constraint_props["max_height"],
+                        b_min=constraint_props["b_min"],
+                        b_max_x=constraint_props["b_max_x"],
+                        b_max_y=constraint_props["b_max_y"],
+                        property_boundary=constraint_props["property_boundary"],
+                        no_go_boundaries=constraint_props["no_go_boundaries"],
+                    )
+                elif ghe.geom_type == DesignGeomType.ROWWISE:
+                    # use perimeter calculations if present
+                    perimeter_spacing_ratio = constraint_props.get("perimeter_spacing_ratio", 0.0)
+                    ghe.set_geometry_constraints_rowwise(
+                        min_height=constraint_props["min_height"],
+                        max_height=constraint_props["max_height"],
+                        perimeter_spacing_ratio=perimeter_spacing_ratio,
+                        max_spacing=constraint_props["max_spacing"],
+                        min_spacing=constraint_props["min_spacing"],
+                        spacing_step=constraint_props["spacing_step"],
+                        max_rotation=constraint_props["max_rotation"],
+                        min_rotation=constraint_props["min_rotation"],
+                        rotate_step=constraint_props["rotate_step"],
+                        property_boundary=constraint_props["property_boundary"],
+                        no_go_boundaries=constraint_props["no_go_boundaries"],
+                    )
+                else:
+                    print("Geometry constraint method not supported.", file=sys.stderr)
+                    return 1
 
-            constraint_props: dict = ghe_dict["geometric_constraints"]
-            try:
-                ghe.set_design_geometry_type(constraint_props["method"])
-            except ValueError:
-                return 1
-            if ghe.geom_type == DesignGeomType.RECTANGLE:
-                # max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
-                ghe.set_geometry_constraints_rectangle(
-                    min_height=constraint_props["min_height"],
-                    max_height=constraint_props["max_height"],
-                    length=constraint_props["length"],
-                    width=constraint_props["width"],
-                    b_min=constraint_props["b_min"],
-                    b_max=constraint_props["b_max"],
+                # self, flow_rate: float, flow_type_str: str, max_eft: float, min_eft: float, throw: bool = True
+                ghe.set_design(
+                    flow_rate=design_props["flow_rate"],
+                    flow_type_str=design_props["flow_type"],
+                    min_eft=design_props["min_eft"],
+                    max_eft=design_props["max_eft"],
                 )
-            elif ghe.geom_type == DesignGeomType.NEARSQUARE:
-                ghe.set_geometry_constraints_near_square(
-                    min_height=constraint_props["min_height"],
-                    max_height=constraint_props["max_height"],
-                    b=constraint_props["b"],
-                    length=constraint_props["length"],
-                )
-            elif ghe.geom_type == DesignGeomType.BIRECTANGLE:
-                ghe.set_geometry_constraints_bi_rectangle(
-                    min_height=constraint_props["min_height"],
-                    max_height=constraint_props["max_height"],
-                    length=constraint_props["length"],
-                    width=constraint_props["width"],
-                    b_min=constraint_props["b_min"],
-                    b_max_x=constraint_props["b_max_x"],
-                    b_max_y=constraint_props["b_max_y"],
-                )
-            elif ghe.geom_type == DesignGeomType.BIZONEDRECTANGLE:
-                ghe.set_geometry_constraints_bi_zoned_rectangle(
-                    min_height=constraint_props["min_height"],
-                    max_height=constraint_props["max_height"],
-                    length=constraint_props["length"],
-                    width=constraint_props["width"],
-                    b_min=constraint_props["b_min"],
-                    b_max_x=constraint_props["b_max_x"],
-                    b_max_y=constraint_props["b_max_y"],
-                )
-            elif ghe.geom_type == DesignGeomType.BIRECTANGLECONSTRAINED:
-                ghe.set_geometry_constraints_bi_rectangle_constrained(
-                    min_height=constraint_props["min_height"],
-                    max_height=constraint_props["max_height"],
-                    b_min=constraint_props["b_min"],
-                    b_max_x=constraint_props["b_max_x"],
-                    b_max_y=constraint_props["b_max_y"],
-                    property_boundary=constraint_props["property_boundary"],
-                    no_go_boundaries=constraint_props["no_go_boundaries"],
-                )
-            elif ghe.geom_type == DesignGeomType.ROWWISE:
-                # use perimeter calculations if present
-                perimeter_spacing_ratio = constraint_props.get("perimeter_spacing_ratio", 0.0)
-                ghe.set_geometry_constraints_rowwise(
-                    min_height=constraint_props["min_height"],
-                    max_height=constraint_props["max_height"],
-                    perimeter_spacing_ratio=perimeter_spacing_ratio,
-                    max_spacing=constraint_props["max_spacing"],
-                    min_spacing=constraint_props["min_spacing"],
-                    spacing_step=constraint_props["spacing_step"],
-                    max_rotation=constraint_props["max_rotation"],
-                    min_rotation=constraint_props["min_rotation"],
-                    rotate_step=constraint_props["rotate_step"],
-                    property_boundary=constraint_props["property_boundary"],
-                    no_go_boundaries=constraint_props["no_go_boundaries"],
-                )
+                ghe.find_design()
+                ghe.prepare_results("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
+                ghe.write_output_files(output_directory)
             else:
-                print("Geometry constraint method not supported.", file=sys.stderr)
-                return 1
+                pre_designed_dict: dict = ghe_dict["pre_designed"]
+                borehole_height: float = pre_designed_dict["H"]
+                x_positions: list[float] = pre_designed_dict["x"]
+                y_positions: list[float] = pre_designed_dict["y"]
+                m_flow_network = 0.05
+                from ghedesigner.media import Pipe
 
-            # self, flow_rate: float, flow_type_str: str, max_eft: float, min_eft: float, throw: bool = True
-            ghe.set_design(
-                flow_rate=design_props["flow_rate"],
-                flow_type_str=design_props["flow_type"],
-                min_eft=design_props["min_eft"],
-                max_eft=design_props["max_eft"],
-            )
+                pipe_positions = Pipe.place_pipes(0.04, ghe._pipe.r_out, 2)
+                if len(x_positions) != len(y_positions):
+                    pass  # TODO: Emit error
+                alpha = 1e-6
+                ts = borehole_height**2 / (9 * alpha)
+                from numpy import array
 
-    # now presumably all the topological objects have been initialized
-    # TODO: Switch operation here based on the simulation-control inputs, for now just finding the design by default
-    ghe.find_design()
-    ghe.prepare_results("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
-    ghe.write_output_files(output_directory)
+                t = [
+                    0.1,
+                    0.144,
+                    0.207,
+                    0.298,
+                    0.428,
+                    0.616,
+                    0.886,
+                    1.274,
+                    1.833,
+                    2.637,
+                    3.793,
+                    5.456,
+                    7.848,
+                    11.288,
+                    16.238,
+                    23.357,
+                    33.598,
+                    48.329,
+                    69.519,
+                    100.0,
+                ]
+                time = array(t) * ts
+                g_values = evaluate_g_function_MIFT(
+                    H=borehole_height,
+                    D=4,  # ghe._borehole.D,
+                    r_b=0.075,  # ghe._borehole.r_b,
+                    x=x_positions,
+                    y=y_positions,
+                    alpha=alpha,  # ghe._soil.k / ghe._soil.rhoCp,
+                    time=time,
+                    pos=pipe_positions,
+                    r_in=ghe._pipe.r_in,
+                    r_out=ghe._pipe.r_out,
+                    k_s=ghe._soil.k,
+                    k_g=ghe._grout.k,
+                    k_p=ghe._pipe.k,
+                    epsilon=ghe._pipe.roughness,
+                    pipe_type=PipeTypes.SINGLEUTUBE,
+                    m_flow_network=m_flow_network,
+                    fluid_name=fluid_props["fluid_name"],
+                    fluid_concentration_pct=fluid_props["concentration_percent"],
+                )
+                from ghedesigner.ghe.gfunction import GFunction
+                from ghedesigner.ghe.ground_heat_exchangers import GHE
+                from ghedesigner.utilities import borehole_spacing
+
+                b = borehole_spacing(ghe._borehole, coordinates=[[0, 0]])
+                g_function = GFunction(b, 4, {100: 0.075}, {100: g_values}, list(time), [[0, 0]])
+                ghe.set_simulation_parameters(
+                    num_months=sim_control["simulation-months"],
+                    max_boreholes=1,
+                    continue_if_design_unmet=False,
+                )
+                this_ghe = GHE(
+                    m_flow_network,
+                    b,
+                    BHPipeType.SINGLEUTUBE,
+                    fluid=ghe._fluid,
+                    borehole=ghe._borehole,
+                    pipe=ghe._pipe,
+                    grout=ghe._grout,
+                    soil=ghe._soil,
+                    g_function=g_function,
+                    sim_params=ghe._simulation_parameters,
+                    hourly_extraction_ground_loads=[],
+                )
+                from ghedesigner.output import OutputManager
+
+                results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
+                results.write_presized_output_files(output_directory=output_directory, ghe=this_ghe)
+
     return 0
 
 

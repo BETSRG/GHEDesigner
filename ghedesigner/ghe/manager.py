@@ -611,15 +611,8 @@ class GroundHeatExchanger:
         if self._search is None:
             raise ValueError("self._search must be set before GroundHeatExchanger.prepare_results is called.")
 
-        self.results = OutputManager(
-            self._search,
-            self._search_time,
-            project_name,
-            note,
-            author,
-            iteration_name,
-            load_method=TimestepType.HYBRID,
-        )
+        self.results = OutputManager(project_name, note, author, iteration_name)
+        self.results.set_design_data(self._search, self._search_time, load_method=TimestepType.HYBRID)
 
     def write_output_files(self, output_directory: Path, output_file_suffix: str = "") -> None:
         """
