@@ -1,4 +1,3 @@
-from datetime import datetime
 from json import loads
 from pathlib import Path
 
@@ -41,8 +40,7 @@ def get_test_input_files() -> list[Path]:
 
 
 @pytest.mark.parametrize("demo_file_path", get_test_input_files(), ids=lambda f: "Demo: " + f.stem)
-def test_demo_files(demo_file_path: Path):
-    time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+def test_demo_files(demo_file_path: Path, time_str: str):
     failed_tests = []
 
     # run demo files first
