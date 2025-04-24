@@ -1,6 +1,5 @@
-from pygfunction.boreholes import Borehole
-
 from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
@@ -27,7 +26,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         grout = Grout(1.0, 3901000.0)
         soil = Soil(3.493, 2.5797e06, 10.0)
         ground_loads = [1.0e2] * 8760
-        borehole = Borehole(100, D=2.0, r_b=0.0751, x=0.0, y=0.0)
+        borehole = Borehole(burial_depth=2.0, borehole_radius=0.0751)
         geometry = GeometricConstraintsNearSquare(b=6.096, length=20)
         design = DesignNearSquare(
             v_flow=1.0,
@@ -61,7 +60,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         grout = Grout(1.0, 3901000.0)
         soil = Soil(3.493, 2.5797e06, 10.0)
         ground_loads = [1.0e6] * 8760
-        borehole = Borehole(100, D=2.0, r_b=0.0751, x=0.0, y=0.0)  # TODO: Why specify borehole length here?
+        borehole = Borehole(burial_depth=2.0, borehole_radius=0.0751)
         geometry = GeometricConstraintsNearSquare(b=6.096, length=20)
         design = DesignNearSquare(
             v_flow=1.0,
@@ -95,7 +94,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         grout = Grout(1.0, 3901000.0)
         soil = Soil(3.493, 2.5797e06, 10.0)
         ground_loads = [1.0e6] * 8760
-        borehole = Borehole(100, D=2.0, r_b=0.0751, x=0.0, y=0.0)  # TODO: Why specify borehole length here?
+        borehole = Borehole(burial_depth=2.0, borehole_radius=0.0751)
         geometry = GeometricConstraintsNearSquare(b=6.096, length=100)
         design = DesignNearSquare(
             v_flow=1.0,

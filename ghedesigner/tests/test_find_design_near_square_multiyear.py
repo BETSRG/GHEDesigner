@@ -3,9 +3,8 @@
 
 # This search is described in section 4.3.2 of Cook (2021) from pages 123-129.
 
-from pygfunction.boreholes import Borehole
-
 from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
@@ -20,7 +19,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
         grout = Grout(k=1.0, rho_cp=3901000.0)
         fluid = GHEFluid(fluid_str="water", percent=0.0, temperature=20.0)
-        borehole = Borehole(100, D=2.0, r_b=0.07, x=0.0, y=0.0)
+        borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
         ground_loads = self.get_multiyear_loads()
         b = 5.0
         length = 155.0

@@ -15,7 +15,7 @@ class GeometricConstraintsRowWise(GeometricConstraints):
 
     def __init__(
         self,
-        perimeter_spacing_ratio: float,
+        perimeter_spacing_ratio: float | None,
         min_spacing: float,
         max_spacing: float,
         spacing_step: float,

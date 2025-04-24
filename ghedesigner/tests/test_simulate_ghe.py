@@ -1,6 +1,5 @@
-from pygfunction.boreholes import Borehole
-
 from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.coordinates import rectangle
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
@@ -125,7 +124,7 @@ class TestGHE(GHEBaseTest):
 
     def test_single_u_tube(self):
         # Define a borehole
-        borehole = Borehole(self.H, self.D, self.dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(borehole_height=self.H, burial_depth=self.D, borehole_radius=self.dia / 2.0)
 
         # Initialize GHE object
         g_function = calc_g_func_for_multiple_lengths(
@@ -171,7 +170,7 @@ class TestGHE(GHEBaseTest):
 
     def test_double_u_tube(self):
         # Define a borehole
-        borehole = Borehole(self.H, self.D, self.dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(borehole_height=self.H, burial_depth=self.D, borehole_radius=self.dia / 2.0)
 
         # Initialize GHE object
         g_function = calc_g_func_for_multiple_lengths(
@@ -217,7 +216,7 @@ class TestGHE(GHEBaseTest):
 
     def test_coaxial_tube(self):
         # Define a borehole
-        borehole = Borehole(self.H, self.D, self.dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(borehole_height=self.H, burial_depth=self.D, borehole_radius=self.dia / 2.0)
 
         # Initialize GHE object
         g_function = calc_g_func_for_multiple_lengths(

@@ -1,6 +1,5 @@
-from pygfunction.boreholes import Borehole
-
 from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.rectangle import DesignRectangle, GeometricConstraintsRectangle
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_1d import Bisection1D
@@ -27,7 +26,7 @@ class TestLoads(GHEBaseTest):
         fluid = GHEFluid("water", 0.0, 20.0)
         grout = Grout(1.0, 3901000.0)
         soil = Soil(2.0, 2343493.0, 18.3)
-        borehole = Borehole(100, D=2.0, r_b=0.07, x=0.0, y=0.0)
+        borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
         geometry = GeometricConstraintsRectangle(width=36.5, length=85.0, b_min=3.0, b_max_x=10.0)
         design = DesignRectangle(
             v_flow=0.5,

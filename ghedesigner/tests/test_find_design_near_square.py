@@ -2,9 +2,10 @@
 # interface with a single U-tube, multiple U-tube and coaxial tube.
 
 # This search is described in section 4.3.2 of Cook (2021) from pages 123-129.
-from pygfunction.boreholes import Borehole
+from typing import cast
 
 from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
+from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
@@ -24,12 +25,13 @@ class TestFindNearSquareDesign(GHEBaseTest):
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
         grout = Grout(k=1.0, rho_cp=3901000.0)
         fluid = GHEFluid(fluid_str="water", percent=0.0, temperature=20.0)
-        borehole = Borehole(100, D=2.0, r_b=0.07, x=0.0, y=0.0)
+        borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
         ground_loads = self.get_atlanta_loads()
         b = 5.0
         number_of_boreholes = 32
         if not length:
             length = length_of_side(number_of_boreholes, b)
+        length = cast(float, length)
         geometry = GeometricConstraintsNearSquare(b=b, length=length)
         design = DesignNearSquare(
             v_flow=flow_rate,

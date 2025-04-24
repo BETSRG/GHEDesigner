@@ -4,9 +4,8 @@
 
 # This search is described in section 4.4.5 from pages 146-148 in Cook (2021).
 
-from pygfunction.boreholes import Borehole
-
 from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.birectangle_constrained import (
     DesignBiRectangleConstrained,
     GeometricConstraintsBiRectangleConstrained,
@@ -80,7 +79,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         fluid = GHEFluid("water", 0.0, 20.0)
         grout = Grout(1.0, 3901000.0)
         ground_loads = self.get_atlanta_loads()
-        borehole = Borehole(100, D=2.0, r_b=borehole_radius, x=0.0, y=0.0)
+        borehole = Borehole(burial_depth=2.0, borehole_radius=borehole_radius)
         geometry = GeometricConstraintsBiRectangleConstrained(
             b_min=5.0,
             b_max_x=25.0,

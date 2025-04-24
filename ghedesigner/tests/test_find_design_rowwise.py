@@ -1,8 +1,10 @@
-from pygfunction.boreholes import Borehole
+from typing import cast
 
 from ghedesigner.constants import DEG_TO_RAD
 from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRowWise
+from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
@@ -59,7 +61,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
         fluid = GHEFluid("water", 0.0, 20.0)
         grout = Grout(1.0, 3901000.0)
         ground_loads = self.get_atlanta_loads()
-        borehole = Borehole(100, D=2.0, r_b=0.07, x=0.0, y=0.0)
+        borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
         geometry = GeometricConstraintsRowWise(
             perimeter_spacing_ratio=spacing_ratio,
             min_spacing=10.0,
@@ -92,6 +94,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             method=TimestepType.HYBRID,
         )
         search = design.find_design()
+        search.ghe = cast(GHE, search.ghe)  # Cast the type to GHE
         search.ghe.compute_g_functions(60, 200)
         search.ghe.size(method=TimestepType.HYBRID, min_height=60, max_height=200, design_min_eft=5, design_max_eft=35)
         return search
