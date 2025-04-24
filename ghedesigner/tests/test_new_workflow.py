@@ -1,8 +1,13 @@
 from pathlib import Path
 
+from pygfunction.boreholes import Borehole
+
 from ghedesigner.building import Building
-from ghedesigner.ghe.manager import GroundHeatExchanger
+from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.ghe.design.rectangle import DesignRectangle, GeometricConstraintsRectangle
+from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.heat_pump import HeatPump
+from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.system import System
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
@@ -24,32 +29,55 @@ class TestNewWorkflows(GHEBaseTest):
         building.add_heat_pump(heat_pump)
 
         # size ghe
-        ghe = GroundHeatExchanger()
-        ghe.set_single_u_tube_pipe(
+        pipe = Pipe.init_single_u_tube(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
             shank_spacing=0.01856,
             roughness=1.0e-6,
             conductivity=0.4,
             rho_cp=1542000.0,
+            num_pipes=1,
         )
-        ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
-        ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
-        ghe.set_fluid()
-        ghe.set_borehole(buried_depth=2.0, diameter=0.140)
-        ghe.set_simulation_parameters(num_months=240)
-        ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_simulation_parameters(num_months=240)
-        ghe.set_geometry_constraints_rectangle(
-            max_height=135, min_height=60, length=85.0, width=36.5, b_min=3.0, b_max=10.0
+        soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
+        fluid = GHEFluid("water", 0.0, 20.0)
+        grout = Grout(1.0, 3901000.0)
+        ground_loads = self.get_atlanta_loads()
+        borehole = Borehole(100, D=2.0, r_b=0.07, x=0.0, y=0.0)
+        geometry = GeometricConstraintsRectangle(width=36.5, length=85.0, b_min=3.0, b_max_x=10)
+        min_height = 60
+        max_height = 135
+        min_eft = 5
+        max_eft = 35
+        design = DesignRectangle(
+            v_flow=0.5,
+            _borehole=borehole,
+            bhe_type=BHPipeType.SINGLEUTUBE,
+            fluid=fluid,
+            pipe=pipe,
+            grout=grout,
+            soil=soil,
+            start_month=1,
+            end_month=240,
+            max_eft=max_eft,
+            min_eft=min_eft,
+            max_height=max_height,
+            min_height=min_height,
+            continue_if_design_unmet=True,
+            max_boreholes=None,
+            geometric_constraints=geometry,
+            hourly_extraction_ground_loads=ground_loads,
+            method=TimestepType.HYBRID,
         )
-        ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
-        ghe.find_design()
-        output_file_directory = self.test_outputs_directory / "TestNewWorkflow"
-        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
-        ghe.write_output_files(output_file_directory, "")
-
+        search = design.find_design()
+        search.ghe.compute_g_functions(min_height, max_height)
+        search.ghe.size(
+            method=TimestepType.HYBRID,
+            min_height=min_height,
+            max_height=max_height,
+            design_min_eft=5,
+            design_max_eft=35,
+        )
         # simulate hourly
         system.set_building(building)
-        system.set_ghe(ghe.get_ghe())
+        system.set_ghe(search.ghe)
         system.simulate()

@@ -12,6 +12,7 @@ from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.boreholes.base import GHEDesignerBoreholeBase
 from ghedesigner.ghe.boreholes.coaxial_borehole import CoaxialPipe
 from ghedesigner.ghe.design.base import AnyBisectionType
+from ghedesigner.ghe.ground_heat_exchangers import GHE
 
 
 class OutputManager:
@@ -86,7 +87,7 @@ class OutputManager:
         with open(str(output_directory / f"SimulationSummary{file_suffix}.json"), "w", newline="") as f_json:
             f_json.write(dumps(output_dict, indent=2))
 
-    def write_presized_output_files(self, output_directory: Path, ghe, file_suffix: str = "") -> None:
+    def write_presized_output_files(self, output_directory: Path, ghe: GHE, file_suffix: str = "") -> None:
         text_summary = self.get_summary_text(
             self.allocated_width,
             self.project_name,
@@ -106,6 +107,9 @@ class OutputManager:
             csv.writer(f_csv).writerows(borehole_location_data_rows)
         with open(os.path.join(output_directory, f"Gfunction{file_suffix}.csv"), "w", newline="") as f_csv:
             csv.writer(f_csv).writerows(g_function_data_rows)
+        with open(str(output_directory / f"SimulationSummary{file_suffix}.json"), "w", newline="") as f_json:
+            d = dict(ghe_system=dict(number_of_boreholes=1, active_borehole_length=dict(value=1)))
+            f_json.write(dumps(d, indent=2))
 
     def get_loading_data(self, ghe):
         csv_array = [
@@ -406,15 +410,15 @@ class OutputManager:
             o += empty_line
 
             o += self.create_title(width, "Simulation Parameters")
-            o += self.d_row(width, "Start Month: ", ghe.sim_params.start_month, f_int)
-            o += self.d_row(width, "End Month: ", ghe.sim_params.end_month, f_int)
-            o += self.d_row(width, "Maximum Allowable HP EFT, C: ", ghe.sim_params.max_EFT_allowable, f_2f)
-            o += self.d_row(width, "Minimum Allowable HP EFT, C: ", ghe.sim_params.min_EFT_allowable, f_2f)
-            o += self.d_row(width, "Maximum Allowable Height, m: ", ghe.sim_params.max_height, f_2f)
-            o += self.d_row(width, "Minimum Allowable Height, m: ", ghe.sim_params.min_height, f_2f)
-            o += self.d_row(width, "Simulation Time, years: ", int(ghe.sim_params.end_month / 12), f_int)
-            load_method_string = load_method.name
-            o += self.d_row(width, "Simulation Loading Type: ", load_method_string, f_str)
+            # o += self.d_row(width, "Start Month: ", ghe.sim_params.start_month, f_int)
+            # o += self.d_row(width, "End Month: ", ghe.sim_params.end_month, f_int)
+            # o += self.d_row(width, "Maximum Allowable HP EFT, C: ", ghe.sim_params.max_EFT_allowable, f_2f)
+            # o += self.d_row(width, "Minimum Allowable HP EFT, C: ", ghe.sim_params.min_EFT_allowable, f_2f)
+            # o += self.d_row(width, "Maximum Allowable Height, m: ", ghe.sim_params.max_height, f_2f)
+            # o += self.d_row(width, "Minimum Allowable Height, m: ", ghe.sim_params.min_height, f_2f)
+            # o += self.d_row(width, "Simulation Time, years: ", int(ghe.sim_params.end_month / 12), f_int)
+            # load_method_string = load_method.name
+            # o += self.d_row(width, "Simulation Loading Type: ", load_method_string, f_str)
 
             o += empty_line
 
@@ -577,13 +581,13 @@ class OutputManager:
                 "fluid_mass_flow_rate_per_borehole": add_with_units(ghe.bhe.m_flow_borehole, "kg/s"),
             },
             "simulation_parameters": {
-                "start_month": ghe.sim_params.start_month,
-                "end_month": ghe.sim_params.end_month,
-                "maximum_allowable_hp_eft": add_with_units(ghe.sim_params.max_EFT_allowable, "C"),
-                "minimum_allowable_hp_eft": add_with_units(ghe.sim_params.min_EFT_allowable, "C"),
-                "maximum_allowable_height": add_with_units(ghe.sim_params.max_height, "m"),
-                "minimum_allowable_height": add_with_units(ghe.sim_params.min_height, "m"),
-                "simulation_time": add_with_units(int(ghe.sim_params.end_month / 12), "years"),
+                # "start_month": ghe.sim_params.start_month,
+                # "end_month": ghe.sim_params.end_month,
+                # "maximum_allowable_hp_eft": add_with_units(ghe.sim_params.max_EFT_allowable, "C"),
+                # "minimum_allowable_hp_eft": add_with_units(ghe.sim_params.min_EFT_allowable, "C"),
+                # "maximum_allowable_height": add_with_units(ghe.sim_params.max_height, "m"),
+                # "minimum_allowable_height": add_with_units(ghe.sim_params.min_height, "m"),
+                # "simulation_time": add_with_units(int(ghe.sim_params.end_month / 12), "years"),
                 "simulation_load_method": load_method.name,
             },
             "simulation_results": {},

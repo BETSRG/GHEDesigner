@@ -1,4 +1,10 @@
-from ghedesigner.ghe.manager import GroundHeatExchanger
+from pygfunction.boreholes import Borehole
+
+from ghedesigner.constants import DEG_TO_RAD
+from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRowWise
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 prop_boundary = [
@@ -48,81 +54,76 @@ no_go_zones = [
 class TestFindRowWiseDesign(GHEBaseTest):
     # Purpose: Design a constrained RowWise field using the common
     # design interface with a single U-tube borehole heat exchanger.
+    def get_design(self, pipe: Pipe, flow_rate: float, pipe_type: BHPipeType, spacing_ratio: float | None = None):
+        soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
+        fluid = GHEFluid("water", 0.0, 20.0)
+        grout = Grout(1.0, 3901000.0)
+        ground_loads = self.get_atlanta_loads()
+        borehole = Borehole(100, D=2.0, r_b=0.07, x=0.0, y=0.0)
+        geometry = GeometricConstraintsRowWise(
+            perimeter_spacing_ratio=spacing_ratio,
+            min_spacing=10.0,
+            max_spacing=20.0,
+            spacing_step=0.1,
+            min_rotation=-90.0 * DEG_TO_RAD,
+            max_rotation=0.0 * DEG_TO_RAD,
+            rotate_step=0.5,
+            property_boundary=prop_boundary,
+            no_go_boundaries=no_go_zones,
+        )
+        design = DesignRowWise(
+            v_flow=flow_rate,
+            _borehole=borehole,
+            bhe_type=pipe_type,
+            fluid=fluid,
+            pipe=pipe,
+            grout=grout,
+            soil=soil,
+            start_month=1,
+            end_month=240,
+            max_eft=35,
+            min_eft=5,
+            max_height=200,
+            min_height=60,
+            continue_if_design_unmet=True,
+            max_boreholes=None,
+            geometric_constraints=geometry,
+            hourly_extraction_ground_loads=ground_loads,
+            method=TimestepType.HYBRID,
+        )
+        search = design.find_design()
+        search.ghe.compute_g_functions(60, 200)
+        search.ghe.size(method=TimestepType.HYBRID, min_height=60, max_height=200, design_min_eft=5, design_max_eft=35)
+        return search
 
     def test_find_row_wise_design_wo_perimeter(self):
-        ghe = GroundHeatExchanger()
-        ghe.set_single_u_tube_pipe(
+        pipe = Pipe.init_single_u_tube(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
             shank_spacing=0.01856,
             roughness=1.0e-6,
             conductivity=0.4,
             rho_cp=1542000.0,
+            num_pipes=1,
         )
-        ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
-        ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
-        ghe.set_fluid()
-        ghe.set_borehole(buried_depth=2.0, diameter=0.140)
-        ghe.set_simulation_parameters(num_months=240)
-        ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_rowwise(
-            max_height=200,
-            min_height=60,
-            perimeter_spacing_ratio=None,
-            min_spacing=10.0,
-            max_spacing=20.0,
-            spacing_step=0.1,
-            min_rotation=-90.0,
-            max_rotation=0.0,
-            rotate_step=0.5,
-            property_boundary=prop_boundary,
-            no_go_boundaries=no_go_zones,
-        )
-        ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
-        ghe.find_design()
-        output_file_directory = self.test_outputs_directory / "TestFindRowWiseDesignWithoutPerimeterSingleUTube"
-        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
-        ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
+        search = self.get_design(pipe, 0.5, BHPipeType.SINGLEUTUBE, None)
+        u_tube_height = search.ghe.bhe.b.H
         self.assertAlmostEqual(197.3, u_tube_height, delta=0.1)
-        nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        assert len(nbh) == 41
+        borehole_location_data_rows = search.ghe.gFunction.bore_locations
+        self.assertEqual(40, len(borehole_location_data_rows))
 
     def test_find_row_wise_design_with_perimeter(self):
-        ghe = GroundHeatExchanger()
-        ghe.set_single_u_tube_pipe(
+        pipe = Pipe.init_single_u_tube(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
             shank_spacing=0.01856,
             roughness=1.0e-6,
             conductivity=0.4,
             rho_cp=1542000.0,
+            num_pipes=1,
         )
-        ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
-        ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
-        ghe.set_fluid()
-        ghe.set_borehole(buried_depth=2.0, diameter=0.140)
-        ghe.set_simulation_parameters(num_months=240)
-        ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
-        ghe.set_geometry_constraints_rowwise(
-            max_height=200,
-            min_height=60,
-            perimeter_spacing_ratio=0.8,
-            min_spacing=10.0,
-            max_spacing=20.0,
-            spacing_step=0.1,
-            min_rotation=-90.0,
-            max_rotation=0.0,
-            rotate_step=0.5,
-            property_boundary=prop_boundary,
-            no_go_boundaries=no_go_zones,
-        )
-        ghe.set_design(flow_rate=0.5, flow_type_str="borehole", max_eft=35, min_eft=5)
-        ghe.find_design()
-        output_file_directory = self.test_outputs_directory / "TestFindRowWiseDesignWithPerimeterSingleUTube"
-        ghe.prepare_results("Project Name", "Notes", "Author", "Iteration Name")
-        ghe.write_output_files(output_file_directory, "")
-        u_tube_height = ghe.results.output_dict["ghe_system"]["active_borehole_length"]["value"]
+        search = self.get_design(pipe, 0.5, BHPipeType.SINGLEUTUBE, 0.8)
+        u_tube_height = search.ghe.bhe.b.H
         self.assertAlmostEqual(198.7, u_tube_height, delta=0.1)
-        nbh = ghe.results.borehole_location_data_rows  # includes a header row
-        assert len(nbh) == 40
+        borehole_location_data_rows = search.ghe.gFunction.bore_locations
+        self.assertEqual(39, len(borehole_location_data_rows))

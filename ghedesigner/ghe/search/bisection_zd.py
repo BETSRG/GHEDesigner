@@ -153,6 +153,6 @@ class BisectionZD(Bisection1D):
             field_specifier=self.nested_fieldDescriptors[selection_key_outer][selection_key],
         )
         self.ghe.compute_g_functions(self.min_height, self.max_height)
-        self.ghe.size(method=TimestepType.HYBRID)
+        self.ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
 
         return selection_key, selected_coordinates

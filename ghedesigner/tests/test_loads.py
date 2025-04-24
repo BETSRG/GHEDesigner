@@ -49,7 +49,10 @@ class TestLoads(GHEBaseTest):
             hourly_extraction_ground_loads=loads,
             method=TimestepType.HYBRID,  # TODO: Is this the problem?
         )
-        return design.find_design()
+        search = design.find_design()
+        search.ghe.compute_g_functions(60, 135)
+        search.ghe.size(method=TimestepType.HYBRID, min_height=60, max_height=135, design_min_eft=5, design_max_eft=35)
+        return search
 
     def test_balanced_loads(self):
         loads = [-self.load if 3 <= i <= 8 else self.load for i in range(12) for _ in range(self.num_hr_in_month)]

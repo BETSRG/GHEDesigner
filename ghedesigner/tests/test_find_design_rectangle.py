@@ -8,7 +8,7 @@ from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
 class TestFindRectangleDesign(GHEBaseTest):
-    def get_design(self, pipe: Pipe, flow_rate: float):
+    def get_design(self, pipe: Pipe, flow_rate: float, pipe_type: BHPipeType):
         fluid = GHEFluid("water", 0.0, 20.0)
         grout = Grout(1.0, 3901000.0)
         soil = Soil(2.0, 2343493.0, 18.3)
@@ -23,7 +23,7 @@ class TestFindRectangleDesign(GHEBaseTest):
         design = DesignRectangle(
             v_flow=flow_rate,
             _borehole=borehole,
-            bhe_type=BHPipeType.SINGLEUTUBE,
+            bhe_type=pipe_type,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -35,12 +35,15 @@ class TestFindRectangleDesign(GHEBaseTest):
             max_height=max_height,
             min_height=min_height,
             continue_if_design_unmet=True,
-            max_boreholes=100,
+            max_boreholes=None,
             geometric_constraints=geometry,
             hourly_extraction_ground_loads=ground_loads,
             method=TimestepType.HYBRID,
         )
-        return design.find_design()
+        search = design.find_design()
+        search.ghe.compute_g_functions(60, 135)
+        search.ghe.size(method=TimestepType.HYBRID, min_height=60, max_height=135, design_min_eft=5, design_max_eft=35)
+        return search
 
     def test_single_u_tube(self):
         pipe = Pipe.init_single_u_tube(
@@ -52,7 +55,7 @@ class TestFindRectangleDesign(GHEBaseTest):
             rho_cp=1542000.0,
             num_pipes=1,
         )
-        search = self.get_design(pipe, 0.5)
+        search = self.get_design(pipe, 0.5, BHPipeType.SINGLEUTUBE)
         u_tube_height = search.ghe.bhe.b.H
         self.assertAlmostEqual(120.9, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
@@ -67,7 +70,7 @@ class TestFindRectangleDesign(GHEBaseTest):
             conductivity=0.4,
             rho_cp=1542000.0,
         )
-        search = self.get_design(pipe, 0.5)
+        search = self.get_design(pipe, 0.5, BHPipeType.DOUBLEUTUBEPARALLEL)
         u_tube_height = search.ghe.bhe.b.H
         self.assertAlmostEqual(126.8, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
@@ -83,7 +86,7 @@ class TestFindRectangleDesign(GHEBaseTest):
             conductivity=(0.4, 0.4),
             rho_cp=1542000.0,
         )
-        search = self.get_design(pipe, 0.8)
+        search = self.get_design(pipe, 0.8, BHPipeType.COAXIAL)
         u_tube_height = search.ghe.bhe.b.H
         self.assertAlmostEqual(119.4, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations

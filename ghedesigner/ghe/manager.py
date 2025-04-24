@@ -24,36 +24,76 @@ class GroundHeatExchanger:
         self.fluid = GHEFluid(fluid_name, fluid_concentration_percent, fluid_temperature)
         self.grout = Grout(grout_conductivity, grout_rho_cp)
         self.soil = Soil(soil_conductivity, soil_rho_cp, soil_undisturbed_temperature)
-        required_pipe_parameters = {
-            BHPipeType.SINGLEUTUBE: ["conductivity", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"],
-            BHPipeType.DOUBLEUTUBESERIES: [
-                "conductivity",
-                "inner_diameter",
-                "outer_diameter",
-                "shank_spacing",
-                "roughness",
-            ],
-            BHPipeType.DOUBLEUTUBEPARALLEL: [
-                "conductivity",
-                "inner_diameter",
-                "outer_diameter",
-                "shank_spacing",
-                "roughness",
-            ],
-            BHPipeType.COAXIAL: [
+        if pipe_arrangement_type == BHPipeType.SINGLEUTUBE:
+            params = ["conductivity", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
+            if not all([x in pipe_parameters for x in params]):
+                raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
+            pipe_parameters["num_pipes"] = 1
+            self.pipe = Pipe.init_single_u_tube(**pipe_parameters)
+            # pipe = Pipe.init_single_u_tube(
+            #     inner_diameter=0.03404,
+            #     outer_diameter=0.04216,
+            #     shank_spacing=0.01856,
+            #     roughness=1.0e-6,
+            #     conductivity=0.4,
+            #     rho_cp=1542000.0,
+            #     num_pipes=1,
+            # )
+        elif pipe_arrangement_type == BHPipeType.DOUBLEUTUBESERIES:
+            params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
+            if not all([x in pipe_parameters for x in params]):
+                raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
+            self.pipe = Pipe.init_double_u_tube_series(**pipe_parameters)
+            # pipe = Pipe.init_double_u_tube_series(
+            #     inner_diameter=0.03404,
+            #     outer_diameter=0.04216,
+            #     shank_spacing=0.01856,
+            #     roughness=1.0e-6,
+            #     conductivity=0.4,
+            #     rho_cp=1542000.0,
+            # )
+        elif pipe_arrangement_type == BHPipeType.DOUBLEUTUBEPARALLEL:
+            params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
+            if not all([x in pipe_parameters for x in params]):
+                raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
+            self.pipe = Pipe.init_double_u_tube_parallel(**pipe_parameters)
+            # pipe = Pipe.init_double_u_tube_parallel(
+            #     inner_diameter=0.03404,
+            #     outer_diameter=0.04216,
+            #     shank_spacing=0.01856,
+            #     roughness=1.0e-6,
+            #     conductivity=0.4,
+            #     rho_cp=1542000.0,
+            # )
+        else:  # Assuming coaxial
+            params = [
                 "conductivity_inner",
+                "rho_cp",
                 "conductivity_outer",
                 "inner_pipe_d_in",
                 "inner_pipe_d_out",
                 "outer_pipe_d_in",
                 "outer_pipe_d_out",
-            ],
-        }[pipe_arrangement_type]
-        if not all([x in pipe_parameters for x in required_pipe_parameters]):
-            raise ValueError(
-                f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {required_pipe_parameters}"
+            ]
+            if not all([x in pipe_parameters for x in params]):
+                raise ValueError(f"pipe_arrangement_type of {BHPipeType.COAXIAL!s} requires these inputs: {params}")
+            pipe_parameters["conductivity"] = (
+                pipe_parameters["conductivity_inner"],
+                pipe_parameters["conductivity_outer"],
             )
-        self.pipe = Pipe(pipe_arrangement_type, pipe_parameters)
+            del pipe_parameters["conductivity_inner"]
+            del pipe_parameters["conductivity_outer"]
+            self.pipe = Pipe.init_coaxial(**pipe_parameters)
+            # pipe = Pipe.init_coaxial(
+            #     inner_pipe_d_in=0.0442,
+            #     inner_pipe_d_out=0.050,
+            #     outer_pipe_d_in=0.0974,
+            #     outer_pipe_d_out=0.11,
+            #     roughness=1.0e-6,
+            #     conductivity=(0.4, 0.4),
+            #     rho_cp=1542000.0,
+            # )
+        # self.pipe = Pipe(pipe_arrangement_type, pipe_parameters["conductivity"], pipe_parameters["rho_cp"])
         self.pygfunction_borehole = Borehole(100, borehole_buried_depth, borehole_radius, x=0.0, y=0.0)
 
     @classmethod
@@ -91,6 +131,7 @@ class GroundHeatExchanger:
 
         pipe_parameters: dict = ghe_dict["pipe"]
         pipe_type: BHPipeType = BHPipeType(pipe_parameters["arrangement"].upper())
+        del pipe_parameters["arrangement"]
 
         ghe: GroundHeatExchanger = cls(
             g_c,

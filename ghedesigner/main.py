@@ -21,14 +21,237 @@ from ghedesigner.ghe.design.bizoned import DesignBiZoned, GeometricConstraintsBi
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.design.rectangle import DesignRectangle, GeometricConstraintsRectangle
 from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRowWise
+from ghedesigner.ghe.gfunction import GFunction
+from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.heat_pump import HeatPump
-from ghedesigner.utilities import write_idf
+from ghedesigner.output import OutputManager
+from ghedesigner.utilities import borehole_spacing, write_idf
 from ghedesigner.validate import validate_input_file
 
 logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
 logger = logging.getLogger(__name__)
+
+
+def design_and_size_ghe(
+    inputs: dict, ghe_dict: dict, design_parameters: dict, ghe: GroundHeatExchanger, ghe_loads: list[float]
+):
+    num_months: int = inputs["simulation-control"]["simulation-months"]
+    if (num_months % MONTHS_IN_YEAR) > 0:
+        raise ValueError(f"num_months must be a multiple of {MONTHS_IN_YEAR}")
+    start_month: int = 1
+    end_month: int = num_months
+
+    # grab some design conditions
+    continue_if_design_unmet: bool = ghe_dict["design"].get("continue_if_design_unmet", False)
+    flow_type_str: str = ghe_dict["design"]["flow_type"]
+    flow_type = FlowConfigType(flow_type_str.upper())
+    flow_rate: float = ghe_dict["design"]["flow_rate"]
+    min_eft: float = ghe_dict["design"]["min_eft"]
+    max_eft: float = ghe_dict["design"]["max_eft"]
+    max_height: float = ghe_dict["geometric_constraints"]["max_height"]  # TODO: Move min/max height to design?
+    min_height: float = ghe_dict["geometric_constraints"]["min_height"]
+    max_boreholes: int | None = design_parameters.get("max_boreholes")
+    # check_arg_bounds(min_eft, max_eft, "min_eft", "max_eft")
+
+    # set up the geometry constraints section
+    geom_parameters = ghe_dict["geometric_constraints"]
+    geometry_map = {geom.name: geom for geom in DesignGeomType}
+    geom_type = geometry_map.get(geom_parameters["method"].upper())
+    # simulation_parameters.set_design_heights()
+    if geom_type == DesignGeomType.RECTANGLE:
+        # max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
+        geometry = GeometricConstraintsRectangle(
+            length=geom_parameters["length"],
+            width=geom_parameters["width"],
+            b_min=geom_parameters["b_min"],
+            b_max_x=geom_parameters["b_max"],
+        )
+        design = DesignRectangle(
+            flow_rate,
+            ghe.pygfunction_borehole,
+            ghe.pipe.type,
+            ghe.fluid,
+            ghe.pipe,
+            ghe.grout,
+            ghe.soil,
+            start_month,
+            end_month,
+            max_eft,
+            min_eft,
+            max_height,
+            min_height,
+            continue_if_design_unmet,
+            max_boreholes,
+            geometry,
+            ghe_loads,
+            flow_type=flow_type,
+            method=TimestepType.HYBRID,
+        )
+    elif geom_type == DesignGeomType.NEARSQUARE:
+        geometry = GeometricConstraintsNearSquare(
+            b=geom_parameters["b"],
+            length=geom_parameters["length"],
+        )
+        design = DesignNearSquare(
+            flow_rate,
+            ghe.pygfunction_borehole,
+            ghe.pipe.type,
+            ghe.fluid,
+            ghe.pipe,
+            ghe.grout,
+            ghe.soil,
+            start_month,
+            end_month,
+            max_eft,
+            min_eft,
+            max_height,
+            min_height,
+            continue_if_design_unmet,
+            max_boreholes,
+            geometry,
+            ghe_loads,
+            flow_type=flow_type,
+            method=TimestepType.HYBRID,
+        )
+    elif geom_type == DesignGeomType.BIRECTANGLE:
+        geometry = GeometricConstraintsBiRectangle(
+            length=geom_parameters["length"],
+            width=geom_parameters["width"],
+            b_min=geom_parameters["b_min"],
+            b_max_x=geom_parameters["b_max_x"],
+            b_max_y=geom_parameters["b_max_y"],
+        )
+        design = DesignBiRectangle(
+            flow_rate,
+            ghe.pygfunction_borehole,
+            ghe.pipe.type,
+            ghe.fluid,
+            ghe.pipe,
+            ghe.grout,
+            ghe.soil,
+            start_month,
+            end_month,
+            max_eft,
+            min_eft,
+            max_height,
+            min_height,
+            continue_if_design_unmet,
+            max_boreholes,
+            geometry,
+            ghe_loads,
+            flow_type=flow_type,
+            method=TimestepType.HYBRID,
+        )
+    elif geom_type == DesignGeomType.BIZONEDRECTANGLE:
+        geometry = GeometricConstraintsBiZoned(
+            length=geom_parameters["length"],
+            width=geom_parameters["width"],
+            b_min=geom_parameters["b_min"],
+            b_max_x=geom_parameters["b_max_x"],
+            b_max_y=geom_parameters["b_max_y"],
+        )
+        design = DesignBiZoned(
+            flow_rate,
+            ghe.pygfunction_borehole,
+            ghe.pipe.type,
+            ghe.fluid,
+            ghe.pipe,
+            ghe.grout,
+            ghe.soil,
+            start_month,
+            end_month,
+            max_eft,
+            min_eft,
+            max_height,
+            min_height,
+            continue_if_design_unmet,
+            max_boreholes,
+            geometry,
+            ghe_loads,
+            flow_type=flow_type,
+            method=TimestepType.HYBRID,
+        )
+    elif geom_type == DesignGeomType.BIRECTANGLECONSTRAINED:
+        geometry = GeometricConstraintsBiRectangleConstrained(
+            b_min=geom_parameters["b_min"],
+            b_max_x=geom_parameters["b_max_x"],
+            b_max_y=geom_parameters["b_max_y"],
+            property_boundary=geom_parameters["property_boundary"],
+            no_go_boundaries=geom_parameters["no_go_boundaries"],
+        )
+        design = DesignBiRectangleConstrained(
+            flow_rate,
+            ghe.pygfunction_borehole,
+            ghe.pipe.type,
+            ghe.fluid,
+            ghe.pipe,
+            ghe.grout,
+            ghe.soil,
+            start_month,
+            end_month,
+            max_eft,
+            min_eft,
+            max_height,
+            min_height,
+            continue_if_design_unmet,
+            max_boreholes,
+            geometry,
+            ghe_loads,
+            flow_type=flow_type,
+            method=TimestepType.HYBRID,
+        )
+    else:  # geom_type == DesignGeomType.ROWWISE:
+        # use perimeter calculations if present
+        perimeter_spacing_ratio = geom_parameters.get("perimeter_spacing_ratio", 0.0)
+        geometry = GeometricConstraintsRowWise(
+            perimeter_spacing_ratio=perimeter_spacing_ratio,
+            max_spacing=geom_parameters["max_spacing"],
+            min_spacing=geom_parameters["min_spacing"],
+            spacing_step=geom_parameters["spacing_step"],
+            max_rotation=geom_parameters["max_rotation"] * DEG_TO_RAD,
+            min_rotation=geom_parameters["min_rotation"] * DEG_TO_RAD,
+            rotate_step=geom_parameters["rotate_step"],
+            property_boundary=geom_parameters["property_boundary"],
+            no_go_boundaries=geom_parameters["no_go_boundaries"],
+        )
+        design = DesignRowWise(
+            flow_rate,
+            ghe.pygfunction_borehole,
+            ghe.pipe.type,
+            ghe.fluid,
+            ghe.pipe,
+            ghe.grout,
+            ghe.soil,
+            start_month,
+            end_month,
+            max_eft,
+            min_eft,
+            max_height,
+            min_height,
+            continue_if_design_unmet,
+            max_boreholes,
+            geometry,
+            ghe_loads,
+            flow_type=flow_type,
+            method=TimestepType.HYBRID,
+        )
+    start_time = time()
+    search = design.find_design()
+    search_time = time() - start_time
+    found_ghe = search.ghe
+    if not found_ghe:
+        pass
+    found_ghe.compute_g_functions(min_height, max_height)
+    found_ghe.size(
+        method=TimestepType.HYBRID,
+        max_height=max_height,
+        min_height=min_height,
+        design_max_eft=max_eft,
+        design_min_eft=min_eft,
+    )
+    return search, search_time, found_ghe
 
 
 def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -> int:
@@ -80,224 +303,8 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             ghe_dict = inputs["ground-heat-exchanger"][ghe_name]
             ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, inputs["fluid"])
             ghe_loads = ghe_dict["loads"]
-            design_parameters = ghe_dict["design"]
-            if ghe_dict["do-sizing"]:
-                num_months: int = inputs["simulation-control"]["simulation-months"]
-                if (num_months % MONTHS_IN_YEAR) > 0:
-                    raise ValueError(f"num_months must be a multiple of {MONTHS_IN_YEAR}")
-                start_month: int = 1
-                end_month: int = num_months
-
-                # grab some design conditions
-                continue_if_design_unmet: bool = ghe_dict["design"].get("continue_if_design_unmet", False)
-                flow_type_str: str = ghe_dict["design"]["flow_type"]
-                flow_type = FlowConfigType(flow_type_str.upper())
-                flow_rate: float = ghe_dict["design"]["flow_rate"]
-                min_eft: float = ghe_dict["design"]["min_eft"]
-                max_eft: float = ghe_dict["design"]["max_eft"]
-                max_height: float = ghe_dict["design"]["max_height"]
-                min_height: float = ghe_dict["design"]["min_height"]
-                max_boreholes: int = design_parameters["max_boreholes"]
-                # check_arg_bounds(min_eft, max_eft, "min_eft", "max_eft")
-
-                # set up the geometry constraints section
-                geom_parameters = ghe_dict["geometric_constraints"]
-                geometry_map = {geom.name: geom for geom in DesignGeomType}
-                geom_type = geometry_map.get(geom_parameters["method"].upper())
-                # simulation_parameters.set_design_heights()
-                if geom_type == DesignGeomType.RECTANGLE:
-                    # max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
-                    geometry = GeometricConstraintsRectangle(
-                        length=geom_parameters["length"],
-                        width=geom_parameters["width"],
-                        b_min=geom_parameters["b_min"],
-                        b_max_x=geom_parameters["b_max"],
-                    )
-                    design = DesignRectangle(
-                        flow_rate,
-                        ghe.pygfunction_borehole,
-                        ghe.pipe.type,
-                        ghe.fluid,
-                        ghe.pipe,
-                        ghe.grout,
-                        ghe.soil,
-                        start_month,
-                        end_month,
-                        max_eft,
-                        min_eft,
-                        max_height,
-                        min_height,
-                        continue_if_design_unmet,
-                        max_boreholes,
-                        geometry,
-                        ghe_loads,
-                        flow_type=flow_type,
-                        method=TimestepType.HYBRID,
-                    )
-                elif geom_type == DesignGeomType.NEARSQUARE:
-                    geometry = GeometricConstraintsNearSquare(
-                        b=geom_parameters["b"],
-                        length=geom_parameters["length"],
-                    )
-                    design = DesignNearSquare(
-                        flow_rate,
-                        ghe.pygfunction_borehole,
-                        ghe.pipe.type,
-                        ghe.fluid,
-                        ghe.pipe,
-                        ghe.grout,
-                        ghe.soil,
-                        start_month,
-                        end_month,
-                        max_eft,
-                        min_eft,
-                        max_height,
-                        min_height,
-                        continue_if_design_unmet,
-                        max_boreholes,
-                        geometry,
-                        ghe_loads,
-                        flow_type=flow_type,
-                        method=TimestepType.HYBRID,
-                    )
-                elif geom_type == DesignGeomType.BIRECTANGLE:
-                    geometry = GeometricConstraintsBiRectangle(
-                        length=geom_parameters["length"],
-                        width=geom_parameters["width"],
-                        b_min=geom_parameters["b_min"],
-                        b_max_x=geom_parameters["b_max_x"],
-                        b_max_y=geom_parameters["b_max_y"],
-                    )
-                    design = DesignBiRectangle(
-                        flow_rate,
-                        ghe.pygfunction_borehole,
-                        ghe.pipe.type,
-                        ghe.fluid,
-                        ghe.pipe,
-                        ghe.grout,
-                        ghe.soil,
-                        start_month,
-                        end_month,
-                        max_eft,
-                        min_eft,
-                        max_height,
-                        min_height,
-                        continue_if_design_unmet,
-                        max_boreholes,
-                        geometry,
-                        ghe_loads,
-                        flow_type=flow_type,
-                        method=TimestepType.HYBRID,
-                    )
-                elif geom_type == DesignGeomType.BIZONEDRECTANGLE:
-                    geometry = GeometricConstraintsBiZoned(
-                        length=geom_parameters["length"],
-                        width=geom_parameters["width"],
-                        b_min=geom_parameters["b_min"],
-                        b_max_x=geom_parameters["b_max_x"],
-                        b_max_y=geom_parameters["b_max_y"],
-                    )
-                    design = DesignBiZoned(
-                        flow_rate,
-                        ghe.pygfunction_borehole,
-                        ghe.pipe.type,
-                        ghe.fluid,
-                        ghe.pipe,
-                        ghe.grout,
-                        ghe.soil,
-                        start_month,
-                        end_month,
-                        max_eft,
-                        min_eft,
-                        max_height,
-                        min_height,
-                        continue_if_design_unmet,
-                        max_boreholes,
-                        geometry,
-                        ghe_loads,
-                        flow_type=flow_type,
-                        method=TimestepType.HYBRID,
-                    )
-                elif geom_type == DesignGeomType.BIRECTANGLECONSTRAINED:
-                    geometry = GeometricConstraintsBiRectangleConstrained(
-                        b_min=geom_parameters["b_min"],
-                        b_max_x=geom_parameters["b_max_x"],
-                        b_max_y=geom_parameters["b_max_y"],
-                        property_boundary=geom_parameters["property_boundary"],
-                        no_go_boundaries=geom_parameters["no_go_boundaries"],
-                    )
-                    design = DesignBiRectangleConstrained(
-                        flow_rate,
-                        ghe.pygfunction_borehole,
-                        ghe.pipe.type,
-                        ghe.fluid,
-                        ghe.pipe,
-                        ghe.grout,
-                        ghe.soil,
-                        start_month,
-                        end_month,
-                        max_eft,
-                        min_eft,
-                        max_height,
-                        min_height,
-                        continue_if_design_unmet,
-                        max_boreholes,
-                        geometry,
-                        ghe_loads,
-                        flow_type=flow_type,
-                        method=TimestepType.HYBRID,
-                    )
-                else:  # geom_type == DesignGeomType.ROWWISE:
-                    # use perimeter calculations if present
-                    perimeter_spacing_ratio = geom_parameters.get("perimeter_spacing_ratio", 0.0)
-                    geometry = GeometricConstraintsRowWise(
-                        perimeter_spacing_ratio=perimeter_spacing_ratio,
-                        max_spacing=geom_parameters["max_spacing"],
-                        min_spacing=geom_parameters["min_spacing"],
-                        spacing_step=geom_parameters["spacing_step"],
-                        max_rotation=geom_parameters["max_rotation"] * DEG_TO_RAD,
-                        min_rotation=geom_parameters["min_rotation"] * DEG_TO_RAD,
-                        rotate_step=geom_parameters["rotate_step"],
-                        property_boundary=geom_parameters["property_boundary"],
-                        no_go_boundaries=geom_parameters["no_go_boundaries"],
-                    )
-                    design = DesignRowWise(
-                        flow_rate,
-                        ghe.pygfunction_borehole,
-                        ghe.pipe.type,
-                        ghe.fluid,
-                        ghe.pipe,
-                        ghe.grout,
-                        ghe.soil,
-                        start_month,
-                        end_month,
-                        max_eft,
-                        min_eft,
-                        max_height,
-                        min_height,
-                        continue_if_design_unmet,
-                        max_boreholes,
-                        geometry,
-                        ghe_loads,
-                        flow_type=flow_type,
-                        method=TimestepType.HYBRID,
-                    )
-                start_time = time()
-                search = design.find_design()
-                search_time = time() - start_time
-                found_ghe = search.ghe
-                if not found_ghe:
-                    pass
-                found_ghe.compute_g_functions(min_height, max_height)
-                found_ghe.size(
-                    method=TimestepType.HYBRID,
-                    max_height=max_height,
-                    min_height=min_height,
-                    design_max_eft=max_eft,
-                    design_min_eft=min_eft,
-                )
-                from ghedesigner.output import OutputManager
-
+            if "do-sizing" not in ghe_dict or (ghe_dict.get("do-sizing")):
+                search, search_time, _ = design_and_size_ghe(inputs, ghe_dict, ghe_dict["design"], ghe, ghe_loads)
                 results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
                 results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
                 results.write_all_output_files(output_directory=output_directory, file_suffix="")
@@ -318,65 +325,83 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         # TODO: Actually calculate the ground load using COP
         ghe_loads_raw = loads_file_path.read_text().strip().split("\n")
         ghe_loads = [float(x) for x in ghe_loads_raw]
-        pre_designed = ghe_dict["pre_designed"]
-        borehole_height: float = pre_designed["H"]
-        x_positions: list[float] = pre_designed["x"]
-        y_positions: list[float] = pre_designed["y"]
-        m_flow_network = 0.05
-        pipe_positions = Pipe.place_pipes(0.04, ghe.pipe.r_out, 2)
-        if len(x_positions) != len(y_positions):
-            pass  # TODO: Emit error
-        alpha = 1e-6
-        ts = borehole_height**2 / (9 * alpha)
-        from numpy import array
+        if "do-sizing" not in ghe_dict or (ghe_dict.get("do-sizing")):
+            search, search_time, _ = design_and_size_ghe(inputs, ghe_dict, ghe_dict["design"], ghe, ghe_loads)
+            results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
+            results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
+            results.write_all_output_files(output_directory=output_directory, file_suffix="")
+        else:
+            pre_designed = ghe_dict["pre_designed"]
+            borehole_height: float = pre_designed["H"]
+            x_positions: list[float] = pre_designed["x"]
+            y_positions: list[float] = pre_designed["y"]
+            m_flow_network = 0.05
+            pipe_positions = Pipe.place_pipes(0.04, ghe.pipe.r_out, 2)
+            if len(x_positions) != len(y_positions):
+                pass  # TODO: Emit error
+            alpha = 1e-6
+            ts = borehole_height**2 / (9 * alpha)
+            from numpy import array
 
-        t = [0.1, 0.144, 0.207, 0.298, 0.428, 0.616, 0.886, 1.274, 1.833, 2.637, 3.793, 5.456, 7.848, 11.288, 16.238]
-        time_array = array(t) * ts
-        g_values = evaluate_g_function_MIFT(
-            H=borehole_height,
-            D=4,  # ghe._borehole.D,
-            r_b=0.075,  # ghe._borehole.r_b,
-            x=x_positions,
-            y=y_positions,
-            alpha=alpha,  # ghe._soil.k / ghe._soil.rhoCp,
-            time=time_array,
-            pos=pipe_positions,
-            r_in=ghe.pipe.r_in,
-            r_out=ghe.pipe.r_out,
-            k_s=ghe.soil.k,
-            k_g=ghe.grout.k,
-            k_p=ghe.pipe.k,
-            epsilon=ghe.pipe.roughness,
-            pipe_type=PipeTypes.SINGLEUTUBE,
-            m_flow_network=m_flow_network,
-            fluid_name=ghe.fluid.name,
-            fluid_concentration_pct=ghe.fluid.concentration_percent,
-        )
-        from ghedesigner.ghe.gfunction import GFunction
-        from ghedesigner.ghe.ground_heat_exchangers import GHE
-        from ghedesigner.output import OutputManager
-        from ghedesigner.utilities import borehole_spacing
+            t = [
+                0.1,
+                0.144,
+                0.207,
+                0.298,
+                0.428,
+                0.616,
+                0.886,
+                1.274,
+                1.833,
+                2.637,
+                3.793,
+                5.456,
+                7.848,
+                11.288,
+                16.238,
+            ]
+            time_array = array(t) * ts
+            g_values = evaluate_g_function_MIFT(
+                H=borehole_height,
+                D=4,  # ghe._borehole.D,
+                r_b=0.075,  # ghe._borehole.r_b,
+                x=x_positions,
+                y=y_positions,
+                alpha=alpha,  # ghe._soil.k / ghe._soil.rhoCp,
+                time=time_array,
+                pos=pipe_positions,
+                r_in=ghe.pipe.r_in,
+                r_out=ghe.pipe.r_out,
+                k_s=ghe.soil.k,
+                k_g=ghe.grout.k,
+                k_p=ghe.pipe.k,
+                epsilon=ghe.pipe.roughness,
+                pipe_type=PipeTypes.SINGLEUTUBE,
+                m_flow_network=m_flow_network,
+                fluid_name=ghe.fluid.name,
+                fluid_concentration_pct=ghe.fluid.concentration_percent,
+            )
 
-        b = borehole_spacing(ghe.pygfunction_borehole, coordinates=[[0, 0]])
-        g_function = GFunction(b, 4, {100: 0.075}, {100: g_values}, list(time_array), [[0, 0]])
-        # simulation_parameters = SimulationParameters(simulation_parameters['simulation-months'], 1, False)
-        this_ghe = GHE(
-            m_flow_network,
-            b,
-            BHPipeType.SINGLEUTUBE,
-            fluid=ghe.fluid,
-            borehole=ghe.pygfunction_borehole,
-            pipe=ghe.pipe,
-            grout=ghe.grout,
-            soil=ghe.soil,
-            g_function=g_function,
-            start_month=1,
-            end_month=1,
-            hourly_extraction_ground_loads=ghe_loads,
-        )
-
-        results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
-        results.write_presized_output_files(output_directory=output_directory, ghe=this_ghe)
+            b = borehole_spacing(ghe.pygfunction_borehole, coordinates=[[0, 0]])
+            g_function = GFunction(b, 4, {100: 0.075}, {100: g_values}, list(time_array), [[0, 0]])
+            # simulation_parameters = SimulationParameters(simulation_parameters['simulation-months'], 1, False)
+            this_ghe = GHE(
+                m_flow_network,
+                b,
+                BHPipeType.SINGLEUTUBE,
+                fluid=ghe.fluid,
+                borehole=ghe.pygfunction_borehole,
+                pipe=ghe.pipe,
+                grout=ghe.grout,
+                soil=ghe.soil,
+                g_function=g_function,
+                start_month=1,
+                end_month=1,
+                hourly_extraction_ground_loads=ghe_loads,
+            )
+            this_ghe.simulate(method=TimestepType.HYBRID)
+            results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
+            results.write_presized_output_files(output_directory=output_directory, ghe=this_ghe)
     return 0
 
 
