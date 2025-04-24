@@ -1,7 +1,7 @@
 from typing import cast
 
 from ghedesigner.constants import DEG_TO_RAD
-from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRowWise
 from ghedesigner.ghe.ground_heat_exchangers import GHE
@@ -56,7 +56,7 @@ no_go_zones = [
 class TestFindRowWiseDesign(GHEBaseTest):
     # Purpose: Design a constrained RowWise field using the common
     # design interface with a single U-tube borehole heat exchanger.
-    def get_design(self, pipe: Pipe, flow_rate: float, pipe_type: BHPipeType, spacing_ratio: float | None = None):
+    def get_design(self, pipe: Pipe, flow_rate: float, spacing_ratio: float | None = None):
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
         fluid = GHEFluid("water", 0.0, 20.0)
         grout = Grout(1.0, 3901000.0)
@@ -76,7 +76,6 @@ class TestFindRowWiseDesign(GHEBaseTest):
         design = DesignRowWise(
             v_flow=flow_rate,
             _borehole=borehole,
-            bhe_type=pipe_type,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -108,7 +107,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             conductivity=0.4,
             rho_cp=1542000.0,
         )
-        search = self.get_design(pipe, 0.5, BHPipeType.SINGLEUTUBE, None)
+        search = self.get_design(pipe, 0.5, None)
         u_tube_height = search.ghe.bhe.b.H
         self.assertAlmostEqual(197.3, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
@@ -123,7 +122,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
             conductivity=0.4,
             rho_cp=1542000.0,
         )
-        search = self.get_design(pipe, 0.5, BHPipeType.SINGLEUTUBE, 0.8)
+        search = self.get_design(pipe, 0.5, 0.8)
         u_tube_height = search.ghe.bhe.b.H
         self.assertAlmostEqual(198.7, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations

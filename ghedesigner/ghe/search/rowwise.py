@@ -3,7 +3,7 @@ from math import inf, sqrt
 import numpy as np
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
+from ghedesigner.enums import FlowConfigType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
@@ -18,7 +18,6 @@ class RowWiseModifiedBisectionSearch:
         self,
         v_flow: float,
         borehole: Borehole,
-        bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
         grout: Grout,
@@ -69,7 +68,7 @@ class RowWiseModifiedBisectionSearch:
         self.flow_type = flow_type
         self.method = method
         self.log_time = eskilson_log_times()
-        self.bhe_type = bhe_type
+        self.bhe_type = pipe.type
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.max_iter = max_iter
         self.disp = disp

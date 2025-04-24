@@ -1,7 +1,7 @@
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import RAD_TO_DEG
-from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.rowwise import RowWiseModifiedBisectionSearch
@@ -57,7 +57,6 @@ class DesignRowWise(DesignBase):
         self,
         v_flow: float,
         _borehole: Borehole,
-        bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
         grout: Grout,
@@ -79,7 +78,6 @@ class DesignRowWise(DesignBase):
         super().__init__(
             v_flow,
             _borehole,
-            bhe_type,
             fluid,
             pipe,
             grout,
@@ -107,7 +105,6 @@ class DesignRowWise(DesignBase):
         return RowWiseModifiedBisectionSearch(
             self.V_flow,
             self.borehole,
-            self.bhe_type,
             self.fluid,
             self.pipe,
             self.grout,

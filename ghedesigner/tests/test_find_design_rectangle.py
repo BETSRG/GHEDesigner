@@ -1,4 +1,4 @@
-from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.rectangle import DesignRectangle, GeometricConstraintsRectangle
 from ghedesigner.ghe.pipe import Pipe
@@ -7,7 +7,7 @@ from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
 class TestFindRectangleDesign(GHEBaseTest):
-    def get_design(self, pipe: Pipe, flow_rate: float, pipe_type: BHPipeType):
+    def get_design(self, pipe: Pipe, flow_rate: float):
         fluid = GHEFluid("water", 0.0, 20.0)
         grout = Grout(1.0, 3901000.0)
         soil = Soil(2.0, 2343493.0, 18.3)
@@ -22,7 +22,6 @@ class TestFindRectangleDesign(GHEBaseTest):
         design = DesignRectangle(
             v_flow=flow_rate,
             _borehole=borehole,
-            bhe_type=pipe_type,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -53,7 +52,7 @@ class TestFindRectangleDesign(GHEBaseTest):
             conductivity=0.4,
             rho_cp=1542000.0,
         )
-        search = self.get_design(pipe, 0.5, BHPipeType.SINGLEUTUBE)
+        search = self.get_design(pipe, 0.5)
         u_tube_height = search.ghe.bhe.b.H
         self.assertAlmostEqual(120.9, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
@@ -68,7 +67,7 @@ class TestFindRectangleDesign(GHEBaseTest):
             conductivity=0.4,
             rho_cp=1542000.0,
         )
-        search = self.get_design(pipe, 0.5, BHPipeType.DOUBLEUTUBEPARALLEL)
+        search = self.get_design(pipe, 0.5)
         u_tube_height = search.ghe.bhe.b.H
         self.assertAlmostEqual(126.8, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
@@ -84,7 +83,7 @@ class TestFindRectangleDesign(GHEBaseTest):
             conductivity=(0.4, 0.4),
             rho_cp=1542000.0,
         )
-        search = self.get_design(pipe, 0.8, BHPipeType.COAXIAL)
+        search = self.get_design(pipe, 0.8)
         u_tube_height = search.ghe.bhe.b.H
         self.assertAlmostEqual(119.4, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations

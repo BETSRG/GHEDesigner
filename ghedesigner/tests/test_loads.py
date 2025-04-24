@@ -1,4 +1,4 @@
-from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.rectangle import DesignRectangle, GeometricConstraintsRectangle
 from ghedesigner.ghe.pipe import Pipe
@@ -30,7 +30,6 @@ class TestLoads(GHEBaseTest):
         design = DesignRectangle(
             v_flow=0.5,
             _borehole=borehole,
-            bhe_type=BHPipeType.SINGLEUTUBE,
             fluid=fluid,
             pipe=pipe,
             grout=grout,

@@ -1,6 +1,6 @@
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase
 from ghedesigner.ghe.design.birectangle import GeometricConstraintsBiRectangle
 from ghedesigner.ghe.domains import bi_rectangle_zoned_nested
@@ -34,7 +34,6 @@ class DesignBiZoned(DesignBase):
         self,
         v_flow: float,
         _borehole: Borehole,
-        bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
         grout: Grout,
@@ -56,7 +55,6 @@ class DesignBiZoned(DesignBase):
         super().__init__(
             v_flow,
             _borehole,
-            bhe_type,
             fluid,
             pipe,
             grout,
@@ -93,7 +91,6 @@ class DesignBiZoned(DesignBase):
             self.fieldDescriptors,
             self.V_flow,
             self.borehole,
-            self.bhe_type,
             self.fluid,
             self.pipe,
             self.grout,

@@ -1,4 +1,4 @@
-from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.pipe import Pipe
@@ -30,7 +30,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
         design = DesignNearSquare(
             v_flow=1.0,
             _borehole=borehole,
-            bhe_type=BHPipeType.SINGLEUTUBE,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -64,7 +63,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
         design = DesignNearSquare(
             v_flow=1.0,
             _borehole=borehole,
-            bhe_type=BHPipeType.SINGLEUTUBE,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -98,7 +96,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
         design = DesignNearSquare(
             v_flow=1.0,
             _borehole=borehole,
-            bhe_type=BHPipeType.SINGLEUTUBE,
             fluid=fluid,
             pipe=pipe,
             grout=grout,

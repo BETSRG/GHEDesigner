@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_1d import Bisection1D
 from ghedesigner.ghe.search.bisection_2d import Bisection2D
@@ -27,7 +27,6 @@ class DesignBase:
         self,
         v_flow: float,
         _borehole: Borehole,
-        bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
         grout: Grout,
@@ -51,7 +50,6 @@ class DesignBase:
         self.load_years = load_years
         self.V_flow = v_flow  # volumetric flow rate, m3/s
         self.borehole = _borehole
-        self.bhe_type = bhe_type  # a borehole heat exchanger object
         self.fluid = fluid  # a fluid object
         self.pipe = pipe
         self.grout = grout

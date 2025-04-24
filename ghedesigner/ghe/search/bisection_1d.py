@@ -3,7 +3,7 @@ from math import ceil
 import numpy as np
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
+from ghedesigner.enums import FlowConfigType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
@@ -18,7 +18,6 @@ class Bisection1D:
         field_descriptors: list,
         v_flow: float,
         borehole: Borehole,
-        bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
         grout: Grout,
@@ -63,7 +62,7 @@ class Bisection1D:
         self.min_eft = min_eft
         self.continue_if_design_unmet = continue_if_design_unmet
         self.log_time = eskilson_log_times()
-        self.bhe_type = bhe_type
+        self.bhe_type = pipe.type
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.coordinates_domain = coordinates_domain
         self.fieldDescriptors = field_descriptors
@@ -93,7 +92,7 @@ class Bisection1D:
         self.ghe = GHE(
             v_flow_system,
             b,
-            bhe_type,
+            pipe.type,
             fluid,
             borehole,
             pipe,

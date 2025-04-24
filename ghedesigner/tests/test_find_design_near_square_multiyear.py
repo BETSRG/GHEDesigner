@@ -3,7 +3,7 @@
 
 # This search is described in section 4.3.2 of Cook (2021) from pages 123-129.
 
-from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.pipe import Pipe
@@ -15,7 +15,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
     # This file contains three examples utilizing the square-near-square design algorithm
     # (utilizing a multi-year loading) for a single U, double U, and coaxial tube  The
     # results from these examples are exported to the "DesignExampleOutput" folder.
-    def get_design(self, pipe: Pipe, flow_rate: float, pipe_type: BHPipeType):
+    def get_design(self, pipe: Pipe, flow_rate: float):
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
         grout = Grout(k=1.0, rho_cp=3901000.0)
         fluid = GHEFluid(fluid_str="water", percent=0.0, temperature=20.0)
@@ -27,7 +27,6 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         design = DesignNearSquare(
             v_flow=flow_rate,
             _borehole=borehole,
-            bhe_type=pipe_type,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -58,7 +57,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             conductivity=0.4,
             rho_cp=1542000.0,
         )
-        search = self.get_design(pipe, 0.5, BHPipeType.SINGLEUTUBE)
+        search = self.get_design(pipe, 0.5)
         u_tube_height = search.ghe.bhe.b.H
         self.assertAlmostEqual(132.7, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
@@ -73,7 +72,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             conductivity=0.4,
             rho_cp=1542000.0,
         )
-        search = self.get_design(pipe, 0.5, BHPipeType.DOUBLEUTUBEPARALLEL)
+        search = self.get_design(pipe, 0.5)
         u_tube_height = search.ghe.bhe.b.H
         self.assertAlmostEqual(119.16, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
@@ -89,7 +88,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
             conductivity=(0.4, 0.4),
             rho_cp=1542000.0,
         )
-        search = self.get_design(pipe, 0.8, BHPipeType.COAXIAL)
+        search = self.get_design(pipe, 0.8)
         u_tube_height = search.ghe.bhe.b.H
         self.assertAlmostEqual(109.8, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations

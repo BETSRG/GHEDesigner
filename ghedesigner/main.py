@@ -74,7 +74,6 @@ def design_and_size_ghe(
         design = DesignRectangle(
             flow_rate,
             ghe.pygfunction_borehole,
-            ghe.pipe.type,
             ghe.fluid,
             ghe.pipe,
             ghe.grout,
@@ -100,7 +99,6 @@ def design_and_size_ghe(
         design = DesignNearSquare(
             flow_rate,
             ghe.pygfunction_borehole,
-            ghe.pipe.type,
             ghe.fluid,
             ghe.pipe,
             ghe.grout,
@@ -129,7 +127,6 @@ def design_and_size_ghe(
         design = DesignBiRectangle(
             flow_rate,
             ghe.pygfunction_borehole,
-            ghe.pipe.type,
             ghe.fluid,
             ghe.pipe,
             ghe.grout,
@@ -158,7 +155,6 @@ def design_and_size_ghe(
         design = DesignBiZoned(
             flow_rate,
             ghe.pygfunction_borehole,
-            ghe.pipe.type,
             ghe.fluid,
             ghe.pipe,
             ghe.grout,
@@ -187,7 +183,6 @@ def design_and_size_ghe(
         design = DesignBiRectangleConstrained(
             flow_rate,
             ghe.pygfunction_borehole,
-            ghe.pipe.type,
             ghe.fluid,
             ghe.pipe,
             ghe.grout,
@@ -222,7 +217,6 @@ def design_and_size_ghe(
         design = DesignRowWise(
             flow_rate,
             ghe.pygfunction_borehole,
-            ghe.pipe.type,
             ghe.fluid,
             ghe.pipe,
             ghe.grout,
