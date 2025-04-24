@@ -1,6 +1,6 @@
 import unittest
 
-from ghedesigner.ghe.geometry.coordinates import open_rectangle, rectangle
+from ghedesigner.ghe.coordinates import open_rectangle, rectangle
 
 
 class TestCoordinates(unittest.TestCase):

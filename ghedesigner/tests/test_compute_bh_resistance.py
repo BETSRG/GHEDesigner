@@ -1,10 +1,11 @@
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import DoubleUTubeConnType
-from ghedesigner.ghe.coaxial_borehole import CoaxialPipe
-from ghedesigner.ghe.multi_u_borehole import MultipleUTube
-from ghedesigner.ghe.single_u_borehole import SingleUTube
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.ghe.boreholes.coaxial_borehole import CoaxialPipe
+from ghedesigner.ghe.boreholes.multi_u_borehole import MultipleUTube
+from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
@@ -24,16 +25,10 @@ class TestBHResistance(GHEBaseTest):
         r_out_out = 110.0 / 1000.0 / 2.0
         # Pipe radii
         # Note: This convention is different from pygfunction
-        r_inner = [r_in_in, r_in_out]  # The radii of the inner pipe from in to out
-        r_outer = [r_out_in, r_out_out]  # The radii of the outer pipe from in to out
         epsilon = 1.0e-6  # Pipe roughness (m)
 
-        # Pipe positioning
-        pos = (0, 0)
-        s = 0
-
         # Thermal properties
-        k_p = [0.4, 0.4]  # Inner and outer pipe thermal conductivity (W/m.K)
+        k_p = (0.4, 0.4)  # Inner and outer pipe thermal conductivity (W/m.K)
         k_s = 2.0  # Ground thermal conductivity (W/m.K)
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
@@ -44,7 +39,15 @@ class TestBHResistance(GHEBaseTest):
 
         # Thermal properties
         # Pipe
-        pipe = Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe.init_coaxial(
+            conductivity=k_p,
+            inner_pipe_d_in=r_in_in * 2,
+            inner_pipe_d_out=r_in_out * 2,
+            outer_pipe_d_in=r_out_in * 2,
+            outer_pipe_d_out=r_out_out * 2,
+            roughness=epsilon,
+            rho_cp=rho_cp_p,
+        )
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = Soil(k_s, rho_cp_s, ugt)
@@ -93,14 +96,20 @@ class TestBHResistance(GHEBaseTest):
         # pipe
         d_out = 0.02667  # pipe outer diameter (m)
         d_in = 0.0216  # pipe inner diameter (m)
-        r_out = d_out / 2.0
         r_in = d_in / 2.0
         s = 0.0323  # shank spacing (m)
-        pos = Pipe.place_pipes(s, r_out, 2)  # double U-tube # TODO: move from static method to borehole
         k_p = 0.4  # pipe thermal conductivity (W/m.K)
         rho_cp_p = 1542000.0  # pipe volumetric heat capacity (J/K.m3)
         epsilon = 1.0e-6  # pipe roughness (m)
-        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+
+        pipe = Pipe.init_double_u_tube_series(
+            conductivity=k_p,
+            inner_diameter=d_in,
+            outer_diameter=d_out,
+            shank_spacing=s,
+            roughness=epsilon,
+            rho_cp=rho_cp_p,
+        )
 
         # soil
         k_s = 2.0  # Ground thermal conductivity (W/m.K)
@@ -177,14 +186,12 @@ class TestBHResistance(GHEBaseTest):
         # Pipe dimensions
         d_out = 0.02667  # Pipe outer diameter (m)
         d_in = 0.0216  # Pipe inner diameter (m)
-        r_out = d_out / 2.0
         r_in = d_in / 2.0
         s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Pipe positions
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos = Pipe.place_pipes(s, r_out, 1)
 
         # Thermal conductivities
         k_p = 0.4  # Pipe thermal conductivity (W/m.K)
@@ -198,7 +205,15 @@ class TestBHResistance(GHEBaseTest):
 
         # Thermal properties
         # Pipe
-        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe.init_single_u_tube(
+            conductivity=k_p,
+            inner_diameter=d_in,
+            outer_diameter=d_out,
+            shank_spacing=s,
+            roughness=epsilon,
+            rho_cp=rho_cp_p,
+            num_pipes=1,
+        )
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = Soil(k_s, rho_cp_s, ugt)
@@ -246,16 +261,9 @@ class TestBHResistance(GHEBaseTest):
         # Pipe dimensions
         d_out = 0.02667  # Pipe outer diameter (m)
         d_in = 0.0216  # Pipe inner diameter (m)
-        r_out = d_out / 2.0
         r_in = d_in / 2.0
         s = 0.0323  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
-
-        # Pipe positions
-        # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos_s = Pipe.place_pipes(s, r_out, 1)
-        # Pipe positions
-        pos_d = Pipe.place_pipes(s, r_out, 2)
 
         # Thermal conductivities
         k_p = 0.4  # Pipe thermal conductivity (W/m.K)
@@ -269,8 +277,23 @@ class TestBHResistance(GHEBaseTest):
 
         # Thermal properties
         # Pipe
-        pipe_s = Pipe(pos_s, r_in, r_out, s, epsilon, k_p, rho_cp_p)
-        pipe_d = Pipe(pos_d, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe_s = Pipe.init_single_u_tube(
+            conductivity=k_p,
+            inner_diameter=d_in,
+            outer_diameter=d_out,
+            shank_spacing=s,
+            roughness=epsilon,
+            rho_cp=rho_cp_p,
+            num_pipes=1,
+        )
+        pipe_d = Pipe.init_double_u_tube_parallel(
+            conductivity=k_p,
+            inner_diameter=d_in,
+            outer_diameter=d_out,
+            shank_spacing=s,
+            roughness=epsilon,
+            rho_cp=rho_cp_p,
+        )
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = Soil(k_s, rho_cp_s, ugt)
@@ -354,16 +377,10 @@ class TestBHResistance(GHEBaseTest):
         r_out_out = 110.0 / 1000.0 / 2.0
         # Pipe radii
         # Note: This convention is different from pygfunction
-        r_inner = [r_in_in, r_in_out]  # The radii of the inner pipe from in to out
-        r_outer = [r_out_in, r_out_out]  # The radii of the outer pipe from in to out
         epsilon = 1.0e-6  # Pipe roughness (m)
 
-        # Pipe positioning
-        pos = (0, 0)
-        s = 0
-
         # Thermal properties
-        k_p = [0.4, 0.4]  # Inner and outer pipe thermal conductivity (W/m.K)
+        k_p = (0.4, 0.4)  # Inner and outer pipe thermal conductivity (W/m.K)
         k_s = 2.0  # Ground thermal conductivity (W/m.K)
         k_g = 1.0  # Grout thermal conductivity (W/m.K)
 
@@ -374,7 +391,16 @@ class TestBHResistance(GHEBaseTest):
 
         # Thermal properties
         # Pipe
-        pipe = Pipe(pos, r_inner, r_outer, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe.init_coaxial(
+            conductivity=k_p,
+            inner_pipe_d_in=r_in_in * 2,
+            inner_pipe_d_out=r_in_out * 2,
+            outer_pipe_d_in=r_out_in * 2,
+            outer_pipe_d_out=r_out_out * 2,
+            roughness=epsilon,
+            rho_cp=rho_cp_p,
+        )
+
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = Soil(k_s, rho_cp_s, ugt)

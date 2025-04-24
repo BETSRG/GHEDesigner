@@ -3,7 +3,8 @@ from abc import abstractmethod
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import TWO_PI, pi
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import GHEFluid, Grout, Soil
 
 
 class GHEDesignerBoreholeBase:
@@ -23,10 +24,6 @@ class GHEDesignerBoreholeBase:
         self.grout = grout
         self.fluid = fluid
         self.b = _borehole
-
-    @abstractmethod
-    def calc_fluid_pipe_resistance(self) -> float:
-        pass
 
     @abstractmethod
     def calc_effective_borehole_resistance(self) -> float:

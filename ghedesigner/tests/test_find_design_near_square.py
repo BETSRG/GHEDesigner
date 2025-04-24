@@ -2,26 +2,31 @@
 # interface with a single U-tube, multiple U-tube and coaxial tube.
 
 # This search is described in section 4.3.2 of Cook (2021) from pages 123-129.
+from pygfunction.boreholes import Borehole
 
-from ghedesigner.ghe.manager import GroundHeatExchanger
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.utilities import length_of_side
 
 
 class TestFindNearSquareDesign(GHEBaseTest):
+    def get_design(self, pipe: Pipe):
+        soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
+        grout = Grout(k=1.0, rho_cp=3901000.0)
+        fluid = GHEFluid(fluid_str="water", percent=0.0, temperature=20.0)
+        borehole = Borehole(100, D=2.0, r_b=0.07, x=0.0, y=0.0)
+
     def test_find_single_u_tube_design(self):
-        ghe = GroundHeatExchanger()
-        ghe.set_single_u_tube_pipe(
+        pipe = Pipe.init_single_u_tube(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
             shank_spacing=0.01856,
             roughness=1.0e-6,
             conductivity=0.4,
             rho_cp=1542000.0,
+            num_pipes=1,
         )
-        ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
-        ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
-        ghe.set_fluid()
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
@@ -49,8 +54,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         assert len(nbh) == 157
 
     def test_find_double_u_tube_parallel_design(self):
-        ghe = GroundHeatExchanger()
-        ghe.set_double_u_tube_pipe_parallel(
+        pipe = Pipe.init_double_u_tube_parallel(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
             shank_spacing=0.01856,
@@ -58,9 +62,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
             conductivity=0.4,
             rho_cp=1542000.0,
         )
-        ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
-        ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
-        ghe.set_fluid()
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
@@ -87,8 +88,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         assert len(nbh) == 145
 
     def test_find_double_u_tube_series_design(self):
-        ghe = GroundHeatExchanger()
-        ghe.set_double_u_tube_pipe_series(
+        pipe = Pipe.init_double_u_tube_series(
             inner_diameter=0.03404,
             outer_diameter=0.04216,
             shank_spacing=0.01856,
@@ -96,9 +96,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
             conductivity=0.4,
             rho_cp=1542000.0,
         )
-        ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
-        ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
-        ghe.set_fluid()
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())
@@ -125,20 +122,15 @@ class TestFindNearSquareDesign(GHEBaseTest):
         assert len(nbh) == 145
 
     def test_find_coaxial_pipe_design(self):
-        ghe = GroundHeatExchanger()
-        ghe.set_coaxial_pipe(
+        pipe = Pipe.init_coaxial(
             inner_pipe_d_in=0.0442,
             inner_pipe_d_out=0.050,
             outer_pipe_d_in=0.0974,
             outer_pipe_d_out=0.11,
             roughness=1.0e-6,
-            conductivity_inner=0.4,
-            conductivity_outer=0.4,
+            conductivity=(0.4, 0.4),
             rho_cp=1542000.0,
         )
-        ghe.set_soil(conductivity=2.0, rho_cp=2343493.0, undisturbed_temp=18.3)
-        ghe.set_grout(conductivity=1.0, rho_cp=3901000.0)
-        ghe.set_fluid()
         ghe.set_borehole(buried_depth=2.0, diameter=0.140)
         ghe.set_simulation_parameters(num_months=240)
         ghe.set_ground_loads_from_hourly_list(self.get_atlanta_loads())

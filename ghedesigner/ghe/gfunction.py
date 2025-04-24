@@ -8,7 +8,7 @@ from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d, lagrange
 
 from ghedesigner.enums import BHPipeType
-from ghedesigner.ghe.coaxial_borehole import get_bhe_object
+from ghedesigner.ghe.boreholes.factory import get_bhe_object
 
 logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
 logger = logging.getLogger(__name__)
@@ -111,7 +111,7 @@ def calc_g_func_for_multiple_lengths(
     boundary="MIFT",
     segment_ratios=None,
 ):
-    r_b_values = {}
+    r_b_values = dict.fromkeys(h_values, r_b)
     g_lts_values = {}
 
     alpha = soil.k / soil.rhoCp
@@ -122,7 +122,7 @@ def calc_g_func_for_multiple_lengths(
         ts = h**2 / (9.0 * alpha)  # Bore field characteristic time
         time_values = np.exp(log_time) * ts
 
-        gfunc = calculate_g_function(
+        g_lts_values[h] = calculate_g_function(
             m_flow_borehole,
             bhe_type,
             time_values,
@@ -137,24 +137,12 @@ def calc_g_func_for_multiple_lengths(
             solver=solver,
             boundary=boundary,
             segment_ratios=segment_ratios,
-        )
-
-        r_b_values[h] = r_b
-        g_lts_values[h] = gfunc.gFunc.tolist()
-
-    geothermal_g_input = {
-        "b": b,
-        "r_b_values": r_b_values,
-        "d": depth,
-        "g_lts": g_lts_values,
-        "log_time": log_time,
-        "bore_locations": coordinates,
-    }
+        ).gFunc.tolist()
 
     # Initialize the gFunction object
-    g_function = GFunction(**geothermal_g_input)
-
-    return g_function
+    return GFunction(
+        b=b, r_b_values=r_b_values, d=depth, g_lts=g_lts_values, log_time=log_time, bore_locations=coordinates
+    )
 
 
 class GFunction:

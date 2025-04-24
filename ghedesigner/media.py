@@ -1,5 +1,3 @@
-from math import cos, pi, sin
-
 from pygfunction.media import Fluid
 
 from ghedesigner.enums import FluidType
@@ -51,50 +49,6 @@ class ThermalProperty:
 
 class Grout(ThermalProperty):
     pass
-
-
-class Pipe(ThermalProperty):
-    def __init__(self, pos, r_in, r_out, s, roughness, k, rho_cp) -> None:
-        # Make variables from ThermalProperty available to Pipe
-        super().__init__(k, rho_cp)
-
-        # Pipe specific parameters
-        self.pos = pos  # Pipe positions either a list of tuples or tuple
-        self.r_in = r_in  # Pipe inner radius (m) can be a float or list
-        self.r_out = r_out  # Pipe outer radius (m) can be a float or list
-        self.s = s  # Center pipe to center pipe shank spacing
-        self.roughness = roughness  # Pipe roughness (m)
-        if isinstance(pos, list):
-            self.n_pipes = int(len(pos) / 2)  # Number of pipes
-        else:
-            self.n_pipes = 1
-
-    def as_dict(self) -> dict:
-        output = {
-            "base": super().as_dict(),
-            "pipe_center_positions": str(self.pos),
-            "shank_spacing_pipe_to_pipe": {"value": self.s, "units": "m"},
-            "pipe_roughness": {"value": self.roughness, "units": "m"},
-            "number_of_pipes": self.n_pipes,
-        }
-        if isinstance(self.r_in, float):
-            output["pipe_inner_diameter"] = str(self.r_in * 2.0)
-            output["pipe_outer_diameter"] = str(self.r_out * 2.0)
-        else:
-            output["pipe_inner_diameters"] = str([x * 2.0 for x in self.r_in])
-            output["pipe_outer_diameters"] = str([x * 2.0 for x in self.r_out])
-        return output
-
-    @staticmethod
-    def place_pipes(s, r_out, n_pipes):
-        """Positions pipes in an axis-symmetric configuration."""
-        shank_space = s / 2 + r_out
-        dt = pi / float(n_pipes)
-        pos = [(0.0, 0.0) for _ in range(2 * n_pipes)]
-        for i in range(n_pipes):
-            pos[2 * i] = (shank_space * cos(2.0 * i * dt + pi), shank_space * sin(2.0 * i * dt + pi))
-            pos[2 * i + 1] = (shank_space * cos(2.0 * i * dt + pi + dt), shank_space * sin(2.0 * i * dt + pi + dt))
-        return pos
 
 
 class Soil(ThermalProperty):

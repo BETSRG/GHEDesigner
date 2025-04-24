@@ -9,9 +9,9 @@ from pathlib import Path
 
 from ghedesigner.constants import HRS_IN_DAY
 from ghedesigner.enums import TimestepType
-from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
-from ghedesigner.ghe.coaxial_borehole import CoaxialPipe
-from ghedesigner.ghe.geometry.design import AnyBisectionType
+from ghedesigner.ghe.boreholes.base import GHEDesignerBoreholeBase
+from ghedesigner.ghe.boreholes.coaxial_borehole import CoaxialPipe
+from ghedesigner.ghe.design.base import AnyBisectionType
 
 
 class OutputManager:

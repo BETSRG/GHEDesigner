@@ -1,7 +1,9 @@
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.ghe.coaxial_borehole import CoaxialPipe, MultipleUTube
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.ghe.boreholes.coaxial_borehole import CoaxialPipe
+from ghedesigner.ghe.boreholes.multi_u_borehole import MultipleUTube
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
@@ -16,17 +18,15 @@ class TestEquivalentPipes(GHEBaseTest):
         r_out_out = 110.0 / 1000.0 / 2.0
         # Pipe radii
         # Note: This convention is different from pygfunction
-        r_inner = [r_in_in, r_in_out]  # The radii of the inner pipe from in to out
-        r_outer = [r_out_in, r_out_out]  # The radii of the outer pipe from in to out
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Pipe
-        pos = (0, 0)
-        s = 0
         k_pipe_inner = 0.4  # Inner pipe thermal conductivity (W/m.K)
         k_pipe_outer = 0.4  # Outer pipe thermal conductivity (W/m.K)
         rho_cp_p = 1542000.0  # Pipe volumetric heat capacity (J/K.m3)
-        pipe = Pipe(pos, r_inner, r_outer, s, epsilon, (k_pipe_inner, k_pipe_outer), rho_cp_p)
+        pipe = Pipe.init_coaxial(
+            (k_pipe_inner, k_pipe_outer), rho_cp_p, r_in_in * 2, r_in_out * 2, r_out_in * 2, r_out_out * 2, epsilon
+        )
 
         # Soil
         k_s = 2.0  # Ground thermal conductivity (W/m.K)
@@ -92,8 +92,6 @@ class TestEquivalentPipes(GHEBaseTest):
         # Pipe dimensions
         d_out = 0.04216  # Pipe outer diameter (m)
         d_in = 0.03404  # Pipe inner diameter (m)
-        r_out = d_out / 2.0
-        r_in = d_in / 2.0
         s = 0.01856  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
@@ -109,11 +107,10 @@ class TestEquivalentPipes(GHEBaseTest):
 
         # Pipe positions
         # Double U-tube [(x_in, y_in), (x_out, y_out), (x_in, y_in), (x_out, y_out)]
-        pos = Pipe.place_pipes(s, r_out, 2)
 
         # Thermal properties
         # Pipe
-        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe.init_double_u_tube_parallel(k_p, rho_cp_p, d_in, d_out, s, epsilon)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = Soil(k_s, rho_cp_s, ugt)

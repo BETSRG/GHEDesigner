@@ -8,8 +8,9 @@ from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
 
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
-from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.ghe.boreholes.base import GHEDesignerBoreholeBase
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import GHEFluid, Grout, Soil
 
 
 class CellProps(IntEnum):
@@ -233,6 +234,30 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
 
         return radial_cells
 
+    @staticmethod
+    def solve_tridiagonal(dl, d, du, b, overwrite_b=False):
+        n = len(d)
+        # Copy or alias b depending on overwrite_b
+        dc = b if overwrite_b else np.copy(b)
+
+        # Make copies of diagonals (always safe to copy these)
+        ac = np.copy(du)
+        bc = np.copy(d)
+        cc = np.copy(dl)
+
+        # Forward sweep
+        for i in range(1, n):
+            w = cc[i - 1] / bc[i - 1]
+            bc[i] -= w * ac[i - 1]
+            dc[i] -= w * dc[i - 1]
+
+        # Back substitution
+        dc[-1] = dc[-1] / bc[-1]
+        for i in range(n - 2, -1, -1):
+            dc[i] = (dc[i] - ac[i] * dc[i + 1]) / bc[i]
+
+        return dc
+
     def calc_sts_g_functions(self, final_time=None) -> tuple:
         self.partial_init()
 
@@ -327,6 +352,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
             # High level interface to LAPACK routine
             # https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.lapack.dgtsv.html#scipy.linalg.lapack.dgtsv
             dgtsv(_dl, _d, _du, _b, overwrite_b=1)  # TODO: Do we really need lapack just to do a TDMA solution?
+            # self.solve_tridiagonal(_dl, _d, _du, _b, overwrite_b=True)
 
             radial_cells[CellProps.TEMP, :] = _b
 

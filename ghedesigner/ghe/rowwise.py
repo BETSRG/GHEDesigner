@@ -3,7 +3,7 @@ from math import atan, cos, inf, pi, sin, sqrt
 import numpy as np
 
 from ghedesigner.constants import DEG_TO_RAD, PI_OVER_2, RAD_TO_DEG
-from ghedesigner.ghe.geometry.shape import Shapes, sort_intersections
+from ghedesigner.ghe.shape import Shapes, sort_intersections
 
 
 def gen_shape(prop_bound, ng_zones=None):

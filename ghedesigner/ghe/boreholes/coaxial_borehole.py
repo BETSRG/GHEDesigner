@@ -4,10 +4,10 @@ from numpy import log, pi
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import TWO_PI
-from ghedesigner.enums import BHPipeType, DoubleUTubeConnType
-from ghedesigner.ghe.multi_u_borehole import GHEDesignerBoreholeWithMultiplePipes, MultipleUTube
-from ghedesigner.ghe.single_u_borehole import SingleUTube
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.ghe.boreholes.multi_u_borehole import GHEDesignerBoreholeWithMultiplePipes
+from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import GHEFluid, Grout, Soil
 
 
 class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
@@ -130,7 +130,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         # Find an equivalent single U-tube given a coaxial heat exchanger
         vol_fluid, vol_pipe, resist_conv, resist_pipe = self.concentric_tube_volumes()
 
-        preliminary = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe)
+        preliminary = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rhoCp)
 
         # Vary grout thermal conductivity to match effective borehole thermal
         # resistance
@@ -184,24 +184,3 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         resist_conv = 1 / (self.h_f_a_in * area_surf_outer)
         resist_pipe = log(r_out_out / r_out_in) / (TWO_PI * self.pipe.k[1])
         return vol_fluid, vol_pipe, resist_conv, resist_pipe
-
-
-def get_bhe_object(
-    bhe_type: BHPipeType,
-    m_flow_borehole: float,
-    fluid: GHEFluid,
-    _borehole: Borehole,
-    pipe: Pipe,
-    grout: Grout,
-    soil: Soil,
-):
-    if bhe_type == BHPipeType.SINGLEUTUBE:
-        return SingleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
-    elif bhe_type == BHPipeType.DOUBLEUTUBEPARALLEL:
-        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=DoubleUTubeConnType.PARALLEL)
-    elif bhe_type == BHPipeType.DOUBLEUTUBESERIES:
-        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=DoubleUTubeConnType.SERIES)
-    elif bhe_type == BHPipeType.COAXIAL:
-        return CoaxialPipe(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
-    else:
-        raise TypeError("BHE type not implemented")

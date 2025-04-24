@@ -1,6 +1,6 @@
-from math import ceil, floor
+from math import ceil, floor, inf
 
-from ghedesigner.ghe.geometry.coordinates import (
+from ghedesigner.ghe.coordinates import (
     c_shape,
     l_shape,
     lop_u,
@@ -8,7 +8,42 @@ from ghedesigner.ghe.geometry.coordinates import (
     transpose_coordinates,
     zoned_rectangle,
 )
-from ghedesigner.ghe.geometry.feature_recognition import determine_largest_rectangle, remove_cutout
+from ghedesigner.ghe.shape import point_polygon_check
+
+
+def determine_largest_rectangle(property_boundary):
+    x_max = -inf
+    y_max = -inf
+    x_min = inf
+    y_min = inf
+    for bf_outline in property_boundary:
+        for x, y in bf_outline:
+            x_max = max(x, x_max)
+            y_max = max(y, y_max)
+            x_min = min(x, x_min)
+            y_min = min(y, y_min)
+
+    return [[x_min, y_min], [x_max, y_min], [x_max, y_max], [x_min, y_max], [x_min, y_min]]
+
+
+def remove_cutout(coordinates, boundaries, remove_inside=True, keep_contour=True, on_edge_tolerance=0.01):
+    if isinstance(boundaries[0][0], (int, float)):
+        boundaries = [boundaries]
+
+    new_coordinates = []
+    inside = 1
+    on_edge = 0
+    for coordinate in coordinates:
+        boundary_results = []
+        for boundary in boundaries:
+            boundary_results.append(point_polygon_check(boundary, coordinate, on_edge_tolerance=on_edge_tolerance))
+        if remove_inside:
+            if (inside not in boundary_results) and not (on_edge in boundary_results and not keep_contour):
+                new_coordinates.append(coordinate)
+        elif (inside in boundary_results) or (on_edge in boundary_results and keep_contour):
+            new_coordinates.append(coordinate)
+
+    return new_coordinates
 
 
 def square_and_near_square(lower: int, upper: int, b: float):
@@ -369,10 +404,12 @@ def bi_rectangle_zoned_nested(length_x, length_y, b_min, b_max_x, b_max_y):
 
 
 def polygonal_land_constraint(
-    b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries=None, keep_contour=[True, False]
+    b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries=None, keep_contour: tuple[bool, bool] | None = None
 ):
     if no_go_boundaries is None:
         no_go_boundaries = []
+    if keep_contour is None:
+        keep_contour = [True, False]
 
     outer_rectangle = determine_largest_rectangle(property_boundary)
 

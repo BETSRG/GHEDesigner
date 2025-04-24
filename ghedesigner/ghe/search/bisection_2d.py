@@ -1,9 +1,9 @@
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import FlowConfigType, TimestepType
-from ghedesigner.ghe.bisection_1d_search import Bisection1D
-from ghedesigner.ghe.simulation import SimulationParameters
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.ghe.search.bisection_1d import Bisection1D
+from ghedesigner.media import GHEFluid, Grout, Soil
 
 
 class Bisection2D(Bisection1D):
@@ -18,7 +18,14 @@ class Bisection2D(Bisection1D):
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
-        sim_params: SimulationParameters,
+        max_boreholes: int,
+        min_height: float,
+        max_height: float,
+        continue_if_design_unmet: bool,
+        start_month: int,
+        end_month: int,
+        min_eft: float,
+        max_eft: float,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
@@ -44,7 +51,14 @@ class Bisection2D(Bisection1D):
             pipe,
             grout,
             soil,
-            sim_params,
+            max_boreholes,
+            min_height,
+            max_height,
+            continue_if_design_unmet,
+            start_month,
+            end_month,
+            min_eft,
+            max_eft,
             hourly_extraction_ground_loads,
             method=method,
             flow_type=flow_type,
