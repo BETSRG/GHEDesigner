@@ -17,7 +17,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
             outer_diameter=0.04216,
             shank_spacing=0.01856,
             roughness=1.0e-6,
-            num_pipes=1,
         )
 
     def test_small_loads(self):

@@ -60,7 +60,6 @@ class TestGHE(GHEBaseTest):
             outer_diameter=d_out,
             shank_spacing=s,
             roughness=epsilon,
-            num_pipes=1,
         )
         self.pipe_d = Pipe.init_double_u_tube_series(
             conductivity=k_p,

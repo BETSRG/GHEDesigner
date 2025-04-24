@@ -211,7 +211,6 @@ class TestBHResistance(GHEBaseTest):
             shank_spacing=s,
             roughness=epsilon,
             rho_cp=rho_cp_p,
-            num_pipes=1,
         )
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
@@ -283,7 +282,6 @@ class TestBHResistance(GHEBaseTest):
             shank_spacing=s,
             roughness=epsilon,
             rho_cp=rho_cp_p,
-            num_pipes=1,
         )
         pipe_d = Pipe.init_double_u_tube_parallel(
             conductivity=k_p,

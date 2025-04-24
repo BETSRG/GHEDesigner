@@ -107,7 +107,6 @@ class TestFindRowWiseDesign(GHEBaseTest):
             roughness=1.0e-6,
             conductivity=0.4,
             rho_cp=1542000.0,
-            num_pipes=1,
         )
         search = self.get_design(pipe, 0.5, BHPipeType.SINGLEUTUBE, None)
         u_tube_height = search.ghe.bhe.b.H
@@ -123,7 +122,6 @@ class TestFindRowWiseDesign(GHEBaseTest):
             roughness=1.0e-6,
             conductivity=0.4,
             rho_cp=1542000.0,
-            num_pipes=1,
         )
         search = self.get_design(pipe, 0.5, BHPipeType.SINGLEUTUBE, 0.8)
         u_tube_height = search.ghe.bhe.b.H

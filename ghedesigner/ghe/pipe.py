@@ -68,7 +68,7 @@ class Pipe(ThermalProperty):
         outer_diameter: float,
         shank_spacing: float,
         roughness: float,
-        num_pipes: int,
+        num_pipes: int = 1,
     ) -> "Pipe":
         check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
         p = cls(BHPipeType.SINGLEUTUBE, conductivity, rho_cp)

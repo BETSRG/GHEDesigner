@@ -67,7 +67,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
             roughness=1.0e-6,
             conductivity=0.4,
             rho_cp=1542000.0,
-            num_pipes=1,
         )
         search = self.get_design(pipe, 0.3, BHPipeType.SINGLEUTUBE)
         u_tube_height = search.ghe.bhe.b.H
@@ -129,7 +128,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
             roughness=1.0e-6,
             conductivity=0.4,
             rho_cp=1542000.0,
-            num_pipes=1,
         )
         search = self.get_design(pipe, 31.2, BHPipeType.SINGLEUTUBE, length=155, flow_type=FlowConfigType.SYSTEM)
         u_tube_height = search.ghe.bhe.b.H
@@ -145,7 +143,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
             roughness=1.0e-6,
             conductivity=0.4,
             rho_cp=1542000.0,
-            num_pipes=1,
         )
         search = self.get_design(pipe, 0.5, BHPipeType.SINGLEUTUBE, length=155)
         u_tube_height = search.ghe.bhe.b.H

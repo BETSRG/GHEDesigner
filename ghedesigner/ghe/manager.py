@@ -30,41 +30,16 @@ class GroundHeatExchanger:
                 raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
             pipe_parameters["num_pipes"] = 1
             self.pipe = Pipe.init_single_u_tube(**pipe_parameters)
-            # pipe = Pipe.init_single_u_tube(
-            #     inner_diameter=0.03404,
-            #     outer_diameter=0.04216,
-            #     shank_spacing=0.01856,
-            #     roughness=1.0e-6,
-            #     conductivity=0.4,
-            #     rho_cp=1542000.0,
-            #     num_pipes=1,
-            # )
         elif pipe_arrangement_type == BHPipeType.DOUBLEUTUBESERIES:
             params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
             if not all(x in pipe_parameters for x in params):
                 raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
             self.pipe = Pipe.init_double_u_tube_series(**pipe_parameters)
-            # pipe = Pipe.init_double_u_tube_series(
-            #     inner_diameter=0.03404,
-            #     outer_diameter=0.04216,
-            #     shank_spacing=0.01856,
-            #     roughness=1.0e-6,
-            #     conductivity=0.4,
-            #     rho_cp=1542000.0,
-            # )
         elif pipe_arrangement_type == BHPipeType.DOUBLEUTUBEPARALLEL:
             params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
             if not all(x in pipe_parameters for x in params):
                 raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
             self.pipe = Pipe.init_double_u_tube_parallel(**pipe_parameters)
-            # pipe = Pipe.init_double_u_tube_parallel(
-            #     inner_diameter=0.03404,
-            #     outer_diameter=0.04216,
-            #     shank_spacing=0.01856,
-            #     roughness=1.0e-6,
-            #     conductivity=0.4,
-            #     rho_cp=1542000.0,
-            # )
         else:  # Assuming coaxial
             params = [
                 "conductivity_inner",
@@ -84,16 +59,6 @@ class GroundHeatExchanger:
             del pipe_parameters["conductivity_inner"]
             del pipe_parameters["conductivity_outer"]
             self.pipe = Pipe.init_coaxial(**pipe_parameters)
-            # pipe = Pipe.init_coaxial(
-            #     inner_pipe_d_in=0.0442,
-            #     inner_pipe_d_out=0.050,
-            #     outer_pipe_d_in=0.0974,
-            #     outer_pipe_d_out=0.11,
-            #     roughness=1.0e-6,
-            #     conductivity=(0.4, 0.4),
-            #     rho_cp=1542000.0,
-            # )
-        # self.pipe = Pipe(pipe_arrangement_type, pipe_parameters["conductivity"], pipe_parameters["rho_cp"])
         self.pygfunction_borehole = Borehole(100, borehole_buried_depth, borehole_radius, x=0.0, y=0.0)
 
     @classmethod

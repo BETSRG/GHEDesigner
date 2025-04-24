@@ -21,7 +21,6 @@ class TestLoads(GHEBaseTest):
             outer_diameter=0.04216,
             shank_spacing=0.01856,
             roughness=1.0e-6,
-            num_pipes=1,
         )
         fluid = GHEFluid("water", 0.0, 20.0)
         grout = Grout(1.0, 3901000.0)

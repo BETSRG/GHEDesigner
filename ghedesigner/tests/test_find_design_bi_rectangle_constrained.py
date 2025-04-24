@@ -120,7 +120,6 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
             roughness=1.0e-6,
             conductivity=0.4,
             rho_cp=1542000.0,
-            num_pipes=1,
         )
         search = self.get_design(pipe, 0.5, BHPipeType.SINGLEUTUBE, 0.07, prop_boundary, no_go_zones)
         u_tube_height = search.ghe.bhe.b.H
@@ -136,7 +135,6 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
             roughness=1.0e-6,
             conductivity=0.4,
             rho_cp=1542000.0,
-            num_pipes=1,
         )
         search = self.get_design(
             pipe,

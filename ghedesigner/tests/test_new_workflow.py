@@ -35,7 +35,6 @@ class TestNewWorkflows(GHEBaseTest):
             roughness=1.0e-6,
             conductivity=0.4,
             rho_cp=1542000.0,
-            num_pipes=1,
         )
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
         fluid = GHEFluid("water", 0.0, 20.0)
