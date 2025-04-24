@@ -159,10 +159,10 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         return fluid.rho * velocity * dia_hydraulic / fluid.mu
 
     def as_dict(self) -> dict:
+        # TODO: This is actually a tuple of radii, right?
         r_in = cast(float, self.pipe.r_in)
-        reynold_no = self.compute_reynolds_concentric(  # TODO: This is passing roughness, but shouldn't, right?
-            self.m_flow_borehole, r_in, self.pipe.roughness, self.fluid
-        )
+        # TODO: This is passing roughness, but shouldn't, right?
+        reynold_no = self.compute_reynolds_concentric(self.m_flow_borehole, r_in, self.pipe.roughness, self.fluid)
         # r_out = cast(tuple[float, float], self.pipe.r_out)
         # reynold_no = self.compute_reynolds_concentric(self.m_flow_borehole, r_out[1], r_out[0], self.fluid)
         blob = {
