@@ -12,10 +12,7 @@ expected_demo_results_dict = loads(expected_results_path.read_text())
 
 # override this with a list of Paths to JSON config files to run, or set to None to run all demo files
 files_to_debug: list[Path] = [
-    Path("/home/edwin/Projects/GHEDesigner/demos/run_simulation_presized.json"),
-    # Path(
-    #     "/home/edwin/Projects/GHEDesigner/demos/find_design_simple_system.json"
-    # )
+    # Path("/home/edwin/Projects/GHEDesigner/demos/run_simulation_presized.json"),
     # Path(__file__).parent.parent.parent / "demos" / "find_design_bi_rectangle_constrained_single_u_tube.json"
 ]
 
