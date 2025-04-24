@@ -18,7 +18,7 @@ class Bisection2D(Bisection1D):
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
-        max_boreholes: int,
+        max_boreholes: int | None,
         min_height: float,
         max_height: float,
         continue_if_design_unmet: bool,

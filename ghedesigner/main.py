@@ -4,6 +4,7 @@ import sys
 from json import loads
 from pathlib import Path
 from time import time
+from typing import cast
 
 import click
 from jsonschema import ValidationError
@@ -12,6 +13,7 @@ from pygfunction.pipes import PipeTypes
 
 from ghedesigner.constants import DEG_TO_RAD, MONTHS_IN_YEAR, VERSION
 from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.ghe.design.base import DesignBase
 from ghedesigner.ghe.design.birectangle import DesignBiRectangle, GeometricConstraintsBiRectangle
 from ghedesigner.ghe.design.birectangle_constrained import (
     DesignBiRectangleConstrained,
@@ -59,10 +61,11 @@ def design_and_size_ghe(
     geom_parameters = ghe_dict["geometric_constraints"]
     geometry_map = {geom.name: geom for geom in DesignGeomType}
     geom_type = geometry_map.get(geom_parameters["method"].upper())
+    design: DesignBase
     # simulation_parameters.set_design_heights()
     if geom_type == DesignGeomType.RECTANGLE:
         # max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
-        geometry = GeometricConstraintsRectangle(
+        rect_geometry: GeometricConstraintsRectangle = GeometricConstraintsRectangle(
             length=geom_parameters["length"],
             width=geom_parameters["width"],
             b_min=geom_parameters["b_min"],
@@ -84,13 +87,13 @@ def design_and_size_ghe(
             min_height,
             continue_if_design_unmet,
             max_boreholes,
-            geometry,
+            rect_geometry,
             ghe_loads,
             flow_type=flow_type,
             method=TimestepType.HYBRID,
         )
     elif geom_type == DesignGeomType.NEARSQUARE:
-        geometry = GeometricConstraintsNearSquare(
+        near_sq_geometry: GeometricConstraintsNearSquare = GeometricConstraintsNearSquare(
             b=geom_parameters["b"],
             length=geom_parameters["length"],
         )
@@ -110,13 +113,13 @@ def design_and_size_ghe(
             min_height,
             continue_if_design_unmet,
             max_boreholes,
-            geometry,
+            near_sq_geometry,
             ghe_loads,
             flow_type=flow_type,
             method=TimestepType.HYBRID,
         )
     elif geom_type == DesignGeomType.BIRECTANGLE:
-        geometry = GeometricConstraintsBiRectangle(
+        bi_rect_geometry: GeometricConstraintsBiRectangle = GeometricConstraintsBiRectangle(
             length=geom_parameters["length"],
             width=geom_parameters["width"],
             b_min=geom_parameters["b_min"],
@@ -139,13 +142,13 @@ def design_and_size_ghe(
             min_height,
             continue_if_design_unmet,
             max_boreholes,
-            geometry,
+            bi_rect_geometry,
             ghe_loads,
             flow_type=flow_type,
             method=TimestepType.HYBRID,
         )
     elif geom_type == DesignGeomType.BIZONEDRECTANGLE:
-        geometry = GeometricConstraintsBiZoned(
+        bi_zoned_geometry: GeometricConstraintsBiZoned = GeometricConstraintsBiZoned(
             length=geom_parameters["length"],
             width=geom_parameters["width"],
             b_min=geom_parameters["b_min"],
@@ -168,13 +171,13 @@ def design_and_size_ghe(
             min_height,
             continue_if_design_unmet,
             max_boreholes,
-            geometry,
+            bi_zoned_geometry,
             ghe_loads,
             flow_type=flow_type,
             method=TimestepType.HYBRID,
         )
     elif geom_type == DesignGeomType.BIRECTANGLECONSTRAINED:
-        geometry = GeometricConstraintsBiRectangleConstrained(
+        bi_rect_const_geometry: GeometricConstraintsBiRectangleConstrained = GeometricConstraintsBiRectangleConstrained(
             b_min=geom_parameters["b_min"],
             b_max_x=geom_parameters["b_max_x"],
             b_max_y=geom_parameters["b_max_y"],
@@ -197,7 +200,7 @@ def design_and_size_ghe(
             min_height,
             continue_if_design_unmet,
             max_boreholes,
-            geometry,
+            bi_rect_const_geometry,
             ghe_loads,
             flow_type=flow_type,
             method=TimestepType.HYBRID,
@@ -205,7 +208,7 @@ def design_and_size_ghe(
     else:  # geom_type == DesignGeomType.ROWWISE:
         # use perimeter calculations if present
         perimeter_spacing_ratio = geom_parameters.get("perimeter_spacing_ratio", 0.0)
-        geometry = GeometricConstraintsRowWise(
+        geometry_row: GeometricConstraintsRowWise = GeometricConstraintsRowWise(
             perimeter_spacing_ratio=perimeter_spacing_ratio,
             max_spacing=geom_parameters["max_spacing"],
             min_spacing=geom_parameters["min_spacing"],
@@ -232,7 +235,7 @@ def design_and_size_ghe(
             min_height,
             continue_if_design_unmet,
             max_boreholes,
-            geometry,
+            geometry_row,
             ghe_loads,
             flow_type=flow_type,
             method=TimestepType.HYBRID,
@@ -240,9 +243,9 @@ def design_and_size_ghe(
     start_time = time()
     search = design.find_design()
     search_time = time() - start_time
-    found_ghe = search.ghe
-    if not found_ghe:
+    if not search.ghe:
         pass
+    found_ghe = cast(GHE, search.ghe)
     found_ghe.compute_g_functions(min_height, max_height)
     found_ghe.size(
         method=TimestepType.HYBRID,
@@ -288,8 +291,8 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
 
     # Loop over the topology and init the found objects, for now just the GHE or a GHE with a HP
     topology_props: list[dict] = inputs["topology"]
-    ghe_names = list()
-    building_names = list()
+    ghe_names = []
+    building_names = []
     for component in topology_props:
         if component["type"] == "building":
             building_names.append(component["name"])

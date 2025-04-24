@@ -1,4 +1,5 @@
 from math import cos, pi, sin
+from typing import cast
 
 from ghedesigner.enums import BHPipeType
 from ghedesigner.media import ThermalProperty
@@ -12,13 +13,9 @@ class Pipe(ThermalProperty):
 
     @classmethod
     def init_from_dict(cls, pipe_type: BHPipeType, pipe_props: dict) -> "Pipe":
-        if pipe_type == BHPipeType.COAXIAL:
-            k = pipe_props["conductivity_inner"], pipe_props["conductivity_outer"]
-        else:
-            k = pipe_props["conductivity"]
         rho_cp = pipe_props["rho_cp"]
-
         if pipe_type == BHPipeType.SINGLEUTUBE:
+            k = pipe_props["conductivity"]
             return Pipe.init_single_u_tube(
                 conductivity=k,
                 rho_cp=rho_cp,
@@ -29,6 +26,7 @@ class Pipe(ThermalProperty):
                 num_pipes=pipe_props.get("num_pipes", 1),
             )
         elif pipe_type == BHPipeType.DOUBLEUTUBESERIES:
+            k = pipe_props["conductivity"]
             return Pipe.init_double_u_tube_series(
                 conductivity=k,
                 rho_cp=rho_cp,
@@ -38,6 +36,7 @@ class Pipe(ThermalProperty):
                 roughness=pipe_props["roughness"],
             )
         elif pipe_type == BHPipeType.DOUBLEUTUBEPARALLEL:
+            k = pipe_props["conductivity"]
             return Pipe.init_double_u_tube_parallel(
                 conductivity=k,
                 rho_cp=rho_cp,
@@ -47,6 +46,7 @@ class Pipe(ThermalProperty):
                 roughness=pipe_props["roughness"],
             )
         elif pipe_type == BHPipeType.COAXIAL:
+            k = pipe_props["conductivity_inner"], pipe_props["conductivity_outer"]
             return Pipe.init_coaxial(
                 conductivity=k,
                 rho_cp=rho_cp,
@@ -158,11 +158,15 @@ class Pipe(ThermalProperty):
             "number_of_pipes": self.n_pipes,
         }
         if isinstance(self.r_in, float):
-            output["pipe_inner_diameter"] = str(self.r_in * 2.0)
-            output["pipe_outer_diameter"] = str(self.r_out * 2.0)
+            r_in = cast(float, self.r_in)
+            r_out = cast(float, self.r_out)
+            output["pipe_inner_diameter"] = str(r_in * 2.0)
+            output["pipe_outer_diameter"] = str(r_out * 2.0)
         else:
-            output["pipe_inner_diameters"] = str([x * 2.0 for x in self.r_in])
-            output["pipe_outer_diameters"] = str([x * 2.0 for x in self.r_out])
+            r_in_list = cast(list[float], self.r_in)
+            r_out_list = cast(list[float], self.r_out)
+            output["pipe_inner_diameters"] = str([x * 2.0 for x in r_in_list])
+            output["pipe_outer_diameters"] = str([x * 2.0 for x in r_out_list])
         return output
 
     @staticmethod

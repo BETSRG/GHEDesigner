@@ -23,7 +23,7 @@ class RowWiseModifiedBisectionSearch:
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
-        max_boreholes: int,
+        max_boreholes: int | None,  # TODO: Unused
         min_height: float,
         max_height: float,
         continue_if_design_unmet: bool,
@@ -56,6 +56,7 @@ class RowWiseModifiedBisectionSearch:
         self.searchTracker: list[list] = []
         self.fieldType = field_type
         # Flow rate tracking
+        self.max_boreholes = max_boreholes
         self.max_height = max_height
         self.max_eft = max_eft
         self.min_eft = min_eft

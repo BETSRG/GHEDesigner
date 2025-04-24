@@ -26,7 +26,7 @@ class GroundHeatExchanger:
         self.soil = Soil(soil_conductivity, soil_rho_cp, soil_undisturbed_temperature)
         if pipe_arrangement_type == BHPipeType.SINGLEUTUBE:
             params = ["conductivity", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
-            if not all([x in pipe_parameters for x in params]):
+            if not all(x in pipe_parameters for x in params):
                 raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
             pipe_parameters["num_pipes"] = 1
             self.pipe = Pipe.init_single_u_tube(**pipe_parameters)
@@ -41,7 +41,7 @@ class GroundHeatExchanger:
             # )
         elif pipe_arrangement_type == BHPipeType.DOUBLEUTUBESERIES:
             params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
-            if not all([x in pipe_parameters for x in params]):
+            if not all(x in pipe_parameters for x in params):
                 raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
             self.pipe = Pipe.init_double_u_tube_series(**pipe_parameters)
             # pipe = Pipe.init_double_u_tube_series(
@@ -54,7 +54,7 @@ class GroundHeatExchanger:
             # )
         elif pipe_arrangement_type == BHPipeType.DOUBLEUTUBEPARALLEL:
             params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
-            if not all([x in pipe_parameters for x in params]):
+            if not all(x in pipe_parameters for x in params):
                 raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
             self.pipe = Pipe.init_double_u_tube_parallel(**pipe_parameters)
             # pipe = Pipe.init_double_u_tube_parallel(
@@ -75,7 +75,7 @@ class GroundHeatExchanger:
                 "outer_pipe_d_in",
                 "outer_pipe_d_out",
             ]
-            if not all([x in pipe_parameters for x in params]):
+            if not all(x in pipe_parameters for x in params):
                 raise ValueError(f"pipe_arrangement_type of {BHPipeType.COAXIAL!s} requires these inputs: {params}")
             pipe_parameters["conductivity"] = (
                 pipe_parameters["conductivity_inner"],

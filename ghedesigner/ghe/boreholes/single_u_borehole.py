@@ -1,5 +1,6 @@
 from enum import IntEnum, auto
 from math import exp, log, pi, sqrt
+from typing import cast
 
 import numpy as np
 import pygfunction as gt
@@ -90,10 +91,13 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.r_borehole = self.borehole.r_b
 
         # outer tube radius is set to sqrt(2) * r_p_o, tube region has 4 cells
-        self.r_out_tube = sqrt(2) * self.pipe.r_out
+        r_out = cast(float, self.pipe.r_out)
+        r_in = cast(float, self.pipe.r_in)
+
+        self.r_out_tube = sqrt(2) * r_out
 
         # inner tube radius is set to r_out_tube - t_p
-        self.t_pipe_wall_actual = self.pipe.r_out - self.pipe.r_in
+        self.t_pipe_wall_actual = r_out - r_in
         self.r_in_tube = self.r_out_tube - self.t_pipe_wall_actual
 
         # r_convection is set to r_in_tube - 1/4 * t_p
@@ -133,8 +137,10 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
             self.fluid.cp,
             self.pipe.roughness,
         )
-        self.R_f = self.compute_fluid_resistance(self.h_f, self.pipe.r_in)
-        self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(self.pipe.r_in, self.pipe.r_out, self.pipe.k)
+        r_in = cast(float, self.pipe.r_in)
+        r_out = cast(float, self.pipe.r_out)
+        self.R_f = self.compute_fluid_resistance(self.h_f, r_in)
+        self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(r_in, r_out, self.pipe.k)
         self.R_fp = self.R_f + self.R_p
         return self.R_fp
 

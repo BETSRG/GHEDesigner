@@ -1,3 +1,5 @@
+from typing import cast
+
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
@@ -90,7 +92,7 @@ class DesignBiRectangleConstrained(DesignBase):
             load_years,
         )
         if keep_contour is None:
-            keep_contour = [True, False]
+            keep_contour = cast(tuple[bool, bool], [True, False])
         self.geometric_constraints = geometric_constraints
         self.coordinates_domain_nested, self.fieldDescriptors = polygonal_land_constraint(
             self.geometric_constraints.b_min,

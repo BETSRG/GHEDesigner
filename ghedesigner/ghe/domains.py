@@ -1,4 +1,5 @@
 from math import ceil, floor, inf
+from typing import cast
 
 from ghedesigner.ghe.coordinates import (
     c_shape,
@@ -409,7 +410,7 @@ def polygonal_land_constraint(
     if no_go_boundaries is None:
         no_go_boundaries = []
     if keep_contour is None:
-        keep_contour = [True, False]
+        keep_contour = cast(tuple[bool, bool], (True, False))
 
     outer_rectangle = determine_largest_rectangle(property_boundary)
 

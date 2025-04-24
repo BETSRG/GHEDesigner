@@ -32,7 +32,7 @@ class OutputManager:
         # have one routine to write all of them
         self.design: AnyBisectionType | None = None
         self.time: float = 0.0
-        self.load_method: TimestepType | None = None
+        self.load_method: TimestepType = TimestepType.HYBRID  # TODO: Initialized this here
         self.project_name = project_name
         self.notes = notes
         self.author = author
@@ -56,7 +56,7 @@ class OutputManager:
             self.time,
             self.design.ghe,
             self.design.searchTracker,
-            self.load_method,
+            # self.load_method,
         )
         loading_data_rows = self.get_loading_data(self.design.ghe)
         borehole_location_data_rows = self.get_borehole_location_data(self.design.ghe)
@@ -97,7 +97,7 @@ class OutputManager:
             self.time,
             ghe,
             "none",
-            self.load_method,
+            # self.load_method,
         )
         borehole_location_data_rows = self.get_borehole_location_data(ghe)
         g_function_data_rows = self.get_g_function_data(ghe)
@@ -108,7 +108,7 @@ class OutputManager:
         with open(os.path.join(output_directory, f"Gfunction{file_suffix}.csv"), "w", newline="") as f_csv:
             csv.writer(f_csv).writerows(g_function_data_rows)
         with open(str(output_directory / f"SimulationSummary{file_suffix}.json"), "w", newline="") as f_json:
-            d = dict(ghe_system=dict(number_of_boreholes=1, active_borehole_length=dict(value=1)))
+            d = dict(ghe_system=dict(number_of_boreholes=1, active_borehole_length=dict(value=1)))  # noqa: C408
             f_json.write(dumps(d, indent=2))
 
     def get_loading_data(self, ghe):
@@ -193,7 +193,7 @@ class OutputManager:
             csv_array.append([log_val, g_val, g_bhw_val])
         return csv_array
 
-    def get_summary_text(self, width, project_name, model_name, notes, author, time, ghe, search_tracker, load_method):
+    def get_summary_text(self, width, project_name, model_name, notes, author, time, ghe, search_tracker):
         f_int = ".0f"
         f_1f = ".1f"
         f_2f = ".2f"

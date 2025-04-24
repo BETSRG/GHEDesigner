@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import cast
 
 import pygfunction as gt
 from numpy import log, sqrt
@@ -169,8 +170,10 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
             self.fluid.cp,
             self.pipe.roughness,
         )
-        self.R_f = self.compute_fluid_resistance(self.h_f, self.pipe.r_in)
-        self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(self.pipe.r_in, self.pipe.r_out, self.pipe.k)
+        r_in = cast(float, self.pipe.r_in)
+        r_out = cast(float, self.pipe.r_out)
+        self.R_f = self.compute_fluid_resistance(self.h_f, r_in)
+        self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(r_in, r_out, self.pipe.k)
         self.R_fp = self.R_f + self.R_p
         return self.R_fp
 
