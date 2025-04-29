@@ -76,14 +76,20 @@
     "ground-heat-exchanger": {
       "type": "object",
       "description": "A collection of objects that define a ground heat exchanger system.",
+      "flow_rate": {
+        "type": "number",
+        "minimum": 0,
+        "format": "Liters/Second",
+        "description": "Volumetric design flow rate. Value specified will be either the system or per-borehole flow rate depending on the 'flow_type' set."
+      },
+      "flow_type": {
+        "type": "string",
+        "enum": ["BOREHOLE", "SYSTEM"],
+        "description": "Indicates whether the design volumetric flow rate set on on a per-borehole or system basis."
+      },
       "additionalProperties": {
         "type": "object",
         "properties": {
-          "do-sizing": {
-            "type": "boolean",
-            "description": "A flag for whether the ground heat exchanger should be sized/designed.  If so, the design and geometric_constraints inputs are required.  If not, then the ground heat exchagner details should be specified in the pre_designed input field",
-            "default": true
-          },
           "grout": {
             "type": "object",
             "properties": {
@@ -299,6 +305,7 @@
           },
           "pre_designed": {
             "type": "object",
+            "description": "A set of pre-designed borehole locations",
             "properties": {
               "H": {
                 "type": "number",
@@ -573,17 +580,6 @@
           "design": {
             "type": "object",
             "properties": {
-              "flow_rate": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Liters/Second",
-                "description": "Volumetric design flow rate. Value specified will be either the system or per-borehole flow rate depending on the 'flow_type' set."
-              },
-              "flow_type": {
-                "type": "string",
-                "enum": ["BOREHOLE", "SYSTEM"],
-                "description": "Indicates whether the design volumetric flow rate set on on a per-borehole or system basis."
-              },
               "max_eft": {
                 "type": "number",
                 "format": "Centigrade",
@@ -603,7 +599,7 @@
                 "description": "Causes to return the best available borehole  field configuration rather than fail if design conditions  are unmet.  Optional. Default False."
               }
             },
-            "required": ["flow_rate", "flow_type", "max_eft", "min_eft"]
+            "required": ["max_eft", "min_eft"]
           },
           "loads": {
             "type": "array",
@@ -618,7 +614,14 @@
             }
           }
         },
-        "required": ["soil", "grout", "pipe", "borehole"]
+        "required": [
+          "soil",
+          "grout",
+          "pipe",
+          "borehole",
+          "flow_rate",
+          "flow_type"
+        ]
       }
     },
     "pump": {

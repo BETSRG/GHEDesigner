@@ -13,6 +13,8 @@
   },
   "ground-heat-exchanger": {
     "ghe1": {
+      "flow_rate": 0.8,
+      "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
@@ -47,8 +49,6 @@
         "method": "RECTANGLE"
       },
       "design": {
-        "flow_rate": 0.8,
-        "flow_type": "BOREHOLE",
         "max_eft": 35,
         "min_eft": 5
       },

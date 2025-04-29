@@ -144,9 +144,9 @@ class GroundHeatExchanger:
 
         # grab some design conditions
         continue_if_design_unmet: bool = ghe_dict["design"].get("continue_if_design_unmet", False)
-        flow_type_str: str = ghe_dict["design"]["flow_type"]
+        flow_type_str: str = ghe_dict["flow_type"]
         flow_type = FlowConfigType(flow_type_str.upper())
-        flow_rate: float = ghe_dict["design"]["flow_rate"]
+        flow_rate: float = ghe_dict["flow_rate"]
         min_eft: float = ghe_dict["design"]["min_eft"]
         max_eft: float = ghe_dict["design"]["max_eft"]
         max_height: float = ghe_dict["geometric_constraints"]["max_height"]  # TODO: Move min/max height to design?

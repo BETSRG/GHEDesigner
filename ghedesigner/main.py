@@ -6,6 +6,7 @@ from pathlib import Path
 
 import click
 from jsonschema import ValidationError
+from numpy import array
 from pygfunction.gfunction import evaluate_g_function_MIFT
 from pygfunction.pipes import PipeTypes
 
@@ -72,7 +73,10 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         for ghe_name in ghe_names:
             ghe_dict = full_inputs["ground-heat-exchanger"][ghe_name]
             ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, full_inputs["fluid"])
-            if "do-sizing" not in ghe_dict or (ghe_dict.get("do-sizing")):
+            if "pre_designed" in ghe_dict:
+                pass  # TODO: What would we want to do here if it is already pre-designed and by itself?
+            else:
+                # TODO: Assert that "design" data is in the ghe object
                 search, search_time, _ = ghe.design_and_size_ghe(full_inputs, ghe_name)
                 results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
                 results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
@@ -91,26 +95,20 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             tests_dir = ghe_designer_dir / "tests"
             loads_file_path = tests_dir / single_building["loads"]
         heat_pump.set_loads_from_file(loads_file_path)
-        # TODO: Actually calculate the ground load using COP
-        ghe_loads_raw = loads_file_path.read_text().strip().split("\n")
-        ghe_loads = [float(x) for x in ghe_loads_raw]
-        if "do-sizing" not in ghe_dict or (ghe_dict.get("do-sizing")):
-            search, search_time, _ = ghe.design_and_size_ghe(full_inputs, ghe_names[0], loads_override=ghe_loads)
-            results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
-            results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
-            results.write_all_output_files(output_directory=output_directory, file_suffix="")
-        else:
+        ghe_loads = heat_pump.get_ground_loads()
+        if "pre_designed" in ghe_dict:
             pre_designed = ghe_dict["pre_designed"]
             borehole_height: float = pre_designed["H"]
             x_positions: list[float] = pre_designed["x"]
             y_positions: list[float] = pre_designed["y"]
+            # burial_depth: float = ghe.pygfunction_borehole.D
+            # borehole_radius: float = ghe.pygfunction_borehole.r_b
             m_flow_network = 0.05
             pipe_positions = Pipe.place_pipes(0.04, ghe.pipe.r_out, 2)
             if len(x_positions) != len(y_positions):
                 pass  # TODO: Emit error
             alpha = 1e-6
             ts = borehole_height**2 / (9 * alpha)
-            from numpy import array
 
             t = [
                 0.1,
@@ -152,7 +150,9 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             )
 
             b = borehole_spacing(ghe.pygfunction_borehole, coordinates=[[0, 0]])
-            g_function = GFunction(b, 4, {100: 0.075}, {100: g_values}, list(time_array), [[0, 0]])
+            g_function = GFunction(
+                b, 4, {borehole_height: 0.075}, {borehole_height: g_values}, list(time_array), [[0, 0]]
+            )
             # simulation_parameters = SimulationParameters(simulation_parameters['simulation-months'], 1, False)
             this_ghe = GHE(
                 m_flow_network,
@@ -171,6 +171,14 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             this_ghe.simulate(method=TimestepType.HYBRID)
             results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
             results.write_presized_output_files(output_directory=output_directory, ghe=this_ghe)
+        else:
+            search, search_time, _ = ghe.design_and_size_ghe(full_inputs, ghe_names[0], loads_override=ghe_loads)
+            results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
+            results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
+            results.write_all_output_files(output_directory=output_directory, file_suffix="")
+    else:
+        print("Bad input file, for now the only available configs are: 1 GLHE alone, or 1 GLHE and 1 building")
+        return 1
     return 0
 
 
