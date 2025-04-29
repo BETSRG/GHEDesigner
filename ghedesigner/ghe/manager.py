@@ -1,7 +1,9 @@
 from time import time
 from typing import cast
 
+from numpy import exp, ndarray
 from pygfunction.boreholes import Borehole
+from pygfunction.gfunction import PipeTypes, evaluate_g_function_MIFT
 
 from ghedesigner.constants import DEG_TO_RAD, MONTHS_IN_YEAR
 from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
@@ -18,6 +20,7 @@ from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRo
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.utilities import eskilson_log_times
 
 
 class GroundHeatExchanger:
@@ -299,7 +302,7 @@ class GroundHeatExchanger:
                 flow_type=flow_type,
                 method=TimestepType.HYBRID,
             )
-        else:  # geom_type == DesignGeomType.ROWWISE:
+        else:  # geom_type == DesignGeomType.ROW-WISE:
             # use perimeter calculations if present
             perimeter_spacing_ratio = geom_parameters.get("perimeter_spacing_ratio", 0.0)
             geometry_row: GeometricConstraintsRowWise = GeometricConstraintsRowWise(
@@ -348,6 +351,52 @@ class GroundHeatExchanger:
             design_min_eft=min_eft,
         )
         return search, search_time, found_ghe
+
+    def get_g_function(self, inputs: dict, ghe_name: str) -> tuple[ndarray, ndarray]:
+        ghe_dict: dict = inputs["ground-heat-exchanger"][ghe_name]
+        pre_designed = ghe_dict["pre_designed"]
+        borehole_height: float = pre_designed["H"]
+        x_positions: list[float] = pre_designed["x"]
+        y_positions: list[float] = pre_designed["y"]
+        if len(x_positions) != len(y_positions):
+            pass  # TODO: Emit error
+        burial_depth: float = self.pygfunction_borehole.D
+        borehole_radius: float = self.pygfunction_borehole.r_b
+        # flow_type_str: str = ghe_dict["flow_type"]
+        # flow_type = FlowConfigType(flow_type_str.upper())  # TODO: Why isn't this used?
+        pipe_map = {
+            BHPipeType.SINGLEUTUBE: PipeTypes.SINGLEUTUBE,
+            BHPipeType.DOUBLEUTUBESERIES: PipeTypes.DOUBLEUTUBESERIES,
+            BHPipeType.DOUBLEUTUBEPARALLEL: PipeTypes.DOUBLEUTUBEPARALLEL,
+        }
+        pipe_type = pipe_map.get(self.pipe.type, PipeTypes.COAXIALPIPEINLET)  # Default to COAXIALPIPEINLET
+        flow_rate: float = ghe_dict["flow_rate"]
+        pipe_positions = Pipe.place_pipes(0.04, self.pipe.r_out, 2)
+        alpha = self.soil.k / self.soil.rhoCp
+        ts = borehole_height**2 / (9 * alpha)
+        log_time = eskilson_log_times()
+        time_values = exp(log_time) * ts
+        g_values = evaluate_g_function_MIFT(
+            H=borehole_height,
+            D=burial_depth,
+            r_b=borehole_radius,
+            x=x_positions,
+            y=y_positions,
+            alpha=alpha,
+            time=time_values,
+            pos=pipe_positions,
+            r_in=self.pipe.r_in,
+            r_out=self.pipe.r_out,
+            k_s=self.soil.k,
+            k_g=self.grout.k,
+            k_p=self.pipe.k,
+            epsilon=self.pipe.roughness,
+            pipe_type=pipe_type,
+            m_flow_network=flow_rate,
+            fluid_name=self.fluid.name,
+            fluid_concentration_pct=self.fluid.concentration_percent,
+        )
+        return time_values, g_values
 
     # def write_input_file(self, output_file_path: Path, simulation_parameters: SimulationParameters) -> None:
     #     """

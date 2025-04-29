@@ -1,21 +1,15 @@
 {
-  "version": 1,
+  "version": 2,
   "topology": [
-    { "type": "building", "name": "building1" },
-    { "type": "ground-heat-exchanger", "name": "ghe1" }
+    {
+      "type": "ground-heat-exchanger",
+      "name": "ghe1"
+    }
   ],
   "fluid": {
     "fluid_name": "WATER",
     "concentration_percent": 0,
     "temperature": 20
-  },
-  "building": {
-    "building1": {
-      "name": "load 1",
-      "loads": "test_data/test_bldg_loads.csv",
-      "cop": 3,
-      "capacity": "AUTOSIZE"
-    }
   },
   "ground-heat-exchanger": {
     "ghe1": {
@@ -49,11 +43,5 @@
         "y": [0.0]
       }
     }
-  },
-  "simulation-control": {
-    "thermal-sizing-run": true,
-    "hourly-run": true,
-    "hydraulic-run": true,
-    "simulation-months": 240
   }
 }

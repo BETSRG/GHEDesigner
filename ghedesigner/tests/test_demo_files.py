@@ -13,7 +13,7 @@ expected_demo_results_dict = loads(expected_results_path.read_text())
 # override this with a list of Paths to JSON config files to run, or set to None to run all demo files
 files_to_debug: list[Path] = [
     # Path("/home/edwin/Projects/GHEDesigner/demos/run_simulation_presized.json"),
-    # Path(__file__).parent.parent.parent / "demos" / "find_design_bi_rectangle_constrained_single_u_tube.json"
+    # Path(__file__).parent.parent.parent / "demos" / "run_simulation_presized.json"
 ]
 
 limit_debug_file_count = 0
@@ -49,15 +49,21 @@ def test_demo_files(demo_file_path: Path, time_str: str):
     results_path = out_dir / "SimulationSummary.json"
 
     actual_results = loads(results_path.read_text())
-    actual_length = actual_results["ghe_system"]["active_borehole_length"]["value"]
-    actual_nbh = actual_results["ghe_system"]["number_of_boreholes"]
+    if "ghe_system" in actual_results:
+        actual_length = actual_results["ghe_system"]["active_borehole_length"]["value"]
+        actual_nbh = actual_results["ghe_system"]["number_of_boreholes"]
 
-    expected_results = expected_demo_results_dict[out_dir.stem]
-    expected_length = expected_results["active_borehole_length"]
-    expected_nbh = expected_results["number_of_boreholes"]
+        expected_results = expected_demo_results_dict[out_dir.stem]
+        expected_length = expected_results["active_borehole_length"]
+        expected_nbh = expected_results["number_of_boreholes"]
 
-    len_passes = abs_error_within_tolerance(actual_length, expected_length, delta=0.1)
-    nbh_passes = abs_error_within_tolerance(actual_nbh, expected_nbh)
+        len_passes = abs_error_within_tolerance(actual_length, expected_length, delta=0.1)
+        nbh_passes = abs_error_within_tolerance(actual_nbh, expected_nbh)
 
-    if not len_passes or not nbh_passes:
-        failed_tests.append(out_dir.stem)
+        if not len_passes or not nbh_passes:
+            failed_tests.append(out_dir.stem)
+
+    else:
+        # TODO: Verify it was intentionally predesigned
+        assert "linear_time" in actual_results
+        assert "g_values" in actual_results

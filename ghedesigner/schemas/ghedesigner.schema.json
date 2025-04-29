@@ -672,11 +672,5 @@
       "description": "An integer version ID for this input structure, for future-proofing."
     }
   },
-  "required": [
-    "topology",
-    "fluid",
-    "ground-heat-exchanger",
-    "simulation-control",
-    "version"
-  ]
+  "required": ["topology", "fluid", "ground-heat-exchanger", "version"]
 }
