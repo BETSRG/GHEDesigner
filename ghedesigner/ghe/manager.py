@@ -353,6 +353,7 @@ class GroundHeatExchanger:
         return search, search_time, found_ghe
 
     def get_g_function(self, inputs: dict, ghe_name: str) -> tuple[ndarray, ndarray]:
+        # TODO: Create a SingleUTube class or something in order to get the STS stitched up
         ghe_dict: dict = inputs["ground-heat-exchanger"][ghe_name]
         pre_designed = ghe_dict["pre_designed"]
         borehole_height: float = pre_designed["H"]
