@@ -139,7 +139,6 @@ class RowWiseModifiedBisectionSearch:
             self.hourly_extraction_ground_loads,
             field_type=self.fieldType,
             field_specifier=field_specifier,
-            load_years=self.load_years,
         )
 
     def calculate_excess(self, coordinates, h, design_max_eft, design_min_eft, field_specifier="N/A"):

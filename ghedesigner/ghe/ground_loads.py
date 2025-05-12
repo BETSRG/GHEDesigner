@@ -18,11 +18,8 @@ class HybridLoad:
         radial_numerical: SingleUTube,
         start_month: int,
         end_month: int,
-        years=None,
     ) -> None:
-        # Split the hourly loads into heating and cooling (kW)
-        if years is None:
-            years = [2019]
+        years = [2019]
 
         self.hourly_rejection_loads, self.hourly_extraction_loads = self.split_heat_and_cool(raw_loads)
 

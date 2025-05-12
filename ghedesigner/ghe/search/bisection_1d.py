@@ -104,7 +104,6 @@ class Bisection1D:
             hourly_extraction_ground_loads,
             field_specifier=current_field,
             field_type=field_type,
-            load_years=load_years,
         )
 
         self.calculated_temperatures: dict[int, np.float64] = {}
@@ -170,7 +169,6 @@ class Bisection1D:
             self.hourly_extraction_ground_loads,
             field_type=self.field_type,
             field_specifier=field_specifier,
-            load_years=self.load_years,
         )
 
     def calculate_excess(self, coordinates, h, field_specifier="N/A"):

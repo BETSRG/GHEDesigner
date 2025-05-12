@@ -31,7 +31,6 @@ class GHE:
         hourly_extraction_ground_loads: list,
         field_type="N/A",
         field_specifier="N/A",
-        load_years=None,
     ) -> None:
         self.fieldType = field_type
         self.fieldSpecifier = field_specifier
@@ -64,13 +63,8 @@ class GHE:
         self.times = np.empty((0,), dtype=np.float64)
         self.loading = None
 
-        # Split the extraction loads into heating and cooling for input to
-        # the HybridLoad object
-        if load_years is None:
-            load_years = [2019]
-
         self.hybrid_load = HybridLoad(
-            self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month, years=load_years
+            self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
         )
         # if hourly_extraction_ground_loads:
         #     hybrid_load = HybridLoad(

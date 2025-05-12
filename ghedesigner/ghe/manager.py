@@ -370,7 +370,7 @@ class GroundHeatExchanger:
             BHPipeType.DOUBLEUTUBESERIES: PipeTypes.DOUBLEUTUBESERIES,
             BHPipeType.DOUBLEUTUBEPARALLEL: PipeTypes.DOUBLEUTUBEPARALLEL,
         }
-        pipe_type = pipe_map.get(self.pipe.type, PipeTypes.COAXIALPIPEINLET)  # Default to COAXIALPIPEINLET
+        pipe_type = pipe_map.get(self.pipe.type, PipeTypes.SINGLEUTUBE)
         flow_rate: float = ghe_dict["flow_rate"]
         pipe_positions = Pipe.place_pipes(0.04, self.pipe.r_out, 2)
         alpha = self.soil.k / self.soil.rhoCp
