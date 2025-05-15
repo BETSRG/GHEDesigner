@@ -3,7 +3,8 @@ from typing import cast
 
 from numpy import exp, ndarray
 from pygfunction.boreholes import Borehole
-from pygfunction.gfunction import PipeTypes, evaluate_g_function_MIFT
+from pygfunction.enums import PipeType
+from pygfunction.ground_heat_exchanger import GroundHeatExchanger as PyGHE
 
 from ghedesigner.constants import DEG_TO_RAD, MONTHS_IN_YEAR
 from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
@@ -43,7 +44,7 @@ class GroundHeatExchanger:
         self.grout = Grout(grout_conductivity, grout_rho_cp)
         self.soil = Soil(soil_conductivity, soil_rho_cp, soil_undisturbed_temperature)
         if pipe_arrangement_type == BHPipeType.SINGLEUTUBE:
-            params = ["conductivity", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
+            params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
             if not all(x in pipe_parameters for x in params):
                 raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
             pipe_parameters["num_pipes"] = 1
@@ -361,30 +362,37 @@ class GroundHeatExchanger:
         y_positions: list[float] = pre_designed["y"]
         if len(x_positions) != len(y_positions):
             pass  # TODO: Emit error
+        nbh = len(x_positions)
         burial_depth: float = self.pygfunction_borehole.D
         borehole_radius: float = self.pygfunction_borehole.r_b
-        # flow_type_str: str = ghe_dict["flow_type"]
-        # flow_type = FlowConfigType(flow_type_str.upper())  # TODO: Why isn't this used?
-        pipe_map = {
-            BHPipeType.SINGLEUTUBE: PipeTypes.SINGLEUTUBE,
-            BHPipeType.DOUBLEUTUBESERIES: PipeTypes.DOUBLEUTUBESERIES,
-            BHPipeType.DOUBLEUTUBEPARALLEL: PipeTypes.DOUBLEUTUBEPARALLEL,
-        }
-        pipe_type = pipe_map.get(self.pipe.type, PipeTypes.SINGLEUTUBE)
         flow_rate: float = ghe_dict["flow_rate"]
+        flow_type_str: str = str(ghe_dict["flow_type"]).upper()
+
+        if flow_type_str == FlowConfigType.BOREHOLE.name:
+            m_flow_ghe = nbh * flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
+        elif flow_type_str == FlowConfigType.SYSTEM.name:
+            m_flow_ghe = flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
+        else:
+            raise NotImplementedError(f"FlowConfigType {flow_type_str} not implemented.")
+
+        pipe_map = {
+            BHPipeType.SINGLEUTUBE: PipeType.SINGLEUTUBE,
+            BHPipeType.DOUBLEUTUBESERIES: PipeType.DOUBLEUTUBESERIES,
+            BHPipeType.DOUBLEUTUBEPARALLEL: PipeType.DOUBLEUTUBEPARALLEL,
+        }
+        pipe_type = pipe_map.get(self.pipe.type, PipeType.SINGLEUTUBE)
         pipe_positions = Pipe.place_pipes(0.04, self.pipe.r_out, 2)
         alpha = self.soil.k / self.soil.rhoCp
         ts = borehole_height**2 / (9 * alpha)
         log_time = eskilson_log_times()
         time_values = exp(log_time) * ts
-        g_values = evaluate_g_function_MIFT(
+
+        ghe = PyGHE(
             H=borehole_height,
             D=burial_depth,
             r_b=borehole_radius,
             x=x_positions,
             y=y_positions,
-            alpha=alpha,
-            time=time_values,
             pos=pipe_positions,
             r_in=self.pipe.r_in,
             r_out=self.pipe.r_out,
@@ -393,10 +401,13 @@ class GroundHeatExchanger:
             k_p=self.pipe.k,
             epsilon=self.pipe.roughness,
             pipe_type=pipe_type,
-            m_flow_network=flow_rate,
+            m_flow_ghe=m_flow_ghe,
             fluid_name=self.fluid.name,
             fluid_concentration_pct=self.fluid.concentration_percent,
         )
+
+        g_values = ghe.evaluate_g_function(alpha=alpha, time=time_values, boundary_condition="UBWT")
+
         return time_values, g_values
 
     # def write_input_file(self, output_file_path: Path, simulation_parameters: SimulationParameters) -> None:

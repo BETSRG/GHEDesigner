@@ -277,7 +277,8 @@ class GHE:
 
         self.bhe.b.H = returned_height
 
-    def calculate(self, _hour_index: int, inlet_temp: float, _flow_rate: float) -> float:
+    @staticmethod
+    def calculate(_hour_index: int, inlet_temp: float, _flow_rate: float) -> float:
         effectiveness = 0.5
         soil_temp = 20
 
