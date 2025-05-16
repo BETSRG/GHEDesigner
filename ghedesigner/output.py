@@ -15,6 +15,7 @@ from ghedesigner.ghe.boreholes.base import GHEDesignerBoreholeBase
 from ghedesigner.ghe.boreholes.coaxial_borehole import CoaxialPipe
 from ghedesigner.ghe.design.base import AnyBisectionType
 from ghedesigner.ghe.ground_heat_exchangers import GHE
+from ghedesigner.utilities import write_flat_dict_to_csv, write_json
 
 
 class OutputManager:
@@ -41,14 +42,20 @@ class OutputManager:
         self.model_name = model_name
         self.allocated_width = allocated_width
 
-    def just_write_g_function(self, output_directory: Path, linear_time: ndarray, g_values: ndarray) -> None:
+    @staticmethod
+    def just_write_g_function(
+        output_directory: Path, log_time: ndarray, g_values: ndarray, g_bhw_values: ndarray
+    ) -> None:
         output_directory.mkdir(exist_ok=True)
-        t_g_outputs = "T\tG\n" + "\n".join([f"{t}\t{g}" for t, g in zip(linear_time, g_values)])
-        text_summary = f"""Project Name:\n{self.project_name}\nG-Values:\n{t_g_outputs}"""
-        json_summary = {"linear_time": linear_time.tolist(), "g_values": g_values.tolist()}
-        (output_directory / "SimulationSummary.txt").write_text(text_summary)
-        with open(str(output_directory / "SimulationSummary.json"), "w", newline="") as f_json:
-            f_json.write(dumps(json_summary, indent=2))
+
+        json_summary = {
+            "log_time": log_time.tolist(),
+            "g_values": g_values.tolist(),
+            "g_bhw_values": g_bhw_values.tolist(),
+        }
+
+        write_json(output_directory / "SimulationSummary.json", json_summary)
+        write_flat_dict_to_csv(output_directory / "Gfunction.csv", json_summary)
 
     def set_design_data(self, design: AnyBisectionType, time: float, load_method: TimestepType) -> None:
         self.design = design

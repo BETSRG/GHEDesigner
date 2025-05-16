@@ -1,13 +1,14 @@
 from time import time
 from typing import cast
 
-from numpy import exp, ndarray
+from numpy import array, exp, ndarray
 from pygfunction.boreholes import Borehole
 from pygfunction.enums import PipeType
 from pygfunction.ground_heat_exchanger import GroundHeatExchanger as PyGHE
 
 from ghedesigner.constants import DEG_TO_RAD, MONTHS_IN_YEAR
 from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 from ghedesigner.ghe.design.base import DesignBase
 from ghedesigner.ghe.design.birectangle import DesignBiRectangle, GeometricConstraintsBiRectangle
 from ghedesigner.ghe.design.birectangle_constrained import (
@@ -21,7 +22,7 @@ from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRo
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
-from ghedesigner.utilities import eskilson_log_times
+from ghedesigner.utilities import combine_sts_lts, eskilson_log_times
 
 
 class GroundHeatExchanger:
@@ -353,7 +354,7 @@ class GroundHeatExchanger:
         )
         return search, search_time, found_ghe
 
-    def get_g_function(self, inputs: dict, ghe_name: str) -> tuple[ndarray, ndarray]:
+    def get_g_function(self, inputs: dict, ghe_name: str) -> tuple[ndarray, ndarray, ndarray]:
         # TODO: Create a SingleUTube class or something in order to get the STS stitched up
         ghe_dict: dict = inputs["ground-heat-exchanger"][ghe_name]
         pre_designed = ghe_dict["pre_designed"]
@@ -369,9 +370,11 @@ class GroundHeatExchanger:
         flow_type_str: str = str(ghe_dict["flow_type"]).upper()
 
         if flow_type_str == FlowConfigType.BOREHOLE.name:
-            m_flow_ghe = nbh * flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
+            m_flow_borehole = flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
+            m_flow_ghe = nbh * m_flow_borehole
         elif flow_type_str == FlowConfigType.SYSTEM.name:
             m_flow_ghe = flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
+            m_flow_borehole = m_flow_ghe / nbh
         else:
             raise NotImplementedError(f"FlowConfigType {flow_type_str} not implemented.")
 
@@ -384,8 +387,8 @@ class GroundHeatExchanger:
         pipe_positions = Pipe.place_pipes(0.04, self.pipe.r_out, 2)
         alpha = self.soil.k / self.soil.rhoCp
         ts = borehole_height**2 / (9 * alpha)
-        log_time = eskilson_log_times()
-        time_values = exp(log_time) * ts
+        log_time_lts = eskilson_log_times()
+        time_values = exp(log_time_lts) * ts
 
         ghe = PyGHE(
             H=borehole_height,
@@ -406,9 +409,34 @@ class GroundHeatExchanger:
             fluid_concentration_pct=self.fluid.concentration_percent,
         )
 
-        g_values = ghe.evaluate_g_function(alpha=alpha, time=time_values, boundary_condition="UBWT")
+        g_lts = ghe.evaluate_g_function(alpha=alpha, time=time_values, boundary_condition="UBWT")
 
-        return time_values, g_values
+        single_u_bh = SingleUTube(
+            m_flow_borehole, self.fluid, self.pygfunction_borehole, self.pipe, self.grout, self.soil
+        )
+
+        log_time_sts, g_sts = single_u_bh.calc_sts_g_functions()
+        g_bhw = single_u_bh.g_bhw
+
+        g_interp = combine_sts_lts(
+            log_time_lts,
+            g_lts.tolist(),
+            log_time_sts.tolist(),
+            g_sts.tolist(),
+        )
+
+        g_bhw_interp = combine_sts_lts(
+            log_time_lts,
+            g_lts.tolist(),
+            log_time_sts.tolist(),
+            g_bhw.tolist(),
+        )
+
+        log_time_to_write = array(log_time_sts.tolist() + log_time_lts)
+        g_to_write = g_interp(log_time_to_write)
+        g_bhw_to_write = g_bhw_interp(log_time_to_write)
+
+        return log_time_to_write, g_to_write, g_bhw_to_write
 
     # def write_input_file(self, output_file_path: Path, simulation_parameters: SimulationParameters) -> None:
     #     """

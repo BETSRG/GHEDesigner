@@ -65,5 +65,5 @@ def test_demo_files(demo_file_path: Path, time_str: str):
 
     else:
         # TODO: Verify it was intentionally predesigned
-        assert "linear_time" in actual_results
+        assert "log_time" in actual_results
         assert "g_values" in actual_results

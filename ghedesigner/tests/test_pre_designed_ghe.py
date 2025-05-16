@@ -43,9 +43,9 @@ class TestPreDesignedGHE(TestCase):
             }
         }
 
-        time_vals, g_vals = ghe.get_g_function(get_g_func_inputs, "ghe1")
+        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, "ghe1")
 
-        self.assertAlmostEqual(596033.37312, time_vals[0], delta=1e-5)
-        self.assertAlmostEqual(59014672693.33465, time_vals[-1], delta=1e-5)
-        self.assertAlmostEqual(2.7218, g_vals[0], delta=0.001)
-        self.assertAlmostEqual(6.6406, g_vals[-1], delta=0.001)
+        self.assertAlmostEqual(-48.623, float(log_time_vals[0]), delta=0.001)
+        self.assertAlmostEqual(3.003, float(log_time_vals[-1]), delta=0.001)
+        self.assertAlmostEqual(-1.730, float(g_vals[0]), delta=0.001)
+        self.assertAlmostEqual(6.6406, float(g_vals[-1]), delta=0.001)

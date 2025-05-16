@@ -11,7 +11,7 @@ from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_length
 from ghedesigner.ghe.ground_loads import HybridLoad
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Grout, Soil
-from ghedesigner.utilities import solve_root
+from ghedesigner.utilities import combine_sts_lts, solve_root
 
 
 class GHE:
@@ -94,28 +94,6 @@ class GHE:
         }
         return output
 
-    @staticmethod
-    def combine_sts_lts(log_time_lts: list, g_lts: list, log_time_sts: list, g_sts: list) -> interp1d:
-        # make sure the short time step doesn't overlap with the long time step
-        max_log_time_sts = max(log_time_sts)
-        min_log_time_lts = min(log_time_lts)
-
-        if max_log_time_sts < min_log_time_lts:
-            log_time = log_time_sts + log_time_lts
-            g = g_sts + g_lts
-        else:
-            # find where to stop in sts
-            i = 0
-            value = log_time_sts[i]
-            while value <= min_log_time_lts:
-                i += 1
-                value = log_time_sts[i]
-            log_time = log_time_sts[0:i] + log_time_lts
-            g = g_sts[0:i] + g_lts
-        g = interp1d(log_time, g)
-
-        return g
-
     def grab_g_function(self, b_over_h):
         # interpolate for the Long time step g-function
         g_function, rb_value, _, _ = self.gFunction.g_function_interpolation(b_over_h)
@@ -124,14 +102,14 @@ class GHE:
         # Don't Update the HybridLoad (its dependent on the STS) because
         # it doesn't change the results much, and it slows things down a lot
         # combine the short and long time step g-function
-        g = self.combine_sts_lts(
+        g = combine_sts_lts(
             self.gFunction.log_time,
             g_function_corrected,
             self.bhe_eq.lntts.tolist(),
             self.bhe_eq.g.tolist(),
         )
 
-        g_bhw = self.combine_sts_lts(
+        g_bhw = combine_sts_lts(
             self.gFunction.log_time,
             g_function_corrected,
             self.bhe_eq.lntts.tolist(),
