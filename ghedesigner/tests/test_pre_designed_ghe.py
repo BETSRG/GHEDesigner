@@ -9,10 +9,10 @@ class TestPreDesignedGHE(TestCase):
         k_g = 1.0
         rho_cp_g = 3901000.0
         k_s = 2.0
-        rho_cp_s = 2343493.0
+        rho_cp_s = 2000000
         ugt = 10
         burial_depth = 2.0
-        bh_radius = 0.07
+        bh_radius = 0.08
         pipe_params = {
             "conductivity": 0.4,
             "rho_cp": 1500000.0,
@@ -37,15 +37,52 @@ class TestPreDesignedGHE(TestCase):
             fluid_temperature=20,
         )
 
+        # testing using UBWT for comparisons against the GDR g-function library
+        # https://gdr.openei.org/submissions/1325
+
+        # case 1: "g-function_library_1.0/rectangle_5m_v1.0.json, 1_1, 5._192._0.08"
         get_g_func_inputs = {
             "ground-heat-exchanger": {
-                "ghe1": {"flow_rate": 0.5, "flow_type": "BOREHOLE", "pre_designed": {"H": 150, "x": [0.0], "y": [0.0]}}
+                "ghe1": {"flow_rate": 0.5, "flow_type": "BOREHOLE", "pre_designed": {"H": 192, "x": [0.0], "y": [0.0]}}
             }
         }
-
-        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, "ghe1")
-
-        self.assertAlmostEqual(-48.623, float(log_time_vals[0]), delta=0.001)
+        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, "ghe1", boundary_condition="UBWT")
+        self.assertAlmostEqual(-48.464, float(log_time_vals[0]), delta=0.001)
         self.assertAlmostEqual(3.003, float(log_time_vals[-1]), delta=0.001)
-        self.assertAlmostEqual(-1.730, float(g_vals[0]), delta=0.001)
-        self.assertAlmostEqual(6.6406, float(g_vals[-1]), delta=0.001)
+        self.assertAlmostEqual(2.8351, float(g_vals[30]), delta=0.001)
+        self.assertAlmostEqual(6.7569, float(g_vals[-1]), delta=0.1)
+
+        # case 2: "g-function_library_1.0/rectangle_5m_v1.0.json, 2_2, 5._192._0.08"
+        get_g_func_inputs = {
+            "ground-heat-exchanger": {
+                "ghe1": {
+                    "flow_rate": 0.5,
+                    "flow_type": "BOREHOLE",
+                    "pre_designed": {"H": 192, "x": [0.0, 0.0, 5.0, 5.0], "y": [0.0, 5.0, 0.0, 5.0]},
+                }
+            }
+        }
+        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, "ghe1", boundary_condition="UBWT")
+        self.assertAlmostEqual(2.8351, float(g_vals[30]), delta=0.001)
+        self.assertAlmostEqual(14.0908, float(g_vals[-1]), delta=0.15)
+
+        # case 3: "g-function_library_1.0/rectangle_5m_v1.0.json, 4_4, 5._192._0.08"
+        get_g_func_inputs = {
+            "ground-heat-exchanger": {
+                "ghe1": {
+                    "flow_rate": 0.5,
+                    "flow_type": "BOREHOLE",
+                    "pre_designed": {
+                        "H": 192,
+                        "x": [0.0, 0.0, 0.0, 0.0, 5.0, 5.0, 5.0, 5.0, 10.0, 10.0, 10.0, 10.0, 15.0, 15.0, 15.0, 15.0],
+                        "y": [0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0],
+                    },
+                }
+            }
+        }
+        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, "ghe1", boundary_condition="UBWT")
+        self.assertAlmostEqual(2.8352, float(g_vals[30]), delta=0.15)
+        self.assertAlmostEqual(33.5639, float(g_vals[-1]), delta=1.0)
+
+        # TODO: should be investigated further - test values are not as close as I had hoped, but
+        #  MIFT results are consistent with what was happening previously

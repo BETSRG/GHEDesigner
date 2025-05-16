@@ -354,7 +354,9 @@ class GroundHeatExchanger:
         )
         return search, search_time, found_ghe
 
-    def get_g_function(self, inputs: dict, ghe_name: str) -> tuple[ndarray, ndarray, ndarray]:
+    def get_g_function(
+        self, inputs: dict, ghe_name: str, boundary_condition="MIFT"
+    ) -> tuple[ndarray, ndarray, ndarray]:
         # TODO: Create a SingleUTube class or something in order to get the STS stitched up
         ghe_dict: dict = inputs["ground-heat-exchanger"][ghe_name]
         pre_designed = ghe_dict["pre_designed"]
@@ -409,7 +411,7 @@ class GroundHeatExchanger:
             fluid_concentration_pct=self.fluid.concentration_percent,
         )
 
-        g_lts = ghe.evaluate_g_function(alpha=alpha, time=time_values, boundary_condition="UBWT")
+        g_lts = ghe.evaluate_g_function(alpha=alpha, time=time_values, boundary_condition=boundary_condition)
 
         single_u_bh = SingleUTube(
             m_flow_borehole, self.fluid, self.pygfunction_borehole, self.pipe, self.grout, self.soil
