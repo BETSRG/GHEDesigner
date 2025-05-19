@@ -42,10 +42,15 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         return 1
 
     # Validate the load source, it should be a building object or a GHE with loads specified
-    # TODO: But what if we are just calculating a g-function and leaving?  We don't need loads....right?
-    ghe_contains_loads = ["loads" in ghe_dict for _, ghe_dict in full_inputs["ground-heat-exchanger"].items()]
-    all_ghe_has_loads = all(ghe_contains_loads)
-    no_ghe_has_loads = not any(ghe_contains_loads)
+    # any GHE instances found with pre_designed will just be ignored since they don't need anything added
+    unsized_ghe_contains_loads = []
+    for _, ghe_dict in full_inputs["ground-heat-exchanger"].items():
+        if "pre_designed" in ghe_dict:
+            continue  # no need for loads checks here, don't even add them to the contains_loads list
+        if "loads" in ghe_dict:
+            unsized_ghe_contains_loads.append(True)
+    all_ghe_has_loads = all(unsized_ghe_contains_loads)
+    no_ghe_has_loads = not any(unsized_ghe_contains_loads)
     building_input = "building" in full_inputs
     valid_load_source = all_ghe_has_loads ^ (building_input and no_ghe_has_loads)  # XOR because we don't want both
     if not valid_load_source:
@@ -70,13 +75,14 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
             ghe_dict = full_inputs["ground-heat-exchanger"][ghe_name]
             ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, full_inputs["fluid"])
             if "pre_designed" in ghe_dict:
-                linear_time, g_values, g_bhw_values = ghe.get_g_function(full_inputs, ghe_name)
+                linear_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
                 results = OutputManager("GHEDesigner Run from CLI", "Just Calculate G", "", "")
                 results.just_write_g_function(output_directory, linear_time, g_values, g_bhw_values)
-                # print(g_values)
             else:
                 # TODO: Assert that "design" data is in the ghe object
-                search, search_time, _ = ghe.design_and_size_ghe(full_inputs, ghe_name)
+                search, search_time, _ = ghe.design_and_size_ghe(
+                    ghe_dict, full_inputs["simulation-control"]["simulation-months"]
+                )
                 results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
                 results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
                 results.write_all_output_files(output_directory=output_directory, file_suffix="")
@@ -96,10 +102,12 @@ def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) 
         heat_pump.set_loads_from_file(loads_file_path)
         ghe_loads = heat_pump.get_ground_loads()
         if "pre_designed" in ghe_dict:
-            linear_time, g_values, g_bhw_values = ghe.get_g_function(full_inputs, ghe_names[0])
+            linear_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
             print(g_values, g_bhw_values)
         else:
-            search, search_time, _ = ghe.design_and_size_ghe(full_inputs, ghe_names[0], loads_override=ghe_loads)
+            search, search_time, _ = ghe.design_and_size_ghe(
+                ghe_dict, full_inputs["simulation-control"]["simulation-months"], loads_override=ghe_loads
+            )
             results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
             results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
             results.write_all_output_files(output_directory=output_directory, file_suffix="")

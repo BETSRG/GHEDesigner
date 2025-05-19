@@ -42,15 +42,11 @@ class TestPreDesignedGHE(TestCase):
 
         # case 1: "g-function_library_1.0/rectangle_5m_v1.0.json, 1_1, 5._192._0.08"
         get_g_func_inputs = {
-            "ground-heat-exchanger": {
-                "ghe1": {
-                    "flow_rate": 0.5,
-                    "flow_type": "BOREHOLE",
-                    "pre_designed": {"arrangement": "MANUAL", "H": 192, "x": [0.0], "y": [0.0]},
-                }
-            }
+            "flow_rate": 0.5,
+            "flow_type": "BOREHOLE",
+            "pre_designed": {"arrangement": "MANUAL", "H": 192, "x": [0.0], "y": [0.0]},
         }
-        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, "ghe1", boundary_condition="UBWT")
+        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")
         self.assertAlmostEqual(-48.464, float(log_time_vals[0]), delta=0.001)
         self.assertAlmostEqual(3.003, float(log_time_vals[-1]), delta=0.001)
         self.assertAlmostEqual(2.8351, float(g_vals[30]), delta=0.001)
@@ -58,39 +54,31 @@ class TestPreDesignedGHE(TestCase):
 
         # case 2: "g-function_library_1.0/rectangle_5m_v1.0.json, 2_2, 5._192._0.08"
         get_g_func_inputs = {
-            "ground-heat-exchanger": {
-                "ghe1": {
-                    "flow_rate": 0.5,
-                    "flow_type": "BOREHOLE",
-                    "pre_designed": {
-                        "arrangement": "MANUAL",
-                        "H": 192,
-                        "x": [0.0, 0.0, 5.0, 5.0],
-                        "y": [0.0, 5.0, 0.0, 5.0],
-                    },
-                }
-            }
+            "flow_rate": 0.5,
+            "flow_type": "BOREHOLE",
+            "pre_designed": {
+                "arrangement": "MANUAL",
+                "H": 192,
+                "x": [0.0, 0.0, 5.0, 5.0],
+                "y": [0.0, 5.0, 0.0, 5.0],
+            },
         }
-        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, "ghe1", boundary_condition="UBWT")
+        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")
         self.assertAlmostEqual(2.8351, float(g_vals[30]), delta=0.001)
         self.assertAlmostEqual(14.0908, float(g_vals[-1]), delta=0.15)
 
         # case 3: "g-function_library_1.0/rectangle_5m_v1.0.json, 4_4, 5._192._0.08"
         get_g_func_inputs = {
-            "ground-heat-exchanger": {
-                "ghe1": {
-                    "flow_rate": 0.5,
-                    "flow_type": "BOREHOLE",
-                    "pre_designed": {
-                        "arrangement": "MANUAL",
-                        "H": 192,
-                        "x": [0.0, 0.0, 0.0, 0.0, 5.0, 5.0, 5.0, 5.0, 10.0, 10.0, 10.0, 10.0, 15.0, 15.0, 15.0, 15.0],
-                        "y": [0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0],
-                    },
-                }
-            }
+            "flow_rate": 0.5,
+            "flow_type": "BOREHOLE",
+            "pre_designed": {
+                "arrangement": "MANUAL",
+                "H": 192,
+                "x": [0.0, 0.0, 0.0, 0.0, 5.0, 5.0, 5.0, 5.0, 10.0, 10.0, 10.0, 10.0, 15.0, 15.0, 15.0, 15.0],
+                "y": [0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0],
+            },
         }
-        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, "ghe1", boundary_condition="UBWT")
+        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")
         self.assertAlmostEqual(2.8352, float(g_vals[30]), delta=0.15)
         self.assertAlmostEqual(33.5639, float(g_vals[-1]), delta=1.0)
 

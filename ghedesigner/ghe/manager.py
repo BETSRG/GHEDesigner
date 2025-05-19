@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from time import time
 from typing import cast
 
@@ -107,13 +108,12 @@ class GroundHeatExchanger:
         diameter: float = borehole_parameters["diameter"]
         radius: float = diameter / 2.0
 
-        fluid_name: str = "Water"
-        concentration_percent: float = 0.0
-        temperature: float = 20.0
-        if fluid_inputs is not None:
-            fluid_name = fluid_inputs.get("fluid_name", "Water")
-            concentration_percent = fluid_inputs.get("concentration_percent", 0.0)
-            temperature = fluid_inputs.get("temperature", 20.0)
+        fluid_dict = (
+            fluid_inputs if fluid_inputs else {"fluid_name": "Water", "concentration_percent": 0.0, "temperature": 20.0}
+        )
+        fluid_name = fluid_dict.get("fluid_name", "Water")
+        concentration_percent = fluid_dict.get("concentration_percent", 0.0)
+        temperature = fluid_dict.get("temperature", 20.0)
 
         pipe_parameters: dict = ghe_dict["pipe"]
         pipe_type: BHPipeType = BHPipeType(pipe_parameters["arrangement"].upper())
@@ -135,17 +135,10 @@ class GroundHeatExchanger:
         )
         return ghe
 
-    def design_and_size_ghe(self, inputs: dict, ghe_name: str, loads_override: list[float] | None = None):
-        ghe_dict: dict = inputs["ground-heat-exchanger"][ghe_name]
-        if loads_override:
-            ghe_loads: list[float] = loads_override
-        else:
-            ghe_loads = ghe_dict["loads"]
-        num_months: int = inputs["simulation-control"]["simulation-months"]
-        if (num_months % MONTHS_IN_YEAR) > 0:
-            raise ValueError(f"num_months must be a multiple of {MONTHS_IN_YEAR}")
-        start_month: int = 1
-        end_month: int = num_months
+    def design_and_size_ghe(self, ghe_dict: dict, end_month: int, loads_override: list[float] | None = None):
+        ghe_loads: list[float] = loads_override if loads_override else ghe_dict["loads"]
+        if (end_month % MONTHS_IN_YEAR) > 0:
+            raise ValueError(f"end_month must be a multiple of {MONTHS_IN_YEAR}")
 
         flow_type_str: str = ghe_dict["flow_type"]
         flow_type = FlowConfigType(flow_type_str.upper())
@@ -162,18 +155,17 @@ class GroundHeatExchanger:
         # check_arg_bounds(min_eft, max_eft, "min_eft", "max_eft")
 
         # set up the geometry constraints section
-        geom_parameters = ghe_dict["geometric_constraints"]
+        geom = ghe_dict["geometric_constraints"]
         geometry_map = {geom.name: geom for geom in DesignGeomType}
-        geom_type = geometry_map.get(geom_parameters["method"].upper())
+        geom_type = geometry_map.get(geom["method"].upper())
         design: DesignBase
-        # simulation_parameters.set_design_heights()
         if geom_type == DesignGeomType.RECTANGLE:
             # max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
             rect_geometry: GeometricConstraintsRectangle = GeometricConstraintsRectangle(
-                length=geom_parameters["length"],
-                width=geom_parameters["width"],
-                b_min=geom_parameters["b_min"],
-                b_max_x=geom_parameters["b_max"],
+                length=geom["length"],
+                width=geom["width"],
+                b_min=geom["b_min"],
+                b_max_x=geom["b_max"],
             )
             design = DesignRectangle(
                 flow_rate,
@@ -182,7 +174,7 @@ class GroundHeatExchanger:
                 self.pipe,
                 self.grout,
                 self.soil,
-                start_month,
+                1,
                 end_month,
                 max_eft,
                 min_eft,
@@ -197,8 +189,8 @@ class GroundHeatExchanger:
             )
         elif geom_type == DesignGeomType.NEARSQUARE:
             near_sq_geometry: GeometricConstraintsNearSquare = GeometricConstraintsNearSquare(
-                b=geom_parameters["b"],
-                length=geom_parameters["length"],
+                b=geom["b"],
+                length=geom["length"],
             )
             design = DesignNearSquare(
                 flow_rate,
@@ -207,7 +199,7 @@ class GroundHeatExchanger:
                 self.pipe,
                 self.grout,
                 self.soil,
-                start_month,
+                1,
                 end_month,
                 max_eft,
                 min_eft,
@@ -222,11 +214,11 @@ class GroundHeatExchanger:
             )
         elif geom_type == DesignGeomType.BIRECTANGLE:
             bi_rect_geometry: GeometricConstraintsBiRectangle = GeometricConstraintsBiRectangle(
-                length=geom_parameters["length"],
-                width=geom_parameters["width"],
-                b_min=geom_parameters["b_min"],
-                b_max_x=geom_parameters["b_max_x"],
-                b_max_y=geom_parameters["b_max_y"],
+                length=geom["length"],
+                width=geom["width"],
+                b_min=geom["b_min"],
+                b_max_x=geom["b_max_x"],
+                b_max_y=geom["b_max_y"],
             )
             design = DesignBiRectangle(
                 flow_rate,
@@ -235,7 +227,7 @@ class GroundHeatExchanger:
                 self.pipe,
                 self.grout,
                 self.soil,
-                start_month,
+                1,
                 end_month,
                 max_eft,
                 min_eft,
@@ -250,11 +242,11 @@ class GroundHeatExchanger:
             )
         elif geom_type == DesignGeomType.BIZONEDRECTANGLE:
             bi_zoned_geometry: GeometricConstraintsBiZoned = GeometricConstraintsBiZoned(
-                length=geom_parameters["length"],
-                width=geom_parameters["width"],
-                b_min=geom_parameters["b_min"],
-                b_max_x=geom_parameters["b_max_x"],
-                b_max_y=geom_parameters["b_max_y"],
+                length=geom["length"],
+                width=geom["width"],
+                b_min=geom["b_min"],
+                b_max_x=geom["b_max_x"],
+                b_max_y=geom["b_max_y"],
             )
             design = DesignBiZoned(
                 flow_rate,
@@ -263,7 +255,7 @@ class GroundHeatExchanger:
                 self.pipe,
                 self.grout,
                 self.soil,
-                start_month,
+                1,
                 end_month,
                 max_eft,
                 min_eft,
@@ -279,11 +271,11 @@ class GroundHeatExchanger:
         elif geom_type == DesignGeomType.BIRECTANGLECONSTRAINED:
             bi_rect_const_geometry: GeometricConstraintsBiRectangleConstrained = (
                 GeometricConstraintsBiRectangleConstrained(
-                    b_min=geom_parameters["b_min"],
-                    b_max_x=geom_parameters["b_max_x"],
-                    b_max_y=geom_parameters["b_max_y"],
-                    property_boundary=geom_parameters["property_boundary"],
-                    no_go_boundaries=geom_parameters["no_go_boundaries"],
+                    b_min=geom["b_min"],
+                    b_max_x=geom["b_max_x"],
+                    b_max_y=geom["b_max_y"],
+                    property_boundary=geom["property_boundary"],
+                    no_go_boundaries=geom["no_go_boundaries"],
                 )
             )
             design = DesignBiRectangleConstrained(
@@ -293,7 +285,7 @@ class GroundHeatExchanger:
                 self.pipe,
                 self.grout,
                 self.soil,
-                start_month,
+                1,
                 end_month,
                 max_eft,
                 min_eft,
@@ -308,17 +300,17 @@ class GroundHeatExchanger:
             )
         else:  # geom_type == DesignGeomType.ROW-WISE:
             # use perimeter calculations if present
-            perimeter_spacing_ratio = geom_parameters.get("perimeter_spacing_ratio", 0.0)
+            perimeter_spacing_ratio = geom.get("perimeter_spacing_ratio", 0.0)
             geometry_row: GeometricConstraintsRowWise = GeometricConstraintsRowWise(
                 perimeter_spacing_ratio=perimeter_spacing_ratio,
-                max_spacing=geom_parameters["max_spacing"],
-                min_spacing=geom_parameters["min_spacing"],
-                spacing_step=geom_parameters["spacing_step"],
-                max_rotation=geom_parameters["max_rotation"] * DEG_TO_RAD,
-                min_rotation=geom_parameters["min_rotation"] * DEG_TO_RAD,
-                rotate_step=geom_parameters["rotate_step"],
-                property_boundary=geom_parameters["property_boundary"],
-                no_go_boundaries=geom_parameters["no_go_boundaries"],
+                max_spacing=geom["max_spacing"],
+                min_spacing=geom["min_spacing"],
+                spacing_step=geom["spacing_step"],
+                max_rotation=geom["max_rotation"] * DEG_TO_RAD,
+                min_rotation=geom["min_rotation"] * DEG_TO_RAD,
+                rotate_step=geom["rotate_step"],
+                property_boundary=geom["property_boundary"],
+                no_go_boundaries=geom["no_go_boundaries"],
             )
             design = DesignRowWise(
                 flow_rate,
@@ -327,7 +319,7 @@ class GroundHeatExchanger:
                 self.pipe,
                 self.grout,
                 self.soil,
-                start_month,
+                1,
                 end_month,
                 max_eft,
                 min_eft,
@@ -341,48 +333,31 @@ class GroundHeatExchanger:
                 method=TimestepType.HYBRID,
             )
         start_time = time()
-        search = design.find_design()
+        search = design.find_design()  # TODO: I wonder if it would simplify things to just return the GHE object
         search_time = time() - start_time
-        if not search.ghe:
-            pass
         found_ghe = cast(GHE, search.ghe)
         found_ghe.compute_g_functions(min_height, max_height)
-        found_ghe.size(
-            method=TimestepType.HYBRID,
-            max_height=max_height,
-            min_height=min_height,
-            design_max_eft=max_eft,
-            design_min_eft=min_eft,
-        )
+        found_ghe.size(TimestepType.HYBRID, max_height, min_height, max_eft, min_eft)
         return search, search_time, found_ghe
 
-    def get_g_function(
-        self, inputs: dict, ghe_name: str, boundary_condition="MIFT"
-    ) -> tuple[ndarray, ndarray, ndarray]:
+    def get_g_function(self, ghe_dict: dict, boundary_condition="MIFT") -> tuple[ndarray, ndarray, ndarray]:
         # TODO: Create a SingleUTube class or something in order to get the STS stitched up
-        ghe_dict: dict = inputs["ground-heat-exchanger"][ghe_name]
         pre_designed = ghe_dict["pre_designed"]
         borehole_height: float = pre_designed["H"]
         if pre_designed["arrangement"] == "MANUAL":
-            x_positions: list[float] = pre_designed["x"]
-            y_positions: list[float] = pre_designed["y"]
+            x_positions: Sequence[float] = pre_designed["x"]
+            y_positions: Sequence[float] = pre_designed["y"]
         elif pre_designed["arrangement"] == "RECTANGLE":
             num_bh_x = pre_designed["boreholes_in_x_dimension"]
             num_bh_y = pre_designed["boreholes_in_y_dimension"]
             spacing_x = pre_designed["spacing_in_x_dimension"]
             spacing_y = pre_designed["spacing_in_y_dimension"]
-            x_spacing = 0.0 if num_bh_x == 1 else spacing_x
-            y_spacing = 0.0 if num_bh_y == 1 else spacing_y
-            locations = rectangle(num_bh_x, num_bh_y, x_spacing, y_spacing)
-            x_positions = []
-            y_positions = []
-            for loc in locations:
-                x_positions.append(loc[0])
-                y_positions.append(loc[1])
+            locations = rectangle(num_bh_x, num_bh_y, spacing_x, spacing_y)
+            x_positions, y_positions = zip(*locations)
         else:
             raise RuntimeError("Invalid arrangement type for pre_designed borehole field")
         if len(x_positions) != len(y_positions):
-            pass  # TODO: Emit error
+            raise RuntimeError("Borehole location coordinate mismatch, make sure length of x and y are equal")
         nbh = len(x_positions)
         burial_depth: float = self.pygfunction_borehole.D
         borehole_radius: float = self.pygfunction_borehole.r_b
@@ -398,7 +373,7 @@ class GroundHeatExchanger:
         else:
             raise NotImplementedError(f"FlowConfigType {flow_type_str} not implemented.")
 
-        pipe_map = {
+        pipe_map = {  # TODO: Should we just use the PipeType enum from PyGFunction?  Maybe not...
             BHPipeType.SINGLEUTUBE: PipeType.SINGLEUTUBE,
             BHPipeType.DOUBLEUTUBESERIES: PipeType.DOUBLEUTUBESERIES,
             BHPipeType.DOUBLEUTUBEPARALLEL: PipeType.DOUBLEUTUBEPARALLEL,
@@ -410,7 +385,7 @@ class GroundHeatExchanger:
         log_time_lts = eskilson_log_times()
         time_values = exp(log_time_lts) * ts
 
-        ghe = PyGHE(
+        ghe = PyGHE(  # TODO: Can we use more from the PyGHE class to simplify our code?
             H=borehole_height,
             D=burial_depth,
             r_b=borehole_radius,

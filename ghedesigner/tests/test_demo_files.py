@@ -13,7 +13,7 @@ expected_demo_results_dict = loads(expected_results_path.read_text())
 # override this with a list of Paths to JSON config files to run, or set to None to run all demo files
 files_to_debug: list[Path] = [
     # Path("/home/edwin/Projects/GHEDesigner/demos/run_simulation_presized_manual.json"),
-    Path(__file__).parent.parent.parent / "demos" / "run_simulation_presized_manual.json"
+    # Path(__file__).parent.parent.parent / "demos" / "run_simulation_presized_manual.json"
 ]
 
 limit_debug_file_count = 0
