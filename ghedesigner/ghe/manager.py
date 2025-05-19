@@ -9,6 +9,7 @@ from pygfunction.ground_heat_exchanger import GroundHeatExchanger as PyGHE
 from ghedesigner.constants import DEG_TO_RAD, MONTHS_IN_YEAR
 from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
+from ghedesigner.ghe.coordinates import rectangle
 from ghedesigner.ghe.design.base import DesignBase
 from ghedesigner.ghe.design.birectangle import DesignBiRectangle, GeometricConstraintsBiRectangle
 from ghedesigner.ghe.design.birectangle_constrained import (
@@ -360,8 +361,24 @@ class GroundHeatExchanger:
         ghe_dict: dict = inputs["ground-heat-exchanger"][ghe_name]
         pre_designed = ghe_dict["pre_designed"]
         borehole_height: float = pre_designed["H"]
-        x_positions: list[float] = pre_designed["x"]
-        y_positions: list[float] = pre_designed["y"]
+        if pre_designed["arrangement"] == "MANUAL":
+            x_positions: list[float] = pre_designed["x"]
+            y_positions: list[float] = pre_designed["y"]
+        elif pre_designed["arrangement"] == "RECTANGLE":
+            num_bh_x = pre_designed["boreholes_in_x_dimension"]
+            num_bh_y = pre_designed["boreholes_in_y_dimension"]
+            spacing_x = pre_designed["spacing_in_x_dimension"]
+            spacing_y = pre_designed["spacing_in_y_dimension"]
+            x_spacing = 0.0 if num_bh_x == 1 else spacing_x
+            y_spacing = 0.0 if num_bh_y == 1 else spacing_y
+            locations = rectangle(num_bh_x, num_bh_y, x_spacing, y_spacing)
+            x_positions = []
+            y_positions = []
+            for loc in locations:
+                x_positions.append(loc[0])
+                y_positions.append(loc[1])
+        else:
+            raise RuntimeError("Invalid arrangement type for pre_designed borehole field")
         if len(x_positions) != len(y_positions):
             pass  # TODO: Emit error
         nbh = len(x_positions)

@@ -305,28 +305,72 @@
           },
           "pre_designed": {
             "type": "object",
-            "description": "A set of pre-designed borehole locations",
+            "description": "Data related to a pre-designed borehole field, used in cases where the field arrangement is known ahead of time.  GHEDesigner will provide a g-function calculation for the specified field.",
             "properties": {
               "H": {
                 "type": "number",
-                "description": "Borehole length, in meters"
+                "description": "Length of each borehole, in meters"
+              },
+              "arrangement": {
+                "type": "string",
+                "enum": ["MANUAL", "RECTANGLE"],
+                "description": "Pipe arrangement specified."
+              },
+              "boreholes_in_x_dimension": {
+                "type": "number",
+                "description": "Number of boreholes in the x direction of the field, dimensionless"
+              },
+              "boreholes_in_y_dimension": {
+                "type": "number",
+                "description": "Number of boreholes in the y direction of the field, dimensionless"
+              },
+              "spacing_in_x_dimension": {
+                "type": "number",
+                "description": "Borehole spacing in the x direction of the field, in meters (ignored if boreholes_in_x_dimension = 1)"
+              },
+              "spacing_in_y_dimension": {
+                "type": "number",
+                "description": "Borehole spacing in the y direction of the field, in meters (ignored if boreholes_in_y_dimension = 1)"
               },
               "x": {
                 "type": "array",
-                "description": "An array of x coordinate positions, one for each borehole in the field",
+                "description": "For MANUAL arrangement, this provides an array of x coordinate positions, one for each borehole in the field",
                 "items": {
                   "type": "number"
                 }
               },
               "y": {
                 "type": "array",
-                "description": "An array of y coordinate positions, one for each borehole in the field",
+                "description": "For MANUAL arrangement, this provides an array of y coordinate positions, one for each borehole in the field",
                 "items": {
                   "type": "number"
                 }
               }
             },
-            "required": ["H", "x", "y"]
+            "oneOf": [
+              {
+                "properties": {
+                  "arrangement": {
+                    "const": "MANUAL"
+                  }
+                },
+                "required": ["H", "x", "y"]
+              },
+              {
+                "properties": {
+                  "method": {
+                    "const": "RECTANGLE"
+                  }
+                },
+                "required": [
+                  "H",
+                  "boreholes_in_x_dimension",
+                  "boreholes_in_y_dimension",
+                  "spacing_in_x_dimension",
+                  "spacing_in_y_dimension"
+                ]
+              }
+            ]
           },
           "geometric_constraints": {
             "type": "object",

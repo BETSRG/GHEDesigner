@@ -38,9 +38,12 @@
         "diameter": 0.14
       },
       "pre_designed": {
+        "arrangement": "RECTANGLE",
         "H": 150,
-        "x": [0.0],
-        "y": [0.0]
+        "spacing_in_x_dimension": 4.5,
+        "spacing_in_y_dimension": 5.5,
+        "boreholes_in_x_dimension": 4,
+        "boreholes_in_y_dimension": 8
       }
     }
   }
