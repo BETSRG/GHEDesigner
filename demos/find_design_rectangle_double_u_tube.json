@@ -42,13 +42,13 @@
         "width": 100,
         "b_min": 3,
         "b_max": 10,
-        "max_height": 135,
-        "min_height": 60,
         "method": "RECTANGLE"
       },
       "design": {
         "max_eft": 35,
-        "min_eft": 5
+        "min_eft": 5,
+        "max_height": 135,
+        "min_height": 60
       },
       "loads": [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

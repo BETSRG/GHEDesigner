@@ -42,13 +42,13 @@
       "geometric_constraints": {
         "length": 100,
         "b": 5,
-        "max_height": 135,
-        "min_height": 60,
         "method": "NEARSQUARE"
       },
       "design": {
         "max_eft": 35,
-        "min_eft": 5
+        "min_eft": 5,
+        "max_height": 135,
+        "min_height": 60
       },
       "loads": [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

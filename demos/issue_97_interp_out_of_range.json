@@ -21,15 +21,15 @@
       },
       "design": {
         "max_eft": 35,
-        "min_eft": 5
+        "min_eft": 5,
+        "max_height": 200,
+        "min_height": 100
       },
       "geometric_constraints": {
         "b_max": 10,
         "b_min": 3,
         "length": 85,
-        "max_height": 200,
         "method": "RECTANGLE",
-        "min_height": 100,
         "width": 36.5
       },
       "grout": {

@@ -361,18 +361,6 @@
                 "format": "Meters",
                 "description": "Maximum borehole-to-borehole spacing in y-direction."
               },
-              "max_height": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Maximum height, or active length, of each borehole heat exchanger."
-              },
-              "min_height": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Minimum height, or active length, of each borehole heat exchanger."
-              },
               "method": {
                 "type": "string",
                 "enum": [
@@ -485,8 +473,6 @@
                   "b_min",
                   "b_max_x",
                   "b_max_y",
-                  "max_height",
-                  "min_height",
                   "method"
                 ]
               },
@@ -500,8 +486,6 @@
                   "b_min",
                   "b_max_x",
                   "b_max_y",
-                  "max_height",
-                  "min_height",
                   "property_boundary",
                   "no_go_boundaries",
                   "method"
@@ -519,8 +503,6 @@
                   "b_min",
                   "b_max_x",
                   "b_max_y",
-                  "max_height",
-                  "min_height",
                   "method"
                 ]
               },
@@ -530,13 +512,7 @@
                     "const": "NEARSQUARE"
                   }
                 },
-                "required": [
-                  "length",
-                  "b",
-                  "max_height",
-                  "min_height",
-                  "method"
-                ]
+                "required": ["length", "b", "method"]
               },
               {
                 "properties": {
@@ -544,15 +520,7 @@
                     "const": "RECTANGLE"
                   }
                 },
-                "required": [
-                  "length",
-                  "width",
-                  "b_min",
-                  "b_max",
-                  "max_height",
-                  "min_height",
-                  "method"
-                ]
+                "required": ["length", "width", "b_min", "b_max", "method"]
               },
               {
                 "properties": {
@@ -568,8 +536,6 @@
                   "max_rotation",
                   "min_rotation",
                   "rotate_step",
-                  "max_height",
-                  "min_height",
                   "property_boundary",
                   "no_go_boundaries",
                   "method"
@@ -597,9 +563,21 @@
               "continue_if_design_unmet": {
                 "type": "boolean",
                 "description": "Causes to return the best available borehole  field configuration rather than fail if design conditions  are unmet.  Optional. Default False."
+              },
+              "max_height": {
+                "type": "number",
+                "minimum": 0,
+                "format": "Meters",
+                "description": "Maximum height, or active length, of each borehole heat exchanger."
+              },
+              "min_height": {
+                "type": "number",
+                "minimum": 0,
+                "format": "Meters",
+                "description": "Minimum height, or active length, of each borehole heat exchanger."
               }
             },
-            "required": ["max_eft", "min_eft"]
+            "required": ["max_eft", "min_eft", "max_height", "min_height"]
           },
           "loads": {
             "type": "array",

@@ -140,22 +140,23 @@ class GroundHeatExchanger:
             ghe_loads: list[float] = loads_override
         else:
             ghe_loads = ghe_dict["loads"]
-        design_parameters = ghe_dict["design"]
         num_months: int = inputs["simulation-control"]["simulation-months"]
         if (num_months % MONTHS_IN_YEAR) > 0:
             raise ValueError(f"num_months must be a multiple of {MONTHS_IN_YEAR}")
         start_month: int = 1
         end_month: int = num_months
 
-        # grab some design conditions
-        continue_if_design_unmet: bool = ghe_dict["design"].get("continue_if_design_unmet", False)
         flow_type_str: str = ghe_dict["flow_type"]
         flow_type = FlowConfigType(flow_type_str.upper())
         flow_rate: float = ghe_dict["flow_rate"]
-        min_eft: float = ghe_dict["design"]["min_eft"]
-        max_eft: float = ghe_dict["design"]["max_eft"]
-        max_height: float = ghe_dict["geometric_constraints"]["max_height"]  # TODO: Move min/max height to design?
-        min_height: float = ghe_dict["geometric_constraints"]["min_height"]
+
+        # grab some design conditions
+        design_parameters = ghe_dict["design"]
+        continue_if_design_unmet: bool = design_parameters.get("continue_if_design_unmet", False)
+        min_eft: float = design_parameters["min_eft"]
+        max_eft: float = design_parameters["max_eft"]
+        max_height: float = design_parameters["max_height"]
+        min_height: float = design_parameters["min_height"]
         max_boreholes: int | None = design_parameters.get("max_boreholes")
         # check_arg_bounds(min_eft, max_eft, "min_eft", "max_eft")
 

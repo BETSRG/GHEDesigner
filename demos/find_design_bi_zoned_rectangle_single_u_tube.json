@@ -43,13 +43,13 @@
         "b_min": 2,
         "b_max_x": 10,
         "b_max_y": 12,
-        "max_height": 135,
-        "min_height": 60,
         "method": "BIZONEDRECTANGLE"
       },
       "design": {
         "max_eft": 35,
-        "min_eft": 5
+        "min_eft": 5,
+        "max_height": 135,
+        "min_height": 60
       },
       "loads": [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

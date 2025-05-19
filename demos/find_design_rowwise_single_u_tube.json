@@ -45,8 +45,6 @@
         "min_rotation": -90,
         "max_rotation": 0,
         "rotate_step": 0.5,
-        "max_height": 135,
-        "min_height": 60,
         "property_boundary": [
           [19.46202532, 108.8860759],
           [19.67827004, 94.46835443],
@@ -87,7 +85,9 @@
       },
       "design": {
         "max_eft": 35,
-        "min_eft": 5
+        "min_eft": 5,
+        "max_height": 135,
+        "min_height": 60
       },
       "loads": [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
