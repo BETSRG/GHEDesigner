@@ -18,7 +18,6 @@ class GHEDesignerBoreholeBase:
         soil: Soil,
     ) -> None:
         self.m_flow_borehole = m_flow_borehole
-        # self.borehole = _borehole
         self.pipe = pipe
         self.soil = soil
         self.grout = grout

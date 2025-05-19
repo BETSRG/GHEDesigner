@@ -6,9 +6,9 @@ from ghedesigner.constants import DEG_TO_RAD, PI_OVER_2, RAD_TO_DEG
 from ghedesigner.ghe.shape import Shapes, sort_intersections
 
 
-def gen_shape(prop_bound, ng_zones=None):
+def gen_shape(prop_bound: list[list[float]], ng_zones=None):
     """Returns an array of shapes objects representing the coordinates given"""
-    r_a = [Shapes(prop_bound)]
+    r_a: list[Shapes | list[Shapes] | None] = [Shapes(prop_bound)]
     if ng_zones is not None:
         r_n = []
         for ng_zone in ng_zones:
@@ -204,7 +204,7 @@ def pts_dist(p1, p2):
     return sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
-def remove_duplicates(borefield, space, disp=False):
+def remove_duplicates(borefield: list, space, disp=False):
     """
     Removes all the duplicates found from the duplicate pairs returned in
     :func:`check_duplicates`.
@@ -258,7 +258,7 @@ def two_space_gen_bhc(
     p_space=None,
     i_space=None,
     intersection_tolerance=1e-5,
-):
+) -> np.array:
     """Generates a borefield that has perimeter spacing
 
     Parameters:

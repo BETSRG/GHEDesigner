@@ -37,7 +37,6 @@ def rectangle(
     for i in range(num_bh_x):
         for j in range(num_bh_y):
             r.append((x_0 + i * spacing_x, y_0 + j * spacing_y))
-
     return r
 
 
@@ -75,7 +74,6 @@ def open_rectangle(
     else:
         open_r = rectangle(num_bh_x, num_bh_y, spacing_x, spacing_y)
         # nbh = num_bh_x * num_bh_y
-
     return open_r
 
 
@@ -91,7 +89,6 @@ def c_shape(n_x_1: int, n_y: int, b_x: int | float, b_y: int | float, n_x_2: int
     y_loc = (n_y - 1) * b_y
     for i in range(1, n_x_2 + 1):
         c.append((i * b_x, y_loc))
-
     return c
 
 
@@ -104,7 +101,6 @@ def lop_u(n_x: int, n_y_1: int, b_x: int | float, b_y: int | float, n_y_2: int) 
     x_loc = (n_x - 1) * b_x
     for j in range(1, n_y_2):
         _lop_u.append((x_loc, j * b_y))
-
     return _lop_u
 
 
@@ -114,7 +110,6 @@ def l_shape(n_x: int, n_y: int, b_x: int | float, b_y: int | float) -> list[tupl
         l_shape_object.append((i * b_x, 0.0))
     for j in range(1, n_y):
         l_shape_object.append((0.0, j * b_y))
-
     return l_shape_object
 
 

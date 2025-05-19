@@ -22,7 +22,7 @@ class TestRowWise(GHEBaseTest):
         # Load Property Boundary
         property_boundary_file = self.test_data_directory / "polygon_property_boundary.csv"
         prop_polygon_df: pd.DataFrame = pd.read_csv(str(property_boundary_file))
-        self.prop_polygon_ar: list = prop_polygon_df.to_numpy().tolist()
+        self.prop_polygon_ar: list[list[float]] = prop_polygon_df.to_numpy().tolist()
 
         # Load Building
         building_file = self.test_data_directory / "polygon_building.csv"

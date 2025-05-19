@@ -284,7 +284,5 @@ class GFunction:
         g_function_corrected: list
             A corrected g_function
         """
-        g_function_corrected = []
-        for g in g_function:
-            g_function_corrected.append(g - log(rb_star / rb))
+        g_function_corrected = [g - log(rb_star / rb) for g in g_function]
         return g_function_corrected

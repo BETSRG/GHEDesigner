@@ -5,6 +5,9 @@ from ghedesigner.enums import BHPipeType
 from ghedesigner.media import ThermalProperty
 from ghedesigner.utilities import check_arg_bounds
 
+FloatOrFloats = float | list[float]
+TupleOrTuples = tuple | list[tuple]
+
 
 class Pipe(ThermalProperty):
     def __init__(self, pipe_type: BHPipeType, conductivity: float | tuple[float, float], rho_cp: float) -> None:
@@ -136,9 +139,9 @@ class Pipe(ThermalProperty):
 
     def _finalize(
         self,
-        pos: tuple | list[tuple],
-        r_in: float | list[float],
-        r_out: float | list[float],
+        pos: TupleOrTuples,
+        r_in: FloatOrFloats,
+        r_out: FloatOrFloats,
         s: float,
         roughness: float,
     ) -> None:

@@ -27,7 +27,7 @@ from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.utilities import combine_sts_lts, eskilson_log_times
 
 
-class GroundHeatExchanger:
+class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHEDesigner?
     def __init__(
         self,
         grout_conductivity: float,
