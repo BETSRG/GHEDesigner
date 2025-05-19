@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from ghedesigner.main import _run_manager_from_cli_worker
+from ghedesigner.main import run
 
 # results can be updated with the update_demo_results.py file in /scripts
 # comment the 'self.assert' statements below to generate an updated set of results first
@@ -43,7 +43,7 @@ def test_demo_files(demo_file_path: Path, time_str: str):
     out_dir = demo_output_parent_dir / time_str / demo_file_path.stem
     out_dir.mkdir(parents=True, exist_ok=True)
     print(f"Running: {demo_file_path}")
-    assert _run_manager_from_cli_worker(input_file_path=demo_file_path, output_directory=out_dir) == 0
+    assert run(input_file_path=demo_file_path, output_directory=out_dir) == 0
 
     # check the outputs
     results_path = out_dir / "SimulationSummary.json"

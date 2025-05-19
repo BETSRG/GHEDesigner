@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
 logger = logging.getLogger(__name__)
 
 
-def _run_manager_from_cli_worker(input_file_path: Path, output_directory: Path) -> int:
+def run(input_file_path: Path, output_directory: Path) -> int:
     """
     Worker function to run simulation.
 
@@ -155,7 +155,7 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
 
     output_path = Path(output_directory).resolve()
 
-    return _run_manager_from_cli_worker(input_path, output_path)
+    return run(input_path, output_path)
 
 
 if __name__ == "__main__":
