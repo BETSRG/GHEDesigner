@@ -43,7 +43,11 @@ class TestPreDesignedGHE(TestCase):
         # case 1: "g-function_library_1.0/rectangle_5m_v1.0.json, 1_1, 5._192._0.08"
         get_g_func_inputs = {
             "ground-heat-exchanger": {
-                "ghe1": {"flow_rate": 0.5, "flow_type": "BOREHOLE", "pre_designed": {"H": 192, "x": [0.0], "y": [0.0]}}
+                "ghe1": {
+                    "flow_rate": 0.5,
+                    "flow_type": "BOREHOLE",
+                    "pre_designed": {"arrangement": "MANUAL", "H": 192, "x": [0.0], "y": [0.0]},
+                }
             }
         }
         log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, "ghe1", boundary_condition="UBWT")
@@ -58,7 +62,12 @@ class TestPreDesignedGHE(TestCase):
                 "ghe1": {
                     "flow_rate": 0.5,
                     "flow_type": "BOREHOLE",
-                    "pre_designed": {"H": 192, "x": [0.0, 0.0, 5.0, 5.0], "y": [0.0, 5.0, 0.0, 5.0]},
+                    "pre_designed": {
+                        "arrangement": "MANUAL",
+                        "H": 192,
+                        "x": [0.0, 0.0, 5.0, 5.0],
+                        "y": [0.0, 5.0, 0.0, 5.0],
+                    },
                 }
             }
         }
@@ -73,6 +82,7 @@ class TestPreDesignedGHE(TestCase):
                     "flow_rate": 0.5,
                     "flow_type": "BOREHOLE",
                     "pre_designed": {
+                        "arrangement": "MANUAL",
                         "H": 192,
                         "x": [0.0, 0.0, 0.0, 0.0, 5.0, 5.0, 5.0, 5.0, 10.0, 10.0, 10.0, 10.0, 15.0, 15.0, 15.0, 15.0],
                         "y": [0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0],
