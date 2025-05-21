@@ -75,9 +75,9 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             ghe_dict = full_inputs["ground-heat-exchanger"][ghe_name]
             ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, full_inputs["fluid"])
             if "pre_designed" in ghe_dict:
-                linear_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
+                log_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
                 results = OutputManager("GHEDesigner Run from CLI", "Just Calculate G", "", "")
-                results.just_write_g_function(output_directory, linear_time, g_values, g_bhw_values)
+                results.just_write_g_function(output_directory, log_time, g_values, g_bhw_values)
             else:
                 # TODO: Assert that "design" data is in the ghe object
                 search, search_time, _ = ghe.design_and_size_ghe(
@@ -102,7 +102,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
         heat_pump.set_loads_from_file(loads_file_path)
         ghe_loads = heat_pump.get_ground_loads()
         if "pre_designed" in ghe_dict:
-            linear_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
+            log_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
             print(g_values, g_bhw_values)
         else:
             search, search_time, _ = ghe.design_and_size_ghe(
