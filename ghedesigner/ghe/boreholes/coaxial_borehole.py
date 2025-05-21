@@ -1,13 +1,15 @@
+from typing import cast
+
 import numpy as np
 import pygfunction as gt
 from numpy import log, pi
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import TWO_PI
-from ghedesigner.enums import BHPipeType, DoubleUTubeConnType
-from ghedesigner.ghe.multi_u_borehole import GHEDesignerBoreholeWithMultiplePipes, MultipleUTube
-from ghedesigner.ghe.single_u_borehole import SingleUTube
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.ghe.boreholes.multi_u_borehole import GHEDesignerBoreholeWithMultiplePipes
+from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import GHEFluid, Grout, Soil
 
 
 class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
@@ -32,8 +34,10 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         # e.g. r_in_in is inner radius of the inner pipe
 
         # Unpack the radii to reduce confusion in the future
-        self.r_in_in, self.r_in_out = self.r_inner
-        self.r_out_in, self.r_out_out = self.r_outer
+        r_inner = cast(tuple[float, float], self.r_inner)
+        r_outer = cast(tuple[float, float], self.r_outer)
+        self.r_in_in, self.r_in_out = r_inner
+        self.r_out_in, self.r_out_out = r_outer
 
         self.borehole = _borehole  # pygfunction borehole
 
@@ -65,8 +69,10 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         # Note: The dimensions of the inlet pipe are the first elements of the vectors.
         # In this example, the inlet pipe is the inside pipe.
         # TODO: fix this
-        r_inner_p = np.array([pipe.r_in[0], pipe.r_out[0]])  # Inner pipe radii (m)
-        r_outer_p = np.array([pipe.r_in[1], pipe.r_out[1]])  # Outer pipe radii (m)
+        r_in = cast(tuple[float, float], pipe.r_in)
+        r_out = cast(tuple[float, float], pipe.r_out)
+        r_inner_p = np.array([r_in[0], r_out[0]])  # Inner pipe radii (m)
+        r_outer_p = np.array([r_in[1], r_out[1]])  # Outer pipe radii (m)
 
         gt.pipes.Coaxial.__init__(
             self, pipe.pos, r_inner_p, r_outer_p, _borehole, self.soil.k, self.grout.k, self.R_ff, self.R_fp
@@ -130,7 +136,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         # Find an equivalent single U-tube given a coaxial heat exchanger
         vol_fluid, vol_pipe, resist_conv, resist_pipe = self.concentric_tube_volumes()
 
-        preliminary = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe)
+        preliminary = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rhoCp)
 
         # Vary grout thermal conductivity to match effective borehole thermal
         # resistance
@@ -153,9 +159,12 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         return fluid.rho * velocity * dia_hydraulic / fluid.mu
 
     def as_dict(self) -> dict:
-        reynold_no = self.compute_reynolds_concentric(
-            self.m_flow_borehole, self.pipe.r_in, self.pipe.roughness, self.fluid
-        )
+        # TODO: This is actually a tuple of radii, right?
+        r_in = cast(float, self.pipe.r_in)
+        # TODO: This is passing roughness, but shouldn't, right?
+        reynold_no = self.compute_reynolds_concentric(self.m_flow_borehole, r_in, self.pipe.roughness, self.fluid)
+        # r_out = cast(tuple[float, float], self.pipe.r_out)
+        # reynold_no = self.compute_reynolds_concentric(self.m_flow_borehole, r_out[1], r_out[0], self.fluid)
         blob = {
             "type": str(self.__class__),
             "mass_flow_borehole": {"value": self.m_flow_borehole, "units": "kg/s"},
@@ -174,8 +183,10 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
 
     def concentric_tube_volumes(self) -> tuple[float, float, float, float]:
         # Unpack the radii to reduce confusion in the future
-        r_in_in, r_in_out = self.r_inner
-        r_out_in, r_out_out = self.r_outer
+        r_inner = cast(tuple[float, float], self.r_inner)
+        r_outer = cast(tuple[float, float], self.r_outer)
+        r_in_in, r_in_out = r_inner
+        r_out_in, r_out_out = r_outer
         # Compute volumes for concentric ghe geometry
         vol_fluid = pi * ((r_in_in**2) + (r_out_in**2) - (r_in_out**2))
         vol_pipe = pi * ((r_in_out**2) - (r_in_in**2) + (r_out_out**2) - (r_out_in**2))
@@ -184,24 +195,3 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         resist_conv = 1 / (self.h_f_a_in * area_surf_outer)
         resist_pipe = log(r_out_out / r_out_in) / (TWO_PI * self.pipe.k[1])
         return vol_fluid, vol_pipe, resist_conv, resist_pipe
-
-
-def get_bhe_object(
-    bhe_type: BHPipeType,
-    m_flow_borehole: float,
-    fluid: GHEFluid,
-    _borehole: Borehole,
-    pipe: Pipe,
-    grout: Grout,
-    soil: Soil,
-):
-    if bhe_type == BHPipeType.SINGLEUTUBE:
-        return SingleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
-    elif bhe_type == BHPipeType.DOUBLEUTUBEPARALLEL:
-        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=DoubleUTubeConnType.PARALLEL)
-    elif bhe_type == BHPipeType.DOUBLEUTUBESERIES:
-        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=DoubleUTubeConnType.SERIES)
-    elif bhe_type == BHPipeType.COAXIAL:
-        return CoaxialPipe(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
-    else:
-        raise TypeError("BHE type not implemented")

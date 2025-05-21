@@ -1,7 +1,7 @@
 from math import sqrt
 from unittest import TestCase
 
-from ghedesigner.ghe.geometry.shape import point_polygon_check
+from ghedesigner.ghe.shape import point_polygon_check
 
 
 class TestShapes(TestCase):

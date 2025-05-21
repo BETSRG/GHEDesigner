@@ -2,7 +2,7 @@ from ghedesigner.building import Building
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 
 
-class System:
+class System:  # TODO: This isn't being used except by a unit test, should we keep it?
     def __init__(self) -> None:
         self.num_months = 0
         self.initial_loop_temp = 20.0

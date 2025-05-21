@@ -3,11 +3,11 @@ from math import ceil
 import numpy as np
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
+from ghedesigner.enums import FlowConfigType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
-from ghedesigner.ghe.simulation import SimulationParameters
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.utilities import borehole_spacing, check_bracket, eskilson_log_times, sign
 
 
@@ -18,12 +18,18 @@ class Bisection1D:
         field_descriptors: list,
         v_flow: float,
         borehole: Borehole,
-        bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
-        sim_params: SimulationParameters,
+        max_boreholes: int | None,
+        min_height: float,
+        max_height: float,
+        continue_if_design_unmet: bool,
+        start_month: int,
+        end_month: int,
+        min_eft: float,
+        max_eft: float,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
@@ -47,10 +53,16 @@ class Bisection1D:
         self.flow_type = flow_type
         v_flow_system, m_flow_borehole = self.retrieve_flow(coordinates, fluid.rho)
         self.method = method
-
+        self.min_height = min_height
+        self.max_height = max_height
+        self.start_month = start_month
+        self.end_month = end_month
+        self.max_boreholes = max_boreholes
+        self.max_eft = max_eft
+        self.min_eft = min_eft
+        self.continue_if_design_unmet = continue_if_design_unmet
         self.log_time = eskilson_log_times()
-        self.bhe_type = bhe_type
-        self.sim_params = sim_params
+        self.bhe_type = pipe.type
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.coordinates_domain = coordinates_domain
         self.fieldDescriptors = field_descriptors
@@ -80,18 +92,18 @@ class Bisection1D:
         self.ghe = GHE(
             v_flow_system,
             b,
-            bhe_type,
+            pipe.type,
             fluid,
             borehole,
             pipe,
             grout,
             soil,
             g_function,
-            sim_params,
+            self.start_month,
+            self.end_month,
             hourly_extraction_ground_loads,
             field_specifier=current_field,
             field_type=field_type,
-            load_years=load_years,
         )
 
         self.calculated_temperatures: dict[int, np.float64] = {}
@@ -152,18 +164,18 @@ class Bisection1D:
             grout,
             soil,
             g_function,
-            self.sim_params,
+            self.start_month,
+            self.end_month,
             self.hourly_extraction_ground_loads,
             field_type=self.field_type,
             field_specifier=field_specifier,
-            load_years=self.load_years,
         )
 
     def calculate_excess(self, coordinates, h, field_specifier="N/A"):
         self.initialize_ghe(coordinates, h, field_specifier=field_specifier)
         # Simulate after computing just one g-function
         max_hp_eft, min_hp_eft = self.ghe.simulate(method=self.method)
-        t_excess = self.ghe.cost(max_hp_eft, min_hp_eft)
+        t_excess = self.ghe.cost(max_hp_eft, min_hp_eft, self.max_eft, self.min_eft)
         self.searchTracker.append([field_specifier, t_excess, max_hp_eft, min_hp_eft])
 
         return t_excess
@@ -172,9 +184,9 @@ class Bisection1D:
         x_l_idx = 0
 
         # find upper bound that respects max_boreholes
-        if self.sim_params.max_boreholes is not None:
+        if self.max_boreholes is not None:
             num_coordinates_in_each = [len(x) for x in self.coordinates_domain]
-            x_r_idx = [idx for idx, x in enumerate(num_coordinates_in_each) if x < self.sim_params.max_boreholes][-1]
+            x_r_idx = [idx for idx, x in enumerate(num_coordinates_in_each) if x < self.max_boreholes][-1]
         else:
             x_r_idx = len(self.coordinates_domain) - 1
 
@@ -184,17 +196,17 @@ class Bisection1D:
         # smallest location in the domain
         t_0_lower = self.calculate_excess(
             self.coordinates_domain[x_l_idx],
-            self.sim_params.min_height,
+            self.min_height,
             field_specifier=self.fieldDescriptors[x_l_idx],
         )
         t_0_upper = self.calculate_excess(
             self.coordinates_domain[x_l_idx],
-            self.sim_params.max_height,
+            self.max_height,
             field_specifier=self.fieldDescriptors[x_l_idx],
         )
         t_m1 = self.calculate_excess(
             self.coordinates_domain[x_r_idx],
-            self.sim_params.max_height,
+            self.max_height,
             field_specifier=self.fieldDescriptors[x_r_idx],
         )
 
@@ -204,7 +216,7 @@ class Bisection1D:
         if check_bracket(sign(t_0_lower), sign(t_0_upper)):
             if self.disp:
                 print("Size between min and max of lower bound in domain.")
-            self.initialize_ghe(self.coordinates_domain[x_l_idx], self.sim_params.max_height)
+            self.initialize_ghe(self.coordinates_domain[x_l_idx], self.max_height)
             return x_l_idx, self.coordinates_domain[x_l_idx]
         elif check_bracket(sign(t_0_upper), sign(t_m1)):
             if self.disp:
@@ -215,12 +227,12 @@ class Bisection1D:
                 "than what is possible based on the current design parameters."
             )
             print(condition_msg)
-            if self.sim_params.continue_if_design_unmet:
+            if self.continue_if_design_unmet:
                 print("Smallest available configuration selected.")
                 selection_key = x_l_idx
                 self.initialize_ghe(
                     self.coordinates_domain[selection_key],
-                    self.sim_params.min_height,
+                    self.min_height,
                     self.fieldDescriptors[selection_key],
                 )
                 return selection_key, self.coordinates_domain[selection_key]
@@ -235,12 +247,12 @@ class Bisection1D:
                 "or decreasing the maximum borehole spacing."
             )
             print(condition_msg)
-            if self.sim_params.continue_if_design_unmet:
+            if self.continue_if_design_unmet:
                 print("Largest available configuration selected.")
                 selection_key = x_r_idx
                 self.initialize_ghe(
                     self.coordinates_domain[selection_key],
-                    self.sim_params.max_height,
+                    self.max_height,
                     self.fieldDescriptors[selection_key],
                 )
                 return selection_key, self.coordinates_domain[selection_key]
@@ -266,7 +278,7 @@ class Bisection1D:
 
             c_t_excess = self.calculate_excess(
                 self.coordinates_domain[c_idx],
-                self.sim_params.max_height,
+                self.max_height,
                 field_specifier=self.fieldDescriptors[c_idx],
             )
 
@@ -282,7 +294,7 @@ class Bisection1D:
 
         coordinates = self.coordinates_domain[i]
 
-        self.calculate_excess(coordinates, self.sim_params.max_height, self.fieldDescriptors[i])
+        self.calculate_excess(coordinates, self.max_height, self.fieldDescriptors[i])
         # Make sure the field being returned pertains to the index which is the
         # closest to 0 but also negative (the maximum of all 0 or negative
         # excess temperatures)
@@ -312,6 +324,6 @@ class Bisection1D:
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
         self.initialize_ghe(
-            self.coordinates_domain[selection_key], self.sim_params.max_height, self.fieldDescriptors[selection_key]
+            self.coordinates_domain[selection_key], self.max_height, self.fieldDescriptors[selection_key]
         )
         return selection_key, self.coordinates_domain[selection_key]

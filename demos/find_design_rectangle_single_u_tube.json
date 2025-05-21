@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "topology": [
     {
       "type": "ground-heat-exchanger",
@@ -13,6 +13,8 @@
   },
   "ground-heat-exchanger": {
     "ghe1": {
+      "flow_rate": 0.5,
+      "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
@@ -40,15 +42,13 @@
         "width": 100,
         "b_min": 3,
         "b_max": 10,
-        "max_height": 135,
-        "min_height": 60,
         "method": "RECTANGLE"
       },
       "design": {
-        "flow_rate": 0.5,
-        "flow_type": "BOREHOLE",
         "max_eft": 35,
         "min_eft": 5,
+        "max_height": 135,
+        "min_height": 60,
         "max_boreholes": 200
       },
       "loads": [

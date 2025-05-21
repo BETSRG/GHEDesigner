@@ -1,711 +1,494 @@
-from __future__ import annotations
-
-from json import dumps
-from pathlib import Path
+from collections.abc import Sequence
 from time import time
+from typing import cast
 
+from numpy import array, exp, ndarray
 from pygfunction.boreholes import Borehole
+from pygfunction.enums import PipeType
+from pygfunction.ground_heat_exchanger import GroundHeatExchanger as PyGHE
 
 from ghedesigner.constants import DEG_TO_RAD, MONTHS_IN_YEAR
 from ghedesigner.enums import BHPipeType, DesignGeomType, FlowConfigType, TimestepType
-from ghedesigner.ghe.geometry.design import (
-    AnyBisectionType,
-    DesignBase,
-    DesignBiRectangle,
+from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
+from ghedesigner.ghe.coordinates import rectangle
+from ghedesigner.ghe.design.base import DesignBase
+from ghedesigner.ghe.design.birectangle import DesignBiRectangle, GeometricConstraintsBiRectangle
+from ghedesigner.ghe.design.birectangle_constrained import (
     DesignBiRectangleConstrained,
-    DesignBiZoned,
-    DesignNearSquare,
-    DesignRectangle,
-    DesignRowWise,
-)
-from ghedesigner.ghe.geometry.geometry import (
-    GeometricConstraints,
-    GeometricConstraintsBiRectangle,
     GeometricConstraintsBiRectangleConstrained,
-    GeometricConstraintsBiZoned,
-    GeometricConstraintsNearSquare,
-    GeometricConstraintsRectangle,
-    GeometricConstraintsRowWise,
 )
+from ghedesigner.ghe.design.bizoned import DesignBiZoned, GeometricConstraintsBiZoned
+from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
+from ghedesigner.ghe.design.rectangle import DesignRectangle, GeometricConstraintsRectangle
+from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRowWise
 from ghedesigner.ghe.ground_heat_exchangers import GHE
-from ghedesigner.ghe.simulation import SimulationParameters
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
-from ghedesigner.output import OutputManager
-from ghedesigner.utilities import check_arg_bounds
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.utilities import combine_sts_lts, eskilson_log_times
 
 
-class GroundHeatExchanger:
-    def __init__(self) -> None:
-        self._fluid: GHEFluid | None = None
-        self._grout: Grout | None = None
-        self._soil: Soil | None = None
-        self._pipe: Pipe | None = None
-        self.pipe_type: BHPipeType | None = None
-        self._borehole: Borehole | None = None
-        self._simulation_parameters: SimulationParameters | None = None
-        self._ground_loads: list[float] | None = None
-        # OK so geometric_constraints is tricky. We have base classes, yay!
-        # Unfortunately, the functionality between the child classes is not actually
-        # collapsed into a base class function... yet. So there will be complaints
-        # about types temporarily. It's going in the right direction though.
-        self.geom_type: DesignGeomType | None = None
-        self._geometric_constraints: GeometricConstraints | None = None
-        self._design: DesignBase | None = None
-        self._search: AnyBisectionType | None = None
-        self.results: OutputManager | None = None
-
-        # some things for results
-        self._search_time: float = 0.0
-        self.summary_results: dict = {}
-
-    def set_design_geometry_type(self, design_geometry_str: str) -> None:
-        """
-        Sets the design type.
-
-        :param design_geometry_str: design geometry input string.
-        :raises ValueError: If the design geometry string is not supported.
-        """
-        geometry_map = {geom.name: geom for geom in DesignGeomType}
-        geom_type = geometry_map.get(design_geometry_str.upper())
-
-        if not geom_type:
-            raise ValueError(f"Geometry constraint method '{design_geometry_str}' not supported.")
-
-        self.geom_type = geom_type
-
-    def set_pipe_type(self, bh_pipe_str: str) -> None:
-        """
-        Sets the borehole pipe type.
-
-        :param bh_pipe_str: pipe type input string.
-        :raises ValueError: If the borehole pipe type string is not supported.
-        """
-        pipe_type_map = {pipe.name: pipe for pipe in BHPipeType}
-        pipe_type = pipe_type_map.get(bh_pipe_str.upper())
-
-        if not pipe_type:
-            raise ValueError(f"Borehole pipe type '{bh_pipe_str}' not supported.")
-
-        self.pipe_type = pipe_type
-
-    def set_fluid(
+class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHEDesigner?
+    def __init__(
         self,
+        grout_conductivity: float,
+        grout_rho_cp: float,
+        soil_conductivity: float,
+        soil_rho_cp: float,
+        soil_undisturbed_temperature: float,
+        borehole_buried_depth: float,
+        borehole_radius: float,
+        pipe_arrangement_type: BHPipeType,
+        pipe_parameters: dict,
         fluid_name: str = "Water",
-        concentration_percent: float = 0.0,
-        temperature: float = 20.0,
+        fluid_concentration_percent: float = 0.0,
+        fluid_temperature: float = 20.0,
     ) -> None:
-        """
-        Sets the fluid instance.
-
-        :param fluid_name: fluid name input string.
-        :param concentration_percent: concentration percent of antifreeze mixture.
-        :param temperature: design fluid temperature, in C.
-        """
-        self._fluid = GHEFluid(fluid_name, concentration_percent, temperature)
-
-    def set_grout(self, conductivity: float, rho_cp: float) -> None:
-        """
-        Sets the grout instance.
-
-        :param conductivity: thermal conductivity, in W/m-K.
-        :param rho_cp: volumetric heat capacity, in J/m^3-K.
-        """
-        self._grout = Grout(conductivity, rho_cp)
-
-    def set_soil(self, conductivity: float, rho_cp: float, undisturbed_temp: float) -> None:
-        """
-        Sets the soil instance.
-
-        :param conductivity: thermal conductivity, in W/m-K.
-        :param rho_cp: volumetric heat capacity, in J/m^3-K.
-        :param undisturbed_temp: undisturbed soil temperature, in C.
-        """
-        self._soil = Soil(conductivity, rho_cp, undisturbed_temp)
-
-    def set_single_u_tube_pipe(
-        self,
-        inner_diameter: float,
-        outer_diameter: float,
-        shank_spacing: float,
-        roughness: float,
-        conductivity: float,
-        rho_cp: float,
-    ) -> None:
-        """
-        Sets the pipe instance for a single u-tube pipe.
-
-        :param inner_diameter: inner pipe diameter, in m.
-        :param outer_diameter: outer pipe diameter, in m.
-        :param shank_spacing: shank spacing between the u-tube legs, in m, as measured edge-to-edge.
-        :param roughness: pipe surface roughness, in m.
-        :param conductivity: thermal conductivity, in W/m-K.
-        :param rho_cp: volumetric heat capacity, in J/m^3-K.
-        """
-        check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
-
-        r_in = inner_diameter / 2.0
-        r_out = outer_diameter / 2.0
-
-        self.pipe_type = BHPipeType.SINGLEUTUBE
-        pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 1)
-        self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, roughness, conductivity, rho_cp)
-
-    def set_double_u_tube_pipe_parallel(
-        self,
-        inner_diameter: float,
-        outer_diameter: float,
-        shank_spacing: float,
-        roughness: float,
-        conductivity: float,
-        rho_cp: float,
-    ) -> None:
-        """
-        Sets the pipe instance for a double u-tube pipe in a parallel configuration.
-
-        :param inner_diameter: inner pipe diameter, in m.
-        :param outer_diameter: outer pipe diameter, in m.
-        :param shank_spacing: shank spacing between the u-tube legs, in m, as measured edge-to-edge.
-        :param roughness: pipe surface roughness, in m.
-        :param conductivity: thermal conductivity, in W/m-K.
-        :param rho_cp: volumetric heat capacity, in J/m^3-K.
-        """
-        check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
-
-        r_in = inner_diameter / 2.0
-        r_out = outer_diameter / 2.0
-
-        self.pipe_type = BHPipeType.DOUBLEUTUBEPARALLEL
-        pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 2)
-        self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, roughness, conductivity, rho_cp)
-
-    def set_double_u_tube_pipe_series(
-        self,
-        inner_diameter: float,
-        outer_diameter: float,
-        shank_spacing: float,
-        roughness: float,
-        conductivity: float,
-        rho_cp: float,
-    ) -> None:
-        """
-        Sets the pipe instance for a double u-tube pipe in a series configuration.
-
-        :param inner_diameter: inner pipe diameter, in m.
-        :param outer_diameter: outer pipe diameter, in m.
-        :param shank_spacing: shank spacing between the u-tube legs, in m, as measured edge-to-edge.
-        :param roughness: pipe surface roughness, in m.
-        :param conductivity: thermal conductivity, in W/m-K.
-        :param rho_cp: volumetric heat capacity, in J/m^3-K.
-        """
-        check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
-
-        r_in = inner_diameter / 2.0
-        r_out = outer_diameter / 2.0
-
-        self.pipe_type = BHPipeType.DOUBLEUTUBESERIES
-        pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 2)
-        self._pipe = Pipe(pipe_positions, r_in, r_out, shank_spacing, roughness, conductivity, rho_cp)
-
-    def set_coaxial_pipe(
-        self,
-        inner_pipe_d_in: float,
-        inner_pipe_d_out: float,
-        outer_pipe_d_in: float,
-        outer_pipe_d_out: float,
-        roughness: float,
-        conductivity_inner: float,
-        conductivity_outer: float,
-        rho_cp: float,
-    ) -> None:
-        """
-        Sets the pipe instance for a coaxial pipe.
-
-        :param inner_pipe_d_in: inner pipe inner diameter, in m.
-        :param inner_pipe_d_out: inner pipe outer diameter, in m.
-        :param outer_pipe_d_in: outer pipe inner diameter, in m.
-        :param outer_pipe_d_out: outer pipe outer diameter, in m.
-        :param roughness: pipe surface roughness, in m.
-        :param conductivity_inner: thermal conductivity of inner pipe, in W/m-K.
-        :param conductivity_outer: thermal conductivity of outer pipe, in W/m-K.
-        :param rho_cp: volumetric heat capacity, in J/m^3-K.
-        """
-        check_arg_bounds(inner_pipe_d_in, inner_pipe_d_out, "inner_pipe_d_in", "inner_pipe_d_out")
-        check_arg_bounds(outer_pipe_d_in, outer_pipe_d_out, "outer_pipe_d_in", "outer_pipe_d_out")
-
-        self.pipe_type = BHPipeType.COAXIAL
-
-        # Note: This convention is different from pygfunction
-        r_inner = [inner_pipe_d_in / 2.0, inner_pipe_d_out / 2.0]  # The radii of the inner pipe from in to out
-        r_outer = [outer_pipe_d_in / 2.0, outer_pipe_d_out / 2.0]  # The radii of the outer pipe from in to out
-        k_p = [conductivity_inner, conductivity_outer]
-        self._pipe = Pipe((0, 0), r_inner, r_outer, 0, roughness, k_p, rho_cp)
-
-    def set_borehole(self, buried_depth: float, diameter: float) -> None:
-        """
-        Sets the borehole instance
-
-        :param buried_depth: depth of top of borehole below the ground surface, in m.
-        :param diameter: diameter of the borehole, in m.
-        """
-        radius = diameter / 2.0
-        self._borehole = Borehole(100, buried_depth, radius, x=0.0, y=0.0)
-
-    def set_simulation_parameters(
-        self,
-        num_months: int,
-        max_boreholes: int | None = None,
-        continue_if_design_unmet: bool = False,
-    ) -> None:
-        """
-        Sets the simulation parameters
-
-        :param num_months: number of months.
-        :param max_boreholes: maximum boreholes in search algorithms.
-        :param continue_if_design_unmet: continues to process if design unmet.
-        :raises ValueError: If num_months is not a multiple of MONTHS_IN_YEAR.
-        """
-
-        if (num_months % MONTHS_IN_YEAR) > 0:
-            raise ValueError(f"num_months must be a multiple of {MONTHS_IN_YEAR}")
-
-        self._simulation_parameters = SimulationParameters(num_months, max_boreholes, continue_if_design_unmet)
-
-    def set_ground_loads_from_hourly_list(self, hourly_ground_loads: list[float]) -> None:
-        """
-        Sets the ground loads based on a list input.
-
-        :param hourly_ground_loads: annual, hourly ground loads, in W.
-         positive values indicate heat extraction, negative values indicate heat rejection.
-        """
-        # TODO: Add API methods for different load inputs
-        self._ground_loads = hourly_ground_loads
-
-    def set_geometry_constraints_near_square(
-        self, max_height: float, min_height: float, b: float, length: float
-    ) -> None:
-        """
-        Sets the geometry constraints for the near-square design method.
-
-        :param max_height: maximum height of borehole, in m.
-        :param min_height: minimum height of borehole, in m.
-        :param b: borehole-to-borehole spacing, in m.
-        :param length: side length of the sizing domain, in m.
-        :raises AttributeError: If GHE simulation parameters are not defined before calling this method.
-        """
-        if not self._simulation_parameters:
-            raise AttributeError(
-                "GHE simulation parameters must be defined before "
-                "GroundHeatExchanger.set_geometry_constraints_near_square is called."
+        self.fluid = GHEFluid(fluid_name, fluid_concentration_percent, fluid_temperature)
+        self.grout = Grout(grout_conductivity, grout_rho_cp)
+        self.soil = Soil(soil_conductivity, soil_rho_cp, soil_undisturbed_temperature)
+        if pipe_arrangement_type == BHPipeType.SINGLEUTUBE:
+            params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
+            if not all(x in pipe_parameters for x in params):
+                raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
+            pipe_parameters["num_pipes"] = 1
+            self.pipe = Pipe.init_single_u_tube(**pipe_parameters)
+        elif pipe_arrangement_type == BHPipeType.DOUBLEUTUBESERIES:
+            params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
+            if not all(x in pipe_parameters for x in params):
+                raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
+            self.pipe = Pipe.init_double_u_tube_series(**pipe_parameters)
+        elif pipe_arrangement_type == BHPipeType.DOUBLEUTUBEPARALLEL:
+            params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
+            if not all(x in pipe_parameters for x in params):
+                raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
+            self.pipe = Pipe.init_double_u_tube_parallel(**pipe_parameters)
+        else:  # Assuming coaxial
+            params = [
+                "conductivity_inner",
+                "rho_cp",
+                "conductivity_outer",
+                "inner_pipe_d_in",
+                "inner_pipe_d_out",
+                "outer_pipe_d_in",
+                "outer_pipe_d_out",
+            ]
+            if not all(x in pipe_parameters for x in params):
+                raise ValueError(f"pipe_arrangement_type of {BHPipeType.COAXIAL!s} requires these inputs: {params}")
+            pipe_parameters["conductivity"] = (
+                pipe_parameters["conductivity_inner"],
+                pipe_parameters["conductivity_outer"],
             )
+            del pipe_parameters["conductivity_inner"]
+            del pipe_parameters["conductivity_outer"]
+            self.pipe = Pipe.init_coaxial(**pipe_parameters)
+        self.pygfunction_borehole = Borehole(100, borehole_buried_depth, borehole_radius, x=0.0, y=0.0)
 
-        check_arg_bounds(min_height, max_height, "min_height", "max_height")
-
-        self._simulation_parameters.set_design_heights(max_height, min_height)
-        self._geometric_constraints = GeometricConstraintsNearSquare(b, length)
-
-    def set_geometry_constraints_rectangle(
-        self,
-        max_height: float,
-        min_height: float,
-        length: float,
-        width: float,
-        b_min: float,
-        b_max: float,
-    ) -> None:
+    @classmethod
+    def init_from_dictionary(cls, ghe_dict: dict, fluid_inputs: dict | None = None) -> "GroundHeatExchanger":
         """
-        Sets the geometry constraints for the rectangle design method.
-
-        :param max_height: maximum height of borehole, in m.
-        :param min_height: minimum height of borehole, in m.
-        :param length: side length of the sizing domain, in m.
-        :param width: side width of the sizing domain, in m.
-        :param b_min: minimum borehole-to-borehole spacing, in m.
-        :param b_max: maximum borehole-to-borehole spacing, in m.
-        :raises AttributeError: If GHE simulation parameters are not defined before calling this method.
+        Initialize a GroundHeatExchanger object from input dictionaries, performing validation and ultimately calling
+        the main object constructor.
+        :param ghe_dict: Dictionary of ground heat exchanger parameters, see the input schema specification for required
+                         inputs in the ground-heat-exchanger schema field.
+        :param fluid_inputs: Optional dictionary of fluid input parameters, see the input schema fluid spec for details.
+        :return: GroundHeatExchanger object.
+        # TODO: Add validation back in to the input fields
         """
-        if self._simulation_parameters is None:
-            raise AttributeError(
-                "Simulation parameters must be set before `set_geometry_constraints_rectangle` is called."
-            )
+        grout_parameters: dict = ghe_dict["grout"]
+        g_c: float = grout_parameters["conductivity"]
+        g_rho_cp: float = grout_parameters["rho_cp"]
 
-        check_arg_bounds(min_height, max_height, "min_height", "max_height")
-        check_arg_bounds(b_min, b_max, "b_min", "b_max")
+        soil_parameters: dict = ghe_dict["soil"]
+        s_k: float = soil_parameters["conductivity"]
+        s_rho_cp: float = soil_parameters["rho_cp"]
+        s_temp: float = soil_parameters["undisturbed_temp"]
 
-        self.geom_type = DesignGeomType.RECTANGLE
-        self._simulation_parameters.set_design_heights(max_height, min_height)
-        self._geometric_constraints = GeometricConstraintsRectangle(width, length, b_min, b_max)
+        borehole_parameters: dict = ghe_dict["borehole"]
+        buried_depth: float = borehole_parameters["buried_depth"]
+        diameter: float = borehole_parameters["diameter"]
+        radius: float = diameter / 2.0
 
-    def set_geometry_constraints_bi_rectangle(
-        self,
-        max_height: float,
-        min_height: float,
-        length: float,
-        width: float,
-        b_min: float,
-        b_max_x: float,
-        b_max_y: float,
-    ) -> None:
-        """
-        Sets the geometry constraints for the bi-rectangle design method.
-
-        :param max_height: maximum height of borehole, in m.
-        :param min_height: minimum height of borehole, in m.
-        :param length: side length of the sizing domain, in m.
-        :param width: side width of the sizing domain, in m.
-        :param b_min: minimum borehole-to-borehole spacing, in m.
-        :param b_max_x: maximum borehole-to-borehole spacing in the x-direction, in m.
-        :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
-        :raises AttributeError: If GHE simulation parameters are not defined before calling this method.
-        """
-        if self._simulation_parameters is None:
-            raise AttributeError(
-                "Simulation parameters must be set before `set_geometry_constraints_bi_rectangle` is called."
-            )
-
-        check_arg_bounds(min_height, max_height, "min_height", "max_height")
-        check_arg_bounds(b_min, b_max_x, "b_min", "b_max_x")
-        check_arg_bounds(b_min, b_max_y, "b_min", "b_max_y")
-
-        self.geom_type = DesignGeomType.BIRECTANGLE
-        self._simulation_parameters.set_design_heights(max_height, min_height)
-        self._geometric_constraints = GeometricConstraintsBiRectangle(width, length, b_min, b_max_x, b_max_y)
-
-    def set_geometry_constraints_bi_zoned_rectangle(
-        self,
-        max_height: float,
-        min_height: float,
-        length: float,
-        width: float,
-        b_min: float,
-        b_max_x: float,
-        b_max_y: float,
-    ) -> None:
-        """
-        Sets the geometry constraints for the bi-zoned rectangle design method.
-
-        :param max_height: maximum height of borehole, in m.
-        :param min_height: minimum height of borehole, in m.
-        :param length: side length of the sizing domain, in m.
-        :param width: side width of the sizing domain, in m.
-        :param b_min: minimum borehole-to-borehole spacing, in m.
-        :param b_max_x: maximum borehole-to-borehole spacing in the x-direction, in m.
-        :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
-        :raises AttributeError: If GHE simulation parameters are not defined before calling this method.
-        """
-        if self._simulation_parameters is None:
-            raise AttributeError(
-                "Simulation parameters must be set before `set_geometry_constraints_bi_zoned_rectangle` is called."
-            )
-
-        check_arg_bounds(min_height, max_height, "min_height", "max_height")
-        check_arg_bounds(b_min, b_max_x, "b_min", "b_max_x")
-        check_arg_bounds(b_min, b_max_y, "b_min", "b_max_y")
-
-        self.geom_type = DesignGeomType.BIZONEDRECTANGLE
-        self._simulation_parameters.set_design_heights(max_height, min_height)
-        self._geometric_constraints = GeometricConstraintsBiZoned(width, length, b_min, b_max_x, b_max_y)
-
-    def set_geometry_constraints_bi_rectangle_constrained(
-        self,
-        max_height: float,
-        min_height: float,
-        b_min: float,
-        b_max_x: float,
-        b_max_y: float,
-        property_boundary: list,
-        no_go_boundaries: list,
-    ) -> None:
-        """
-        Sets the geometry constraints for the bi-rectangle constrained design method.
-
-        :param max_height: maximum height of borehole, in m.
-        :param min_height: minimum height of borehole, in m.
-        :param b_min: minimum borehole-to-borehole spacing, in m.
-        :param b_max_x: maximum borehole-to-borehole spacing in the x-direction, in m.
-        :param b_max_y: maximum borehole-to-borehole spacing in the y-direction, in m.
-        :param property_boundary: property boundary points, in m.
-        :param no_go_boundaries: boundary points for no-go zones, in m.
-        :raises AttributeError: If GHE simulation parameters are not defined before calling this method.
-        """
-        if self._simulation_parameters is None:
-            raise AttributeError(
-                "Simulation parameters must be set before "
-                "`set_geometry_constraints_bi_rectangle_constrained` is called."
-            )
-
-        check_arg_bounds(min_height, max_height, "min_height", "max_height")
-        check_arg_bounds(b_min, b_max_x, "b_min", "b_max_x")
-        check_arg_bounds(b_min, b_max_y, "b_min", "b_max_y")
-
-        self.geom_type = DesignGeomType.BIRECTANGLECONSTRAINED
-        self._simulation_parameters.set_design_heights(max_height, min_height)
-        self._geometric_constraints = GeometricConstraintsBiRectangleConstrained(
-            b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries
+        fluid_dict = (
+            fluid_inputs if fluid_inputs else {"fluid_name": "Water", "concentration_percent": 0.0, "temperature": 20.0}
         )
+        fluid_name = fluid_dict.get("fluid_name", "Water")
+        concentration_percent = fluid_dict.get("concentration_percent", 0.0)
+        temperature = fluid_dict.get("temperature", 20.0)
 
-    def set_geometry_constraints_rowwise(
-        self,
-        max_height: float,
-        min_height: float,
-        perimeter_spacing_ratio: float,
-        max_spacing: float,
-        min_spacing: float,
-        spacing_step: float,
-        max_rotation: float,
-        min_rotation: float,
-        rotate_step: float,
-        property_boundary: list,
-        no_go_boundaries=None,
-    ) -> None:
-        """
-        Sets the geometry constraints for the row-wise design method.
-        :param max_height: maximum height of borehole, in m.
-        :param min_height: minimum height of borehole, in m.
-        :param perimeter_spacing_ratio: the ratio between the minimum spacing between
-            boreholes placed along the property and no-go zones and the standard borehole-to-borehole
-            spacing used for internal boreholes.
-        :param max_spacing: the largest minimum spacing that will be used to generate a RowWise field.
-        :param min_spacing: the smallest minimum spacing that will be used to generate a RowWise field.
-        :param spacing_step: the distance in spacing from the design found in the first part of first
-            search to exhaustively check in the second part.
-        :param max_rotation: the maximum rotation of the rows of each field relative to horizontal that
-            will be used in the search.
-        :param min_rotation: the minimum rotation of the rows of each field relative to horizontal that
-            will be used in the search.
-        :param rotate_step: step size for field rotation search.
-        :param property_boundary: property boundary points.
-        :param no_go_boundaries: boundary points for no-go zones.
-        :raises AttributeError: If GHE simulation parameters are not defined before calling this method.
-        """
-        if self._simulation_parameters is None:
-            raise AttributeError(
-                "Simulation parameters must be set before `set_geometry_constraints_rowwise` is called."
-            )
+        pipe_parameters: dict = ghe_dict["pipe"]
+        pipe_type: BHPipeType = BHPipeType(pipe_parameters["arrangement"].upper())
+        del pipe_parameters["arrangement"]
 
-        check_arg_bounds(min_height, max_height, "min_height", "max_height")
-        check_arg_bounds(min_spacing, max_spacing, "min_spacing", "max_spacing")
-        check_arg_bounds(min_rotation, max_rotation, "min_rotation", "max_rotation")
-
-        # convert from degrees to radians
-        max_rotation = max_rotation * DEG_TO_RAD
-        min_rotation = min_rotation * DEG_TO_RAD
-
-        self.geom_type = DesignGeomType.ROWWISE
-        self._simulation_parameters.set_design_heights(max_height, min_height)
-        self._geometric_constraints = GeometricConstraintsRowWise(
-            perimeter_spacing_ratio,
-            min_spacing,
-            max_spacing,
-            spacing_step,
-            min_rotation,
-            max_rotation,
-            rotate_step,
-            property_boundary,
-            no_go_boundaries,
+        ghe: GroundHeatExchanger = cls(
+            g_c,
+            g_rho_cp,
+            s_k,
+            s_rho_cp,
+            s_temp,
+            buried_depth,
+            radius,
+            pipe_type,
+            pipe_parameters,
+            fluid_name,
+            concentration_percent,
+            temperature,
         )
+        return ghe
 
-    def set_design(self, flow_rate: float, flow_type_str: str, max_eft: float, min_eft: float) -> None:
-        """
-        Set the design method.
+    def design_and_size_ghe(self, ghe_dict: dict, end_month: int, loads_override: list[float] | None = None):
+        ghe_loads: list[float] = loads_override if loads_override else ghe_dict["loads"]
+        if (end_month % MONTHS_IN_YEAR) > 0:
+            raise ValueError(f"end_month must be a multiple of {MONTHS_IN_YEAR}")
 
-        :param flow_rate: design flow rate, in lps.
-        :param flow_type_str: flow type string input.
-        :param max_eft: maximum heat pump entering fluid temperature, in C.
-        :param min_eft: minimum heat pump entering fluid temperature, in C.
-        :raises AttributeError: If necessary class attributes are not set.
-        :raises ValueError: If the flow type or design method are not implemented.
-        """
+        flow_type_str: str = ghe_dict["flow_type"]
+        flow_type = FlowConfigType(flow_type_str.upper())
+        flow_rate: float = ghe_dict["flow_rate"]
 
-        check_arg_bounds(min_eft, max_eft, "min_eft", "max_eft")
+        # grab some design conditions
+        design_parameters = ghe_dict["design"]
+        continue_if_design_unmet: bool = design_parameters.get("continue_if_design_unmet", False)
+        min_eft: float = design_parameters["min_eft"]
+        max_eft: float = design_parameters["max_eft"]
+        max_height: float = design_parameters["max_height"]
+        min_height: float = design_parameters["min_height"]
+        max_boreholes: int | None = design_parameters.get("max_boreholes")
+        # check_arg_bounds(min_eft, max_eft, "min_eft", "max_eft")
 
-        if self._simulation_parameters is None:
-            raise AttributeError("Simulation parameters must be set before `set_design` is called.")
-
-        self._simulation_parameters.set_design_temps(max_eft, min_eft)
-
-        flow_type_map = {flow.name: flow for flow in FlowConfigType}
-        flow_type = flow_type_map.get(flow_type_str.upper())
-        if not flow_type:
-            raise ValueError(f'FlowConfig "{flow_type_str}" is not implemented.')
-
-        if self._geometric_constraints is None:
-            raise AttributeError("Geometric constraints must be set before `set_design` is called.")
-
-        if (
-            self._geometric_constraints.type in DesignGeomType
-            and self._geometric_constraints.type is not DesignGeomType.NONE
-        ):
-            design_classes = {
-                DesignGeomType.NEARSQUARE: DesignNearSquare,
-                DesignGeomType.RECTANGLE: DesignRectangle,
-                DesignGeomType.BIRECTANGLE: DesignBiRectangle,
-                DesignGeomType.BIZONEDRECTANGLE: DesignBiZoned,
-                DesignGeomType.BIRECTANGLECONSTRAINED: DesignBiRectangleConstrained,
-                DesignGeomType.ROWWISE: DesignRowWise,
-            }
-            selected_class = design_classes[self._geometric_constraints.type]
-
-            # temporary disable of the type checker because of the _geometric_constraints member
-            # noinspection PyTypeChecker
-            self._design = selected_class(
+        # set up the geometry constraints section
+        geom = ghe_dict["geometric_constraints"]
+        geometry_map = {geom.name: geom for geom in DesignGeomType}
+        geom_type = geometry_map.get(geom["method"].upper())
+        design: DesignBase
+        if geom_type == DesignGeomType.RECTANGLE:
+            # max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
+            rect_geometry: GeometricConstraintsRectangle = GeometricConstraintsRectangle(
+                length=geom["length"],
+                width=geom["width"],
+                b_min=geom["b_min"],
+                b_max_x=geom["b_max"],
+            )
+            design = DesignRectangle(
                 flow_rate,
-                self._borehole,
-                self.pipe_type,
-                self._fluid,
-                self._pipe,
-                self._grout,
-                self._soil,
-                self._simulation_parameters,
-                self._geometric_constraints,
-                self._ground_loads,
+                self.pygfunction_borehole,
+                self.fluid,
+                self.pipe,
+                self.grout,
+                self.soil,
+                1,
+                end_month,
+                max_eft,
+                min_eft,
+                max_height,
+                min_height,
+                continue_if_design_unmet,
+                max_boreholes,
+                rect_geometry,
+                ghe_loads,
                 flow_type=flow_type,
                 method=TimestepType.HYBRID,
             )
-        else:
-            raise ValueError(
-                f"Design method not implemented for geometric constraint type '{self._geometric_constraints.type}'"
+        elif geom_type == DesignGeomType.NEARSQUARE:
+            near_sq_geometry: GeometricConstraintsNearSquare = GeometricConstraintsNearSquare(
+                b=geom["b"],
+                length=geom["length"],
             )
-
-    def find_design(self) -> None:
-        """
-        Calls design methods to execute sizing.
-
-        :raises AttributeError: If necessary class attributes are not set.
-        :raises RuntimeError: If design method fails to populate GHE.
-        """
-
-        if not (
-            self._fluid
-            and self._grout
-            and self._soil
-            and self._pipe
-            and self._borehole
-            and self._simulation_parameters
-            and self._ground_loads
-            and self._geometric_constraints
-            and self._design
-        ):
-            raise AttributeError("All GHE properties must be set before GroundHeatExchanger.find_design is called.")
-
+            design = DesignNearSquare(
+                flow_rate,
+                self.pygfunction_borehole,
+                self.fluid,
+                self.pipe,
+                self.grout,
+                self.soil,
+                1,
+                end_month,
+                max_eft,
+                min_eft,
+                max_height,
+                min_height,
+                continue_if_design_unmet,
+                max_boreholes,
+                near_sq_geometry,
+                ghe_loads,
+                flow_type=flow_type,
+                method=TimestepType.HYBRID,
+            )
+        elif geom_type == DesignGeomType.BIRECTANGLE:
+            bi_rect_geometry: GeometricConstraintsBiRectangle = GeometricConstraintsBiRectangle(
+                length=geom["length"],
+                width=geom["width"],
+                b_min=geom["b_min"],
+                b_max_x=geom["b_max_x"],
+                b_max_y=geom["b_max_y"],
+            )
+            design = DesignBiRectangle(
+                flow_rate,
+                self.pygfunction_borehole,
+                self.fluid,
+                self.pipe,
+                self.grout,
+                self.soil,
+                1,
+                end_month,
+                max_eft,
+                min_eft,
+                max_height,
+                min_height,
+                continue_if_design_unmet,
+                max_boreholes,
+                bi_rect_geometry,
+                ghe_loads,
+                flow_type=flow_type,
+                method=TimestepType.HYBRID,
+            )
+        elif geom_type == DesignGeomType.BIZONEDRECTANGLE:
+            bi_zoned_geometry: GeometricConstraintsBiZoned = GeometricConstraintsBiZoned(
+                length=geom["length"],
+                width=geom["width"],
+                b_min=geom["b_min"],
+                b_max_x=geom["b_max_x"],
+                b_max_y=geom["b_max_y"],
+            )
+            design = DesignBiZoned(
+                flow_rate,
+                self.pygfunction_borehole,
+                self.fluid,
+                self.pipe,
+                self.grout,
+                self.soil,
+                1,
+                end_month,
+                max_eft,
+                min_eft,
+                max_height,
+                min_height,
+                continue_if_design_unmet,
+                max_boreholes,
+                bi_zoned_geometry,
+                ghe_loads,
+                flow_type=flow_type,
+                method=TimestepType.HYBRID,
+            )
+        elif geom_type == DesignGeomType.BIRECTANGLECONSTRAINED:
+            bi_rect_const_geometry: GeometricConstraintsBiRectangleConstrained = (
+                GeometricConstraintsBiRectangleConstrained(
+                    b_min=geom["b_min"],
+                    b_max_x=geom["b_max_x"],
+                    b_max_y=geom["b_max_y"],
+                    property_boundary=geom["property_boundary"],
+                    no_go_boundaries=geom["no_go_boundaries"],
+                )
+            )
+            design = DesignBiRectangleConstrained(
+                flow_rate,
+                self.pygfunction_borehole,
+                self.fluid,
+                self.pipe,
+                self.grout,
+                self.soil,
+                1,
+                end_month,
+                max_eft,
+                min_eft,
+                max_height,
+                min_height,
+                continue_if_design_unmet,
+                max_boreholes,
+                bi_rect_const_geometry,
+                ghe_loads,
+                flow_type=flow_type,
+                method=TimestepType.HYBRID,
+            )
+        else:  # geom_type == DesignGeomType.ROW-WISE:
+            # use perimeter calculations if present
+            perimeter_spacing_ratio = geom.get("perimeter_spacing_ratio", 0.0)
+            geometry_row: GeometricConstraintsRowWise = GeometricConstraintsRowWise(
+                perimeter_spacing_ratio=perimeter_spacing_ratio,
+                max_spacing=geom["max_spacing"],
+                min_spacing=geom["min_spacing"],
+                spacing_step=geom["spacing_step"],
+                max_rotation=geom["max_rotation"] * DEG_TO_RAD,
+                min_rotation=geom["min_rotation"] * DEG_TO_RAD,
+                rotate_step=geom["rotate_step"],
+                property_boundary=geom["property_boundary"],
+                no_go_boundaries=geom["no_go_boundaries"],
+            )
+            design = DesignRowWise(
+                flow_rate,
+                self.pygfunction_borehole,
+                self.fluid,
+                self.pipe,
+                self.grout,
+                self.soil,
+                1,
+                end_month,
+                max_eft,
+                min_eft,
+                max_height,
+                min_height,
+                continue_if_design_unmet,
+                max_boreholes,
+                geometry_row,
+                ghe_loads,
+                flow_type=flow_type,
+                method=TimestepType.HYBRID,
+            )
         start_time = time()
-        self._search = self._design.find_design()
-        if not self._search.ghe:
-            raise RuntimeError("Find design failed to populate GHE.")
+        search = design.find_design()  # TODO: I wonder if it would simplify things to just return the GHE object
+        search_time = time() - start_time
+        found_ghe = cast(GHE, search.ghe)
+        found_ghe.compute_g_functions(min_height, max_height)
+        found_ghe.size(TimestepType.HYBRID, max_height, min_height, max_eft, min_eft)
+        return search, search_time, found_ghe
 
-        self._search.ghe.compute_g_functions()
-        self._search_time = time() - start_time
-        self._search.ghe.size(method=TimestepType.HYBRID)
+    def get_g_function(self, ghe_dict: dict, boundary_condition="MIFT") -> tuple[ndarray, ndarray, ndarray]:
+        # TODO: Create a SingleUTube class or something in order to get the STS stitched up
+        pre_designed = ghe_dict["pre_designed"]
+        borehole_height: float = pre_designed["H"]
+        if pre_designed["arrangement"] == "MANUAL":
+            x_positions: Sequence[float] = pre_designed["x"]
+            y_positions: Sequence[float] = pre_designed["y"]
+        elif pre_designed["arrangement"] == "RECTANGLE":
+            num_bh_x = pre_designed["boreholes_in_x_dimension"]
+            num_bh_y = pre_designed["boreholes_in_y_dimension"]
+            spacing_x = pre_designed["spacing_in_x_dimension"]
+            spacing_y = pre_designed["spacing_in_y_dimension"]
+            locations = rectangle(num_bh_x, num_bh_y, spacing_x, spacing_y)
+            x_positions, y_positions = zip(*locations)
+        else:
+            raise RuntimeError("Invalid arrangement type for pre_designed borehole field")
+        if len(x_positions) != len(y_positions):
+            raise RuntimeError("Borehole location coordinate mismatch, make sure length of x and y are equal")
+        nbh = len(x_positions)
+        burial_depth: float = self.pygfunction_borehole.D
+        borehole_radius: float = self.pygfunction_borehole.r_b
+        flow_rate: float = ghe_dict["flow_rate"]
+        flow_type_str: str = str(ghe_dict["flow_type"]).upper()
 
-    def get_ghe(self) -> GHE:
-        if not self._search or not self._search.ghe:
-            raise AttributeError("GHE has not been found yet.")
+        if flow_type_str == FlowConfigType.BOREHOLE.name:
+            m_flow_borehole = flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
+            m_flow_ghe = nbh * m_flow_borehole
+        elif flow_type_str == FlowConfigType.SYSTEM.name:
+            m_flow_ghe = flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
+            m_flow_borehole = m_flow_ghe / nbh
+        else:
+            raise NotImplementedError(f"FlowConfigType {flow_type_str} not implemented.")
 
-        return self._search.ghe
+        pipe_map = {  # TODO: Should we just use the PipeType enum from PyGFunction?  Maybe not...
+            BHPipeType.SINGLEUTUBE: PipeType.SINGLEUTUBE,
+            BHPipeType.DOUBLEUTUBESERIES: PipeType.DOUBLEUTUBESERIES,
+            BHPipeType.DOUBLEUTUBEPARALLEL: PipeType.DOUBLEUTUBEPARALLEL,
+        }
+        pipe_type = pipe_map.get(self.pipe.type, PipeType.SINGLEUTUBE)
+        pipe_positions = Pipe.place_pipes(0.04, self.pipe.r_out, 2)
+        alpha = self.soil.k / self.soil.rhoCp
+        ts = borehole_height**2 / (9 * alpha)
+        log_time_lts = eskilson_log_times()
+        time_values = exp(log_time_lts) * ts
 
-    def prepare_results(self, project_name: str, note: str, author: str, iteration_name: str) -> None:
-        """
-        Prepares the output results.
-
-        :raises ValueError: If the search is not performed.
-        """
-        if self._search is None:
-            raise ValueError("self._search must be set before GroundHeatExchanger.prepare_results is called.")
-
-        self.results = OutputManager(
-            self._search,
-            self._search_time,
-            project_name,
-            note,
-            author,
-            iteration_name,
-            load_method=TimestepType.HYBRID,
+        ghe = PyGHE(  # TODO: Can we use more from the PyGHE class to simplify our code?
+            H=borehole_height,
+            D=burial_depth,
+            r_b=borehole_radius,
+            x=x_positions,
+            y=y_positions,
+            pos=pipe_positions,
+            r_in=self.pipe.r_in,
+            r_out=self.pipe.r_out,
+            k_s=self.soil.k,
+            k_g=self.grout.k,
+            k_p=self.pipe.k,
+            epsilon=self.pipe.roughness,
+            pipe_type=pipe_type,
+            m_flow_ghe=m_flow_ghe,
+            fluid_name=self.fluid.name,
+            fluid_concentration_pct=self.fluid.concentration_percent,
         )
 
-    def write_output_files(self, output_directory: Path, output_file_suffix: str = "") -> None:
-        """
-        Writes the output files.
+        g_lts = ghe.evaluate_g_function(alpha=alpha, time=time_values, boundary_condition=boundary_condition)
 
-        :param output_directory: output directory for output files.
-        :param output_file_suffix: adds a string suffix to the output files.
-        :raises ValueError: If the results are not prepared.
-        """
-        if self.results is None:
-            raise ValueError("GHE results must be prepared before GroundHeatExchanger.write_output_files is called.")
+        single_u_bh = SingleUTube(
+            m_flow_borehole, self.fluid, self.pygfunction_borehole, self.pipe, self.grout, self.soil
+        )
 
-        self.results.write_all_output_files(output_directory=output_directory, file_suffix=output_file_suffix)
+        log_time_sts, g_sts = single_u_bh.calc_sts_g_functions()
+        g_bhw = single_u_bh.g_bhw
 
-    def write_input_file(self, output_file_path: Path) -> None:
-        """
-        Writes an input file based on current simulation configuration.
+        g_interp = combine_sts_lts(
+            log_time_lts,
+            g_lts.tolist(),
+            log_time_sts.tolist(),
+            g_sts.tolist(),
+        )
 
-        :param output_file_path: output directory to write input file.
-        :raises AttributeError: If necessary class attributes are not set.
-        :raises ValueError: If the pipe type is not supported.
-        """
+        g_bhw_interp = combine_sts_lts(
+            log_time_lts,
+            g_lts.tolist(),
+            log_time_sts.tolist(),
+            g_bhw.tolist(),
+        )
 
-        if not (self._pipe and self._design and self._simulation_parameters and self._geometric_constraints):
-            raise AttributeError(
-                "All GHE properties must be set before GroundHeatExchanger.write_input_file is called."
-            )
+        log_time_to_write = array(log_time_sts.tolist() + log_time_lts)
+        g_to_write = g_interp(log_time_to_write)
+        g_bhw_to_write = g_bhw_interp(log_time_to_write)
 
-        # TODO: geometric constraints are currently held in two places
-        #       SimulationParameters and GeometricConstraints
-        #       these should be consolidated
-        d_geo = self._geometric_constraints.to_input()
-        d_geo["max_height"] = self._simulation_parameters.max_height
-        d_geo["min_height"] = self._simulation_parameters.min_height
+        return log_time_to_write, g_to_write, g_bhw_to_write
 
-        # TODO: data held in different places
-        d_des = self._design.to_input()
-        d_des["max_eft"] = self._simulation_parameters.max_EFT_allowable
-        d_des["min_eft"] = self._simulation_parameters.min_EFT_allowable
-
-        if self._simulation_parameters.max_boreholes is not None:
-            d_des["max_boreholes"] = self._simulation_parameters.max_boreholes
-        if self._simulation_parameters.continue_if_design_unmet is True:
-            d_des["continue_if_design_unmet"] = self._simulation_parameters.continue_if_design_unmet
-
-        # pipe data
-        d_pipe = {"rho_cp": self._pipe.rhoCp, "roughness": self._pipe.roughness}
-
-        if self.pipe_type in [BHPipeType.SINGLEUTUBE, BHPipeType.DOUBLEUTUBEPARALLEL, BHPipeType.DOUBLEUTUBESERIES]:
-            d_pipe["inner_diameter"] = self._pipe.r_in * 2.0
-            d_pipe["outer_diameter"] = self._pipe.r_out * 2.0
-            d_pipe["shank_spacing"] = self._pipe.s
-            d_pipe["conductivity"] = self._pipe.k
-        elif self.pipe_type == BHPipeType.COAXIAL:
-            d_pipe["inner_pipe_d_in"] = self._pipe.r_in[0] * 2.0
-            d_pipe["inner_pipe_d_out"] = self._pipe.r_in[1] * 2.0
-            d_pipe["outer_pipe_d_in"] = self._pipe.r_out[0] * 2.0
-            d_pipe["outer_pipe_d_out"] = self._pipe.r_out[1] * 2.0
-            d_pipe["conductivity_inner"] = self._pipe.k[0]
-            d_pipe["conductivity_outer"] = self._pipe.k[1]
-        else:
-            raise ValueError(f"Invalid pipe type '{self.pipe_type.name if self.pipe_type else 'None'}'")
-
-        if self.pipe_type == BHPipeType.SINGLEUTUBE:
-            d_pipe["arrangement"] = BHPipeType.SINGLEUTUBE.name
-        elif self.pipe_type == BHPipeType.DOUBLEUTUBEPARALLEL:
-            d_pipe["arrangement"] = BHPipeType.DOUBLEUTUBEPARALLEL.name
-        elif self.pipe_type == BHPipeType.DOUBLEUTUBESERIES:
-            d_pipe["arrangement"] = BHPipeType.DOUBLEUTUBESERIES.name
-        elif self.pipe_type == BHPipeType.COAXIAL:
-            d_pipe["arrangement"] = BHPipeType.COAXIAL.name
-
-        if not (self._fluid and self._grout and self._soil and isinstance(self._ground_loads, list)):
-            raise AttributeError("Required values have not been defined")
-
-        d = {
-            "fluid": self._fluid.to_input(),
-            "grout": self._grout.to_input(),
-            "soil": self._soil.to_input(),
-            "pipe": d_pipe,
-            # "borehole": self._borehole.to_input(),
-            # "simulation": self._simulation_parameters.to_input(),
-            "geometric_constraints": d_geo,
-            "design": d_des,
-            "loads": {"ground_loads": self._ground_loads},
-        }
-
-        output_file_path.parent.mkdir(parents=True, exist_ok=True)
-        output_file_path.write_text(dumps(d, sort_keys=True, indent=2, separators=(",", ": ")))
+    # def write_input_file(self, output_file_path: Path, simulation_parameters: SimulationParameters) -> None:
+    #     """
+    #     Writes an input file based on current simulation configuration.
+    #
+    #     :param output_file_path: output directory to write input file.
+    #     :raises AttributeError: If necessary class attributes are not set.
+    #     :raises ValueError: If the pipe type is not supported.
+    #     """
+    #     # TODO: geometric constraints are currently held in two places
+    #     #       SimulationParameters and GeometricConstraints
+    #     #       these should be consolidated
+    #     d_geo = self._geometric_constraints.to_input()
+    #     d_geo["max_height"] = simulation_parameters.max_height
+    #     d_geo["min_height"] = simulation_parameters.min_height
+    #
+    #     # TODO: data held in different places
+    #     d_des = self._design.to_input()
+    #     d_des["max_eft"] = simulation_parameters.max_EFT_allowable
+    #     d_des["min_eft"] = simulation_parameters.min_EFT_allowable
+    #
+    #     if simulation_parameters.max_boreholes is not None:
+    #         d_des["max_boreholes"] = simulation_parameters.max_boreholes
+    #     if simulation_parameters.continue_if_design_unmet is True:
+    #         d_des["continue_if_design_unmet"] = simulation_parameters.continue_if_design_unmet
+    #
+    #     # pipe data
+    #     d_pipe = {"rho_cp": self.pipe.rhoCp, "roughness": self.pipe.roughness}
+    #
+    #     if self.pipe.type in [BHPipeType.SINGLEUTUBE, BHPipeType.DOUBLEUTUBEPARALLEL, BHPipeType.DOUBLEUTUBESERIES]:
+    #         d_pipe["inner_diameter"] = self.pipe.r_in * 2.0
+    #         d_pipe["outer_diameter"] = self.pipe.r_out * 2.0
+    #         d_pipe["shank_spacing"] = self.pipe.s
+    #         d_pipe["conductivity"] = self.pipe.k
+    #     elif self.pipe.type == BHPipeType.COAXIAL:
+    #         d_pipe["inner_pipe_d_in"] = self.pipe.r_in[0] * 2.0
+    #         d_pipe["inner_pipe_d_out"] = self.pipe.r_in[1] * 2.0
+    #         d_pipe["outer_pipe_d_in"] = self.pipe.r_out[0] * 2.0
+    #         d_pipe["outer_pipe_d_out"] = self.pipe.r_out[1] * 2.0
+    #         d_pipe["conductivity_inner"] = self.pipe.k[0]
+    #         d_pipe["conductivity_outer"] = self.pipe.k[1]
+    #     else:
+    #         raise ValueError(f"Invalid pipe type '{self.pipe.type.name if self.pipe.type else 'None'}'")
+    #
+    #     d_pipe["arrangement"] = self.pipe.type.name
+    #
+    #     d = {
+    #         "fluid": self.fluid.to_input(),
+    #         "grout": self.grout.to_input(),
+    #         "soil": self.soil.to_input(),
+    #         "pipe": d_pipe,
+    #         # "borehole": self._borehole.to_input(),
+    #         # "simulation": self._simulation_parameters.to_input(),
+    #         "geometric_constraints": d_geo,
+    #         "design": d_des,
+    #         "loads": {"ground_loads": self._ground_loads},
+    #     }
+    #
+    #     output_file_path.parent.mkdir(parents=True, exist_ok=True)
+    #     output_file_path.write_text(dumps(d, sort_keys=True, indent=2, separators=(",", ": ")))

@@ -3,7 +3,7 @@ from math import pi
 import numpy as np
 import pandas as pd
 
-from ghedesigner.ghe.geometry.rowwise import (
+from ghedesigner.ghe.rowwise import (
     field_optimization_fr,
     field_optimization_wp_space_fr,
     gen_borehole_config,
@@ -22,7 +22,7 @@ class TestRowWise(GHEBaseTest):
         # Load Property Boundary
         property_boundary_file = self.test_data_directory / "polygon_property_boundary.csv"
         prop_polygon_df: pd.DataFrame = pd.read_csv(str(property_boundary_file))
-        self.prop_polygon_ar: list = prop_polygon_df.to_numpy().tolist()
+        self.prop_polygon_ar: list[list[float]] = prop_polygon_df.to_numpy().tolist()
 
         # Load Building
         building_file = self.test_data_directory / "polygon_building.csv"

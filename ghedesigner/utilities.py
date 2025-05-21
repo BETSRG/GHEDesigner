@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from json import loads
+import csv
+from json import dumps, loads
 from math import sqrt
 from pathlib import Path
 from typing import Any, Callable
 
 import numpy as np
+from scipy.interpolate import interp1d
 from scipy.optimize import brentq
 
 
@@ -247,3 +249,39 @@ def check_arg_bounds(min_val: float, max_val: float, min_val_name: str, max_val_
     if min_val > max_val:
         # always throw error here
         raise ValueError(f"{min_val_name} ({min_val}) should be less than or equal to {max_val_name} ({max_val})")
+
+
+def combine_sts_lts(log_time_lts: list, g_lts: list, log_time_sts: list, g_sts: list) -> interp1d:
+    # make sure the short time step doesn't overlap with the long time step
+    max_log_time_sts = max(log_time_sts)
+    min_log_time_lts = min(log_time_lts)
+
+    if max_log_time_sts < min_log_time_lts:
+        log_time = log_time_sts + log_time_lts
+        g = g_sts + g_lts
+    else:
+        # find where to stop in sts
+        i = 0
+        value = log_time_sts[i]
+        while value <= min_log_time_lts:
+            i += 1
+            value = log_time_sts[i]
+        log_time = log_time_sts[0:i] + log_time_lts
+        g = g_sts[0:i] + g_lts
+    g = interp1d(log_time, g)
+
+    return g
+
+
+def write_json(write_path: Path, input_dict: dict, indent: int = 2) -> None:
+    with write_path.open("w") as f:
+        f.write(dumps(input_dict, sort_keys=True, indent=indent, separators=(",", ": ")))
+
+
+def write_flat_dict_to_csv(write_path: Path, input_dict: dict) -> None:
+    with open(write_path, "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(input_dict.keys())
+
+        for row in zip(*input_dict.values()):
+            writer.writerow(row)

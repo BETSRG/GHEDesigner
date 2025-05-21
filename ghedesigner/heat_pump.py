@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable
+from typing import Callable, cast
 
 LoadFunctionType = Callable[[float], float]
 
@@ -54,3 +54,20 @@ class HeatPump:
 
         cp = 4100
         return loop_inlet_temp + loop_load / (flow_rate * cp)
+
+    def get_ground_loads(self) -> list[float]:
+        if self.loads_list is None:
+            raise ValueError("Loads values are not set.")
+        ground_loads: list[float] = []
+        self.load_function = cast(LoadFunctionType, self.load_function)
+        self.cop = cast(float, self.cop)
+        for h in range(8760):
+            building_load = self.load_function(h)
+            if building_load > 0:
+                # Heating the building, taking energy from loop
+                loop_load = building_load - (building_load / self.cop)
+            else:
+                # Cooling the building, adding energy to loop
+                loop_load = building_load + (building_load / self.cop)
+            ground_loads.append(loop_load)
+        return ground_loads

@@ -1,11 +1,10 @@
-from pygfunction.boreholes import Borehole
-
 from ghedesigner.enums import BHPipeType, TimestepType
-from ghedesigner.ghe.geometry.coordinates import rectangle
+from ghedesigner.ghe.boreholes.core import Borehole
+from ghedesigner.ghe.coordinates import rectangle
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
-from ghedesigner.ghe.simulation import SimulationParameters
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.utilities import eskilson_log_times
 
@@ -23,15 +22,12 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # ---------------
         d_out = 0.04216  # Pipe outer diameter (m)
         d_in = 0.03404  # Pipe inner diameter (m)
-        r_out = d_out / 2.0
-        r_in = d_in / 2.0
         s = 0.01856  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Pipe positions
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos = Pipe.place_pipes(s, r_out, 1)
 
         # Thermal conductivities
         # ----------------------
@@ -48,7 +44,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # Thermal properties
         # ------------------
         # Pipe
-        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe.init_single_u_tube(k_p, rho_cp_p, d_in, d_out, s, epsilon, 1)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = Soil(k_s, rho_cp_s, ugt)
@@ -76,7 +72,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = Borehole(h, d, dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(borehole_height=h, burial_depth=d, borehole_radius=dia / 2.0)
 
         # Simulation start month and end month
         # --------------------------------
@@ -84,11 +80,6 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # start_month = 1
         n_years = 20
         num_months = n_years * 12
-
-        sim_params = SimulationParameters(num_months)
-
-        sim_params.set_design_temps(35, 5)
-        sim_params.set_design_heights(384, 24)
 
         # Process loads from file
         hourly_extraction_ground_loads = self.get_atlanta_loads()
@@ -122,7 +113,8 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             grout,
             soil,
             g_function,
-            sim_params,
+            1,
+            num_months,
             hourly_extraction_ground_loads,
         )
 
@@ -161,10 +153,11 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             grout,
             soil,
             g_function,
-            sim_params,
+            1,
+            num_months,
             hourly_extraction_ground_loads,
         )
 
-        ghe.size(method=TimestepType.HYBRID)
+        ghe.size(method=TimestepType.HYBRID, max_height=384, min_height=24, design_max_eft=35, design_min_eft=5)
 
         self.log(f"Height of boreholes: {ghe.bhe.b.H:0.4f}")

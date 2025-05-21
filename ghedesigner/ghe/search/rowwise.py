@@ -3,12 +3,12 @@ from math import inf, sqrt
 import numpy as np
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import BHPipeType, FlowConfigType, TimestepType
-from ghedesigner.ghe.geometry.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
+from ghedesigner.enums import FlowConfigType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
-from ghedesigner.ghe.simulation import SimulationParameters
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.ghe.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
+from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.utilities import borehole_spacing, eskilson_log_times
 
 
@@ -18,12 +18,18 @@ class RowWiseModifiedBisectionSearch:
         self,
         v_flow: float,
         borehole: Borehole,
-        bhe_type: BHPipeType,
         fluid: GHEFluid,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
-        sim_params: SimulationParameters,
+        max_boreholes: int | None,  # TODO: Unused
+        min_height: float,
+        max_height: float,
+        continue_if_design_unmet: bool,
+        start_month: int,
+        end_month: int,
+        min_eft: float,
+        max_eft: float,
         hourly_extraction_ground_loads: list,
         geometric_constraints,
         method: TimestepType,
@@ -49,12 +55,20 @@ class RowWiseModifiedBisectionSearch:
         self.searchTracker: list[list] = []
         self.fieldType = field_type
         # Flow rate tracking
+        self.max_boreholes = max_boreholes
+        self.max_height = max_height
+        self.max_eft = max_eft
+        self.min_eft = min_eft
+        self.min_height = min_height
+        self.max_height = max_height
+        self.start_month = start_month
+        self.end_month = end_month
+        self.continue_if_design_unmet = continue_if_design_unmet
         self.V_flow = v_flow
         self.flow_type = flow_type
         self.method = method
         self.log_time = eskilson_log_times()
-        self.bhe_type = bhe_type
-        self.sim_params = sim_params
+        self.bhe_type = pipe.type
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.max_iter = max_iter
         self.disp = disp
@@ -65,9 +79,7 @@ class RowWiseModifiedBisectionSearch:
             self.checkedFields: list[np.ndarray[tuple[np.float64, np.float64]]] = []
         if search:
             self.selected_coordinates, self.selected_specifier = self.search()
-            self.initialize_ghe(
-                self.selected_coordinates, self.sim_params.max_height, field_specifier=self.selected_specifier
-            )
+            self.initialize_ghe(self.selected_coordinates, self.max_height, field_specifier=self.selected_specifier)
 
     def retrieve_flow(self, coordinates, rho):
         if self.flow_type == FlowConfigType.BOREHOLE:
@@ -122,18 +134,18 @@ class RowWiseModifiedBisectionSearch:
             grout,
             soil,
             g_function,
-            self.sim_params,
+            self.start_month,
+            self.end_month,
             self.hourly_extraction_ground_loads,
             field_type=self.fieldType,
             field_specifier=field_specifier,
-            load_years=self.load_years,
         )
 
-    def calculate_excess(self, coordinates, h, field_specifier="N/A"):
+    def calculate_excess(self, coordinates, h, design_max_eft, design_min_eft, field_specifier="N/A"):
         self.initialize_ghe(coordinates, h, field_specifier=field_specifier)
         # Simulate after computing just one g-function
         max_hp_eft, min_hp_eft = self.ghe.simulate(method=self.method)
-        t_excess = self.ghe.cost(max_hp_eft, min_hp_eft)
+        t_excess = self.ghe.cost(max_hp_eft, min_hp_eft, design_max_eft, design_min_eft)
         self.searchTracker.append([field_specifier, t_excess, max_hp_eft, min_hp_eft])
 
         return t_excess
@@ -198,8 +210,12 @@ class RowWiseModifiedBisectionSearch:
             )
 
         # Get Excess Temperatures
-        t_upper = self.calculate_excess(upper_field, self.sim_params.max_height, field_specifier=upper_field_specifier)
-        t_lower = self.calculate_excess(lower_field, self.sim_params.max_height, field_specifier=lower_field_specifier)
+        t_upper = self.calculate_excess(
+            upper_field, self.max_height, self.max_eft, self.min_eft, field_specifier=upper_field_specifier
+        )
+        t_lower = self.calculate_excess(
+            lower_field, self.max_height, self.max_eft, self.min_eft, field_specifier=lower_field_specifier
+        )
 
         if self.advanced_tracking:
             self.advanced_tracking.append([spacing_start, upper_field_specifier, len(upper_field), t_upper])
@@ -218,7 +234,7 @@ class RowWiseModifiedBisectionSearch:
                 "or decreasing the maximum borehole spacing."
             )
             print(condition_msg)
-            if self.sim_params.continue_if_design_unmet:
+            if self.continue_if_design_unmet:
                 print("Largest available configuration selected.")
                 return upper_field, upper_field_specifier
             else:
@@ -261,7 +277,9 @@ class RowWiseModifiedBisectionSearch:
                     )
 
                 # Getting the three field's excess temperature
-                t_e1 = self.calculate_excess(f1, self.sim_params.max_height, field_specifier=f1_specifier)
+                t_e1 = self.calculate_excess(
+                    f1, self.max_height, self.max_eft, self.min_eft, field_specifier=f1_specifier
+                )
 
                 if self.advanced_tracking:
                     self.advanced_tracking.append([spacing_m, f1_specifier, len(f1), t_e1])
@@ -317,15 +335,21 @@ class RowWiseModifiedBisectionSearch:
                         rotate_stop=rotate_stop,
                     )
 
-                t_e = self.calculate_excess(field, self.sim_params.max_height, field_specifier=f_s)
+                t_e = self.calculate_excess(field, self.max_height, self.max_eft, self.min_eft, field_specifier=f_s)
 
                 if self.advanced_tracking:
                     self.advanced_tracking.append([ts, f_s, len(field), t_e])
                     self.checkedFields.append(field)
 
-                self.initialize_ghe(field, self.sim_params.max_height, field_specifier=f_s)
-                self.ghe.compute_g_functions()
-                self.ghe.size(method=TimestepType.HYBRID)
+                self.initialize_ghe(field, self.max_height, field_specifier=f_s)
+                self.ghe.compute_g_functions(self.min_height, self.max_height)
+                self.ghe.size(
+                    method=TimestepType.HYBRID,
+                    max_height=self.max_height,
+                    min_height=self.min_height,
+                    design_max_eft=self.max_eft,
+                    design_min_eft=self.min_eft,
+                )
                 total_drilling = self.ghe.bhe.b.H * len(field)
 
                 if best_field is None:
@@ -377,7 +401,9 @@ class RowWiseModifiedBisectionSearch:
             #     raise ValueError(msg)
 
             # Check if a 1X1 field is satisfactory
-            t_e_single = self.calculate_excess([[0, 0]], self.sim_params.max_height, field_specifier="1X1")
+            t_e_single = self.calculate_excess(
+                [[0, 0]], self.max_height, self.max_eft, self.min_eft, field_specifier="1X1"
+            )
 
             if self.advanced_tracking:
                 self.advanced_tracking.append(["N/A", "1X1", 1, t_e_single])
@@ -400,7 +426,9 @@ class RowWiseModifiedBisectionSearch:
                     nbh = (nbh_max + nbh_min) // 2
                     current_field = starting_field[nbh_start - nbh :]
                     f_s = lower_field_specifier + f"_BR{nbh_start - nbh}"
-                    t_e = self.calculate_excess(current_field, self.sim_params.max_height, field_specifier=f_s)
+                    t_e = self.calculate_excess(
+                        current_field, self.max_height, self.max_eft, self.min_eft, field_specifier=f_s
+                    )
                     if self.advanced_tracking:
                         self.advanced_tracking.append([spacing_stop, lower_field_specifier + "_" + str(nbh), nbh, t_e])
                         self.checkedFields.append(current_field)

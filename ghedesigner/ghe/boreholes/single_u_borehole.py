@@ -1,5 +1,6 @@
 from enum import IntEnum, auto
 from math import exp, log, pi, sqrt
+from typing import cast
 
 import numpy as np
 import pygfunction as gt
@@ -8,8 +9,9 @@ from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
 
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
-from ghedesigner.ghe.borehole_base import GHEDesignerBoreholeBase
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.ghe.boreholes.base import GHEDesignerBoreholeBase
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import GHEFluid, Grout, Soil
 
 
 class CellProps(IntEnum):
@@ -89,10 +91,13 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.r_borehole = self.borehole.r_b
 
         # outer tube radius is set to sqrt(2) * r_p_o, tube region has 4 cells
-        self.r_out_tube = sqrt(2) * self.pipe.r_out
+        r_out = cast(float, self.pipe.r_out)
+        r_in = cast(float, self.pipe.r_in)
+
+        self.r_out_tube = sqrt(2) * r_out
 
         # inner tube radius is set to r_out_tube - t_p
-        self.t_pipe_wall_actual = self.pipe.r_out - self.pipe.r_in
+        self.t_pipe_wall_actual = r_out - r_in
         self.r_in_tube = self.r_out_tube - self.t_pipe_wall_actual
 
         # r_convection is set to r_in_tube - 1/4 * t_p
@@ -132,8 +137,10 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
             self.fluid.cp,
             self.pipe.roughness,
         )
-        self.R_f = self.compute_fluid_resistance(self.h_f, self.pipe.r_in)
-        self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(self.pipe.r_in, self.pipe.r_out, self.pipe.k)
+        r_in = cast(float, self.pipe.r_in)
+        r_out = cast(float, self.pipe.r_out)
+        self.R_f = self.compute_fluid_resistance(self.h_f, r_in)
+        self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(r_in, r_out, self.pipe.k)
         self.R_fp = self.R_f + self.R_p
         return self.R_fp
 
@@ -233,6 +240,30 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
 
         return radial_cells
 
+    @staticmethod
+    def solve_tridiagonal(dl, d, du, b, overwrite_b=False):
+        n = len(d)
+        # Copy or alias b depending on overwrite_b
+        dc = b if overwrite_b else np.copy(b)
+
+        # Make copies of diagonals (always safe to copy these)
+        ac = np.copy(du)
+        bc = np.copy(d)
+        cc = np.copy(dl)
+
+        # Forward sweep
+        for i in range(1, n):
+            w = cc[i - 1] / bc[i - 1]
+            bc[i] -= w * ac[i - 1]
+            dc[i] -= w * dc[i - 1]
+
+        # Back substitution
+        dc[-1] = dc[-1] / bc[-1]
+        for i in range(n - 2, -1, -1):
+            dc[i] = (dc[i] - ac[i] * dc[i + 1]) / bc[i]
+
+        return dc
+
     def calc_sts_g_functions(self, final_time=None) -> tuple:
         self.partial_init()
 
@@ -327,6 +358,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
             # High level interface to LAPACK routine
             # https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.lapack.dgtsv.html#scipy.linalg.lapack.dgtsv
             dgtsv(_dl, _d, _du, _b, overwrite_b=1)  # TODO: Do we really need lapack just to do a TDMA solution?
+            # self.solve_tridiagonal(_dl, _d, _du, _b, overwrite_b=True)
 
             radial_cells[CellProps.TEMP, :] = _b
 

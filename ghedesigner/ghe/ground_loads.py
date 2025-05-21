@@ -7,8 +7,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from ghedesigner.constants import HRS_IN_DAY, MONTHS_IN_YEAR, SEC_IN_HR, TWO_PI
-from ghedesigner.ghe.simulation import SimulationParameters
-from ghedesigner.ghe.single_u_borehole import SingleUTube
+from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 
 
 class HybridLoad:
@@ -17,18 +16,16 @@ class HybridLoad:
         raw_loads: list,
         bhe: SingleUTube,
         radial_numerical: SingleUTube,
-        sim_params: SimulationParameters,
-        years=None,
+        start_month: int,
+        end_month: int,
     ) -> None:
-        # Split the hourly loads into heating and cooling (kW)
-        if years is None:
-            years = [2019]
+        years = [2019]
 
         self.hourly_rejection_loads, self.hourly_extraction_loads = self.split_heat_and_cool(raw_loads)
 
         # Simulation start and end month
-        self.start_month = sim_params.start_month
-        self.end_month = sim_params.end_month
+        self.start_month = start_month
+        self.end_month = end_month
         if len(years) <= 1:
             self.peak_retain_start = 12  # use peak loads for first 12 months
             self.peak_retain_end = 12  # use peak loads for last 12 months

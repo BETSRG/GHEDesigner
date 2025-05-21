@@ -2,9 +2,9 @@ import numpy as np
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import FlowConfigType, TimestepType
-from ghedesigner.ghe.bisection_1d_search import Bisection1D
-from ghedesigner.ghe.simulation import SimulationParameters
-from ghedesigner.media import GHEFluid, Grout, Pipe, Soil
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.ghe.search.bisection_1d import Bisection1D
+from ghedesigner.media import GHEFluid, Grout, Soil
 
 
 class BisectionZD(Bisection1D):
@@ -14,12 +14,18 @@ class BisectionZD(Bisection1D):
         field_descriptors: list,
         v_flow: float,
         borehole: Borehole,
-        bhe_type,
         fluid: GHEFluid,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
-        sim_params: SimulationParameters,
+        max_boreholes: int | None,
+        min_height: float,
+        max_height: float,
+        continue_if_design_unmet: bool,
+        start_month: int,
+        end_month: int,
+        min_eft: float,
+        max_eft: float,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
@@ -40,12 +46,18 @@ class BisectionZD(Bisection1D):
             field_descriptors[0],
             v_flow,
             borehole,
-            bhe_type,
             fluid,
             pipe,
             grout,
             soil,
-            sim_params,
+            max_boreholes,
+            min_height,
+            max_height,
+            continue_if_design_unmet,
+            start_month,
+            end_month,
+            min_eft,
+            max_eft,
             hourly_extraction_ground_loads,
             method=method,
             flow_type=flow_type,
@@ -55,7 +67,7 @@ class BisectionZD(Bisection1D):
             field_type=field_type,
             load_years=load_years,
         )
-
+        self.max_height = max_height
         self.coordinates_domain_nested = coordinates_domain_nested
         self.nested_fieldDescriptors = field_descriptors
         self.calculated_temperatures_nested: dict[int, dict[int, np.float64]] = {}
@@ -95,8 +107,14 @@ class BisectionZD(Bisection1D):
                 break
             self.calculated_temperatures_nested[i] = self.calculated_temperatures
 
-            self.ghe.compute_g_functions()
-            self.ghe.size(method=TimestepType.HYBRID)
+            self.ghe.compute_g_functions(self.min_height, self.max_height)
+            self.ghe.size(
+                method=TimestepType.HYBRID,
+                max_height=self.max_height,
+                min_height=self.min_height,
+                design_max_eft=self.max_eft,
+                design_min_eft=self.min_eft,
+            )
 
             nbh = len(selected_coordinates)
             total_drilling = nbh * self.ghe.bhe.b.H
@@ -129,10 +147,10 @@ class BisectionZD(Bisection1D):
 
         self.initialize_ghe(
             selected_coordinates,
-            self.sim_params.max_height,
+            self.max_height,
             field_specifier=self.nested_fieldDescriptors[selection_key_outer][selection_key],
         )
-        self.ghe.compute_g_functions()
-        self.ghe.size(method=TimestepType.HYBRID)
+        self.ghe.compute_g_functions(self.min_height, self.max_height)
+        self.ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
 
         return selection_key, selected_coordinates
