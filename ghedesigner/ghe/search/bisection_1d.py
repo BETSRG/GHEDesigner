@@ -49,7 +49,7 @@ class Bisection1D:
         current_field = field_descriptors[0]
         self.field_type = field_type
         # Flow rate tracking
-        self.V_flow = v_flow
+        self.v_flow = v_flow
         self.flow_type = flow_type
         v_flow_system, m_flow_borehole = self.retrieve_flow(coordinates, fluid.rho)
         self.method = method
@@ -113,12 +113,12 @@ class Bisection1D:
 
     def retrieve_flow(self, coordinates, rho):
         if self.flow_type == FlowConfigType.BOREHOLE:
-            v_flow_system = self.V_flow * len(coordinates)
+            v_flow_system = self.v_flow * len(coordinates)
             # Total fluid mass flow rate per borehole (kg/s)
-            m_flow_borehole = self.V_flow / 1000.0 * rho
+            m_flow_borehole = self.v_flow / 1000.0 * rho
         elif self.flow_type == FlowConfigType.SYSTEM:
-            v_flow_system = self.V_flow
-            v_flow_borehole = self.V_flow / len(coordinates)
+            v_flow_system = self.v_flow
+            v_flow_borehole = self.v_flow / len(coordinates)
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
         else:
             raise ValueError("The flow argument should be either `borehole` or `system`.")

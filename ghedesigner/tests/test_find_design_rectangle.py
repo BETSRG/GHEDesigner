@@ -14,7 +14,7 @@ class TestFindRectangleDesign(GHEBaseTest):
         ground_loads = self.get_atlanta_loads()
         borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
         num_months = 240
-        geometry = GeometricConstraintsRectangle(width=36.5, length=85.0, b_min=3.0, b_max_x=10)
+        geometry = GeometricConstraintsRectangle(width=36.5, length=85.0, b_min=3.0, b_max=10)
         min_height = 60
         max_height = 135
         min_eft = 5

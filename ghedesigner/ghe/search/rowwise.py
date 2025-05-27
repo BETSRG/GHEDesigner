@@ -53,7 +53,7 @@ class RowWiseModifiedBisectionSearch:
         self.borehole = borehole
         self.geometricConstraints = geometric_constraints
         self.searchTracker: list[list] = []
-        self.fieldType = field_type
+        self.field_type = field_type
         # Flow rate tracking
         self.max_boreholes = max_boreholes
         self.max_height = max_height
@@ -64,7 +64,7 @@ class RowWiseModifiedBisectionSearch:
         self.start_month = start_month
         self.end_month = end_month
         self.continue_if_design_unmet = continue_if_design_unmet
-        self.V_flow = v_flow
+        self.v_flow = v_flow
         self.flow_type = flow_type
         self.method = method
         self.log_time = eskilson_log_times()
@@ -83,12 +83,12 @@ class RowWiseModifiedBisectionSearch:
 
     def retrieve_flow(self, coordinates, rho):
         if self.flow_type == FlowConfigType.BOREHOLE:
-            v_flow_system = self.V_flow * len(coordinates)
+            v_flow_system = self.v_flow * len(coordinates)
             # Total fluid mass flow rate per borehole (kg/s)
-            m_flow_borehole = self.V_flow / 1000.0 * rho
+            m_flow_borehole = self.v_flow / 1000.0 * rho
         elif self.flow_type == FlowConfigType.SYSTEM:
-            v_flow_system = self.V_flow
-            v_flow_borehole = self.V_flow / len(coordinates)
+            v_flow_system = self.v_flow
+            v_flow_borehole = self.v_flow / len(coordinates)
             m_flow_borehole = v_flow_borehole / 1000.0 * rho
         else:
             raise ValueError("The flow argument should be either `borehole` or `system`.")
@@ -137,7 +137,7 @@ class RowWiseModifiedBisectionSearch:
             self.start_month,
             self.end_month,
             self.hourly_extraction_ground_loads,
-            field_type=self.fieldType,
+            field_type=self.field_type,
             field_specifier=field_specifier,
         )
 

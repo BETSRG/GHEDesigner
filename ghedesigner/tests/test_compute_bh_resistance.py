@@ -330,13 +330,13 @@ class TestBHResistance(GHEBaseTest):
         borehole_values["Single U-tube"] = {"V_dot": [], "Rb": [], "Re": []}
         borehole_values["Double U-tube"] = {"V_dot": [], "Rb": [], "Re": []}
 
-        for idx, V_flow_borehole in enumerate(v_flow_rates):
+        for idx, v_flow_borehole in enumerate(v_flow_rates):
             # Store volumetric flow rates in (L/s)
-            borehole_values["Single U-tube"]["V_dot"].append(V_flow_borehole)
-            borehole_values["Double U-tube"]["V_dot"].append(V_flow_borehole)
+            borehole_values["Single U-tube"]["V_dot"].append(v_flow_borehole)
+            borehole_values["Double U-tube"]["V_dot"].append(v_flow_borehole)
 
             # Total fluid mass flow rate per borehole (kg/s)
-            m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho
+            m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
             # Define a borehole
             borehole = Borehole(borehole_height=h, burial_depth=d, borehole_radius=dia / 2.0)
@@ -405,10 +405,10 @@ class TestBHResistance(GHEBaseTest):
         grout = Grout(k_g, rho_cp_g)
 
         borehole_values["Coaxial"] = {"V_dot": [], "Rb": [], "Re": []}
-        for idx, V_flow_borehole in enumerate(v_flow_rates_coaxial):
+        for idx, v_flow_borehole in enumerate(v_flow_rates_coaxial):
             # Total fluid mass flow rate per borehole (kg/s)
-            m_flow_borehole = V_flow_borehole / 1000.0 * fluid.rho
-            borehole_values["Coaxial"]["V_dot"].append(V_flow_borehole)
+            m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
+            borehole_values["Coaxial"]["V_dot"].append(v_flow_borehole)
 
             # Define a borehole
             borehole = Borehole(borehole_height=h, burial_depth=d, borehole_radius=dia / 2.0)
@@ -422,7 +422,7 @@ class TestBHResistance(GHEBaseTest):
             resist_bh = coaxial.calc_effective_borehole_resistance()
             borehole_values["Coaxial"]["Rb"].append(resist_bh)
 
-            if V_flow_borehole > 0.4:
+            if v_flow_borehole > 0.4:
                 assert self.rel_error_within_tol(resist_bh, rb_glhepro_coaxial[idx], 0.02)
 
         # Note: DO NOT DELETE THIS SECTION

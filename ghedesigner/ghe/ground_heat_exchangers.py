@@ -32,13 +32,13 @@ class GHE:
         field_type="N/A",
         field_specifier="N/A",
     ) -> None:
-        self.fieldType = field_type
+        self.field_type = field_type
         self.fieldSpecifier = field_specifier
-        self.V_flow_system = v_flow_system
-        self.B_spacing = b_spacing
+        self.v_flow_system = v_flow_system
+        self.b_spacing = b_spacing
         self.nbh = len(g_function.bore_locations)
-        self.V_flow_borehole = self.V_flow_system / self.nbh
-        m_flow_borehole = self.V_flow_borehole / 1000.0 * fluid.rho
+        self.v_flow_borehole = self.v_flow_system / self.nbh
+        m_flow_borehole = self.v_flow_borehole / 1000.0 * fluid.rho
         self.m_flow_borehole = m_flow_borehole
 
         # Borehole Heat Exchanger
@@ -87,7 +87,7 @@ class GHE:
             "title": f"GHEDesigner GHE Output - Version {VERSION}",
             "number_of_boreholes": len(self.gFunction.bore_locations),
             "borehole_depth": {"value": self.bhe.b.H, "units": "m"},
-            "borehole_spacing": {"value": self.B_spacing, "units": "m"},
+            "borehole_spacing": {"value": self.b_spacing, "units": "m"},
             "borehole_heat_exchanger": self.bhe.as_dict(),
             "equivalent_borehole_heat_exchanger": self.bhe_eq.as_dict(),
             # "simulation_parameters": self.sim_params.as_dict(),
@@ -171,7 +171,7 @@ class GHE:
     def compute_g_functions(self, h_min: float, h_max: float):
         # Compute g-functions for a bracketed solution, based on min and max height
         self.gFunction = calc_g_func_for_multiple_lengths(
-            self.B_spacing,
+            self.b_spacing,
             [h_min] if h_min == h_max else [h_min, (h_min + h_max) / 2.0, h_max],
             self.bhe.b.r_b,
             self.bhe.b.D,
@@ -186,7 +186,7 @@ class GHE:
         )
 
     def simulate(self, method: TimestepType):
-        b = self.B_spacing
+        b = self.b_spacing
         b_over_h = b / self.bhe.b.H
 
         # Solve for equivalent single U-tube

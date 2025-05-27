@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from dataclasses import dataclass, field
 
 from pygfunction.boreholes import Borehole
 
@@ -13,15 +14,16 @@ from ghedesigner.media import GHEFluid, Grout, Soil
 AnyBisectionType = Bisection1D | Bisection2D | BisectionZD | RowWiseModifiedBisectionSearch
 
 
+@dataclass(init=False)
 class GeometricConstraints:
-    def __init__(self) -> None:
-        self.type: DesignGeomType = DesignGeomType.NONE
+    type: DesignGeomType = field(default=DesignGeomType.NONE, init=False, repr=False)
 
     @abstractmethod
-    def to_input(self):
+    def to_input(self) -> dict:
         pass
 
 
+@dataclass
 class DesignBase:
     def __init__(
         self,
@@ -48,7 +50,7 @@ class DesignBase:
         if load_years is None:
             load_years = [2019]
         self.load_years = load_years
-        self.V_flow = v_flow  # volumetric flow rate, m3/s
+        self.v_flow = v_flow  # volumetric flow rate, m3/s
         self.borehole = _borehole
         self.fluid = fluid  # a fluid object
         self.pipe = pipe
@@ -76,7 +78,6 @@ class DesignBase:
                 "perform a sizing routine on the selected GHE with the \n",
                 "hourly simulation.",
             )
-            # Wrap the text to a 50 char line width and print it
             for element in msg:
                 print(element)
             print("\n")
@@ -86,4 +87,4 @@ class DesignBase:
         pass
 
     def to_input(self) -> dict:
-        return {"flow_rate": self.V_flow, "flow_type": self.flow_type.name}
+        return {"flow_rate": self.v_flow, "flow_type": self.flow_type.name}

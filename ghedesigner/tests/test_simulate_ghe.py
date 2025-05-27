@@ -103,7 +103,7 @@ class TestGHE(GHEBaseTest):
         # Fluid properties
         self.fluid = GHEFluid(fluid_str="Water", percent=0.0)
         # System volumetric flow rate (L/s)
-        self.V_flow_system = v_flow_borehole * float(nx * ny)
+        self.v_flow_system = v_flow_borehole * float(nx * ny)
         # Total fluid mass flow rate per borehole (kg/s)
         self.m_flow_borehole = v_flow_borehole / 1000.0 * self.fluid.rho
 
@@ -143,7 +143,7 @@ class TestGHE(GHEBaseTest):
 
         # Initialize the GHE object
         ghe = GHE(
-            self.V_flow_system,
+            self.v_flow_system,
             self.B,
             BHPipeType.SINGLEUTUBE,
             self.fluid,
@@ -189,7 +189,7 @@ class TestGHE(GHEBaseTest):
 
         # Initialize the GHE object
         ghe = GHE(
-            self.V_flow_system,
+            self.v_flow_system,
             self.B,
             BHPipeType.DOUBLEUTUBEPARALLEL,
             self.fluid,
@@ -235,7 +235,7 @@ class TestGHE(GHEBaseTest):
 
         # Re-Initialize the GHE object
         ghe = GHE(
-            self.V_flow_system,
+            self.v_flow_system,
             self.B,
             BHPipeType.COAXIAL,
             self.fluid,

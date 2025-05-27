@@ -1,3 +1,5 @@
+from dataclasses import asdict, dataclass, field
+
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
@@ -8,26 +10,22 @@ from ghedesigner.ghe.search.bisection_1d import Bisection1D
 from ghedesigner.media import GHEFluid, Grout, Soil
 
 
+@dataclass
 class GeometricConstraintsRectangle(GeometricConstraints):
     """
     Geometric constraints for rectangular design algorithm
     """
 
-    def __init__(self, width: float, length: float, b_min: float, b_max_x: float) -> None:
-        super().__init__()
-        self.width = width
-        self.length = length
-        self.b_min = b_min
-        self.b_max_x = b_max_x
-        self.type = DesignGeomType.RECTANGLE
+    length: float
+    width: float
+    b_min: float
+    b_max: float
+    type: DesignGeomType = field(default=DesignGeomType.RECTANGLE, init=False, repr=False)
 
     def to_input(self) -> dict:
         return {
-            "length": self.length,
-            "width": self.width,
-            "b_min": self.b_min,
-            "b_max": self.b_max_x,
-            "method": DesignGeomType.RECTANGLE.name,
+            **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k != "type"}),
+            "method": self.type.name,
         }
 
 
@@ -80,7 +78,7 @@ class DesignRectangle(DesignBase):
             self.geometric_constraints.length,
             self.geometric_constraints.width,
             self.geometric_constraints.b_min,
-            self.geometric_constraints.b_max_x,
+            self.geometric_constraints.b_max,
         )
 
     def find_design(self, disp=False) -> Bisection1D:
@@ -90,7 +88,7 @@ class DesignRectangle(DesignBase):
         return Bisection1D(
             self.coordinates_domain,
             self.fieldDescriptors,
-            self.V_flow,
+            self.v_flow,
             self.borehole,
             self.fluid,
             self.pipe,
