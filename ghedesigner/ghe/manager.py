@@ -165,7 +165,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                 length=geom["length"],
                 width=geom["width"],
                 b_min=geom["b_min"],
-                b_max_x=geom["b_max"],
+                b_max=geom["b_max"],
             )
             design = DesignRectangle(
                 flow_rate,

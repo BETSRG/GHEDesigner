@@ -12,7 +12,7 @@ from ghedesigner.ghe.coordinates import (
 from ghedesigner.ghe.shape import point_polygon_check
 
 
-def determine_largest_rectangle(property_boundary):
+def determine_largest_rectangle(property_boundary: list[list[list[float]]]):
     x_max = -inf
     y_max = -inf
     x_min = inf
@@ -405,7 +405,12 @@ def bi_rectangle_zoned_nested(length_x, length_y, b_min, b_max_x, b_max_y):
 
 
 def polygonal_land_constraint(
-    b_min, b_max_x, b_max_y, property_boundary, no_go_boundaries=None, keep_contour: tuple[bool, bool] | None = None
+    b_min: float,
+    b_max_x: float,
+    b_max_y: float,
+    property_boundary: list[list[list[float]]],
+    no_go_boundaries: list[list[list[float]]] | None = None,
+    keep_contour: tuple[bool, bool] | None = None,
 ):
     if no_go_boundaries is None:
         no_go_boundaries = []

@@ -1,4 +1,5 @@
-from typing import cast
+from dataclasses import asdict, dataclass, field
+from typing import TypeGuard, cast
 
 from pygfunction.boreholes import Borehole
 
@@ -10,37 +11,45 @@ from ghedesigner.ghe.search.bisection_zd import BisectionZD
 from ghedesigner.media import GHEFluid, Grout, Soil
 
 
+def is_2d(property_boundary: list[list[float]] | list[list[list[float]]]) -> TypeGuard[list[list[float]]]:
+    return bool(property_boundary) and isinstance(property_boundary[0][0], float)
+
+
+@dataclass
 class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
     """
     Geometric constraints for bi-rectangle constrained design algorithm
     """
 
-    def __init__(self, b_min: float, b_max_x: float, b_max_y: float, property_boundary, no_go_boundaries) -> None:
-        super().__init__()
+    b_min: float
+    b_max_x: float
+    b_max_y: float
+    property_boundary: list[list[list[float]]] = field(init=False)
+    no_go_boundaries: list[list[list[float]]]
+    type: DesignGeomType = field(default=DesignGeomType.BIRECTANGLECONSTRAINED, init=False, repr=False)
+
+    def __init__(
+        self,
+        b_min: float,
+        b_max_x: float,
+        b_max_y: float,
+        property_boundary: list[list[float]] | list[list[list[float]]],
+        no_go_boundaries: list[list[list[float]]],
+    ) -> None:
         self.b_min = b_min
         self.b_max_x = b_max_x
         self.b_max_y = b_max_y
+        self.no_go_boundaries = no_go_boundaries
 
-        if len(no_go_boundaries) > 0 and isinstance(no_go_boundaries[0][0], (int, float)):
-            self.no_go_boundaries = [no_go_boundaries]
-        else:
-            self.no_go_boundaries = no_go_boundaries
-
-        if len(property_boundary) > 0 and isinstance(property_boundary[0][0], (int, float)):
+        if is_2d(property_boundary):
             self.property_boundary = [property_boundary]
         else:
-            self.property_boundary = property_boundary
-
-        self.type = DesignGeomType.BIRECTANGLECONSTRAINED
+            self.property_boundary = cast(list[list[list[float]]], property_boundary)
 
     def to_input(self) -> dict:
         return {
-            "b_min": self.b_min,
-            "b_max_x": self.b_max_x,
-            "b_max_y": self.b_max_y,
-            "property_boundary": self.property_boundary,
-            "no_go_boundaries": self.no_go_boundaries,
-            "method": DesignGeomType.BIRECTANGLECONSTRAINED.name,
+            **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k != "type"}),
+            "method": self.type.name,
         }
 
 
@@ -108,7 +117,7 @@ class DesignBiRectangleConstrained(DesignBase):
         return BisectionZD(
             self.coordinates_domain_nested,
             self.fieldDescriptors,
-            self.V_flow,
+            self.v_flow,
             self.borehole,
             self.fluid,
             self.pipe,

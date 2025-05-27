@@ -1,5 +1,74 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$defs": {
+    "b_max": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Maximum borehole-to-borehole spacing."
+    },
+    "b_max_x": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Maximum borehole-to-borehole spacing in x-direction."
+    },
+    "b_max_y": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Maximum borehole-to-borehole spacing in y-direction."
+    },
+    "b_min": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Minimum borehole-to-borehole spacing."
+    },
+    "length": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Horizontal length of property boundary defining surface area available for ground heat exchanger."
+    },
+    "no_go_boundaries": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "format": "Meters",
+      "description": "(x, y) coordinate points of closed polygon defining go/no-go boundaries. Go/no-go zones must lie within the area defined in 'property_boundary'. Points should be entered in a counter-clockwise fashion."
+    },
+    "property_boundary": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "format": "Meters",
+      "description": "(x, y) coordinate points of closed polygon defining property boundary. Points should be entered in a counter-clockwise fashion."
+    },
+    "width": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Horizontal width of property boundary defining surface area available for ground heat exchanger."
+    }
+  },
   "type": "object",
   "properties": {
     "topology": {
@@ -49,7 +118,8 @@
           "description": "Average design fluid temperature at peak conditions."
         }
       },
-      "required": ["fluid_name", "concentration_percent", "temperature"]
+      "required": ["fluid_name", "concentration_percent", "temperature"],
+      "additionalProperties": false
     },
     "building": {
       "type": "object",
@@ -70,26 +140,27 @@
             "type": "string"
           }
         },
-        "required": ["name", "loads", "cop", "capacity"]
+        "required": ["name", "loads", "cop", "capacity"],
+        "additionalProperties": false
       }
     },
     "ground-heat-exchanger": {
       "type": "object",
       "description": "A collection of objects that define a ground heat exchanger system.",
-      "flow_rate": {
-        "type": "number",
-        "minimum": 0,
-        "format": "Liters/Second",
-        "description": "Volumetric design flow rate. Value specified will be either the system or per-borehole flow rate depending on the 'flow_type' set."
-      },
-      "flow_type": {
-        "type": "string",
-        "enum": ["BOREHOLE", "SYSTEM"],
-        "description": "Indicates whether the design volumetric flow rate set on on a per-borehole or system basis."
-      },
       "additionalProperties": {
         "type": "object",
         "properties": {
+          "flow_rate": {
+            "type": "number",
+            "minimum": 0,
+            "format": "Liters/Second",
+            "description": "Volumetric design flow rate. Value specified will be either the system or per-borehole flow rate depending on the 'flow_type' set."
+          },
+          "flow_type": {
+            "type": "string",
+            "enum": ["BOREHOLE", "SYSTEM"],
+            "description": "Indicates whether the design volumetric flow rate set on on a per-borehole or system basis."
+          },
           "grout": {
             "type": "object",
             "properties": {
@@ -106,7 +177,8 @@
                 "description": "Volumetric heat capacity."
               }
             },
-            "required": ["conductivity", "rho_cp"]
+            "required": ["conductivity", "rho_cp"],
+            "additionalProperties": false
           },
           "soil": {
             "type": "object",
@@ -129,7 +201,8 @@
                 "description": "Undisturbed, far-field soil temperature."
               }
             },
-            "required": ["conductivity", "rho_cp", "undisturbed_temp"]
+            "required": ["conductivity", "rho_cp", "undisturbed_temp"],
+            "additionalProperties": false
           },
           "pipe": {
             "type": "object",
@@ -284,7 +357,8 @@
                   "arrangement"
                 ]
               }
-            ]
+            ],
+            "additionalProperties": false
           },
           "borehole": {
             "type": "object",
@@ -301,7 +375,8 @@
                 "description": "Diameter of borehole."
               }
             },
-            "required": ["buried_depth", "diameter"]
+            "required": ["buried_depth", "diameter"],
+            "additionalProperties": false
           },
           "pre_designed": {
             "type": "object",
@@ -370,41 +445,12 @@
                   "spacing_in_y_dimension"
                 ]
               }
-            ]
+            ],
+            "additionalProperties": false
           },
           "geometric_constraints": {
             "type": "object",
             "properties": {
-              "length": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Horizontal length of property boundary defining surface area available for ground heat exchanger."
-              },
-              "width": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Horizontal width of property boundary defining surface area available for ground heat exchanger."
-              },
-              "b_min": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Minimum borehole-to-borehole spacing."
-              },
-              "b_max_x": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Maximum borehole-to-borehole spacing in x-direction."
-              },
-              "b_max_y": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Maximum borehole-to-borehole spacing in y-direction."
-              },
               "method": {
                 "type": "string",
                 "enum": [
@@ -416,92 +462,6 @@
                   "ROWWISE"
                 ],
                 "description": "Design algorithm specified."
-              },
-              "property_boundary": {
-                "type": "array",
-                "items": {
-                  "type": "array",
-                  "minItems": 2,
-                  "maxItems": 2,
-                  "items": {
-                    "type": "number",
-                    "minimum": 0
-                  }
-                },
-                "format": "Meters",
-                "description": "(x, y) coordinate points of closed polygon defining property boundary. Points should be entered in a counter-clockwise fashion."
-              },
-              "no_go_boundaries": {
-                "type": "array",
-                "items": {
-                  "type": "array",
-                  "items": {
-                    "type": "array",
-                    "minItems": 2,
-                    "maxItems": 2,
-                    "items": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  }
-                },
-                "format": "Meters",
-                "description": "(x, y) coordinate points of closed polygon defining go/no-go boundaries. Go/no-go zones must lie within the area defined in 'property_boundary'. Points should be entered in a counter-clockwise fashion."
-              },
-              "b": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Borehole-to-borehole spacing."
-              },
-              "b_max": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Maximum borehole-to-borehole spacing."
-              },
-              "perimeter_spacing_ratio": {
-                "type": "number",
-                "minimum": 0,
-                "format": "fraction",
-                "description": "The ratio between the minimum spacing between boreholes placed along the property and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes."
-              },
-              "max_spacing": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "The largest minimum spacing that will be used to generate a RowWise field."
-              },
-              "min_spacing": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "The smallest minimum spacing that will be used to generate a RowWise field."
-              },
-              "spacing_step": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "The distance in spacing from the design found in the first part of first search to exhaustively check in the second part."
-              },
-              "max_rotation": {
-                "type": "number",
-                "format": "Degrees",
-                "maximum": 90,
-                "minimum": -90,
-                "description": "The maximum rotation of the rows of each field relative to horizontal that will be used in the search."
-              },
-              "min_rotation": {
-                "type": "number",
-                "format": "Degrees",
-                "maximum": 90,
-                "minimum": -90,
-                "description": "The minimum rotation of the rows of each field relative to horizontal that will be used in the search."
-              },
-              "rotate_step": {
-                "type": "number",
-                "format": "Degrees",
-                "description": "Step size for field rotation search."
               }
             },
             "oneOf": [
@@ -509,6 +469,21 @@
                 "properties": {
                   "method": {
                     "const": "BIRECTANGLE"
+                  },
+                  "length": {
+                    "$ref": "#/$defs/length"
+                  },
+                  "width": {
+                    "$ref": "#/$defs/width"
+                  },
+                  "b_min": {
+                    "$ref": "#/$defs/b_min"
+                  },
+                  "b_max_x": {
+                    "$ref": "#/$defs/b_max_x"
+                  },
+                  "b_max_y": {
+                    "$ref": "#/$defs/b_max_y"
                   }
                 },
                 "required": [
@@ -518,12 +493,28 @@
                   "b_max_x",
                   "b_max_y",
                   "method"
-                ]
+                ],
+                "additionalProperties": false
               },
               {
                 "properties": {
                   "method": {
                     "const": "BIRECTANGLECONSTRAINED"
+                  },
+                  "b_min": {
+                    "$ref": "#/$defs/b_min"
+                  },
+                  "b_max_x": {
+                    "$ref": "#/$defs/b_max_x"
+                  },
+                  "b_max_y": {
+                    "$ref": "#/$defs/b_max_y"
+                  },
+                  "property_boundary": {
+                    "$ref": "#/$defs/property_boundary"
+                  },
+                  "no_go_boundaries": {
+                    "$ref": "#/$defs/no_go_boundaries"
                   }
                 },
                 "required": [
@@ -533,12 +524,28 @@
                   "property_boundary",
                   "no_go_boundaries",
                   "method"
-                ]
+                ],
+                "additionalProperties": false
               },
               {
                 "properties": {
                   "method": {
                     "const": "BIZONEDRECTANGLE"
+                  },
+                  "length": {
+                    "$ref": "#/$defs/length"
+                  },
+                  "width": {
+                    "$ref": "#/$defs/width"
+                  },
+                  "b_min": {
+                    "$ref": "#/$defs/b_min"
+                  },
+                  "b_max_x": {
+                    "$ref": "#/$defs/b_max_x"
+                  },
+                  "b_max_y": {
+                    "$ref": "#/$defs/b_max_y"
                   }
                 },
                 "required": [
@@ -548,42 +555,115 @@
                   "b_max_x",
                   "b_max_y",
                   "method"
-                ]
+                ],
+                "additionalProperties": false
               },
               {
                 "properties": {
                   "method": {
                     "const": "NEARSQUARE"
+                  },
+                  "length": {
+                    "$ref": "#/$defs/length"
+                  },
+                  "b": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Borehole-to-borehole spacing."
                   }
                 },
-                "required": ["length", "b", "method"]
+                "required": ["length", "b", "method"],
+                "additionalProperties": false
               },
               {
                 "properties": {
                   "method": {
                     "const": "RECTANGLE"
+                  },
+                  "length": {
+                    "$ref": "#/$defs/length"
+                  },
+                  "width": {
+                    "$ref": "#/$defs/width"
+                  },
+                  "b_min": {
+                    "$ref": "#/$defs/b_min"
+                  },
+                  "b_max": {
+                    "$ref": "#/$defs/b_max"
                   }
                 },
-                "required": ["length", "width", "b_min", "b_max", "method"]
+                "required": ["length", "width", "b_min", "b_max", "method"],
+                "additionalProperties": false
               },
               {
                 "properties": {
                   "method": {
                     "const": "ROWWISE"
+                  },
+                  "min_spacing": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "The smallest minimum spacing that will be used to generate a RowWise field."
+                  },
+                  "max_spacing": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "The largest minimum spacing that will be used to generate a RowWise field."
+                  },
+                  "spacing_step": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "The distance in spacing from the design found in the first part of first search to exhaustively check in the second part."
+                  },
+                  "min_rotation": {
+                    "type": "number",
+                    "format": "Degrees",
+                    "maximum": 90,
+                    "minimum": -90,
+                    "description": "The minimum rotation of the rows of each field relative to horizontal that will be used in the search."
+                  },
+                  "max_rotation": {
+                    "type": "number",
+                    "format": "Degrees",
+                    "maximum": 90,
+                    "minimum": -90,
+                    "description": "The maximum rotation of the rows of each field relative to horizontal that will be used in the search."
+                  },
+                  "rotate_step": {
+                    "type": "number",
+                    "format": "Degrees",
+                    "description": "Step size for field rotation search."
+                  },
+                  "property_boundary": {
+                    "$ref": "#/$defs/property_boundary"
+                  },
+                  "no_go_boundaries": {
+                    "$ref": "#/$defs/no_go_boundaries"
+                  },
+                  "perimeter_spacing_ratio": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "fraction",
+                    "description": "The ratio between the minimum spacing between boreholes placed along the property and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes."
                   }
                 },
                 "required": [
-                  "perimeter_spacing_ratio",
                   "min_spacing",
                   "max_spacing",
                   "spacing_step",
-                  "max_rotation",
                   "min_rotation",
+                  "max_rotation",
                   "rotate_step",
                   "property_boundary",
                   "no_go_boundaries",
                   "method"
-                ]
+                ],
+                "additionalProperties": false
               }
             ]
           },
@@ -621,7 +701,8 @@
                 "description": "Minimum height, or active length, of each borehole heat exchanger."
               }
             },
-            "required": ["max_eft", "min_eft", "max_height", "min_height"]
+            "required": ["max_eft", "min_eft", "max_height", "min_height"],
+            "additionalProperties": false
           },
           "loads": {
             "type": "array",
@@ -643,20 +724,24 @@
           "borehole",
           "flow_rate",
           "flow_type"
-        ]
+        ],
+        "additionalProperties": false
       }
     },
     "pump": {
       "type": "object",
-      "description": ""
+      "description": "",
+      "additionalProperties": false
     },
     "towers": {
       "type": "object",
-      "description": ""
+      "description": "",
+      "additionalProperties": false
     },
     "generic-loads": {
       "type": "object",
-      "description": ""
+      "description": "",
+      "additionalProperties": false
     },
     "simulation-control": {
       "type": "object",
@@ -687,12 +772,14 @@
           "description": "This field is currently unused. Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently available."
         }
       },
-      "required": ["simulation-months"]
+      "required": ["simulation-months"],
+      "additionalProperties": false
     },
     "version": {
       "type": "number",
       "description": "An integer version ID for this input structure, for future-proofing."
     }
   },
-  "required": ["topology", "fluid", "ground-heat-exchanger", "version"]
+  "required": ["topology", "fluid", "ground-heat-exchanger", "version"],
+  "additionalProperties": false
 }

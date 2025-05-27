@@ -1,3 +1,4 @@
+from dataclasses import asdict, dataclass, field
 from math import floor
 
 from pygfunction.boreholes import Borehole
@@ -10,19 +11,21 @@ from ghedesigner.ghe.search.bisection_1d import Bisection1D
 from ghedesigner.media import GHEFluid, Grout, Soil
 
 
+@dataclass
 class GeometricConstraintsNearSquare(GeometricConstraints):
     """
     Geometric constraints for near square design algorithm
     """
 
-    def __init__(self, b: float, length: float) -> None:
-        super().__init__()
-        self.b = b
-        self.length = length
-        self.type = DesignGeomType.NEARSQUARE
+    b: float
+    length: float
+    type: DesignGeomType = field(default=DesignGeomType.NEARSQUARE, init=False, repr=False)
 
     def to_input(self) -> dict:
-        return {"length": self.length, "b": self.b, "method": DesignGeomType.NEARSQUARE.name}
+        return {
+            **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k != "type"}),
+            "method": self.type.name,
+        }
 
 
 class DesignNearSquare(DesignBase):
@@ -89,7 +92,7 @@ class DesignNearSquare(DesignBase):
         return Bisection1D(
             self.coordinates_domain,
             self.fieldDescriptors,
-            self.V_flow,
+            self.v_flow,
             self.borehole,
             self.fluid,
             self.pipe,

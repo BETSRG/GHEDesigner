@@ -1,3 +1,5 @@
+from dataclasses import asdict, dataclass, field
+
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import RAD_TO_DEG
@@ -8,47 +10,29 @@ from ghedesigner.ghe.search.rowwise import RowWiseModifiedBisectionSearch
 from ghedesigner.media import GHEFluid, Grout, Soil
 
 
+@dataclass
 class GeometricConstraintsRowWise(GeometricConstraints):
     """
     Geometric constraints for rowwise design algorithm
     """
 
-    def __init__(
-        self,
-        perimeter_spacing_ratio: float | None,
-        min_spacing: float,
-        max_spacing: float,
-        spacing_step: float,
-        min_rotation: float,
-        max_rotation: float,
-        rotate_step: float,
-        property_boundary,
-        no_go_boundaries,
-    ) -> None:
-        super().__init__()
-        self.perimeter_spacing_ratio = perimeter_spacing_ratio
-        self.min_spacing = min_spacing
-        self.max_spacing = max_spacing
-        self.spacing_step = spacing_step
-        self.min_rotation = min_rotation
-        self.max_rotation = max_rotation
-        self.rotate_step = rotate_step
-        self.property_boundary = property_boundary
-        self.no_go_boundaries = no_go_boundaries
-        self.type = DesignGeomType.ROWWISE
+    perimeter_spacing_ratio: float | None
+    min_spacing: float
+    max_spacing: float
+    spacing_step: float
+    min_rotation: float
+    max_rotation: float
+    rotate_step: float
+    property_boundary: list[list[float]]
+    no_go_boundaries: list[list[list[float]]]
+    type: DesignGeomType = field(default=DesignGeomType.ROWWISE, init=False, repr=False)
 
     def to_input(self) -> dict:
         return {
-            "perimeter_spacing_ratio": self.perimeter_spacing_ratio,
-            "min_spacing": self.min_spacing,
-            "max_spacing": self.max_spacing,
-            "spacing_step": self.spacing_step,
+            **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k != "type"}),
             "min_rotation": self.min_rotation * RAD_TO_DEG,
             "max_rotation": self.max_rotation * RAD_TO_DEG,
-            "rotate_step": self.rotate_step,
-            "property_boundary": self.property_boundary,
-            "no_go_boundaries": self.no_go_boundaries,
-            "method": DesignGeomType.ROWWISE.name,
+            "method": self.type.name,
         }
 
 
@@ -103,7 +87,7 @@ class DesignRowWise(DesignBase):
             title = "Find row-wise..."
             print(title + "\n" + len(title) * "=")
         return RowWiseModifiedBisectionSearch(
-            self.V_flow,
+            self.v_flow,
             self.borehole,
             self.fluid,
             self.pipe,

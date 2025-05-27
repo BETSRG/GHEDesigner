@@ -1,10 +1,19 @@
+from dataclasses import InitVar, asdict, dataclass, field
+
 from pygfunction.media import Fluid
 
 from ghedesigner.enums import FluidType
 
 
+@dataclass
 class GHEFluid(Fluid):
-    def __init__(self, fluid_str: str, percent: float, temperature: float = 20.0) -> None:
+    fluid_str: InitVar[str]
+    percent: InitVar[float]
+    temperature: float = 20.0
+    concentration_percent: float = field(init=False)
+    fluid_type: FluidType = field(init=False)
+
+    def __post_init__(self, fluid_str: str, percent: float) -> None:
         fluid_type_map = {
             FluidType.ETHYLALCOHOL.name: (FluidType.ETHYLALCOHOL, "MEA"),
             FluidType.ETHYLENEGLYCOL.name: (FluidType.ETHYLENEGLYCOL, "MEG"),
@@ -13,25 +22,24 @@ class GHEFluid(Fluid):
             FluidType.WATER.name: (FluidType.WATER, "WATER"),
         }
 
+        self.concentration_percent = percent
+
         try:
             self.fluid_type, fluid_shorthand = fluid_type_map[fluid_str.upper()]
         except KeyError:
             raise ValueError(f'FluidType "{fluid_str}" not implemented')
 
-        super().__init__(fluid_shorthand, percent, temperature)
-        self.concentration_percent = percent
-        self.temperature = temperature
+        super().__init__(fluid_shorthand, percent, self.temperature)
 
-    def to_input(self):
+    def to_input(self) -> dict:
         return {
+            **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k not in {"fluid_type"}}),
             "fluid_name": self.fluid_type.name,
-            "concentration_percent": self.concentration_percent,
-            "temperature": self.temperature,
         }
 
 
 class ThermalProperty:
-    def __init__(self, k, rho_cp) -> None:
+    def __init__(self, k, rho_cp: float) -> None:
         self.k = k  # Thermal conductivity (W/m.K)
         self.rhoCp = rho_cp  # Volumetric heat capacity (J/K.m3)
 
@@ -52,9 +60,9 @@ class Grout(ThermalProperty):
 
 
 class Soil(ThermalProperty):
-    def __init__(self, k, rho_cp, ugt) -> None:
+    def __init__(self, k: float, rho_cp: float, ugt: float) -> None:
         # Make variables from ThermalProperty available to Pipe
-        ThermalProperty.__init__(self, k, rho_cp)
+        super().__init__(k, rho_cp)
 
         # Soil specific parameters
         self.ugt = ugt

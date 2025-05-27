@@ -71,8 +71,8 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         pipe: Pipe,
         flow_rate: float,
         borehole_radius: float,
-        _prop_boundary: list,
-        _no_go_boundaries: list,
+        _prop_boundary: list[list[float]] | list[list[list[float]]],
+        _no_go_boundaries: list[list[list[float]]],
     ):
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
         fluid = GHEFluid("water", 0.0, 20.0)

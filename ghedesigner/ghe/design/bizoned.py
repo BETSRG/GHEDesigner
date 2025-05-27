@@ -1,3 +1,5 @@
+from dataclasses import asdict, dataclass, field
+
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
@@ -9,23 +11,23 @@ from ghedesigner.ghe.search.bisection_zd import BisectionZD
 from ghedesigner.media import GHEFluid, Grout, Soil
 
 
+@dataclass
 class GeometricConstraintsBiZoned(GeometricConstraintsBiRectangle):
     """
     Geometric constraints for bi-zoned design algorithm
     """
 
-    def __init__(self, width: float, length: float, b_min: float, b_max_x: float, b_max_y: float) -> None:
-        super().__init__(width, length, b_min, b_max_x, b_max_y)
-        self.type = DesignGeomType.BIZONEDRECTANGLE
+    length: float
+    width: float
+    b_min: float
+    b_max_x: float
+    b_max_y: float
+    type: DesignGeomType = field(default=DesignGeomType.BIZONEDRECTANGLE, init=False, repr=False)
 
     def to_input(self) -> dict:
         return {
-            "length": self.length,
-            "width": self.width,
-            "b_min": self.b_min,
-            "b_max_x": self.b_max_x,
-            "b_max_y": self.b_max_y,
-            "method": DesignGeomType.BIZONEDRECTANGLE.name,
+            **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k != "type"}),
+            "method": self.type.name,
         }
 
 
@@ -89,7 +91,7 @@ class DesignBiZoned(DesignBase):
         return BisectionZD(
             self.coordinates_domain_nested,
             self.fieldDescriptors,
-            self.V_flow,
+            self.v_flow,
             self.borehole,
             self.fluid,
             self.pipe,
