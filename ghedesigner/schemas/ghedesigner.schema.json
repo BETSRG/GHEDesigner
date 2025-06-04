@@ -25,6 +25,24 @@
       "format": "Meters",
       "description": "Minimum borehole-to-borehole spacing."
     },
+    "conductivity": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Watts/Meter-Kelvin",
+      "description": "Thermal conductivity."
+    },
+    "H": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Length of each borehole"
+    },
+    "inner_diameter": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Inner diameter of pipe."
+    },
     "length": {
       "type": "number",
       "minimum": 0,
@@ -48,6 +66,12 @@
       "format": "Meters",
       "description": "(x, y) coordinate points of closed polygon defining go/no-go boundaries. Go/no-go zones must lie within the area defined in 'property_boundary'. Points should be entered in a counter-clockwise fashion."
     },
+    "outer_diameter": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Outer diameter of pipe."
+    },
     "property_boundary": {
       "type": "array",
       "items": {
@@ -61,6 +85,24 @@
       },
       "format": "Meters",
       "description": "(x, y) coordinate points of closed polygon defining property boundary. Points should be entered in a counter-clockwise fashion."
+    },
+    "rho_cp": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Joules/Meter^3-Kelvin",
+      "description": "Volumetric heat capacity."
+    },
+    "roughness": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Surface roughness of pipe."
+    },
+    "shank_spacing": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Spacing between up/down legs of u-tube pipe, as measured from nearest outer surfaces of each pipe (o<-- s -->o)."
     },
     "width": {
       "type": "number",
@@ -165,16 +207,10 @@
             "type": "object",
             "properties": {
               "conductivity": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Watts/Meter-Kelvin",
-                "description": "Thermal conductivity."
+                "$ref": "#/$defs/conductivity"
               },
               "rho_cp": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Joules/Meter^3-Kelvin",
-                "description": "Volumetric heat capacity."
+                "$ref": "#/$defs/rho_cp"
               }
             },
             "required": ["conductivity", "rho_cp"],
@@ -184,16 +220,10 @@
             "type": "object",
             "properties": {
               "conductivity": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Watts/Meter-Kelvin",
-                "description": "Thermal conductivity."
+                "$ref": "#/$defs/conductivity"
               },
               "rho_cp": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Joules/Meter^3-Kelvin",
-                "description": "Volumetric heat capacity."
+                "$ref": "#/$defs/rho_cp"
               },
               "undisturbed_temp": {
                 "type": "number",
@@ -207,24 +237,6 @@
           "pipe": {
             "type": "object",
             "properties": {
-              "roughness": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Surface roughness of pipe."
-              },
-              "conductivity": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Watts/Meter-Kelvin",
-                "description": "Thermal conductivity."
-              },
-              "rho_cp": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Joules/Meter^3-Kelvin",
-                "description": "Volumetric heat capacity."
-              },
               "arrangement": {
                 "type": "string",
                 "enum": [
@@ -234,60 +246,6 @@
                   "COAXIAL"
                 ],
                 "description": "Pipe arrangement specified."
-              },
-              "inner_diameter": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Inner diameter of pipe."
-              },
-              "outer_diameter": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Outer diameter of pipe."
-              },
-              "shank_spacing": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Spacing between up/down legs of u-tube pipe, as measured from nearest outer surfaces of each pipe (o<-- s -->o)."
-              },
-              "conductivity_inner": {
-                "type": "number",
-                "minimum": 0,
-                "format": "W/Meters-K",
-                "description": "Thermal conductivity of inner pipe."
-              },
-              "conductivity_outer": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Watts/Meter-Kelvin",
-                "description": "Thermal conductivity of outer pipe."
-              },
-              "inner_pipe_d_in": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Inner pipe inner diameter."
-              },
-              "inner_pipe_d_out": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Inner pipe outer diameter."
-              },
-              "outer_pipe_d_in": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Outer pipe inner diameter."
-              },
-              "outer_pipe_d_out": {
-                "type": "number",
-                "minimum": 0,
-                "format": "Meters",
-                "description": "Outer pipe outer diameter."
               }
             },
             "oneOf": [
@@ -295,6 +253,30 @@
                 "properties": {
                   "arrangement": {
                     "const": "SINGLEUTUBE"
+                  },
+                  "inner_diameter": {
+                    "$ref": "#/$defs/inner_diameter"
+                  },
+                  "outer_diameter": {
+                    "$ref": "#/$defs/outer_diameter"
+                  },
+                  "shank_spacing": {
+                    "$ref": "#/$defs/shank_spacing"
+                  },
+                  "roughness": {
+                    "$ref": "#/$defs/roughness"
+                  },
+                  "conductivity": {
+                    "$ref": "#/$defs/conductivity"
+                  },
+                  "rho_cp": {
+                    "$ref": "#/$defs/rho_cp"
+                  },
+                  "num_pipes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "Number of single U-tube pipes in the borehole. Default is 1."
                   }
                 },
                 "required": [
@@ -305,12 +287,31 @@
                   "conductivity",
                   "rho_cp",
                   "arrangement"
-                ]
+                ],
+                "additionalProperties": false
               },
               {
                 "properties": {
                   "arrangement": {
                     "const": "DOUBLEUTUBESERIES"
+                  },
+                  "inner_diameter": {
+                    "$ref": "#/$defs/inner_diameter"
+                  },
+                  "outer_diameter": {
+                    "$ref": "#/$defs/outer_diameter"
+                  },
+                  "shank_spacing": {
+                    "$ref": "#/$defs/shank_spacing"
+                  },
+                  "roughness": {
+                    "$ref": "#/$defs/roughness"
+                  },
+                  "conductivity": {
+                    "$ref": "#/$defs/conductivity"
+                  },
+                  "rho_cp": {
+                    "$ref": "#/$defs/rho_cp"
                   }
                 },
                 "required": [
@@ -321,12 +322,31 @@
                   "conductivity",
                   "rho_cp",
                   "arrangement"
-                ]
+                ],
+                "additionalProperties": false
               },
               {
                 "properties": {
                   "arrangement": {
                     "const": "DOUBLEUTUBEPARALLEL"
+                  },
+                  "inner_diameter": {
+                    "$ref": "#/$defs/inner_diameter"
+                  },
+                  "outer_diameter": {
+                    "$ref": "#/$defs/outer_diameter"
+                  },
+                  "shank_spacing": {
+                    "$ref": "#/$defs/shank_spacing"
+                  },
+                  "roughness": {
+                    "$ref": "#/$defs/roughness"
+                  },
+                  "conductivity": {
+                    "$ref": "#/$defs/conductivity"
+                  },
+                  "rho_cp": {
+                    "$ref": "#/$defs/rho_cp"
                   }
                 },
                 "required": [
@@ -337,12 +357,55 @@
                   "conductivity",
                   "rho_cp",
                   "arrangement"
-                ]
+                ],
+                "additionalProperties": false
               },
               {
                 "properties": {
                   "arrangement": {
                     "const": "COAXIAL"
+                  },
+                  "inner_pipe_d_in": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Inner pipe inner diameter."
+                  },
+                  "inner_pipe_d_out": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Inner pipe outer diameter."
+                  },
+                  "outer_pipe_d_in": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Outer pipe inner diameter."
+                  },
+                  "outer_pipe_d_out": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Outer pipe outer diameter."
+                  },
+                  "roughness": {
+                    "$ref": "#/$defs/roughness"
+                  },
+                  "conductivity_inner": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Watts/Meters-Kelvin",
+                    "description": "Thermal conductivity of inner pipe."
+                  },
+                  "conductivity_outer": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Watts/Meter-Kelvin",
+                    "description": "Thermal conductivity of outer pipe."
+                  },
+                  "rho_cp": {
+                    "$ref": "#/$defs/rho_cp"
                   }
                 },
                 "required": [
@@ -355,10 +418,10 @@
                   "conductivity_outer",
                   "rho_cp",
                   "arrangement"
-                ]
+                ],
+                "additionalProperties": false
               }
-            ],
-            "additionalProperties": false
+            ]
           },
           "borehole": {
             "type": "object",
@@ -380,46 +443,12 @@
           },
           "pre_designed": {
             "type": "object",
-            "description": "Data related to a pre-designed borehole field, used in cases where the field arrangement is known ahead of time.  GHEDesigner will provide a g-function calculation for the specified field.",
+            "description": "Data related to a pre-designed borehole field, used in cases where the field arrangement is known ahead of time. GHEDesigner will provide a g-function calculation for the specified field.",
             "properties": {
-              "H": {
-                "type": "number",
-                "description": "Length of each borehole, in meters"
-              },
               "arrangement": {
                 "type": "string",
                 "enum": ["MANUAL", "RECTANGLE"],
                 "description": "Pipe arrangement specified."
-              },
-              "boreholes_in_x_dimension": {
-                "type": "number",
-                "description": "Number of boreholes in the x direction of the field, dimensionless"
-              },
-              "boreholes_in_y_dimension": {
-                "type": "number",
-                "description": "Number of boreholes in the y direction of the field, dimensionless"
-              },
-              "spacing_in_x_dimension": {
-                "type": "number",
-                "description": "Borehole spacing in the x direction of the field, in meters (ignored if boreholes_in_x_dimension = 1)"
-              },
-              "spacing_in_y_dimension": {
-                "type": "number",
-                "description": "Borehole spacing in the y direction of the field, in meters (ignored if boreholes_in_y_dimension = 1)"
-              },
-              "x": {
-                "type": "array",
-                "description": "For MANUAL arrangement, this provides an array of x coordinate positions, one for each borehole in the field",
-                "items": {
-                  "type": "number"
-                }
-              },
-              "y": {
-                "type": "array",
-                "description": "For MANUAL arrangement, this provides an array of y coordinate positions, one for each borehole in the field",
-                "items": {
-                  "type": "number"
-                }
               }
             },
             "oneOf": [
@@ -427,26 +456,70 @@
                 "properties": {
                   "arrangement": {
                     "const": "MANUAL"
+                  },
+                  "H": {
+                    "$ref": "#/$defs/H"
+                  },
+                  "x": {
+                    "type": "array",
+                    "description": "For MANUAL arrangement, this provides an array of x coordinate positions, one for each borehole in the field",
+                    "items": {
+                      "type": "number"
+                    }
+                  },
+                  "y": {
+                    "type": "array",
+                    "description": "For MANUAL arrangement, this provides an array of y coordinate positions, one for each borehole in the field",
+                    "items": {
+                      "type": "number"
+                    }
                   }
                 },
-                "required": ["H", "x", "y"]
+                "required": ["arrangement", "H", "x", "y"],
+                "additionalProperties": false
               },
               {
                 "properties": {
-                  "method": {
+                  "arrangement": {
                     "const": "RECTANGLE"
+                  },
+                  "H": {
+                    "$ref": "#/$defs/H"
+                  },
+                  "boreholes_in_x_dimension": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of boreholes in the x direction of the field, dimensionless"
+                  },
+                  "boreholes_in_y_dimension": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of boreholes in the y direction of the field, dimensionless"
+                  },
+                  "spacing_in_x_dimension": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Borehole spacing in the x direction of the field, in meters (ignored if boreholes_in_x_dimension = 1)"
+                  },
+                  "spacing_in_y_dimension": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Borehole spacing in the y direction of the field, in meters (ignored if boreholes_in_y_dimension = 1)"
                   }
                 },
                 "required": [
+                  "arrangement",
                   "H",
                   "boreholes_in_x_dimension",
                   "boreholes_in_y_dimension",
                   "spacing_in_x_dimension",
                   "spacing_in_y_dimension"
-                ]
+                ],
+                "additionalProperties": false
               }
-            ],
-            "additionalProperties": false
+            ]
           },
           "geometric_constraints": {
             "type": "object",
@@ -686,7 +759,8 @@
               },
               "continue_if_design_unmet": {
                 "type": "boolean",
-                "description": "Causes to return the best available borehole  field configuration rather than fail if design conditions  are unmet.  Optional. Default False."
+                "default": false,
+                "description": "Causes to return the best available borehole field configuration rather than fail if design conditions are unmet. Optional. Default False."
               },
               "max_height": {
                 "type": "number",
@@ -749,7 +823,7 @@
       "properties": {
         "thermal-sizing-run": {
           "type": "boolean",
-          "description": "This field is currently unused.  It will enable or disable running a sizing calculation for the ground heat exchanger"
+          "description": "This field is currently unused. It will enable or disable running a sizing calculation for the ground heat exchanger"
         },
         "hourly-run": {
           "type": "boolean",
@@ -776,7 +850,7 @@
       "additionalProperties": false
     },
     "version": {
-      "type": "number",
+      "type": "integer",
       "description": "An integer version ID for this input structure, for future-proofing."
     }
   },
