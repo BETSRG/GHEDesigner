@@ -21,6 +21,7 @@ from ghedesigner.ghe.design.bizoned import DesignBiZoned, GeometricConstraintsBi
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.design.rectangle import DesignRectangle, GeometricConstraintsRectangle
 from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRowWise
+from ghedesigner.ghe.design.titled_line import DesignTiltedLine, GeometricConstraintsTiltedLine
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
@@ -298,7 +299,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                 flow_type=flow_type,
                 method=TimestepType.HYBRID,
             )
-        else:  # geom_type == DesignGeomType.ROW-WISE:
+        elif geom_type == DesignGeomType.ROWWISE:
             # use perimeter calculations if present
             perimeter_spacing_ratio = geom.get("perimeter_spacing_ratio", 0.0)
             geometry_row: GeometricConstraintsRowWise = GeometricConstraintsRowWise(
@@ -332,6 +333,33 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                 flow_type=flow_type,
                 method=TimestepType.HYBRID,
             )
+        else: # geom_type == DesignGeomType.TILTEDLINE:
+            tilted_line_geometry: GeometricConstraintsTiltedLine = GeometricConstraintsTiltedLine(
+                b=geom["b"],
+                length=geom["length"],
+                tilt=geom["tilt"]
+            )
+            design = DesignTiltedLine(
+                flow_rate,
+                self.pygfunction_borehole,
+                self.fluid,
+                self.pipe,
+                self.grout,
+                self.soil,
+                1,
+                end_month,
+                max_eft,
+                min_eft,
+                max_height,
+                min_height,
+                continue_if_design_unmet,
+                max_boreholes,
+                tilted_line_geometry,
+                ghe_loads,
+                flow_type=flow_type,
+                method=TimestepType.HYBRID,
+            )
+
         start_time = time()
         search = design.find_design()  # TODO: I wonder if it would simplify things to just return the GHE object
         search_time = time() - start_time

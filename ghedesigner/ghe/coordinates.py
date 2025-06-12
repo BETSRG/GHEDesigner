@@ -1,3 +1,5 @@
+from math import cos, pi, sin
+
 def transpose_coordinates(coordinates) -> list[tuple[float, float]]:
     coordinates_transposed = []
     for x, y in coordinates:
@@ -146,3 +148,50 @@ def zoned_rectangle(
     zoned.extend(rectangle(n_ix, n_it, bix, biy, origin=(bix, biy)))
 
     return zoned
+
+
+def tilted_line(n: int, b: float, tilt: float) -> list[list[tuple[float, float]], list[float], list[float]]:
+
+    # Create List of
+    line_coordinates = []
+    line_tilts = []
+    line_orientations = []
+    for i in range(n):
+        line_coordinates.append((i * b, 0.0))
+        line_tilts.append(tilt)
+        line_orientations.append((0.5 + (i % 2)) * pi)
+
+    return [line_coordinates, line_tilts, line_orientations]
+
+
+def staggered_line(n: int, b: float, tilt: float, borehole_height: float) -> list[tuple[float, float]]:
+    line_object = []
+    sign_list = [1, -1]
+    y_spacing = 0.5 * borehole_height * sin(tilt)
+    for i in range(n):
+        line_object.append((i * b, sign_list[i % 2] * y_spacing))
+
+    return line_object
+
+
+def circle_of_points(n_points: int, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> \
+        list[tuple[float, float]]:
+    """
+    Generates a list of equally spaced points around a circle.
+
+    Args:
+        n_points: The number of points to generate.
+        radius: The radius of the circle.
+        center_x: The x-coordinate of the circle's center (default is 0.0).
+        center_y: The y-coordinate of the circle's center (default is 0.0).
+
+    Returns:
+        A list of tuples, where each tuple represents the (x, y) coordinates of a point on the circle.
+    """
+    points = []
+    for i in range(n_points):
+        angle = 2 * pi * i / n_points
+        x = center_x + radius * cos(angle)
+        y = center_y + radius * sin(angle)
+        points.append((x, y))
+    return points

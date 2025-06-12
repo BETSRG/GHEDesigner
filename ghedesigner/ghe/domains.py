@@ -3,9 +3,12 @@ from typing import cast
 
 from ghedesigner.ghe.coordinates import (
     c_shape,
+    circle_of_points,
     l_shape,
     lop_u,
     rectangle,
+    staggered_line,
+    tilted_line,
     transpose_coordinates,
     zoned_rectangle,
 )
@@ -237,6 +240,47 @@ def bi_rectangle_nested(length_x, length_y, b_min, b_max_x, b_max_y, disp=False)
 
     return bi_rectangle_nested_domain, field_descriptors
 
+
+def straight_line(lower: int, upper: int, b: float, tilt: float, borehole_height: float):
+    if lower < 1 or upper < 1:
+        raise ValueError("The lower and upper arguments must be positive integer values.")
+    if upper < lower:
+        raise ValueError("The lower argument should be less than or equal to the upper.")
+
+    field_descriptors = []
+    coordinates_domain = []
+
+    staggered_field_descriptors = []
+    staggered_coordinates_domain = []
+
+    for num_boreholes in range(lower, upper + 1):
+
+        field_descriptors.append(f"Tilted_Line_{num_boreholes}_B{b:0.2f}_T{tilt:0.2f}")
+        staggered_field_descriptors.append(f"Staggered_Line_{num_boreholes}X_B{b:0.2f}_T{tilt:0.2f}"
+                                           f"_H{borehole_height:0.2f}")
+
+        coordinates_domain.append(tilted_line(num_boreholes, b, tilt))
+        staggered_coordinates_domain.append(staggered_line(num_boreholes, b, tilt, borehole_height))
+
+    return coordinates_domain, field_descriptors, staggered_coordinates_domain, staggered_field_descriptors
+
+
+def circles_with_varying_points(lower_n: int, upper_n: int, radius: float, center_x: float = 0.0,
+                                center_y: float = 0.0) -> tuple[list[list[tuple[float, float]]], list[str]]:
+    if lower_n < 1 or upper_n < 1:
+        raise ValueError("The lower and upper arguments must be positive integer values.")
+    if upper_n < lower_n:
+        raise ValueError("The lower argument should be less than or equal to the upper.")
+
+    coordinates_domain = []
+    field_descriptors = []
+
+    for n_points in range(lower_n, upper_n + 1):
+        points = circle_of_points(n_points, radius, center_x, center_y)
+        coordinates_domain.append(points)
+        field_descriptors.append(f"{n_points} Points")
+
+    return coordinates_domain, field_descriptors
 
 def zoned_rectangle_domain(length_x, length_y, n_x, n_y, transpose=False):
     # Make this work for the transpose

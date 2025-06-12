@@ -1,6 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$defs": {
+    "b": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Borehole-to-borehole spacing."
+    },
     "b_max": {
       "type": "number",
       "minimum": 0,
@@ -103,6 +109,12 @@
       "minimum": 0,
       "format": "Meters",
       "description": "Spacing between up/down legs of u-tube pipe, as measured from nearest outer surfaces of each pipe (o<-- s -->o)."
+    },
+    "tilt": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Radians",
+      "description": "Tilt angle of borehole from vertical."
     },
     "width": {
       "type": "number",
@@ -532,7 +544,8 @@
                   "BIZONEDRECTANGLE",
                   "NEARSQUARE",
                   "RECTANGLE",
-                  "ROWWISE"
+                  "ROWWISE",
+                  "TILTEDLINE"
                 ],
                 "description": "Design algorithm specified."
               }
@@ -640,10 +653,7 @@
                     "$ref": "#/$defs/length"
                   },
                   "b": {
-                    "type": "number",
-                    "minimum": 0,
-                    "format": "Meters",
-                    "description": "Borehole-to-borehole spacing."
+                    "$ref": "#/$defs/b"
                   }
                 },
                 "required": ["length", "b", "method"],
@@ -736,6 +746,24 @@
                   "no_go_boundaries",
                   "method"
                 ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "method": {
+                    "const": "TILTEDLINE"
+                  },
+                  "length": {
+                    "$ref": "#/$defs/length"
+                  },
+                  "b": {
+                    "$ref": "#/$defs/b"
+                  },
+                  "tilt": {
+                    "$ref": "#/$defs/tilt"
+                  }
+                },
+                "required": ["length", "b", "tilt", "method"],
                 "additionalProperties": false
               }
             ]

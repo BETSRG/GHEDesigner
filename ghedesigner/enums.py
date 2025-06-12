@@ -25,6 +25,7 @@ class DesignGeomType(Enum):
     NEARSQUARE = auto()
     RECTANGLE = auto()
     ROWWISE = auto()
+    TILTEDLINE = auto()
     NONE = auto()  # TODO: Check this won't break anything
 
 

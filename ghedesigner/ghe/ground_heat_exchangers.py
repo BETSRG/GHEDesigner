@@ -53,6 +53,7 @@ class GHE:
 
         # gFunction object
         self.gFunction = g_function
+
         # Additional simulation parameters
         self.start_month = start_month
         self.end_month = end_month
@@ -169,6 +170,12 @@ class GHE:
         return hp_eft, delta_tb
 
     def compute_g_functions(self, h_min: float, h_max: float):
+
+        # Choosing Solver Method
+        selected_solver = 'equivalent'
+        if self.gFunction.bore_tilts is not None and self.gFunction.bore_orientations is not None:
+            selected_solver = 'similarities'
+
         # Compute g-functions for a bracketed solution, based on min and max height
         self.gFunction = calc_g_func_for_multiple_lengths(
             self.b_spacing,
@@ -183,6 +190,9 @@ class GHE:
             self.bhe.pipe,
             self.bhe.grout,
             self.bhe.soil,
+            tilts=self.gFunction.bore_tilts,
+            orientations=self.gFunction.bore_orientations,
+            solver=selected_solver
         )
 
     def simulate(self, method: TimestepType):
@@ -231,7 +241,7 @@ class GHE:
         return max(hp_eft), min(hp_eft)
 
     def size(
-        self, method: TimestepType, max_height: float, min_height: float, design_max_eft: float, design_min_eft: float
+        self, method: TimestepType, max_height: float, min_height: float, design_max_eft: float, design_min_eft: float,
     ) -> None:
         # Size the ground heat exchanger
         def local_objective(h: float):
@@ -242,6 +252,7 @@ class GHE:
 
         # Make the initial guess variable the average of the heights given
         self.bhe.b.H = (max_height + min_height) / 2.0
+        print(abs_tol)
         # bhe.b.H is updated during sizing
         returned_height = solve_root(
             self.bhe.b.H,

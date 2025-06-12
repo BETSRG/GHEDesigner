@@ -31,6 +31,8 @@ def calculate_g_function(
     boundary="MIFT",
     segment_ratios=None,
     disp=False,
+    tilts=None,
+    orientations=None
 ):
     bore_field = []
     bhe_objects = []
@@ -38,11 +40,14 @@ def calculate_g_function(
     h = borehole.H
     r_b = borehole.r_b
     d = borehole.D
-    tilt = borehole.tilt
-    orientation = borehole.orientation
+    # tilt = borehole.tilt
+    # orientation = borehole.orientation
 
-    for x, y in coordinates:
-        _borehole = Borehole(h, d, r_b, x, y, tilt, orientation)
+    for i, (x, y) in enumerate(coordinates):
+        if tilts is not None and orientations is not None:
+            _borehole = Borehole(h, d, r_b, x, y, tilts[i], orientations[i])
+        else:
+            _borehole = Borehole(h, d, r_b, x, y)
         bore_field.append(_borehole)
         # Initialize pipe model
         if boundary == "MIFT":
@@ -110,7 +115,14 @@ def calc_g_func_for_multiple_lengths(
     solver="equivalent",
     boundary="MIFT",
     segment_ratios=None,
+    tilts=None,
+    orientations=None
 ):
+
+    if tilts is not None and orientations is not None and solver == "equivalent":
+        raise Warning("pygfunction's equivalent solver cannot use tilted boreholes. Using similarities solver instead.")
+        solver = "similarities"
+
     r_b_values = dict.fromkeys(h_values, r_b)
     g_lts_values = {}
 
@@ -137,11 +149,14 @@ def calc_g_func_for_multiple_lengths(
             solver=solver,
             boundary=boundary,
             segment_ratios=segment_ratios,
+            tilts=tilts,
+            orientations=orientations
         ).gFunc.tolist()
 
     # Initialize the gFunction object
     return GFunction(
-        b=b, r_b_values=r_b_values, d=depth, g_lts=g_lts_values, log_time=log_time, bore_locations=coordinates
+        b=b, r_b_values=r_b_values, d=depth, g_lts=g_lts_values, log_time=log_time, bore_locations=coordinates,
+        bore_tilts=tilts, bore_orientations=orientations
     )
 
 
@@ -154,6 +169,8 @@ class GFunction:
         g_lts: dict,
         log_time: list,
         bore_locations: list,
+        bore_tilts: list,
+        bore_orientations: list,
     ) -> None:
         self.B: float = b  # a B spacing in the borefield
         # r_b (borehole radius) value keyed by height
@@ -164,6 +181,8 @@ class GFunction:
         self.log_time: list = log_time
         # (x, y) coordinates of boreholes
         self.bore_locations: list = bore_locations
+        self.bore_tilts = bore_tilts
+        self.bore_orientations = bore_orientations
         # self.time: dict = {}  # the time values in years
 
         # an interpolation table for B/H ratios, D, r_b (used in the method
