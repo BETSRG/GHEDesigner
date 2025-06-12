@@ -252,7 +252,6 @@ class GHE:
 
         # Make the initial guess variable the average of the heights given
         self.bhe.b.H = (max_height + min_height) / 2.0
-        print(abs_tol)
         # bhe.b.H is updated during sizing
         returned_height = solve_root(
             self.bhe.b.H,

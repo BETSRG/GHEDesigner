@@ -150,7 +150,7 @@ def zoned_rectangle(
     return zoned
 
 
-def tilted_line(n: int, b: float, tilt: float) -> list[list[tuple[float, float]], list[float], list[float]]:
+def tilted_line(n: int, b: float, tilt: float) -> tuple[list[tuple[float, float]], list[float], list[float]]:
 
     # Create List of
     line_coordinates = []
@@ -161,7 +161,7 @@ def tilted_line(n: int, b: float, tilt: float) -> list[list[tuple[float, float]]
         line_tilts.append(tilt)
         line_orientations.append((0.5 + (i % 2)) * pi)
 
-    return [line_coordinates, line_tilts, line_orientations]
+    return line_coordinates, line_tilts, line_orientations
 
 
 def staggered_line(n: int, b: float, tilt: float, borehole_height: float) -> list[tuple[float, float]]:
