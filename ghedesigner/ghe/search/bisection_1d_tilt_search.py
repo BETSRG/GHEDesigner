@@ -1,4 +1,5 @@
 from math import ceil
+from typing import Optional
 
 import numpy as np
 from pygfunction.boreholes import Borehole
@@ -38,8 +39,8 @@ class Bisection1DTilt:
         search=True,
         field_type="N/A",
         load_years=None,
-        staggered_coordinates_domain: list = None,
-        staggered_field_descriptors: list = None,
+        staggered_coordinates_domain: Optional[list] = None,
+        staggered_field_descriptors: Optional[list] = None,
     ) -> None:
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
@@ -336,7 +337,8 @@ class Bisection1DTilt:
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
         self.initialize_ghe(
-            self.staggered_coordinates_domain[selection_key], self.max_height, self.staggered_fieldDescriptors[selection_key]
+            self.staggered_coordinates_domain[selection_key], self.max_height,
+            self.staggered_fieldDescriptors[selection_key]
         )
         return selection_key, self.staggered_coordinates_domain[selection_key]
 

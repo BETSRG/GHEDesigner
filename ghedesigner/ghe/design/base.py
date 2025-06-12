@@ -9,9 +9,10 @@ from ghedesigner.ghe.search.bisection_1d import Bisection1D
 from ghedesigner.ghe.search.bisection_2d import Bisection2D
 from ghedesigner.ghe.search.bisection_zd import BisectionZD
 from ghedesigner.ghe.search.rowwise import RowWiseModifiedBisectionSearch
+from ghedesigner.ghe.search.bisection_1d_tilt_search import Bisection1DTilt
 from ghedesigner.media import GHEFluid, Grout, Soil
 
-AnyBisectionType = Bisection1D | Bisection2D | BisectionZD | RowWiseModifiedBisectionSearch
+AnyBisectionType = Bisection1D | Bisection2D | BisectionZD | RowWiseModifiedBisectionSearch| Bisection1DTilt
 
 
 @dataclass(init=False)
