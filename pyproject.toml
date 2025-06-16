@@ -25,6 +25,7 @@ click = "^8.1"
 jsonschema = "^4.19"
 numpy = "^2.0.0"
 pygfunction = { git = "https://github.com/mitchute/pygfunction.git", rev = "5515d19af49a6c38ac5bd6814d062917e1bf486e" }
+bhresist = "^0.1"
 scipy = "^1.14"
 
 [tool.poetry.group.dev.dependencies]

@@ -165,7 +165,7 @@ class TestGHE(GHEBaseTest):
         ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
 
         self.assertEqual(156, ghe.nbh)
-        self.assertAlmostEqual(128.0, ghe.bhe.b.H, delta=0.1)
+        self.assertAlmostEqual(127.8, ghe.bhe.b.H, delta=0.1)
 
     def test_double_u_tube(self):
         # Define a borehole

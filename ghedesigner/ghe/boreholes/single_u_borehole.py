@@ -4,6 +4,7 @@ from typing import cast
 
 import numpy as np
 import pygfunction as gt
+from bhr.borehole import Borehole as BHRBorehole
 from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
@@ -46,6 +47,21 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.soil = soil
         self.grout = grout
 
+        self.bhr_borehole = BHRBorehole()
+        self.bhr_borehole.init_single_u_borehole(
+            borehole_diameter=_borehole.r_b * 2,
+            pipe_outer_diameter=(2.0 * pipe.r_out),
+            pipe_dimension_ratio=(2.0 * pipe.r_out) / (pipe.r_out - pipe.r_in),
+            length=_borehole.H,
+            shank_space=(pipe.s / 2.0 + pipe.r_out),
+            pipe_conductivity=pipe.k,
+            grout_conductivity=grout.k,
+            soil_conductivity=soil.k,
+            fluid_type=self.fluid.name,
+            fluid_concentration=self.fluid.concentration_percent / 100,
+            boundary_condition="UNIFORM_BOREHOLE_WALL_TEMP",
+        )
+
         # compute resistances required to construct inherited class
         self.calc_fluid_pipe_resistance()
 
@@ -61,9 +77,9 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
             self.R_fp,
         )
 
-        # these methods must be called after inherited class construction
-        self.update_thermal_resistances(self.R_fp)
-        self.calc_effective_borehole_resistance()
+        # # these methods must be called after inherited class construction
+        # self.update_thermal_resistances(self.R_fp)
+        # self.calc_effective_borehole_resistance()
 
         # radial numerical initialization
         # "The one dimensional model has a fluid core, an equivalent convective
@@ -145,9 +161,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         return self.R_fp
 
     def calc_effective_borehole_resistance(self) -> float:
-        # TODO: should this be here?
-        self._initialize_stored_coefficients()
-        resist_bh_effective = self.effective_borehole_thermal_resistance(self.m_flow_borehole, self.fluid.cp)
+        resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.soil.ugt)
         return resist_bh_effective
 
     def to_single(self):
@@ -155,16 +169,6 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
 
     def as_dict(self) -> dict:
         return {"type": str(self.__class__)}
-
-    def partial_init(self):
-        # TODO: unravel how to eliminate this.
-        # - It was calling the full class ctor "self.__init__()" which is just plain wrong...
-        # - Now we're calling a stripped down version with only the most essential
-        #   variables which are required.
-        # - This is here partially because equivalent boreholes are generated.
-        soil_diffusivity = self.k_s / self.soil.rhoCp
-        self.t_s = self.b.H**2 / (9 * soil_diffusivity)
-        self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
 
     def fill_radial_cells(self, resist_f_effective, resist_pg_effective):
         radial_cells = np.zeros(shape=(len(CellProps), self.num_cells), dtype=np.double)
@@ -265,7 +269,8 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         return dc
 
     def calc_sts_g_functions(self, final_time=None) -> tuple:
-        self.partial_init()
+        self.t_s = self.b.H**2 / (9 * self.soil.alpha)
+        self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
 
         # effective borehole resistance
         resist_bh_effective = self.calc_effective_borehole_resistance()
