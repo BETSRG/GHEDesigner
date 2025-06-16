@@ -39,7 +39,6 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.R_p = 0.0
         self.R_f = 0.0
         self.R_fp = 0.0
-        self.h_f = 0.0
         self.fluid = fluid
         self.m_flow_borehole = m_flow_borehole
         self.borehole = _borehole
@@ -137,14 +136,13 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         self.g_bhw = np.array([], dtype=np.double)
         self.lntts = np.array([], dtype=np.double)
         self.c_0 = TWO_PI * self.soil.k
-        soil_diffusivity = self.k_s / self.soil.rhoCp
-        self.t_s = self.b.H**2 / (9 * soil_diffusivity)
+        self.t_s = self.b.H**2 / (9 * self.soil.alpha)
         # default is at least 49 hours, or up to -8.6 log time
         self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
         self.g_sts = None
 
     def calc_fluid_pipe_resistance(self) -> float:
-        self.h_f = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
+        h_f = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
             self.m_flow_borehole,
             self.pipe.r_in,
             self.fluid.mu,
@@ -155,7 +153,7 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         )
         r_in = cast(float, self.pipe.r_in)
         r_out = cast(float, self.pipe.r_out)
-        self.R_f = self.compute_fluid_resistance(self.h_f, r_in)
+        self.R_f = self.compute_fluid_resistance(h_f, r_in)
         self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(r_in, r_out, self.pipe.k)
         self.R_fp = self.R_f + self.R_p
         return self.R_fp
@@ -276,7 +274,8 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         resist_bh_effective = self.calc_effective_borehole_resistance()
 
         # effective convection resistance, assumes 2 pipes
-        resist_f_effective = self.R_f / 2.0
+        R_f = self.bhr_borehole._bh.calc_pipe_internal_conv_resist(self.m_flow_borehole, self.soil.ugt)
+        resist_f_effective = R_f / 2.0
 
         # effective combined pipe-grout resistance. assumes Rees 2016, eq. 3.6 applies
         resist_pg_effective = resist_bh_effective - resist_f_effective

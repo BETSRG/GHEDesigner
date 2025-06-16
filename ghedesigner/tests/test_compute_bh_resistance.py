@@ -232,19 +232,16 @@ class TestBHResistance(GHEBaseTest):
         # Intermediate variables
         re = SingleUTube.compute_reynolds(single_u_tube.m_flow_borehole, r_in, fluid)
         r_p = single_u_tube.R_p
-        h_f = single_u_tube.h_f
         r_fp = single_u_tube.R_fp
         r_b = single_u_tube.calc_effective_borehole_resistance()
 
         # comparison values from GLHEPro v5.1
         assert self.rel_error_within_tol(re, 11748.0, 0.005)
-        assert self.rel_error_within_tol(h_f, 2538.0, 0.005)
         assert self.rel_error_within_tol(r_b, 0.2073, 0.005)
 
         self.log(single_u_tube)
         self.log(f"Reynolds number: {re}")
         self.log(f"Pipe resistance (K/(W/m)) : {r_p}")
-        self.log(f"Convection coefficient (W/m2.K): {h_f}")
         self.log(f"Convective resistance (K/(W/m)): {r_fp}")
         self.log(f"Borehole thermal resistance: {r_b:0.4f} m.K/W")
 

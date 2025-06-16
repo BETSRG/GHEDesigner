@@ -73,7 +73,6 @@ class TestEquivalentPipes(GHEBaseTest):
         self.log(f"Diameter of inner pipe (m): {single_u_tube.r_in * 2.0:0.8f}")
         self.log(f"Diameter of outer pipe (m): {single_u_tube.r_out * 2.0:0.8f}")
         self.log(f"Shank spacing (m): {single_u_tube.pipe.s:0.8f}")
-        self.log(f"Convection coefficient (): {single_u_tube.h_f:08f}")
         self.log(f"Pipe thermal conductivity (W/m.K): {single_u_tube.pipe.k:0.8f}")
         self.log(f"Grout thermal conductivity (W/m.K): {single_u_tube.grout.k:0.8f}")
 
@@ -146,7 +145,6 @@ class TestEquivalentPipes(GHEBaseTest):
         self.log(f"Diameter of inner pipe (m): {single_u_tube.r_in * 2.0:0.8f}")
         self.log(f"Diameter of outer pipe (m): {single_u_tube.r_out * 2.0:0.8f}")
         self.log(f"Shank spacing (m): {single_u_tube.pipe.s:0.8f}")
-        self.log(f"Convection coefficient (-): {single_u_tube.h_f:0.8f}")
         self.log(f"Pipe thermal conductivity (W/m.K): {single_u_tube.pipe.k:0.8f}")
         self.log(f"Grout thermal conductivity (W/m.K): {single_u_tube.grout.k:0.8f}")
 
