@@ -1,7 +1,7 @@
 from enum import Enum, auto
 
 
-class BHPipeType(Enum):
+class PipeType(Enum):
     COAXIAL = "COAXIAL"
     DOUBLEUTUBEPARALLEL = "DOUBLEUTUBEPARALLEL"
     DOUBLEUTUBESERIES = "DOUBLEUTUBESERIES"

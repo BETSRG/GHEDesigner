@@ -1,4 +1,4 @@
-from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.enums import PipeType, TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.coordinates import rectangle
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
@@ -132,7 +132,7 @@ class TestGHE(GHEBaseTest):
             self.dia / 2.0,
             self.bh_depth,
             self.m_flow_borehole,
-            BHPipeType.SINGLEUTUBE,
+            PipeType.SINGLEUTUBE,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -145,7 +145,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.v_flow_system,
             self.B,
-            BHPipeType.SINGLEUTUBE,
+            PipeType.SINGLEUTUBE,
             self.fluid,
             borehole,
             self.pipe_s,
@@ -178,7 +178,7 @@ class TestGHE(GHEBaseTest):
             self.dia / 2.0,
             self.bh_depth,
             self.m_flow_borehole,
-            BHPipeType.DOUBLEUTUBEPARALLEL,
+            PipeType.DOUBLEUTUBEPARALLEL,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -191,7 +191,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.v_flow_system,
             self.B,
-            BHPipeType.DOUBLEUTUBEPARALLEL,
+            PipeType.DOUBLEUTUBEPARALLEL,
             self.fluid,
             borehole,
             self.pipe_d,
@@ -205,7 +205,7 @@ class TestGHE(GHEBaseTest):
 
         max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HYBRID)
 
-        self.assertAlmostEqual(37.54, max_hp_eft, delta=0.1)
+        self.assertAlmostEqual(37.5, max_hp_eft, delta=0.1)
         self.assertAlmostEqual(16.96, min_hp_eft, delta=0.1)
 
         ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
@@ -224,7 +224,7 @@ class TestGHE(GHEBaseTest):
             self.dia / 2.0,
             self.bh_depth,
             self.m_flow_borehole,
-            BHPipeType.COAXIAL,
+            PipeType.COAXIAL,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -237,7 +237,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.v_flow_system,
             self.B,
-            BHPipeType.COAXIAL,
+            PipeType.COAXIAL,
             self.fluid,
             borehole,
             self.pipe_c,

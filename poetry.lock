@@ -1054,8 +1054,8 @@ testing = ["matplotlib (>=3.9.2)", "pytest (>=7.4.4)", "pytest-cov (>=6.1.1)", "
 [package.source]
 type = "git"
 url = "https://github.com/mitchute/pygfunction.git"
-reference = "5515d19af49a6c38ac5bd6814d062917e1bf486e"
-resolved_reference = "5515d19af49a6c38ac5bd6814d062917e1bf486e"
+reference = "157e8ff3853470e04289b0445cfb6d6ebc945691"
+resolved_reference = "157e8ff3853470e04289b0445cfb6d6ebc945691"
 
 [[package]]
 name = "pygments"
@@ -1697,4 +1697,4 @@ viz = ["cartopy", "matplotlib", "nc-time-axis", "seaborn"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <3.14"
-content-hash = "6e23f63e8d016076fcdf3834b44e322a0284881685be76d3f3654f4ed157c356"
+content-hash = "5dcca8a099a19fbf42ca71e5e8f41ebbc9e5adfe43fc3c0934287b7312748307"

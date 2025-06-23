@@ -1,7 +1,7 @@
 from math import cos, pi, sin
 from typing import cast
 
-from ghedesigner.enums import BHPipeType
+from ghedesigner.enums import PipeType
 from ghedesigner.media import ThermalProperty
 from ghedesigner.utilities import check_arg_bounds
 
@@ -10,14 +10,14 @@ TupleOrTuples = tuple | list[tuple]
 
 
 class Pipe(ThermalProperty):
-    def __init__(self, pipe_type: BHPipeType, conductivity: float | tuple[float, float], rho_cp: float) -> None:
+    def __init__(self, pipe_type: PipeType, conductivity: float | tuple[float, float], rho_cp: float) -> None:
         super().__init__(conductivity, rho_cp)
         self.type = pipe_type
 
     @classmethod
-    def init_from_dict(cls, pipe_type: BHPipeType, pipe_props: dict) -> "Pipe":
+    def init_from_dict(cls, pipe_type: PipeType, pipe_props: dict) -> "Pipe":
         rho_cp = pipe_props["rho_cp"]
-        if pipe_type == BHPipeType.SINGLEUTUBE:
+        if pipe_type == PipeType.SINGLEUTUBE:
             k = pipe_props["conductivity"]
             return Pipe.init_single_u_tube(
                 conductivity=k,
@@ -28,7 +28,7 @@ class Pipe(ThermalProperty):
                 roughness=pipe_props["roughness"],
                 num_pipes=pipe_props.get("num_pipes", 1),
             )
-        elif pipe_type == BHPipeType.DOUBLEUTUBESERIES:
+        elif pipe_type == PipeType.DOUBLEUTUBESERIES:
             k = pipe_props["conductivity"]
             return Pipe.init_double_u_tube_series(
                 conductivity=k,
@@ -38,7 +38,7 @@ class Pipe(ThermalProperty):
                 shank_spacing=pipe_props["shank_spacing"],
                 roughness=pipe_props["roughness"],
             )
-        elif pipe_type == BHPipeType.DOUBLEUTUBEPARALLEL:
+        elif pipe_type == PipeType.DOUBLEUTUBEPARALLEL:
             k = pipe_props["conductivity"]
             return Pipe.init_double_u_tube_parallel(
                 conductivity=k,
@@ -48,7 +48,7 @@ class Pipe(ThermalProperty):
                 shank_spacing=pipe_props["shank_spacing"],
                 roughness=pipe_props["roughness"],
             )
-        elif pipe_type == BHPipeType.COAXIAL:
+        elif pipe_type == PipeType.COAXIAL:
             k = pipe_props["conductivity_inner"], pipe_props["conductivity_outer"]
             return Pipe.init_coaxial(
                 conductivity=k,
@@ -74,7 +74,7 @@ class Pipe(ThermalProperty):
         num_pipes: int = 1,
     ) -> "Pipe":
         check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
-        p = cls(BHPipeType.SINGLEUTUBE, conductivity, rho_cp)  # TODO: Untangle this a little more
+        p = cls(PipeType.SINGLEUTUBE, conductivity, rho_cp)  # TODO: Untangle this a little more
         r_in = inner_diameter / 2.0
         r_out = outer_diameter / 2.0
         pipe_positions = Pipe.place_pipes(shank_spacing, r_out, num_pipes)
@@ -92,7 +92,7 @@ class Pipe(ThermalProperty):
         roughness: float,
     ) -> "Pipe":
         check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
-        p = cls(BHPipeType.DOUBLEUTUBESERIES, conductivity, rho_cp)
+        p = cls(PipeType.DOUBLEUTUBESERIES, conductivity, rho_cp)
         r_in = inner_diameter / 2.0
         r_out = outer_diameter / 2.0
         pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 2)
@@ -110,7 +110,7 @@ class Pipe(ThermalProperty):
         roughness: float,
     ) -> "Pipe":
         check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
-        p = cls(BHPipeType.DOUBLEUTUBEPARALLEL, conductivity, rho_cp)
+        p = cls(PipeType.DOUBLEUTUBEPARALLEL, conductivity, rho_cp)
         r_in = inner_diameter / 2.0
         r_out = outer_diameter / 2.0
         pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 2)
@@ -130,7 +130,7 @@ class Pipe(ThermalProperty):
     ) -> "Pipe":
         check_arg_bounds(inner_pipe_d_in, inner_pipe_d_out, "inner_pipe_d_in", "inner_pipe_d_out")
         check_arg_bounds(outer_pipe_d_in, outer_pipe_d_out, "outer_pipe_d_in", "outer_pipe_d_out")
-        p = cls(BHPipeType.COAXIAL, conductivity, rho_cp)
+        p = cls(PipeType.COAXIAL, conductivity, rho_cp)
         # Note: This convention is different from pygfunction
         r_inner = [inner_pipe_d_in / 2.0, inner_pipe_d_out / 2.0]  # The radii of the inner pipe from in to out
         r_outer = [outer_pipe_d_in / 2.0, outer_pipe_d_out / 2.0]  # The radii of the outer pipe from in to out

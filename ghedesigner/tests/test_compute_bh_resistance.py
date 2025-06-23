@@ -231,7 +231,7 @@ class TestBHResistance(GHEBaseTest):
 
         # Intermediate variables
         re = SingleUTube.compute_reynolds(single_u_tube.m_flow_borehole, r_in, fluid)
-        r_p = single_u_tube.R_p
+
         r_fp = single_u_tube.R_fp
         r_b = single_u_tube.calc_effective_borehole_resistance()
 
@@ -241,7 +241,6 @@ class TestBHResistance(GHEBaseTest):
 
         self.log(single_u_tube)
         self.log(f"Reynolds number: {re}")
-        self.log(f"Pipe resistance (K/(W/m)) : {r_p}")
         self.log(f"Convective resistance (K/(W/m)): {r_fp}")
         self.log(f"Borehole thermal resistance: {r_b:0.4f} m.K/W")
 

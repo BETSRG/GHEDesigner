@@ -5,18 +5,26 @@ from math import log
 import numpy as np
 import pygfunction as gt
 from pygfunction.boreholes import Borehole
+from pygfunction.enums import PipeType as PyPipeType
+from pygfunction.ground_heat_exchanger import GroundHeatExchanger as PyGHE
 from scipy.interpolate import interp1d, lagrange
 
-from ghedesigner.enums import BHPipeType
-from ghedesigner.ghe.boreholes.factory import get_bhe_object
+from ghedesigner.enums import PipeType
 
 logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
 logger = logging.getLogger(__name__)
 
+pipe_map = {
+    PipeType.SINGLEUTUBE.name: PyPipeType.SINGLEUTUBE.name,
+    PipeType.DOUBLEUTUBESERIES.name: PyPipeType.DOUBLEUTUBESERIES.name,
+    PipeType.DOUBLEUTUBEPARALLEL.name: PyPipeType.DOUBLEUTUBEPARALLEL.name,
+    PipeType.COAXIAL.name: PyPipeType.COAXIALPIPEINLET.name,
+}
+
 
 def calculate_g_function(
     m_flow_borehole,
-    bhe_type: BHPipeType,
+    bhe_type: PipeType,
     time_values,
     coordinates,
     borehole,
@@ -32,24 +40,35 @@ def calculate_g_function(
     segment_ratios=None,
     disp=False,
 ):
-    bore_field = []
-    bhe_objects = []
+    if bhe_type in [PipeType.SINGLEUTUBE, PipeType.DOUBLEUTUBESERIES, PipeType.DOUBLEUTUBEPARALLEL]:
+        r_inner = pipe.r_in
+        r_outer = pipe.r_out
+    elif bhe_type == PipeType.COAXIAL:
+        # converting to pygfunction coaxial pipe conventions
+        # this assumes the pipe (not annulus) is the inlet
+        r_inner = [pipe.r_in[0], pipe.r_out[0]]
+        r_outer = [pipe.r_in[1], pipe.r_out[1]]
+    else:
+        raise ValueError(f"bhe_type {bhe_type} is not supported")
 
-    h = borehole.H
-    r_b = borehole.r_b
-    d = borehole.D
-    tilt = borehole.tilt
-    orientation = borehole.orientation
-
-    for x, y in coordinates:
-        _borehole = Borehole(h, d, r_b, x, y, tilt, orientation)
-        bore_field.append(_borehole)
-        # Initialize pipe model
-        if boundary == "MIFT":
-            bhe = get_bhe_object(bhe_type, m_flow_borehole, fluid, _borehole, pipe, grout, soil)
-            bhe_objects.append(bhe)
-
-    alpha = soil.k / soil.rhoCp
+    pyg_ghe = PyGHE(
+        borehole.H,
+        borehole.D,
+        borehole.r_b,
+        [x for x, _ in coordinates],
+        [y for _, y in coordinates],
+        PyPipeType[pipe_map[bhe_type.name]],
+        pipe.pos,
+        r_inner,
+        r_outer,
+        soil.k,
+        grout.k,
+        pipe.k,
+        fluid.name,
+        fluid.concentration_percent,
+        m_flow_borehole * (len(coordinates)),
+        pipe.roughness,
+    )
 
     # setup options
     segments = segments.lower()
@@ -64,30 +83,66 @@ def calculate_g_function(
             "disp": disp,
         }
     else:
-        raise ValueError("Equal or Unequal are acceptable options for segments.")
+        raise ValueError(f"Unknown segments: {segments}")
 
-    if boundary in ("UHTR", "UBWT"):
-        gfunc = gt.gfunction.gFunction(
-            bore_field,
-            alpha,
-            time=time_values,
-            boundary_condition=boundary,
-            options=options,
-            method=solver,
-        )
-    elif boundary == "MIFT":
-        m_flow_network = len(bore_field) * m_flow_borehole
-        network = gt.networks.Network(bore_field, bhe_objects, m_flow_network=m_flow_network, cp_f=fluid.cp)
-        gfunc = gt.gfunction.gFunction(
-            network,
-            alpha,
-            time=time_values,
-            boundary_condition=boundary,
-            options=options,
-            method=solver,
-        )
-    else:
-        raise ValueError("UHTR, UBWT or MIFT are accepted boundary conditions.")
+    gfunc = pyg_ghe.evaluate_g_function(
+        soil.alpha, time_values, method=solver, boundary_condition=boundary, options=options
+    )
+
+    # bore_field = []
+    # bhe_objects = []
+    #
+    # h = borehole.H
+    # r_b = borehole.r_b
+    # d = borehole.D
+    # tilt = borehole.tilt
+    # orientation = borehole.orientation
+    #
+    # for x, y in coordinates:
+    #     _borehole = Borehole(h, d, r_b, x, y, tilt, orientation)
+    #     bore_field.append(_borehole)
+    #     # Initialize pipe model
+    #     if boundary == "MIFT":
+    #         bhe = get_bhe_object(bhe_type, m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+    #         bhe_objects.append(bhe)
+    #
+    # # setup options
+    # segments = segments.lower()
+    # if segments == "equal":
+    #     options = {"nSegments": n_segments, "disp": disp}
+    # elif segments == "unequal":
+    #     if segment_ratios is None:
+    #         segment_ratios = gt.utilities.segment_ratios(n_segments, end_length_ratio=end_length_ratio)
+    #     options = {
+    #         "nSegments": n_segments,
+    #         "segment_ratios": segment_ratios,
+    #         "disp": disp,
+    #     }
+    # else:
+    #     raise ValueError("Equal or Unequal are acceptable options for segments.")
+    #
+    # if boundary in ("UHTR", "UBWT"):
+    #     gfunc = gt.gfunction.gFunction(
+    #         bore_field,
+    #         soil.alpha,
+    #         time=time_values,
+    #         boundary_condition=boundary,
+    #         options=options,
+    #         method=solver,
+    #     )
+    # elif boundary == "MIFT":
+    #     m_flow_network = len(bore_field) * m_flow_borehole
+    #     network = gt.networks.Network(bore_field, bhe_objects, m_flow_network=m_flow_network, cp_f=fluid.cp)
+    #     gfunc = gt.gfunction.gFunction(
+    #         network,
+    #         soil.alpha,
+    #         time=time_values,
+    #         boundary_condition=boundary,
+    #         options=options,
+    #         method=solver,
+    #     )
+    # else:
+    #     raise ValueError("UHTR, UBWT or MIFT are accepted boundary conditions.")
 
     return gfunc
 
@@ -98,7 +153,7 @@ def calc_g_func_for_multiple_lengths(
     r_b,
     depth,
     m_flow_borehole,
-    bhe_type: BHPipeType,
+    bhe_type: PipeType,
     log_time,
     coordinates,
     fluid,
@@ -137,7 +192,7 @@ def calc_g_func_for_multiple_lengths(
             solver=solver,
             boundary=boundary,
             segment_ratios=segment_ratios,
-        ).gFunc.tolist()
+        ).tolist()
 
     # Initialize the gFunction object
     return GFunction(
