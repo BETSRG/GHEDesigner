@@ -44,6 +44,11 @@ class SingleUTube(GHEDesignerBoreholeBase):
         self.grout = grout
 
         self.bhr_borehole = BHRBorehole()
+
+        # Ensure r_in and r_out are floats rather than list[float]
+        if not isinstance(pipe.r_out, float) or not isinstance(pipe.r_in, float):
+            raise TypeError("pipe r_in and r_out must be floats")
+
         self.bhr_borehole.init_single_u_borehole(
             borehole_diameter=_borehole.r_b * 2,
             pipe_outer_diameter=(2.0 * pipe.r_out),
