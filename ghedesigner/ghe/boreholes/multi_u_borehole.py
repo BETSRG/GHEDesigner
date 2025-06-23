@@ -92,7 +92,6 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         # Define objective function for varying the grout thermal conductivity
         def objective_resistance(k_g_in: float):
             # update new tubes grout thermal conductivity and relevant parameters
-            preliminary_new_single_u_tube.k_g = k_g_in
             preliminary_new_single_u_tube.grout.k = k_g_in
             # Update Delta-circuit thermal resistances
             # Initialize stored_coefficients
@@ -106,7 +105,6 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         kg_upper = 7.0
         k_g = solve_root(preliminary_new_single_u_tube.grout.k, objective_resistance, lower=kg_lower, upper=kg_upper)
         # Ensure the grout thermal conductivity is updated
-        preliminary_new_single_u_tube.k_g = k_g
         preliminary_new_single_u_tube.grout.k = k_g
 
         return preliminary_new_single_u_tube
