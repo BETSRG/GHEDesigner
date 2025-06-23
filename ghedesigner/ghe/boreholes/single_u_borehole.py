@@ -3,7 +3,6 @@ from math import exp, log, pi, sqrt
 from typing import cast
 
 import numpy as np
-import pygfunction as gt
 from bhr.borehole import Borehole as BHRBorehole
 from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d
@@ -25,7 +24,7 @@ class CellProps(IntEnum):
     VOL = auto()
 
 
-class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
+class SingleUTube(GHEDesignerBoreholeBase):
     def __init__(
         self,
         m_flow_borehole: float,
