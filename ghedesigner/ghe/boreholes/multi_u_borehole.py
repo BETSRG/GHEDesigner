@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import cast
 
 import pygfunction as gt
+from bhr.borehole import Borehole as BHRBorehole
 from numpy import log, sqrt
 from pygfunction.boreholes import Borehole
 
@@ -134,6 +135,27 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         self.grout = grout
         self.flow_config = config
 
+        self.bhr_borehole = BHRBorehole()
+
+        # Ensure r_in and r_out are floats rather than list[float]
+        if not isinstance(pipe.r_out, float) or not isinstance(pipe.r_in, float):
+            raise TypeError("pipe r_in and r_out must be floats")
+
+        self.bhr_borehole.init_double_u_borehole(
+            borehole_diameter=_borehole.r_b * 2,
+            pipe_outer_diameter=(2.0 * pipe.r_out),
+            pipe_dimension_ratio=(2.0 * pipe.r_out) / (pipe.r_out - pipe.r_in),
+            length=_borehole.H,
+            shank_space=(pipe.s / 2.0 + pipe.r_out),
+            pipe_conductivity=pipe.k,
+            grout_conductivity=grout.k,
+            soil_conductivity=soil.k,
+            fluid_type=self.fluid.name,
+            fluid_concentration=self.fluid.concentration_percent / 100,
+            boundary_condition="UNIFORM_BOREHOLE_WALL_TEMP",
+            pipe_inlet_arrangement="ADJACENT",
+        )
+
         # Get number of pipes from positions
         self.resist_delta = None
         self.n_pipes = len(pipe.pos) / 2
@@ -173,12 +195,11 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         self.R_f = self.compute_fluid_resistance(self.h_f, r_in)
         self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(r_in, r_out, self.pipe.k)
         self.R_fp = self.R_f + self.R_p
+        # self.R_fp = self.bhr_borehole._bh.calc_pipe_resist(self.m_flow_borehole, self.soil.ugt)
         return self.R_fp
 
     def calc_effective_borehole_resistance(self) -> float:
-        # TODO: should this be here?
-        self._initialize_stored_coefficients()
-        resist_bh_effective = self.effective_borehole_thermal_resistance(self.m_flow_borehole, self.fluid.cp)
+        resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.soil.ugt)
         return resist_bh_effective
 
     def u_tube_volumes(self) -> tuple[float, float, float, float]:

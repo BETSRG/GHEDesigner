@@ -147,10 +147,11 @@ class TestBHResistance(GHEBaseTest):
         self.log(f"Convective resistance (K/(W/m)): {r_fp}")
         self.log(f"Borehole thermal resistance: {r_b_series:0.4f} m.K/W")
 
+        # TODO: evaluate whether these tests are still needed
         # test values pinned to current performance because GLHEPro doesn't offer a series connection
         assert self.rel_error_within_tol(re, 11744.0, 0.01)
         assert self.rel_error_within_tol(h_f, 2529.0, 0.01)
-        assert self.rel_error_within_tol(r_b_series, 0.1624, 0.01)
+        assert self.rel_error_within_tol(r_b_series, 0.1597, 0.01)
 
         # Parallel
         double_u_tube_parallel = MultipleUTube(

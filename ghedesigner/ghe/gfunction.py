@@ -89,61 +89,6 @@ def calculate_g_function(
         soil.alpha, time_values, method=solver, boundary_condition=boundary, options=options
     )
 
-    # bore_field = []
-    # bhe_objects = []
-    #
-    # h = borehole.H
-    # r_b = borehole.r_b
-    # d = borehole.D
-    # tilt = borehole.tilt
-    # orientation = borehole.orientation
-    #
-    # for x, y in coordinates:
-    #     _borehole = Borehole(h, d, r_b, x, y, tilt, orientation)
-    #     bore_field.append(_borehole)
-    #     # Initialize pipe model
-    #     if boundary == "MIFT":
-    #         bhe = get_bhe_object(bhe_type, m_flow_borehole, fluid, _borehole, pipe, grout, soil)
-    #         bhe_objects.append(bhe)
-    #
-    # # setup options
-    # segments = segments.lower()
-    # if segments == "equal":
-    #     options = {"nSegments": n_segments, "disp": disp}
-    # elif segments == "unequal":
-    #     if segment_ratios is None:
-    #         segment_ratios = gt.utilities.segment_ratios(n_segments, end_length_ratio=end_length_ratio)
-    #     options = {
-    #         "nSegments": n_segments,
-    #         "segment_ratios": segment_ratios,
-    #         "disp": disp,
-    #     }
-    # else:
-    #     raise ValueError("Equal or Unequal are acceptable options for segments.")
-    #
-    # if boundary in ("UHTR", "UBWT"):
-    #     gfunc = gt.gfunction.gFunction(
-    #         bore_field,
-    #         soil.alpha,
-    #         time=time_values,
-    #         boundary_condition=boundary,
-    #         options=options,
-    #         method=solver,
-    #     )
-    # elif boundary == "MIFT":
-    #     m_flow_network = len(bore_field) * m_flow_borehole
-    #     network = gt.networks.Network(bore_field, bhe_objects, m_flow_network=m_flow_network, cp_f=fluid.cp)
-    #     gfunc = gt.gfunction.gFunction(
-    #         network,
-    #         soil.alpha,
-    #         time=time_values,
-    #         boundary_condition=boundary,
-    #         options=options,
-    #         method=solver,
-    #     )
-    # else:
-    #     raise ValueError("UHTR, UBWT or MIFT are accepted boundary conditions.")
-
     return gfunc
 
 
