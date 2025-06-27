@@ -28,7 +28,9 @@ def run(input_file_path: Path, output_directory: Path) -> int:
     """
 
     # validate inputs against schema before doing anything
-    if validate_input_file(input_file_path) != 0:
+    try:
+        validate_input_file(input_file_path)
+    except ValidationError:
         return 1
 
     # read all inputs into a dict

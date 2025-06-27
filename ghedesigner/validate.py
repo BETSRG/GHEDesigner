@@ -10,7 +10,7 @@ from jsonschema import ValidationError, validate
 #       More details here: https://github.com/json-schema-org/community/discussions/148
 
 
-def validate_input_file(input_file_path: Path) -> int:
+def validate_input_file(input_file_path: Path) -> None:
     """
     Validate input file against the schema
     """
@@ -19,7 +19,6 @@ def validate_input_file(input_file_path: Path) -> int:
         schema_path = Path(__file__).parent / "schemas" / "ghedesigner.schema.json"
         schema = loads(schema_path.read_text())
         validate(instance=instance, schema=schema)
-        return 0
     except ValidationError as error:
         print("\n Validation Error:")
         print(f"  Bad Input Location: {' → '.join(map(str, error.path)) if error.path else 'Root'}")
@@ -33,9 +32,13 @@ def validate_input_file(input_file_path: Path) -> int:
         elif "type" in error.schema:
             print(f"{fix}  Ensure the value is of type: {error.schema['type']}")
         print("For example inputs, see the demo files.", file=sys.stderr)
-        return 1
+        raise error
 
 
 if __name__ == "__main__":
     instance_path = Path(sys.argv[1]).resolve()
-    sys.exit(validate_input_file(instance_path))
+    try:
+        validate_input_file(instance_path)
+    except ValidationError:
+        sys.exit(1)
+    sys.exit(0)
