@@ -300,7 +300,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             )
         else:  # geom_type == DesignGeomType.ROW-WISE:
             # use perimeter calculations if present
-            perimeter_spacing_ratio = geom.get("perimeter_spacing_ratio", 0.0)
+            perimeter_spacing_ratio = geom.get("perimeter_spacing_ratio", None)
             geometry_row: GeometricConstraintsRowWise = GeometricConstraintsRowWise(
                 perimeter_spacing_ratio=perimeter_spacing_ratio,
                 max_spacing=geom["max_spacing"],
