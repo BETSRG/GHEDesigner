@@ -9,6 +9,7 @@ from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_loads import HybridLoad
+from ghedesigner.ghe.peak_loads import HybridLoads2
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Grout, Soil
 from ghedesigner.utilities import combine_sts_lts, solve_root
@@ -63,19 +64,20 @@ class GHE:
         self.times = np.empty((0,), dtype=np.float64)
         self.loading = None
 
+        hourly_temps = (
+            18 + 5 * np.sin(2 * np.pi * np.arange(8760) / 24 / 365) + 3 * np.sin(2 * np.pi * np.arange(8760) / 24)
+        )  # TODO eventually this will have to run a hourly sim for hourly temps
+
+        h = HybridLoads2(
+            bldg_loads=self.hourly_extraction_ground_loads,
+            bhe=self.bhe_eq,
+            radial_numerical=self.bhe_eq,
+            hourly_temps=hourly_temps,
+        )
+
         self.hybrid_load = HybridLoad(
             self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
         )
-        # if hourly_extraction_ground_loads:
-        #     hybrid_load = HybridLoad(
-        #         self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq,
-        #         start_month, end_month, years=load_years
-        #     )
-        #
-        #     # hybrid load object
-        #     self.hybrid_load = hybrid_load
-        # else:
-        #     self.hybrid_load = None
 
         # List of heat pump exiting fluid temperatures
         self.hp_eft: list[float] = []
