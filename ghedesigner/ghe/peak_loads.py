@@ -11,7 +11,7 @@ from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 class HybridLoads2:
     def __init__(
         self,
-        bldg_loads: list,
+        loads: list,
         bhe: SingleUTube,
         radial_numerical: SingleUTube,
         # sim_params: SimulationParameters,
@@ -24,7 +24,7 @@ class HybridLoads2:
             years = [2025]
         self.years = years
 
-        self.bldg_loads = bldg_loads
+        self.loads = loads
         self.hourly_ExFT_temps = hourly_temps
 
         self.start_month = start_month
@@ -51,7 +51,7 @@ class HybridLoads2:
 
         # Store the radial numerical g-function value
         # Note: this is intended to be a scipy.interp1d object
-        self.radial_numerical = radial_numerical
+        self.borehole = radial_numerical
         # self.sim_params = sim_params
         self.years = years
 
@@ -99,9 +99,9 @@ class HybridLoads2:
             self.cumulative_hours.append(self.cumulative_hours[-1] + self.days_in_month[i] * HRS_IN_DAY)
 
         # convert bldg loads to ground loads
-        self.cop_c = 2  # TODO I think we can get rid of this now that we're integrated with GHEdesigner?
-        self.cop_h = 2
-        self.ground_loads = self.bldg_to_ground_load()
+        # self.cop_c = 2  # TODO I think we can get rid of this now that we're integrated with GHEdesigner?
+        # self.cop_h = 2
+        # self.ground_loads = self.bldg_to_ground_load()
         # split heating and cooling
         self.split_heat_and_cool()
         # Process the loads and by month
@@ -118,23 +118,29 @@ class HybridLoads2:
         self.monthly_peak_cl_duration = []
         self.monthly_peak_hl_duration = []
 
-    # Step 1----------------------------------------
+        self.hourly_extraction_loads = []
+        self.hourly_rejection_loads = []
 
-    def bldg_to_ground_load(self) -> list:
-        """
-        Acts as a constant COP heatpump
-        :return: ground loads in Watts
-        """
-        ground_loads = []
+        self.hrly_extraction_loads_norm = []
+        self.hrly_rejection_loads_norm = []
 
-        for i in range(len(self.bldg_loads)):
-            if self.bldg_loads[i] >= 0:
-                ground_loads.append((self.cop_h - 1) / self.cop_h * self.bldg_loads[i])
-            else:
-                ground_loads.append((1 + self.cop_c) / self.cop_c * self.bldg_loads[i])
+        # Step 1----------------------------------------
 
-        print("bldg loads have been converted to ground loads.")
-        return ground_loads
+    # def bldg_to_ground_load(self) -> list:
+    #     """
+    #     Acts as a constant COP heatpump
+    #     :return: ground loads in Watts
+    #     """
+    #     ground_loads = []
+    #
+    #     for i in range(len(self.loads)):
+    #         if self.loads[i] >= 0:
+    #             ground_loads.append((self.cop_h - 1) / self.cop_h * self.loads[i])
+    #         else:
+    #             ground_loads.append((1 + self.cop_c) / self.cop_c * self.loads[i])
+    #
+    #     print("bldg loads have been converted to ground loads.")
+    #     return ground_loads
 
     # Step 2  -----------------------------
 
@@ -143,11 +149,11 @@ class HybridLoads2:
         Split the normalized ground loads into heating and cooling as well as the associated ExFTs.
         Heating is positive, cooling is negative.
         :return: hourly normalized ground loads split into heating and cooling in kilowatts
-        :return: hourly ExFTs split in to heating and cooling lists in Celsius
+        :return: hourly ExFTs split into heating and cooling lists in Celsius
         """
 
-        self.hourly_extraction_loads = [x / 1000.0 if x >= 0.0 else 0.0 for x in self.ground_loads]
-        self.hourly_rejection_loads = [abs(x) / 1000.0 if x < 0.0 else 0.0 for x in self.ground_loads]
+        self.hourly_extraction_loads = [x / 1000.0 if x >= 0.0 else 0.0 for x in self.loads]
+        self.hourly_rejection_loads = [abs(x) / 1000.0 if x < 0.0 else 0.0 for x in self.loads]
 
         self.hrly_extraction_loads_norm = self.normalize_loads(self.hourly_extraction_loads)
         self.hrly_rejection_loads_norm = self.normalize_loads(self.hourly_rejection_loads)
@@ -157,7 +163,8 @@ class HybridLoads2:
         print(f" first 100 hrs rejection normed= {self.hrly_rejection_loads_norm[:100]} kW")
         # TODO returning vs self. variables?
 
-    def normalize_loads(self, load) -> list:
+    @staticmethod
+    def normalize_loads(load) -> list:
         """
         Normalize the ground loads to a peak of 4000 W since we do not know the size or
         configuration of the borehole field
@@ -392,16 +399,16 @@ class HybridLoads2:
         This performs a month long ExFT simulation given the new hybrid loads
         """
 
-        ts = self.radial_numerical.t_s
+        ts = self.borehole.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
         resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
         print(f"resist_bh_effective = {resist_bh_effective}")
-        g_sts = self.radial_numerical.g_sts
+        g = self.borehole.g_sts
         q = hybrid_load
 
         hrs_in_month = list(range(len(q)))
         delta_t_fluid = self.simulate_hourly(
-            hrs_in_month, q, g_sts, resist_bh_effective, two_pi_k, ts
+            hrs_in_month, q, g, resist_bh_effective, two_pi_k, ts
         )  # runs hourly fluid temperature simulation
 
         new_ExFT_hrly_w_pk = delta_t_fluid[pk_hour_of_month]
@@ -409,7 +416,7 @@ class HybridLoads2:
         return new_ExFT_hrly_w_pk
 
     @staticmethod
-    def simulate_hourly(hour_time, q, g_sts, resist_bh, two_pi_k, ts):
+    def simulate_hourly(hour_time, q, g, resist_bh, two_pi_k, ts):
         # An hourly simulation for the fluid temperature
         # Chapter 2 of Advances in Ground Source Heat Pumps
         q_arr = np.array(q)
@@ -420,7 +427,7 @@ class HybridLoads2:
             # Take the last i elements of the reversed time array
             _time = hour_time_arr[n] - hour_time_arr[0:n]
             # _time = time_values_reversed[n - i:n]
-            g_values = g_sts(np.log((_time * SEC_IN_HR) / ts))
+            g_values = g(np.log((_time * SEC_IN_HR) / ts))
             # Tb = Tg + (q_dt * g)  (Equation 2.12)
             delta_tb_i = (q_dt[0:n] / two_pi_k).dot(g_values)
             # Delta mean heat pump entering fluid temperature

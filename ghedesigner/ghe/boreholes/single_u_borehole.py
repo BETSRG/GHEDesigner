@@ -164,7 +164,11 @@ class SingleUTube(gt.pipes.SingleUTube, GHEDesignerBoreholeBase):
         # - This is here partially because equivalent boreholes are generated.
         soil_diffusivity = self.k_s / self.soil.rhoCp
         self.t_s = self.b.H**2 / (9 * soil_diffusivity)
-        self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
+
+        max_sec_in_month = 31 * 24 * 3600
+        max_lntts = log(max_sec_in_month / self.t_s)
+
+        self.calc_time_in_sec = max([self.t_s * exp(max_lntts), 49.0 * SEC_IN_HR])
 
     def fill_radial_cells(self, resist_f_effective, resist_pg_effective):
         radial_cells = np.zeros(shape=(len(CellProps), self.num_cells), dtype=np.double)

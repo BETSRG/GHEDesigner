@@ -69,7 +69,7 @@ class GHE:
         )  # TODO eventually this will have to run a hourly sim for hourly temps
 
         h = HybridLoads2(
-            bldg_loads=self.hourly_extraction_ground_loads,
+            loads=self.hourly_extraction_ground_loads,
             bhe=self.bhe_eq,
             radial_numerical=self.bhe_eq,
             hourly_temps=hourly_temps,
