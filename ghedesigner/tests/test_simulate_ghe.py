@@ -205,13 +205,13 @@ class TestGHE(GHEBaseTest):
 
         max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HYBRID)
 
-        self.assertAlmostEqual(37.5, max_hp_eft, delta=0.1)
-        self.assertAlmostEqual(16.96, min_hp_eft, delta=0.1)
+        self.assertAlmostEqual(37.3, max_hp_eft, delta=0.1)
+        self.assertAlmostEqual(17.3, min_hp_eft, delta=0.1)
 
         ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
 
         self.assertEqual(156, ghe.nbh)
-        self.assertAlmostEqual(118.9, ghe.bhe.b.H, delta=0.1)
+        self.assertAlmostEqual(117.6, ghe.bhe.b.H, delta=0.1)
 
     def test_coaxial_tube(self):
         # Define a borehole

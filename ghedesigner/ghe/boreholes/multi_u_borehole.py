@@ -1,12 +1,11 @@
 from copy import deepcopy
-from typing import cast
 
 import pygfunction as gt
 from bhr.borehole import Borehole as BHRBorehole
 from numpy import log, sqrt
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.constants import TWO_PI, pi
+from ghedesigner.constants import PI, TWO_PI
 from ghedesigner.enums import DoubleUTubeConnType
 from ghedesigner.ghe.boreholes.base import GHEDesignerBoreholeBase
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
@@ -32,8 +31,8 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
 
         # Compute equivalent single U-tube geometry
         n = 2
-        r_p_i_prime = sqrt(vol_fluid / (n * pi))
-        r_p_o_prime = sqrt((vol_fluid + vol_pipe) / (n * pi))
+        r_p_i_prime = sqrt(vol_fluid / (n * PI))
+        r_p_o_prime = sqrt((vol_fluid + vol_pipe) / (n * PI))
         # A_s_prime = n * pi * ((r_p_i_prime * 2) ** 2)
         # h_prime = 1 / (R_conv * A_s_prime)
         k_p_prime = log(r_p_o_prime / r_p_i_prime) / (TWO_PI * n * resist_pipe)
@@ -181,46 +180,33 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         self.calc_effective_borehole_resistance()
 
     def calc_fluid_pipe_resistance(self) -> float:
-        self.h_f = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
-            self.m_flow_pipe,
-            self.pipe.r_in,
-            self.fluid.mu,
-            self.fluid.rho,
-            self.fluid.k,
-            self.fluid.cp,
-            self.pipe.roughness,
-        )
-        r_in = cast(float, self.pipe.r_in)
-        r_out = cast(float, self.pipe.r_out)
-        self.R_f = self.compute_fluid_resistance(self.h_f, r_in)
-        self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(r_in, r_out, self.pipe.k)
-        self.R_fp = self.R_f + self.R_p
-        # self.R_fp = self.bhr_borehole._bh.calc_pipe_resist(self.m_flow_borehole, self.soil.ugt)
+        self.R_fp = self.bhr_borehole._bh.calc_pipe_resist(self.m_flow_borehole, self.soil.ugt)
         return self.R_fp
 
     def calc_effective_borehole_resistance(self) -> float:
         resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.soil.ugt)
         return resist_bh_effective
 
-    def u_tube_volumes(self) -> tuple[float, float, float, float]:
+    def u_tube_volumes(self) -> tuple[float, float]:
         # Compute volumes for U-tube geometry
         # Effective parameters
         n = self.nPipes * 2  # Total number of tubes
-        # Total inside surface area (m^2)
-        area_surf_inner = n * pi * (self.r_in * 2.0) ** 2
-        resist_conv = 1 / (self.h_f * area_surf_inner)  # Convection resistance (m.K/W)
+
         # Volumes
-        vol_fluid = n * pi * (self.r_in**2)
-        vol_pipe = n * pi * (self.r_out**2) - vol_fluid
-        # V_grout = pi * (u_tube.b.r_b**2) - vol_pipe - vol_fluid
-        resist_pipe = log(self.r_out / self.r_in) / (n * TWO_PI * self.pipe.k)
-        return vol_fluid, vol_pipe, resist_conv, resist_pipe
+        vol_fluid = n * PI * (self.r_in**2)
+        vol_pipe = n * PI * (self.r_out**2) - vol_fluid
+
+        return vol_fluid, vol_pipe
 
     def to_single(self) -> SingleUTube:
         # Find an equivalent single U-tube given multiple U-tube geometry
 
         # Get effective parameters for the multiple u-tube
-        vol_fluid, vol_pipe, resist_conv, resist_pipe = self.u_tube_volumes()
+        vol_fluid, vol_pipe = self.u_tube_volumes()
+
+        # TODO: check that the usage here for converting to an equivalent single u-tube is accurate
+        resist_pipe = self.bhr_borehole._bh.calc_pipe_cond_resist()
+        resist_conv = self.R_fp - resist_pipe
 
         single_u_tube = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rhoCp)
 

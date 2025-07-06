@@ -157,9 +157,9 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         )
         search = self.get_design(pipe, 0.5, 0.07, prop_boundary, no_go_zones)
         u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(134.5, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(133.1, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
-        self.assertEqual(64, len(borehole_location_data_rows))
+        self.assertEqual(63, len(borehole_location_data_rows))
 
     def test_coaxial(self):
         pipe = Pipe.init_coaxial(

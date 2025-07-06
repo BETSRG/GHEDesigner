@@ -66,16 +66,6 @@ class GHE:
         self.hybrid_load = HybridLoad(
             self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
         )
-        # if hourly_extraction_ground_loads:
-        #     hybrid_load = HybridLoad(
-        #         self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq,
-        #         start_month, end_month, years=load_years
-        #     )
-        #
-        #     # hybrid load object
-        #     self.hybrid_load = hybrid_load
-        # else:
-        #     self.hybrid_load = None
 
         # List of heat pump exiting fluid temperatures
         self.hp_eft: list[float] = []

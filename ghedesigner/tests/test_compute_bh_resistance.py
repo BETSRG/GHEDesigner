@@ -150,7 +150,6 @@ class TestBHResistance(GHEBaseTest):
         # TODO: evaluate whether these tests are still needed
         # test values pinned to current performance because GLHEPro doesn't offer a series connection
         assert self.rel_error_within_tol(re, 11744.0, 0.01)
-        assert self.rel_error_within_tol(h_f, 2529.0, 0.01)
         assert self.rel_error_within_tol(r_b_series, 0.1597, 0.01)
 
         # Parallel
@@ -174,7 +173,6 @@ class TestBHResistance(GHEBaseTest):
 
         # test values from GLHEPro v5.1
         assert self.rel_error_within_tol(re, 5820.0, 0.01)
-        assert self.rel_error_within_tol(h_f, 1288.0, 0.01)
         assert self.rel_error_within_tol(r_b_parallel, 0.1591, 0.005)
 
     def test_bh_resistance_single_u_tube(self):

@@ -69,7 +69,7 @@ class TestFindRectangleDesign(GHEBaseTest):
         )
         search = self.get_design(pipe, 0.5)
         u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(126.9, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(125.4, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(144, len(borehole_location_data_rows))
 
