@@ -160,4 +160,4 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
 
         ghe.size(method=TimestepType.HYBRID, max_height=384, min_height=24, design_max_eft=35, design_min_eft=5)
 
-        self.log(f"Height of boreholes: {ghe.bhe.b.H:0.4f}")
+        self.log(f"Height of boreholes: {ghe.bhe.borehole.H:0.4f}")

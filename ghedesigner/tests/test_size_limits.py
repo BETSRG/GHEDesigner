@@ -47,7 +47,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
             method=TimestepType.HYBRID,
         )
         search = design.find_design()
-        u_tube_height = search.ghe.bhe.b.H
+        u_tube_height = search.ghe.bhe.borehole.H
         self.assertAlmostEqual(60, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(1, len(borehole_location_data_rows))
@@ -80,7 +80,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
             method=TimestepType.HYBRID,
         )
         search = design.find_design()
-        u_tube_height = search.ghe.bhe.b.H
+        u_tube_height = search.ghe.bhe.borehole.H
         self.assertAlmostEqual(213, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(20, len(borehole_location_data_rows))
@@ -113,7 +113,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
             method=TimestepType.HYBRID,
         )
         search = design.find_design()
-        u_tube_height = search.ghe.bhe.b.H
+        u_tube_height = search.ghe.bhe.borehole.H
         self.assertAlmostEqual(213, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(90, len(borehole_location_data_rows))

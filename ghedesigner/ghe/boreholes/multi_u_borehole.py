@@ -1,6 +1,5 @@
 from copy import deepcopy
 
-import pygfunction as gt
 from bhr.borehole import Borehole as BHRBorehole
 from numpy import log, sqrt
 from pygfunction.boreholes import Borehole
@@ -40,7 +39,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         # Place single u-tubes at a B-spacing
         # Total horizontal space (m)
         # TODO: investigate why this deepcopy is required
-        _borehole = deepcopy(self.b)
+        _borehole = deepcopy(self.borehole)
         spacing = _borehole.r_b * 2 - (n * r_p_o_prime * 2)
         # If the spacing is negative, then the borehole is not large enough,
         # therefore, the borehole will be increased if necessary
@@ -110,7 +109,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         return preliminary_new_single_u_tube
 
 
-class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes):
+class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
     def __init__(
         self,
         m_flow_borehole: float,
@@ -121,10 +120,13 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         soil: Soil,
         config=DoubleUTubeConnType.PARALLEL,
     ) -> None:
-        self.R_p = 0.0
-        self.R_f = 0.0
+        # Ensure r_in and r_out are floats rather than list[float]
+        if not isinstance(pipe.r_out, float) or not isinstance(pipe.r_in, float):
+            raise TypeError("pipe r_in and r_out must be floats")
+
+        super().__init__(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+
         self.R_fp = 0.0
-        self.h_f = 0.0
         self.fluid = fluid
         self.m_flow_borehole = m_flow_borehole
         self.m_flow_pipe = self.calc_mass_flow_pipe(self.m_flow_borehole, config)
@@ -133,12 +135,8 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
         self.soil = soil
         self.grout = grout
         self.flow_config = config
-
         self.bhr_borehole = BHRBorehole()
-
-        # Ensure r_in and r_out are floats rather than list[float]
-        if not isinstance(pipe.r_out, float) or not isinstance(pipe.r_in, float):
-            raise TypeError("pipe r_in and r_out must be floats")
+        self.n_pipes = 2
 
         self.bhr_borehole.init_double_u_borehole(
             borehole_diameter=_borehole.r_b * 2,
@@ -155,29 +153,7 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
             pipe_inlet_arrangement="ADJACENT",
         )
 
-        # Get number of pipes from positions
-        self.resist_delta = None
-        self.n_pipes = len(pipe.pos) / 2
-
-        # compute resistances required to construct inherited class
         self.calc_fluid_pipe_resistance()
-
-        gt.pipes.MultipleUTube.__init__(
-            self,
-            self.pipe.pos,
-            self.pipe.r_in,
-            self.pipe.r_out,
-            self.borehole,
-            self.soil.k,
-            self.grout.k,
-            self.R_fp,
-            self.pipe.n_pipes,
-            config=config.name,
-        )
-
-        # these methods must be called after inherited class construction
-        self.update_thermal_resistances(self.R_fp)
-        self.calc_effective_borehole_resistance()
 
     def calc_fluid_pipe_resistance(self) -> float:
         self.R_fp = self.bhr_borehole._bh.calc_pipe_resist(self.m_flow_borehole, self.soil.ugt)
@@ -190,11 +166,11 @@ class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes
     def u_tube_volumes(self) -> tuple[float, float]:
         # Compute volumes for U-tube geometry
         # Effective parameters
-        n = self.nPipes * 2  # Total number of tubes
+        n = self.n_pipes * 2  # Total number of tubes
 
         # Volumes
-        vol_fluid = n * PI * (self.r_in**2)
-        vol_pipe = n * PI * (self.r_out**2) - vol_fluid
+        vol_fluid = n * PI * (self.pipe.r_in**2)
+        vol_pipe = n * PI * (self.pipe.r_out**2) - vol_fluid
 
         return vol_fluid, vol_pipe
 

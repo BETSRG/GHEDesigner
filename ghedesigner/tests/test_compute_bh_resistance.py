@@ -135,15 +135,11 @@ class TestBHResistance(GHEBaseTest):
         r_b_series = double_u_tube_series.calc_effective_borehole_resistance()
         re = MultipleUTube.compute_reynolds(double_u_tube_series.m_flow_pipe, r_in, fluid)
         m_dot = double_u_tube_series.m_flow_pipe
-        r_p = double_u_tube_series.R_p
-        h_f = double_u_tube_series.h_f
         r_fp = double_u_tube_series.R_fp
 
         self.log(double_u_tube_series)
         self.log(f"Reynolds number: {re}")
         self.log(f"Mass flow per pipe: (kg/s): {m_dot}")
-        self.log(f"Pipe resistance (K/(W/m)): {r_p}")
-        self.log(f"Convection coefficient (W/m2.K): {h_f}")
         self.log(f"Convective resistance (K/(W/m)): {r_fp}")
         self.log(f"Borehole thermal resistance: {r_b_series:0.4f} m.K/W")
 
@@ -159,15 +155,11 @@ class TestBHResistance(GHEBaseTest):
         r_b_parallel = double_u_tube_parallel.calc_effective_borehole_resistance()
         re = MultipleUTube.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
         m_dot = double_u_tube_parallel.m_flow_pipe
-        r_p = double_u_tube_parallel.R_p
-        h_f = double_u_tube_parallel.h_f
         r_fp = double_u_tube_parallel.R_fp
 
         self.log(double_u_tube_parallel)
         self.log(f"Reynolds number: {re}")
         self.log(f"Mass flow per pipe: (kg/s): {m_dot}")
-        self.log(f"Pipe resistance (K/(W/m)) : {r_p}")
-        self.log(f"Convection coefficient (W/m2.K): {h_f}")
         self.log(f"Convective resistance (K/(W/m)): {r_fp}")
         self.log(f"Borehole thermal resistance: {r_b_parallel:0.4f} m.K/W")
 

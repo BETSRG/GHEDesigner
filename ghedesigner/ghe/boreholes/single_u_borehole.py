@@ -119,7 +119,7 @@ class SingleUTube(GHEDesignerBoreholeBase):
         self.g_bhw = np.array([], dtype=np.double)
         self.lntts = np.array([], dtype=np.double)
         self.c_0 = TWO_PI * self.soil.k
-        self.t_s = self.b.H**2 / (9 * self.soil.alpha)
+        self.t_s = self.borehole.H**2 / (9 * self.soil.alpha)
         # default is at least 49 hours, or up to -8.6 log time
         self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
         self.g_sts = None
@@ -237,7 +237,7 @@ class SingleUTube(GHEDesignerBoreholeBase):
         return dc
 
     def calc_sts_g_functions(self, final_time=None) -> tuple:
-        self.t_s = self.b.H**2 / (9 * self.soil.alpha)
+        self.t_s = self.borehole.H**2 / (9 * self.soil.alpha)
         self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
 
         # effective borehole resistance
