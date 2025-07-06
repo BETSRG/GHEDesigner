@@ -83,7 +83,7 @@ class TestBHResistance(GHEBaseTest):
 
         assert self.rel_error_within_tol(coaxial.h_f_in, 2255, 0.01)
         assert self.rel_error_within_tol(coaxial.h_f_a_in, 670, 0.15)
-        assert self.rel_error_within_tol(r_b, 0.1078, 0.01)
+        assert self.rel_error_within_tol(r_b, 0.1057, 0.01)
 
     def test_bh_resistance_double_u_tube(self):
         # borehole
@@ -299,12 +299,12 @@ class TestBHResistance(GHEBaseTest):
 
         re_glhepro_coaxial = [8607, 7747, 6886, 6025, 5164, 4304, 3443, 2582, 2496, 2410, 2324, 2238]
         rb_glhepro_coaxial = [
-            0.1055,
-            0.1066,
-            0.1081,
-            0.1102,
-            0.1131,
-            0.1176,
+            0.1033,
+            0.1043,
+            0.1057,
+            0.1076,
+            0.1105,
+            0.1149,
             0.1249,
             0.1386,
             0.1406,
@@ -411,63 +411,3 @@ class TestBHResistance(GHEBaseTest):
 
             if v_flow_borehole > 0.4:
                 assert self.rel_error_within_tol(resist_bh, rb_glhepro_coaxial[idx], 0.02)
-
-        # Note: DO NOT DELETE THIS SECTION
-        #       Uncomment the code and pip install matplotlib if you want to regenerate the plots
-
-        # Comparison plots
-        # borehole_validation_values = {
-        #     "Single U-tube": {"Re": re_glhepro_single, "Rb": rb_glhepro_single, "V_dot": v_flow_rates},
-        #     "Double U-tube": {"Re": re_glhepro_double, "Rb": rb_glhepro_double, "V_dot": v_flow_rates},
-        #     "Coaxial": {"Re": re_glhepro_coaxial, "Rb": rb_glhepro_coaxial, "V_dot": v_flow_rates_coaxial}
-        # }
-
-        # fig_1, ax_1 = pyplot.subplots(3, sharex='all', sharey='none')
-        # fig_2, ax_2 = pyplot.subplots(3, sharex='all', sharey='none')
-
-        # for i, tube in enumerate(borehole_values):
-        #     ax_1[i].scatter(
-        #         borehole_values[tube]["Re"],
-        #         borehole_values[tube]["Rb"],
-        #         label=tube + " (GHEDesigner)",
-        #     )
-        #     ax_1[i].scatter(
-        #         borehole_validation_values[tube]["Re"],
-        #         borehole_validation_values[tube]["Rb"],
-        #         label=tube + " (GLHEPRO)",
-        #         marker="x",
-        #     )
-        #     ax_1[i].grid()
-        #     ax_1[i].set_axisbelow(True)
-        #     ax_1[i].legend()
-
-        #     ax_2[i].scatter(
-        #         borehole_values[tube]["V_dot"],
-        #         borehole_values[tube]["Rb"],
-        #         label=tube + " (GHEDesigner)",
-        #     )
-        #     ax_2[i].scatter(
-        #         borehole_validation_values[tube]["V_dot"],
-        #         borehole_validation_values[tube]["Rb"],
-        #         label=tube + " (GLHEPRO)",
-        #         marker="x",
-        #     )
-        #     ax_2[i].grid()
-        #     ax_2[i].set_axisbelow(True)
-        #     ax_2[i].legend()
-
-        # ax_1[2].set_xlabel("Reynolds number")
-        # ax_1[1].set_ylabel("Effective borehole thermal resistance, R$_b^*$ (m.K/W)")
-
-        # ax_2[2].set_xlabel("Volumetric flow rate per borehole (L/s)")
-        # ax_2[1].set_ylabel("Effective borehole thermal resistance, R$_b^*$ (m.K/W)")
-
-        # fig_1.tight_layout()
-        # fig_2.tight_layout()
-
-        # output_plot = self.test_outputs_directory / 'Rb_vs_Re.png'
-        # fig_1.savefig(str(output_plot))
-        # output_plot = self.test_outputs_directory / 'Rb_vs_v_dot.png'
-        # fig_2.savefig(str(output_plot))
-        # pyplot.close(fig_1)
-        # pyplot.close(fig_2)

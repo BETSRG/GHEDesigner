@@ -2,10 +2,11 @@ from typing import cast
 
 import numpy as np
 import pygfunction as gt
-from numpy import log, pi
+from bhr.borehole import Borehole as BHRBorehole
+from numpy import log
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.constants import TWO_PI
+from ghedesigner.constants import PI, TWO_PI
 from ghedesigner.ghe.boreholes.multi_u_borehole import GHEDesignerBoreholeWithMultiplePipes
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 from ghedesigner.ghe.pipe import Pipe
@@ -28,6 +29,23 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
 
         self.r_inner = pipe.r_in
         self.r_outer = pipe.r_out
+
+        self.bhr_borehole = BHRBorehole()
+        self.bhr_borehole.init_coaxial_borehole(
+            borehole_diameter=_borehole.r_b * 2,
+            outer_pipe_outer_diameter=(2.0 * pipe.r_out[1]),
+            outer_pipe_dimension_ratio=(2.0 * pipe.r_out[1]) / (pipe.r_out[1] - pipe.r_out[0]),
+            outer_pipe_conductivity=pipe.k[1],
+            inner_pipe_outer_diameter=(2.0 * pipe.r_in[1]),
+            inner_pipe_dimension_ratio=(2.0 * pipe.r_in[1]) / (pipe.r_in[1] - pipe.r_in[0]),
+            inner_pipe_conductivity=pipe.k[0],
+            length=_borehole.H,
+            grout_conductivity=grout.k,
+            soil_conductivity=soil.k,
+            fluid_type=self.fluid.name,
+            fluid_concentration=self.fluid.concentration_percent / 100,
+            boundary_condition="UNIFORM_BOREHOLE_WALL_TEMP",
+        )
 
         # Pipe naming nomenclature
         # <var>_<inner/outer pipe>_<inner/outer surface>
@@ -127,9 +145,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         return self.R_fp
 
     def calc_effective_borehole_resistance(self) -> float:
-        # TODO: should this be here?
-        self._initialize_stored_coefficients()
-        resist_bh_effective = self.effective_borehole_thermal_resistance(self.m_flow_borehole, self.fluid.cp)
+        resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.soil.ugt)
         return resist_bh_effective
 
     def to_single(self) -> SingleUTube:
@@ -150,7 +166,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         dia_hydraulic = 2 * (r_a_out - r_a_in)
         # r_h = dia_hydraulic / 2
         # Cross-sectional area of the annulus region
-        area_cr_annular = pi * ((r_a_out**2) - (r_a_in**2))
+        area_cr_annular = PI * ((r_a_out**2) - (r_a_in**2))
         # Volume flow rate
         vol_flow_rate = m_flow_pipe / fluid.rho
         # Average velocity
@@ -163,8 +179,6 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         r_in = cast(float, self.pipe.r_in)
         # TODO: This is passing roughness, but shouldn't, right?
         reynold_no = self.compute_reynolds_concentric(self.m_flow_borehole, r_in, self.pipe.roughness, self.fluid)
-        # r_out = cast(tuple[float, float], self.pipe.r_out)
-        # reynold_no = self.compute_reynolds_concentric(self.m_flow_borehole, r_out[1], r_out[0], self.fluid)
         blob = {
             "type": str(self.__class__),
             "mass_flow_borehole": {"value": self.m_flow_borehole, "units": "kg/s"},
@@ -174,11 +188,6 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
             "pipe": self.pipe.as_dict(),
             "reynolds": {"value": reynold_no, "units": ""},
         }
-        # blob['borehole'] = self.as_dict()
-        # blob['fluid'] = self.fluid.as_dict()
-        # blob['convection_coefficient'] = {'value': self.h_f, 'units': 'W/m2-K'}
-        # blob['pipe_resistance'] = {'value': self.R_p, 'units': 'm-K/W'}
-        # blob['fluid_resistance'] = {'value': self.R_f, 'units': 'm-K/W'}
         return blob
 
     def concentric_tube_volumes(self) -> tuple[float, float, float, float]:
@@ -188,10 +197,9 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         r_in_in, r_in_out = r_inner
         r_out_in, r_out_out = r_outer
         # Compute volumes for concentric ghe geometry
-        vol_fluid = pi * ((r_in_in**2) + (r_out_in**2) - (r_in_out**2))
-        vol_pipe = pi * ((r_in_out**2) - (r_in_in**2) + (r_out_out**2) - (r_out_in**2))
-        # V_grout = pi * ((coaxial.b.r_b**2) - (r_out_out**2))
-        area_surf_outer = pi * 2 * r_out_in
+        vol_fluid = PI * ((r_in_in**2) + (r_out_in**2) - (r_in_out**2))
+        vol_pipe = PI * ((r_in_out**2) - (r_in_in**2) + (r_out_out**2) - (r_out_in**2))
+        area_surf_outer = PI * 2 * r_out_in
         resist_conv = 1 / (self.h_f_a_in * area_surf_outer)
         resist_pipe = log(r_out_out / r_out_in) / (TWO_PI * self.pipe.k[1])
         return vol_fluid, vol_pipe, resist_conv, resist_pipe

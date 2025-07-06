@@ -251,10 +251,10 @@ class TestGHE(GHEBaseTest):
 
         max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HYBRID)
 
-        self.assertAlmostEqual(36.7, max_hp_eft, delta=0.1)
+        self.assertAlmostEqual(36.5, max_hp_eft, delta=0.1)
         self.assertAlmostEqual(17.75, min_hp_eft, delta=0.1)
 
         ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
 
         self.assertEqual(156, ghe.nbh)
-        self.assertAlmostEqual(114.2, ghe.bhe.borehole.H, delta=0.1)
+        self.assertAlmostEqual(113.2, ghe.bhe.borehole.H, delta=0.1)
