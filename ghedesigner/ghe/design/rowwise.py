@@ -19,7 +19,7 @@ class GeometricConstraintsRowWise(GeometricConstraints):
     perimeter_spacing_ratio: float | None
     min_spacing: float
     max_spacing: float
-    spacing_step: float
+    spacing_step: float | None
     min_rotation: float
     max_rotation: float
     rotate_step: float

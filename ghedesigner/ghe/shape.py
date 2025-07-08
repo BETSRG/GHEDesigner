@@ -16,6 +16,46 @@ class Shapes:
         self.min_x = np.min(self.c[:, 0])
         self.max_y = np.max(self.c[:, 1])
         self.min_y = np.min(self.c[:, 1])
+        self.area = self.get_area()
+        self.arc_lengths = self._calc_arc_lengths()
+        self.total_arc_length = sum(self.arc_lengths)
+        self.piecewise_maxes = self._prep_arc_length_piecewise_function()
+
+    def _calc_arc_lengths(self):
+        lengths = []
+        for i in range(len(self.c)):
+            if i == len(self.c) - 1:
+                c1 = self.c[i]
+                c2 = self.c[0]
+            else:
+                c1 = self.c[i]
+                c2 = self.c[i + 1]
+            lengths.append(distance(c1, c2))
+        return lengths
+
+    def _prep_arc_length_piecewise_function(self):
+        piecewise_maxes = [0.0]
+        current_length = 0
+        maximum_length = self.total_arc_length
+        for arc_length in self.arc_lengths:
+            current_length += arc_length
+            piecewise_maxes.append(current_length / maximum_length)
+        return piecewise_maxes
+
+    def _get_point_along_arc(self, ratio, arc_index):
+        if arc_index == len(self.c) - 1:
+            c1 = self.c[arc_index]
+            c2 = self.c[0]
+        else:
+            c1 = self.c[arc_index]
+            c2 = self.c[arc_index + 1]
+        return ratio * (c2[0] - c1[0]) + c1[0], ratio * (c2[1] - c1[1]) + c1[1]
+
+    def get_point_along_curve(self, relative_distance_along_curve):
+        larger_index = next(i for i, x in enumerate(self.piecewise_maxes) if x >= relative_distance_along_curve)
+        arc_ratio = (relative_distance_along_curve - self.piecewise_maxes[larger_index - 1]) /\
+                    (self.piecewise_maxes[larger_index] - self.piecewise_maxes[larger_index - 1])
+        return self._get_point_along_arc(arc_ratio, larger_index - 1)
 
     def line_intersect(self, xy, rotate=0, intersection_tolerance=1e-6):
         """
@@ -32,7 +72,16 @@ class Shapes:
             the x,y values of the intersections
         """
         x1, y1, x2, y2 = xy
+        minx, maxx = (x1, x2) if x1 < x2 else (x2, x1)
+        miny, maxy = (y1, y2) if y1 < y2 else (y2, y1)
+
         r_a = []
+
+        # Check if they fall within the same rectangular area - note: calling functions seem to assume
+        # that this is an infinite line intersection check (rather than line segment).
+        # if maxx < self.min_x or minx > self.max_x or maxy < self.min_y or miny > self.max_y:
+            # return r_a
+
         for i in range(len(self.c)):
             if i == len(self.c) - 1:
                 c1 = self.c[len(self.c) - 1]
@@ -42,7 +91,7 @@ class Shapes:
                     [x1, y1, x2, y2],
                     intersection_tolerance,
                 )
-                # print(r)
+
                 if len(r) == 1:
                     r = r[0]
                     if (
@@ -198,8 +247,10 @@ def vector_intersect(l1, l2, intersection_tolerance):
     ry = a1 * (c2 - c1) / (a1 - a2) + c1
     return [[rx, ry]]
 
+def distance(pt_1, pt_2) -> float:
+    return sqrt((pt_1[0] - pt_2[0]) ** 2 + (pt_1[1] - pt_2[1]) ** 2)
 
-def point_polygon_check(contour, point, on_edge_tolerance=0.001):
+def point_polygon_check(contour, point, on_edge_tolerance=1e-6):
     """
     Mimics pointPolygonTest from OpenCV-Python
 
@@ -224,9 +275,6 @@ def point_polygon_check(contour, point, on_edge_tolerance=0.001):
     # and the line vertices add to the distance between the line vertices
     # if they are within tolerance, the point is co-linear
     # if not, it is off the line
-
-    def distance(pt_1, pt_2) -> float:
-        return sqrt((pt_1[0] - pt_2[0]) ** 2 + (pt_1[1] - pt_2[1]) ** 2)
 
     for idx, vertex in enumerate(contour):
         v1 = contour[idx - 1]

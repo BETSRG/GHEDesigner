@@ -39,12 +39,12 @@
       },
       "geometric_constraints": {
         "perimeter_spacing_ratio": 0.8,
-        "min_spacing": 10,
-        "max_spacing": 20,
-        "spacing_step": 2,
+        "min_spacing": 10.0,
+        "max_spacing": 20.0,
+        "spacing_step": 0,
         "min_rotation": -90,
         "max_rotation": 0,
-        "rotate_step": 10,
+        "rotate_step": 10.0,
         "property_boundary": [
           [19.46202532, 108.8860759],
           [19.67827004, 94.46835443],

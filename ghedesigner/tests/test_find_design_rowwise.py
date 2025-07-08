@@ -124,6 +124,6 @@ class TestFindRowWiseDesign(GHEBaseTest):
         )
         search = self.get_design(pipe, 0.5, 0.8)
         u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(198.7, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(199.4, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
-        self.assertEqual(39, len(borehole_location_data_rows))
+        self.assertEqual(40, len(borehole_location_data_rows))
