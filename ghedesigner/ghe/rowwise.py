@@ -4,8 +4,7 @@ from math import atan, cos, inf, pi, sin, sqrt
 import numpy as np
 
 from ghedesigner.constants import DEG_TO_RAD, PI_OVER_2, RAD_TO_DEG
-from ghedesigner.ghe.shape import Shapes, sort_intersections, point_polygon_check
-
+from ghedesigner.ghe.shape import Shapes, point_polygon_check, sort_intersections
 
 NEIGHBORHOOD_OFFSETS = ((-1, -1), (-1, 0), (-1, 1),
                         (0, -1), (0, 0), (0, 1),
@@ -57,11 +56,11 @@ class DeferredDuplicateCheckList:
         self.bucket_keys = bucket_keys.tolist()
         point_keys = list(self.points.keys())
         for i, key in enumerate(bucket_keys):
-            key = (key[0], key[1])
-            if key in self.buckets:
-                self.buckets[key].append(point_keys[i])
+            usable_key = (key[0], key[1])
+            if usable_key in self.buckets:
+                self.buckets[usable_key].append(point_keys[i])
             else:
-                self.buckets[key] = [point_keys[i]]
+                self.buckets[usable_key] = [point_keys[i]]
 
         self.partitioned = True
 
@@ -69,7 +68,6 @@ class DeferredDuplicateCheckList:
         if not self.partitioned:
             self.partition()
         for i, key in enumerate(self.points):
-            point = self.points[key]
             x_ind, y_ind = self.bucket_keys[i]
             for key_modifier in NEIGHBORHOOD_OFFSETS:
                 dx, dy = key_modifier
@@ -135,7 +133,7 @@ class DeferredDuplicateCheckList:
 
         if dx == 0:
             step_x = 0
-            t_max_x = float('inf')
+            t_max_x = float("inf")
         elif dx > 0:
             step_x = 1
             t_max_x = ((p1x_bucket + 1) * self.spacing - p1x) / dx
@@ -145,7 +143,7 @@ class DeferredDuplicateCheckList:
 
         if dy == 0:
             step_y = 0
-            t_max_y = float('inf')
+            t_max_y = float("inf")
         elif dy > 0:
             step_y = 1
             t_max_y = ((p1y_bucket + 1) * self.spacing - p1y) / dy
@@ -153,8 +151,8 @@ class DeferredDuplicateCheckList:
             step_y = -1
             t_max_y = (p1y_bucket * self.spacing - p1y) / dy
 
-        t_delta_x = self.spacing / abs(dx) if dx != 0 else float('inf')
-        t_delta_y = self.spacing / abs(dy) if dy != 0 else float('inf')
+        t_delta_x = self.spacing / abs(dx) if dx != 0 else float("inf")
+        t_delta_y = self.spacing / abs(dy) if dy != 0 else float("inf")
 
         current_x_bucket = p1x_bucket
         current_y_bucket = p1y_bucket
@@ -341,14 +339,14 @@ def field_optimization_fr(
         )
 
         # Assuming that the rotation with the maximum number of boreholes is most efficiently using space
-        '''
+        """
         print(rt)
         import matplotlib.pyplot as plt
         x_vals = [hole.points[point][0] for point in hole.points]
         y_vals = [hole.points[point][1] for point in hole.points]
         plt.scatter(x_vals, y_vals)
         plt.show()
-        '''
+        """
         if hole.size() > max_l:
             max_l = hole.size()
             max_rt = rt * RAD_TO_DEG
