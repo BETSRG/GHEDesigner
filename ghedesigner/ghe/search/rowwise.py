@@ -305,7 +305,6 @@ class RowWiseModifiedBisectionSearch:
             if skip_secondary_interval_search:
                 return selected_coordinates, selected_specifier
             else:
-
                 # Now Check fields that have a higher target spacing to double-check that none of them would work:
                 spacing_l = spacing_step + spacing_high
                 target_spacings = []

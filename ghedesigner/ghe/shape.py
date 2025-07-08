@@ -53,8 +53,9 @@ class Shapes:
 
     def get_point_along_curve(self, relative_distance_along_curve):
         larger_index = next(i for i, x in enumerate(self.piecewise_maxes) if x >= relative_distance_along_curve)
-        arc_ratio = (relative_distance_along_curve - self.piecewise_maxes[larger_index - 1]) /\
-                    (self.piecewise_maxes[larger_index] - self.piecewise_maxes[larger_index - 1])
+        arc_ratio = (relative_distance_along_curve - self.piecewise_maxes[larger_index - 1]) / (
+            self.piecewise_maxes[larger_index] - self.piecewise_maxes[larger_index - 1]
+        )
         return self._get_point_along_arc(arc_ratio, larger_index - 1)
 
     def line_intersect(self, xy, rotate=0, intersection_tolerance=1e-6):
@@ -80,7 +81,7 @@ class Shapes:
         # Check if they fall within the same rectangular area - note: calling functions seem to assume
         # that this is an infinite line intersection check (rather than line segment).
         # if maxx < self.min_x or minx > self.max_x or maxy < self.min_y or miny > self.max_y:
-            # return r_a
+        # return r_a
 
         for i in range(len(self.c)):
             if i == len(self.c) - 1:
@@ -247,8 +248,10 @@ def vector_intersect(l1, l2, intersection_tolerance):
     ry = a1 * (c2 - c1) / (a1 - a2) + c1
     return [[rx, ry]]
 
+
 def distance(pt_1, pt_2) -> float:
     return sqrt((pt_1[0] - pt_2[0]) ** 2 + (pt_1[1] - pt_2[1]) ** 2)
+
 
 def point_polygon_check(contour, point, on_edge_tolerance=1e-6):
     """

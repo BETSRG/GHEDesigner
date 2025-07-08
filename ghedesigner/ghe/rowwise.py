@@ -6,15 +6,11 @@ import numpy as np
 from ghedesigner.constants import DEG_TO_RAD, PI_OVER_2, RAD_TO_DEG
 from ghedesigner.ghe.shape import Shapes, point_polygon_check, sort_intersections
 
-NEIGHBORHOOD_OFFSETS = ((-1, -1), (-1, 0), (-1, 1),
-                        (0, -1), (0, 0), (0, 1),
-                        (1, -1), (1, 0), (1, 1))
+NEIGHBORHOOD_OFFSETS = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1, -1), (1, 0), (1, 1))
 
 
 class DeferredDuplicateCheckList:
-
     def __init__(self, spacing):
-
         self.points = {}
         self.buckets = {}
         self.points_to_check = []
@@ -76,7 +72,6 @@ class DeferredDuplicateCheckList:
         self.proximity_checks_found = True
 
     def append(self, element):
-
         # Since the spatial partitioning is done in bulk in "partition()", we have to reset the partitioning
         # when appending a new element.
         if self.partitioned:
@@ -107,7 +102,6 @@ class DeferredDuplicateCheckList:
         return np.array(self.tolist(), dtype=float)
 
     def find_duplicates(self, tolerance):
-
         if tolerance > self.spacing:
             raise ValueError("Requested tolerance exceeds that which is allowed by the given spatial partitioning.")
 
@@ -129,7 +123,6 @@ class DeferredDuplicateCheckList:
         return duplicates
 
     def get_line_partitions(self, p1x, p1y, p2x, p2y):
-
         # This is based on Amanatides & Woo's algorithm as described here:
         # https://github.com/cgyurgyik/fast-voxel-traversal-algorithm/blob/master/overview/FastVoxelTraversalOverview.md
         # It should be noted that this implementation assumes that the line segment begins on the spatial grid
@@ -181,7 +174,6 @@ class DeferredDuplicateCheckList:
         return buckets_visited
 
     def points_close_to_line(self, p1, p2, tolerance):
-
         if tolerance > self.spacing:
             raise ValueError("Requested tolerance exceeds that which is allowed by the given spatial partitioning.")
 
@@ -469,7 +461,7 @@ def two_space_gen_bhc(
         rotate=rotate,
         intersection_tolerance=intersection_tolerance,
         duplicate_spacing_ratio=duplicate_spacing_ratio,
-        partition_ratio=partition_ratio
+        partition_ratio=partition_ratio,
     )
 
     remove_points_too_close(field, holes, i_space, no_go_zones=no_go)
@@ -1060,8 +1052,9 @@ def distribute(x1, x2, spacing, r):
     if d < spacing:
         # If we have currently not generated any coordinates, or we have not added a point at the same location
         # previously, then add at the average between the two row edges.
-        if r.size() == 0 or not (r.index(r.size() - 1)[0] == (x1[0] + x2[0]) / 2 and r.index(r.size() - 1)[1] ==
-                                 (x1[1] + x2[1]) / 2):
+        if r.size() == 0 or not (
+            r.index(r.size() - 1)[0] == (x1[0] + x2[0]) / 2 and r.index(r.size() - 1)[1] == (x1[1] + x2[1]) / 2
+        ):
             r.append([(x1[0] + x2[0]) / 2, (x1[1] + x2[1]) / 2])
         return r
 
