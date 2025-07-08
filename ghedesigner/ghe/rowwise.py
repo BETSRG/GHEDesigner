@@ -24,9 +24,6 @@ class DeferredDuplicateCheckList:
         self.largest_index = 0
         self.bucket_keys = None
 
-    def _get_bucket_key(self, point):
-        return int(point[0] // self.spacing), int(point[1] // self.spacing)
-
     def _get_bucket_key(self, px, py):
         return int(px // self.spacing), int(py // self.spacing)
 
@@ -79,13 +76,23 @@ class DeferredDuplicateCheckList:
         self.proximity_checks_found = True
 
     def append(self, element):
+
+        # Since the spatial partitioning is done in bulk in "partition()", we have to reset the partitioning
+        # when appending a new element.
         if self.partitioned:
             self.partitioned = False
             self.buckets = {}
             self.bucket_keys = None
+        # For a similar reason, the proximity checks need to be rerun when a new element is appended.
         if self.proximity_checks_found:
             self.proximity_checks_found = False
             self.points_to_check = []
+        # Internally, points are contained in the self.points dictionary, but we want this classes usage
+        # to be similar to a list/array. This can cause an issue when doing deletions (as we would
+        # like to avoid readjusting the keys for all dict entries). In order to avoid generating an already
+        # existing key, "largest_index" is used to always increment the key for the added element (regardless
+        # of deletions). There is probably a better way to implement this internally, as I suspect the
+        # point indexing with this implementation is slower than necessary.
         self.points[self.largest_index] = element
         self.largest_index += 1
 
@@ -122,6 +129,11 @@ class DeferredDuplicateCheckList:
         return duplicates
 
     def get_line_partitions(self, p1x, p1y, p2x, p2y):
+
+        # This is based on Amanatides & Woo's algorithm as described here:
+        # https://github.com/cgyurgyik/fast-voxel-traversal-algorithm/blob/master/overview/FastVoxelTraversalOverview.md
+        # It should be noted that this implementation assumes that the line segment begins on the spatial grid
+        # which simplifies the initialization of some of the values.
 
         buckets_visited = []
 
@@ -186,7 +198,7 @@ class DeferredDuplicateCheckList:
                 other_bucket = (bucket[0] + key_modifier[0], bucket[1] + key_modifier[1])
                 neighbors_to_check.append(other_bucket)
 
-        # Add in the appropriate points
+        # Return points that might be too close.
         keys_list = list(self.points.keys())
         buckets_to_check.extend(neighbors_to_check)
         buckets_to_check = set(buckets_to_check)
