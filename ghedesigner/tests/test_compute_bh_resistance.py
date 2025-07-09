@@ -64,25 +64,6 @@ class TestBHResistance(GHEBaseTest):
         coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
         r_b = coaxial.calc_effective_borehole_resistance()
 
-        self.log(coaxial)
-        self.log("Intermediate Variables \n" + "-" * 30)
-        self.log(f"Convection coefficient at inside of inner pipe (W/m2.K): {coaxial.h_f_in}")
-        self.log(f"Convection coefficient at outside of inner pipe (W/m2.K): {coaxial.h_f_a_in}")
-        self.log(f"Convection coefficient at inside of outer pipe (W/m2.K): {coaxial.h_f_a_out}")
-        self.log("-" * 30)
-        self.log(f"Convective resistance at inside of inner pipe (K/(W/m): {coaxial.R_f_in}")
-        self.log(f"Conduction resistance of inner pipe (K/(W/m): {coaxial.R_p_in}")
-        self.log(f"Convection resistance at outside of inner pipe (K/(W/m): {coaxial.R_f_a_in}")
-        self.log(f"Convection resistance at inside of outer pipe (K/(W/m): {coaxial.R_f_a_out}")
-        self.log(f"Conduction resistance of outer pipe (K/(W/m): {coaxial.R_p_out}")
-        self.log(f"Inner fluid to inner annulus fluid resistance (K/(W/m): {coaxial.R_ff}")
-        self.log(f"Outer annulus fluid to pipe thermal resistance (K/(W/m): {coaxial.R_fp}")
-
-        self.log("-" * 30)
-        self.log(f"Borehole thermal resistance: {r_b:0.4f} m.K/W")
-
-        assert self.rel_error_within_tol(coaxial.h_f_in, 2255, 0.01)
-        assert self.rel_error_within_tol(coaxial.h_f_a_in, 670, 0.15)
         assert self.rel_error_within_tol(r_b, 0.1057, 0.01)
 
     def test_bh_resistance_double_u_tube(self):
@@ -134,14 +115,6 @@ class TestBHResistance(GHEBaseTest):
         )
         r_b_series = double_u_tube_series.calc_effective_borehole_resistance()
         re = MultipleUTube.compute_reynolds(double_u_tube_series.m_flow_pipe, r_in, fluid)
-        m_dot = double_u_tube_series.m_flow_pipe
-        r_fp = double_u_tube_series.R_fp
-
-        self.log(double_u_tube_series)
-        self.log(f"Reynolds number: {re}")
-        self.log(f"Mass flow per pipe: (kg/s): {m_dot}")
-        self.log(f"Convective resistance (K/(W/m)): {r_fp}")
-        self.log(f"Borehole thermal resistance: {r_b_series:0.4f} m.K/W")
 
         # TODO: evaluate whether these tests are still needed
         # test values pinned to current performance because GLHEPro doesn't offer a series connection
@@ -154,14 +127,6 @@ class TestBHResistance(GHEBaseTest):
         )
         r_b_parallel = double_u_tube_parallel.calc_effective_borehole_resistance()
         re = MultipleUTube.compute_reynolds(double_u_tube_parallel.m_flow_pipe, r_in, fluid)
-        m_dot = double_u_tube_parallel.m_flow_pipe
-        r_fp = double_u_tube_parallel.R_fp
-
-        self.log(double_u_tube_parallel)
-        self.log(f"Reynolds number: {re}")
-        self.log(f"Mass flow per pipe: (kg/s): {m_dot}")
-        self.log(f"Convective resistance (K/(W/m)): {r_fp}")
-        self.log(f"Borehole thermal resistance: {r_b_parallel:0.4f} m.K/W")
 
         # test values from GLHEPro v5.1
         assert self.rel_error_within_tol(re, 5820.0, 0.01)
@@ -223,17 +188,11 @@ class TestBHResistance(GHEBaseTest):
         # Intermediate variables
         re = SingleUTube.compute_reynolds(single_u_tube.m_flow_borehole, r_in, fluid)
 
-        r_fp = single_u_tube.R_fp
         r_b = single_u_tube.calc_effective_borehole_resistance()
 
         # comparison values from GLHEPro v5.1
         assert self.rel_error_within_tol(re, 11748.0, 0.005)
         assert self.rel_error_within_tol(r_b, 0.2073, 0.005)
-
-        self.log(single_u_tube)
-        self.log(f"Reynolds number: {re}")
-        self.log(f"Convective resistance (K/(W/m)): {r_fp}")
-        self.log(f"Borehole thermal resistance: {r_b:0.4f} m.K/W")
 
     def test_bh_resistance_validation(self):
         # Dictionary for storing PLAT variations

@@ -1,12 +1,10 @@
 from typing import cast
 
-import numpy as np
 import pygfunction as gt
 from bhr.borehole import Borehole as BHRBorehole
-from numpy import log
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.constants import PI, TWO_PI
+from ghedesigner.constants import PI
 from ghedesigner.ghe.boreholes.multi_u_borehole import GHEDesignerBoreholeWithMultiplePipes
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 from ghedesigner.ghe.pipe import Pipe
@@ -80,69 +78,70 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         # Store borehole
         self.borehole = _borehole
 
-        # compute resistances required to construct inherited class
-        self.calc_fluid_pipe_resistance()
+        # # compute resistances required to construct inherited class
+        # self.calc_fluid_pipe_resistance()
 
         # Vectors of inner and outer pipe radii
         # Note: The dimensions of the inlet pipe are the first elements of the vectors.
         # In this example, the inlet pipe is the inside pipe.
         # TODO: fix this
-        r_in = cast(tuple[float, float], pipe.r_in)
-        r_out = cast(tuple[float, float], pipe.r_out)
-        r_inner_p = np.array([r_in[0], r_out[0]])  # Inner pipe radii (m)
-        r_outer_p = np.array([r_in[1], r_out[1]])  # Outer pipe radii (m)
+        # r_in = cast(tuple[float, float], pipe.r_in)
+        # r_out = cast(tuple[float, float], pipe.r_out)
+        # r_inner_p = np.array([r_in[0], r_out[0]])  # Inner pipe radii (m)
+        # r_outer_p = np.array([r_in[1], r_out[1]])  # Outer pipe radii (m)
 
-        gt.pipes.Coaxial.__init__(
-            self, pipe.pos, r_inner_p, r_outer_p, _borehole, self.soil.k, self.grout.k, self.R_ff, self.R_fp
-        )
-
-        # these methods must be called after inherited class construction
-        self.update_thermal_resistances(self.R_ff, self.R_fp)
+        # gt.pipes.Coaxial.__init__(
+        #     self, pipe.pos, r_inner_p, r_outer_p, _borehole, self.soil.k, self.grout.k, self.R_ff, self.R_fp
+        # )
+        #
+        # # these methods must be called after inherited class construction
+        # self.update_thermal_resistances(self.R_ff, self.R_fp)
         self.calc_effective_borehole_resistance()
 
-    def calc_fluid_pipe_resistance(self):
-        # inner pipe convection resistance
-        self.h_f_in = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
-            self.m_flow_borehole,
-            self.r_in_in,
-            self.fluid.mu,
-            self.fluid.rho,
-            self.fluid.k,
-            self.fluid.cp,
-            self.pipe.roughness,
-        )
-        self.R_f_in = self.compute_fluid_resistance(self.h_f_in, self.r_in_in)
-
-        # inner pipe conduction resistance
-        self.R_p_in = gt.pipes.conduction_thermal_resistance_circular_pipe(self.r_in_in, self.r_in_out, self.pipe.k[0])
-
-        # annulus convection resistances
-        self.h_f_a_in, self.h_f_a_out = gt.pipes.convective_heat_transfer_coefficient_concentric_annulus(
-            self.m_flow_borehole,
-            self.r_in_out,
-            self.r_out_in,
-            self.fluid.mu,
-            self.fluid.rho,
-            self.fluid.k,
-            self.fluid.cp,
-            self.roughness,
-        )
-
-        self.R_f_a_in = self.compute_fluid_resistance(self.h_f_a_in, self.r_in_out)
-        self.R_f_a_out = self.compute_fluid_resistance(self.h_f_a_out, self.r_out_in)
-
-        # inner pipe conduction resistance
-        self.R_p_out = gt.pipes.conduction_thermal_resistance_circular_pipe(
-            self.r_out_in, self.r_out_out, self.pipe.k[1]
-        )
-
-        # inner fluid to inner annulus fluid resistance
-        self.R_ff = self.R_f_in + self.R_p_in + self.R_f_a_in
-
-        # outer annulus fluid to pipe thermal resistance
-        self.R_fp = self.R_p_out + self.R_f_a_out
-
-        return self.R_fp
+    # def calc_fluid_pipe_resistance(self):
+    #     # inner pipe convection resistance
+    #     self.h_f_in = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
+    #         self.m_flow_borehole,
+    #         self.r_in_in,
+    #         self.fluid.mu,
+    #         self.fluid.rho,
+    #         self.fluid.k,
+    #         self.fluid.cp,
+    #         self.pipe.roughness,
+    #     )
+    #     self.R_f_in = self.compute_fluid_resistance(self.h_f_in, self.r_in_in)
+    #
+    #     # inner pipe conduction resistance
+    #     self.R_p_in = gt.pipes.conduction_thermal_resistance_circular_pipe(self.r_in_in, self.r_in_out,
+    #     self.pipe.k[0])
+    #
+    #     # annulus convection resistances
+    #     self.h_f_a_in, self.h_f_a_out = gt.pipes.convective_heat_transfer_coefficient_concentric_annulus(
+    #         self.m_flow_borehole,
+    #         self.r_in_out,
+    #         self.r_out_in,
+    #         self.fluid.mu,
+    #         self.fluid.rho,
+    #         self.fluid.k,
+    #         self.fluid.cp,
+    #         self.roughness,
+    #     )
+    #
+    #     self.R_f_a_in = self.compute_fluid_resistance(self.h_f_a_in, self.r_in_out)
+    #     self.R_f_a_out = self.compute_fluid_resistance(self.h_f_a_out, self.r_out_in)
+    #
+    #     # inner pipe conduction resistance
+    #     self.R_p_out = gt.pipes.conduction_thermal_resistance_circular_pipe(
+    #         self.r_out_in, self.r_out_out, self.pipe.k[1]
+    #     )
+    #
+    #     # inner fluid to inner annulus fluid resistance
+    #     self.R_ff = self.R_f_in + self.R_p_in + self.R_f_a_in
+    #
+    #     # outer annulus fluid to pipe thermal resistance
+    #     self.R_fp = self.R_p_out + self.R_f_a_out
+    #
+    #     return self.R_fp
 
     def calc_effective_borehole_resistance(self) -> float:
         resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.soil.ugt)
@@ -150,8 +149,11 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
 
     def to_single(self) -> SingleUTube:
         # Find an equivalent single U-tube given a coaxial heat exchanger
-        vol_fluid, vol_pipe, resist_conv, resist_pipe = self.concentric_tube_volumes()
+        vol_fluid, vol_pipe = self.concentric_tube_volumes()
 
+        # TODO: fix this
+        resist_conv = 0.002
+        resist_pipe = 0.015
         preliminary = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rhoCp)
 
         # Vary grout thermal conductivity to match effective borehole thermal
@@ -190,7 +192,7 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         }
         return blob
 
-    def concentric_tube_volumes(self) -> tuple[float, float, float, float]:
+    def concentric_tube_volumes(self) -> tuple[float, float]:
         # Unpack the radii to reduce confusion in the future
         r_inner = cast(tuple[float, float], self.r_inner)
         r_outer = cast(tuple[float, float], self.r_outer)
@@ -199,7 +201,5 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         # Compute volumes for concentric ghe geometry
         vol_fluid = PI * ((r_in_in**2) + (r_out_in**2) - (r_in_out**2))
         vol_pipe = PI * ((r_in_out**2) - (r_in_in**2) + (r_out_out**2) - (r_out_in**2))
-        area_surf_outer = PI * 2 * r_out_in
-        resist_conv = 1 / (self.h_f_a_in * area_surf_outer)
-        resist_pipe = log(r_out_out / r_out_in) / (TWO_PI * self.pipe.k[1])
-        return vol_fluid, vol_pipe, resist_conv, resist_pipe
+
+        return vol_fluid, vol_pipe

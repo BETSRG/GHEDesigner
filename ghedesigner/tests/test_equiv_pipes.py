@@ -56,11 +56,9 @@ class TestEquivalentPipes(GHEBaseTest):
         var = "Intermediate variables"
         self.log(var)
         self.log(len(var) * "-")
-        v_fluid, v_pipe, r_conv, r_pipe = coaxial.concentric_tube_volumes()
+        v_fluid, v_pipe = coaxial.concentric_tube_volumes()
         self.log(f"Fluid volume per meter (m^2): {v_fluid:0.8f}")
         self.log(f"Pipe volume per meter (m^2): {v_pipe:0.8f}")
-        self.log(f"Total Convective Resistance (K/(W/m)): {r_conv:0.8f}")
-        self.log(f"Total Pipe Resistance (K/(W/m)): {r_pipe:0.8f}")
         self.log("\n")
 
         single_u_tube = coaxial.to_single()
