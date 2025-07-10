@@ -15,6 +15,16 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
     def __init__(
         self, m_flow_borehole: float, fluid: GHEFluid, _borehole: Borehole, pipe: Pipe, grout: Grout, soil: Soil
     ) -> None:
+        # Ensure r_in and r_out are list[float] rather than floats
+        if not isinstance(pipe.r_out, list) or not isinstance(pipe.r_in, list):
+            raise TypeError("pipe r_in and r_out must be list[float]")
+
+        # Unpack the radii to reduce confusion in the future
+        self.r_inner = cast(tuple[float, float], pipe.r_in)
+        self.r_outer = cast(tuple[float, float], pipe.r_out)
+        self.r_in_in, self.r_in_out = self.r_inner
+        self.r_out_in, self.r_out_out = self.r_outer
+
         self.m_flow_borehole = m_flow_borehole
         # Store Thermal properties
         self.soil = soil
@@ -25,17 +35,14 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         # Store pipe roughness
         self.roughness = self.pipe.roughness
 
-        self.r_inner = pipe.r_in
-        self.r_outer = pipe.r_out
-
         self.bhr_borehole = BHRBorehole()
         self.bhr_borehole.init_coaxial_borehole(
             borehole_diameter=_borehole.r_b * 2,
-            outer_pipe_outer_diameter=(2.0 * pipe.r_out[1]),
-            outer_pipe_dimension_ratio=(2.0 * pipe.r_out[1]) / (pipe.r_out[1] - pipe.r_out[0]),
+            outer_pipe_outer_diameter=(2.0 * self.r_out_out),
+            outer_pipe_dimension_ratio=(2.0 * self.r_out_out) / (self.r_out_out - self.r_out_in),
             outer_pipe_conductivity=pipe.k[1],
-            inner_pipe_outer_diameter=(2.0 * pipe.r_in[1]),
-            inner_pipe_dimension_ratio=(2.0 * pipe.r_in[1]) / (pipe.r_in[1] - pipe.r_in[0]),
+            inner_pipe_outer_diameter=(2.0 * self.r_in_out),
+            inner_pipe_dimension_ratio=(2.0 * self.r_in_out) / (self.r_in_out - self.r_in_in),
             inner_pipe_conductivity=pipe.k[0],
             length=_borehole.H,
             grout_conductivity=grout.k,
@@ -48,12 +55,6 @@ class CoaxialPipe(gt.pipes.Coaxial, GHEDesignerBoreholeWithMultiplePipes):
         # Pipe naming nomenclature
         # <var>_<inner/outer pipe>_<inner/outer surface>
         # e.g. r_in_in is inner radius of the inner pipe
-
-        # Unpack the radii to reduce confusion in the future
-        r_inner = cast(tuple[float, float], self.r_inner)
-        r_outer = cast(tuple[float, float], self.r_outer)
-        self.r_in_in, self.r_in_out = r_inner
-        self.r_out_in, self.r_out_out = r_outer
 
         self.borehole = _borehole  # pygfunction borehole
 

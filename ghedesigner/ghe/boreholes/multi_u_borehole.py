@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import cast
 
 from bhr.borehole import Borehole as BHRBorehole
 from numpy import log, sqrt
@@ -169,8 +170,8 @@ class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
         n = self.n_pipes * 2  # Total number of tubes
 
         # Volumes
-        vol_fluid = n * PI * (self.pipe.r_in**2)
-        vol_pipe = n * PI * (self.pipe.r_out**2) - vol_fluid
+        vol_fluid = n * PI * (cast(float, self.pipe.r_in) ** 2)
+        vol_pipe = n * PI * (cast(float, self.pipe.r_out) ** 2) - vol_fluid
 
         return vol_fluid, vol_pipe
 
