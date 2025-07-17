@@ -83,10 +83,7 @@ class CoaxialPipe(GHEDesignerBoreholeWithMultiplePipes):
         return fluid.rho * velocity * dia_hydraulic / fluid.mu
 
     def as_dict(self) -> dict:
-        # TODO: This is actually a tuple of radii, right?
-        r_in = cast(float, self.pipe.r_in)
-        # TODO: This is passing roughness, but shouldn't, right?
-        reynold_no = self.compute_reynolds_concentric(self.m_flow_borehole, r_in, self.pipe.roughness, self.fluid)
+        reynold_no = self.compute_reynolds_concentric(self.m_flow_borehole, self.r_in_out, self.r_out_in, self.fluid)
         blob = {
             "type": str(self.__class__),
             "mass_flow_borehole": {"value": self.m_flow_borehole, "units": "kg/s"},
@@ -99,12 +96,7 @@ class CoaxialPipe(GHEDesignerBoreholeWithMultiplePipes):
         return blob
 
     def concentric_tube_volumes(self) -> tuple[float, float]:
-        # Unpack the radii to reduce confusion in the future
-        r_inner = cast(tuple[float, float], self.r_inner)
-        r_outer = cast(tuple[float, float], self.r_outer)
-        r_in_in, r_in_out = r_inner
-        r_out_in, r_out_out = r_outer
         # Compute volumes for concentric ghe geometry
-        vol_fluid = PI * ((r_in_in**2) + (r_out_in**2) - (r_in_out**2))
-        vol_pipe = PI * ((r_in_out**2) - (r_in_in**2) + (r_out_out**2) - (r_out_in**2))
+        vol_fluid = PI * ((self.r_in_in**2) + (self.r_out_in**2) - (self.r_in_out**2))
+        vol_pipe = PI * ((self.r_in_out**2) - (self.r_in_in**2) + (self.r_out_out**2) - (self.r_out_in**2))
         return vol_fluid, vol_pipe
