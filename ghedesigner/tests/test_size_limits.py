@@ -29,7 +29,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         geometry = GeometricConstraintsNearSquare(b=6.096, length=20)
         design = DesignNearSquare(
             v_flow=1.0,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -62,7 +62,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         geometry = GeometricConstraintsNearSquare(b=6.096, length=20)
         design = DesignNearSquare(
             v_flow=1.0,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -95,7 +95,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         geometry = GeometricConstraintsNearSquare(b=6.096, length=100)
         design = DesignNearSquare(
             v_flow=1.0,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,

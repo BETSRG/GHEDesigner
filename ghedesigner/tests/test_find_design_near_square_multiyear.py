@@ -26,7 +26,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         geometry = GeometricConstraintsNearSquare(b=b, length=length)
         design = DesignNearSquare(
             v_flow=flow_rate,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,

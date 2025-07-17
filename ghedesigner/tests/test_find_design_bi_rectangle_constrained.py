@@ -88,7 +88,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         )
         design = DesignBiRectangleConstrained(
             v_flow=flow_rate,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,

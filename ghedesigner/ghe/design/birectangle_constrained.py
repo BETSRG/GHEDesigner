@@ -57,7 +57,7 @@ class DesignBiRectangleConstrained(DesignBase):
     def __init__(
         self,
         v_flow: float,
-        _borehole: Borehole,
+        borehole: Borehole,
         fluid: GHEFluid,
         pipe: Pipe,
         grout: Grout,
@@ -79,7 +79,7 @@ class DesignBiRectangleConstrained(DesignBase):
     ) -> None:
         super().__init__(
             v_flow,
-            _borehole,
+            borehole,
             fluid,
             pipe,
             grout,

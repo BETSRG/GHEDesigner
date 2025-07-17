@@ -29,7 +29,7 @@ class TestLoads(GHEBaseTest):
         geometry = GeometricConstraintsRectangle(width=36.5, length=85.0, b_min=3.0, b_max=10.0)
         design = DesignRectangle(
             v_flow=0.5,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,

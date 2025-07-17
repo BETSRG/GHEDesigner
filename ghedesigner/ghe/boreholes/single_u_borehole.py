@@ -29,16 +29,16 @@ class SingleUTube(GHEDesignerBoreholeBase):
         self,
         m_flow_borehole: float,
         fluid: GHEFluid,
-        _borehole: Borehole,
+        borehole: Borehole,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
     ) -> None:
-        GHEDesignerBoreholeBase.__init__(self, m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+        GHEDesignerBoreholeBase.__init__(self, m_flow_borehole, fluid, borehole, pipe, grout, soil)
         self.R_fp = 0.0
         self.fluid = fluid
         self.m_flow_borehole = m_flow_borehole
-        self.borehole = _borehole
+        self.borehole = borehole
         self.pipe = pipe
         self.soil = soil
         self.grout = grout
@@ -50,10 +50,10 @@ class SingleUTube(GHEDesignerBoreholeBase):
             raise TypeError("pipe r_in and r_out must be floats")
 
         self.bhr_borehole.init_single_u_borehole(
-            borehole_diameter=_borehole.r_b * 2,
+            borehole_diameter=borehole.r_b * 2,
             pipe_outer_diameter=(2.0 * pipe.r_out),
             pipe_dimension_ratio=(2.0 * pipe.r_out) / (pipe.r_out - pipe.r_in),
-            length=_borehole.H,
+            length=borehole.H,
             shank_space=(pipe.s / 2.0 + pipe.r_out),
             pipe_conductivity=pipe.k,
             grout_conductivity=grout.k,

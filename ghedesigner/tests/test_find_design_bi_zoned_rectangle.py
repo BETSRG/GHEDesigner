@@ -25,7 +25,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
         geometry = GeometricConstraintsBiZoned(length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0)
         design = DesignBiZoned(
             v_flow=flow_rate,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,

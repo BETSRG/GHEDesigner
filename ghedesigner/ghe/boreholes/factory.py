@@ -12,18 +12,18 @@ def get_bhe_object(
     bhe_type: PipeType,
     m_flow_borehole: float,
     fluid: GHEFluid,
-    _borehole: Borehole,
+    borehole: Borehole,
     pipe: Pipe,
     grout: Grout,
     soil: Soil,
 ):
     if bhe_type == PipeType.SINGLEUTUBE:
-        return SingleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+        return SingleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)
     elif bhe_type == PipeType.DOUBLEUTUBEPARALLEL:
-        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=DoubleUTubeConnType.PARALLEL)
+        return MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, config=DoubleUTubeConnType.PARALLEL)
     elif bhe_type == PipeType.DOUBLEUTUBESERIES:
-        return MultipleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil, config=DoubleUTubeConnType.SERIES)
+        return MultipleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil, config=DoubleUTubeConnType.SERIES)
     elif bhe_type == PipeType.COAXIAL:
-        return CoaxialPipe(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+        return CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
     else:
         raise TypeError("BHE type not implemented")

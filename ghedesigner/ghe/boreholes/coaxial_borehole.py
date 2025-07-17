@@ -12,9 +12,9 @@ from ghedesigner.media import GHEFluid, Grout, Soil
 
 class CoaxialPipe(GHEDesignerBoreholeWithMultiplePipes):
     def __init__(
-        self, m_flow_borehole: float, fluid: GHEFluid, _borehole: Borehole, pipe: Pipe, grout: Grout, soil: Soil
+        self, m_flow_borehole: float, fluid: GHEFluid, borehole: Borehole, pipe: Pipe, grout: Grout, soil: Soil
     ) -> None:
-        super().__init__(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+        super().__init__(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
         # Ensure r_in and r_out are list[float] rather than floats
         if not isinstance(pipe.r_out, list) or not isinstance(pipe.r_in, list):
@@ -34,14 +34,14 @@ class CoaxialPipe(GHEDesignerBoreholeWithMultiplePipes):
 
         self.bhr_borehole = BHRBorehole()
         self.bhr_borehole.init_coaxial_borehole(
-            borehole_diameter=_borehole.r_b * 2,
+            borehole_diameter=borehole.r_b * 2,
             outer_pipe_outer_diameter=(2.0 * self.r_out_out),
             outer_pipe_dimension_ratio=(2.0 * self.r_out_out) / (self.r_out_out - self.r_out_in),
             outer_pipe_conductivity=pipe.k[1],
             inner_pipe_outer_diameter=(2.0 * self.r_in_out),
             inner_pipe_dimension_ratio=(2.0 * self.r_in_out) / (self.r_in_out - self.r_in_in),
             inner_pipe_conductivity=pipe.k[0],
-            length=_borehole.H,
+            length=borehole.H,
             grout_conductivity=grout.k,
             soil_conductivity=soil.k,
             fluid_type=self.fluid.name,

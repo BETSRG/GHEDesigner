@@ -33,21 +33,19 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         n = 2
         r_p_i_prime = sqrt(vol_fluid / (n * PI))
         r_p_o_prime = sqrt((vol_fluid + vol_pipe) / (n * PI))
-        # A_s_prime = n * pi * ((r_p_i_prime * 2) ** 2)
-        # h_prime = 1 / (R_conv * A_s_prime)
         k_p_prime = log(r_p_o_prime / r_p_i_prime) / (TWO_PI * n * resist_pipe)
 
         # Place single u-tubes at a B-spacing
         # Total horizontal space (m)
         # TODO: investigate why this deepcopy is required
-        _borehole = deepcopy(self.borehole)
-        spacing = _borehole.r_b * 2 - (n * r_p_o_prime * 2)
+        borehole = deepcopy(self.borehole)
+        spacing = borehole.r_b * 2 - (n * r_p_o_prime * 2)
         # If the spacing is negative, then the borehole is not large enough,
         # therefore, the borehole will be increased if necessary
         if spacing <= 0.0:
-            _borehole.r_b -= spacing  # Add on the necessary spacing to fit
-            spacing = (_borehole.r_b * 2.0) / 10.0  # make spacing 1/10th of diameter
-            _borehole.r_b += spacing
+            borehole.r_b -= spacing  # Add on the necessary spacing to fit
+            spacing = (borehole.r_b * 2.0) / 10.0  # make spacing 1/10th of diameter
+            borehole.r_b += spacing
         s = spacing / 3  # outer tube-to-tube shank spacing (m)
 
         # New pipe geometry
@@ -62,7 +60,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         soil = self.soil
 
         # Maintain the same mass flow rate so that the Rb/Rb* is not diverged from
-        eq_single_u_tube = SingleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+        eq_single_u_tube = SingleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
         # The thermal conductivity of the pipe must now be varied such that R_fp is
         # equivalent to R_fp_prime
@@ -115,7 +113,7 @@ class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
         self,
         m_flow_borehole: float,
         fluid: GHEFluid,
-        _borehole: Borehole,
+        borehole: Borehole,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
@@ -125,13 +123,13 @@ class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
         if not isinstance(pipe.r_out, float) or not isinstance(pipe.r_in, float):
             raise TypeError("pipe r_in and r_out must be floats")
 
-        super().__init__(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+        super().__init__(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
         self.R_fp = 0.0
         self.fluid = fluid
         self.m_flow_borehole = m_flow_borehole
         self.m_flow_pipe = self.calc_mass_flow_pipe(self.m_flow_borehole, config)
-        self.borehole = _borehole
+        self.borehole = borehole
         self.pipe = pipe
         self.soil = soil
         self.grout = grout
@@ -140,10 +138,10 @@ class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
         self.n_pipes = 2
 
         self.bhr_borehole.init_double_u_borehole(
-            borehole_diameter=_borehole.r_b * 2,
+            borehole_diameter=borehole.r_b * 2,
             pipe_outer_diameter=(2.0 * pipe.r_out),
             pipe_dimension_ratio=(2.0 * pipe.r_out) / (pipe.r_out - pipe.r_in),
-            length=_borehole.H,
+            length=borehole.H,
             shank_space=(pipe.s / 2.0 + pipe.r_out),
             pipe_conductivity=pipe.k,
             grout_conductivity=grout.k,

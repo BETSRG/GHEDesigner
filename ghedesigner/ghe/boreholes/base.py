@@ -12,7 +12,7 @@ class GHEDesignerBoreholeBase:
         self,
         m_flow_borehole: float,
         fluid: GHEFluid,
-        _borehole: Borehole,
+        borehole: Borehole,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
@@ -22,7 +22,7 @@ class GHEDesignerBoreholeBase:
         self.soil = soil
         self.grout = grout
         self.fluid = fluid
-        self.borehole = _borehole
+        self.borehole = borehole
 
     @abstractmethod
     def calc_effective_borehole_resistance(self) -> float:
