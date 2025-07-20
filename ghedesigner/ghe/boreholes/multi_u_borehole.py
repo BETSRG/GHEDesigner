@@ -74,7 +74,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         k_p_lower = eq_single_u_tube.pipe.k / 100.0
         k_p_upper = eq_single_u_tube.pipe.k * 10.0
 
-        # Solve for the mass flow rate to make the convection values equal
+        # Solve for the pipe conductivity to make the resistance equal
         solve_root(
             eq_single_u_tube.pipe.k,
             objective_pipe_conductivity,
@@ -155,7 +155,7 @@ class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
         self.calc_fluid_pipe_resistance()
 
     def calc_fluid_pipe_resistance(self) -> float:
-        self.R_fp = self.bhr_borehole._bh.calc_pipe_resist(self.m_flow_borehole, self.soil.ugt)
+        self.R_fp = self.bhr_borehole.calc_fluid_pipe_resist(self.m_flow_borehole, self.soil.ugt)
         return self.R_fp
 
     def calc_effective_borehole_resistance(self) -> float:
@@ -180,7 +180,7 @@ class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
         vol_fluid, vol_pipe = self.u_tube_volumes()
 
         # TODO: check that the usage here for converting to an equivalent single u-tube is accurate
-        resist_pipe = self.bhr_borehole._bh.calc_pipe_cond_resist()
+        resist_pipe = self.bhr_borehole.calc_pipe_cond_resist()
         resist_conv = self.R_fp - resist_pipe
 
         single_u_tube = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rhoCp)

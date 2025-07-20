@@ -57,9 +57,8 @@ class CoaxialPipe(GHEDesignerBoreholeWithMultiplePipes):
         # Find an equivalent single U-tube given a coaxial heat exchanger
         vol_fluid, vol_pipe = self.concentric_tube_volumes()
 
-        # TODO: fix this
-        resist_conv = 0.002
-        resist_pipe = 0.015
+        resist_conv = self.bhr_borehole.calc_fluid_resist(self.m_flow_borehole, self.soil.ugt)
+        resist_pipe = self.bhr_borehole.calc_pipe_cond_resist()
         preliminary = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rhoCp)
 
         # Vary grout thermal conductivity to match effective borehole thermal
