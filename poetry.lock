@@ -57,20 +57,18 @@ extras = ["regex"]
 
 [[package]]
 name = "bhresist"
-version = "0.1"
+version = "0.2.0"
 description = "Functionality to compute the thermal resistance of borehole heat exchangers"
 optional = false
-python-versions = ">=3.10, <3.14"
+python-versions = "<3.14,>=3.10"
 groups = ["main"]
-files = []
-develop = false
+files = [
+    {file = "bhresist-0.2.0-py3-none-any.whl", hash = "sha256:b097543cd233ee49ec7fb35459945e7ec7159ae5c813123c4530a26d9de70a42"},
+    {file = "bhresist-0.2.0.tar.gz", hash = "sha256:6fee023c9cb92d0f780af9a15b1acf1cf0993fe96bf01b55c30539094ad5911f"},
+]
 
 [package.dependencies]
-SecondaryCoolantProps = "^1.3"
-
-[package.source]
-type = "directory"
-url = "../BHResist"
+SecondaryCoolantProps = ">=1.3,<2.0"
 
 [[package]]
 name = "certifi"
@@ -1901,4 +1899,4 @@ viz = ["cartopy (>=0.23)", "matplotlib", "nc-time-axis", "seaborn"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <3.14"
-content-hash = "983199c4e9f0a34d443270c8f78576c60bb17469affa4227f0e2e733b059f14e"
+content-hash = "814e4c6efb0583b3177b8549491e1c669ead8ab2bb99f8addf19a60c279c9aa7"

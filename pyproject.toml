@@ -25,7 +25,7 @@ click = "^8.1"
 jsonschema = "^4.19"
 numpy = "^2.0.0"
 pygfunction = { git = "https://github.com/mitchute/pygfunction.git", rev = "157e8ff3853470e04289b0445cfb6d6ebc945691" }
-bhresist = { path = "/home/mitchute/Projects/BHResist" }
+bhresist ="^0.2.0"
 scipy = "^1.14"
 
 [tool.poetry.group.dev.dependencies]
