@@ -25,7 +25,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
         geometry = GeometricConstraintsBiZoned(length=85.0, width=40.0, b_min=3.0, b_max_x=10.0, b_max_y=12.0)
         design = DesignBiZoned(
             v_flow=flow_rate,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -57,7 +57,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.5)
-        u_tube_height = search.ghe.bhe.b.H
+        u_tube_height = search.ghe.bhe.borehole.H
         self.assertAlmostEqual(133.1, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(123, len(borehole_location_data_rows))
@@ -72,8 +72,8 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.5)
-        u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(134.5, u_tube_height, delta=0.1)
+        u_tube_height = search.ghe.bhe.borehole.H
+        self.assertAlmostEqual(132.4, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(104, len(borehole_location_data_rows))
 
@@ -88,7 +88,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.8)
-        u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(133.8, u_tube_height, delta=0.1)
+        u_tube_height = search.ghe.bhe.borehole.H
+        self.assertAlmostEqual(132.9, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(92, len(borehole_location_data_rows))

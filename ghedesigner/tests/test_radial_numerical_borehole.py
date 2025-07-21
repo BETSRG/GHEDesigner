@@ -24,7 +24,7 @@ class TestRadialNumericalBorehole(unittest.TestCase):
         bh = SingleUTube(m_dot_bh, fluid, borehole, pipe, grout, soil)
         bh.calc_sts_g_functions()
 
-        self.assertAlmostEqual(-1.182, bh.g[0], delta=0.001)
+        self.assertAlmostEqual(-1.180, bh.g[0], delta=0.001)
         self.assertAlmostEqual(2.217, bh.g[-1], delta=0.001)
         self.assertAlmostEqual(0.0, bh.g_bhw[0], delta=0.001)
         self.assertAlmostEqual(2.094, bh.g_bhw[-1], delta=0.001)

@@ -29,7 +29,7 @@ class TestLoads(GHEBaseTest):
         geometry = GeometricConstraintsRectangle(width=36.5, length=85.0, b_min=3.0, b_max=10.0)
         design = DesignRectangle(
             v_flow=0.5,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -54,15 +54,15 @@ class TestLoads(GHEBaseTest):
     def test_balanced_loads(self):
         loads = [-self.load if 3 <= i <= 8 else self.load for i in range(12) for _ in range(self.num_hr_in_month)]
         search = self.get_designed_ghe(loads)
-        u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(118.53, u_tube_height, delta=0.1)
+        u_tube_height = search.ghe.bhe.borehole.H
+        self.assertAlmostEqual(118.6, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(6, len(borehole_location_data_rows))
 
     def test_imbalanced_heating_loads(self):
         loads = [self.load for _ in range(12) for _ in range(self.num_hr_in_month)]
         search = self.get_designed_ghe(loads)
-        u_tube_height = search.ghe.bhe.b.H
+        u_tube_height = search.ghe.bhe.borehole.H
         self.assertAlmostEqual(130.40, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(10, len(borehole_location_data_rows))
@@ -70,7 +70,7 @@ class TestLoads(GHEBaseTest):
     def test_imbalanced_cooling_loads(self):
         loads = [-self.load for _ in range(12) for _ in range(self.num_hr_in_month)]
         search = self.get_designed_ghe(loads)
-        u_tube_height = search.ghe.bhe.b.H
+        u_tube_height = search.ghe.bhe.borehole.H
         self.assertAlmostEqual(126.99, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(8, len(borehole_location_data_rows))

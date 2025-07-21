@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.constants import TWO_PI, pi
+from ghedesigner.constants import PI, TWO_PI
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
 
@@ -12,7 +12,7 @@ class GHEDesignerBoreholeBase:
         self,
         m_flow_borehole: float,
         fluid: GHEFluid,
-        _borehole: Borehole,
+        borehole: Borehole,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
@@ -22,7 +22,7 @@ class GHEDesignerBoreholeBase:
         self.soil = soil
         self.grout = grout
         self.fluid = fluid
-        self.b = _borehole
+        self.borehole = borehole
 
     @abstractmethod
     def calc_effective_borehole_resistance(self) -> float:
@@ -38,7 +38,7 @@ class GHEDesignerBoreholeBase:
         dia_hydraulic = 2.0 * r_in
         # Fluid velocity
         vol_flow_rate = m_flow_pipe / fluid.rho
-        area_cr_inner = pi * r_in**2
+        area_cr_inner = PI * r_in**2
         velocity = vol_flow_rate / area_cr_inner
         # Reynolds number
         return fluid.rho * velocity * dia_hydraulic / fluid.mu

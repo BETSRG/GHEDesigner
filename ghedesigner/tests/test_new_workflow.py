@@ -48,7 +48,7 @@ class TestNewWorkflows(GHEBaseTest):
         max_eft = 35
         design = DesignRectangle(
             v_flow=0.5,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,

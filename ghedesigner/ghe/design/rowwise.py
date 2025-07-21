@@ -40,7 +40,7 @@ class DesignRowWise(DesignBase):
     def __init__(
         self,
         v_flow: float,
-        _borehole: Borehole,
+        borehole: Borehole,
         fluid: GHEFluid,
         pipe: Pipe,
         grout: Grout,
@@ -61,7 +61,7 @@ class DesignRowWise(DesignBase):
     ) -> None:
         super().__init__(
             v_flow,
-            _borehole,
+            borehole,
             fluid,
             pipe,
             grout,
