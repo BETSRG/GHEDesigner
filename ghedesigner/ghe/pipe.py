@@ -17,50 +17,52 @@ class Pipe(ThermalProperty):
     @classmethod
     def init_from_dict(cls, pipe_type: PipeType, pipe_props: dict) -> "Pipe":
         rho_cp = pipe_props["rho_cp"]
-        if pipe_type == PipeType.SINGLEUTUBE:
-            k = pipe_props["conductivity"]
-            return Pipe.init_single_u_tube(
-                conductivity=k,
-                rho_cp=rho_cp,
-                inner_diameter=pipe_props["inner_diameter"],
-                outer_diameter=pipe_props["outer_diameter"],
-                shank_spacing=pipe_props["shank_spacing"],
-                roughness=pipe_props["roughness"],
-                num_pipes=pipe_props.get("num_pipes", 1),
-            )
-        elif pipe_type == PipeType.DOUBLEUTUBESERIES:
-            k = pipe_props["conductivity"]
-            return Pipe.init_double_u_tube_series(
-                conductivity=k,
-                rho_cp=rho_cp,
-                inner_diameter=pipe_props["inner_diameter"],
-                outer_diameter=pipe_props["outer_diameter"],
-                shank_spacing=pipe_props["shank_spacing"],
-                roughness=pipe_props["roughness"],
-            )
-        elif pipe_type == PipeType.DOUBLEUTUBEPARALLEL:
-            k = pipe_props["conductivity"]
-            return Pipe.init_double_u_tube_parallel(
-                conductivity=k,
-                rho_cp=rho_cp,
-                inner_diameter=pipe_props["inner_diameter"],
-                outer_diameter=pipe_props["outer_diameter"],
-                shank_spacing=pipe_props["shank_spacing"],
-                roughness=pipe_props["roughness"],
-            )
-        elif pipe_type == PipeType.COAXIAL:
-            k = pipe_props["conductivity_inner"], pipe_props["conductivity_outer"]
-            return Pipe.init_coaxial(
-                conductivity=k,
-                rho_cp=rho_cp,
-                inner_pipe_d_in=pipe_props["inner_pipe_d_in"],
-                inner_pipe_d_out=pipe_props["inner_pipe_d_out"],
-                outer_pipe_d_in=pipe_props["outer_pipe_d_in"],
-                outer_pipe_d_out=pipe_props["outer_pipe_d_out"],
-                roughness=pipe_props["roughness"],
-            )
-        else:
-            raise ValueError(f"Pipe type {pipe_type} not recognized.")
+
+        match pipe_type:
+            case PipeType.SINGLEUTUBE:
+                k = pipe_props["conductivity"]
+                return Pipe.init_single_u_tube(
+                    conductivity=k,
+                    rho_cp=rho_cp,
+                    inner_diameter=pipe_props["inner_diameter"],
+                    outer_diameter=pipe_props["outer_diameter"],
+                    shank_spacing=pipe_props["shank_spacing"],
+                    roughness=pipe_props["roughness"],
+                    num_pipes=pipe_props.get("num_pipes", 1),
+                )
+            case PipeType.DOUBLEUTUBESERIES:
+                k = pipe_props["conductivity"]
+                return Pipe.init_double_u_tube_series(
+                    conductivity=k,
+                    rho_cp=rho_cp,
+                    inner_diameter=pipe_props["inner_diameter"],
+                    outer_diameter=pipe_props["outer_diameter"],
+                    shank_spacing=pipe_props["shank_spacing"],
+                    roughness=pipe_props["roughness"],
+                )
+            case PipeType.DOUBLEUTUBEPARALLEL:
+                k = pipe_props["conductivity"]
+                return Pipe.init_double_u_tube_parallel(
+                    conductivity=k,
+                    rho_cp=rho_cp,
+                    inner_diameter=pipe_props["inner_diameter"],
+                    outer_diameter=pipe_props["outer_diameter"],
+                    shank_spacing=pipe_props["shank_spacing"],
+                    roughness=pipe_props["roughness"],
+                )
+            case PipeType.COAXIAL:
+                k = pipe_props["conductivity_inner"], pipe_props["conductivity_outer"]
+                return Pipe.init_coaxial(
+                    conductivity=k,
+                    rho_cp=rho_cp,
+                    inner_pipe_d_in=pipe_props["inner_pipe_d_in"],
+                    inner_pipe_d_out=pipe_props["inner_pipe_d_out"],
+                    outer_pipe_d_in=pipe_props["outer_pipe_d_in"],
+                    outer_pipe_d_out=pipe_props["outer_pipe_d_out"],
+                    roughness=pipe_props["roughness"],
+                )
+            case _:
+                raise ValueError(f"Pipe type {pipe_type} not recognized.")
 
     @classmethod
     def init_single_u_tube(

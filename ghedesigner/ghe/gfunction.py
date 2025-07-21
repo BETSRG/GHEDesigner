@@ -40,16 +40,17 @@ def calculate_g_function(
     segment_ratios=None,
     disp=False,
 ):
-    if bhe_type in [PipeType.SINGLEUTUBE, PipeType.DOUBLEUTUBESERIES, PipeType.DOUBLEUTUBEPARALLEL]:
-        r_inner = pipe.r_in
-        r_outer = pipe.r_out
-    elif bhe_type == PipeType.COAXIAL:
-        # converting to pygfunction coaxial pipe conventions
-        # this assumes the pipe (not annulus) is the inlet
-        r_inner = [pipe.r_in[0], pipe.r_out[0]]
-        r_outer = [pipe.r_in[1], pipe.r_out[1]]
-    else:
-        raise ValueError(f"bhe_type {bhe_type} is not supported")
+    match bhe_type:
+        case PipeType.SINGLEUTUBE | PipeType.DOUBLEUTUBESERIES | PipeType.DOUBLEUTUBEPARALLEL:
+            r_inner = pipe.r_in
+            r_outer = pipe.r_out
+        case PipeType.COAXIAL:
+            # converting to pygfunction coaxial pipe conventions
+            # this assumes the pipe (not annulus) is the inlet
+            r_inner = [pipe.r_in[0], pipe.r_out[0]]
+            r_outer = [pipe.r_in[1], pipe.r_out[1]]
+        case _:
+            raise ValueError(f"bhe_type {bhe_type} is not supported")
 
     pyg_ghe = PyGHE(
         borehole.H,
