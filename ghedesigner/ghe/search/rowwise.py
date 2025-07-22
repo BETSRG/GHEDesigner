@@ -254,7 +254,6 @@ class RowWiseModifiedBisectionSearch:
             low_e = t_upper
             high_e = t_lower
             spacing_m = (spacing_stop + spacing_start) * 0.5
-            selected_coordinates = upper_field
             while i < self.max_iter:
                 print("Bisection Search Iteration: ", i)
                 # Getting Three Middle Field
@@ -290,7 +289,6 @@ class RowWiseModifiedBisectionSearch:
                     spacing_high = spacing_m
                     high_e = t_e1
                     selected_specifier = f1_specifier
-                    selected_coordinates = f1
                 else:
                     spacing_low = spacing_m
                     low_e = t_e1

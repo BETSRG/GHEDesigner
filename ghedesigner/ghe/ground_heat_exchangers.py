@@ -5,7 +5,7 @@ from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d
 
 from ghedesigner.constants import SEC_IN_HR, TWO_PI, VERSION
-from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.enums import PipeType, TimestepType
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_loads import HybridLoad
@@ -19,7 +19,7 @@ class GHE:
         self,
         v_flow_system: float,
         b_spacing: float,
-        bhe_type: BHPipeType,
+        bhe_type: PipeType,
         fluid,
         borehole: Borehole,
         pipe: Pipe,
@@ -66,16 +66,6 @@ class GHE:
         self.hybrid_load = HybridLoad(
             self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
         )
-        # if hourly_extraction_ground_loads:
-        #     hybrid_load = HybridLoad(
-        #         self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq,
-        #         start_month, end_month, years=load_years
-        #     )
-        #
-        #     # hybrid load object
-        #     self.hybrid_load = hybrid_load
-        # else:
-        #     self.hybrid_load = None
 
         # List of heat pump exiting fluid temperatures
         self.hp_eft: list[float] = []
@@ -86,7 +76,7 @@ class GHE:
         output = {
             "title": f"GHEDesigner GHE Output - Version {VERSION}",
             "number_of_boreholes": len(self.gFunction.bore_locations),
-            "borehole_depth": {"value": self.bhe.b.H, "units": "m"},
+            "borehole_depth": {"value": self.bhe.borehole.H, "units": "m"},
             "borehole_spacing": {"value": self.b_spacing, "units": "m"},
             "borehole_heat_exchanger": self.bhe.as_dict(),
             "equivalent_borehole_heat_exchanger": self.bhe_eq.as_dict(),
@@ -98,7 +88,7 @@ class GHE:
         # interpolate for the Long time step g-function
         g_function, rb_value, _, _ = self.gFunction.g_function_interpolation(b_over_h)
         # correct the long time step for borehole radius
-        g_function_corrected = self.gFunction.borehole_radius_correction(g_function, rb_value, self.bhe.b.r_b)
+        g_function_corrected = self.gFunction.borehole_radius_correction(g_function, rb_value, self.bhe.borehole.r_b)
         # Don't Update the HybridLoad (its dependent on the STS) because
         # it doesn't change the results much, and it slows things down a lot
         # combine the short and long time step g-function
@@ -142,7 +132,7 @@ class GHE:
 
         ts = self.bhe_eq.t_s  # (-)
         two_pi_k = TWO_PI * self.bhe.soil.k  # (W/m.K)
-        h = self.bhe.b.H  # (meters)
+        h = self.bhe.borehole.H  # (meters)
         tg = self.bhe.soil.ugt  # (Celsius)
         rb = self.bhe.calc_effective_borehole_resistance()  # (m.K/W)
         m_dot = self.bhe.m_flow_borehole  # (kg/s)
@@ -173,8 +163,8 @@ class GHE:
         self.gFunction = calc_g_func_for_multiple_lengths(
             self.b_spacing,
             [h_min] if h_min == h_max else [h_min, (h_min + h_max) / 2.0, h_max],
-            self.bhe.b.r_b,
-            self.bhe.b.D,
+            self.bhe.borehole.r_b,
+            self.bhe.borehole.D,
             self.bhe.m_flow_borehole,
             self.bhe_type,
             self.gFunction.log_time,
@@ -187,7 +177,7 @@ class GHE:
 
     def simulate(self, method: TimestepType):
         b = self.b_spacing
-        b_over_h = b / self.bhe.b.H
+        b_over_h = b / self.bhe.borehole.H
 
         # Solve for equivalent single U-tube
         self.bhe_eq = self.bhe.to_single()
@@ -235,16 +225,16 @@ class GHE:
     ) -> None:
         # Size the ground heat exchanger
         def local_objective(h: float):
-            self.bhe.b.H = h
+            self.bhe.borehole.H = h
             this_max_hp_eft, this_min_hp_eft = self.simulate(method=method)
             t_excess = self.cost(this_max_hp_eft, this_min_hp_eft, design_max_eft, design_min_eft)
             return t_excess
 
         # Make the initial guess variable the average of the heights given
-        self.bhe.b.H = (max_height + min_height) / 2.0
+        self.bhe.borehole.H = (max_height + min_height) / 2.0
         # bhe.b.H is updated during sizing
         returned_height = solve_root(
-            self.bhe.b.H,
+            self.bhe.borehole.H,
             local_objective,
             lower=min_height,
             upper=max_height,
@@ -253,7 +243,7 @@ class GHE:
             max_iter=50,
         )
 
-        self.bhe.b.H = returned_height
+        self.bhe.borehole.H = returned_height
 
     @staticmethod
     def calculate(_hour_index: int, inlet_temp: float, _flow_rate: float) -> float:
