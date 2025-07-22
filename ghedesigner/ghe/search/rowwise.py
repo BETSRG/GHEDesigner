@@ -289,6 +289,7 @@ class RowWiseModifiedBisectionSearch:
                     spacing_high = spacing_m
                     high_e = t_e1
                     selected_specifier = f1_specifier
+                    selected_coordinates = f1
                 else:
                     spacing_low = spacing_m
                     low_e = t_e1
@@ -354,7 +355,7 @@ class RowWiseModifiedBisectionSearch:
                         design_max_eft=self.max_eft,
                         design_min_eft=self.min_eft,
                     )
-                    total_drilling = self.ghe.bhe.b.H * len(field)
+                    total_drilling = self.ghe.bhe.borehole.H * len(field)
 
                     if best_field is None:
                         best_field = field

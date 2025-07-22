@@ -300,9 +300,9 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     flow_type=flow_type,
                     method=TimestepType.HYBRID,
                 )
-            case _:
+            case DesignGeomType.ROWWISE:
                 # use perimeter calculations if present
-                perimeter_spacing_ratio = geom.get("perimeter_spacing_ratio", 0.0)
+                perimeter_spacing_ratio = geom.get("perimeter_spacing_ratio", None)
                 geometry_row: GeometricConstraintsRowWise = GeometricConstraintsRowWise(
                     perimeter_spacing_ratio=perimeter_spacing_ratio,
                     max_spacing=geom["max_spacing"],
@@ -334,6 +334,9 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     flow_type=flow_type,
                     method=TimestepType.HYBRID,
                 )
+            case _:
+                raise ValueError(f'DesignGeomType "{geom_type}" not supported')
+
         start_time = time()
         search = design.find_design()  # TODO: I wonder if it would simplify things to just return the GHE object
         search_time = time() - start_time
