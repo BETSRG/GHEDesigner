@@ -24,7 +24,7 @@ class GeometricConstraintsRowWise(GeometricConstraints):
     max_rotation: float
     rotate_step: float
     property_boundary: list[list[float]]
-    no_go_boundaries: list[list[list[float]]]
+    no_go_boundaries: list[list[list[float]]] | None
     type: DesignGeomType = field(default=DesignGeomType.ROWWISE, init=False, repr=False)
 
     def to_input(self) -> dict:

@@ -18,10 +18,6 @@ files_to_debug: list[Path] = [
 limit_debug_file_count = 0
 
 
-def abs_error_within_tolerance(val_1, val_2, delta: float = 0):
-    return bool(abs(val_1 - val_2) <= delta)
-
-
 def get_test_input_files() -> list[Path]:
     if files_to_debug:
         return files_to_debug
@@ -35,8 +31,6 @@ def get_test_input_files() -> list[Path]:
 
 @pytest.mark.parametrize("demo_file_path", get_test_input_files(), ids=lambda f: "Demo: " + f.stem)
 def test_demo_files(demo_file_path: Path, time_str: str):
-    failed_tests = []
-
     # run demo files first
     demo_output_parent_dir = Path(__file__).parent.parent.parent / "demo_outputs"
     out_dir = demo_output_parent_dir / time_str / demo_file_path.stem
@@ -56,11 +50,8 @@ def test_demo_files(demo_file_path: Path, time_str: str):
         expected_length = expected_results["active_borehole_length"]
         expected_nbh = expected_results["number_of_boreholes"]
 
-        len_passes = abs_error_within_tolerance(actual_length, expected_length, delta=0.1)
-        nbh_passes = abs_error_within_tolerance(actual_nbh, expected_nbh)
-
-        if not len_passes or not nbh_passes:
-            failed_tests.append(out_dir.stem)
+        assert actual_length == pytest.approx(expected_length, abs=0.1)
+        assert actual_nbh == expected_nbh
 
     else:
         # TODO: Verify it was intentionally predesigned
