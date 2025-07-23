@@ -92,7 +92,6 @@ class GHE:
             "borehole_spacing": {"value": self.b_spacing, "units": "m"},
             "borehole_heat_exchanger": self.bhe.as_dict(),
             "equivalent_borehole_heat_exchanger": self.bhe_eq.as_dict(),
-            # "simulation_parameters": self.sim_params.as_dict(),
         }
         return output
 
@@ -120,7 +119,8 @@ class GHE:
 
         return g, g_bhw
 
-    def cost(self, max_eft: float, min_eft: float, design_max_eft: float, design_min_eft: float):
+    @staticmethod
+    def cost(max_eft: float, min_eft: float, design_max_eft: float, design_min_eft: float):
         delta_t_max = max_eft - design_max_eft
         delta_t_min = design_min_eft - min_eft
         t_excess = max(delta_t_max, delta_t_min)
