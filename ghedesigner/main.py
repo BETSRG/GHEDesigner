@@ -28,7 +28,9 @@ def run(input_file_path: Path, output_directory: Path) -> int:
     """
 
     # validate inputs against schema before doing anything
-    if validate_input_file(input_file_path) != 0:
+    try:
+        validate_input_file(input_file_path)
+    except ValidationError:
         return 1
 
     # read all inputs into a dict
@@ -131,8 +133,8 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
             validate_input_file(input_path)
             logger.info("Valid input file.")
             return 0
-        except ValidationError:
-            logger.error("Schema validation error. See previous error message for details.")
+        except ValidationError as ve:
+            logger.error(ve)
             return 1
 
     if convert:

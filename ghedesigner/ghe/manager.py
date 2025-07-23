@@ -271,13 +271,14 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     method=TimestepType.HYBRID,
                 )
             case DesignGeomType.BIRECTANGLECONSTRAINED:
+                no_go_boundaries = geom.get("no_go_boundaries", None)
                 bi_rect_const_geometry: GeometricConstraintsBiRectangleConstrained = (
                     GeometricConstraintsBiRectangleConstrained(
                         b_min=geom["b_min"],
                         b_max_x=geom["b_max_x"],
                         b_max_y=geom["b_max_y"],
                         property_boundary=geom["property_boundary"],
-                        no_go_boundaries=geom["no_go_boundaries"],
+                        no_go_boundaries=no_go_boundaries,
                     )
                 )
                 design = DesignBiRectangleConstrained(
@@ -300,19 +301,21 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     flow_type=flow_type,
                     method=TimestepType.HYBRID,
                 )
-            case _:
+            case DesignGeomType.ROWWISE:
                 # use perimeter calculations if present
-                perimeter_spacing_ratio = geom.get("perimeter_spacing_ratio", 0.0)
+                perimeter_spacing_ratio = geom.get("perimeter_spacing_ratio", None)
+                spacing_step = geom.get("spacing_step", 0)
+                no_go_boundaries = geom.get("no_go_boundaries", None)
                 geometry_row: GeometricConstraintsRowWise = GeometricConstraintsRowWise(
                     perimeter_spacing_ratio=perimeter_spacing_ratio,
                     max_spacing=geom["max_spacing"],
                     min_spacing=geom["min_spacing"],
-                    spacing_step=geom["spacing_step"],
+                    spacing_step=spacing_step,
                     max_rotation=geom["max_rotation"] * DEG_TO_RAD,
                     min_rotation=geom["min_rotation"] * DEG_TO_RAD,
                     rotate_step=geom["rotate_step"],
                     property_boundary=geom["property_boundary"],
-                    no_go_boundaries=geom["no_go_boundaries"],
+                    no_go_boundaries=no_go_boundaries,
                 )
                 design = DesignRowWise(
                     flow_rate,
@@ -334,6 +337,9 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     flow_type=flow_type,
                     method=TimestepType.HYBRID,
                 )
+            case _:
+                raise ValueError(f'DesignGeomType "{geom_type}" not supported')
+
         start_time = time()
         search = design.find_design()  # TODO: I wonder if it would simplify things to just return the GHE object
         search_time = time() - start_time
