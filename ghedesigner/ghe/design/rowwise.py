@@ -19,12 +19,12 @@ class GeometricConstraintsRowWise(GeometricConstraints):
     perimeter_spacing_ratio: float | None
     min_spacing: float
     max_spacing: float
-    spacing_step: float
+    spacing_step: float | None
     min_rotation: float
     max_rotation: float
     rotate_step: float
     property_boundary: list[list[float]]
-    no_go_boundaries: list[list[list[float]]]
+    no_go_boundaries: list[list[list[float]]] | None
     type: DesignGeomType = field(default=DesignGeomType.ROWWISE, init=False, repr=False)
 
     def to_input(self) -> dict:
@@ -40,7 +40,7 @@ class DesignRowWise(DesignBase):
     def __init__(
         self,
         v_flow: float,
-        _borehole: Borehole,
+        borehole: Borehole,
         fluid: GHEFluid,
         pipe: Pipe,
         grout: Grout,
@@ -61,7 +61,7 @@ class DesignRowWise(DesignBase):
     ) -> None:
         super().__init__(
             v_flow,
-            _borehole,
+            borehole,
             fluid,
             pipe,
             grout,

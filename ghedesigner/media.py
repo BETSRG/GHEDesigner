@@ -66,6 +66,7 @@ class Soil(ThermalProperty):
 
         # Soil specific parameters
         self.ugt = ugt
+        self.alpha = k / rho_cp
 
     def as_dict(self) -> dict:
         output = super().as_dict()

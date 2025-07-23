@@ -595,7 +595,6 @@
                   "b_max_x",
                   "b_max_y",
                   "property_boundary",
-                  "no_go_boundaries",
                   "method"
                 ],
                 "additionalProperties": false
@@ -728,12 +727,10 @@
                 "required": [
                   "min_spacing",
                   "max_spacing",
-                  "spacing_step",
                   "min_rotation",
                   "max_rotation",
                   "rotate_step",
                   "property_boundary",
-                  "no_go_boundaries",
                   "method"
                 ],
                 "additionalProperties": false

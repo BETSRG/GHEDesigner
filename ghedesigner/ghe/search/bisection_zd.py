@@ -117,7 +117,7 @@ class BisectionZD(Bisection1D):
             )
 
             nbh = len(selected_coordinates)
-            total_drilling = nbh * self.ghe.bhe.b.H
+            total_drilling = nbh * self.ghe.bhe.borehole.H
             self.calculated_heights[i] = total_drilling
 
             if old_height < total_drilling:

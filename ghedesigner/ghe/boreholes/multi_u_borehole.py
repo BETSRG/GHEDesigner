@@ -1,11 +1,11 @@
 from copy import deepcopy
 from typing import cast
 
-import pygfunction as gt
+from bhr.borehole import Borehole as BHRBorehole
 from numpy import log, sqrt
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.constants import TWO_PI, pi
+from ghedesigner.constants import PI, TWO_PI
 from ghedesigner.enums import DoubleUTubeConnType
 from ghedesigner.ghe.boreholes.base import GHEDesignerBoreholeBase
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
@@ -31,23 +31,21 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
 
         # Compute equivalent single U-tube geometry
         n = 2
-        r_p_i_prime = sqrt(vol_fluid / (n * pi))
-        r_p_o_prime = sqrt((vol_fluid + vol_pipe) / (n * pi))
-        # A_s_prime = n * pi * ((r_p_i_prime * 2) ** 2)
-        # h_prime = 1 / (R_conv * A_s_prime)
+        r_p_i_prime = sqrt(vol_fluid / (n * PI))
+        r_p_o_prime = sqrt((vol_fluid + vol_pipe) / (n * PI))
         k_p_prime = log(r_p_o_prime / r_p_i_prime) / (TWO_PI * n * resist_pipe)
 
         # Place single u-tubes at a B-spacing
         # Total horizontal space (m)
         # TODO: investigate why this deepcopy is required
-        _borehole = deepcopy(self.b)
-        spacing = _borehole.r_b * 2 - (n * r_p_o_prime * 2)
+        borehole = deepcopy(self.borehole)
+        spacing = borehole.r_b * 2 - (n * r_p_o_prime * 2)
         # If the spacing is negative, then the borehole is not large enough,
         # therefore, the borehole will be increased if necessary
         if spacing <= 0.0:
-            _borehole.r_b -= spacing  # Add on the necessary spacing to fit
-            spacing = (_borehole.r_b * 2.0) / 10.0  # make spacing 1/10th of diameter
-            _borehole.r_b += spacing
+            borehole.r_b -= spacing  # Add on the necessary spacing to fit
+            spacing = (borehole.r_b * 2.0) / 10.0  # make spacing 1/10th of diameter
+            borehole.r_b += spacing
         s = spacing / 3  # outer tube-to-tube shank spacing (m)
 
         # New pipe geometry
@@ -62,7 +60,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         soil = self.soil
 
         # Maintain the same mass flow rate so that the Rb/Rb* is not diverged from
-        eq_single_u_tube = SingleUTube(m_flow_borehole, fluid, _borehole, pipe, grout, soil)
+        eq_single_u_tube = SingleUTube(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
         # The thermal conductivity of the pipe must now be varied such that R_fp is
         # equivalent to R_fp_prime
@@ -76,7 +74,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         k_p_lower = eq_single_u_tube.pipe.k / 100.0
         k_p_upper = eq_single_u_tube.pipe.k * 10.0
 
-        # Solve for the mass flow rate to make the convection values equal
+        # Solve for the pipe conductivity to make the resistance equal
         solve_root(
             eq_single_u_tube.pipe.k,
             objective_pipe_conductivity,
@@ -92,7 +90,6 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         # Define objective function for varying the grout thermal conductivity
         def objective_resistance(k_g_in: float):
             # update new tubes grout thermal conductivity and relevant parameters
-            preliminary_new_single_u_tube.k_g = k_g_in
             preliminary_new_single_u_tube.grout.k = k_g_in
             # Update Delta-circuit thermal resistances
             # Initialize stored_coefficients
@@ -106,102 +103,85 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         kg_upper = 7.0
         k_g = solve_root(preliminary_new_single_u_tube.grout.k, objective_resistance, lower=kg_lower, upper=kg_upper)
         # Ensure the grout thermal conductivity is updated
-        preliminary_new_single_u_tube.k_g = k_g
         preliminary_new_single_u_tube.grout.k = k_g
 
         return preliminary_new_single_u_tube
 
 
-class MultipleUTube(gt.pipes.MultipleUTube, GHEDesignerBoreholeWithMultiplePipes):
+class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
     def __init__(
         self,
         m_flow_borehole: float,
         fluid: GHEFluid,
-        _borehole: Borehole,
+        borehole: Borehole,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
         config=DoubleUTubeConnType.PARALLEL,
     ) -> None:
-        self.R_p = 0.0
-        self.R_f = 0.0
+        # Ensure r_in and r_out are floats rather than list[float]
+        if not isinstance(pipe.r_out, float) or not isinstance(pipe.r_in, float):
+            raise TypeError("pipe r_in and r_out must be floats")
+
+        super().__init__(m_flow_borehole, fluid, borehole, pipe, grout, soil)
+
         self.R_fp = 0.0
-        self.h_f = 0.0
         self.fluid = fluid
         self.m_flow_borehole = m_flow_borehole
         self.m_flow_pipe = self.calc_mass_flow_pipe(self.m_flow_borehole, config)
-        self.borehole = _borehole
+        self.borehole = borehole
         self.pipe = pipe
         self.soil = soil
         self.grout = grout
         self.flow_config = config
+        self.bhr_borehole = BHRBorehole()
+        self.n_pipes = 2
 
-        # Get number of pipes from positions
-        self.resist_delta = None
-        self.n_pipes = len(pipe.pos) / 2
+        self.bhr_borehole.init_double_u_borehole(
+            borehole_diameter=borehole.r_b * 2,
+            pipe_outer_diameter=(2.0 * pipe.r_out),
+            pipe_dimension_ratio=(2.0 * pipe.r_out) / (pipe.r_out - pipe.r_in),
+            length=borehole.H,
+            shank_space=(pipe.s / 2.0 + pipe.r_out),
+            pipe_conductivity=pipe.k,
+            grout_conductivity=grout.k,
+            soil_conductivity=soil.k,
+            fluid_type=self.fluid.name,
+            fluid_concentration=self.fluid.concentration_percent / 100,
+            boundary_condition="UNIFORM_BOREHOLE_WALL_TEMP",
+            pipe_inlet_arrangement="ADJACENT",
+        )
 
-        # compute resistances required to construct inherited class
         self.calc_fluid_pipe_resistance()
 
-        gt.pipes.MultipleUTube.__init__(
-            self,
-            self.pipe.pos,
-            self.pipe.r_in,
-            self.pipe.r_out,
-            self.borehole,
-            self.soil.k,
-            self.grout.k,
-            self.R_fp,
-            self.pipe.n_pipes,
-            config=config.name,
-        )
-
-        # these methods must be called after inherited class construction
-        self.update_thermal_resistances(self.R_fp)
-        self.calc_effective_borehole_resistance()
-
     def calc_fluid_pipe_resistance(self) -> float:
-        self.h_f = gt.pipes.convective_heat_transfer_coefficient_circular_pipe(
-            self.m_flow_pipe,
-            self.pipe.r_in,
-            self.fluid.mu,
-            self.fluid.rho,
-            self.fluid.k,
-            self.fluid.cp,
-            self.pipe.roughness,
-        )
-        r_in = cast(float, self.pipe.r_in)
-        r_out = cast(float, self.pipe.r_out)
-        self.R_f = self.compute_fluid_resistance(self.h_f, r_in)
-        self.R_p = gt.pipes.conduction_thermal_resistance_circular_pipe(r_in, r_out, self.pipe.k)
-        self.R_fp = self.R_f + self.R_p
+        self.R_fp = self.bhr_borehole.calc_fluid_pipe_resist(self.m_flow_borehole, self.soil.ugt)
         return self.R_fp
 
     def calc_effective_borehole_resistance(self) -> float:
-        # TODO: should this be here?
-        self._initialize_stored_coefficients()
-        resist_bh_effective = self.effective_borehole_thermal_resistance(self.m_flow_borehole, self.fluid.cp)
+        resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.soil.ugt)
         return resist_bh_effective
 
-    def u_tube_volumes(self) -> tuple[float, float, float, float]:
+    def u_tube_volumes(self) -> tuple[float, float]:
         # Compute volumes for U-tube geometry
         # Effective parameters
-        n = self.nPipes * 2  # Total number of tubes
-        # Total inside surface area (m^2)
-        area_surf_inner = n * pi * (self.r_in * 2.0) ** 2
-        resist_conv = 1 / (self.h_f * area_surf_inner)  # Convection resistance (m.K/W)
+        n = self.n_pipes * 2  # Total number of tubes
+
         # Volumes
-        vol_fluid = n * pi * (self.r_in**2)
-        vol_pipe = n * pi * (self.r_out**2) - vol_fluid
-        # V_grout = pi * (u_tube.b.r_b**2) - vol_pipe - vol_fluid
-        resist_pipe = log(self.r_out / self.r_in) / (n * TWO_PI * self.pipe.k)
-        return vol_fluid, vol_pipe, resist_conv, resist_pipe
+        vol_fluid = n * PI * (cast(float, self.pipe.r_in) ** 2)
+        vol_pipe = n * PI * (cast(float, self.pipe.r_out) ** 2) - vol_fluid
+
+        return vol_fluid, vol_pipe
 
     def to_single(self) -> SingleUTube:
         # Find an equivalent single U-tube given multiple U-tube geometry
 
         # Get effective parameters for the multiple u-tube
-        vol_fluid, vol_pipe, resist_conv, resist_pipe = self.u_tube_volumes()
+        vol_fluid, vol_pipe = self.u_tube_volumes()
+
+        # TODO: check that the usage here for converting to an equivalent single u-tube is accurate
+        resist_pipe = self.bhr_borehole.calc_pipe_cond_resist()
+        resist_conv = self.R_fp - resist_pipe
 
         single_u_tube = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rhoCp)
 

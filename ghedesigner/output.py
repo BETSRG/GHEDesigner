@@ -146,13 +146,13 @@ class OutputManager:
                 current_time = tv
                 loading = loading_values[i + 1]
                 current_month = self.hours_to_month(tv)
-                normalized_loading = loading / (ghe.bhe.b.H * ghe.nbh)
+                normalized_loading = loading / (ghe.bhe.borehole.H * ghe.nbh)
                 wall_temperature = ghe.bhe.soil.ugt + d_tb
                 hp_eft_val = ghe.hp_eft[i]
                 csv_row = [tv, self.hours_to_month(tv)]
                 if i > 1:
                     csv_row.append(lv)
-                    csv_row.append(lv / (ghe.bhe.b.H * ghe.nbh))
+                    csv_row.append(lv / (ghe.bhe.borehole.H * ghe.nbh))
                 else:
                     csv_row.append(0)
                     csv_row.append(0)
@@ -163,7 +163,7 @@ class OutputManager:
                 csv_row = [tv, self.hours_to_month(tv)]
                 if i > 1:
                     csv_row.append(lv)
-                    csv_row.append(lv / (ghe.bhe.b.H * ghe.nbh))
+                    csv_row.append(lv / (ghe.bhe.borehole.H * ghe.nbh))
                 else:
                     csv_row.append(0)
                     csv_row.append(0)
@@ -174,7 +174,7 @@ class OutputManager:
                 current_time = tv
                 loading = 0
                 current_month = self.hours_to_month(tv)
-                normalized_loading = loading / (ghe.bhe.b.H * ghe.nbh)
+                normalized_loading = loading / (ghe.bhe.borehole.H * ghe.nbh)
                 wall_temperature = ghe.bhe.soil.ugt + d_tb
                 hp_eft_val = ghe.hp_eft[i]
             csv_row = [current_time, current_month, loading, normalized_loading, wall_temperature, hp_eft_val]
@@ -198,9 +198,9 @@ class OutputManager:
 
     @staticmethod
     def get_g_function_data(ghe):
-        title = f"H: {ghe.bhe.b.H:0.2f} m"
+        title = f"H: {ghe.bhe.borehole.H:0.2f} m"
         csv_array = [["ln(t/ts)", f"{title}", f"{title} bhw"]]
-        gf_adjusted, gf_bhw_adjusted = ghe.grab_g_function(ghe.b_spacing / float(ghe.bhe.b.H))
+        gf_adjusted, gf_bhw_adjusted = ghe.grab_g_function(ghe.b_spacing / float(ghe.bhe.borehole.H))
 
         gf_log_vals = gf_adjusted.x
         gf_g_vals = gf_adjusted.y
@@ -263,10 +263,10 @@ class OutputManager:
 
         for g_function_name in list(ghe.gFunction.g_lts):
             g_function_col_titles.append(f"H: {g_function_name:0.2f} m")
-        g_function_col_titles.append(f"H: {ghe.bhe.b.H:0.2f} m")
+        g_function_col_titles.append(f"H: {ghe.bhe.borehole.H:0.2f} m")
 
         g_function_data = []
-        ghe_gf = ghe.gFunction.g_function_interpolation(float(ghe.b_spacing) / ghe.bhe.b.H)[0]
+        ghe_gf = ghe.gFunction.g_function_interpolation(float(ghe.b_spacing) / ghe.bhe.borehole.H)[0]
         for i in range(len(ghe.gFunction.log_time)):
             gf_row = [ghe.gFunction.log_time[i]]
             for g_function_name in list(ghe.gFunction.g_lts):
@@ -286,11 +286,11 @@ class OutputManager:
         o += empty_line
 
         o += self.create_title(width, "System Parameters", filler_symbol="-")
-        o += self.d_row(width, "Active Borehole Length, m:", ghe.bhe.b.H, f_int)
-        o += self.d_row(width, "Borehole Diameter, mm:", ghe.bhe.b.r_b * 1000 * 2.0, f_2f)
+        o += self.d_row(width, "Active Borehole Length, m:", ghe.bhe.borehole.H, f_int)
+        o += self.d_row(width, "Borehole Diameter, mm:", ghe.bhe.borehole.r_b * 1000 * 2.0, f_2f)
         o += self.d_row(width, "Borehole Spacing, m:", ghe.b_spacing, f_3f)
-        o += self.d_row(width, "Borehole Depth, m:", ghe.bhe.b.D, f_2f)
-        o += self.d_row(width, "Total Drilling, m:", ghe.bhe.b.H * len(ghe.gFunction.bore_locations), f_int)
+        o += self.d_row(width, "Borehole Depth, m:", ghe.bhe.borehole.D, f_2f)
+        o += self.d_row(width, "Total Drilling, m:", ghe.bhe.borehole.H * len(ghe.gFunction.bore_locations), f_int)
 
         o += "Field Geometry: " + "\n"
         o += self.d_row(width, "Field Type:", ghe.field_type, f_str, n_tabs=1)
@@ -523,9 +523,9 @@ class OutputManager:
 
         for g_function_name in list(ghe.gFunction.g_lts):
             g_function_col_titles.append(f"H: {g_function_name:0.2f} m")
-        g_function_col_titles.append(f"H: {ghe.bhe.b.H:0.2f} m")
+        g_function_col_titles.append(f"H: {ghe.bhe.borehole.H:0.2f} m")
         g_function_data = []
-        ghe_gf = ghe.gFunction.g_function_interpolation(float(ghe.b_spacing) / ghe.bhe.b.H)[0]
+        ghe_gf = ghe.gFunction.g_function_interpolation(float(ghe.b_spacing) / ghe.bhe.borehole.H)[0]
         for i in range(len(ghe.gFunction.log_time)):
             gf_row = [ghe.gFunction.log_time[i]]
             for g_function_name in list(ghe.gFunction.g_lts):
@@ -570,11 +570,11 @@ class OutputManager:
             },
             "ghe_system": {
                 "search_log": {"titles": g_function_col_titles, "units": None, "data": g_function_data},
-                "active_borehole_length": add_with_units(ghe.bhe.b.H, "m"),
-                "borehole_diameter": add_with_units(ghe.bhe.b.r_b * 2.0, "m"),
-                "borehole_buried_depth": add_with_units(ghe.bhe.b.D, "m"),
+                "active_borehole_length": add_with_units(ghe.bhe.borehole.H, "m"),
+                "borehole_diameter": add_with_units(ghe.bhe.borehole.r_b * 2.0, "m"),
+                "borehole_buried_depth": add_with_units(ghe.bhe.borehole.D, "m"),
                 "borehole_spacing": add_with_units(ghe.b_spacing, "m"),
-                "total_drilling": add_with_units(ghe.bhe.b.H * len(ghe.gFunction.bore_locations), "m"),
+                "total_drilling": add_with_units(ghe.bhe.borehole.H * len(ghe.gFunction.bore_locations), "m"),
                 "field_type": ghe.field_type,
                 "field_specifier": ghe.fieldSpecifier,
                 "number_of_boreholes": len(ghe.gFunction.bore_locations),

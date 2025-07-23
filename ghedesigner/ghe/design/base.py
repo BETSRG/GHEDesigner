@@ -28,7 +28,7 @@ class DesignBase:
     def __init__(
         self,
         v_flow: float,
-        _borehole: Borehole,
+        borehole: Borehole,
         fluid: GHEFluid,
         pipe: Pipe,
         grout: Grout,
@@ -51,7 +51,7 @@ class DesignBase:
             load_years = [2019]
         self.load_years = load_years
         self.v_flow = v_flow  # volumetric flow rate, m3/s
-        self.borehole = _borehole
+        self.borehole = borehole
         self.fluid = fluid  # a fluid object
         self.pipe = pipe
         self.grout = grout

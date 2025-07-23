@@ -162,7 +162,8 @@ class RowWiseModifiedBisectionSearch:
         rotate_stop = self.geometricConstraints.max_rotation
         perimeter_spacing_ratio = self.geometricConstraints.perimeter_spacing_ratio
 
-        use_perimeter = perimeter_spacing_ratio is not None
+        use_perimeter = not (perimeter_spacing_ratio is None or perimeter_spacing_ratio == 0)
+        skip_secondary_interval_search = spacing_step is None or spacing_step == 0
 
         selected_coordinates = None
         selected_specifier = None
@@ -288,6 +289,7 @@ class RowWiseModifiedBisectionSearch:
                     spacing_high = spacing_m
                     high_e = t_e1
                     selected_specifier = f1_specifier
+                    selected_coordinates = f1
                 else:
                     spacing_low = spacing_m
                     low_e = t_e1
@@ -299,72 +301,75 @@ class RowWiseModifiedBisectionSearch:
 
                 i += 1
 
-            # Now Check fields that have a higher target spacing to double-check that none of them would work:
-            spacing_l = spacing_step + spacing_high
-            target_spacings = []
-            current_spacing = spacing_high
+            if skip_secondary_interval_search:
+                return selected_coordinates, selected_specifier
+            else:
+                # Now Check fields that have a higher target spacing to double-check that none of them would work:
+                spacing_l = spacing_step + spacing_high
+                target_spacings = []
+                current_spacing = spacing_high
 
-            # TODO: this was an argument, but was never used.
-            exhaustive_fields_to_check = 10
-            spacing_change = (spacing_l - current_spacing) / exhaustive_fields_to_check
-            while current_spacing <= spacing_l:
-                target_spacings.append(current_spacing)
-                current_spacing += spacing_change
-            best_field = None
-            best_drilling = inf
-            best_excess = None
-            best_spacing = None
-            for ts in target_spacings:
-                if use_perimeter:
-                    field, f_s = field_optimization_wp_space_fr(
-                        perimeter_spacing_ratio,
-                        ts,
-                        rotate_step,
-                        prop_bound,
-                        ng_zones=ng_zones,
-                        rotate_start=rotate_start,
-                        rotate_stop=rotate_stop,
+                # TODO: this was an argument, but was never used.
+                exhaustive_fields_to_check = 10
+                spacing_change = (spacing_l - current_spacing) / exhaustive_fields_to_check
+                while current_spacing <= spacing_l:
+                    target_spacings.append(current_spacing)
+                    current_spacing += spacing_change
+                best_field = None
+                best_drilling = inf
+                best_excess = None
+                best_spacing = None
+                for ts in target_spacings:
+                    if use_perimeter:
+                        field, f_s = field_optimization_wp_space_fr(
+                            perimeter_spacing_ratio,
+                            ts,
+                            rotate_step,
+                            prop_bound,
+                            ng_zones=ng_zones,
+                            rotate_start=rotate_start,
+                            rotate_stop=rotate_stop,
+                        )
+                    else:
+                        field, f_s = field_optimization_fr(
+                            ts,
+                            rotate_step,
+                            prop_bound,
+                            ng_zones=ng_zones,
+                            rotate_start=rotate_start,
+                            rotate_stop=rotate_stop,
+                        )
+
+                    t_e = self.calculate_excess(field, self.max_height, self.max_eft, self.min_eft, field_specifier=f_s)
+
+                    if self.advanced_tracking:
+                        self.advanced_tracking.append([ts, f_s, len(field), t_e])
+                        self.checkedFields.append(field)
+
+                    self.initialize_ghe(field, self.max_height, field_specifier=f_s)
+                    self.ghe.compute_g_functions(self.min_height, self.max_height)
+                    self.ghe.size(
+                        method=TimestepType.HYBRID,
+                        max_height=self.max_height,
+                        min_height=self.min_height,
+                        design_max_eft=self.max_eft,
+                        design_min_eft=self.min_eft,
                     )
-                else:
-                    field, f_s = field_optimization_fr(
-                        ts,
-                        rotate_step,
-                        prop_bound,
-                        ng_zones=ng_zones,
-                        rotate_start=rotate_start,
-                        rotate_stop=rotate_stop,
-                    )
+                    total_drilling = self.ghe.bhe.borehole.H * len(field)
 
-                t_e = self.calculate_excess(field, self.max_height, self.max_eft, self.min_eft, field_specifier=f_s)
-
-                if self.advanced_tracking:
-                    self.advanced_tracking.append([ts, f_s, len(field), t_e])
-                    self.checkedFields.append(field)
-
-                self.initialize_ghe(field, self.max_height, field_specifier=f_s)
-                self.ghe.compute_g_functions(self.min_height, self.max_height)
-                self.ghe.size(
-                    method=TimestepType.HYBRID,
-                    max_height=self.max_height,
-                    min_height=self.min_height,
-                    design_max_eft=self.max_eft,
-                    design_min_eft=self.min_eft,
-                )
-                total_drilling = self.ghe.bhe.b.H * len(field)
-
-                if best_field is None:
-                    best_field = field
-                    best_drilling = total_drilling
-                    best_excess = t_e
-                    best_spacing = ts
-                elif t_e <= 0.0 and total_drilling < best_drilling:
-                    best_drilling = total_drilling
-                    best_field = field
-                    best_excess = t_e
-                    best_spacing = ts
-            selected_coordinates = best_field
-            selected_temp_excess = best_excess
-            selected_spacing = best_spacing
+                    if best_field is None:
+                        best_field = field
+                        best_drilling = total_drilling
+                        best_excess = t_e
+                        best_spacing = ts
+                    elif t_e <= 0.0 and total_drilling < best_drilling:
+                        best_drilling = total_drilling
+                        best_field = field
+                        best_excess = t_e
+                        best_spacing = ts
+                selected_coordinates = best_field
+                selected_temp_excess = best_excess
+                selected_spacing = best_spacing
 
         # If the excess temperature is < 0 when utilizing the largest depth and the smallest field, it is most likely
         # in the user's best interest to return a field smaller than the smallest one. This is done by removing

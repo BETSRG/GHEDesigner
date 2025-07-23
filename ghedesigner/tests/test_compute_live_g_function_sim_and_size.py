@@ -1,4 +1,4 @@
-from ghedesigner.enums import BHPipeType, TimestepType
+from ghedesigner.enums import PipeType, TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.coordinates import rectangle
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
@@ -91,7 +91,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             dia / 2.0,
             d,
             m_flow_borehole,
-            BHPipeType.SINGLEUTUBE,
+            PipeType.SINGLEUTUBE,
             log_time,
             coordinates,
             fluid,
@@ -106,7 +106,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         ghe = GHE(
             v_flow_system,
             b,
-            BHPipeType.SINGLEUTUBE,
+            PipeType.SINGLEUTUBE,
             fluid,
             borehole,
             pipe,
@@ -133,7 +133,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             dia / 2.0,
             bh_depth,
             m_flow_borehole,
-            BHPipeType.SINGLEUTUBE,
+            PipeType.SINGLEUTUBE,
             log_time,
             coordinates,
             fluid,
@@ -146,7 +146,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         ghe = GHE(
             v_flow_system,
             b,
-            BHPipeType.SINGLEUTUBE,
+            PipeType.SINGLEUTUBE,
             fluid,
             borehole,
             pipe,
@@ -160,4 +160,4 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
 
         ghe.size(method=TimestepType.HYBRID, max_height=384, min_height=24, design_max_eft=35, design_min_eft=5)
 
-        self.log(f"Height of boreholes: {ghe.bhe.b.H:0.4f}")
+        self.log(f"Height of boreholes: {ghe.bhe.borehole.H:0.4f}")

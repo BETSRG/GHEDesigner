@@ -25,7 +25,7 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
     b_max_x: float
     b_max_y: float
     property_boundary: list[list[list[float]]] = field(init=False)
-    no_go_boundaries: list[list[list[float]]]
+    no_go_boundaries: list[list[list[float]]] | None = None
     type: DesignGeomType = field(default=DesignGeomType.BIRECTANGLECONSTRAINED, init=False, repr=False)
 
     def __init__(
@@ -34,7 +34,7 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
         b_max_x: float,
         b_max_y: float,
         property_boundary: list[list[float]] | list[list[list[float]]],
-        no_go_boundaries: list[list[list[float]]],
+        no_go_boundaries: list[list[list[float]]] | None = None,
     ) -> None:
         self.b_min = b_min
         self.b_max_x = b_max_x
@@ -57,7 +57,7 @@ class DesignBiRectangleConstrained(DesignBase):
     def __init__(
         self,
         v_flow: float,
-        _borehole: Borehole,
+        borehole: Borehole,
         fluid: GHEFluid,
         pipe: Pipe,
         grout: Grout,
@@ -79,7 +79,7 @@ class DesignBiRectangleConstrained(DesignBase):
     ) -> None:
         super().__init__(
             v_flow,
-            _borehole,
+            borehole,
             fluid,
             pipe,
             grout,
