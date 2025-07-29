@@ -39,7 +39,7 @@ def main():
     geometry = GeometricConstraintsNearSquare(b=b, length=length)
     design = DesignNearSquare(
         v_flow=0.5,
-        _borehole=borehole,
+        borehole=borehole,
         fluid=fluid,
         pipe=pipe,
         grout=grout,
