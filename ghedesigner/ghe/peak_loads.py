@@ -25,6 +25,7 @@ class HybridLoads2:
         self.years = years
 
         self.loads = loads
+        #print(loads[54:70])
         self.hourly_ExFT_temps = hourly_temps
 
         self.start_month = start_month
@@ -126,27 +127,27 @@ class HybridLoads2:
 
         # Step 1----------------------------------------
 
-    # def bldg_to_ground_load(self) -> list:
-    #     """
-    #     Acts as a constant COP heatpump
-    #     :return: ground loads in Watts
-    #     """
-    #     ground_loads = []
-    #
-    #     for i in range(len(self.loads)):
-    #         if self.loads[i] >= 0:
-    #             ground_loads.append((self.cop_h - 1) / self.cop_h * self.loads[i])
-    #         else:
-    #             ground_loads.append((1 + self.cop_c) / self.cop_c * self.loads[i])
-    #
-    #     print("bldg loads have been converted to ground loads.")
-    #     return ground_loads
+    def bldg_to_ground_load(self) -> list:
+        """
+        Acts as a constant COP heatpump
+        :return: ground loads in Watts
+        """
+        ground_loads = []
+
+        for i in range(len(self.loads)):
+            if self.loads[i] >= 0:
+                ground_loads.append((self.cop_h - 1) / self.cop_h * self.loads[i])
+            else:
+                ground_loads.append((1 + self.cop_c) / self.cop_c * self.loads[i])
+
+        print("bldg loads have been converted to ground loads.")
+        return ground_loads
 
     # Step 2  -----------------------------
 
     def split_heat_and_cool(self):
         """
-        Split the normalized ground loads into heating and cooling as well as the associated ExFTs.
+        Splits the hourly normalized ground loads into heating and cooling
         Heating is positive, cooling is negative.
         :return: hourly normalized ground loads split into heating and cooling in kilowatts
         :return: hourly ExFTs split into heating and cooling lists in Celsius
@@ -159,8 +160,9 @@ class HybridLoads2:
         self.hrly_rejection_loads_norm = self.normalize_loads(self.hourly_rejection_loads)
 
         print("split_heat_and_cool has run")
-        # print(f" first 100 hrs extraction normed= {self.hrly_extraction_loads_norm[:100]} kW")
-        print(f" first 100 hrs rejection normed= {self.hrly_rejection_loads_norm[:100]} kW")
+        #print(f" hrly rejection sample  = {self.hrly_rejection_loads_norm[54:70]} kW")
+        #print(f" hrly exaction sample = {self.hrly_extraction_loads_norm[54:70]} kW")
+
         # TODO returning vs self. variables?
 
     @staticmethod
@@ -173,14 +175,16 @@ class HybridLoads2:
         max_ground_loads = max(load)
         normalized_loads = [40 * 100 / max_ground_loads * load[i] for i in range(len(load))]
 
-        print("Normalized loads has run. ")
+        print("Normalize loads has run.")
 
         return normalized_loads
 
     # Part 3 ----------------
 
     def split_loads_by_month(self) -> None:
-        """Split the loads into peak, total, and average loads for each month"""
+        """Split the loads into peak, total, and average loads for each month
+
+        """
 
         # Store the index of the last month's hours
         hours_in_previous_months: int = 0  # type is integer and set to a value of 0 to start
@@ -231,16 +235,18 @@ class HybridLoads2:
             # print("")
 
             hours_in_previous_months += hours_in_month
-
-        print(f"Total monthly cooling energy:{self.monthly_cl} kWh")
-        # print(f"Total monthly Heating energy:{self.monthly_hl} kWh")
-        print(f"monthly_ave_cls = {self.monthly_avg_cl} kW")
-        print(f"monthly_pk_cls = {self.monthly_peak_cl} kW")
+        #check the first 3 months
+        # print(f"Total monthly cooling energy [kWh]:{self.monthly_cl[1:4]} ")
+        # print(f"Total monthly heating energy [kWh]:{self.monthly_hl[1:4]} ")
+        # print(f"average cooling load per month [kW]= {self.monthly_avg_cl[1:4]} ")
+        # print(f"peak cooling load per month[kW]= {self.monthly_peak_cl[1:4]} ")
+        # print(f"average heating load per month [kW]= {self.monthly_avg_hl[1:4]} ")
+        # print(f"peak heating load per month[kW]= {self.monthly_peak_hl[1:4]} ")
         print("split_loads_by_month has run")
 
     def split_ExFT_by_month(self) -> None:
-        """Split the loads into peak, total and average loads for each month"""
-        # TODO find a way to slice month hours outside of split_ExFT_by_month and load_by_month functions
+        """Slice the hourly ExFT of the GHE into months"""
+        # TODO find a way to slice month hours outside of split_ExFT_by_month and split_load_by_month functions
 
         # Store the index of the last month's hours
         hours_in_previous_months: int = 0
