@@ -86,14 +86,14 @@ class HybridLoads2:
         self.monthly_peak_cl_day = [0] * num_unique_months
         # day of the month on which peak htg load occurs (e.g. 1-31)
         self.monthly_peak_hl_day = [0] * num_unique_months
-        # monthly peak exiting fluid temperature in C for cooling
-        self.monthly_peak_ExFT_cl = [0.0] * num_unique_months
-        # monthly peak exiting fluid temperature in C for heating
-        self.monthly_peak_ExFT_hl = [0.0] * num_unique_months
+        # monthly minimum GHE exiting fluid temperature (EFT for heatpump) in C
+        self.monthly_min_ExFT = [0.0] * num_unique_months
+        # monthly maximum GHE exiting fluid temperature (EFT for heatpump) in C
+        self.monthly_max_ExFT = [0.0] * num_unique_months
         # hour of the month on which min ExFT occurs for cooling
-        self.monthly_peak_ExFT_cl_hour = [0.0] * num_unique_months
+        self.monthly_min_GHE_ExFT_hour = [0.0] * num_unique_months
         # hour of the month on which peak ExFT occurs for heating
-        self.monthly_peak_ExFT_hl_hour = [0.0] * num_unique_months
+        self.monthly_max_GHE_ExFT_hour = [0.0] * num_unique_months
 
         self.cumulative_hours = [0]
         for i in range(1, len(self.days_in_month)):
@@ -110,9 +110,9 @@ class HybridLoads2:
         # Process the ExFT by month
         self.split_ExFT_by_month()
         # return the highest 4 ExFTs for cooling
-        self.highest_4_ExFT_cl = self.get_pk_4_ExFT_and_time_cooling()
+        self.max_4_ExFT = self.get_max_4_ExFT_and_time()
         # return the lowest 4ExFTs for heating
-        self.lowest_4_ExFT_hl = self.get_pk_4_ExFT_and_time_heating()
+        self.min_4_ExFT = self.get_min_4_ExFT_and_time()
         # find peak durations
         self.durations = self.find_peak_durations()
 
@@ -260,51 +260,53 @@ class HybridLoads2:
             ]
 
             # Peak
-            # monthly peak (min) exiting fluid temperature from the GHE in C when cooling
-            self.monthly_peak_ExFT_cl[i] = float(min(current_month_ExFTs))
-            # monthly peak exiting fluid temperature from the GHE in C when heating
-            self.monthly_peak_ExFT_hl[i] = float(max(current_month_ExFTs))
+            # monthly peak (min) exiting fluid temperature from the GHE [degrees C]
+            self.monthly_min_ExFT[i] = float(min(current_month_ExFTs))
+            # monthly peak exiting fluid temperature from the GHE [degrees C]
+            self.monthly_max_ExFT[i] = float(max(current_month_ExFTs))
 
-            # Hour of the month the peak (min) ExFT occurs in cooling
-            self.monthly_peak_ExFT_cl_hour[i] = int(np.where(current_month_ExFTs == self.monthly_peak_ExFT_cl[i])[0][0])
-            # Hour of the month the peak ExFT occurs in heating
-            self.monthly_peak_ExFT_hl_hour[i] = int(np.where(current_month_ExFTs == self.monthly_peak_ExFT_hl[i])[0][0])
+            # Hour of the month the min ExFT for the GHE occurs (EFT for heatpump). critical for heating
+            self.monthly_min_GHE_ExFT_hour[i] = int(np.where(current_month_ExFTs == self.monthly_min_ExFT[i])[0][0])
+            # Hour of the month the max ExFT for the GHE occurs (EFT for heatpump). critical for cooling
+            self.monthly_max_GHE_ExFT_hour[i] = int(np.where(current_month_ExFTs == self.monthly_max_ExFT[i])[0][0])
 
             hours_in_previous_months += hours_in_month
 
-        print("Monthly Peak (min) Cooling ExFTs (C):", self.monthly_peak_ExFT_cl)
-        # print("Monthly Peak (max) Heating ExFTs (C):", self.monthly_peak_ExFT_hl)
-        print(f"peak ExFT occurs at {self.monthly_peak_ExFT_cl_hour} hr of month for cooling")
-        # print(f"peak ExFT occurs at {self.monthly_peak_ExFT_hl_hour} hr for heating")
+        #print("Monthly min ExFTs (C):", self.monthly_min_ExFT)
+        #print("Monthly max ExFTs (C):", self.monthly_max_ExFT)
+        #print(f"min ExFTs occurs at hr {self.monthly_min_GHE_ExFT_hour}")
+        #print(f"max ExFTs occurs at hr {self.monthly_max_GHE_ExFT_hour}")
+
         print("split_ExFT_by_month has run")
 
-    def get_pk_4_ExFT_and_time_cooling(self):
+    def get_min_4_ExFT_and_time(self):
         """
         Returns the 4 months in which peak ExFT occurs for cooling, the peak ExFT, and the hour of the month.
         Stores the result as a 2D NumPy array with columns: [ExFT value, hour of month, month, hour of year].
         """
         # Step 1: Create cumulative hour lookup for each month
 
-        top_4 = sorted(
+        top_4_min = sorted(
             [
                 (
-                    val,  # ExFT value
-                    int(self.monthly_peak_ExFT_cl_hour[i]),  # hour within month
+                    min,  # ExFT value
+                    int(self.monthly_min_GHE_ExFT_hour[i]),  # hour within month
                     int(i),  # month index
-                    int(self.cumulative_hours[i] + self.monthly_peak_ExFT_cl_hour[i]),  # absolute hour of year
+                    int(self.cumulative_hours[i] + self.monthly_min_GHE_ExFT_hour[i]),  # absolute hour of year
                 )
-                for i, val in enumerate(self.monthly_peak_ExFT_cl)
+                for i, min in enumerate(self.monthly_min_ExFT)
                 if i != 0
             ],
             key=lambda x: x[0],  # sort by ExFT value
             reverse=True,
         )[:4]
 
-        highest_4_ExFT_cl = np.array(top_4)
-        print(f"highest_4_ExFT_cl{highest_4_ExFT_cl}")
-        return highest_4_ExFT_cl
+        min_4_ExFT = np.array(top_4_min)
+        print(f"min ExFT, hour of month, month, hour of year ")
+        print(f"{min_4_ExFT}")
+        return min_4_ExFT
 
-    def get_pk_4_ExFT_and_time_heating(self):
+    def get_max_4_ExFT_and_time(self):
         """
         Returns the 4 months in which peak ExFT occurs for cooling, the peak ExFT, and the hour of the month.
         Stores the result as a 2D NumPy array with columns: [hour, month, ExFT value].
@@ -314,22 +316,22 @@ class HybridLoads2:
         top_4 = sorted(
             [
                 (
-                    val,  # ExFT
-                    int(self.monthly_peak_ExFT_hl_hour[i]),  # hour within month
+                    max,  # ExFT
+                    int(self.monthly_max_GHE_ExFT_hour[i]),  # hour within month
                     int(i),  # month
-                    int(self.cumulative_hours[i] + self.monthly_peak_ExFT_cl_hour[i]),  # absolute hour of year
+                    int(self.cumulative_hours[i] + self.monthly_min_GHE_ExFT_hour[i]),  # absolute hour of year
                 )
-                for i, val in enumerate(self.monthly_peak_ExFT_hl)
-                if i != 0 and val != 0
+                for i, max in enumerate(self.monthly_max_ExFT)
+                if i != 0 and max != 0
             ],
             key=lambda x: x[0],  # sort by ExFT value
             reverse=False,
         )[:4]
 
-        lowest_4_ExFT_hl = np.array(top_4)
-        # print("heating peak (min) 4 ExFTs")
-        # print(f"get_pk_4_ExFT_and_time_cooling has run")
-        return lowest_4_ExFT_hl
+        max_4_ExFT = np.array(top_4)
+        print(f"max ExFT, hour of month, month, hour of year ")
+        print(f"{max_4_ExFT}")
+        return max_4_ExFT
 
     # part 4 ----------------------
     def find_peak_durations(self):
@@ -340,7 +342,7 @@ class HybridLoads2:
         """
 
         durations = []
-        for row in self.highest_4_ExFT_cl:  # iterates through the 4 identified peaks
+        for row in self.max_4_ExFT:  # iterates through the 4 identified peaks
             target_ExFT = row[0]  # our target ExFT for the iteration
             pk_hour_of_month = int(row[1])
             month_index = int(row[2])
