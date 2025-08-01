@@ -12,7 +12,7 @@ from ghedesigner.ghe.ground_loads import HybridLoad
 from ghedesigner.ghe.peak_loads import HybridLoads2
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Grout, Soil
-from ghedesigner.utilities import combine_sts_lts, solve_root
+from ghedesigner.utilities import combine_sts_lts, simulate_detailed, solve_root
 
 
 class GHE:
@@ -64,9 +64,11 @@ class GHE:
         self.times = np.empty((0,), dtype=np.float64)
         self.loading = None
 
-        hourly_temps = (
-            18 + 5 * np.sin(2 * np.pi * np.arange(8760) / 24 / 365) + 3 * np.sin(2 * np.pi * np.arange(8760) / 24)
-        )  # TODO eventually this will have to run a hourly sim for hourly temps
+        # hourly_temps = (
+        #     18 + 5 * np.sin(2 * np.pi * np.arange(8760) / 24 / 365) + 3 * np.sin(2 * np.pi * np.arange(8760) / 24)
+        # )  # TODO eventually this will have to run a hourly sim for hourly temps
+
+        hourly_temps = simulate_detailed()
 
         h = HybridLoads2(
             loads=self.hourly_extraction_ground_loads,

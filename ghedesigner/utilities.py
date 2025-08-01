@@ -10,6 +10,8 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.optimize import brentq
 
+from ghedesigner.constants import SEC_IN_HR, TWO_PI
+
 
 # Time functions
 # --------------
@@ -285,3 +287,48 @@ def write_flat_dict_to_csv(write_path: Path, input_dict: dict) -> None:
 
         for row in zip(*input_dict.values()):
             writer.writerow(row)
+
+
+def simulate_detailed(q_dot: np.ndarray, time_values: np.ndarray, g: interp1d, nbh, t_s, k, h, tg, rb, m_dot, cp):
+    # Perform a detailed simulation based on a numpy array of heat rejection
+    # rates, Q_dot (Watts) where each load is applied at the time_value
+    # (seconds). The g-function can interpolate.
+    # Source: Chapter 2 of Advances in Ground Source Heat Pumps
+
+    n = q_dot.size
+
+    # Convert the total load applied to the field to the average over
+    # borehole wall rejection rate
+    # At time t=0, make the heat rejection rate 0.
+    q_dot_b = np.hstack((0.0, q_dot / float(nbh)))
+    time_values = np.hstack((0.0, time_values))
+
+    q_dot_b_dt = np.hstack(q_dot_b[1:] - q_dot_b[:-1])
+
+    # ts = self.bhe_eq.t_s  # (-)
+    two_pi_k = TWO_PI * k  # (W/m.K)
+    # h = self.bhe.borehole.H  # (meters)
+    # tg = self.bhe.soil.ugt  # (Celsius)
+    # rb = self.bhe.calc_effective_borehole_resistance()  # (m.K/W)
+    # m_dot = self.bhe.m_flow_borehole  # (kg/s)
+    # cp = self.bhe.fluid.cp  # (J/kg.s)
+
+    hp_eft: list[float] = []
+    delta_tb: list[float] = []
+    for i in range(1, n + 1):
+        # Take the last i elements of the reversed time array
+        _time = time_values[i] - time_values[0:i]
+        # _time = time_values_reversed[n - i:n]
+        g_values = g(np.log((_time * SEC_IN_HR) / t_s))
+        # Tb = Tg + (q_dt * g)  (Equation 2.12)
+        delta_tb_i = (q_dot_b_dt[0:i] / h / two_pi_k).dot(g_values)
+        # Tf = Tb + q_i * R_b^* (Equation 2.13)
+        tb = tg + delta_tb_i
+        # Bulk fluid temperature
+        tf_bulk = tb + q_dot_b[i] / h * rb
+        # T_out = T_f - Q / (2 * m_dot cp)  (Equation 2.14)
+        tf_out = tf_bulk - q_dot_b[i] / (2 * m_dot * cp)
+        hp_eft.append(tf_out)
+        delta_tb.append(delta_tb_i)
+
+    return hp_eft, delta_tb
