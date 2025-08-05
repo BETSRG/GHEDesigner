@@ -25,11 +25,20 @@
       "format": "Meters",
       "description": "Minimum borehole-to-borehole spacing."
     },
+    "column_name": {
+      "type": "string"
+    },
+    "column_number": {
+      "type": "number"
+    },
     "conductivity": {
       "type": "number",
       "minimum": 0,
       "format": "Watts/Meter-Kelvin",
       "description": "Thermal conductivity."
+    },
+    "file_path": {
+      "type": "string"
     },
     "H": {
       "type": "number",
@@ -48,6 +57,18 @@
       "minimum": 0,
       "format": "Meters",
       "description": "Horizontal length of property boundary defining surface area available for ground heat exchanger."
+    },
+    "load_values": {
+      "type": "array",
+      "items": {
+        "items": {
+          "type": "number"
+        }
+      },
+      "format": "Watts",
+      "minItems": 8760,
+      "maxItems": 8760,
+      "description": "Annual, hourly loads of the object. Positive value indicate heating/heat extraction, negative values indicate cooling/heat rejection."
     },
     "no_go_boundaries": {
       "type": "array",
@@ -776,16 +797,51 @@
             "additionalProperties": false
           },
           "loads": {
-            "type": "array",
-            "items": {
-              "items": {
-                "type": "number"
+            "type": "object",
+            "properties": {
+              "column_name": {
+                "$ref": "#/$defs/column_name"
               },
-              "format": "Watts",
-              "minItems": 8760,
-              "maxItems": 8760,
-              "description": "Annual, hourly heat extraction and heat rejection loads of the ground heat exchanger. Positive value indicate heat extraction, negative values indicate heat rejection."
-            }
+              "column_number": {
+                "$ref": "#/$defs/column_number"
+              },
+              "file_path": {
+                "$ref": "#/$defs/file_path"
+              },
+              "load_values": {
+                "$ref": "#/$defs/load_values"
+              }
+            },
+            "oneOf": [
+              {
+                "properties": {
+                  "load_values": {
+                    "$ref": "#/$defs/load_values"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "file_path": {
+                    "$ref": "#/$defs/file_path"
+                  },
+                  "column_name": {
+                    "$ref": "#/$defs/column_name"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "file_path": {
+                    "$ref": "#/$defs/file_path"
+                  },
+                  "column_number": {
+                    "$ref": "#/$defs/column_number"
+                  }
+                }
+              }
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -794,7 +850,8 @@
           "pipe",
           "borehole",
           "flow_rate",
-          "flow_type"
+          "flow_type",
+          "loads"
         ],
         "additionalProperties": false
       }
