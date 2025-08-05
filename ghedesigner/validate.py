@@ -3,7 +3,8 @@ import sys
 from json import loads
 from pathlib import Path
 
-from jsonschema import ValidationError, validate
+from jsonschema import validate
+from jsonschema.exceptions import ValidationError
 
 # Note: JSON schema does not currently have a good way to handle case-insensitive enums.
 #       I think we should enforce case sensitivity.  The validation script should clearly alert the user.
@@ -32,7 +33,7 @@ def validate_input_file(input_file_path: Path) -> None:
         elif "type" in error.schema:
             print(f"{fix}  Ensure the value is of type: {error.schema['type']}")
         print("For example inputs, see the demo files.", file=sys.stderr)
-        raise ValidationError("") from None
+        raise
 
 
 if __name__ == "__main__":
