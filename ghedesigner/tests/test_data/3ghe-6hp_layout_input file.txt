@@ -1,0 +1,89 @@
+# This is an input file for simulation of multiple GHE-HP system
+
+Title, '3ghe-6hp system'
+# Ground heat exchanger data
+
+# Building Data
+
+# keyword, name,            id, zoneID
+Building, Hospital, 	    B1, b1z1, b1z2
+Building, Midriseapartment, B2, b2z1, b2z2
+Building, Mediumoffice,     B3, b3z1, b3z2
+
+
+# Zone data
+
+# keyword, name,          id,   nodeID,  HPmodel, loads_file,   beta
+Zone,      space_htg/clg, b1z1, n2,       HP1,     B1Z1.csv,    1.5
+Zone,      space_htg/clg, b1z2, n4,       HP4,     B1Z2.csv,    1.5
+Zone,      space_htg/clg, b2z1, n6,       HP2,     B2Z1.csv,    1.5
+Zone,      water_htg,     b2z2, n8,       HP4,     B2Z2.csv,    1.5
+Zone,      water_htg,     b3z1, n10,      HP3,     B3Z1.csv,    1.5
+Zone,      water_htg,     b3z2, n12,      HP4,     B3Z2.csv,    1.5
+
+
+#  keyword, id,   nodeID, n_rows, n_cols, row_spacing (m), col_spacing (m), beta  	    height     m_flow_ghe_design
+GHX,        ghe1, n16,    15,     10,     5,               5, 		         1.5,       100,       50.63
+GHX,        ghe2, n18,    10,     8,      5,               5,               1.5,        100,       27
+GHX,        ghe3, n20,    10,     7,      5,               5,               1.5,        100,       23.63
+
+
+# nodes data
+# keyword, id,   type,   x,   y,  z
+node,      n1,   mixing, 30,  60, 0
+node,      n2,   device, 40,  60, 0
+node,      n3,   mixing, 30,  50, 0
+node,      n4,   device, 40,  50, 0
+node,      n5,   mixing, 30,  40, 0
+node,      n6,   device, 40,  40, 0
+node,      n7,   mixing, 30,  30, 0
+node,      n8,   device, 40,  30, 0
+node,      n9,   mixing, 30,  20, 0
+node,     n10,   device, 40,  20, 0
+node,     n11,   mixing, 30,  10, 0
+node,     n12,   device, 40,  10, 0
+node,     n13,   simple, 30,  0,  0
+node,     n14,   simple, 10,  0,  0
+node,     n15,   mixing, 10,  30, 0
+node,     n16,   device, 0,   30, 0
+node,     n17,   mixing, 10,  40, 0
+node,     n18,   device, 0,   40, 0
+node,     n19,   mixing, 10,  50, 0
+node,     n20,   device, 0,   50, 0
+node,     n21,   simple, 10,  70, 0
+node,     n22,   simple, 30,  70, 0
+
+
+# Pipes Data
+
+# keyword, id,   type       node_in_name    node_out_name,    length
+pipe,      p1,   2way,      n1,             n2,               10
+pipe,      p2,   1way,      n1,             n3,               10
+pipe,      p3,   2way,       n3,             n4,               10
+pipe,      p4,   1way,     n3,             n5,               10
+pipe,      p5,   2way,       n5,             n6,               10
+pipe,      p6,   1way,     n5,             n7,               10
+pipe,      p7,   2way,       n7,             n8,               10
+pipe,      p8,   1way,     n7,             n9,               10
+pipe,      p9,   2way,       n9,             n10,              10
+pipe,      p10,  1way,     n9,             n11,              10
+pipe,      p11,  2way,       n11,            n12,              10
+pipe,      p12,  1way,     n11,            n13,              10
+pipe,      p13,  1way,     n13,            n14,              20
+pipe,      p14,  1way,     n14,            n15,              30
+pipe,      p15,  2way,       n15,            n16,              10
+pipe,      p16,  1way,     n15,            n17,              10
+pipe,      p17,  2way,       n17,            n18,              10
+pipe,      p18,  1way,     n17,            n19,              10
+pipe,      p19,  2way,       n19,            n20,              10
+pipe,      p20,  1way,     n19,            n21,              20
+pipe,      p21,  1way,     n21,            n22,              20
+pipe,      p22,  1way,     n22,            n1,               10
+
+# Heat Pump Model Library
+
+# keyword, name,   id,   a_htg,     b_htg,   c_htg, a_clg,   b_clg,   c_clg, c1_htg, c2_htg, c3_htg, c1_clg,  c2_clg, c3_clg, m_single_hp, design_htg_cap, design_clg_cap
+HPmodel,   HP_AtW, HP1, -0.0000713, 0.00534, 0.734, 0.0001,  0.00112, 1.13, -0.124,  112,    4114,  -0.393,  -30.3,   6777,   0.296,       4140,           4396
+HPmodel,   HP_AtW, HP2, -0.0000786, 0.00539, 0.734, 0.0001, -0.00041, 1.15,  0.178,  158,    6712,  -1.2,    -4.72,   9629,   0.495,       6797,           6709
+HPmodel,   HP_AtW, HP3, -0.000068, 0.00497,  0.738, 0.0001, -0.00084, 1.16,  0.091,  224,    9422,  -2.16,    46.8,   12397,  0.693,       9500,           9752
+HPmodel,   HP_WtW, HP4, -0.0000606, 0.0051,  0.692, 0,       0,       0,    -1.19,   212,    8932,   0,       0,      0,      0.425,       9561,           0
