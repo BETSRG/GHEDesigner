@@ -61,9 +61,7 @@
     "load_values": {
       "type": "array",
       "items": {
-        "items": {
-          "type": "number"
-        }
+        "type": "number"
       },
       "format": "Watts",
       "minItems": 8760,
@@ -850,8 +848,7 @@
           "pipe",
           "borehole",
           "flow_rate",
-          "flow_type",
-          "loads"
+          "flow_type"
         ],
         "additionalProperties": false
       }
