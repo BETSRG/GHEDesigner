@@ -285,3 +285,59 @@ def write_flat_dict_to_csv(write_path: Path, input_dict: dict) -> None:
 
         for row in zip(*input_dict.values()):
             writer.writerow(row)
+
+
+def read_csv_column(file_path: str | Path, column: int | str, try_convert_to_numeric=True) -> list:
+    """
+    Reads a specific column from a CSV file.
+
+    Parameters:
+        file_path (str or Path): Path to the CSV file.
+        column (str or int): Column name (str) or index (int) to extract.
+        try_convert_to_numeric (bool, optional): If True, convert column to numeric. Defaults to True.
+
+    Returns:
+        list: A list of values from the specified column.
+    """
+    values = []
+
+    with open(file_path, newline="", encoding="utf-8") as csv_file:
+        reader = csv.reader(csv_file)
+        header = next(reader)
+
+        # Determine column index
+        if isinstance(column, str):
+            try:
+                col_index = header.index(column)
+            except ValueError:
+                raise ValueError(f"Column name '{column}' not found in header.")
+        elif isinstance(column, int):
+            if column < 0 or column >= len(header):
+                raise IndexError(f"Column index {column} out of range.")
+            col_index = column
+        else:
+            raise TypeError("Column must be a string (name) or integer (index).")
+
+        for row in reader:
+            if len(row) > col_index:
+                values.append(row[col_index])
+            else:
+                values.append("")  # Handle missing/short rows
+
+        def try_convert(val):
+            try:
+                return float(val)
+            except (ValueError, TypeError):
+                return val
+
+        if try_convert_to_numeric:
+            values = [try_convert(x) for x in values]
+
+    return values
+
+
+def get_loads(loads_dict: dict) -> list[float]:
+    if "load_values" in loads_dict:
+        return loads_dict["load_values"]
+    else:
+        return read_csv_column(loads_dict["file_path"], loads_dict["column"])

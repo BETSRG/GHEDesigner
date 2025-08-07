@@ -25,11 +25,8 @@
       "format": "Meters",
       "description": "Minimum borehole-to-borehole spacing."
     },
-    "column_name": {
-      "type": "string"
-    },
-    "column_number": {
-      "type": "number"
+    "column": {
+      "type": ["string", "integer"]
     },
     "conductivity": {
       "type": "number",
@@ -67,6 +64,47 @@
       "minItems": 8760,
       "maxItems": 8760,
       "description": "Annual, hourly loads of the object. Positive value indicate heating/heat extraction, negative values indicate cooling/heat rejection."
+    },
+    "loads": {
+      "type": "object",
+      "properties": {
+        "column_name": {
+          "$ref": "#/$defs/column_name"
+        },
+        "column_number": {
+          "$ref": "#/$defs/column_number"
+        },
+        "file_path": {
+          "$ref": "#/$defs/file_path"
+        },
+        "load_values": {
+          "$ref": "#/$defs/load_values"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "load_values": {
+              "$ref": "#/$defs/load_values"
+            }
+          },
+          "required": ["load_values"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column": {
+              "$ref": "#/$defs/column"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            }
+          },
+          "required": ["file_path", "column"],
+          "additionalProperties": false
+        }
+      ],
+      "additionalProperties": false
     },
     "no_go_boundaries": {
       "type": "array",
@@ -795,51 +833,7 @@
             "additionalProperties": false
           },
           "loads": {
-            "type": "object",
-            "properties": {
-              "column_name": {
-                "$ref": "#/$defs/column_name"
-              },
-              "column_number": {
-                "$ref": "#/$defs/column_number"
-              },
-              "file_path": {
-                "$ref": "#/$defs/file_path"
-              },
-              "load_values": {
-                "$ref": "#/$defs/load_values"
-              }
-            },
-            "oneOf": [
-              {
-                "properties": {
-                  "load_values": {
-                    "$ref": "#/$defs/load_values"
-                  }
-                }
-              },
-              {
-                "properties": {
-                  "file_path": {
-                    "$ref": "#/$defs/file_path"
-                  },
-                  "column_name": {
-                    "$ref": "#/$defs/column_name"
-                  }
-                }
-              },
-              {
-                "properties": {
-                  "file_path": {
-                    "$ref": "#/$defs/file_path"
-                  },
-                  "column_number": {
-                    "$ref": "#/$defs/column_number"
-                  }
-                }
-              }
-            ],
-            "additionalProperties": false
+            "$ref": "#/$defs/loads"
           }
         },
         "required": [
