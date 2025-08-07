@@ -68,11 +68,8 @@
     "loads": {
       "type": "object",
       "properties": {
-        "column_name": {
-          "$ref": "#/$defs/column_name"
-        },
-        "column_number": {
-          "$ref": "#/$defs/column_number"
+        "column": {
+          "$ref": "#/$defs/column"
         },
         "file_path": {
           "$ref": "#/$defs/file_path"
