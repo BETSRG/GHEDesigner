@@ -1,11 +1,29 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-08/schema#",
   "$defs": {
+    "ndp_min": {
+      "type": "integer",
+      "minimum": 1,
+      "format": "-",
+      "description": "minimum number of drill pads"
+    },
+    "ndp_max": {
+      "type": "integer",
+      "minimum": 1,
+      "format": "-",
+      "description": "maximum number of drill pads"
+    },
     "b": {
       "type": "number",
       "minimum": 0,
       "format": "Meters",
       "description": "Borehole-to-borehole spacing."
+    },
+    "nbh": {
+      "type": "number",
+      "minimum": 1,
+      "format": "Meters",
+      "description": "Number of boreholes per drill pad"
     },
     "b_max": {
       "type": "number",
@@ -54,6 +72,12 @@
       "minimum": 0,
       "format": "Meters",
       "description": "Horizontal length of property boundary defining surface area available for ground heat exchanger."
+    },
+    "radius": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Radius of each drill pad"
     },
     "no_go_boundaries": {
       "type": "array",
@@ -545,7 +569,8 @@
                   "NEARSQUARE",
                   "RECTANGLE",
                   "ROWWISE",
-                  "TILTEDLINE"
+                  "TILTEDLINE",
+                  "DRILLPAD"
                 ],
                 "description": "Design algorithm specified."
               }
@@ -764,6 +789,30 @@
                   }
                 },
                 "required": ["length", "b", "tilt", "method"],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "method": {
+                    "const": "DRILLPAD"
+                  },
+                  "radius": {
+                    "$ref": "#/$defs/radius"
+                  },
+                  "nbh": {
+                    "$ref": "#/$defs/nbh"
+                  },
+                  "tilt": {
+                    "$ref": "#/$defs/tilt"
+                  },
+                  "ndp_min": {
+                    "$ref": "#/$defs/ndp_min"
+                  },
+                  "ndp_max": {
+                    "$ref": "#/$defs/ndp_max"
+                  }
+                },
+                "required": ["method", "nbh", "radius", "tilt", "ndp_min", "ndp_max"],
                 "additionalProperties": false
               }
             ]

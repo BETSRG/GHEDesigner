@@ -167,31 +167,48 @@ def tilted_line(n: int, b: float, tilt: float) -> tuple[list[tuple[float, float]
 def staggered_line(n: int, b: float, tilt: float, borehole_height: float) -> list[tuple[float, float]]:
     line_object = []
     sign_list = [1, -1]
-    y_spacing = 0.5 * borehole_height * sin(tilt)
+    y_spacing = 0.37 * borehole_height * sin(tilt)
     for i in range(n):
         line_object.append((i * b, sign_list[i % 2] * y_spacing))
 
     return line_object
 
+def tilted_drill_pad(n: int,radius: float, tilt: float,center_x: float = 0.0,center_y: float = 0.0,
+                     ) -> tuple[list[tuple[float, float]], list[float], list[float]]:
 
-def circle_of_points(n_points: int, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> \
-        list[tuple[float, float]]:
-    """
-    Generates a list of equally spaced points around a circle.
+    coords: list[tuple[float, float]] = []
+    tilts:  list[float]               = []
+    orients:list[float]               = []
 
-    Args:
-        n_points: The number of points to generate.
-        radius: The radius of the circle.
-        center_x: The x-coordinate of the circle's center (default is 0.0).
-        center_y: The y-coordinate of the circle's center (default is 0.0).
-
-    Returns:
-        A list of tuples, where each tuple represents the (x, y) coordinates of a point on the circle.
-    """
-    points = []
-    for i in range(n_points):
-        angle = 2 * pi * i / n_points
+    for i in range(n):
+        angle = 2 * pi * i / n
         x = center_x + radius * cos(angle)
         y = center_y + radius * sin(angle)
-        points.append((x, y))
-    return points
+        coords.append((x, y))
+        tilts.append(tilt)
+        orients.append(angle + pi / 2)
+
+    return coords, tilts, orients
+
+
+#def circle_of_points(n_points: int, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> \
+#        list[tuple[float, float]]:
+#    """
+#    Generates a list of equally spaced points around a circle.
+#
+#    Args:
+#        n_points: The number of points to generate.
+#        radius: The radius of the circle.
+#        center_x: The x-coordinate of the circle's center (default is 0.0).
+#       center_y: The y-coordinate of the circle's center (default is 0.0).
+#
+#    Returns:
+#        A list of tuples, where each tuple represents the (x, y) coordinates of a point on the circle.
+#    """
+#    points = []
+#    for i in range(n_points):
+#       angle = 2 * pi * i / n_points
+#       x = center_x + radius * cos(angle)
+#        y = center_y + radius * sin(angle)
+#        points.append((x, y))
+#    return points

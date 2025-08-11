@@ -1,5 +1,5 @@
 from math import ceil
-
+from time import time
 import numpy as np
 from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d
@@ -7,7 +7,7 @@ from scipy.interpolate import interp1d
 from ghedesigner.constants import SEC_IN_HR, TWO_PI, VERSION
 from ghedesigner.enums import BHPipeType, TimestepType
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
-from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
+from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths, merge_g_functions
 from ghedesigner.ghe.ground_loads import HybridLoad
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Grout, Soil
@@ -40,6 +40,9 @@ class GHE:
         self.v_flow_borehole = self.v_flow_system / self.nbh
         m_flow_borehole = self.v_flow_borehole / 1000.0 * fluid.rho
         self.m_flow_borehole = m_flow_borehole
+
+        # Cached g-function from bisection search
+        self.bisection = None
 
         # Borehole Heat Exchanger
         self.bhe_type = bhe_type
@@ -179,7 +182,7 @@ class GHE:
         # Compute g-functions for a bracketed solution, based on min and max height
         self.gFunction = calc_g_func_for_multiple_lengths(
             self.b_spacing,
-            [h_min] if h_min == h_max else [h_min, (h_min + h_max) / 2.0, h_max],
+            [h_max * 0.70, h_max],
             self.bhe.b.r_b,
             self.bhe.b.D,
             self.bhe.m_flow_borehole,
@@ -194,6 +197,32 @@ class GHE:
             orientations=self.gFunction.bore_orientations,
             solver=selected_solver
         )
+
+    def compute_and_merge_g_functions(self, h_values: list):
+        selected_solver = 'equivalent'
+        if self.gFunction.bore_tilts is not None and self.gFunction.bore_orientations is not None:
+            selected_solver = 'similarities'
+
+        g_func_mid = calc_g_func_for_multiple_lengths(
+            self.b_spacing,
+            h_values,
+            self.bhe.b.r_b,
+            self.bhe.b.D,
+            self.bhe.m_flow_borehole,
+            self.bhe_type,
+            self.gFunction.log_time,
+            self.gFunction.bore_locations,
+            self.bhe.fluid,
+            self.bhe.pipe,
+            self.bhe.grout,
+            self.bhe.soil,
+            tilts=self.gFunction.bore_tilts,
+            orientations=self.gFunction.bore_orientations,
+            solver=selected_solver
+        )
+        g_func_max = self.gFunction
+
+        self.gFunction = merge_g_functions(g_func_mid=g_func_mid, g_func_max=g_func_max)
 
     def simulate(self, method: TimestepType):
         b = self.b_spacing
@@ -251,7 +280,7 @@ class GHE:
             return t_excess
 
         # Make the initial guess variable the average of the heights given
-        self.bhe.b.H = (max_height + min_height) / 2.0
+        self.bhe.b.H = max_height * 0.70
         # bhe.b.H is updated during sizing
         returned_height = solve_root(
             self.bhe.b.H,

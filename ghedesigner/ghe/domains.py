@@ -3,7 +3,7 @@ from typing import cast
 
 from ghedesigner.ghe.coordinates import (
     c_shape,
-    circle_of_points,
+    tilted_drill_pad,
     l_shape,
     lop_u,
     rectangle,
@@ -265,20 +265,16 @@ def straight_line(lower: int, upper: int, b: float, tilt: float, borehole_height
     return coordinates_domain, field_descriptors, staggered_coordinates_domain, staggered_field_descriptors
 
 
-def circles_with_varying_points(lower_n: int, upper_n: int, radius: float, center_x: float = 0.0,
-                                center_y: float = 0.0) -> tuple[list[list[tuple[float, float]]], list[str]]:
-    if lower_n < 1 or upper_n < 1:
-        raise ValueError("The lower and upper arguments must be positive integer values.")
-    if upper_n < lower_n:
-        raise ValueError("The lower argument should be less than or equal to the upper.")
+def drill_pad(nbh: int, tilt: float, radius: float, ndp_min: int, ndp_max: int):
 
     coordinates_domain = []
     field_descriptors = []
+    # Only create coordinates for 1 drill pad
+    coordinates_domain.append(tilted_drill_pad(nbh, radius, tilt, center_x=0.0, center_y=0.0))
 
-    for n_points in range(lower_n, upper_n + 1):
-        points = circle_of_points(n_points, radius, center_x, center_y)
-        coordinates_domain.append(points)
-        field_descriptors.append(f"{n_points} Points")
+    for npads in range(ndp_min, ndp_max + 1):
+        field_descriptors.append(f"{npads}X_Drill_Pads_{nbh}X_R{radius:.2f}_T{tilt:.2f}")
+
 
     return coordinates_domain, field_descriptors
 

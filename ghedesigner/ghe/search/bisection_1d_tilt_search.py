@@ -1,5 +1,4 @@
 from math import ceil
-from typing import Optional
 
 import numpy as np
 from pygfunction.boreholes import Borehole
@@ -39,8 +38,8 @@ class Bisection1DTilt:
         search=True,
         field_type="N/A",
         load_years=None,
-        staggered_coordinates_domain: list = [],
-        staggered_field_descriptors: list = [],
+        staggered_coordinates_domain: list = None,
+        staggered_field_descriptors: list = None,
     ) -> None:
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
@@ -70,7 +69,7 @@ class Bisection1DTilt:
         self.coordinates_domain = coordinates_domain
         self.fieldDescriptors = field_descriptors
         self.staggered_coordinates_domain = staggered_coordinates_domain
-        self. staggered_fieldDescriptors = staggered_field_descriptors
+        self.staggered_fieldDescriptors = staggered_field_descriptors
         self.max_iter = max_iter
         self.disp = disp
 
@@ -93,6 +92,7 @@ class Bisection1DTilt:
             soil,
             solver='equivalent'
         )
+        self.last_g_function = g_function
 
         # Initialize the GHE object
         self.ghe = GHE(
@@ -112,6 +112,7 @@ class Bisection1DTilt:
             field_type=field_type,
         )
 
+        self.ghe.bisection = self
         self.calculated_temperatures: dict[int, np.float64] = {}
 
         if search:
@@ -165,7 +166,7 @@ class Bisection1DTilt:
             orientations=orientations,
             solver=selected_solver,
         )
-
+        self.last_g_function = g_function
         # Initialize the GHE object
         self.ghe = GHE(
             v_flow_system,
@@ -183,6 +184,7 @@ class Bisection1DTilt:
             field_type=self.field_type,
             field_specifier=field_specifier,
         )
+        self.ghe.bisection = self
 
     def calculate_excess(self, coordinates, h, field_specifier="N/A", tilts=None, orientations=None):
         self.initialize_ghe(coordinates, h, field_specifier=field_specifier, tilts=tilts, orientations=orientations)
@@ -318,7 +320,7 @@ class Bisection1DTilt:
         negative_excess_values = [v for v in values if v <= 0.0]
         excess_of_interest = max(negative_excess_values)
 
-        # but some conditions don't yield this result
+        # but some conditions don't yield this result,
         # adding a check here to ensure we pick the smallest field with
         # negative excess temperature
         num_bh = [len(self.staggered_coordinates_domain[x]) for x in keys]
@@ -343,6 +345,7 @@ class Bisection1DTilt:
         return selection_key, self.staggered_coordinates_domain[selection_key]
 
     def search(self):
+        # Hybrid Search
         # Perform search with staggered vertical boreholes to get an approximate answer
         staggered_selection_key, staggered_coords = self.staggered_search()
 
@@ -352,7 +355,6 @@ class Bisection1DTilt:
                                                  tilts=self.coordinates_domain[staggered_selection_key][1],
                                                  orientations=self.coordinates_domain[staggered_selection_key][2])
 
-        search_direction = None
         if staggered_excess == 0:
             return staggered_selection_key, self.coordinates_domain[staggered_selection_key][0]
         elif staggered_excess > 0:
@@ -383,4 +385,5 @@ class Bisection1DTilt:
             self.coordinates_domain[selection_key][0], self.max_height, self.fieldDescriptors[selection_key],
             tilts=self.coordinates_domain[selection_key][1],  orientations=self.coordinates_domain[selection_key][2]
         )
+        self.ghe.gFunction = self.last_g_function
         return selection_key, self.coordinates_domain[selection_key]

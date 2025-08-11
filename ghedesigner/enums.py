@@ -26,6 +26,7 @@ class DesignGeomType(Enum):
     RECTANGLE = auto()
     ROWWISE = auto()
     TILTEDLINE = auto()
+    DRILLPAD = auto()
     NONE = auto()  # TODO: Check this won't break anything
 
 

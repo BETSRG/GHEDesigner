@@ -1,7 +1,7 @@
 import logging
 import warnings
 from math import log
-
+from copy import deepcopy
 import numpy as np
 import pygfunction as gt
 from pygfunction.boreholes import Borehole
@@ -121,7 +121,6 @@ def calc_g_func_for_multiple_lengths(
 
     if tilts is not None and orientations is not None and solver == "equivalent":
         raise Warning("pygfunction's equivalent solver cannot use tilted boreholes. Using similarities solver instead.")
-        solver = "similarities"
 
     r_b_values = dict.fromkeys(h_values, r_b)
     g_lts_values = {}
@@ -157,6 +156,35 @@ def calc_g_func_for_multiple_lengths(
     return GFunction(
         b=b, r_b_values=r_b_values, d=depth, g_lts=g_lts_values, log_time=log_time, bore_locations=coordinates,
         bore_tilts=tilts, bore_orientations=orientations
+    )
+
+def merge_g_functions(g_func_mid, g_func_max):
+    if g_func_mid.bore_locations != g_func_max.bore_locations:
+        raise ValueError(f"Borehole coordinates do not match, unable to merge")
+    if g_func_mid.bore_tilts != g_func_max.bore_tilts:
+        raise ValueError(f"Borehole tilts do not match, unable to merge")
+    if g_func_mid.bore_orientations != g_func_max.bore_orientations:
+        raise ValueError(f"Borehole orientations do not match, unable to merge")
+    if  g_func_mid.B != g_func_max.B:
+        raise ValueError(f"Borehole spacings do not match, unable to merge")
+    if g_func_mid.d != g_func_max.d:
+        raise ValueError(f"Borehole depths do not match, unable to merge")
+    if g_func_mid.log_time != g_func_max.log_time:
+        raise ValueError(f"Borehole log times do not match, unable to merge")
+
+    new_r_b_values = deepcopy(g_func_mid.r_b_values)
+    new_g_lts = deepcopy(g_func_mid.g_lts)
+
+    for h, rb in g_func_max.r_b_values.items():
+        if h not in new_r_b_values:
+            new_r_b_values[h] = rb
+    for h, lts in g_func_max.g_lts.items():
+        if h not in new_g_lts:
+            new_g_lts[h] = lts
+
+    return GFunction(
+        b=g_func_mid.B, r_b_values=new_r_b_values, d=g_func_mid.d, g_lts=new_g_lts, log_time=g_func_mid.log_time, bore_locations=g_func_mid.bore_locations,
+        bore_tilts=g_func_mid.bore_tilts, bore_orientations=g_func_mid.bore_orientations
     )
 
 
