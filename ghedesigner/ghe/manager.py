@@ -24,7 +24,7 @@ from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRo
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
-from ghedesigner.utilities import combine_sts_lts, eskilson_log_times
+from ghedesigner.utilities import combine_sts_lts, eskilson_log_times, get_loads
 
 
 class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHEDesigner?
@@ -136,7 +136,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         return ghe
 
     def design_and_size_ghe(self, ghe_dict: dict, end_month: int, loads_override: list[float] | None = None):
-        ghe_loads: list[float] = loads_override if loads_override else ghe_dict["loads"]
+        ghe_loads = loads_override if loads_override else get_loads(ghe_dict["loads"])
+
         if (end_month % MONTHS_IN_YEAR) > 0:
             raise ValueError(f"end_month must be a multiple of {MONTHS_IN_YEAR}")
 

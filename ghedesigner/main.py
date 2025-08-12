@@ -5,7 +5,7 @@ from json import loads
 from pathlib import Path
 
 import click
-from jsonschema import ValidationError
+from jsonschema.exceptions import ValidationError
 
 from ghedesigner.constants import VERSION
 from ghedesigner.enums import TimestepType
@@ -75,6 +75,17 @@ def run(input_file_path: Path, output_directory: Path) -> int:
         # we are just doing a GHE design/sizing/simulation alone
         for ghe_name in ghe_names:
             ghe_dict = full_inputs["ground-heat-exchanger"][ghe_name]
+
+            if "loads" in ghe_dict and "file_path" in ghe_dict["loads"]:
+                if Path(ghe_dict["loads"]["file_path"]).is_absolute():
+                    ghe_dict["loads"]["file_path"] = str(Path(ghe_dict["loads"]["file_path"]).resolve())
+                else:
+                    # relatives paths as referenced from input file
+                    input_file_dir = input_file_path.parent.resolve()
+                    relative_file_path = Path(ghe_dict["loads"]["file_path"])
+                    loads_path = input_file_dir / relative_file_path
+                    ghe_dict["loads"]["file_path"] = str(loads_path.resolve())
+
             ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, full_inputs["fluid"])
             if "pre_designed" in ghe_dict:
                 log_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
@@ -126,39 +137,44 @@ def run(input_file_path: Path, output_directory: Path) -> int:
 @click.option("--validate-only", default=False, is_flag=True, show_default=False, help="Validate input file and exit.")
 @click.option("-c", "--convert", help="Convert output to specified format. Options supported: 'IDF'.")
 def run_manager_from_cli(input_path, output_directory, validate_only, convert):
+    # Note that since this is wrapped in click, it should use the exit(code) instead of return.
+    # Click will absorb the return code and not return it.
+    # If we use exit(code), it will return the code properly.
     input_path = Path(input_path).resolve()
 
     if validate_only:
         try:
             validate_input_file(input_path)
             logger.info("Valid input file.")
-            return 0
+            sys.exit(0)
         except ValidationError as ve:
             logger.error(ve)
-            return 1
+            sys.exit(1)
 
     if convert:
         if convert == "IDF":
             try:
                 write_idf(input_path)
                 print("Output converted to IDF objects.")
-                return 0
+                sys.exit(0)
             except Exception as e:  # noqa: BLE001
                 logger.warning(f"Conversion to IDF error: {e}")
-                return 1
+                sys.exit(1)
 
         else:
             print(f"Unsupported conversion format type: {format}", file=sys.stderr)
-            return 1
+            sys.exit(1)
 
     if output_directory is None:
         print("Output directory path must be passed as an argument, aborting", file=sys.stderr)
-        return 1
+        sys.exit(1)
 
     output_path = Path(output_directory).resolve()
 
-    return run(input_path, output_path)
+    return_code = run(input_path, output_path)
+    sys.exit(return_code)
 
 
 if __name__ == "__main__":
-    sys.exit(run_manager_from_cli())
+    exit_code = run_manager_from_cli()
+    sys.exit(exit_code)

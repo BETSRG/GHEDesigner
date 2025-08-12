@@ -25,11 +25,17 @@
       "format": "Meters",
       "description": "Minimum borehole-to-borehole spacing."
     },
+    "column": {
+      "type": ["string", "integer"]
+    },
     "conductivity": {
       "type": "number",
       "minimum": 0,
       "format": "Watts/Meter-Kelvin",
       "description": "Thermal conductivity."
+    },
+    "file_path": {
+      "type": "string"
     },
     "H": {
       "type": "number",
@@ -48,6 +54,54 @@
       "minimum": 0,
       "format": "Meters",
       "description": "Horizontal length of property boundary defining surface area available for ground heat exchanger."
+    },
+    "load_values": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "format": "Watts",
+      "minItems": 8760,
+      "maxItems": 8760,
+      "description": "Annual, hourly loads of the object. Positive value indicate heating/heat extraction, negative values indicate cooling/heat rejection."
+    },
+    "loads": {
+      "type": "object",
+      "properties": {
+        "column": {
+          "$ref": "#/$defs/column"
+        },
+        "file_path": {
+          "$ref": "#/$defs/file_path"
+        },
+        "load_values": {
+          "$ref": "#/$defs/load_values"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "load_values": {
+              "$ref": "#/$defs/load_values"
+            }
+          },
+          "required": ["load_values"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column": {
+              "$ref": "#/$defs/column"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            }
+          },
+          "required": ["file_path", "column"],
+          "additionalProperties": false
+        }
+      ],
+      "additionalProperties": false
     },
     "no_go_boundaries": {
       "type": "array",
@@ -776,16 +830,7 @@
             "additionalProperties": false
           },
           "loads": {
-            "type": "array",
-            "items": {
-              "items": {
-                "type": "number"
-              },
-              "format": "Watts",
-              "minItems": 8760,
-              "maxItems": 8760,
-              "description": "Annual, hourly heat extraction and heat rejection loads of the ground heat exchanger. Positive value indicate heat extraction, negative values indicate heat rejection."
-            }
+            "$ref": "#/$defs/loads"
           }
         },
         "required": [
