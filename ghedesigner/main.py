@@ -75,6 +75,17 @@ def run(input_file_path: Path, output_directory: Path) -> int:
         # we are just doing a GHE design/sizing/simulation alone
         for ghe_name in ghe_names:
             ghe_dict = full_inputs["ground-heat-exchanger"][ghe_name]
+
+            if "loads" in ghe_dict and "file_path" in ghe_dict["loads"]:
+                if Path(ghe_dict["loads"]["file_path"]).is_absolute():
+                    ghe_dict["loads"]["file_path"] = str(Path(ghe_dict["loads"]["file_path"]).resolve())
+                else:
+                    # relatives paths as referenced from input file
+                    input_file_dir = input_file_path.parent.resolve()
+                    relative_file_path = Path(ghe_dict["loads"]["file_path"])
+                    loads_path = input_file_dir / relative_file_path
+                    ghe_dict["loads"]["file_path"] = str(loads_path.resolve())
+
             ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, full_inputs["fluid"])
             if "pre_designed" in ghe_dict:
                 log_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
