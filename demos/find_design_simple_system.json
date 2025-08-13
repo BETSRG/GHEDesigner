@@ -65,7 +65,6 @@
   "simulation-control": {
     "thermal-sizing-run": true,
     "hourly-run": true,
-    "hydraulic-run": true,
     "simulation-months": 240
   }
 }

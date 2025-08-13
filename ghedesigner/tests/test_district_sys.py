@@ -9,13 +9,11 @@ from ghedesigner.tests.test_base_case import GHEBaseTest
 
 class TestDistrictSys(GHEBaseTest):
     def test_district_sys(self):
-        f_path = Path(__file__).resolve().parent / "test_data" / "3ghe-6hp_layout_input file.txt"
-
-        with open(f_path) as f1:
-            data = f1.readlines()
+        f_path_txt = Path(__file__).resolve().parent / "test_data" / "3ghe-6hp_layout_input file.txt"
+        f_path_json = Path(__file__).resolve().parent.parent.parent / "demos" / "simulate_3_bldg_3_ghe.json"
 
         System = GHEHPSystem()
-        System.read_ghe_hp_system_data(data, f_path.parent)
+        System.read_ghe_hp_system_data(f_path_txt, f_path_json, f_path_txt.parent)
 
         pipe = Pipe.init_single_u_tube(
             inner_diameter=0.03404,

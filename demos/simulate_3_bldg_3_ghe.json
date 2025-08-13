@@ -1,0 +1,123 @@
+{
+  "version": 2,
+  "topology": [
+    {
+      "type": "ground-heat-exchanger",
+      "name": "ghe1"
+    }
+  ],
+  "fluid": {
+    "fluid_name": "WATER",
+    "concentration_percent": 0,
+    "temperature": 20
+  },
+  "ground-heat-exchanger": {
+    "ghe1": {
+      "flow_rate": 0.5,
+      "flow_type": "BOREHOLE",
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 18.3
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "pre_designed": {
+        "arrangement": "RECTANGLE",
+        "H": 100,
+        "spacing_in_x_dimension": 5,
+        "spacing_in_y_dimension": 5,
+        "boreholes_in_x_dimension": 15,
+        "boreholes_in_y_dimension": 10
+      }
+    },
+    "ghe2": {
+      "flow_rate": 0.5,
+      "flow_type": "BOREHOLE",
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 18.3
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "pre_designed": {
+        "arrangement": "RECTANGLE",
+        "H": 100,
+        "spacing_in_x_dimension": 5,
+        "spacing_in_y_dimension": 5,
+        "boreholes_in_x_dimension": 10,
+        "boreholes_in_y_dimension": 8
+      }
+    },
+    "ghe3": {
+      "flow_rate": 0.5,
+      "flow_type": "BOREHOLE",
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 18.3
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "pre_designed": {
+        "arrangement": "RECTANGLE",
+        "H": 100,
+        "spacing_in_x_dimension": 5,
+        "spacing_in_y_dimension": 5,
+        "boreholes_in_x_dimension": 10,
+        "boreholes_in_y_dimension": 7
+      }
+    }
+  },
+  "simulation-control": {
+    "thermal-sizing-run": false,
+    "hourly-run": true,
+    "simulation-months": 240
+  }
+}

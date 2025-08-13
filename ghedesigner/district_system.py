@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import numpy as np
@@ -355,9 +356,20 @@ class GHEHPSystem:
         self.beta = 1.5
         self.matrix_size = 0
 
-    def read_ghe_hp_system_data(self, data, data_dir: Path):
+    def read_ghe_hp_system_data(self, f_path_txt: Path, f_path_json: Path, data_dir: Path):
+        with open(f_path_txt) as f1:
+            txt_data = f1.readlines()
+
+        json_data = json.loads(f_path_json.read_text())
+
         next_matrix_line = 0
-        for line in data:  # loop over all the lines
+
+        # ghe_data = json_data["ground-heat-exchanger"]
+        # for g in ghe_data:
+        #     next_matrix_line += 4
+        #     self.GHXs.append(GHX(g, next_matrix_line))
+
+        for line in txt_data:  # loop over all the lines
             cells = [c.strip() for c in line.strip().split(",")]
             keyword = cells[0].lower()
 
@@ -615,7 +627,7 @@ def find_item_by_id(obj_id, objectlist):
     # search a list of objects to find one with a particular name
     # of course, the objects must have a "name" member
     for item in objectlist:  # all objects in the list
-        if item.ID == obj_id:  # does it have the ID I am seeking?
+        if obj_id == item.ID:  # does it have the ID I am seeking?
             return item  # then return this one
     # next item
     return None  # couldn't find it

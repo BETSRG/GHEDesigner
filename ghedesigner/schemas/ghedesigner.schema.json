@@ -865,15 +865,11 @@
       "properties": {
         "thermal-sizing-run": {
           "type": "boolean",
-          "description": "This field is currently unused. It will enable or disable running a sizing calculation for the ground heat exchanger"
+          "description": "Field enables or disables running sizing calculations."
         },
         "hourly-run": {
           "type": "boolean",
-          "description": "This field is currently unused."
-        },
-        "hydraulic-run": {
-          "Type": "boolean",
-          "description": "This field is currently unused"
+          "description": "Field enables running hour simulation."
         },
         "simulation-months": {
           "type": "number",
