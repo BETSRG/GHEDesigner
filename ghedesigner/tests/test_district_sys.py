@@ -30,4 +30,4 @@ class TestDistrictSys(GHEBaseTest):
         borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
 
         System.solve_system(fluid, pipe, grout, soil, borehole)
-        System.create_output(self.test_outputs_directory)
+        System.create_output(self.tests_directory)
