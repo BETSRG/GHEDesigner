@@ -15,7 +15,7 @@ from ghedesigner.utilities import combine_sts_lts
 
 
 class GHX:
-    def __init__(self, cells):
+    def __init__(self, ghe_id, ghe_data):
         self.type = "GHX"
         self.input = None
         self.downstream_device = None
@@ -51,16 +51,16 @@ class GHX:
         self.q_ghe = None
         self.t_exit = None
 
-        self.ID = str(cells[1])
-        self.nodeID = str(cells[2])
-        self.n_rows = float(cells[3])
-        self.n_cols = float(cells[4])
-        self.row_spacing = float(cells[5])
-        self.col_spacing = float(cells[6])
-        self.beta = float(cells[7])
-        self.ghe_height = float(cells[8])
-        self.mass_flow_ghe_design = float(cells[9])
+        self.ID = ghe_id
+        self.nodeID = ghe_data["node_id"]
+        self.n_rows = ghe_data["pre_designed"]["boreholes_in_x_dimension"]
+        self.n_cols = ghe_data["pre_designed"]["boreholes_in_y_dimension"]
+        self.row_spacing = ghe_data["pre_designed"]["spacing_in_x_dimension"]
+        self.col_spacing = ghe_data["pre_designed"]["spacing_in_y_dimension"]
+        self.beta = ghe_data["beta"]
+        self.ghe_height = ghe_data["pre_designed"]["H"]
         self.nbh = self.n_rows * self.n_cols
+        self.mass_flow_ghe_design = ghe_data["flow_rate"] * self.nbh
         self.matrix_size = None
 
     def generate_g_function_object(self, log_time):
@@ -323,7 +323,6 @@ class HPmodel:
 
 class GHEHPSystem:
     def __init__(self):
-        self.title = None
         self.GHXs = []
         self.buildings = []
         self.zones = []
@@ -359,21 +358,13 @@ class GHEHPSystem:
 
         json_data = json.loads(f_path_json.read_text())
 
-        # ghe_data = json_data["ground-heat-exchanger"]
-        # for g in ghe_data:
-        #     next_matrix_line += 4
-        #     self.GHXs.append(GHX(g, next_matrix_line))
+        ghe_data = json_data["ground-heat-exchanger"]
+        for ghe_id, ghe_data in ghe_data.items():
+            self.GHXs.append(GHX(ghe_id, ghe_data))
 
         for line in txt_data:  # loop over all the lines
             cells = [c.strip() for c in line.strip().split(",")]
             keyword = cells[0].lower()
-
-            if keyword == "title":
-                self.title = cells[1].replace("'", "")
-
-            if keyword == "ghx":
-                this_ghx = GHX(cells)
-                self.GHXs.append(this_ghx)
 
             if keyword == "building":
                 this_building = Building(cells)

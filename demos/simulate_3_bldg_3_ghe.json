@@ -13,7 +13,9 @@
   },
   "ground-heat-exchanger": {
     "ghe1": {
-      "flow_rate": 0.5,
+      "node_id": "n16",
+      "beta": 1.5,
+      "flow_rate": 0.33753,
       "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
@@ -47,7 +49,9 @@
       }
     },
     "ghe2": {
-      "flow_rate": 0.5,
+      "node_id": "n18",
+      "beta": 1.5,
+      "flow_rate": 0.3375,
       "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
@@ -81,7 +85,9 @@
       }
     },
     "ghe3": {
-      "flow_rate": 0.5,
+      "node_id": "n20",
+      "beta": 1.5,
+      "flow_rate": 0.33757,
       "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
