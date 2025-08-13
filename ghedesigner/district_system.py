@@ -15,7 +15,7 @@ from ghedesigner.utilities import combine_sts_lts
 
 
 class GHX:
-    def __init__(self, cells, matrix_line):
+    def __init__(self, cells):
         self.type = "GHX"
         self.input = None
         self.downstream_device = None
@@ -60,8 +60,6 @@ class GHX:
         self.beta = float(cells[7])
         self.ghe_height = float(cells[8])
         self.mass_flow_ghe_design = float(cells[9])
-        self.matrix_line = matrix_line
-
         self.nbh = self.n_rows * self.n_cols
         self.matrix_size = None
 
@@ -205,7 +203,7 @@ class Building:
 
 
 class Zone:
-    def __init__(self, cells, matrix_line, data_dir: Path):
+    def __init__(self, cells, data_dir: Path):
         # values read from the file
         self.type = "zone"
         self.node = None
@@ -221,7 +219,6 @@ class Zone:
         self.hp_name = str(cells[4])
         self.loads_file = pd.read_csv(data_dir / cells[5])
         self.beta = float(cells[6])
-        self.matrix_line = matrix_line
         self.matrix_size = None
 
     def q_net_htg(self):
@@ -362,8 +359,6 @@ class GHEHPSystem:
 
         json_data = json.loads(f_path_json.read_text())
 
-        next_matrix_line = 0
-
         # ghe_data = json_data["ground-heat-exchanger"]
         # for g in ghe_data:
         #     next_matrix_line += 4
@@ -377,8 +372,7 @@ class GHEHPSystem:
                 self.title = cells[1].replace("'", "")
 
             if keyword == "ghx":
-                this_ghx = GHX(cells, matrix_line=next_matrix_line)
-                next_matrix_line += 4
+                this_ghx = GHX(cells)
                 self.GHXs.append(this_ghx)
 
             if keyword == "building":
@@ -390,8 +384,7 @@ class GHEHPSystem:
                 self.time_array = df["Hours"].values
                 self.n_timesteps = len(self.time_array)
 
-                this_zone = Zone(cells, next_matrix_line, data_dir)
-                next_matrix_line += 1
+                this_zone = Zone(cells, data_dir)
                 self.zones.append(this_zone)
 
             if keyword == "node":
