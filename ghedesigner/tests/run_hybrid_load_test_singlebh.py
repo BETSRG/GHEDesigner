@@ -31,7 +31,7 @@ def main():
     grout = Grout(k=1.0, rho_cp=3901000.0)
     fluid = GHEFluid(fluid_str="water", percent=0.0, temperature=20.0)
     borehole = Borehole(burial_depth=2.0, borehole_radius=0.5, borehole_height=100)
-    ground_loads = get_atlanta_loads()
+    building_loads = get_atlanta_loads()
     b = 5.0
     number_of_boreholes = 1
     length = length_of_side(number_of_boreholes, b)
@@ -53,7 +53,7 @@ def main():
         continue_if_design_unmet=True,
         max_boreholes=None,
         geometric_constraints=geometry,
-        hourly_extraction_ground_loads=ground_loads,
+        hourly_extraction_ground_loads=building_loads,
         method=TimestepType.HYBRID,
         flow_type=FlowConfigType.BOREHOLE,
     )
@@ -64,3 +64,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+       # hourly_temps = (
+        # #     18 + 5 * np.sin(2 * np.pi * np.arange(8760) / 24 / 365) + 3 * np.sin(2 * np.pi * np.arange(8760) / 24)
+        # # )  # TODO eventually this will have to run a hourly sim for hourly temps

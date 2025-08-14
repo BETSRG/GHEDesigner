@@ -9,7 +9,7 @@ from ghedesigner.enums import PipeType, TimestepType
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_loads import HybridLoad
-from ghedesigner.ghe.peak_loads import HybridLoads2
+from ghedesigner.ghe.hybrid_loads import HybridLoads2
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Grout, Soil
 from ghedesigner.utilities import combine_sts_lts, simulate_detailed, solve_root
@@ -30,8 +30,11 @@ class GHE:
         start_month: int,
         end_month: int,
         hourly_extraction_ground_loads: list,
+        hourly_ExFTghe_temps: list | None,
+        radial_numerical: SingleUTube,
         field_type="N/A",
         field_specifier="N/A",
+
     ) -> None:
         self.field_type = field_type
         self.fieldSpecifier = field_specifier
@@ -63,18 +66,26 @@ class GHE:
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.times = np.empty((0,), dtype=np.float64)
         self.loading = None
+        self.radial_numerical = radial_numerical
 
-        # hourly_temps = (
-        #     18 + 5 * np.sin(2 * np.pi * np.arange(8760) / 24 / 365) + 3 * np.sin(2 * np.pi * np.arange(8760) / 24)
-        # )  # TODO eventually this will have to run a hourly sim for hourly temps
-
-        hourly_temps = simulate_detailed()
+        hourly_ExFTghe_temps = simulate_detailed(
+            q_dot = self.hourly_extraction_ground_loads,
+            time_values = time_values,
+            g = self.gFunction,
+            nbh = self.nbh,
+            t_s = self.radial_numerical,
+            k = 0.48,
+            h = 100,
+            tg = 17.5,
+            rb = 0.13,
+            m_dot = 0.1,
+            cp = 3795
+        )
 
         h = HybridLoads2(
-            loads=self.hourly_extraction_ground_loads,
-            bhe=self.bhe_eq,
-            radial_numerical=self.bhe_eq,
-            hourly_temps=hourly_temps,
+            building_loads = self.hourly_extraction_ground_loads,
+            bhe = self.bhe_eq,
+            radial_numerical = self.radial_numerical,
         )
 
         self.hybrid_load = HybridLoad(

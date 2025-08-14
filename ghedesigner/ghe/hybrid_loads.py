@@ -1,32 +1,41 @@
 from calendar import monthrange
 from json import dumps
 from math import floor
-
+from pathlib import Path
 import numpy as np
+from scipy.interpolate import interp1d
 
 from ghedesigner.constants import HRS_IN_DAY, SEC_IN_HR, TWO_PI
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
+from ghedesigner import utilities
+
+
+# time array for hourly_temps
+hours_in_year = 24 * 365  # 8760 hours
+hourly_seconds = np.arange(0, hours_in_year * 3600, 3600)
+time_values = np.array(hourly_seconds)
+
 
 
 class HybridLoads2:
     def __init__(
         self,
-        loads: list,
+        building_loads: list,
         bhe: SingleUTube,
         radial_numerical: SingleUTube,
+        #g: interp1d,
+        #hourly_ExFTghe_temps: list,
         # sim_params: SimulationParameters,
-        hourly_temps: list,
         years=None,
         start_month=None,
         end_month=None,
     ) -> None:
+
+        self.building_loads = building_loads
+
         if years is None:
             years = [2025]
         self.years = years
-
-        self.loads = loads
-        #print(loads[54:70])
-        self.hourly_ExFT_temps = hourly_temps
 
         self.start_month = start_month
         self.end_month = end_month
@@ -107,6 +116,10 @@ class HybridLoads2:
         self.split_heat_and_cool()
         # Process the loads and by month
         self.split_loads_by_month()
+        # get target ExFT temperatures from the original loads for every hour of the year
+        self.target_ExFTghe_temps = self.perform_hrly_ExFT_simulation(
+            self.normalize_loads(self.bldg_to_ground_load(self.building_loads))
+        )
         # Process the ExFT by month
         self.split_ExFT_by_month()
         # return the highest 4 ExFTs for cooling
@@ -125,20 +138,21 @@ class HybridLoads2:
         self.hrly_extraction_loads_norm = []
         self.hrly_rejection_loads_norm = []
 
+
         # Step 1----------------------------------------
 
-    def bldg_to_ground_load(self) -> list:
+    def bldg_to_ground_load(self, bldg_loads) -> list:
         """
         Acts as a constant COP heatpump
         :return: ground loads in Watts
         """
         ground_loads = []
 
-        for i in range(len(self.loads)):
-            if self.loads[i] >= 0:
-                ground_loads.append((self.cop_h - 1) / self.cop_h * self.loads[i])
+        for i in range(len(self.building_loads)):
+            if self.building_loads[i] >= 0:
+                ground_loads.append((self.cop_h - 1) / self.cop_h * bldg_loads[i])
             else:
-                ground_loads.append((1 + self.cop_c) / self.cop_c * self.loads[i])
+                ground_loads.append((1 + self.cop_c) / self.cop_c * bldg_loads[i])
 
         print("bldg loads have been converted to ground loads.")
         return ground_loads
@@ -153,8 +167,8 @@ class HybridLoads2:
         :return: hourly ExFTs split into heating and cooling lists in Celsius
         """
 
-        self.hourly_extraction_loads = [x / 1000.0 if x >= 0.0 else 0.0 for x in self.loads]
-        self.hourly_rejection_loads = [abs(x) / 1000.0 if x < 0.0 else 0.0 for x in self.loads]
+        self.hourly_extraction_loads = [x / 1000.0 if x >= 0.0 else 0.0 for x in self.building_loads]
+        self.hourly_rejection_loads = [abs(x) / 1000.0 if x < 0.0 else 0.0 for x in self.building_loads]
 
         self.hrly_extraction_loads_norm = self.normalize_loads(self.hourly_extraction_loads)
         self.hrly_rejection_loads_norm = self.normalize_loads(self.hourly_rejection_loads)
@@ -244,6 +258,27 @@ class HybridLoads2:
         # print(f"peak heating load per month[kW]= {self.monthly_peak_hl[1:4]} ")
         print("split_loads_by_month has run")
 
+
+
+    def perform_hrly_ExFT_simulation(self, load_profile):
+        """
+        This performs an ExFT simulation given a loads profile
+        """
+
+        ts = self.borehole.t_s
+        two_pi_k = TWO_PI * self.bhe.soil.k
+        resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
+        print(f"resist_bh_effective = {resist_bh_effective}")
+        g = self.borehole.g_sts
+        q = load_profile
+
+        hours_in_year = list(range(len(q)))
+        delta_t_fluid = self.simulate_hourly(hours_in_year,q,g,resist_bh_effective,two_pi_k,ts)
+    # get target ExFT temperatures from the original loads for every hour of the year
+    # (moved to __init__ to use self and avoid NameError)
+
+        return delta_t_fluid
+
     def split_ExFT_by_month(self) -> None:
         """Slice the hourly ExFT of the GHE into months"""
         # TODO find a way to slice month hours outside of split_ExFT_by_month and split_load_by_month functions
@@ -255,7 +290,7 @@ class HybridLoads2:
             hours_in_month = HRS_IN_DAY * self.days_in_month[i]
             # Slice the hours in this current month
 
-            current_month_ExFTs = self.hourly_ExFT_temps[
+            current_month_ExFTs = self.target_ExFTghe_temps[
                 hours_in_previous_months : hours_in_previous_months + hours_in_month
             ]
 
