@@ -41,15 +41,11 @@ class GHX:
         #     rho_cp=ghe_data["soil"]["rho_cp"],
         #     ugt=ghe_data["soil"]["undisturbed_temp"]
         # )
-        #
-        # self.grout = Grout(
-        #     k=ghe_data["soil"]["conductivity"],
-        #     rho_cp=ghe_data["soil"]["rho_cp"]
-        # )
+
+        self.grout = Grout(k=ghe_data["grout"]["conductivity"], rho_cp=ghe_data["grout"]["rho_cp"])
 
         # self.pipe = Pipe
         self.soil = Soil
-        self.grout = Grout
 
         self.borehole = Borehole
         self.fluid = fluid
@@ -384,7 +380,6 @@ class GHEHPSystem:
         self.matrix_size = 0
 
         self.soil = Soil(k=2.0, rho_cp=2343493.0, ugt=6.1)
-        self.grout = Grout(k=1.0, rho_cp=3901000.0)
         self.fluid = GHEFluid(fluid_str="PropyleneGlycol", percent=30.0, temperature=20.0)
         self.borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
 
@@ -442,8 +437,6 @@ class GHEHPSystem:
         tg = 0
 
         for this_ghx in self.GHXs:
-            this_ghx.fluid = self.fluid
-            this_ghx.grout = self.grout
             this_ghx.soil = self.soil
             this_ghx.borehole = self.borehole
             this_ghx.height = this_ghx.borehole.H
