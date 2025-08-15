@@ -10,7 +10,7 @@ from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import Grout, Soil
+from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.utilities import combine_sts_lts
 
 
@@ -336,7 +336,7 @@ class HPmodel:
 
 
 class GHEHPSystem:
-    def __init__(self):
+    def __init__(self, f_path_txt: Path, f_path_json: Path, data_dir: Path):
         self.GHXs = []
         self.buildings = []
         self.zones = []
@@ -349,11 +349,6 @@ class GHEHPSystem:
         self.n_timesteps = None
 
         # Thermal object references (to be set during setup)
-        self.pipe = None
-        self.soil = None
-        self.grout = None
-        self.borehole = None
-        self.fluid = None
         self.nbh_total = None
         self.gFunction = None
         self.g = None
@@ -366,7 +361,20 @@ class GHEHPSystem:
         self.beta = 1.5
         self.matrix_size = 0
 
-    def read_ghe_hp_system_data(self, f_path_txt: Path, f_path_json: Path, data_dir: Path):
+        self.pipe = Pipe.init_single_u_tube(
+            inner_diameter=0.03404,
+            outer_diameter=0.04216,
+            shank_spacing=0.01856,
+            roughness=1.0e-6,
+            conductivity=0.4,
+            rho_cp=1542000.0,
+        )
+
+        self.soil = Soil(k=2.0, rho_cp=2343493.0, ugt=6.1)
+        self.grout = Grout(k=1.0, rho_cp=3901000.0)
+        self.fluid = GHEFluid(fluid_str="PropyleneGlycol", percent=30.0, temperature=20.0)
+        self.borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
+
         with open(f_path_txt) as f1:
             txt_data = f1.readlines()
 
@@ -415,17 +423,17 @@ class GHEHPSystem:
         for this_zone in self.zones:
             this_zone.matrix_size = self.matrix_size
 
-    def solve_system(self, fluid, pipe, grout, soil, borehole):
+    def solve_system(self):
         ts = 0
         cp = 0
         tg = 0
 
         for this_ghx in self.GHXs:
-            this_ghx.fluid = fluid
-            this_ghx.pipe = pipe
-            this_ghx.grout = grout
-            this_ghx.soil = soil
-            this_ghx.borehole = borehole
+            this_ghx.fluid = self.fluid
+            this_ghx.pipe = self.pipe
+            this_ghx.grout = self.grout
+            this_ghx.soil = self.soil
+            this_ghx.borehole = self.borehole
             this_ghx.height = this_ghx.borehole.H
             this_ghx.nbh = this_ghx.n_rows * this_ghx.n_cols
             this_ghx.mass_flow_ghe_borehole_design = this_ghx.mass_flow_ghe_design / this_ghx.nbh
