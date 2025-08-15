@@ -44,7 +44,10 @@ class GHX:
 
         self.grout = Grout(k=ghe_data["grout"]["conductivity"], rho_cp=ghe_data["grout"]["rho_cp"])
 
-        self.borehole = Borehole
+        self.borehole = Borehole(
+            burial_depth=ghe_data["borehole"]["buried_depth"], borehole_radius=ghe_data["borehole"]["diameter"] / 2.0
+        )
+
         self.fluid = fluid
         self.bhe_type = PipeType.SINGLEUTUBE
         self.split_ratio = None
@@ -377,7 +380,6 @@ class GHEHPSystem:
         self.matrix_size = 0
 
         self.fluid = GHEFluid(fluid_str="PropyleneGlycol", percent=30.0, temperature=20.0)
-        self.borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
 
         with open(f_path_txt) as f1:
             txt_data = f1.readlines()
@@ -433,7 +435,6 @@ class GHEHPSystem:
         tg = 0
 
         for this_ghx in self.GHXs:
-            this_ghx.borehole = self.borehole
             this_ghx.height = this_ghx.borehole.H
             this_ghx.nbh = this_ghx.n_rows * this_ghx.n_cols
             this_ghx.mass_flow_ghe_borehole_design = this_ghx.mass_flow_ghe_design / this_ghx.nbh
