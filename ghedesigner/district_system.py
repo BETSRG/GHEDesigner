@@ -15,7 +15,7 @@ from ghedesigner.utilities import combine_sts_lts
 
 
 class GHX:
-    def __init__(self, ghe_id: str, ghe_data: dict):
+    def __init__(self, ghe_id: str, ghe_data: dict, fluid: GHEFluid):
         self.type = "GHX"
         self.input = None
         self.downstream_device = None
@@ -26,11 +26,33 @@ class GHX:
         self.m_dot_total = None
 
         # Thermal object references (to be set during setup)
-        self.pipe = Pipe
+
+        self.pipe = Pipe.init_single_u_tube(
+            inner_diameter=ghe_data["pipe"]["inner_diameter"],
+            outer_diameter=ghe_data["pipe"]["outer_diameter"],
+            shank_spacing=ghe_data["pipe"]["shank_spacing"],
+            roughness=ghe_data["pipe"]["roughness"],
+            conductivity=ghe_data["pipe"]["conductivity"],
+            rho_cp=ghe_data["pipe"]["rho_cp"],
+        )
+
+        # self.soil = Soil(
+        #     k=ghe_data["soil"]["conductivity"],
+        #     rho_cp=ghe_data["soil"]["rho_cp"],
+        #     ugt=ghe_data["soil"]["undisturbed_temp"]
+        # )
+        #
+        # self.grout = Grout(
+        #     k=ghe_data["soil"]["conductivity"],
+        #     rho_cp=ghe_data["soil"]["rho_cp"]
+        # )
+
+        # self.pipe = Pipe
         self.soil = Soil
         self.grout = Grout
+
         self.borehole = Borehole
-        self.fluid = None
+        self.fluid = fluid
         self.bhe_type = PipeType.SINGLEUTUBE
         self.split_ratio = None
 
@@ -361,15 +383,6 @@ class GHEHPSystem:
         self.beta = 1.5
         self.matrix_size = 0
 
-        self.pipe = Pipe.init_single_u_tube(
-            inner_diameter=0.03404,
-            outer_diameter=0.04216,
-            shank_spacing=0.01856,
-            roughness=1.0e-6,
-            conductivity=0.4,
-            rho_cp=1542000.0,
-        )
-
         self.soil = Soil(k=2.0, rho_cp=2343493.0, ugt=6.1)
         self.grout = Grout(k=1.0, rho_cp=3901000.0)
         self.fluid = GHEFluid(fluid_str="PropyleneGlycol", percent=30.0, temperature=20.0)
@@ -382,7 +395,7 @@ class GHEHPSystem:
 
         ghe_data = json_data["ground-heat-exchanger"]
         for ghe_id, ghe_data in ghe_data.items():
-            self.GHXs.append(GHX(ghe_id, ghe_data))
+            self.GHXs.append(GHX(ghe_id, ghe_data, self.fluid))
 
         hp_data = json_data["heat_pump"]
         for hp_id, hp_data in hp_data.items():
@@ -430,7 +443,6 @@ class GHEHPSystem:
 
         for this_ghx in self.GHXs:
             this_ghx.fluid = self.fluid
-            this_ghx.pipe = self.pipe
             this_ghx.grout = self.grout
             this_ghx.soil = self.soil
             this_ghx.borehole = self.borehole
