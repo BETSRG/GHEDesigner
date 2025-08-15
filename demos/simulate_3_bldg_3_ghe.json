@@ -181,7 +181,7 @@
       "soil": {
         "conductivity": 2,
         "rho_cp": 2343493,
-        "undisturbed_temp": 18.3
+        "undisturbed_temp": 6.1
       },
       "pipe": {
         "inner_diameter": 0.03404,
@@ -217,7 +217,7 @@
       "soil": {
         "conductivity": 2,
         "rho_cp": 2343493,
-        "undisturbed_temp": 18.3
+        "undisturbed_temp": 6.1
       },
       "pipe": {
         "inner_diameter": 0.03404,
@@ -253,7 +253,7 @@
       "soil": {
         "conductivity": 2,
         "rho_cp": 2343493,
-        "undisturbed_temp": 18.3
+        "undisturbed_temp": 6.1
       },
       "pipe": {
         "inner_diameter": 0.03404,
