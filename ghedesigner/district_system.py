@@ -54,6 +54,8 @@ class GHX:
         self.bhe_type = PipeType.SINGLEUTUBE
         self.split_ratio = None
 
+        self.two_pi_k = TWO_PI * self.soil.k
+
         # Computed properties
         self.bhe = None
         self.r_b = None
@@ -93,6 +95,8 @@ class GHX:
         self.t_mean = np.full(N_TIMESTEPS, self.soil.ugt)
         self.q_ghe = np.zeros(N_TIMESTEPS)
         self.t_exit = np.full(N_TIMESTEPS, self.soil.ugt)
+
+        self.time_array = np.arange(1, N_TIMESTEPS + 1)
 
     def generate_g_function_object(self, log_time):
         self.r_b = self.bhe.calc_effective_borehole_resistance()
@@ -149,25 +153,24 @@ class GHX:
 
         return g, g_bhw
 
-    def calculation_of_ghe_constant_c_n(self, g, ts, time_array):
+    def calculation_of_ghe_constant_c_n(self, g, ts):
         """
         Calculate C_n values for three GHEs based on their g-functions.
 
         Cn = 1 / (2 * pi * K_s) * g((tn - tn-1) / t_s) + R_b
         """
 
-        two_pi_k = TWO_PI * self.soil.k
         c_n = np.zeros(N_TIMESTEPS, dtype=float)
 
         for i in range(1, N_TIMESTEPS):
-            delta_log_time = np.log((time_array[i] - time_array[i - 1]) / (ts / 3600))
+            delta_log_time = np.log((self.time_array[i] - self.time_array[i - 1]) / (ts / 3600))
             g_val = g(delta_log_time)
 
-            c_n[i] = (1 / two_pi_k * g_val) + self.r_b
+            c_n[i] = (1 / self.two_pi_k * g_val) + self.r_b
 
         return c_n
 
-    def compute_history_term(self, i, time_array, ts, two_pi_k, g, H_n_ghe, total_values_ghe, q_ghe):
+    def compute_history_term(self, i, ts, g, H_n_ghe, total_values_ghe, q_ghe):
         """
         Computes the history term H_n for this GHX at time index `i`.
         Updates self.total_values_ghe and self.H_n_ghe in place.
@@ -175,21 +178,21 @@ class GHX:
         if i == 0:
             raise IndexError("Timestep index error")
 
-        time_n = time_array[i]
+        time_n = self.time_array[i]
 
         # Compute dimensionless time for all indices from 1 to i-1
         indices = np.arange(1, i)
-        dim_less_time = np.log((time_n - time_array[indices - 1]) / (ts / 3600))
+        dim_less_time = np.log((time_n - self.time_array[indices - 1]) / (ts / 3600))
 
         # Compute contributions from all previous steps
-        delta_q_ghe = (q_ghe[indices] - q_ghe[indices - 1]) / two_pi_k
+        delta_q_ghe = (q_ghe[indices] - q_ghe[indices - 1]) / self.two_pi_k
         values = np.sum(delta_q_ghe * g(dim_less_time))
 
         total_values_ghe[i] = values
 
         # Contribution from the last time step only
-        dim1_less_time = np.log((time_n - time_array[i - 1]) / (ts / 3600))
-        H_n_ghe[i] = self.soil.ugt - total_values_ghe[i] + (q_ghe[i - 1] / two_pi_k * g(dim1_less_time))
+        dim1_less_time = np.log((time_n - self.time_array[i - 1]) / (ts / 3600))
+        H_n_ghe[i] = self.soil.ugt - total_values_ghe[i] + (q_ghe[i - 1] / self.two_pi_k * g(dim1_less_time))
 
         return H_n_ghe, total_values_ghe
 
@@ -375,7 +378,6 @@ class GHEHPSystem:
         self.HPmodels = []
         self.bhe = None
         self.g_value = {}
-        self.time_array = None
 
         # Thermal object references (to be set during setup)
         self.nbh_total = None
@@ -414,9 +416,6 @@ class GHEHPSystem:
                 self.buildings.append(this_building)
 
             if keyword == "zone":
-                df = pd.read_csv(data_dir / cells[5])
-                self.time_array = df["Hours"].values
-
                 this_zone = Zone(cells, data_dir)
                 self.zones.append(this_zone)
 
@@ -466,7 +465,7 @@ class GHEHPSystem:
 
             self.gFunction = this_ghx.generate_g_function_object(self.log_time)
             self.g, _ = this_ghx.grab_g_function(self.log_time)
-            self.c_n = this_ghx.calculation_of_ghe_constant_c_n(self.g, ts, self.time_array)
+            self.c_n = this_ghx.calculation_of_ghe_constant_c_n(self.g, ts)
 
         # Initializing t_eft, t__mean, q_ghe, t_exit
         for this_zone in self.zones:
@@ -500,13 +499,12 @@ class GHEHPSystem:
 
             for j, this_ghx in enumerate(self.GHXs):
                 q_ghe = this_ghx.q_ghe[:i]
-                two_pi_k = TWO_PI * this_ghx.soil.k
                 split_ratio = this_ghx.nbh / self.nbh_total
                 mass_flow_ghe = m_loop * split_ratio
                 g = self.g
                 c_n = self.c_n[i]
                 this_ghx.H_n_ghe, this_ghx.total_values_ghe = this_ghx.compute_history_term(
-                    i, self.time_array, ts, two_pi_k, g, this_ghx.H_n_ghe, this_ghx.total_values_ghe, q_ghe
+                    i, ts, g, this_ghx.H_n_ghe, this_ghx.total_values_ghe, q_ghe
                 )
                 rows, rhs_values = this_ghx.generate_ghx_matrix_row(m_loop, mass_flow_ghe, cp, this_ghx.H_n_ghe[i], c_n)
                 for row, rhs in zip(rows, rhs_values):
