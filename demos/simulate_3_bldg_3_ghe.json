@@ -11,6 +11,163 @@
     "concentration_percent": 0,
     "temperature": 20
   },
+  "heat_pump": {
+    "hp1": {
+      "cooling": {
+        "a": 0.0001,
+        "b": 0.00112,
+        "c": 1.13,
+        "c1": -0.393,
+        "c2": -30.3,
+        "c3": 6777.0,
+        "design_cap": 4396.0
+      },
+      "design_flow": 0.296,
+      "heating": {
+        "a": -7.13e-5,
+        "b": 0.00534,
+        "c": 0.734,
+        "c1": -0.124,
+        "c2": 112.0,
+        "c3": 4114.0,
+        "design_cap": 4140.0
+      }
+    },
+    "hp2": {
+      "cooling": {
+        "a": 0.0001,
+        "b": -0.00041,
+        "c": 1.15,
+        "c1": -1.2,
+        "c2": -4.72,
+        "c3": 9629.0,
+        "design_cap": 6709.0
+      },
+      "design_flow": 0.495,
+      "heating": {
+        "a": -7.86e-5,
+        "b": 0.00539,
+        "c": 0.734,
+        "c1": 0.178,
+        "c2": 158.0,
+        "c3": 6712.0,
+        "design_cap": 6797.0
+      }
+    },
+    "hp3": {
+      "cooling": {
+        "a": 0.0001,
+        "b": -0.00084,
+        "c": 1.16,
+        "c1": -2.16,
+        "c2": 46.8,
+        "c3": 12397.0,
+        "design_cap": 9752.0
+      },
+      "design_flow": 0.693,
+      "heating": {
+        "a": -6.8e-5,
+        "b": 0.00497,
+        "c": 0.738,
+        "c1": 0.091,
+        "c2": 224.0,
+        "c3": 9422.0,
+        "design_cap": 9500.0
+      }
+    },
+    "hp4": {
+      "cooling": {
+        "a": 0.0,
+        "b": 0.0,
+        "c": 0.0,
+        "c1": 0.0,
+        "c2": 0.0,
+        "c3": 0.0,
+        "design_cap": 0.0
+      },
+      "design_flow": 0.425,
+      "heating": {
+        "a": -6.06e-5,
+        "b": 0.0051,
+        "c": 0.692,
+        "c1": -1.19,
+        "c2": 212.0,
+        "c3": 8932.0,
+        "design_cap": 9561.0
+      }
+    }
+  },
+  "building": {
+    "building1": {
+      "space_heating": {
+        "loads": {
+          "column": "HPHtgLd_W",
+          "file_path": "ghedesigner/tests/test_data/B1Z1.csv"
+        },
+        "heat_pump": "hp1"
+      },
+      "space_cooling": {
+        "loads": {
+          "column": "HPClgLd_W",
+          "file_path": "ghedesigner/tests/test_data/B1Z1.csv"
+        },
+        "heat_pump": "hp1"
+      },
+      "service_hot_water": {
+        "loads": {
+          "column": "HPHtgLd_W",
+          "file_path": "ghedesigner/tests/test_data/B1Z2.csv"
+        },
+        "heat_pump": "hp4"
+      }
+    },
+    "building2": {
+      "space_heating": {
+        "loads": {
+          "column": "HPHtgLd_W",
+          "file_path": "ghedesigner/tests/test_data/B2Z1.csv"
+        },
+        "heat_pump": "hp2"
+      },
+      "space_cooling": {
+        "loads": {
+          "column": "HPClgLd_W",
+          "file_path": "ghedesigner/tests/test_data/B2Z1.csv"
+        },
+        "heat_pump": "hp2"
+      },
+      "service_hot_water": {
+        "loads": {
+          "column": "HPHtgLd_W",
+          "file_path": "ghedesigner/tests/test_data/B2Z2.csv"
+        },
+        "heat_pump": "hp4"
+      }
+    },
+    "building3": {
+      "space_heating": {
+        "loads": {
+          "column": "HPHtgLd_W",
+          "file_path": "ghedesigner/tests/test_data/B3Z1.csv"
+        },
+        "heat_pump": "hp3"
+      },
+      "space_cooling": {
+        "loads": {
+          "column": "HPClgLd_W",
+          "file_path": "ghedesigner/tests/test_data/B3Z1.csv"
+        },
+        "heat_pump": "hp3"
+      },
+      "service_hot_water": {
+        "loads": {
+          "column": "HPHtgLd_W",
+          "file_path": "ghedesigner/tests/test_data/B3Z2.csv"
+        },
+        "heat_pump": "hp4"
+      }
+    }
+  },
   "ground-heat-exchanger": {
     "ghe1": {
       "node_id": "n16",

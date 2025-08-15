@@ -15,7 +15,7 @@ from ghedesigner.utilities import combine_sts_lts
 
 
 class GHX:
-    def __init__(self, ghe_id, ghe_data):
+    def __init__(self, ghe_id: str, ghe_data: dict):
         self.type = "GHX"
         self.input = None
         self.downstream_device = None
@@ -309,16 +309,29 @@ class DistPipe:
 
 
 class HPmodel:
-    def __init__(self, cells):
-        self.name = str(cells[1])
-        self.ID = str(cells[2])
-        self.a_htg, self.b_htg, self.c_htg = (float(cells[3]), float(cells[4]), float(cells[5]))
-        self.a_clg, self.b_clg, self.c_clg = (float(cells[6]), float(cells[7]), float(cells[8]))
-        self.c1_htg, self.c2_htg, self.c3_htg = (float(cells[9]), float(cells[10]), float(cells[11]))
-        self.c1_clg, self.c2_clg, self.c3_clg = (float(cells[12]), float(cells[13]), float(cells[14]))
-        self.m_single_hp = float(cells[15])
-        self.m_design_htg_cap = float(cells[16])
-        self.m_design_clg_cap = float(cells[17])
+    def __init__(self, hp_id: str, hp_data: dict):
+        # self.name = str(cells[1])
+        self.ID = hp_id
+
+        self.a_htg = hp_data["heating"]["a"]
+        self.b_htg = hp_data["heating"]["b"]
+        self.c_htg = hp_data["heating"]["c"]
+
+        self.a_clg = hp_data["cooling"]["a"]
+        self.b_clg = hp_data["cooling"]["b"]
+        self.c_clg = hp_data["cooling"]["c"]
+
+        self.c1_htg = hp_data["heating"]["c1"]
+        self.c2_htg = hp_data["heating"]["c2"]
+        self.c3_htg = hp_data["heating"]["c3"]
+
+        self.c1_clg = hp_data["cooling"]["c1"]
+        self.c2_clg = hp_data["cooling"]["c2"]
+        self.c3_clg = hp_data["cooling"]["c3"]
+
+        self.m_single_hp = hp_data["design_flow"]
+        self.m_design_htg_cap = hp_data["heating"]["design_cap"]
+        self.m_design_clg_cap = hp_data["cooling"]["design_cap"]
 
 
 class GHEHPSystem:
@@ -362,6 +375,10 @@ class GHEHPSystem:
         for ghe_id, ghe_data in ghe_data.items():
             self.GHXs.append(GHX(ghe_id, ghe_data))
 
+        hp_data = json_data["heat_pump"]
+        for hp_id, hp_data in hp_data.items():
+            self.HPmodels.append(HPmodel(hp_id, hp_data))
+
         for line in txt_data:  # loop over all the lines
             cells = [c.strip() for c in line.strip().split(",")]
             keyword = cells[0].lower()
@@ -385,10 +402,6 @@ class GHEHPSystem:
             if keyword == "pipe":
                 this_pipe = DistPipe(cells)
                 self.pipes.append(this_pipe)
-
-            if keyword == "hpmodel":
-                this_hp_model = HPmodel(cells)
-                self.HPmodels.append(this_hp_model)
 
         self.update_connections()
         self.nbh_total = sum(this_ghx.n_rows * this_ghx.n_cols for this_ghx in self.GHXs)
@@ -611,7 +624,7 @@ def find_item_by_id(obj_id, objectlist):
     # search a list of objects to find one with a particular name
     # of course, the objects must have a "name" member
     for item in objectlist:  # all objects in the list
-        if obj_id == item.ID:  # does it have the ID I am seeking?
+        if obj_id.lower() == item.ID.lower():  # does it have the ID I am seeking?
             return item  # then return this one
     # next item
     return None  # couldn't find it
