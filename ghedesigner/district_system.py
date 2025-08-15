@@ -217,11 +217,12 @@ class Zone:
         self.ID = str(cells[2])
         self.nodeID = str(cells[3])
         self.hp_name = str(cells[4])
-        self.loads_file = pd.read_csv(data_dir / cells[5])
+        self.df_zone = pd.read_csv(data_dir / cells[5])
         self.beta = float(cells[6])
         self.matrix_size = None
+        self.q_net_htg = self.calc_q_net_htg()
 
-    def q_net_htg(self):
+    def calc_q_net_htg(self):
         """
         Calculate net heat extracted/rejected each hour for the zone.
         If either column is missing, default to zeros.
@@ -238,12 +239,12 @@ class Zone:
 
         return h - c
 
-    def zone_mass_flow_rate(self, t_eft, q_net_htg, i):
+    def zone_mass_flow_rate(self, t_eft, i):
         cap_htg = self.hp.c1_htg * t_eft**2 + self.hp.c2_htg * t_eft + self.hp.c3_htg
         cap_clg = self.hp.c1_clg * t_eft**2 + self.hp.c2_clg * t_eft + self.hp.c3_clg
         m_single_hp = self.hp.m_single_hp
 
-        q_i = q_net_htg[i]
+        q_i = self.q_net_htg[i]
         hp_capacity = cap_htg if q_i > 0 else cap_clg
 
         # compute mass flow rates
@@ -477,9 +478,7 @@ class GHEHPSystem:
 
             for this_zone in self.zones:
                 t_eft = this_zone.t_eft[i - 1]
-                this_zone.df_zone = this_zone.loads_file
-                q_net_htg = this_zone.q_net_htg()
-                m_zone = this_zone.zone_mass_flow_rate(t_eft, q_net_htg, i)
+                m_zone = this_zone.zone_mass_flow_rate(t_eft, i)
                 total_hp_flow += m_zone
 
             m_loop = total_hp_flow * self.beta
