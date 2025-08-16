@@ -227,7 +227,7 @@ class GHX:
 
         return H_n_ghe, total_values_ghe
 
-    def generate_ghx_matrix_row(self, m_loop, mass_flow_ghe, H_n_ghe, c_n):
+    def generate_ghx_matrix_row(self, m_loop, H_n_ghe, idx_timestep):
         row1 = np.zeros(self.matrix_size)
         row2 = np.zeros(self.matrix_size)
         row3 = np.zeros(self.matrix_size)
@@ -235,13 +235,14 @@ class GHX:
 
         row_index = self.row_index
         neighbour_index = self.downstream_device.row_index
+        mass_flow_ghe = m_loop * self.split_ratio
 
         row1[row_index] = (m_loop - mass_flow_ghe) * self.cp
         row1[row_index + 3] = mass_flow_ghe * self.cp
         row1[neighbour_index] = -m_loop * self.cp
 
         row2[row_index + 1] = 1
-        row2[row_index + 2] = c_n
+        row2[row_index + 2] = self.c_n[idx_timestep]
 
         row3[row_index] = -1
         row3[row_index + 1] = 2
@@ -497,13 +498,11 @@ class GHEHPSystem:
 
             for idx_ghx, this_ghx in enumerate(self.GHXs):
                 q_ghe = this_ghx.q_ghe[:idx_timestep]
-                mass_flow_ghe = m_loop * this_ghx.split_ratio
-                c_n = this_ghx.c_n[idx_timestep]
                 this_ghx.H_n_ghe, this_ghx.total_values_ghe = this_ghx.compute_history_term(
                     idx_timestep, this_ghx.H_n_ghe, this_ghx.total_values_ghe, q_ghe
                 )
                 rows, rhs_values = this_ghx.generate_ghx_matrix_row(
-                    m_loop, mass_flow_ghe, this_ghx.H_n_ghe[idx_timestep], c_n
+                    m_loop, this_ghx.H_n_ghe[idx_timestep], idx_timestep
                 )
                 for row, rhs in zip(rows, rhs_values):
                     matrix_rows.append(row)
