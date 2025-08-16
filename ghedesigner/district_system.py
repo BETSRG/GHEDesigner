@@ -117,13 +117,13 @@ class GHX:
 
         self.ts = self.bhe_eq.t_s
         self.cp = self.bhe.fluid.cp
-        # tg = self.bhe.soil.ugt
+        self.tg = self.bhe.soil.ugt
 
         self.log_time = np.linspace(-10, 4, 25).tolist()
 
         self.gFunction = self.generate_g_function_object()
         self.g, _ = self.grab_g_function()
-        self.c_n = self.calculation_of_ghe_constant_c_n(self.g)
+        self.c_n = self.calculation_of_ghe_constant_c_n()
 
     def generate_g_function_object(self):
         self.r_b = self.bhe.calc_effective_borehole_resistance()
@@ -180,7 +180,7 @@ class GHX:
 
         return g, g_bhw
 
-    def calculation_of_ghe_constant_c_n(self, g):
+    def calculation_of_ghe_constant_c_n(self):
         """
         Calculate C_n values for three GHEs based on their g-functions.
 
@@ -191,35 +191,39 @@ class GHX:
 
         for i in range(1, N_TIMESTEPS):
             delta_log_time = np.log((self.time_array[i] - self.time_array[i - 1]) / (self.ts / 3600))
-            g_val = g(delta_log_time)
+            g_val = self.g(delta_log_time)
 
             c_n[i] = (1 / self.two_pi_k * g_val) + self.r_b
 
         return c_n
 
-    def compute_history_term(self, i, g, H_n_ghe, total_values_ghe, q_ghe):
+    def compute_history_term(self, idx_timestep, H_n_ghe, total_values_ghe, q_ghe):
         """
         Computes the history term H_n for this GHX at time index `i`.
         Updates self.total_values_ghe and self.H_n_ghe in place.
         """
-        if i == 0:
+        if idx_timestep == 0:
             raise IndexError("Timestep index error")
 
-        time_n = self.time_array[i]
+        time_n = self.time_array[idx_timestep]
 
         # Compute dimensionless time for all indices from 1 to i-1
-        indices = np.arange(1, i)
+        indices = np.arange(1, idx_timestep)
         dim_less_time = np.log((time_n - self.time_array[indices - 1]) / (self.ts / 3600))
 
         # Compute contributions from all previous steps
         delta_q_ghe = (q_ghe[indices] - q_ghe[indices - 1]) / self.two_pi_k
-        values = np.sum(delta_q_ghe * g(dim_less_time))
+        values = np.sum(delta_q_ghe * self.g(dim_less_time))
 
-        total_values_ghe[i] = values
+        total_values_ghe[idx_timestep] = values
 
         # Contribution from the last time step only
-        dim1_less_time = np.log((time_n - self.time_array[i - 1]) / (self.ts / 3600))
-        H_n_ghe[i] = self.soil.ugt - total_values_ghe[i] + (q_ghe[i - 1] / self.two_pi_k * g(dim1_less_time))
+        dim1_less_time = np.log((time_n - self.time_array[idx_timestep - 1]) / (self.ts / 3600))
+        H_n_ghe[idx_timestep] = (
+            self.soil.ugt
+            - total_values_ghe[idx_timestep]
+            + (q_ghe[idx_timestep - 1] / self.two_pi_k * self.g(dim1_less_time))
+        )
 
         return H_n_ghe, total_values_ghe
 
@@ -263,7 +267,7 @@ class Building:
 
 
 class Zone:
-    def __init__(self, cells, data_dir: Path):
+    def __init__(self, cells, data_dir: Path, tg):
         # values read from the file
         self.type = "zone"
         self.node = None
@@ -282,6 +286,7 @@ class Zone:
         self.matrix_size = None
         self.q_net_htg = self.calc_q_net_htg()
         self.cp = None
+        self.t_eft = np.full(N_TIMESTEPS, tg)
 
     def calc_q_net_htg(self):
         """
@@ -440,7 +445,7 @@ class GHEHPSystem:
                 self.buildings.append(this_building)
 
             if keyword == "zone":
-                this_zone = Zone(cells, data_dir)
+                this_zone = Zone(cells, data_dir, self.GHXs[0].tg)  # TODO: fix this
                 self.zones.append(this_zone)
 
             if keyword == "node":
@@ -457,18 +462,13 @@ class GHEHPSystem:
 
         for this_ghx in self.GHXs:
             this_ghx.matrix_size = self.matrix_size
+            this_ghx.split_ratio = this_ghx.nbh / self.nbh_total
 
         for this_zone in self.zones:
             this_zone.matrix_size = self.matrix_size
-            this_zone.cp = self.GHXs[0].bhe.fluid.cp
+            this_zone.cp = self.GHXs[0].bhe.fluid.cp  # TODO: fix this
 
     def solve_system(self):
-        tg = 6.1
-
-        # Initializing t_eft, t__mean, q_ghe, t_exit
-        for this_zone in self.zones:
-            this_zone.t_eft = np.full(N_TIMESTEPS, tg)
-
         # Assigning row_indices
         for k, this_zone in enumerate(self.zones):
             this_zone.row_index = k
@@ -476,35 +476,35 @@ class GHEHPSystem:
         for k, this_ghx in enumerate(self.GHXs):
             this_ghx.row_index = len(self.zones) + k * 4
 
-        for i in range(1, N_TIMESTEPS):  # loop over all timestep
+        for idx_timestep in range(1, N_TIMESTEPS):  # loop over all timestep
             matrix_rows = []
             matrix_rhs = []
             total_hp_flow = 0
 
             for this_zone in self.zones:
-                t_eft = this_zone.t_eft[i - 1]
-                m_zone = this_zone.zone_mass_flow_rate(t_eft, i)
+                t_eft = this_zone.t_eft[idx_timestep - 1]
+                m_zone = this_zone.zone_mass_flow_rate(t_eft, idx_timestep)
                 total_hp_flow += m_zone
 
             m_loop = total_hp_flow * self.beta
 
             for this_zone in self.zones:
-                t_eft = this_zone.t_eft[i - 1]
-                r1, r2 = this_zone.calculate_r1_r2(t_eft, i)
+                t_eft = this_zone.t_eft[idx_timestep - 1]
+                r1, r2 = this_zone.calculate_r1_r2(t_eft, idx_timestep)
                 this_zone_row, rhs = this_zone.generate_zone_matrix_row(m_loop, r1, r2)
                 matrix_rows.append(this_zone_row)
                 matrix_rhs.append(rhs)
 
-            for j, this_ghx in enumerate(self.GHXs):
-                q_ghe = this_ghx.q_ghe[:i]
-                split_ratio = this_ghx.nbh / self.nbh_total
-                mass_flow_ghe = m_loop * split_ratio
-                g = this_ghx.g
-                c_n = this_ghx.c_n[i]
+            for idx_ghx, this_ghx in enumerate(self.GHXs):
+                q_ghe = this_ghx.q_ghe[:idx_timestep]
+                mass_flow_ghe = m_loop * this_ghx.split_ratio
+                c_n = this_ghx.c_n[idx_timestep]
                 this_ghx.H_n_ghe, this_ghx.total_values_ghe = this_ghx.compute_history_term(
-                    i, g, this_ghx.H_n_ghe, this_ghx.total_values_ghe, q_ghe
+                    idx_timestep, this_ghx.H_n_ghe, this_ghx.total_values_ghe, q_ghe
                 )
-                rows, rhs_values = this_ghx.generate_ghx_matrix_row(m_loop, mass_flow_ghe, this_ghx.H_n_ghe[i], c_n)
+                rows, rhs_values = this_ghx.generate_ghx_matrix_row(
+                    m_loop, mass_flow_ghe, this_ghx.H_n_ghe[idx_timestep], c_n
+                )
                 for row, rhs in zip(rows, rhs_values):
                     matrix_rows.append(row)
                     matrix_rhs.append(rhs)
@@ -515,17 +515,17 @@ class GHEHPSystem:
 
             X = np.linalg.solve(A, B)
 
-            for j, this_zone in enumerate(self.zones):
-                this_zone.t_eft[i] = X[j]
+            for idx_ghx, this_zone in enumerate(self.zones):
+                this_zone.t_eft[idx_timestep] = X[idx_ghx]
 
             X_ghe = X[len(self.zones) :]
 
-            for j, this_ghx in enumerate(self.GHXs):
-                base = 4 * j
-                this_ghx.t_eft[i] = X_ghe[base]
-                this_ghx.t_mean[i] = X_ghe[base + 1]
-                this_ghx.q_ghe[i] = X_ghe[base + 2]
-                this_ghx.t_exit[i] = X_ghe[base + 3]
+            for idx_ghx, this_ghx in enumerate(self.GHXs):
+                base = 4 * idx_ghx
+                this_ghx.t_eft[idx_timestep] = X_ghe[base]
+                this_ghx.t_mean[idx_timestep] = X_ghe[base + 1]
+                this_ghx.q_ghe[idx_timestep] = X_ghe[base + 2]
+                this_ghx.t_exit[idx_timestep] = X_ghe[base + 3]
 
     def create_output(self, output_dir: Path):
         data_rows = []
