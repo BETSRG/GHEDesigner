@@ -100,7 +100,32 @@ class GHX:
         self.g = None
         self.c_n = None
 
-    def generate_g_function_object(self, log_time):
+        self.height = self.borehole.H
+        self.nbh = self.n_rows * self.n_cols
+        self.mass_flow_ghe_borehole_design = self.mass_flow_ghe_design / self.nbh
+        self.bhe = get_bhe_object(
+            self.bhe_type,
+            self.mass_flow_ghe_borehole_design,
+            self.fluid,
+            self.borehole,
+            self.pipe,
+            self.grout,
+            self.soil,
+        )
+        self.bhe_eq = self.bhe.to_single()
+        self.bhe_eq.calc_sts_g_functions()
+
+        self.ts = self.bhe_eq.t_s
+        self.cp = self.bhe.fluid.cp
+        # tg = self.bhe.soil.ugt
+
+        self.log_time = np.linspace(-10, 4, 25).tolist()
+
+        self.gFunction = self.generate_g_function_object()
+        self.g, _ = self.grab_g_function()
+        self.c_n = self.calculation_of_ghe_constant_c_n(self.g)
+
+    def generate_g_function_object(self):
         self.r_b = self.bhe.calc_effective_borehole_resistance()
         self.depth = self.bhe.borehole.D
         self.mass_flow_ghe_borehole_design = self.mass_flow_ghe_design / self.nbh
@@ -117,7 +142,7 @@ class GHX:
             self.depth,
             self.mass_flow_ghe_borehole_design,
             self.bhe_type,
-            log_time,
+            self.log_time,
             coordinates_ghe,
             self.bhe.fluid,
             self.bhe.pipe,
@@ -126,7 +151,7 @@ class GHX:
         )
         return self.gFunction
 
-    def grab_g_function(self, log_time):
+    def grab_g_function(self):
         """
         Interpolates g-function values using self.gFunction and self.bhe,
         and returns g and g_bhw arrays.
@@ -140,14 +165,14 @@ class GHX:
 
         # Combine STS and LTS g-functions
         g = combine_sts_lts(
-            log_time,
+            self.log_time,
             g_function_corrected,
             self.bhe.lntts.tolist(),
             self.bhe.g.tolist(),
         )
 
         g_bhw = combine_sts_lts(
-            log_time,
+            self.log_time,
             g_function_corrected,
             self.bhe.lntts.tolist(),
             self.bhe.g_bhw.tolist(),
@@ -155,7 +180,7 @@ class GHX:
 
         return g, g_bhw
 
-    def calculation_of_ghe_constant_c_n(self, g, ts):
+    def calculation_of_ghe_constant_c_n(self, g):
         """
         Calculate C_n values for three GHEs based on their g-functions.
 
@@ -165,14 +190,14 @@ class GHX:
         c_n = np.zeros(N_TIMESTEPS, dtype=float)
 
         for i in range(1, N_TIMESTEPS):
-            delta_log_time = np.log((self.time_array[i] - self.time_array[i - 1]) / (ts / 3600))
+            delta_log_time = np.log((self.time_array[i] - self.time_array[i - 1]) / (self.ts / 3600))
             g_val = g(delta_log_time)
 
             c_n[i] = (1 / self.two_pi_k * g_val) + self.r_b
 
         return c_n
 
-    def compute_history_term(self, i, ts, g, H_n_ghe, total_values_ghe, q_ghe):
+    def compute_history_term(self, i, g, H_n_ghe, total_values_ghe, q_ghe):
         """
         Computes the history term H_n for this GHX at time index `i`.
         Updates self.total_values_ghe and self.H_n_ghe in place.
@@ -184,7 +209,7 @@ class GHX:
 
         # Compute dimensionless time for all indices from 1 to i-1
         indices = np.arange(1, i)
-        dim_less_time = np.log((time_n - self.time_array[indices - 1]) / (ts / 3600))
+        dim_less_time = np.log((time_n - self.time_array[indices - 1]) / (self.ts / 3600))
 
         # Compute contributions from all previous steps
         delta_q_ghe = (q_ghe[indices] - q_ghe[indices - 1]) / self.two_pi_k
@@ -193,12 +218,12 @@ class GHX:
         total_values_ghe[i] = values
 
         # Contribution from the last time step only
-        dim1_less_time = np.log((time_n - self.time_array[i - 1]) / (ts / 3600))
+        dim1_less_time = np.log((time_n - self.time_array[i - 1]) / (self.ts / 3600))
         H_n_ghe[i] = self.soil.ugt - total_values_ghe[i] + (q_ghe[i - 1] / self.two_pi_k * g(dim1_less_time))
 
         return H_n_ghe, total_values_ghe
 
-    def generate_ghx_matrix_row(self, m_loop, mass_flow_ghe, cp, H_n_ghe, c_n):
+    def generate_ghx_matrix_row(self, m_loop, mass_flow_ghe, H_n_ghe, c_n):
         row1 = np.zeros(self.matrix_size)
         row2 = np.zeros(self.matrix_size)
         row3 = np.zeros(self.matrix_size)
@@ -207,9 +232,9 @@ class GHX:
         row_index = self.row_index
         neighbour_index = self.downstream_device.row_index
 
-        row1[row_index] = (m_loop - mass_flow_ghe) * cp
-        row1[row_index + 3] = mass_flow_ghe * cp
-        row1[neighbour_index] = -m_loop * cp
+        row1[row_index] = (m_loop - mass_flow_ghe) * self.cp
+        row1[row_index + 3] = mass_flow_ghe * self.cp
+        row1[neighbour_index] = -m_loop * self.cp
 
         row2[row_index + 1] = 1
         row2[row_index + 2] = c_n
@@ -218,9 +243,9 @@ class GHX:
         row3[row_index + 1] = 2
         row3[row_index + 3] = -1
 
-        row4[row_index] = mass_flow_ghe * cp
+        row4[row_index] = mass_flow_ghe * self.cp
         row4[row_index + 2] = self.height * self.nbh
-        row4[row_index + 3] = -mass_flow_ghe * cp
+        row4[row_index + 3] = -mass_flow_ghe * self.cp
 
         rhs1, rhs2, rhs3, rhs4 = 0, H_n_ghe, 0, 0
 
@@ -256,6 +281,7 @@ class Zone:
         self.beta = float(cells[6])
         self.matrix_size = None
         self.q_net_htg = self.calc_q_net_htg()
+        self.cp = None
 
     def calc_q_net_htg(self):
         """
@@ -314,12 +340,12 @@ class Zone:
 
         return r1, r2
 
-    def generate_zone_matrix_row(self, m_loop, cp, r1, r2):
+    def generate_zone_matrix_row(self, m_loop, r1, r2):
         neighbour_index = self.downstream_device.row_index
         row = np.zeros(self.matrix_size)
-        row[self.row_index] = 1 - r1 / (m_loop * cp)
+        row[self.row_index] = 1 - r1 / (m_loop * self.cp)
         row[neighbour_index] = -1
-        rhs = r2 / (m_loop * cp)
+        rhs = r2 / (m_loop * self.cp)
         return row, rhs
 
 
@@ -383,7 +409,6 @@ class GHEHPSystem:
 
         # Thermal object references (to be set during setup)
         self.nbh_total = None
-        self.log_time = None
         self.mass_flow_ghe = None
         self.bhe_eq = None
         self.m_loop = None
@@ -428,7 +453,6 @@ class GHEHPSystem:
 
         self.update_connections()
         self.nbh_total = sum(this_ghx.n_rows * this_ghx.n_cols for this_ghx in self.GHXs)
-        self.log_time = np.linspace(-10, 4, 25).tolist()
         self.matrix_size = 4 * len(self.GHXs) + len(self.zones)
 
         for this_ghx in self.GHXs:
@@ -436,35 +460,10 @@ class GHEHPSystem:
 
         for this_zone in self.zones:
             this_zone.matrix_size = self.matrix_size
+            this_zone.cp = self.GHXs[0].bhe.fluid.cp
 
     def solve_system(self):
-        ts = 0
-        cp = 0
-        tg = 0
-
-        for this_ghx in self.GHXs:
-            this_ghx.height = this_ghx.borehole.H
-            this_ghx.nbh = this_ghx.n_rows * this_ghx.n_cols
-            this_ghx.mass_flow_ghe_borehole_design = this_ghx.mass_flow_ghe_design / this_ghx.nbh
-            this_ghx.bhe = get_bhe_object(
-                this_ghx.bhe_type,
-                this_ghx.mass_flow_ghe_borehole_design,
-                this_ghx.fluid,
-                this_ghx.borehole,
-                this_ghx.pipe,
-                this_ghx.grout,
-                this_ghx.soil,
-            )
-            this_ghx.bhe_eq = this_ghx.bhe.to_single()
-            this_ghx.bhe_eq.calc_sts_g_functions()
-
-            ts = this_ghx.bhe_eq.t_s
-            cp = this_ghx.bhe.fluid.cp
-            tg = this_ghx.bhe.soil.ugt
-
-            this_ghx.gFunction = this_ghx.generate_g_function_object(self.log_time)
-            this_ghx.g, _ = this_ghx.grab_g_function(self.log_time)
-            this_ghx.c_n = this_ghx.calculation_of_ghe_constant_c_n(this_ghx.g, ts)
+        tg = 6.1
 
         # Initializing t_eft, t__mean, q_ghe, t_exit
         for this_zone in self.zones:
@@ -492,7 +491,7 @@ class GHEHPSystem:
             for this_zone in self.zones:
                 t_eft = this_zone.t_eft[i - 1]
                 r1, r2 = this_zone.calculate_r1_r2(t_eft, i)
-                this_zone_row, rhs = this_zone.generate_zone_matrix_row(m_loop, cp, r1, r2)
+                this_zone_row, rhs = this_zone.generate_zone_matrix_row(m_loop, r1, r2)
                 matrix_rows.append(this_zone_row)
                 matrix_rhs.append(rhs)
 
@@ -503,9 +502,9 @@ class GHEHPSystem:
                 g = this_ghx.g
                 c_n = this_ghx.c_n[i]
                 this_ghx.H_n_ghe, this_ghx.total_values_ghe = this_ghx.compute_history_term(
-                    i, ts, g, this_ghx.H_n_ghe, this_ghx.total_values_ghe, q_ghe
+                    i, g, this_ghx.H_n_ghe, this_ghx.total_values_ghe, q_ghe
                 )
-                rows, rhs_values = this_ghx.generate_ghx_matrix_row(m_loop, mass_flow_ghe, cp, this_ghx.H_n_ghe[i], c_n)
+                rows, rhs_values = this_ghx.generate_ghx_matrix_row(m_loop, mass_flow_ghe, this_ghx.H_n_ghe[i], c_n)
                 for row, rhs in zip(rows, rhs_values):
                     matrix_rows.append(row)
                     matrix_rhs.append(rhs)
