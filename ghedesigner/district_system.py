@@ -95,8 +95,10 @@ class GHX:
         self.t_mean = np.full(N_TIMESTEPS, self.soil.ugt)
         self.q_ghe = np.zeros(N_TIMESTEPS)
         self.t_exit = np.full(N_TIMESTEPS, self.soil.ugt)
-
         self.time_array = np.arange(1, N_TIMESTEPS + 1)
+        self.gFunction = None
+        self.g = None
+        self.c_n = None
 
     def generate_g_function_object(self, log_time):
         self.r_b = self.bhe.calc_effective_borehole_resistance()
@@ -381,12 +383,9 @@ class GHEHPSystem:
 
         # Thermal object references (to be set during setup)
         self.nbh_total = None
-        self.gFunction = None
-        self.g = None
         self.log_time = None
         self.mass_flow_ghe = None
         self.bhe_eq = None
-        self.c_n = None
         self.m_loop = None
         self.df = None
         self.beta = 1.5
@@ -463,9 +462,9 @@ class GHEHPSystem:
             cp = this_ghx.bhe.fluid.cp
             tg = this_ghx.bhe.soil.ugt
 
-            self.gFunction = this_ghx.generate_g_function_object(self.log_time)
-            self.g, _ = this_ghx.grab_g_function(self.log_time)
-            self.c_n = this_ghx.calculation_of_ghe_constant_c_n(self.g, ts)
+            this_ghx.gFunction = this_ghx.generate_g_function_object(self.log_time)
+            this_ghx.g, _ = this_ghx.grab_g_function(self.log_time)
+            this_ghx.c_n = this_ghx.calculation_of_ghe_constant_c_n(this_ghx.g, ts)
 
         # Initializing t_eft, t__mean, q_ghe, t_exit
         for this_zone in self.zones:
@@ -501,8 +500,8 @@ class GHEHPSystem:
                 q_ghe = this_ghx.q_ghe[:i]
                 split_ratio = this_ghx.nbh / self.nbh_total
                 mass_flow_ghe = m_loop * split_ratio
-                g = self.g
-                c_n = self.c_n[i]
+                g = this_ghx.g
+                c_n = this_ghx.c_n[i]
                 this_ghx.H_n_ghe, this_ghx.total_values_ghe = this_ghx.compute_history_term(
                     i, ts, g, this_ghx.H_n_ghe, this_ghx.total_values_ghe, q_ghe
                 )
