@@ -130,9 +130,7 @@ class GHX:
         self.mass_flow_ghe_borehole_design = self.mass_flow_ghe_design / self.nbh
         h_values = [self.height]
         coordinates_ghe = [
-            (i * self.row_spacing, j * self.row_spacing)
-            for i in range(int(self.n_rows))
-            for j in range(int(self.n_cols))
+            (i * self.row_spacing, j * self.row_spacing) for i in range(self.n_rows) for j in range(self.n_cols)
         ]
         self.gFunction = calc_g_func_for_multiple_lengths(
             self.row_spacing,
@@ -270,42 +268,56 @@ class Building2:
         self.downstream_device = None
         self.matrix_size = None
         self.cp = None
+        self.hp_name = "hp1"
 
         self.ID = bldg_id
-        # self.nodeID = str(cells[3])
+        self.nodeID = bldg_data["node_id"]
 
-        self.heating_exists = False
-        self.cooling_exists = False
+        self.heating_exists = True if "heating" in bldg_data else False
+        self.cooling_exists = True if "cooling" in bldg_data else False
 
-        htg_vals = np.zeros(N_TIMESTEPS, dtype=float)
-        clg_vals = np.zeros(N_TIMESTEPS, dtype=float)
+        self.htg_vals = np.zeros(N_TIMESTEPS, dtype=float)
+        self.clg_vals = np.zeros(N_TIMESTEPS, dtype=float)
 
-        if "heating" in bldg_data:
-            self.heating_exists = True
+        if self.heating_exists:
             hp_htg_name = bldg_data["heating"]["heat_pump"]
             hp_htg_data = hp_data[hp_htg_name]
             self.hp_htg = HPmodel(hp_htg_name, hp_htg_data)
             htg_loads_path = parent_dir / bldg_data["heating"]["loads"]["file_path"]
             htg_loads_path = htg_loads_path.resolve()
             htg_col = bldg_data["heating"]["loads"]["column"]
-            htg_vals = pd.read_csv(htg_loads_path, usecols=[htg_col]).values
+            df_htg = pd.read_csv(htg_loads_path, usecols=[htg_col])
+            self.htg_vals = df_htg[htg_col].values
 
-        if "cooling" in bldg_data:
+        if self.cooling_exists:
             hp_clg_name = bldg_data["cooling"]["heat_pump"]
             hp_clg_data = hp_data[hp_clg_name]
             self.hp_clg = HPmodel(hp_clg_name, hp_clg_data)
             clg_loads_path = parent_dir / bldg_data["cooling"]["loads"]["file_path"]
             clg_loads_path = clg_loads_path.resolve()
             clg_col = bldg_data["cooling"]["loads"]["column"]
-            clg_vals = pd.read_csv(clg_loads_path, usecols=[clg_col]).values
+            df_clg = pd.read_csv(clg_loads_path, usecols=[clg_col])
+            self.clg_vals = df_clg[clg_col].values
 
-        self.q_net_htg = htg_vals - clg_vals
+        self.q_net_htg = self.htg_vals - self.clg_vals
         self.t_eft = np.full(N_TIMESTEPS, tg)
 
     def calc_bldg_mass_flow_rate(self, t_eft, i):
-        cap_htg = self.hp.c1_htg * t_eft**2 + self.hp.c2_htg * t_eft + self.hp.c3_htg
-        cap_clg = self.hp.c1_clg * t_eft**2 + self.hp.c2_clg * t_eft + self.hp.c3_clg
-        m_single_hp = self.hp.m_single_hp
+        if self.heating_exists:
+            cap_htg = self.hp_htg.c1_htg * t_eft**2 + self.hp_htg.c2_htg * t_eft + self.hp_htg.c3_htg
+            m_single_hp_htg = self.hp_htg.m_single_hp
+        else:
+            cap_htg = 0.0
+            m_single_hp_htg = 0.0
+
+        if self.cooling_exists:
+            cap_clg = self.hp_clg.c1_clg * t_eft**2 + self.hp_clg.c2_clg * t_eft + self.hp_clg.c3_clg
+            m_single_hp_clg = self.hp_clg.m_single_hp
+        else:
+            cap_clg = 0.0
+            m_single_hp_clg = 0.0
+
+        m_single_hp = max(m_single_hp_htg, m_single_hp_clg)
 
         q_i = self.q_net_htg[i]
         hp_capacity = cap_htg if q_i > 0 else cap_clg
@@ -320,21 +332,28 @@ class Building2:
         Calculate r1 and r2 for this building based on entering fluid temperature and HP coefficients.
         """
 
+        a = 0
+        b = 0
+        u = 0
+        v = 0
+
         # Extract loads
-        h = self.df_bldg["HPHtgLd_W"].iloc[hour_index] if "HPHtgLd_W" in self.df_bldg.columns else 0.0
-        c = self.df_bldg["HPClgLd_W"].iloc[hour_index] if "HPClgLd_W" in self.df_bldg.columns else 0.0
+        h = self.htg_vals[hour_index]
+        c = self.clg_vals[hour_index]
 
         # Heating calculations
-        slope_htg = 2 * self.hp.a_htg * t_eft + self.hp.b_htg
-        ratio_htg = self.hp.a_htg * t_eft**2 + self.hp.b_htg * t_eft + self.hp.c_htg
-        u = ratio_htg - slope_htg * t_eft
-        v = slope_htg
+        if self.heating_exists:
+            slope_htg = 2 * self.hp_htg.a_htg * t_eft + self.hp_htg.b_htg
+            ratio_htg = self.hp_htg.a_htg * t_eft**2 + self.hp_htg.b_htg * t_eft + self.hp_htg.c_htg
+            u = ratio_htg - slope_htg * t_eft
+            v = slope_htg
 
         # Cooling calculations
-        slope_clg = 2 * self.hp.a_clg * t_eft + self.hp.b_clg
-        ratio_clg = self.hp.a_clg * t_eft**2 + self.hp.b_clg * t_eft + self.hp.c_clg
-        a = ratio_clg - slope_clg * t_eft
-        b = slope_clg
+        if self.cooling_exists:
+            slope_clg = 2 * self.hp_clg.a_clg * t_eft + self.hp_clg.b_clg
+            ratio_clg = self.hp_clg.a_clg * t_eft**2 + self.hp_clg.b_clg * t_eft + self.hp_clg.c_clg
+            a = ratio_clg - slope_clg * t_eft
+            b = slope_clg
 
         # Final arrays
         r1 = v * h - b * c
@@ -576,9 +595,10 @@ class GHEHPSystem:
 
             m_loop = total_hp_flow * self.beta
 
-            for this_bldg in self.buildings:
+            for idx_bldg, this_bldg in enumerate(self.buildings):
                 t_eft = this_bldg.t_eft[idx_timestep - 1]
-                r1, r2 = this_bldg.calc_r1_r2(t_eft, idx_timestep)
+                # r1, r2 = this_bldg.calc_r1_r2(t_eft, idx_timestep)
+                r1, r2 = self.buildings2[idx_bldg].calc_r1_r2(t_eft, idx_timestep)
                 this_bldg_row, rhs = this_bldg.generate_bldg_matrix_row(m_loop, r1, r2)
                 matrix_rows.append(this_bldg_row)
                 matrix_rhs.append(rhs)

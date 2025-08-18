@@ -131,6 +131,7 @@
   },
   "building": {
     "building1": {
+      "node_id": "n2",
       "heating": {
         "loads": {
           "column": "HPHtgLd_W",
@@ -147,6 +148,7 @@
       }
     },
     "building2": {
+      "node_id": "n4",
       "heating": {
         "loads": {
           "column": "HPHtgLd_W",
@@ -156,6 +158,7 @@
       }
     },
     "building3": {
+      "node_id": "n6",
       "heating": {
         "loads": {
           "column": "HPHtgLd_W",
@@ -172,6 +175,7 @@
       }
     },
     "building4": {
+      "node_id": "n8",
       "heating": {
         "loads": {
           "column": "HPHtgLd_W",
@@ -181,6 +185,7 @@
       }
     },
     "building5": {
+      "node_id": "n10",
       "heating": {
         "loads": {
           "column": "HPHtgLd_W",
@@ -197,6 +202,7 @@
       }
     },
     "building6": {
+      "node_id": "n12",
       "heating": {
         "loads": {
           "column": "HPHtgLd_W",
