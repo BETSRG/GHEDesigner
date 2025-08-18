@@ -405,7 +405,6 @@ class HPmodel:
 class GHEHPSystem:
     def __init__(self, f_path_txt: Path, f_path_json: Path, data_dir: Path):
         self.GHXs = []
-        self.buildings = []
         self.zones = []
         self.nodes = []
         self.pipes = []
@@ -440,10 +439,6 @@ class GHEHPSystem:
         for line in txt_data:  # loop over all the lines
             cells = [c.strip() for c in line.strip().split(",")]
             keyword = cells[0].lower()
-
-            if keyword == "building":
-                this_building = Building(cells)
-                self.buildings.append(this_building)
 
             if keyword == "zone":
                 this_zone = Zone(cells, data_dir, self.GHXs[0].tg)  # TODO: fix this
@@ -571,11 +566,6 @@ class GHEHPSystem:
             this_zone.hp = find_item_by_id(this_zone.hp_name, self.HPmodels)
             this_zone.input = find_item_by_id(this_zone.nodeID, self.nodes)
             this_zone.input.output = this_zone
-
-        for this_bldg in self.buildings:
-            for zoneID in this_bldg.zoneIDs:
-                this_zone = find_item_by_id(zoneID, self.zones)
-                this_bldg.zones.append(this_zone)
 
         for this_ghx in self.GHXs:
             this_ghx.input = find_item_by_id(this_ghx.nodeID, self.nodes)
