@@ -2,8 +2,40 @@
   "version": 2,
   "topology": [
     {
+      "type": "building",
+      "name": "building1"
+    },
+    {
+      "type": "building",
+      "name": "building2"
+    },
+    {
+      "type": "building",
+      "name": "building3"
+    },
+    {
+      "type": "building",
+      "name": "building4"
+    },
+    {
+      "type": "building",
+      "name": "building5"
+    },
+    {
+      "type": "building",
+      "name": "building6"
+    },
+    {
       "type": "ground-heat-exchanger",
       "name": "ghe1"
+    },
+    {
+      "type": "ground-heat-exchanger",
+      "name": "ghe2"
+    },
+    {
+      "type": "ground-heat-exchanger",
+      "name": "ghe3"
     }
   ],
   "fluid": {
@@ -13,6 +45,7 @@
   },
   "heat_pump": {
     "hp1": {
+      "beta": 1.5,
       "cooling": {
         "a": 0.0001,
         "b": 0.00112,
@@ -34,6 +67,7 @@
       }
     },
     "hp2": {
+      "beta": 1.5,
       "cooling": {
         "a": 0.0001,
         "b": -0.00041,
@@ -55,6 +89,7 @@
       }
     },
     "hp3": {
+      "beta": 1.5,
       "cooling": {
         "a": 0.0001,
         "b": -0.00084,
@@ -76,6 +111,7 @@
       }
     },
     "hp4": {
+      "beta": 1.5,
       "cooling": {
         "a": 0.0,
         "b": 0.0,
