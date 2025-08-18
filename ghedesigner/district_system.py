@@ -256,7 +256,7 @@ class GHX:
         return rows, rhs
 
 
-class Building2:
+class Building:
     def __init__(self, bldg_id: str, bldg_data: dict, hp_data: dict, parent_dir: Path, tg):
         # values read from the file
         self.type = "building"
@@ -370,92 +370,6 @@ class Building2:
         return row, rhs
 
 
-class Building:
-    def __init__(self, cells, data_dir: Path, tg):
-        # values read from the file
-        self.type = "building"
-        self.node = None
-        self.hp = None
-        self.row_index = None
-        self.df_bldg = None
-        self.t_eft = None
-        self.downstream_device = None
-        self.matrix_size = None
-        self.cp = None
-
-        self.ID = str(cells[2])
-        self.nodeID = str(cells[3])
-        self.hp_name = str(cells[4])
-        self.df_bldg = pd.read_csv(data_dir / cells[5])
-        self.q_net_htg = self.calc_q_net_htg()
-        self.t_eft = np.full(N_TIMESTEPS, tg)
-
-    def calc_q_net_htg(self):
-        """
-        Calculate net heat extracted/rejected each hour.
-        If either column is missing, default to zeros.
-        """
-        if "HPHtgLd_W" in self.df_bldg.columns:
-            h = np.array(self.df_bldg["HPHtgLd_W"])
-        else:
-            h = np.zeros(len(self.df_bldg))
-
-        if "HPClgLd_W" in self.df_bldg.columns:
-            c = np.array(self.df_bldg["HPClgLd_W"])
-        else:
-            c = np.zeros(len(self.df_bldg))
-
-        return h - c
-
-    def calc_bldg_mass_flow_rate(self, t_eft, i):
-        cap_htg = self.hp.c1_htg * t_eft**2 + self.hp.c2_htg * t_eft + self.hp.c3_htg
-        cap_clg = self.hp.c1_clg * t_eft**2 + self.hp.c2_clg * t_eft + self.hp.c3_clg
-        m_single_hp = self.hp.m_single_hp
-
-        q_i = self.q_net_htg[i]
-        hp_capacity = cap_htg if q_i > 0 else cap_clg
-
-        # compute mass flow rates
-        mass_flow_bldg = np.abs(q_i) / hp_capacity * m_single_hp
-
-        return mass_flow_bldg
-
-    def calc_r1_r2(self, t_eft, hour_index):
-        """
-        Calculate r1 and r2 for this building based on entering fluid temperature and HP coefficients.
-        """
-
-        # Extract loads
-        h = self.df_bldg["HPHtgLd_W"].iloc[hour_index] if "HPHtgLd_W" in self.df_bldg.columns else 0.0
-        c = self.df_bldg["HPClgLd_W"].iloc[hour_index] if "HPClgLd_W" in self.df_bldg.columns else 0.0
-
-        # Heating calculations
-        slope_htg = 2 * self.hp.a_htg * t_eft + self.hp.b_htg
-        ratio_htg = self.hp.a_htg * t_eft**2 + self.hp.b_htg * t_eft + self.hp.c_htg
-        u = ratio_htg - slope_htg * t_eft
-        v = slope_htg
-
-        # Cooling calculations
-        slope_clg = 2 * self.hp.a_clg * t_eft + self.hp.b_clg
-        ratio_clg = self.hp.a_clg * t_eft**2 + self.hp.b_clg * t_eft + self.hp.c_clg
-        a = ratio_clg - slope_clg * t_eft
-        b = slope_clg
-
-        # Final arrays
-        r1 = v * h - b * c
-        r2 = u * h - a * c
-
-        return r1, r2
-
-    def generate_bldg_matrix_row(self, m_loop, r1, r2):
-        neighbour_index = self.downstream_device.row_index
-        row = np.zeros(self.matrix_size)
-        row[self.row_index] = 1 - r1 / (m_loop * self.cp)
-        row[neighbour_index] = -1
-        rhs = r2 / (m_loop * self.cp)
-        return row, rhs
-
-
 class Node:
     def __init__(self, cells):
         self.input = None
@@ -508,7 +422,6 @@ class GHEHPSystem:
 
         self.building_data = {}
         self.buildings = []
-        self.buildings2 = []
         self.nodes = []
         self.pipes = []
 
@@ -544,16 +457,12 @@ class GHEHPSystem:
 
         self.building_data = json_data["building"]
         for this_building_id, this_bldg_data in self.building_data.items():
-            this_bldg = Building2(this_building_id, this_bldg_data, self.heat_pump_data, input_dir, self.GHXs[0].tg)
-            self.buildings2.append(this_bldg)
+            this_bldg = Building(this_building_id, this_bldg_data, self.heat_pump_data, input_dir, self.GHXs[0].tg)
+            self.buildings.append(this_bldg)
 
         for line in txt_data:  # loop over all the lines
             cells = [c.strip() for c in line.strip().split(",")]
             keyword = cells[0].lower()
-
-            if keyword == "building":
-                this_bldg = Building(cells, data_dir, self.GHXs[0].tg)  # TODO: fix this
-                self.buildings.append(this_bldg)
 
             if keyword == "node":
                 this_node = Node(cells)
@@ -595,10 +504,9 @@ class GHEHPSystem:
 
             m_loop = total_hp_flow * self.beta
 
-            for idx_bldg, this_bldg in enumerate(self.buildings):
+            for this_bldg in self.buildings:
                 t_eft = this_bldg.t_eft[idx_timestep - 1]
-                # r1, r2 = this_bldg.calc_r1_r2(t_eft, idx_timestep)
-                r1, r2 = self.buildings2[idx_bldg].calc_r1_r2(t_eft, idx_timestep)
+                r1, r2 = this_bldg.calc_r1_r2(t_eft, idx_timestep)
                 this_bldg_row, rhs = this_bldg.generate_bldg_matrix_row(m_loop, r1, r2)
                 matrix_rows.append(this_bldg_row)
                 matrix_rhs.append(rhs)
