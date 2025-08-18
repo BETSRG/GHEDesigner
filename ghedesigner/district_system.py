@@ -79,7 +79,6 @@ class GHX:
         self.n_cols = ghe_data["pre_designed"]["boreholes_in_y_dimension"]
         self.row_spacing = ghe_data["pre_designed"]["spacing_in_x_dimension"]
         self.col_spacing = ghe_data["pre_designed"]["spacing_in_y_dimension"]
-        self.beta = ghe_data["beta"]
         self.ghe_height = ghe_data["pre_designed"]["H"]
         self.nbh = self.n_rows * self.n_cols
         self.mass_flow_ghe_design = ghe_data["flow_rate"] * self.nbh
@@ -260,7 +259,7 @@ class GHX:
 
 
 class Building2:
-    def __init__(self, bldg_id: str, bldg_data: dict, tg):
+    def __init__(self, bldg_id: str, bldg_data: dict, hp_data: dict, parent_dir: Path, tg):
         # values read from the file
         self.type = "building"
         self.node = None
@@ -269,34 +268,39 @@ class Building2:
         self.df_bldg = None
         self.t_eft = None
         self.downstream_device = None
+        self.matrix_size = None
+        self.cp = None
 
-        # self.name = str(cells[1])
-        # self.ID = str(cells[2])
+        self.ID = bldg_id
         # self.nodeID = str(cells[3])
-        # self.hp_name = str(cells[4])
-        # self.df_bldg = pd.read_csv(data_dir / cells[5])
-        # self.beta = float(cells[6])
-        # self.matrix_size = None
-        # self.q_net_htg = self.calc_q_net_htg()
-        # self.cp = None
-        # self.t_eft = np.full(N_TIMESTEPS, tg)
 
-    def calc_q_net_htg(self):
-        """
-        Calculate net heat extracted/rejected each hour.
-        If either column is missing, default to zeros.
-        """
-        if "HPHtgLd_W" in self.df_bldg.columns:
-            h = np.array(self.df_bldg["HPHtgLd_W"])
-        else:
-            h = np.zeros(len(self.df_bldg))
+        self.heating_exists = False
+        self.cooling_exists = False
 
-        if "HPClgLd_W" in self.df_bldg.columns:
-            c = np.array(self.df_bldg["HPClgLd_W"])
-        else:
-            c = np.zeros(len(self.df_bldg))
+        htg_vals = np.zeros(N_TIMESTEPS, dtype=float)
+        clg_vals = np.zeros(N_TIMESTEPS, dtype=float)
 
-        return h - c
+        if "heating" in bldg_data:
+            self.heating_exists = True
+            hp_htg_name = bldg_data["heating"]["heat_pump"]
+            hp_htg_data = hp_data[hp_htg_name]
+            self.hp_htg = HPmodel(hp_htg_name, hp_htg_data)
+            htg_loads_path = parent_dir / bldg_data["heating"]["loads"]["file_path"]
+            htg_loads_path = htg_loads_path.resolve()
+            htg_col = bldg_data["heating"]["loads"]["column"]
+            htg_vals = pd.read_csv(htg_loads_path, usecols=[htg_col]).values
+
+        if "cooling" in bldg_data:
+            hp_clg_name = bldg_data["cooling"]["heat_pump"]
+            hp_clg_data = hp_data[hp_clg_name]
+            self.hp_clg = HPmodel(hp_clg_name, hp_clg_data)
+            clg_loads_path = parent_dir / bldg_data["cooling"]["loads"]["file_path"]
+            clg_loads_path = clg_loads_path.resolve()
+            clg_col = bldg_data["cooling"]["loads"]["column"]
+            clg_vals = pd.read_csv(clg_loads_path, usecols=[clg_col]).values
+
+        self.q_net_htg = htg_vals - clg_vals
+        self.t_eft = np.full(N_TIMESTEPS, tg)
 
     def calc_bldg_mass_flow_rate(self, t_eft, i):
         cap_htg = self.hp.c1_htg * t_eft**2 + self.hp.c2_htg * t_eft + self.hp.c3_htg
@@ -357,16 +361,14 @@ class Building:
         self.df_bldg = None
         self.t_eft = None
         self.downstream_device = None
+        self.matrix_size = None
+        self.cp = None
 
-        self.name = str(cells[1])
         self.ID = str(cells[2])
         self.nodeID = str(cells[3])
         self.hp_name = str(cells[4])
         self.df_bldg = pd.read_csv(data_dir / cells[5])
-        self.beta = float(cells[6])
-        self.matrix_size = None
         self.q_net_htg = self.calc_q_net_htg()
-        self.cp = None
         self.t_eft = np.full(N_TIMESTEPS, tg)
 
     def calc_q_net_htg(self):
@@ -458,7 +460,6 @@ class DistPipe:
 
 class HPmodel:
     def __init__(self, hp_id: str, hp_data: dict):
-        # self.name = str(cells[1])
         self.ID = hp_id
 
         self.a_htg = hp_data["heating"]["a"]
@@ -512,6 +513,7 @@ class GHEHPSystem:
             txt_data = f1.readlines()
 
         json_data = json.loads(f_path_json.read_text())
+        input_dir = f_path_json.resolve().parent
 
         ghe_data = json_data["ground-heat-exchanger"]
         for ghe_id, ghe_data in ghe_data.items():
@@ -523,7 +525,7 @@ class GHEHPSystem:
 
         self.building_data = json_data["building"]
         for this_building_id, this_bldg_data in self.building_data.items():
-            this_bldg = Building2(this_building_id, this_bldg_data, self.GHXs[0].tg)
+            this_bldg = Building2(this_building_id, this_bldg_data, self.heat_pump_data, input_dir, self.GHXs[0].tg)
             self.buildings2.append(this_bldg)
 
         for line in txt_data:  # loop over all the lines
@@ -703,8 +705,8 @@ class GHEHPSystem:
 
 
 def find_item_by_id(obj_id, objectlist):
-    # search a list of objects to find one with a particular name
-    # of course, the objects must have a "name" member
+    # search a list of objects to find one with a particular ID
+    # of course, the objects must have an "ID" member
     for item in objectlist:  # all objects in the list
         if obj_id.lower() == item.ID.lower():  # does it have the ID I am seeking?
             return item  # then return this one
