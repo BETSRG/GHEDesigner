@@ -260,21 +260,13 @@ class GHX:
 
 
 class Building:
-    def __init__(self, cells):
-        self.name = str(cells[1])
-        self.ID = str(cells[2])
-        self.zoneIDs = [zones.strip() for zones in cells[3:]]
-        self.zones = []
-
-
-class Zone:
     def __init__(self, cells, data_dir: Path, tg):
         # values read from the file
-        self.type = "zone"
+        self.type = "building"
         self.node = None
         self.hp = None
         self.row_index = None
-        self.df_zone = None
+        self.df_bldg = None
         self.t_eft = None
         self.downstream_device = None
 
@@ -282,7 +274,7 @@ class Zone:
         self.ID = str(cells[2])
         self.nodeID = str(cells[3])
         self.hp_name = str(cells[4])
-        self.df_zone = pd.read_csv(data_dir / cells[5])
+        self.df_bldg = pd.read_csv(data_dir / cells[5])
         self.beta = float(cells[6])
         self.matrix_size = None
         self.q_net_htg = self.calc_q_net_htg()
@@ -291,22 +283,22 @@ class Zone:
 
     def calc_q_net_htg(self):
         """
-        Calculate net heat extracted/rejected each hour for the zone.
+        Calculate net heat extracted/rejected each hour.
         If either column is missing, default to zeros.
         """
-        if "HPHtgLd_W" in self.df_zone.columns:
-            h = np.array(self.df_zone["HPHtgLd_W"])
+        if "HPHtgLd_W" in self.df_bldg.columns:
+            h = np.array(self.df_bldg["HPHtgLd_W"])
         else:
-            h = np.zeros(len(self.df_zone))
+            h = np.zeros(len(self.df_bldg))
 
-        if "HPClgLd_W" in self.df_zone.columns:
-            c = np.array(self.df_zone["HPClgLd_W"])
+        if "HPClgLd_W" in self.df_bldg.columns:
+            c = np.array(self.df_bldg["HPClgLd_W"])
         else:
-            c = np.zeros(len(self.df_zone))
+            c = np.zeros(len(self.df_bldg))
 
         return h - c
 
-    def zone_mass_flow_rate(self, t_eft, i):
+    def calc_bldg_mass_flow_rate(self, t_eft, i):
         cap_htg = self.hp.c1_htg * t_eft**2 + self.hp.c2_htg * t_eft + self.hp.c3_htg
         cap_clg = self.hp.c1_clg * t_eft**2 + self.hp.c2_clg * t_eft + self.hp.c3_clg
         m_single_hp = self.hp.m_single_hp
@@ -315,18 +307,18 @@ class Zone:
         hp_capacity = cap_htg if q_i > 0 else cap_clg
 
         # compute mass flow rates
-        mass_flow_zone = np.abs(q_i) / hp_capacity * m_single_hp
+        mass_flow_bldg = np.abs(q_i) / hp_capacity * m_single_hp
 
-        return mass_flow_zone
+        return mass_flow_bldg
 
-    def calculate_r1_r2(self, t_eft, hour_index):
+    def calc_r1_r2(self, t_eft, hour_index):
         """
-        Calculate r1 and r2 for this zone based on entering fluid temperature and HP coefficients.
+        Calculate r1 and r2 for this building based on entering fluid temperature and HP coefficients.
         """
 
         # Extract loads
-        h = self.df_zone["HPHtgLd_W"].iloc[hour_index] if "HPHtgLd_W" in self.df_zone.columns else 0.0
-        c = self.df_zone["HPClgLd_W"].iloc[hour_index] if "HPClgLd_W" in self.df_zone.columns else 0.0
+        h = self.df_bldg["HPHtgLd_W"].iloc[hour_index] if "HPHtgLd_W" in self.df_bldg.columns else 0.0
+        c = self.df_bldg["HPClgLd_W"].iloc[hour_index] if "HPClgLd_W" in self.df_bldg.columns else 0.0
 
         # Heating calculations
         slope_htg = 2 * self.hp.a_htg * t_eft + self.hp.b_htg
@@ -346,7 +338,7 @@ class Zone:
 
         return r1, r2
 
-    def generate_zone_matrix_row(self, m_loop, r1, r2):
+    def generate_bldg_matrix_row(self, m_loop, r1, r2):
         neighbour_index = self.downstream_device.row_index
         row = np.zeros(self.matrix_size)
         row[self.row_index] = 1 - r1 / (m_loop * self.cp)
@@ -405,7 +397,7 @@ class HPmodel:
 class GHEHPSystem:
     def __init__(self, f_path_txt: Path, f_path_json: Path, data_dir: Path):
         self.GHXs = []
-        self.zones = []
+        self.buildings = []
         self.nodes = []
         self.pipes = []
         self.HPmodels = []
@@ -440,9 +432,9 @@ class GHEHPSystem:
             cells = [c.strip() for c in line.strip().split(",")]
             keyword = cells[0].lower()
 
-            if keyword == "zone":
-                this_zone = Zone(cells, data_dir, self.GHXs[0].tg)  # TODO: fix this
-                self.zones.append(this_zone)
+            if keyword == "building":
+                this_bldg = Building(cells, data_dir, self.GHXs[0].tg)  # TODO: fix this
+                self.buildings.append(this_bldg)
 
             if keyword == "node":
                 this_node = Node(cells)
@@ -454,41 +446,41 @@ class GHEHPSystem:
 
         self.update_connections()
         self.nbh_total = sum(this_ghx.n_rows * this_ghx.n_cols for this_ghx in self.GHXs)
-        self.matrix_size = 4 * len(self.GHXs) + len(self.zones)
+        self.matrix_size = 4 * len(self.GHXs) + len(self.buildings)
 
         for this_ghx in self.GHXs:
             this_ghx.matrix_size = self.matrix_size
             this_ghx.split_ratio = this_ghx.nbh / self.nbh_total
 
-        for this_zone in self.zones:
-            this_zone.matrix_size = self.matrix_size
-            this_zone.cp = self.GHXs[0].bhe.fluid.cp  # TODO: fix this
+        for this_bldg in self.buildings:
+            this_bldg.matrix_size = self.matrix_size
+            this_bldg.cp = self.GHXs[0].bhe.fluid.cp  # TODO: fix this
 
     def solve_system(self):
         # Assigning row_indices
-        for k, this_zone in enumerate(self.zones):
-            this_zone.row_index = k
+        for k, this_bldg in enumerate(self.buildings):
+            this_bldg.row_index = k
 
         for k, this_ghx in enumerate(self.GHXs):
-            this_ghx.row_index = len(self.zones) + k * 4
+            this_ghx.row_index = len(self.buildings) + k * 4
 
         for idx_timestep in range(1, N_TIMESTEPS):  # loop over all timestep
             matrix_rows = []
             matrix_rhs = []
             total_hp_flow = 0
 
-            for this_zone in self.zones:
-                t_eft = this_zone.t_eft[idx_timestep - 1]
-                m_zone = this_zone.zone_mass_flow_rate(t_eft, idx_timestep)
-                total_hp_flow += m_zone
+            for this_bldg in self.buildings:
+                t_eft = this_bldg.t_eft[idx_timestep - 1]
+                m_bldg = this_bldg.calc_bldg_mass_flow_rate(t_eft, idx_timestep)
+                total_hp_flow += m_bldg
 
             m_loop = total_hp_flow * self.beta
 
-            for this_zone in self.zones:
-                t_eft = this_zone.t_eft[idx_timestep - 1]
-                r1, r2 = this_zone.calculate_r1_r2(t_eft, idx_timestep)
-                this_zone_row, rhs = this_zone.generate_zone_matrix_row(m_loop, r1, r2)
-                matrix_rows.append(this_zone_row)
+            for this_bldg in self.buildings:
+                t_eft = this_bldg.t_eft[idx_timestep - 1]
+                r1, r2 = this_bldg.calc_r1_r2(t_eft, idx_timestep)
+                this_bldg_row, rhs = this_bldg.generate_bldg_matrix_row(m_loop, r1, r2)
+                matrix_rows.append(this_bldg_row)
                 matrix_rhs.append(rhs)
 
             for idx_ghx, this_ghx in enumerate(self.GHXs):
@@ -509,10 +501,10 @@ class GHEHPSystem:
 
             X = np.linalg.solve(A, B)
 
-            for idx_ghx, this_zone in enumerate(self.zones):
-                this_zone.t_eft[idx_timestep] = X[idx_ghx]
+            for idx_ghx, this_bldg in enumerate(self.buildings):
+                this_bldg.t_eft[idx_timestep] = X[idx_ghx]
 
-            X_ghe = X[len(self.zones) :]
+            X_ghe = X[len(self.buildings) :]
 
             for idx_ghx, this_ghx in enumerate(self.GHXs):
                 base = 4 * idx_ghx
@@ -526,8 +518,8 @@ class GHEHPSystem:
 
         for i in range(N_TIMESTEPS):
             row = []
-            for zone in self.zones:
-                row.append(zone.t_eft[i])
+            for this_bldg in self.buildings:
+                row.append(this_bldg.t_eft[i])
 
             for this_ghx in self.GHXs:
                 row.append(this_ghx.t_eft[i])
@@ -540,8 +532,8 @@ class GHEHPSystem:
         # Step 2: Create column labels
         column_names = []
 
-        for j, _ in enumerate(self.zones):
-            column_names.append(f"Zone{j}_t_eft")
+        for j, _ in enumerate(self.buildings):
+            column_names.append(f"Building{j}_t_eft")
 
         for j, _ in enumerate(self.GHXs):
             column_names += [f"GHX{j}_t_eft", f"GHX{j}_t_mean", f"GHX{j}_q_ghe", f"GHX{j}_t_exit"]
@@ -562,10 +554,10 @@ class GHEHPSystem:
                 this_pipe.input.diversion = this_pipe
                 this_pipe.output.input = this_pipe
 
-        for this_zone in self.zones:
-            this_zone.hp = find_item_by_id(this_zone.hp_name, self.HPmodels)
-            this_zone.input = find_item_by_id(this_zone.nodeID, self.nodes)
-            this_zone.input.output = this_zone
+        for this_bldg in self.buildings:
+            this_bldg.hp = find_item_by_id(this_bldg.hp_name, self.HPmodels)
+            this_bldg.input = find_item_by_id(this_bldg.nodeID, self.nodes)
+            this_bldg.input.output = this_bldg
 
         for this_ghx in self.GHXs:
             this_ghx.input = find_item_by_id(this_ghx.nodeID, self.nodes)
@@ -586,16 +578,16 @@ class GHEHPSystem:
 
             # find the upstream device
             device = device.diversion
-            while device.type != "GHX" and device.type != "zone":
+            while device.type != "GHX" and device.type != "building":
                 device = device.output
 
             device.downstream_device = this_ghx
 
         # find the upstream device
 
-        for this_zone in self.zones:
+        for this_bldg in self.buildings:
             # find the first upstream mixing node
-            device = this_zone.input
+            device = this_bldg.input
             while device.type != "mixing":
                 device = device.input
 
@@ -606,10 +598,10 @@ class GHEHPSystem:
 
             # find the upstream device
             device = device.diversion
-            while device.type != "GHX" and device.type != "zone":
+            while device.type != "GHX" and device.type != "building":
                 device = device.output
 
-            device.downstream_device = this_zone
+            device.downstream_device = this_bldg
 
 
 def find_item_by_id(obj_id, objectlist):

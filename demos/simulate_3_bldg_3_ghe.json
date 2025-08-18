@@ -99,21 +99,23 @@
   },
   "building": {
     "building1": {
-      "space_heating": {
+      "heating": {
         "loads": {
           "column": "HPHtgLd_W",
           "file_path": "ghedesigner/tests/test_data/B1Z1.csv"
         },
         "heat_pump": "hp1"
       },
-      "space_cooling": {
+      "cooling": {
         "loads": {
           "column": "HPClgLd_W",
           "file_path": "ghedesigner/tests/test_data/B1Z1.csv"
         },
         "heat_pump": "hp1"
-      },
-      "service_hot_water": {
+      }
+    },
+    "building2": {
+      "heating": {
         "loads": {
           "column": "HPHtgLd_W",
           "file_path": "ghedesigner/tests/test_data/B1Z2.csv"
@@ -121,22 +123,24 @@
         "heat_pump": "hp4"
       }
     },
-    "building2": {
-      "space_heating": {
+    "building3": {
+      "heating": {
         "loads": {
           "column": "HPHtgLd_W",
           "file_path": "ghedesigner/tests/test_data/B2Z1.csv"
         },
         "heat_pump": "hp2"
       },
-      "space_cooling": {
+      "cooling": {
         "loads": {
           "column": "HPClgLd_W",
           "file_path": "ghedesigner/tests/test_data/B2Z1.csv"
         },
         "heat_pump": "hp2"
-      },
-      "service_hot_water": {
+      }
+    },
+    "building4": {
+      "heating": {
         "loads": {
           "column": "HPHtgLd_W",
           "file_path": "ghedesigner/tests/test_data/B2Z2.csv"
@@ -144,22 +148,24 @@
         "heat_pump": "hp4"
       }
     },
-    "building3": {
-      "space_heating": {
+    "building5": {
+      "heating": {
         "loads": {
           "column": "HPHtgLd_W",
           "file_path": "ghedesigner/tests/test_data/B3Z1.csv"
         },
         "heat_pump": "hp3"
       },
-      "space_cooling": {
+      "cooling": {
         "loads": {
           "column": "HPClgLd_W",
           "file_path": "ghedesigner/tests/test_data/B3Z1.csv"
         },
         "heat_pump": "hp3"
-      },
-      "service_hot_water": {
+      }
+    },
+    "building6": {
+      "heating": {
         "loads": {
           "column": "HPHtgLd_W",
           "file_path": "ghedesigner/tests/test_data/B3Z2.csv"

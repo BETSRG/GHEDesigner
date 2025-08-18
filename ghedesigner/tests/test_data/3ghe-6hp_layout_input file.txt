@@ -6,20 +6,20 @@ Title, '3ghe-6hp system'
 # Building Data
 
 # keyword, name,            id, zoneID
-Building, Hospital, 	    B1, b1z1, b1z2
-Building, Midriseapartment, B2, b2z1, b2z2
-Building, Mediumoffice,     B3, b3z1, b3z2
+# Building, Hospital, 	    B1, b1z1, b1z2
+# Building, Midriseapartment, B2, b2z1, b2z2
+# Building, Mediumoffice,     B3, b3z1, b3z2
 
 
 # Zone data
 
 # keyword, name,          id,   nodeID,  HPmodel, loads_file,   beta
-Zone,      space_htg/clg, b1z1, n2,       HP1,     B1Z1.csv,    1.5
-Zone,      space_htg/clg, b1z2, n4,       HP4,     B1Z2.csv,    1.5
-Zone,      space_htg/clg, b2z1, n6,       HP2,     B2Z1.csv,    1.5
-Zone,      water_htg,     b2z2, n8,       HP4,     B2Z2.csv,    1.5
-Zone,      water_htg,     b3z1, n10,      HP3,     B3Z1.csv,    1.5
-Zone,      water_htg,     b3z2, n12,      HP4,     B3Z2.csv,    1.5
+Building,      space_htg/clg, b1z1, n2,       HP1,     B1Z1.csv,    1.5
+Building,      space_htg/clg, b1z2, n4,       HP4,     B1Z2.csv,    1.5
+Building,      space_htg/clg, b2z1, n6,       HP2,     B2Z1.csv,    1.5
+Building,      water_htg,     b2z2, n8,       HP4,     B2Z2.csv,    1.5
+Building,      water_htg,     b3z1, n10,      HP3,     B3Z1.csv,    1.5
+Building,      water_htg,     b3z2, n12,      HP4,     B3Z2.csv,    1.5
 
 
 #  keyword, id,   nodeID, n_rows, n_cols, row_spacing (m), col_spacing (m), beta  	    height     m_flow_ghe_design
