@@ -1,3 +1,4 @@
+import copy
 import json
 from pathlib import Path
 
@@ -17,6 +18,8 @@ N_TIMESTEPS = 8760
 
 
 class GHX:
+    MATRIX_ROWS = 4
+
     def __init__(self, ghe_id: str, ghe_data: dict, fluid: GHEFluid):
         self.name = ghe_id
         self.comp_type = SimCompType.GROUND_HEAT_EXCHANGER
@@ -259,6 +262,8 @@ class GHX:
 
 
 class Building:
+    MATRIX_ROWS = 1
+
     def __init__(self, bldg_id: str, bldg_data: dict, hp_data: dict, parent_dir: Path, tg):
         self.name = bldg_id
         self.comp_type = SimCompType.BUILDING
@@ -406,39 +411,52 @@ class GHEHPSystem:
         input_dir = f_path_json.resolve().parent
 
         fluid_data = json_data["fluid"]
+        topology_data = json_data["topology"]
+        heat_pump_data = json_data["heat_pump"]
+        building_data = json_data["building"]
+        ghe_data = json_data["ground_heat_exchanger"]
+
         self.fluid = GHEFluid(
             fluid_str=fluid_data["fluid_name"],
             percent=fluid_data["concentration_percent"],
             temperature=fluid_data["temperature"],
         )
 
-        topology_data = json_data["topology"]
         tg = json_data["ground_heat_exchanger"]["ghe1"]["soil"]["undisturbed_temp"]  # TODO: fix this
 
-        heat_pump_data = json_data["heat_pump"]
-        building_data = json_data["building"]
-        self.num_buildings = 0
+        buildings = []
         for this_building_id, this_bldg_data in building_data.items():
-            # self.buildings.append(Building(this_building_id, this_bldg_data, heat_pump_data, input_dir, tg))
             this_bldg = Building(this_building_id, this_bldg_data, heat_pump_data, input_dir, tg)
-            self.components.append(this_bldg)
-            self.num_buildings += 1
+            buildings.append(this_bldg)
+
+        self.num_buildings = len(buildings)
 
         cp = 0
 
-        self.nbh_total = 0
-
-        ghe_data = json_data["ground_heat_exchanger"]
-        self.num_ghx = 0
+        ground_heat_exchangers = []
         for ghe_id, ghe_data in ghe_data.items():
-            # self.GHXs.append(GHX(ghe_id, ghe_data, self.fluid))
             this_ghx = GHX(ghe_id, ghe_data, self.fluid)
             cp = this_ghx.bhe.fluid.cp  # TODO: fix this
-            self.nbh_total += this_ghx.n_rows * this_ghx.n_cols
-            self.num_ghx += 1
-            self.components.append(this_ghx)
+            ground_heat_exchangers.append(this_ghx)
 
-        self.matrix_size = 4 * self.num_ghx + self.num_buildings
+        self.nbh_total = sum(x.nbh for x in ground_heat_exchangers)
+        self.num_ghx = len(ground_heat_exchangers)
+        self.matrix_size = GHX.MATRIX_ROWS * self.num_ghx + self.num_buildings * Building.MATRIX_ROWS
+
+        def get_bldg(name: str):
+            return copy.deepcopy(next((obj for obj in buildings if obj.name.upper() == name.upper()), None))
+
+        def get_ghx(name: str):
+            return copy.deepcopy(
+                next((obj for obj in ground_heat_exchangers if obj.name.upper() == name.upper()), None)
+            )
+
+        for v in topology_data:
+            comp_type = v["type"]
+            if SimCompType[comp_type.upper()] == SimCompType.BUILDING:
+                self.components.append(get_bldg(v["name"]))
+            elif SimCompType[comp_type.upper()] == SimCompType.GROUND_HEAT_EXCHANGER:
+                self.components.append(get_ghx(v["name"]))
 
         for this_comp in self.components:
             this_comp.matrix_size = self.matrix_size
