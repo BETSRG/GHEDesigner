@@ -195,7 +195,7 @@ class GHX:
 
         return c_n
 
-    def compute_history_term(self, idx_timestep, history_terms, total_values_ghe, q_ghe):
+    def compute_history_term(self, idx_timestep, history_terms, total_values_ghe):
         """
         Computes the history term H_n for this GHX at time index `i`.
         Updates self.total_values_ghe and self.H_n_ghe in place.
@@ -204,6 +204,8 @@ class GHX:
             raise IndexError("Timestep index error")
 
         time_n = self.time_array[idx_timestep]
+
+        q_ghe = self.q_ghe[:idx_timestep]
 
         # Compute dimensionless time for all indices from 1 to i-1
         indices = np.arange(1, idx_timestep)
@@ -225,7 +227,11 @@ class GHX:
 
         return history_terms, total_values_ghe
 
-    def generate_ghx_matrix_row(self, m_loop, history_terms, idx_timestep):
+    def generate_matrix_row(self, m_loop, idx_timestep):
+        self.history_terms, self.total_values_ghe = self.compute_history_term(
+            idx_timestep, self.history_terms, self.total_values_ghe
+        )
+
         row1 = np.zeros(self.matrix_size)
         row2 = np.zeros(self.matrix_size)
         row3 = np.zeros(self.matrix_size)
@@ -250,7 +256,7 @@ class GHX:
         row4[row_index + 2] = self.height * self.nbh
         row4[row_index + 3] = -mass_flow_ghe * self.cp
 
-        rhs1, rhs2, rhs3, rhs4 = 0, history_terms, 0, 0
+        rhs1, rhs2, rhs3, rhs4 = 0, self.history_terms[idx_timestep], 0, 0
 
         rows = [row1, row2, row3, row4]
         rhs = [rhs1, rhs2, rhs3, rhs4]
@@ -362,13 +368,15 @@ class Building:
 
         return r1, r2
 
-    def generate_bldg_matrix_row(self, m_loop, r1, r2):
+    def generate_matrix_row(self, m_loop, idx_timestep):
+        t_eft = self.t_eft[idx_timestep - 1]
+        r1, r2 = self.calc_r1_r2(t_eft, idx_timestep)
         neighbour_index = self.downstream_device.row_index
         row = np.zeros(self.matrix_size)
         row[self.row_index] = 1 - r1 / (m_loop * self.cp)
         row[neighbour_index] = -1
         rhs = r2 / (m_loop * self.cp)
-        return row, rhs
+        return [row], [rhs]
 
 
 class Node:
@@ -497,25 +505,16 @@ class GHEHPSystem:
             m_loop = total_hp_flow * self.beta
 
             for this_bldg in self.buildings:
-                t_eft = this_bldg.t_eft[idx_timestep - 1]
-                r1, r2 = this_bldg.calc_r1_r2(t_eft, idx_timestep)
-                this_bldg_row, rhs = this_bldg.generate_bldg_matrix_row(m_loop, r1, r2)
-                matrix_rows.append(this_bldg_row)
-                matrix_rhs.append(rhs)
+                bldg_row, rhs = this_bldg.generate_matrix_row(m_loop, idx_timestep)
+                matrix_rows.extend(bldg_row)
+                matrix_rhs.extend(rhs)
 
             for idx_ghx, this_ghx in enumerate(self.GHXs):
-                q_ghe = this_ghx.q_ghe[:idx_timestep]
-                this_ghx.history_terms, this_ghx.total_values_ghe = this_ghx.compute_history_term(
-                    idx_timestep, this_ghx.history_terms, this_ghx.total_values_ghe, q_ghe
-                )
-                rows, rhs_values = this_ghx.generate_ghx_matrix_row(
-                    m_loop, this_ghx.history_terms[idx_timestep], idx_timestep
-                )
-                for row, rhs in zip(rows, rhs_values):
-                    matrix_rows.append(row)
-                    matrix_rhs.append(rhs)
+                ghx_rows, rhs_values = this_ghx.generate_matrix_row(m_loop, idx_timestep)
+                matrix_rows.extend(ghx_rows)
+                matrix_rhs.extend(rhs_values)
 
-            # Solve the matrix = A * X = B
+            # Solve the system = A * X = B
             a_matrix = np.array(matrix_rows, dtype=float)
             b_vector = np.array(matrix_rhs, dtype=float)
 
