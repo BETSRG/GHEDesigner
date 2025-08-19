@@ -39,3 +39,8 @@ class FluidType(Enum):
     METHYLALCOHOL = auto()
     PROPYLENEGLYCOL = auto()
     WATER = auto()
+
+
+class SimCompType(Enum):
+    BUILDING = auto()
+    GROUND_HEAT_EXCHANGER = auto()

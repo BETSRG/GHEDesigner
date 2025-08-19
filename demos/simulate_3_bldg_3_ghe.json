@@ -26,21 +26,21 @@
       "name": "building6"
     },
     {
-      "type": "ground-heat-exchanger",
+      "type": "ground_heat_exchanger",
       "name": "ghe1"
     },
     {
-      "type": "ground-heat-exchanger",
+      "type": "ground_heat_exchanger",
       "name": "ghe2"
     },
     {
-      "type": "ground-heat-exchanger",
+      "type": "ground_heat_exchanger",
       "name": "ghe3"
     }
   ],
   "fluid": {
-    "fluid_name": "WATER",
-    "concentration_percent": 0,
+    "fluid_name": "PROPYLENEGLYCOL",
+    "concentration_percent": 30,
     "temperature": 20
   },
   "heat_pump": {
@@ -212,7 +212,7 @@
       }
     }
   },
-  "ground-heat-exchanger": {
+  "ground_heat_exchanger": {
     "ghe1": {
       "node_id": "n16",
       "flow_rate": 0.33753,

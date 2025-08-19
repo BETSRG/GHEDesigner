@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from ghedesigner.constants import TWO_PI
-from ghedesigner.enums import PipeType
+from ghedesigner.enums import PipeType, SimCompType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
@@ -19,6 +19,7 @@ N_TIMESTEPS = 8760
 class GHX:
     def __init__(self, ghe_id: str, ghe_data: dict, fluid: GHEFluid):
         self.type = "GHX"
+        self.new_type = SimCompType.GROUND_HEAT_EXCHANGER
         self.input = None
         self.downstream_device = None
         self.height = None
@@ -64,7 +65,7 @@ class GHX:
 
         # self.mass_flow_ghe_design = None
         self.mass_flow_ghe_borehole_design = None
-        self.H_n_ghe = None
+        self.history_terms = None
         self.total_values_ghe = None
 
         # for output
@@ -84,7 +85,7 @@ class GHX:
         self.mass_flow_ghe_design = ghe_data["flow_rate"] * self.nbh
         self.matrix_size = None
 
-        self.H_n_ghe, self.total_values_ghe, self.q_ghe = (
+        self.history_terms, self.total_values_ghe, self.q_ghe = (
             np.full(N_TIMESTEPS, self.soil.ugt),
             np.zeros(N_TIMESTEPS),
             np.zeros(N_TIMESTEPS),
@@ -194,7 +195,7 @@ class GHX:
 
         return c_n
 
-    def compute_history_term(self, idx_timestep, H_n_ghe, total_values_ghe, q_ghe):
+    def compute_history_term(self, idx_timestep, history_terms, total_values_ghe, q_ghe):
         """
         Computes the history term H_n for this GHX at time index `i`.
         Updates self.total_values_ghe and self.H_n_ghe in place.
@@ -216,15 +217,15 @@ class GHX:
 
         # Contribution from the last time step only
         dim1_less_time = np.log((time_n - self.time_array[idx_timestep - 1]) / (self.ts / 3600))
-        H_n_ghe[idx_timestep] = (
+        history_terms[idx_timestep] = (
             self.soil.ugt
             - total_values_ghe[idx_timestep]
             + (q_ghe[idx_timestep - 1] / self.two_pi_k * self.g(dim1_less_time))
         )
 
-        return H_n_ghe, total_values_ghe
+        return history_terms, total_values_ghe
 
-    def generate_ghx_matrix_row(self, m_loop, H_n_ghe, idx_timestep):
+    def generate_ghx_matrix_row(self, m_loop, history_terms, idx_timestep):
         row1 = np.zeros(self.matrix_size)
         row2 = np.zeros(self.matrix_size)
         row3 = np.zeros(self.matrix_size)
@@ -249,7 +250,7 @@ class GHX:
         row4[row_index + 2] = self.height * self.nbh
         row4[row_index + 3] = -mass_flow_ghe * self.cp
 
-        rhs1, rhs2, rhs3, rhs4 = 0, H_n_ghe, 0, 0
+        rhs1, rhs2, rhs3, rhs4 = 0, history_terms, 0, 0
 
         rows = [row1, row2, row3, row4]
         rhs = [rhs1, rhs2, rhs3, rhs4]
@@ -260,6 +261,7 @@ class Building:
     def __init__(self, bldg_id: str, bldg_data: dict, hp_data: dict, parent_dir: Path, tg):
         # values read from the file
         self.type = "building"
+        self.new_type = SimCompType.BUILDING
         self.node = None
         self.hp = None
         self.row_index = None
@@ -268,13 +270,12 @@ class Building:
         self.downstream_device = None
         self.matrix_size = None
         self.cp = None
-        self.hp_name = "hp1"
 
         self.ID = bldg_id
         self.nodeID = bldg_data["node_id"]
 
-        self.heating_exists = True if "heating" in bldg_data else False
-        self.cooling_exists = True if "cooling" in bldg_data else False
+        self.heating_exists = bool("heating" in bldg_data)
+        self.cooling_exists = bool("cooling" in bldg_data)
 
         self.htg_vals = np.zeros(N_TIMESTEPS, dtype=float)
         self.clg_vals = np.zeros(N_TIMESTEPS, dtype=float)
@@ -287,7 +288,7 @@ class Building:
             htg_loads_path = htg_loads_path.resolve()
             htg_col = bldg_data["heating"]["loads"]["column"]
             df_htg = pd.read_csv(htg_loads_path, usecols=[htg_col])
-            self.htg_vals = df_htg[htg_col].values
+            self.htg_vals = df_htg[htg_col].to_numpy()
 
         if self.cooling_exists:
             hp_clg_name = bldg_data["cooling"]["heat_pump"]
@@ -297,7 +298,7 @@ class Building:
             clg_loads_path = clg_loads_path.resolve()
             clg_col = bldg_data["cooling"]["loads"]["column"]
             df_clg = pd.read_csv(clg_loads_path, usecols=[clg_col])
-            self.clg_vals = df_clg[clg_col].values
+            self.clg_vals = df_clg[clg_col].to_numpy()
 
         self.q_net_htg = self.htg_vals - self.clg_vals
         self.t_eft = np.full(N_TIMESTEPS, tg)
@@ -417,29 +418,15 @@ class HPmodel:
 
 
 class GHEHPSystem:
-    def __init__(self, f_path_txt: Path, f_path_json: Path, data_dir: Path):
+    def __init__(self, f_path_txt: Path, f_path_json: Path):
         self.GHXs = []
-
-        self.building_data = {}
         self.buildings = []
         self.nodes = []
         self.pipes = []
-
-        self.heat_pump_data = {}
         self.heat_pumps = []
-        self.bhe = None
-        self.g_value = {}
-
-        # Thermal object references (to be set during setup)
         self.nbh_total = None
-        self.mass_flow_ghe = None
-        self.bhe_eq = None
-        self.m_loop = None
-        self.df = None
         self.beta = 1.5
         self.matrix_size = 0
-
-        self.fluid = GHEFluid(fluid_str="PropyleneGlycol", percent=30.0, temperature=20.0)
 
         with open(f_path_txt) as f1:
             txt_data = f1.readlines()
@@ -447,17 +434,26 @@ class GHEHPSystem:
         json_data = json.loads(f_path_json.read_text())
         input_dir = f_path_json.resolve().parent
 
-        ghe_data = json_data["ground-heat-exchanger"]
+        fluid_data = json_data["fluid"]
+        self.fluid = GHEFluid(
+            fluid_str=fluid_data["fluid_name"],
+            percent=fluid_data["concentration_percent"],
+            temperature=fluid_data["temperature"],
+        )
+
+        topology_data = json_data["topology"]
+
+        ghe_data = json_data["ground_heat_exchanger"]
         for ghe_id, ghe_data in ghe_data.items():
             self.GHXs.append(GHX(ghe_id, ghe_data, self.fluid))
 
-        self.heat_pump_data = json_data["heat_pump"]
-        for this_hp_id, this_hp_data in self.heat_pump_data.items():
+        heat_pump_data = json_data["heat_pump"]
+        for this_hp_id, this_hp_data in heat_pump_data.items():
             self.heat_pumps.append(HPmodel(this_hp_id, this_hp_data))
 
-        self.building_data = json_data["building"]
-        for this_building_id, this_bldg_data in self.building_data.items():
-            this_bldg = Building(this_building_id, this_bldg_data, self.heat_pump_data, input_dir, self.GHXs[0].tg)
+        building_data = json_data["building"]
+        for this_building_id, this_bldg_data in building_data.items():
+            this_bldg = Building(this_building_id, this_bldg_data, heat_pump_data, input_dir, self.GHXs[0].tg)
             self.buildings.append(this_bldg)
 
         for line in txt_data:  # loop over all the lines
@@ -513,11 +509,11 @@ class GHEHPSystem:
 
             for idx_ghx, this_ghx in enumerate(self.GHXs):
                 q_ghe = this_ghx.q_ghe[:idx_timestep]
-                this_ghx.H_n_ghe, this_ghx.total_values_ghe = this_ghx.compute_history_term(
-                    idx_timestep, this_ghx.H_n_ghe, this_ghx.total_values_ghe, q_ghe
+                this_ghx.history_terms, this_ghx.total_values_ghe = this_ghx.compute_history_term(
+                    idx_timestep, this_ghx.history_terms, this_ghx.total_values_ghe, q_ghe
                 )
                 rows, rhs_values = this_ghx.generate_ghx_matrix_row(
-                    m_loop, this_ghx.H_n_ghe[idx_timestep], idx_timestep
+                    m_loop, this_ghx.history_terms[idx_timestep], idx_timestep
                 )
                 for row, rhs in zip(rows, rhs_values):
                     matrix_rows.append(row)
@@ -567,9 +563,9 @@ class GHEHPSystem:
             column_names += [f"GHX{j}_t_eft", f"GHX{j}_t_mean", f"GHX{j}_q_ghe", f"GHX{j}_t_exit"]
 
         # Step 3: Create and save DataFrame
-        self.df = pd.DataFrame(data_rows, columns=column_names)
-        self.df.index.name = "Hour"
-        self.df.to_csv(output_dir / "output_results.csv", float_format="%0.8f")
+        output_data = pd.DataFrame(data_rows, columns=column_names)
+        output_data.index.name = "Hour"
+        output_data.to_csv(output_dir / "output_results.csv", float_format="%0.8f")
 
     def update_connections(self):
         for this_pipe in self.pipes:
@@ -583,7 +579,6 @@ class GHEHPSystem:
                 this_pipe.output.input = this_pipe
 
         for this_bldg in self.buildings:
-            this_bldg.hp = find_item_by_id(this_bldg.hp_name, self.heat_pumps)
             this_bldg.input = find_item_by_id(this_bldg.nodeID, self.nodes)
             this_bldg.input.output = this_bldg
 
