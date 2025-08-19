@@ -24,6 +24,7 @@ class GHX:
         self.downstream_device = None
         self.height = None
         self.row_index = None
+        self.downstream_index = None
 
         # Parameters to be assigned later
         self.m_dot_total = None
@@ -238,7 +239,7 @@ class GHX:
         row4 = np.zeros(self.matrix_size)
 
         row_index = self.row_index
-        neighbour_index = self.downstream_device.row_index
+        neighbour_index = self.downstream_index
         mass_flow_ghe = m_loop * self.split_ratio
 
         row1[row_index] = (m_loop - mass_flow_ghe) * self.cp
@@ -271,6 +272,7 @@ class Building:
         self.node = None
         self.hp = None
         self.row_index = None
+        self.downstream_index = None
         self.df_bldg = None
         self.t_eft = None
         self.downstream_device = None
@@ -371,7 +373,7 @@ class Building:
     def generate_matrix_row(self, m_loop, idx_timestep):
         t_eft = self.t_eft[idx_timestep - 1]
         r1, r2 = self.calc_r1_r2(t_eft, idx_timestep)
-        neighbour_index = self.downstream_device.row_index
+        neighbour_index = self.downstream_index
         row = np.zeros(self.matrix_size)
         row[self.row_index] = 1 - r1 / (m_loop * self.cp)
         row[neighbour_index] = -1
@@ -427,8 +429,8 @@ class HPmodel:
 
 class GHEHPSystem:
     def __init__(self, f_path_txt: Path, f_path_json: Path):
-        self.GHXs = []
-        self.buildings = []
+        # self.GHXs = []
+        # self.buildings = []
         self.components = []
         self.nodes = []
         self.pipes = []
@@ -454,70 +456,110 @@ class GHEHPSystem:
 
         heat_pump_data = json_data["heat_pump"]
         building_data = json_data["building"]
+        self.num_buildings = 0
         for this_building_id, this_bldg_data in building_data.items():
+            # self.buildings.append(Building(this_building_id, this_bldg_data, heat_pump_data, input_dir, tg))
             this_bldg = Building(this_building_id, this_bldg_data, heat_pump_data, input_dir, tg)
-            self.buildings.append(this_bldg)
             self.components.append(this_bldg)
+            self.num_buildings += 1
+
+        cp = 0
+
+        self.nbh_total = 0
 
         ghe_data = json_data["ground_heat_exchanger"]
+        self.num_ghx = 0
         for ghe_id, ghe_data in ghe_data.items():
+            # self.GHXs.append(GHX(ghe_id, ghe_data, self.fluid))
             this_ghx = GHX(ghe_id, ghe_data, self.fluid)
-            self.GHXs.append(this_ghx)
+            cp = this_ghx.bhe.fluid.cp  # TODO: fix this
+            self.nbh_total += this_ghx.n_rows * this_ghx.n_cols
+            self.num_ghx += 1
             self.components.append(this_ghx)
 
-        for line in txt_data:  # loop over all the lines
-            cells = [c.strip() for c in line.strip().split(",")]
-            keyword = cells[0].lower()
+        # for line in txt_data:  # loop over all the lines
+        #     cells = [c.strip() for c in line.strip().split(",")]
+        #     keyword = cells[0].lower()
+        #
+        #     if keyword == "node":
+        #         this_node = Node(cells)
+        #         self.nodes.append(this_node)
+        #
+        #     if keyword == "pipe":
+        #         this_pipe = DistPipe(cells)
+        #         self.pipes.append(this_pipe)
 
-            if keyword == "node":
-                this_node = Node(cells)
-                self.nodes.append(this_node)
+        # self.update_connections()
 
-            if keyword == "pipe":
-                this_pipe = DistPipe(cells)
-                self.pipes.append(this_pipe)
+        self.matrix_size = 4 * self.num_ghx + self.num_buildings
 
-        self.update_connections()
-        self.nbh_total = sum(this_ghx.n_rows * this_ghx.n_cols for this_ghx in self.GHXs)
-        self.matrix_size = 4 * len(self.GHXs) + len(self.buildings)
+        # for this_ghx in self.GHXs:
+        #     this_ghx.matrix_size = self.matrix_size
+        #     this_ghx.split_ratio = this_ghx.nbh / self.nbh_total
 
-        for this_ghx in self.GHXs:
-            this_ghx.matrix_size = self.matrix_size
-            this_ghx.split_ratio = this_ghx.nbh / self.nbh_total
+        # for this_bldg in self.buildings:
+        #     this_bldg.matrix_size = self.matrix_size
+        #     this_bldg.cp = self.GHXs[0].bhe.fluid.cp  # TODO: fix this
 
-        for this_bldg in self.buildings:
-            this_bldg.matrix_size = self.matrix_size
-            this_bldg.cp = self.GHXs[0].bhe.fluid.cp  # TODO: fix this
+        for this_comp in self.components:
+            this_comp.matrix_size = self.matrix_size
+            if this_comp.new_type == SimCompType.GROUND_HEAT_EXCHANGER:
+                this_comp.split_ratio = this_comp.nbh / self.nbh_total
+            elif this_comp.new_type == SimCompType.BUILDING:
+                this_comp.cp = cp
+            else:
+                raise ValueError("broken")
 
     def solve_system(self):
         # Assigning row_indices
-        for k, this_bldg in enumerate(self.buildings):
-            this_bldg.row_index = k
+        # for k, this_bldg in enumerate(self.buildings):
+        #     this_bldg.row_index = k
+        #
+        # for k, this_ghx in enumerate(self.GHXs):
+        #     this_ghx.row_index = self.num_buildings + k * 4
 
-        for k, this_ghx in enumerate(self.GHXs):
-            this_ghx.row_index = len(self.buildings) + k * 4
+        idx_comp = 0
+        for this_comp in self.components:
+            if this_comp.new_type == SimCompType.BUILDING:
+                this_comp.row_index = idx_comp
+                idx_comp += 1
+                this_comp.downstream_index = idx_comp
+
+            elif this_comp.new_type == SimCompType.GROUND_HEAT_EXCHANGER:
+                this_comp.row_index = idx_comp
+                idx_comp += 4
+                this_comp.downstream_index = idx_comp
+
+        # set last component to loop back to the start
+        self.components[-1].downstream_index = 0
 
         for idx_timestep in range(1, N_TIMESTEPS):  # loop over all timestep
             matrix_rows = []
             matrix_rhs = []
             total_hp_flow = 0
 
-            for this_bldg in self.buildings:
-                t_eft = this_bldg.t_eft[idx_timestep - 1]
-                m_bldg = this_bldg.calc_bldg_mass_flow_rate(t_eft, idx_timestep)
-                total_hp_flow += m_bldg
+            for this_comp in self.components:
+                if this_comp.new_type == SimCompType.BUILDING:
+                    t_eft = this_comp.t_eft[idx_timestep - 1]
+                    m_bldg = this_comp.calc_bldg_mass_flow_rate(t_eft, idx_timestep)
+                    total_hp_flow += m_bldg
 
             m_loop = total_hp_flow * self.beta
 
-            for this_bldg in self.buildings:
-                bldg_row, rhs = this_bldg.generate_matrix_row(m_loop, idx_timestep)
-                matrix_rows.extend(bldg_row)
+            for this_comp in self.components:
+                this_comp, rhs = this_comp.generate_matrix_row(m_loop, idx_timestep)
+                matrix_rows.extend(this_comp)
                 matrix_rhs.extend(rhs)
 
-            for idx_ghx, this_ghx in enumerate(self.GHXs):
-                ghx_rows, rhs_values = this_ghx.generate_matrix_row(m_loop, idx_timestep)
-                matrix_rows.extend(ghx_rows)
-                matrix_rhs.extend(rhs_values)
+            # for this_bldg in self.buildings:
+            #     bldg_row, rhs = this_bldg.generate_matrix_row(m_loop, idx_timestep)
+            #     matrix_rows.extend(bldg_row)
+            #     matrix_rhs.extend(rhs)
+            #
+            # for idx_ghx, this_ghx in enumerate(self.GHXs):
+            #     ghx_rows, rhs_values = this_ghx.generate_matrix_row(m_loop, idx_timestep)
+            #     matrix_rows.extend(ghx_rows)
+            #     matrix_rhs.extend(rhs_values)
 
             # Solve the system = A * X = B
             a_matrix = np.array(matrix_rows, dtype=float)
@@ -525,135 +567,166 @@ class GHEHPSystem:
 
             x_vector = np.linalg.solve(a_matrix, b_vector)
 
-            for idx_ghx, this_bldg in enumerate(self.buildings):
-                this_bldg.t_eft[idx_timestep] = x_vector[idx_ghx]
+            for idx_comp, this_comp in enumerate(self.components):
+                row_index = this_comp.row_index
 
-            x_ghe_vector = x_vector[len(self.buildings) :]
+                if this_comp.new_type == SimCompType.BUILDING:
+                    this_comp.t_eft[idx_timestep] = x_vector[row_index]
+                elif this_comp.new_type == SimCompType.GROUND_HEAT_EXCHANGER:
+                    this_comp.t_eft[idx_timestep] = x_vector[row_index]
+                    this_comp.t_mean[idx_timestep] = x_vector[row_index + 1]
+                    this_comp.q_ghe[idx_timestep] = x_vector[row_index + 2]
+                    this_comp.t_exit[idx_timestep] = x_vector[row_index + 3]
 
-            for idx_ghx, this_ghx in enumerate(self.GHXs):
-                base = 4 * idx_ghx
-                this_ghx.t_eft[idx_timestep] = x_ghe_vector[base]
-                this_ghx.t_mean[idx_timestep] = x_ghe_vector[base + 1]
-                this_ghx.q_ghe[idx_timestep] = x_ghe_vector[base + 2]
-                this_ghx.t_exit[idx_timestep] = x_ghe_vector[base + 3]
+            # for idx_bldg, this_bldg in enumerate(self.buildings):
+            #     this_bldg.t_eft[idx_timestep] = x_vector[idx_bldg]
+            #
+            # x_ghe_vector = x_vector[self.num_buildings :]
+            #
+            # for idx_ghx, this_ghx in enumerate(self.GHXs):
+            #     base = 4 * idx_ghx
+            #     this_ghx.t_eft[idx_timestep] = x_ghe_vector[base]
+            #     this_ghx.t_mean[idx_timestep] = x_ghe_vector[base + 1]
+            #     this_ghx.q_ghe[idx_timestep] = x_ghe_vector[base + 2]
+            #     this_ghx.t_exit[idx_timestep] = x_ghe_vector[base + 3]
 
     def create_output(self, output_dir: Path):
+        output_data = pd.DataFrame()
+        output_data.index.name = "Hour"
+
         data_rows = []
 
-        for i in range(N_TIMESTEPS):
-            row = []
-            for this_bldg in self.buildings:
-                row.append(this_bldg.t_eft[i])
+        bldg_idx = 0
+        for this_comp in self.components:
+            if this_comp.new_type == SimCompType.BUILDING:
+                output_data[f"Building{bldg_idx}_t_eft"] = this_comp.t_eft
+                bldg_idx += 1
 
-            for this_ghx in self.GHXs:
-                row.append(this_ghx.t_eft[i])
-                row.append(this_ghx.t_mean[i])
-                row.append(this_ghx.q_ghe[i])
-                row.append(this_ghx.t_exit[i])
+        ghx_idx = 0
+        for this_comp in self.components:
+            if this_comp.new_type == SimCompType.GROUND_HEAT_EXCHANGER:
+                output_data[f"GHX{ghx_idx}_t_eft"] = this_comp.t_eft
+                output_data[f"GHX{ghx_idx}_t_mean"] = this_comp.t_mean
+                output_data[f"GHX{ghx_idx}_q_ghe"] = this_comp.q_ghe
+                output_data[f"GHX{ghx_idx}_t_exit"] = this_comp.t_exit
+                ghx_idx += 1
 
-            data_rows.append(row)
+        # for i in range(N_TIMESTEPS):
+        #     row = []
+        #     for this_bldg in self.buildings:
+        #         row.append(this_bldg.t_eft[i])
+        #
+        #     for this_ghx in self.GHXs:
+        #         row.append(this_ghx.t_eft[i])
+        #         row.append(this_ghx.t_mean[i])
+        #         row.append(this_ghx.q_ghe[i])
+        #         row.append(this_ghx.t_exit[i])
+        #
+        #     data_rows.append(row)
 
-        # Step 2: Create column labels
-        column_names = []
-
-        for j, _ in enumerate(self.buildings):
-            column_names.append(f"Building{j}_t_eft")
-
-        for j, _ in enumerate(self.GHXs):
-            column_names += [f"GHX{j}_t_eft", f"GHX{j}_t_mean", f"GHX{j}_q_ghe", f"GHX{j}_t_exit"]
+        # # Step 2: Create column labels
+        # column_names = []
+        #
+        # for j, _ in enumerate(self.buildings):
+        #     column_names.append(f"Building{j}_t_eft")
+        #
+        # for j, _ in enumerate(self.GHXs):
+        #     column_names += [f"GHX{j}_t_eft", f"GHX{j}_t_mean", f"GHX{j}_q_ghe", f"GHX{j}_t_exit"]
 
         # Step 3: Create and save DataFrame
-        output_data = pd.DataFrame(data_rows, columns=column_names)
-        output_data.index.name = "Hour"
+        # output_data = pd.DataFrame(data_rows, columns=column_names)
+        # output_data.index.name = "Hour"
+
         output_data.to_csv(output_dir / "output_results.csv", float_format="%0.8f")
 
     def update_connections(self):
-        for this_pipe in self.pipes:
-            this_pipe.input = find_item_by_id(this_pipe.node_in_name, self.nodes)
-            this_pipe.output = find_item_by_id(this_pipe.node_out_name, self.nodes)
-            if this_pipe.type == "1way":
-                this_pipe.input.output = this_pipe
-                this_pipe.output.input = this_pipe
-            else:
-                this_pipe.input.diversion = this_pipe
-                this_pipe.output.input = this_pipe
+        pass
+        # for this_pipe in self.pipes:
+        #     this_pipe.input = find_item_by_id(this_pipe.node_in_name, self.nodes)
+        #     this_pipe.output = find_item_by_id(this_pipe.node_out_name, self.nodes)
+        #     if this_pipe.type == "1way":
+        #         this_pipe.input.output = this_pipe
+        #         this_pipe.output.input = this_pipe
+        #     else:
+        #         this_pipe.input.diversion = this_pipe
+        #         this_pipe.output.input = this_pipe
 
-        for this_comp in self.buildings:
-            this_comp.input = find_item_by_id(this_comp.nodeID, self.nodes)
-            this_comp.input.output = this_comp
+        # for this_comp in self.buildings:
+        #     this_comp.input = find_item_by_id(this_comp.nodeID, self.nodes)
+        #     this_comp.input.output = this_comp
+        #
+        # for this_comp in self.GHXs:
+        #     this_comp.input = find_item_by_id(this_comp.nodeID, self.nodes)
+        #     this_comp.input.output = this_comp
 
-        for this_comp in self.GHXs:
-            this_comp.input = find_item_by_id(this_comp.nodeID, self.nodes)
-            this_comp.input.output = this_comp
+        # for this_comp in self.components:
+        #     this_comp.input = find_item_by_id(this_comp.nodeID, self.nodes)
+        #     this_comp.input.output = this_comp
 
-        for this_comp in self.components:
-            this_comp.input = find_item_by_id(this_comp.nodeID, self.nodes)
-            this_comp.input.output = this_comp
+        # for this_comp in self.GHXs:
+        #     # find the upstream device
+        #
+        #     # find the first upstream mixing node
+        #     device = this_comp.input
+        #     while device.type != "mixing":
+        #         device = device.input
+        #
+        #     # find the second upstream mixing node
+        #     device = device.input
+        #     while device.type != "mixing":
+        #         device = device.input
+        #
+        #     # find the upstream device
+        #     device = device.diversion
+        #     while device.type != "GHX" and device.type != "building":
+        #         device = device.output
+        #
+        #     device.downstream_device = this_comp
+        #
+        # # find the upstream device
+        #
+        # for this_comp in self.buildings:
+        #     # find the first upstream mixing node
+        #     device = this_comp.input
+        #     while device.type != "mixing":
+        #         device = device.input
+        #
+        #     # find the second upstream mixing node
+        #     device = device.input
+        #     while device.type != "mixing":
+        #         device = device.input
+        #
+        #     # find the upstream device
+        #     device = device.diversion
+        #     while device.type != "GHX" and device.type != "building":
+        #         device = device.output
+        #
+        #     device.downstream_device = this_comp
 
-        for this_comp in self.GHXs:
-            # find the upstream device
-
-            # find the first upstream mixing node
-            device = this_comp.input
-            while device.type != "mixing":
-                device = device.input
-
-            # find the second upstream mixing node
-            device = device.input
-            while device.type != "mixing":
-                device = device.input
-
-            # find the upstream device
-            device = device.diversion
-            while device.type != "GHX" and device.type != "building":
-                device = device.output
-
-            device.downstream_device = this_comp
-
-        # find the upstream device
-
-        for this_comp in self.buildings:
-            # find the first upstream mixing node
-            device = this_comp.input
-            while device.type != "mixing":
-                device = device.input
-
-            # find the second upstream mixing node
-            device = device.input
-            while device.type != "mixing":
-                device = device.input
-
-            # find the upstream device
-            device = device.diversion
-            while device.type != "GHX" and device.type != "building":
-                device = device.output
-
-            device.downstream_device = this_comp
-
-        for this_comp in self.components:
-            # find the first upstream mixing node
-            device = this_comp.input
-            while device.type != "mixing":
-                device = device.input
-
-            # find the second upstream mixing node
-            device = device.input
-            while device.type != "mixing":
-                device = device.input
-
-            # find the upstream device
-            device = device.diversion
-            while device.type != "GHX" and device.type != "building":
-                device = device.output
-
-            device.downstream_device = this_comp
+        # for this_comp in self.components:
+        #     # find the first upstream mixing node
+        #     device = this_comp.input
+        #     while device.type != "mixing":
+        #         device = device.input
+        #
+        #     # find the second upstream mixing node
+        #     device = device.input
+        #     while device.type != "mixing":
+        #         device = device.input
+        #
+        #     # find the upstream device
+        #     device = device.diversion
+        #     while device.type != "GHX" and device.type != "building":
+        #         device = device.output
+        #
+        #     device.downstream_device = this_comp
 
 
-def find_item_by_id(obj_id, objectlist):
-    # search a list of objects to find one with a particular ID
-    # of course, the objects must have an "ID" member
-    for item in objectlist:  # all objects in the list
-        if obj_id.lower() == item.ID.lower():  # does it have the ID I am seeking?
-            return item  # then return this one
-    # next item
-    return None  # couldn't find it
+# def find_item_by_id(obj_id, objectlist):
+#     # search a list of objects to find one with a particular ID
+#     # of course, the objects must have an "ID" member
+#     for item in objectlist:  # all objects in the list
+#         if obj_id.lower() == item.ID.lower():  # does it have the ID I am seeking?
+#             return item  # then return this one
+#     # next item
+#     return None  # couldn't find it
