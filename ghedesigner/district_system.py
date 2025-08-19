@@ -449,7 +449,6 @@ class GHEHPSystem:
             else:
                 raise ValueError("broken")
 
-    def solve_system(self):
         # Assigning row_indices
         idx_comp = 0
         for this_comp in self.components:
@@ -463,9 +462,10 @@ class GHEHPSystem:
                 idx_comp += 4
                 this_comp.downstream_index = idx_comp
 
-        # set last component to loop back to the start
+        # set last component to loops back to the start
         self.components[-1].downstream_index = 0
 
+    def solve_system(self):
         for idx_timestep in range(1, N_TIMESTEPS):  # loop over all timestep
             matrix_rows = []
             matrix_rhs = []

@@ -133,15 +133,15 @@
     "building1": {
       "heating": {
         "loads": {
-          "column": "HPHtgLd_W",
-          "file_path": "../ghedesigner/tests/test_data/B1Z1.csv"
+          "column": "B1Z1_HPHtgLd_W",
+          "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp1"
       },
       "cooling": {
         "loads": {
-          "column": "HPClgLd_W",
-          "file_path": "../ghedesigner/tests/test_data/B1Z1.csv"
+          "column": "B1Z1_HPClgLd_W",
+          "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp1"
       }
@@ -149,8 +149,8 @@
     "building2": {
       "heating": {
         "loads": {
-          "column": "HPHtgLd_W",
-          "file_path": "../ghedesigner/tests/test_data/B1Z2.csv"
+          "column": "B1Z2_HPHtgLd_W",
+          "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp4"
       }
@@ -158,15 +158,15 @@
     "building3": {
       "heating": {
         "loads": {
-          "column": "HPHtgLd_W",
-          "file_path": "../ghedesigner/tests/test_data/B2Z1.csv"
+          "column": "B2Z1_HPHtgLd_W",
+          "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp2"
       },
       "cooling": {
         "loads": {
-          "column": "HPClgLd_W",
-          "file_path": "../ghedesigner/tests/test_data/B2Z1.csv"
+          "column": "B2Z1_HPClgLd_W",
+          "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp2"
       }
@@ -174,8 +174,8 @@
     "building4": {
       "heating": {
         "loads": {
-          "column": "HPHtgLd_W",
-          "file_path": "../ghedesigner/tests/test_data/B2Z2.csv"
+          "column": "B2Z2_HPHtgLd_W",
+          "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp4"
       }
@@ -183,15 +183,15 @@
     "building5": {
       "heating": {
         "loads": {
-          "column": "HPHtgLd_W",
-          "file_path": "../ghedesigner/tests/test_data/B3Z1.csv"
+          "column": "B3Z1_HPHtgLd_W",
+          "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp3"
       },
       "cooling": {
         "loads": {
-          "column": "HPClgLd_W",
-          "file_path": "../ghedesigner/tests/test_data/B3Z1.csv"
+          "column": "B3Z1_HPClgLd_W",
+          "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp3"
       }
@@ -199,8 +199,8 @@
     "building6": {
       "heating": {
         "loads": {
-          "column": "HPHtgLd_W",
-          "file_path": "../ghedesigner/tests/test_data/B3Z2.csv"
+          "column": "B3Z2_HPHtgLd_W",
+          "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp4"
       }
