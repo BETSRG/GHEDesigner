@@ -429,6 +429,7 @@ class GHEHPSystem:
     def __init__(self, f_path_txt: Path, f_path_json: Path):
         self.GHXs = []
         self.buildings = []
+        self.components = []
         self.nodes = []
         self.pipes = []
         self.nbh_total = None
@@ -449,16 +450,20 @@ class GHEHPSystem:
         )
 
         topology_data = json_data["topology"]
-
-        ghe_data = json_data["ground_heat_exchanger"]
-        for ghe_id, ghe_data in ghe_data.items():
-            self.GHXs.append(GHX(ghe_id, ghe_data, self.fluid))
+        tg = json_data["ground_heat_exchanger"]["ghe1"]["soil"]["undisturbed_temp"]  # TODO: fix this
 
         heat_pump_data = json_data["heat_pump"]
         building_data = json_data["building"]
         for this_building_id, this_bldg_data in building_data.items():
-            this_bldg = Building(this_building_id, this_bldg_data, heat_pump_data, input_dir, self.GHXs[0].tg)
+            this_bldg = Building(this_building_id, this_bldg_data, heat_pump_data, input_dir, tg)
             self.buildings.append(this_bldg)
+            self.components.append(this_bldg)
+
+        ghe_data = json_data["ground_heat_exchanger"]
+        for ghe_id, ghe_data in ghe_data.items():
+            this_ghx = GHX(ghe_id, ghe_data, self.fluid)
+            self.GHXs.append(this_ghx)
+            self.components.append(this_ghx)
 
         for line in txt_data:  # loop over all the lines
             cells = [c.strip() for c in line.strip().split(",")]
@@ -573,19 +578,23 @@ class GHEHPSystem:
                 this_pipe.input.diversion = this_pipe
                 this_pipe.output.input = this_pipe
 
-        for this_bldg in self.buildings:
-            this_bldg.input = find_item_by_id(this_bldg.nodeID, self.nodes)
-            this_bldg.input.output = this_bldg
+        for this_comp in self.buildings:
+            this_comp.input = find_item_by_id(this_comp.nodeID, self.nodes)
+            this_comp.input.output = this_comp
 
-        for this_ghx in self.GHXs:
-            this_ghx.input = find_item_by_id(this_ghx.nodeID, self.nodes)
-            this_ghx.input.output = this_ghx
+        for this_comp in self.GHXs:
+            this_comp.input = find_item_by_id(this_comp.nodeID, self.nodes)
+            this_comp.input.output = this_comp
 
-        for this_ghx in self.GHXs:
+        for this_comp in self.components:
+            this_comp.input = find_item_by_id(this_comp.nodeID, self.nodes)
+            this_comp.input.output = this_comp
+
+        for this_comp in self.GHXs:
             # find the upstream device
 
             # find the first upstream mixing node
-            device = this_ghx.input
+            device = this_comp.input
             while device.type != "mixing":
                 device = device.input
 
@@ -599,13 +608,13 @@ class GHEHPSystem:
             while device.type != "GHX" and device.type != "building":
                 device = device.output
 
-            device.downstream_device = this_ghx
+            device.downstream_device = this_comp
 
         # find the upstream device
 
-        for this_bldg in self.buildings:
+        for this_comp in self.buildings:
             # find the first upstream mixing node
-            device = this_bldg.input
+            device = this_comp.input
             while device.type != "mixing":
                 device = device.input
 
@@ -619,7 +628,25 @@ class GHEHPSystem:
             while device.type != "GHX" and device.type != "building":
                 device = device.output
 
-            device.downstream_device = this_bldg
+            device.downstream_device = this_comp
+
+        for this_comp in self.components:
+            # find the first upstream mixing node
+            device = this_comp.input
+            while device.type != "mixing":
+                device = device.input
+
+            # find the second upstream mixing node
+            device = device.input
+            while device.type != "mixing":
+                device = device.input
+
+            # find the upstream device
+            device = device.diversion
+            while device.type != "GHX" and device.type != "building":
+                device = device.output
+
+            device.downstream_device = this_comp
 
 
 def find_item_by_id(obj_id, objectlist):
