@@ -423,7 +423,6 @@ class GHEHPSystem:
         self.buildings = []
         self.nodes = []
         self.pipes = []
-        self.heat_pumps = []
         self.nbh_total = None
         self.beta = 1.5
         self.matrix_size = 0
@@ -448,9 +447,6 @@ class GHEHPSystem:
             self.GHXs.append(GHX(ghe_id, ghe_data, self.fluid))
 
         heat_pump_data = json_data["heat_pump"]
-        for this_hp_id, this_hp_data in heat_pump_data.items():
-            self.heat_pumps.append(HPmodel(this_hp_id, this_hp_data))
-
         building_data = json_data["building"]
         for this_building_id, this_bldg_data in building_data.items():
             this_bldg = Building(this_building_id, this_bldg_data, heat_pump_data, input_dir, self.GHXs[0].tg)
@@ -519,23 +515,23 @@ class GHEHPSystem:
                     matrix_rows.append(row)
                     matrix_rhs.append(rhs)
 
-            # Solve the matrix
-            A = np.array(matrix_rows, dtype=float)
-            B = np.array(matrix_rhs, dtype=float)
+            # Solve the matrix = A * X = B
+            a_matrix = np.array(matrix_rows, dtype=float)
+            b_vector = np.array(matrix_rhs, dtype=float)
 
-            X = np.linalg.solve(A, B)
+            x_vector = np.linalg.solve(a_matrix, b_vector)
 
             for idx_ghx, this_bldg in enumerate(self.buildings):
-                this_bldg.t_eft[idx_timestep] = X[idx_ghx]
+                this_bldg.t_eft[idx_timestep] = x_vector[idx_ghx]
 
-            X_ghe = X[len(self.buildings) :]
+            x_ghe_vector = x_vector[len(self.buildings) :]
 
             for idx_ghx, this_ghx in enumerate(self.GHXs):
                 base = 4 * idx_ghx
-                this_ghx.t_eft[idx_timestep] = X_ghe[base]
-                this_ghx.t_mean[idx_timestep] = X_ghe[base + 1]
-                this_ghx.q_ghe[idx_timestep] = X_ghe[base + 2]
-                this_ghx.t_exit[idx_timestep] = X_ghe[base + 3]
+                this_ghx.t_eft[idx_timestep] = x_ghe_vector[base]
+                this_ghx.t_mean[idx_timestep] = x_ghe_vector[base + 1]
+                this_ghx.q_ghe[idx_timestep] = x_ghe_vector[base + 2]
+                this_ghx.t_exit[idx_timestep] = x_ghe_vector[base + 3]
 
     def create_output(self, output_dir: Path):
         data_rows = []
