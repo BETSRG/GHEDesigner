@@ -313,14 +313,14 @@ class Building(BaseSimComp):
     def calc_bldg_mass_flow_rate(self, t_eft, i):
         if self.heating_exists:
             cap_htg = self.hp_htg.c1_htg * t_eft**2 + self.hp_htg.c2_htg * t_eft + self.hp_htg.c3_htg
-            m_single_hp_htg = self.hp_htg.m_single_hp
+            m_single_hp_htg = self.hp_htg.m_flow_single_hp
         else:
             cap_htg = 0.0
             m_single_hp_htg = 0.0
 
         if self.cooling_exists:
             cap_clg = self.hp_clg.c1_clg * t_eft**2 + self.hp_clg.c2_clg * t_eft + self.hp_clg.c3_clg
-            m_single_hp_clg = self.hp_clg.m_single_hp
+            m_single_hp_clg = self.hp_clg.m_flow_single_hp
         else:
             cap_clg = 0.0
             m_single_hp_clg = 0.0
@@ -399,9 +399,9 @@ class HPmodel:
         self.c2_clg = hp_data["cooling"]["c2"]
         self.c3_clg = hp_data["cooling"]["c3"]
 
-        self.m_single_hp = hp_data["design_flow"]
-        self.m_design_htg_cap = hp_data["heating"]["design_cap"]
-        self.m_design_clg_cap = hp_data["cooling"]["design_cap"]
+        self.m_flow_single_hp = hp_data["design_flow_rate"]
+        self.design_htg_cap_single_hp = hp_data["heating"]["design_cap"]
+        self.design_clg_cap_single_hp = hp_data["cooling"]["design_cap"]
 
 
 class GHEHPSystem:

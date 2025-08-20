@@ -54,7 +54,7 @@
         "c3": 6777.0,
         "design_cap": 4396.0
       },
-      "design_flow": 0.296,
+      "design_flow_rate": 0.296,
       "heating": {
         "a": -7.13e-5,
         "b": 0.00534,
@@ -75,7 +75,7 @@
         "c3": 9629.0,
         "design_cap": 6709.0
       },
-      "design_flow": 0.495,
+      "design_flow_rate": 0.495,
       "heating": {
         "a": -7.86e-5,
         "b": 0.00539,
@@ -96,7 +96,7 @@
         "c3": 12397.0,
         "design_cap": 9752.0
       },
-      "design_flow": 0.693,
+      "design_flow_rate": 0.693,
       "heating": {
         "a": -6.8e-5,
         "b": 0.00497,
@@ -117,7 +117,7 @@
         "c3": 0.0,
         "design_cap": 0.0
       },
-      "design_flow": 0.425,
+      "design_flow_rate": 0.425,
       "heating": {
         "a": -6.06e-5,
         "b": 0.0051,
