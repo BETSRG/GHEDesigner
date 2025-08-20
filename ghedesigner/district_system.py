@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from ghedesigner.constants import TWO_PI
+from ghedesigner.constants import SEC_IN_HR, TWO_PI
 from ghedesigner.enums import PipeType, SimCompType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
@@ -24,7 +24,6 @@ class GHX:
         self.name = ghe_id
         self.comp_type = SimCompType.GROUND_HEAT_EXCHANGER
         self.input = None
-        self.downstream_device = None
         self.height = None
         self.row_index = None
         self.downstream_index = None
@@ -186,7 +185,7 @@ class GHX:
         c_n = np.zeros(N_TIMESTEPS, dtype=float)
 
         for i in range(1, N_TIMESTEPS):
-            delta_log_time = np.log((self.time_array[i] - self.time_array[i - 1]) / (self.ts / 3600))
+            delta_log_time = np.log((self.time_array[i] - self.time_array[i - 1]) / (self.ts / SEC_IN_HR))
             g_val = self.g(delta_log_time)
 
             c_n[i] = (1 / self.two_pi_k * g_val) + self.r_b
@@ -207,7 +206,7 @@ class GHX:
 
         # Compute dimensionless time for all indices from 1 to i-1
         indices = np.arange(1, idx_timestep)
-        dim_less_time = np.log((time_n - self.time_array[indices - 1]) / (self.ts / 3600))
+        dim_less_time = np.log((time_n - self.time_array[indices - 1]) / (self.ts / SEC_IN_HR))
 
         # Compute contributions from all previous steps
         delta_q_ghe = (q_ghe[indices] - q_ghe[indices - 1]) / self.two_pi_k
@@ -216,7 +215,7 @@ class GHX:
         total_values_ghe[idx_timestep] = values
 
         # Contribution from the last time step only
-        dim1_less_time = np.log((time_n - self.time_array[idx_timestep - 1]) / (self.ts / 3600))
+        dim1_less_time = np.log((time_n - self.time_array[idx_timestep - 1]) / (self.ts / SEC_IN_HR))
         history_terms[idx_timestep] = (
             self.soil.ugt
             - total_values_ghe[idx_timestep]
@@ -230,34 +229,32 @@ class GHX:
             idx_timestep, self.history_terms, self.total_values_ghe
         )
 
-        row1 = np.zeros(self.matrix_size)
-        row2 = np.zeros(self.matrix_size)
-        row3 = np.zeros(self.matrix_size)
-        row4 = np.zeros(self.matrix_size)
+        row_1 = np.zeros(self.matrix_size)
+        row_2 = np.zeros(self.matrix_size)
+        row_3 = np.zeros(self.matrix_size)
+        row_4 = np.zeros(self.matrix_size)
 
-        row_index = self.row_index
-        neighbour_index = self.downstream_index
         mass_flow_ghe = m_loop * self.split_ratio
 
-        row1[row_index] = (m_loop - mass_flow_ghe) * self.cp
-        row1[row_index + 3] = mass_flow_ghe * self.cp
-        row1[neighbour_index] = -m_loop * self.cp
+        row_1[self.row_index] = (m_loop - mass_flow_ghe) * self.cp
+        row_1[self.row_index + 3] = mass_flow_ghe * self.cp
+        row_1[self.downstream_index] = -m_loop * self.cp
 
-        row2[row_index + 1] = 1
-        row2[row_index + 2] = self.c_n[idx_timestep]
+        row_2[self.row_index + 1] = 1
+        row_2[self.row_index + 2] = self.c_n[idx_timestep]
 
-        row3[row_index] = -1
-        row3[row_index + 1] = 2
-        row3[row_index + 3] = -1
+        row_3[self.row_index] = -1
+        row_3[self.row_index + 1] = 2
+        row_3[self.row_index + 3] = -1
 
-        row4[row_index] = mass_flow_ghe * self.cp
-        row4[row_index + 2] = self.height * self.nbh
-        row4[row_index + 3] = -mass_flow_ghe * self.cp
+        row_4[self.row_index] = mass_flow_ghe * self.cp
+        row_4[self.row_index + 2] = self.height * self.nbh
+        row_4[self.row_index + 3] = -mass_flow_ghe * self.cp
 
-        rhs1, rhs2, rhs3, rhs4 = 0, self.history_terms[idx_timestep], 0, 0
+        rhs_1, rhs_2, rhs_3, rhs_4 = 0, self.history_terms[idx_timestep], 0, 0
 
-        rows = [row1, row2, row3, row4]
-        rhs = [rhs1, rhs2, rhs3, rhs4]
+        rows = [row_1, row_2, row_3, row_4]
+        rhs = [rhs_1, rhs_2, rhs_3, rhs_4]
         return rows, rhs
 
 
@@ -270,9 +267,7 @@ class Building:
         self.hp = None
         self.row_index: int | None = None
         self.downstream_index: int | None = None
-        self.df_bldg = None
         self.t_eft = None
-        self.downstream_device = None
         self.matrix_size: int | None = None
         self.cp: float | None = None
 
@@ -367,10 +362,9 @@ class Building:
     def generate_matrix_row(self, m_loop, idx_timestep):
         t_eft = self.t_eft[idx_timestep - 1]
         r1, r2 = self.calc_r1_r2(t_eft, idx_timestep)
-        neighbour_index = self.downstream_index
         row = np.zeros(self.matrix_size)
         row[self.row_index] = 1 - r1 / (m_loop * self.cp)
-        row[neighbour_index] = -1
+        row[self.downstream_index] = -1
         rhs = r2 / (m_loop * self.cp)
         return [row], [rhs]
 
@@ -468,14 +462,9 @@ class GHEHPSystem:
         # Assigning row_indices
         idx_comp = 0
         for this_comp in self.components:
-            if this_comp.comp_type == SimCompType.BUILDING:
+            if isinstance(this_comp, Building) or isinstance(this_comp, GHX):
                 this_comp.row_index = idx_comp
-                idx_comp += 1
-                this_comp.downstream_index = idx_comp
-
-            elif this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
-                this_comp.row_index = idx_comp
-                idx_comp += 4
+                idx_comp += this_comp.MATRIX_ROWS
                 this_comp.downstream_index = idx_comp
 
         # set last component to loops back to the start
@@ -488,7 +477,7 @@ class GHEHPSystem:
             total_hp_flow = 0
 
             for this_comp in self.components:
-                if this_comp.comp_type == SimCompType.BUILDING:
+                if isinstance(this_comp, Building):
                     t_eft = this_comp.t_eft[idx_timestep - 1]
                     m_bldg = this_comp.calc_bldg_mass_flow_rate(t_eft, idx_timestep)
                     total_hp_flow += m_bldg
@@ -537,3 +526,6 @@ class GHEHPSystem:
                 ghx_idx += 1
 
         output_data.to_csv(output_dir / "output_results.csv", float_format="%0.8f")
+
+    def new_output(self, output_dir: Path):
+        output_data = pd.DataFrame()
