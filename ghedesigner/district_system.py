@@ -1,5 +1,6 @@
 import copy
 import json
+from abc import ABC, abstractmethod
 from pathlib import Path
 
 import numpy as np
@@ -17,16 +18,26 @@ from ghedesigner.utilities import combine_sts_lts
 N_TIMESTEPS = 8760
 
 
-class GHX:
+class BaseSimComp(ABC):
+    def __init__(self):
+        self.name = str | None
+        self.comp_type = SimCompType | None
+        self.row_index: int | None = None
+        self.downstream_index: int | None = None
+
+    @abstractmethod
+    def generate_matrix(self, m_loop: float, idx_timestep: int):
+        pass
+
+
+class GHX(BaseSimComp):
     MATRIX_ROWS = 4
 
     def __init__(self, ghe_id: str, ghe_data: dict, fluid: GHEFluid):
+        super().__init__()
         self.name = ghe_id
         self.comp_type = SimCompType.GROUND_HEAT_EXCHANGER
-        self.input = None
         self.height = None
-        self.row_index = None
-        self.downstream_index = None
         self.m_dot_total = None
 
         self.pipe = Pipe.init_single_u_tube(
@@ -99,6 +110,7 @@ class GHX:
 
         self.height = self.borehole.H
         self.nbh = self.n_rows * self.n_cols
+        self.total_length = self.height * self.nbh
         self.mass_flow_ghe_borehole_design = self.mass_flow_ghe_design / self.nbh
         self.bhe = get_bhe_object(
             self.bhe_type,
@@ -224,7 +236,7 @@ class GHX:
 
         return history_terms, total_values_ghe
 
-    def generate_matrix_row(self, m_loop, idx_timestep):
+    def generate_matrix(self, m_loop, idx_timestep):
         self.history_terms, self.total_values_ghe = self.compute_history_term(
             idx_timestep, self.history_terms, self.total_values_ghe
         )
@@ -258,15 +270,13 @@ class GHX:
         return rows, rhs
 
 
-class Building:
+class Building(BaseSimComp):
     MATRIX_ROWS = 1
 
     def __init__(self, bldg_id: str, bldg_data: dict, hp_data: dict, parent_dir: Path, tg):
+        super().__init__()
         self.name = bldg_id
         self.comp_type = SimCompType.BUILDING
-        self.hp = None
-        self.row_index: int | None = None
-        self.downstream_index: int | None = None
         self.t_eft = None
         self.matrix_size: int | None = None
         self.cp: float | None = None
@@ -359,7 +369,7 @@ class Building:
 
         return r1, r2
 
-    def generate_matrix_row(self, m_loop, idx_timestep):
+    def generate_matrix(self, m_loop, idx_timestep):
         t_eft = self.t_eft[idx_timestep - 1]
         r1, r2 = self.calc_r1_r2(t_eft, idx_timestep)
         row = np.zeros(self.matrix_size)
@@ -462,10 +472,9 @@ class GHEHPSystem:
         # Assigning row_indices
         idx_comp = 0
         for this_comp in self.components:
-            if isinstance(this_comp, Building) or isinstance(this_comp, GHX):
-                this_comp.row_index = idx_comp
-                idx_comp += this_comp.MATRIX_ROWS
-                this_comp.downstream_index = idx_comp
+            this_comp.row_index = idx_comp
+            idx_comp += this_comp.MATRIX_ROWS
+            this_comp.downstream_index = idx_comp
 
         # set last component to loops back to the start
         self.components[-1].downstream_index = 0
@@ -485,7 +494,7 @@ class GHEHPSystem:
             m_loop = total_hp_flow * self.beta
 
             for this_comp in self.components:
-                rows, rhs = this_comp.generate_matrix_row(m_loop, idx_timestep)
+                rows, rhs = this_comp.generate_matrix(m_loop, idx_timestep)
                 matrix_rows.extend(rows)
                 matrix_rhs.extend(rhs)
 
@@ -510,22 +519,15 @@ class GHEHPSystem:
         output_data = pd.DataFrame()
         output_data.index.name = "Hour"
 
-        bldg_idx = 0
         for this_comp in self.components:
-            if this_comp.comp_type == SimCompType.BUILDING:
-                output_data[f"Building{bldg_idx}_t_eft"] = this_comp.t_eft
-                bldg_idx += 1
+            if isinstance(this_comp, Building):
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_eft
 
-        ghx_idx = 0
         for this_comp in self.components:
             if isinstance(this_comp, GHX):
-                output_data[f"GHX{ghx_idx}_t_eft"] = this_comp.t_eft
-                output_data[f"GHX{ghx_idx}_t_mean"] = this_comp.t_mean
-                output_data[f"GHX{ghx_idx}_q_ghe"] = this_comp.q_ghe
-                output_data[f"GHX{ghx_idx}_t_exit"] = this_comp.t_exit
-                ghx_idx += 1
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_eft
+                output_data[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean
+                output_data[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe
+                output_data[f"{this_comp.name}:ExFt [C]"] = this_comp.t_exit
 
         output_data.to_csv(output_dir / "output_results.csv", float_format="%0.8f")
-
-    def new_output(self, output_dir: Path):
-        output_data = pd.DataFrame()
