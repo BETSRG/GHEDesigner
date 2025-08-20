@@ -69,11 +69,10 @@ class GHX(BaseSimComp):
 
         # Computed properties
         self.bhe = None
-        self.r_b = None
+        self.bh_effective_resist = None
         self.gFunction = None
         self.depth = None
 
-        # self.mass_flow_ghe_design = None
         self.mass_flow_ghe_borehole_design = None
         self.history_terms = None
         self.total_values_ghe = None
@@ -135,7 +134,7 @@ class GHX(BaseSimComp):
         self.c_n = self.calculation_of_ghe_constant_c_n()
 
     def generate_g_function_object(self):
-        self.r_b = self.bhe.calc_effective_borehole_resistance()
+        self.bh_effective_resist = self.bhe.calc_effective_borehole_resistance()
         self.depth = self.bhe.borehole.D
         self.mass_flow_ghe_borehole_design = self.mass_flow_ghe_design / self.nbh
         h_values = [self.height]
@@ -145,7 +144,7 @@ class GHX(BaseSimComp):
         self.gFunction = calc_g_func_for_multiple_lengths(
             self.row_spacing,
             h_values,
-            self.r_b,
+            self.bhe.borehole.r_b,
             self.depth,
             self.mass_flow_ghe_borehole_design,
             self.bhe_type,
@@ -200,7 +199,7 @@ class GHX(BaseSimComp):
             delta_log_time = np.log((self.time_array[i] - self.time_array[i - 1]) / (self.ts / SEC_IN_HR))
             g_val = self.g(delta_log_time)
 
-            c_n[i] = (1 / self.two_pi_k * g_val) + self.r_b
+            c_n[i] = (1 / self.two_pi_k * g_val) + self.bh_effective_resist
 
         return c_n
 
@@ -310,7 +309,7 @@ class Building(BaseSimComp):
         self.q_net_htg = self.htg_vals - self.clg_vals
         self.t_eft = np.full(N_TIMESTEPS, tg)
 
-    def calc_bldg_mass_flow_rate(self, t_eft, i):
+    def calc_bldg_mass_flow_rate(self, t_eft, idx_timestep):
         if self.heating_exists:
             cap_htg = self.hp_htg.c1_htg * t_eft**2 + self.hp_htg.c2_htg * t_eft + self.hp_htg.c3_htg
             m_single_hp_htg = self.hp_htg.m_flow_single_hp
@@ -327,7 +326,7 @@ class Building(BaseSimComp):
 
         m_single_hp = max(m_single_hp_htg, m_single_hp_clg)
 
-        q_i = self.q_net_htg[i]
+        q_i = self.q_net_htg[idx_timestep]
         hp_capacity = cap_htg if q_i > 0 else cap_clg
 
         # compute mass flow rates
@@ -335,7 +334,7 @@ class Building(BaseSimComp):
 
         return mass_flow_bldg
 
-    def calc_r1_r2(self, t_eft, hour_index):
+    def calc_r1_r2(self, t_eft, idx_timestep):
         """
         Calculate r1 and r2 for this building based on entering fluid temperature and HP coefficients.
         """
@@ -346,8 +345,8 @@ class Building(BaseSimComp):
         v = 0
 
         # Extract loads
-        h = self.htg_vals[hour_index]
-        c = self.clg_vals[hour_index]
+        h = self.htg_vals[idx_timestep]
+        c = self.clg_vals[idx_timestep]
 
         # Heating calculations
         if self.heating_exists:
