@@ -46,7 +46,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
     # Validate the load source, it should be a building object or a GHE with loads specified
     # any GHE instances found with pre_designed will just be ignored since they don't need anything added
     unsized_ghe_contains_loads = []
-    for _, ghe_dict in full_inputs["ground-heat-exchanger"].items():
+    for _, ghe_dict in full_inputs["ground_heat_exchanger"].items():
         if "pre_designed" in ghe_dict:
             continue  # no need for loads checks here, don't even add them to the contains_loads list
         if "loads" in ghe_dict:
@@ -65,16 +65,16 @@ def run(input_file_path: Path, output_directory: Path) -> int:
     for component in topology_props:
         if component["type"] == "building":
             building_names.append(component["name"])
-        elif component["type"] == "ground-heat-exchanger":
+        elif component["type"] == "ground_heat_exchanger":
             ghe_names.append(component["name"])
 
-    # TODO: check on simulation-control, it's not required by schema because it may not be needed
+    # TODO: check on simulation_control, it's not required by schema because it may not be needed
 
     # do actions depending on what is provided in input
     if len(ghe_names) >= 1 and len(building_names) == 0:
         # we are just doing a GHE design/sizing/simulation alone
         for ghe_name in ghe_names:
-            ghe_dict = full_inputs["ground-heat-exchanger"][ghe_name]
+            ghe_dict = full_inputs["ground_heat_exchanger"][ghe_name]
 
             if "loads" in ghe_dict and "file_path" in ghe_dict["loads"]:
                 if Path(ghe_dict["loads"]["file_path"]).is_absolute():
@@ -94,14 +94,14 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             else:
                 # TODO: Assert that "design" data is in the ghe object
                 search, search_time, _ = ghe.design_and_size_ghe(
-                    ghe_dict, full_inputs["simulation-control"]["simulation-months"]
+                    ghe_dict, full_inputs["simulation_control"]["sizing_months"]
                 )
                 results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
                 results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
                 results.write_all_output_files(output_directory=output_directory, file_suffix="")
     elif len(ghe_names) == 1 and len(building_names) == 1:
         # we have a GHE and a building, grab both
-        ghe_dict = full_inputs["ground-heat-exchanger"][ghe_names[0]]
+        ghe_dict = full_inputs["ground_heat_exchanger"][ghe_names[0]]
         ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, full_inputs["fluid"])
         single_building = full_inputs["building"][building_names[0]]
         heat_pump = HeatPump(single_building["name"])
@@ -119,7 +119,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             print(g_values, g_bhw_values)
         else:
             search, search_time, _ = ghe.design_and_size_ghe(
-                ghe_dict, full_inputs["simulation-control"]["simulation-months"], loads_override=ghe_loads
+                ghe_dict, full_inputs["simulation_control"]["sizing_months"], loads_override=ghe_loads
             )
             results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
             results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)

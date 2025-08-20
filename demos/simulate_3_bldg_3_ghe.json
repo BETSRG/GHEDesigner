@@ -310,9 +310,9 @@
       }
     }
   },
-  "simulation-control": {
-    "thermal-sizing-run": false,
-    "hourly-run": true,
-    "simulation-months": 240
+  "simulation_control": {
+    "sizing_run": false,
+    "hourly_run": true,
+    "sizing_months": 240
   }
 }

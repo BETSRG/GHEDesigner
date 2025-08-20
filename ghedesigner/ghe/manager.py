@@ -89,7 +89,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         Initialize a GroundHeatExchanger object from input dictionaries, performing validation and ultimately calling
         the main object constructor.
         :param ghe_dict: Dictionary of ground heat exchanger parameters, see the input schema specification for required
-                         inputs in the ground-heat-exchanger schema field.
+                         inputs in the ground_heat_exchanger schema field.
         :param fluid_inputs: Optional dictionary of fluid input parameters, see the input schema fluid spec for details.
         :return: GroundHeatExchanger object.
         # TODO: Add validation back in to the input fields
