@@ -268,13 +268,13 @@ class Building:
         self.name = bldg_id
         self.comp_type = SimCompType.BUILDING
         self.hp = None
-        self.row_index = None
-        self.downstream_index = None
+        self.row_index: int | None = None
+        self.downstream_index: int | None = None
         self.df_bldg = None
         self.t_eft = None
         self.downstream_device = None
-        self.matrix_size = None
-        self.cp = None
+        self.matrix_size: int | None = None
+        self.cp: float | None = None
 
         self.heating_exists = bool("heating" in bldg_data)
         self.cooling_exists = bool("cooling" in bldg_data)
@@ -431,12 +431,12 @@ class GHEHPSystem:
 
         self.num_buildings = len(buildings)
 
-        cp = 0
+        cp = 0.0
 
         ground_heat_exchangers = []
         for ghe_id, ghe_data in ghe_data.items():
             this_ghx = GHX(ghe_id, ghe_data, self.fluid)
-            cp = this_ghx.bhe.fluid.cp  # TODO: fix this
+            cp = this_ghx.cp
             ground_heat_exchangers.append(this_ghx)
 
         self.nbh_total = sum(x.nbh for x in ground_heat_exchangers)
@@ -460,12 +460,10 @@ class GHEHPSystem:
 
         for this_comp in self.components:
             this_comp.matrix_size = self.matrix_size
-            if this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
+            if isinstance(this_comp, GHX):
                 this_comp.split_ratio = this_comp.nbh / self.nbh_total
-            elif this_comp.comp_type == SimCompType.BUILDING:
+            elif isinstance(this_comp, Building):
                 this_comp.cp = cp
-            else:
-                raise ValueError("broken")
 
         # Assigning row_indices
         idx_comp = 0
@@ -531,7 +529,7 @@ class GHEHPSystem:
 
         ghx_idx = 0
         for this_comp in self.components:
-            if this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
+            if isinstance(this_comp, GHX):
                 output_data[f"GHX{ghx_idx}_t_eft"] = this_comp.t_eft
                 output_data[f"GHX{ghx_idx}_t_mean"] = this_comp.t_mean
                 output_data[f"GHX{ghx_idx}_q_ghe"] = this_comp.q_ghe
