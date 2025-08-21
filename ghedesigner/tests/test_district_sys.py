@@ -9,4 +9,10 @@ class TestDistrictSys(GHEBaseTest):
         f_path_json = Path(__file__).resolve().parent.parent.parent / "demos" / "simulate_3_bldg_3_ghe.json"
         System = GHEHPSystem(f_path_json)
         System.solve_system()
-        System.create_output(self.tests_directory)
+        System.create_output(self.tests_directory / "output_results.csv")
+
+    def test_simple_district(self):
+        f_path_json = Path(__file__).resolve().parent.parent.parent / "demos" / "simple_district.json"
+        System = GHEHPSystem(f_path_json)
+        System.solve_system()
+        System.create_output(self.test_outputs_directory / "simple_district.csv")

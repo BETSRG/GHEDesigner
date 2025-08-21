@@ -427,20 +427,33 @@ class GHEHPSystem:
 
         tg = json_data["ground_heat_exchanger"]["ghe1"]["soil"]["undisturbed_temp"]  # TODO: fix this
 
+        # get component names we need to build
+        building_names = [
+            c["name"].upper() for c in topology_data if SimCompType[c["type"].upper()] == SimCompType.BUILDING
+        ]
+        ghx_names = [
+            c["name"].upper()
+            for c in topology_data
+            if SimCompType[c["type"].upper()] == SimCompType.GROUND_HEAT_EXCHANGER
+        ]
+
+        # get needed buildings
         buildings = []
         for this_building_id, this_bldg_data in building_data.items():
-            this_bldg = Building(this_building_id, this_bldg_data, heat_pump_data, input_dir, tg)
-            buildings.append(this_bldg)
+            if this_building_id.upper() in building_names:
+                this_bldg = Building(this_building_id, this_bldg_data, heat_pump_data, input_dir, tg)
+                buildings.append(this_bldg)
 
         self.num_buildings = len(buildings)
 
         cp = 0.0
 
         ground_heat_exchangers = []
-        for ghe_id, ghe_data in ghe_data.items():
-            this_ghx = GHX(ghe_id, ghe_data, self.fluid)
-            cp = this_ghx.cp
-            ground_heat_exchangers.append(this_ghx)
+        for ghx_id, ghe_data in ghe_data.items():
+            if ghx_id.upper() in ghx_names:
+                this_ghx = GHX(ghx_id, ghe_data, self.fluid)
+                cp = this_ghx.cp
+                ground_heat_exchangers.append(this_ghx)
 
         self.nbh_total = sum(x.nbh for x in ground_heat_exchangers)
         self.num_ghx = len(ground_heat_exchangers)
@@ -490,7 +503,7 @@ class GHEHPSystem:
                     m_bldg = this_comp.calc_bldg_mass_flow_rate(t_eft, idx_timestep)
                     total_hp_flow += m_bldg
 
-            m_loop = total_hp_flow * self.beta
+            m_loop = max(total_hp_flow * self.beta, 0.1)
 
             for this_comp in self.components:
                 rows, rhs = this_comp.generate_matrix(m_loop, idx_timestep)
@@ -514,7 +527,7 @@ class GHEHPSystem:
                     this_comp.q_ghe[idx_timestep] = x_vector[row_index + 2]
                     this_comp.t_exit[idx_timestep] = x_vector[row_index + 3]
 
-    def create_output(self, output_dir: Path):
+    def create_output(self, output_path: Path):
         output_data = pd.DataFrame()
         output_data.index.name = "Hour"
 
@@ -527,6 +540,6 @@ class GHEHPSystem:
                 output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_eft
                 output_data[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean
                 output_data[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe
-                output_data[f"{this_comp.name}:ExFt [C]"] = this_comp.t_exit
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_exit
 
-        output_data.to_csv(output_dir / "output_results.csv", float_format="%0.8f")
+        output_data.to_csv(output_path, float_format="%0.8f")
