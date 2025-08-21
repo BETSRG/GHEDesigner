@@ -93,14 +93,14 @@ class GHX(BaseSimComp):
         self.matrix_size = None
 
         self.history_terms, self.total_values_ghe, self.q_ghe = (
-            np.full(N_TIMESTEPS, self.soil.ugt),
-            np.zeros(N_TIMESTEPS),
-            np.zeros(N_TIMESTEPS),
+            np.full(N_TIMESTEPS, self.soil.ugt, dtype=float),
+            np.zeros(N_TIMESTEPS, dtype=float),
+            np.zeros(N_TIMESTEPS, dtype=float),
         )
 
-        self.t_in = np.full(N_TIMESTEPS, self.soil.ugt)
-        self.t_mean = np.full(N_TIMESTEPS, self.soil.ugt)
-        self.t_out = np.full(N_TIMESTEPS, self.soil.ugt)
+        self.t_in = np.full(N_TIMESTEPS, self.soil.ugt, dtype=float)
+        self.t_mean = np.full(N_TIMESTEPS, self.soil.ugt, dtype=float)
+        self.t_out = np.full(N_TIMESTEPS, self.soil.ugt, dtype=float)
         self.q_ghe = np.zeros(N_TIMESTEPS)
         self.time_array = np.arange(1, N_TIMESTEPS + 1)
         self.gFunction = None
@@ -240,10 +240,10 @@ class GHX(BaseSimComp):
             idx_timestep, self.history_terms, self.total_values_ghe
         )
 
-        row_1 = np.zeros(self.matrix_size)
-        row_2 = np.zeros(self.matrix_size)
-        row_3 = np.zeros(self.matrix_size)
-        row_4 = np.zeros(self.matrix_size)
+        row_1 = np.zeros(self.matrix_size, dtype=float)
+        row_2 = np.zeros(self.matrix_size, dtype=float)
+        row_3 = np.zeros(self.matrix_size, dtype=float)
+        row_4 = np.zeros(self.matrix_size, dtype=float)
 
         mass_flow_ghe = m_loop * self.split_ratio
 
@@ -306,8 +306,8 @@ class Building(BaseSimComp):
             self.clg_vals = df_clg[clg_col].to_numpy()
 
         self.q_net_htg = self.htg_vals - self.clg_vals
-        self.t_in = np.full(N_TIMESTEPS, tg)
-        self.t_out = np.full(N_TIMESTEPS, tg)
+        self.t_in = np.full(N_TIMESTEPS, tg, dtype=float)
+        self.t_out = np.full(N_TIMESTEPS, tg, dtype=float)
 
     def calc_bldg_mass_flow_rate(self, t_in, idx_timestep):
         if self.heating_exists:
@@ -371,7 +371,7 @@ class Building(BaseSimComp):
     def generate_matrix(self, m_loop, idx_timestep):
         t_in = self.t_in[idx_timestep - 1]
         r1, r2 = self.calc_r1_r2(t_in, idx_timestep)
-        row = np.zeros(self.matrix_size)
+        row = np.zeros(self.matrix_size, dtype=float)
         row[self.row_index] = 1 - r1 / (m_loop * self.cp)
         row[self.downstream_index] = -1
         rhs = r2 / (m_loop * self.cp)
