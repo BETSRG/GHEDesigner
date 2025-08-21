@@ -78,10 +78,10 @@ class GHX(BaseSimComp):
         self.total_values_ghe = None
 
         # for output
-        self.t_eft = None
+        self.t_in = None
         self.t_mean = None
+        self.t_out = None
         self.q_ghe = None
-        self.t_exit = None
 
         self.n_rows = ghe_data["pre_designed"]["boreholes_in_x_dimension"]
         self.n_cols = ghe_data["pre_designed"]["boreholes_in_y_dimension"]
@@ -98,10 +98,10 @@ class GHX(BaseSimComp):
             np.zeros(N_TIMESTEPS),
         )
 
-        self.t_eft = np.full(N_TIMESTEPS, self.soil.ugt)
+        self.t_in = np.full(N_TIMESTEPS, self.soil.ugt)
         self.t_mean = np.full(N_TIMESTEPS, self.soil.ugt)
+        self.t_out = np.full(N_TIMESTEPS, self.soil.ugt)
         self.q_ghe = np.zeros(N_TIMESTEPS)
-        self.t_exit = np.full(N_TIMESTEPS, self.soil.ugt)
         self.time_array = np.arange(1, N_TIMESTEPS + 1)
         self.gFunction = None
         self.g = None
@@ -276,7 +276,6 @@ class Building(BaseSimComp):
         super().__init__()
         self.name = bldg_id
         self.comp_type = SimCompType.BUILDING
-        self.t_eft = None
         self.matrix_size: int | None = None
         self.cp: float | None = None
 
@@ -307,18 +306,19 @@ class Building(BaseSimComp):
             self.clg_vals = df_clg[clg_col].to_numpy()
 
         self.q_net_htg = self.htg_vals - self.clg_vals
-        self.t_eft = np.full(N_TIMESTEPS, tg)
+        self.t_in = np.full(N_TIMESTEPS, tg)
+        self.t_out = np.full(N_TIMESTEPS, tg)
 
-    def calc_bldg_mass_flow_rate(self, t_eft, idx_timestep):
+    def calc_bldg_mass_flow_rate(self, t_in, idx_timestep):
         if self.heating_exists:
-            cap_htg = self.hp_htg.c1_htg * t_eft**2 + self.hp_htg.c2_htg * t_eft + self.hp_htg.c3_htg
+            cap_htg = self.hp_htg.c1_htg * t_in**2 + self.hp_htg.c2_htg * t_in + self.hp_htg.c3_htg
             m_single_hp_htg = self.hp_htg.m_flow_single_hp
         else:
             cap_htg = 0.0
             m_single_hp_htg = 0.0
 
         if self.cooling_exists:
-            cap_clg = self.hp_clg.c1_clg * t_eft**2 + self.hp_clg.c2_clg * t_eft + self.hp_clg.c3_clg
+            cap_clg = self.hp_clg.c1_clg * t_in**2 + self.hp_clg.c2_clg * t_in + self.hp_clg.c3_clg
             m_single_hp_clg = self.hp_clg.m_flow_single_hp
         else:
             cap_clg = 0.0
@@ -334,7 +334,7 @@ class Building(BaseSimComp):
 
         return mass_flow_bldg
 
-    def calc_r1_r2(self, t_eft, idx_timestep):
+    def calc_r1_r2(self, t_in, idx_timestep):
         """
         Calculate r1 and r2 for this building based on entering fluid temperature and HP coefficients.
         """
@@ -350,16 +350,16 @@ class Building(BaseSimComp):
 
         # Heating calculations
         if self.heating_exists:
-            slope_htg = 2 * self.hp_htg.a_htg * t_eft + self.hp_htg.b_htg
-            ratio_htg = self.hp_htg.a_htg * t_eft**2 + self.hp_htg.b_htg * t_eft + self.hp_htg.c_htg
-            u = ratio_htg - slope_htg * t_eft
+            slope_htg = 2 * self.hp_htg.a_htg * t_in + self.hp_htg.b_htg
+            ratio_htg = self.hp_htg.a_htg * t_in**2 + self.hp_htg.b_htg * t_in + self.hp_htg.c_htg
+            u = ratio_htg - slope_htg * t_in
             v = slope_htg
 
         # Cooling calculations
         if self.cooling_exists:
-            slope_clg = 2 * self.hp_clg.a_clg * t_eft + self.hp_clg.b_clg
-            ratio_clg = self.hp_clg.a_clg * t_eft**2 + self.hp_clg.b_clg * t_eft + self.hp_clg.c_clg
-            a = ratio_clg - slope_clg * t_eft
+            slope_clg = 2 * self.hp_clg.a_clg * t_in + self.hp_clg.b_clg
+            ratio_clg = self.hp_clg.a_clg * t_in**2 + self.hp_clg.b_clg * t_in + self.hp_clg.c_clg
+            a = ratio_clg - slope_clg * t_in
             b = slope_clg
 
         # Final arrays
@@ -369,8 +369,8 @@ class Building(BaseSimComp):
         return r1, r2
 
     def generate_matrix(self, m_loop, idx_timestep):
-        t_eft = self.t_eft[idx_timestep - 1]
-        r1, r2 = self.calc_r1_r2(t_eft, idx_timestep)
+        t_in = self.t_in[idx_timestep - 1]
+        r1, r2 = self.calc_r1_r2(t_in, idx_timestep)
         row = np.zeros(self.matrix_size)
         row[self.row_index] = 1 - r1 / (m_loop * self.cp)
         row[self.downstream_index] = -1
@@ -499,8 +499,8 @@ class GHEHPSystem:
 
             for this_comp in self.components:
                 if isinstance(this_comp, Building):
-                    t_eft = this_comp.t_eft[idx_timestep - 1]
-                    m_bldg = this_comp.calc_bldg_mass_flow_rate(t_eft, idx_timestep)
+                    t_in = this_comp.t_in[idx_timestep - 1]
+                    m_bldg = this_comp.calc_bldg_mass_flow_rate(t_in, idx_timestep)
                     total_hp_flow += m_bldg
 
             m_loop = max(total_hp_flow * self.beta, 0.1)
@@ -520,12 +520,12 @@ class GHEHPSystem:
                 row_index = this_comp.row_index
 
                 if this_comp.comp_type == SimCompType.BUILDING:
-                    this_comp.t_eft[idx_timestep] = x_vector[row_index]
+                    this_comp.t_in[idx_timestep] = x_vector[row_index]
                 elif this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
-                    this_comp.t_eft[idx_timestep] = x_vector[row_index]
+                    this_comp.t_in[idx_timestep] = x_vector[row_index]
                     this_comp.t_mean[idx_timestep] = x_vector[row_index + 1]
                     this_comp.q_ghe[idx_timestep] = x_vector[row_index + 2]
-                    this_comp.t_exit[idx_timestep] = x_vector[row_index + 3]
+                    this_comp.t_out[idx_timestep] = x_vector[row_index + 3]
 
     def create_output(self, output_path: Path):
         output_data = pd.DataFrame()
@@ -533,13 +533,13 @@ class GHEHPSystem:
 
         for this_comp in self.components:
             if isinstance(this_comp, Building):
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_eft
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
 
         for this_comp in self.components:
             if isinstance(this_comp, GHX):
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_eft
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
                 output_data[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean
                 output_data[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_exit
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
 
         output_data.to_csv(output_path, float_format="%0.8f")
