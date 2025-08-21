@@ -516,9 +516,8 @@ class GHEHPSystem:
 
             x_vector = np.linalg.solve(a_matrix, b_vector)
 
-            for idx_comp, this_comp in enumerate(self.components):
+            for this_comp in self.components:
                 row_index = this_comp.row_index
-
                 if this_comp.comp_type == SimCompType.BUILDING:
                     this_comp.t_in[idx_timestep] = x_vector[row_index]
                 elif this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:

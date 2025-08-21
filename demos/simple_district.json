@@ -49,7 +49,7 @@
       },
       "cooling": {
         "loads": {
-          "column": "Small",
+          "column": "Zero",
           "file_path": "../ghedesigner/tests/test_data/Simple_Load_Data.csv"
         },
         "heat_pump": "hp1"
