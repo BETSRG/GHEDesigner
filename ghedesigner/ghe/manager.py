@@ -379,15 +379,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         else:
             raise NotImplementedError(f"FlowConfigType {flow_type_str} not implemented.")
 
-        borehole = Borehole(
-            H=borehole_height,
-            D=self.pygfunction_borehole.D,
-            r_b=self.pygfunction_borehole.r_b,
-            x=0,
-            y=0,
-        )
-        alpha = self.soil.k / self.soil.rhoCp
-        ts = borehole_height**2 / (9 * alpha)
+        self.pygfunction_borehole.H = borehole_height
+        ts = borehole_height**2 / (9 * self.soil.alpha)
         log_time_lts = eskilson_log_times()
         time_values = exp(log_time_lts) * ts
 
@@ -396,7 +389,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             self.pipe.type,
             time_values,
             locations,
-            borehole,
+            self.pygfunction_borehole,
             self.fluid,
             self.pipe,
             self.grout,
