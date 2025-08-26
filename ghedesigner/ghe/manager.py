@@ -4,8 +4,6 @@ from typing import cast
 
 from numpy import array, exp, ndarray
 from pygfunction.boreholes import Borehole
-from pygfunction.enums import PipeType as PyPipeType
-from pygfunction.ground_heat_exchanger import GroundHeatExchanger as PyGHE
 
 from ghedesigner.constants import DEG_TO_RAD, MONTHS_IN_YEAR
 from ghedesigner.enums import DesignGeomType, FlowConfigType, PipeType, TimestepType
@@ -21,6 +19,7 @@ from ghedesigner.ghe.design.bizoned import DesignBiZoned, GeometricConstraintsBi
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.design.rectangle import DesignRectangle, GeometricConstraintsRectangle
 from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRowWise
+from ghedesigner.ghe.gfunction import calculate_g_function
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
@@ -356,66 +355,47 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         if pre_designed["arrangement"] == "MANUAL":
             x_positions: Sequence[float] = pre_designed["x"]
             y_positions: Sequence[float] = pre_designed["y"]
+            if len(x_positions) != len(y_positions):
+                raise RuntimeError("Borehole location coordinate mismatch, make sure length of x and y are equal")
+            locations = list(zip(x_positions, y_positions))
         elif pre_designed["arrangement"] == "RECTANGLE":
             num_bh_x = pre_designed["boreholes_in_x_dimension"]
             num_bh_y = pre_designed["boreholes_in_y_dimension"]
             spacing_x = pre_designed["spacing_in_x_dimension"]
             spacing_y = pre_designed["spacing_in_y_dimension"]
             locations = rectangle(num_bh_x, num_bh_y, spacing_x, spacing_y)
-            x_positions, y_positions = zip(*locations)
         else:
             raise RuntimeError("Invalid arrangement type for pre_designed borehole field")
-        if len(x_positions) != len(y_positions):
-            raise RuntimeError("Borehole location coordinate mismatch, make sure length of x and y are equal")
-        nbh = len(x_positions)
-        burial_depth: float = self.pygfunction_borehole.D
-        borehole_radius: float = self.pygfunction_borehole.r_b
+
+        nbh = len(locations)
         flow_rate: float = ghe_dict["flow_rate"]
         flow_type_str: str = str(ghe_dict["flow_type"]).upper()
 
         if flow_type_str == FlowConfigType.BOREHOLE.name:
             m_flow_borehole = flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
-            m_flow_ghe = nbh * m_flow_borehole
         elif flow_type_str == FlowConfigType.SYSTEM.name:
             m_flow_ghe = flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
             m_flow_borehole = m_flow_ghe / nbh
         else:
             raise NotImplementedError(f"FlowConfigType {flow_type_str} not implemented.")
 
-        pipe_map = {
-            PipeType.SINGLEUTUBE: PyPipeType.SINGLEUTUBE,
-            PipeType.DOUBLEUTUBESERIES: PyPipeType.DOUBLEUTUBESERIES,
-            PipeType.DOUBLEUTUBEPARALLEL: PyPipeType.DOUBLEUTUBEPARALLEL,
-            PipeType.COAXIAL: PyPipeType.COAXIALANNULARINLET,
-        }
-
-        pipe_type = pipe_map.get(self.pipe.type, PipeType.SINGLEUTUBE)
-        pipe_positions = Pipe.place_pipes(0.04, self.pipe.r_out, 2)  # TODO: shank spacing should not be hard coded
-        alpha = self.soil.k / self.soil.rhoCp
-        ts = borehole_height**2 / (9 * alpha)
+        self.pygfunction_borehole.H = borehole_height
+        ts = borehole_height**2 / (9 * self.soil.alpha)
         log_time_lts = eskilson_log_times()
         time_values = exp(log_time_lts) * ts
 
-        ghe = PyGHE(  # TODO: Can we use more from the PyGHE class to simplify our code?
-            H=borehole_height,
-            D=burial_depth,
-            r_b=borehole_radius,
-            x=x_positions,
-            y=y_positions,
-            pos=pipe_positions,
-            r_in=self.pipe.r_in,
-            r_out=self.pipe.r_out,
-            k_s=self.soil.k,
-            k_g=self.grout.k,
-            k_p=self.pipe.k,
-            epsilon=self.pipe.roughness,
-            pipe_type=pipe_type,
-            m_flow_ghe=m_flow_ghe,
-            fluid_name=self.fluid.name,
-            fluid_concentration_pct=self.fluid.concentration_percent,
+        g_lts = calculate_g_function(
+            m_flow_borehole,
+            self.pipe.type,
+            time_values,
+            locations,
+            self.pygfunction_borehole,
+            self.fluid,
+            self.pipe,
+            self.grout,
+            self.soil,
+            boundary_condition=boundary_condition,
         )
-
-        g_lts = ghe.evaluate_g_function(alpha=alpha, time=time_values, boundary_condition=boundary_condition)
 
         single_u_bh = SingleUTube(
             m_flow_borehole, self.fluid, self.pygfunction_borehole, self.pipe, self.grout, self.soil

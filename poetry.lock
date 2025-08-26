@@ -1105,13 +1105,15 @@ virtualenv = ">=20.10.0"
 
 [[package]]
 name = "pygfunction"
-version = "2.4.0.dev0"
+version = "2.3.1"
 description = "A g-function calculator for Python"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
-files = []
-develop = false
+files = [
+    {file = "pygfunction-2.3.1-py3-none-any.whl", hash = "sha256:b32cde693fc38080ad69da720f3e5c78205d0f8f16aa71072d7200ebb65a5295"},
+    {file = "pygfunction-2.3.1.tar.gz", hash = "sha256:8b319b88ae90dcc625f849cfa6275a1e2e5c884225fff8fc65bb2c20a9bac933"},
+]
 
 [package.dependencies]
 numpy = ">=1.26.4"
@@ -1123,12 +1125,6 @@ typing_extensions = ">=4.11.0"
 doc = ["numpydoc (>=1.7.0)", "recommonmark (>=0.7.1)", "sphinx (>=7.3.7)"]
 plot = ["matplotlib (>=3.9.2)"]
 testing = ["matplotlib (>=3.9.2)", "pytest (>=7.4.4)", "pytest-cov (>=6.1.1)", "tox (>=4.25.0)"]
-
-[package.source]
-type = "git"
-url = "https://github.com/mitchute/pygfunction.git"
-reference = "157e8ff3853470e04289b0445cfb6d6ebc945691"
-resolved_reference = "157e8ff3853470e04289b0445cfb6d6ebc945691"
 
 [[package]]
 name = "pygments"
@@ -1899,4 +1895,4 @@ viz = ["cartopy (>=0.23)", "matplotlib", "nc-time-axis", "seaborn"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <3.14"
-content-hash = "814e4c6efb0583b3177b8549491e1c669ead8ab2bb99f8addf19a60c279c9aa7"
+content-hash = "5128a5e3d8805272eab25d3e4652f7767f0d5fb601d40a4396a4f93b5f378899"
