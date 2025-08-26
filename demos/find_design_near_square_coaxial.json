@@ -2,7 +2,7 @@
   "version": 2,
   "topology": [
     {
-      "type": "ground-heat-exchanger",
+      "type": "ground_heat_exchanger",
       "name": "ghe1"
     }
   ],
@@ -11,7 +11,7 @@
     "concentration_percent": 0,
     "temperature": 20
   },
-  "ground-heat-exchanger": {
+  "ground_heat_exchanger": {
     "ghe1": {
       "flow_rate": 0.8,
       "flow_type": "BOREHOLE",
@@ -1792,10 +1792,9 @@
       }
     }
   },
-  "simulation-control": {
-    "thermal-sizing-run": false,
-    "hourly-run": false,
-    "hydraulic-run": false,
-    "simulation-months": 240
+  "simulation_control": {
+    "sizing_run": false,
+    "hourly_run": false,
+    "sizing_months": 240
   }
 }

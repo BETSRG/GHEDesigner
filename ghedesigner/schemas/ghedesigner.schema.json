@@ -240,7 +240,7 @@
         "additionalProperties": false
       }
     },
-    "ground-heat-exchanger": {
+    "ground_heat_exchanger": {
       "type": "object",
       "description": "A collection of objects that define a ground heat exchanger system.",
       "additionalProperties": {
@@ -844,38 +844,19 @@
         "additionalProperties": false
       }
     },
-    "pump": {
-      "type": "object",
-      "description": "",
-      "additionalProperties": false
-    },
-    "towers": {
-      "type": "object",
-      "description": "",
-      "additionalProperties": false
-    },
-    "generic-loads": {
-      "type": "object",
-      "description": "",
-      "additionalProperties": false
-    },
-    "simulation-control": {
+    "simulation_control": {
       "type": "object",
       "description": "",
       "properties": {
-        "thermal-sizing-run": {
+        "sizing_run": {
           "type": "boolean",
-          "description": "This field is currently unused. It will enable or disable running a sizing calculation for the ground heat exchanger"
+          "description": "Field enables or disables running sizing calculations."
         },
-        "hourly-run": {
+        "hourly_run": {
           "type": "boolean",
-          "description": "This field is currently unused."
+          "description": "Field enables running hour simulation."
         },
-        "hydraulic-run": {
-          "Type": "boolean",
-          "description": "This field is currently unused"
-        },
-        "simulation-months": {
+        "sizing_months": {
           "type": "number",
           "minimum": 1,
           "format": "Months",
@@ -888,7 +869,7 @@
           "description": "This field is currently unused. Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently available."
         }
       },
-      "required": ["simulation-months"],
+      "required": ["sizing_months"],
       "additionalProperties": false
     },
     "version": {
@@ -896,6 +877,6 @@
       "description": "An integer version ID for this input structure, for future-proofing."
     }
   },
-  "required": ["topology", "fluid", "ground-heat-exchanger", "version"],
+  "required": ["topology", "fluid", "ground_heat_exchanger", "version"],
   "additionalProperties": false
 }
