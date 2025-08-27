@@ -59,7 +59,7 @@ class CoaxialPipe(GHEDesignerBoreholeWithMultiplePipes):
 
         resist_conv = self.bhr_borehole.calc_fluid_resist(self.m_flow_borehole, self.soil.ugt)
         resist_pipe = self.bhr_borehole.calc_pipe_cond_resist()
-        preliminary = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rhoCp)
+        preliminary = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rho_cp)
 
         # Vary grout thermal conductivity to match effective borehole thermal
         # resistance

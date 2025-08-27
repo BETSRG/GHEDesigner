@@ -59,53 +59,29 @@ class Fluid:
         return self._fluid.k(self.temperature)
 
     @property
-    def rhoCp(self) -> float:
+    def rho_cp(self) -> float:
         return self.rho * self.cp
 
     @property
     def alpha(self) -> float:
-        return self.k / self.rhoCp
-
-    # def __post_init__(self, fluid_str: str, percent: float) -> None:
-    #     fluid_type_map = {
-    #         FluidType.ETHYLALCOHOL.name: (FluidType.ETHYLALCOHOL, "MEA"),
-    #         FluidType.ETHYLENEGLYCOL.name: (FluidType.ETHYLENEGLYCOL, "MEG"),
-    #         FluidType.METHYLALCOHOL.name: (FluidType.METHYLALCOHOL, "MMA"),
-    #         FluidType.PROPYLENEGLYCOL.name: (FluidType.PROPYLENEGLYCOL, "MPG"),
-    #         FluidType.WATER.name: (FluidType.WATER, "WATER"),
-    #     }
-    #
-    #     self.concentration_percent = percent
-    #
-    #     try:
-    #         self.fluid_type, fluid_shorthand = fluid_type_map[fluid_str.upper()]
-    #     except KeyError:
-    #         raise ValueError(f'FluidType "{fluid_str}" not implemented')
-    #
-    #     super().__init__(fluid_shorthand, percent, self.temperature)
-    #
-    # def to_input(self) -> dict:
-    #     return {
-    #         **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k not in {"fluid_type"}}),
-    #         "fluid_name": self.fluid_type.name,
-    #     }
+        return self.k / self.rho_cp
 
 
 class ThermalProperty:
     def __init__(self, k, rho_cp: float) -> None:
         self.k = k  # Thermal conductivity (W/m.K)
-        self.rhoCp = rho_cp  # Volumetric heat capacity (J/K.m3)
+        self.rho_cp = rho_cp  # Volumetric heat capacity (J/K.m3)
 
     def as_dict(self) -> dict:
         output = {
             "type": str(self.__class__),
             "thermal_conductivity": {"value": self.k, "units": "W/m-K"},
-            "volumetric_heat_capacity": {"value": self.rhoCp, "units": "J/K-m3"},
+            "volumetric_heat_capacity": {"value": self.rho_cp, "units": "J/K-m3"},
         }
         return output
 
     def to_input(self) -> dict:
-        return {"conductivity": self.k, "rho_cp": self.rhoCp}
+        return {"conductivity": self.k, "rho_cp": self.rho_cp}
 
 
 class Grout(ThermalProperty):
@@ -127,4 +103,4 @@ class Soil(ThermalProperty):
         return output
 
     def to_input(self) -> dict:
-        return {"conductivity": self.k, "rho_cp": self.rhoCp, "undisturbed_temp": self.ugt}
+        return {"conductivity": self.k, "rho_cp": self.rho_cp, "undisturbed_temp": self.ugt}

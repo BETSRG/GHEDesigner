@@ -315,10 +315,10 @@ class OutputManager:
             o += self.d_row(width, "Inner Pipe Thermal Conductivity, W/m-K:", ghe.bhe.pipe.k[0], f_3f, n_tabs=1)
             o += self.d_row(width, "Outer Pipe Thermal Conductivity, W/m-K:", ghe.bhe.pipe.k[1], f_3f, n_tabs=1)
 
-        o += self.d_row(width, "Pipe Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.pipe.rhoCp / 1000, f_2f, n_tabs=1)
+        o += self.d_row(width, "Pipe Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.pipe.rho_cp / 1000, f_2f, n_tabs=1)
         o += self.d_row(width, "Shank Spacing, mm:", ghe.bhe.pipe.s * 1000, f_2f, n_tabs=1)
         o += self.d_row(width, "Grout Thermal Conductivity, W/(m-K):", ghe.bhe.grout.k, f_3f, n_tabs=1)
-        o += self.d_row(width, "Grout Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.grout.rhoCp / 1000, f_2f, n_tabs=1)
+        o += self.d_row(width, "Grout Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.grout.rho_cp / 1000, f_2f, n_tabs=1)
         if isinstance(ghe.bhe.pipe.r_out, float):
             o += self.d_row(
                 width,
@@ -352,11 +352,11 @@ class OutputManager:
 
         o += "Soil Properties: " + "\n"
         o += self.d_row(width, "Thermal Conductivity, W/m-K:", ghe.bhe.soil.k, f_3f, n_tabs=1)
-        o += self.d_row(width, "Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.soil.rhoCp / 1000, f_2f, n_tabs=1)
+        o += self.d_row(width, "Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.soil.rho_cp / 1000, f_2f, n_tabs=1)
         o += self.d_row(width, "Undisturbed Ground Temperature, C:", ghe.bhe.soil.ugt, f_2f, n_tabs=1)
 
         o += "Fluid Properties" + "\n"
-        o += self.d_row(width, "Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.fluid.rhoCp / 1000, f_2f, n_tabs=1)
+        o += self.d_row(width, "Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.fluid.rho_cp / 1000, f_2f, n_tabs=1)
         o += self.d_row(width, "Thermal Conductivity, W/m-K:", ghe.bhe.fluid.k, f_2f, n_tabs=1)
         o += self.d_row(width, "Viscosity, Pa-s:", ghe.bhe.fluid.mu, f_sci, n_tabs=1)
         o += self.d_row(width, "Fluid Mix:", ghe.bhe.fluid.name, f_str, n_tabs=1)
@@ -582,16 +582,16 @@ class OutputManager:
                 "pipe_geometry": pipe_geometry,
                 "pipe_roughness": add_with_units(ghe.bhe.pipe.roughness, "m"),
                 "pipe_thermal_conductivity": add_with_units(ghe.bhe.pipe.k, "W/m-K"),
-                "pipe_volumetric_heat_capacity": add_with_units(ghe.bhe.pipe.rhoCp / 1000, "kJ/m3-K"),
+                "pipe_volumetric_heat_capacity": add_with_units(ghe.bhe.pipe.rho_cp / 1000, "kJ/m3-K"),
                 "grout_thermal_conductivity": add_with_units(ghe.bhe.grout.k, "W/m-K"),
-                "grout_volumetric_heat_capacity": add_with_units(ghe.bhe.grout.rhoCp / 1000, "kJ/m3-K"),
+                "grout_volumetric_heat_capacity": add_with_units(ghe.bhe.grout.rho_cp / 1000, "kJ/m3-K"),
                 "reynolds_number": reynolds,
                 "effective_borehole_resistance": add_with_units(ghe.bhe.calc_effective_borehole_resistance(), "W/m-K"),
                 # TODO: are the units right here?
                 "soil_thermal_conductivity": add_with_units(ghe.bhe.soil.k, "W/m-K"),
-                "soil_volumetric_heat_capacity": add_with_units(ghe.bhe.soil.rhoCp / 1000, "kJ/m3-K"),
+                "soil_volumetric_heat_capacity": add_with_units(ghe.bhe.soil.rho_cp / 1000, "kJ/m3-K"),
                 "soil_undisturbed_ground_temp": add_with_units(ghe.bhe.soil.ugt, "C"),
-                "fluid_volumetric_heat_capacity": add_with_units(ghe.bhe.fluid.rhoCp / 1000, "kJ/m3-K"),
+                "fluid_volumetric_heat_capacity": add_with_units(ghe.bhe.fluid.rho_cp / 1000, "kJ/m3-K"),
                 "fluid_thermal_conductivity": add_with_units(ghe.bhe.fluid.k, "W/m-K"),
                 "fluid_viscosity": add_with_units(ghe.bhe.fluid.mu, "Pa-s"),
                 "fluid_mixture": ghe.bhe.fluid.name,
