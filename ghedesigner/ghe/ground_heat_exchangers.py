@@ -13,7 +13,7 @@ from ghedesigner.ghe.hybrid_loads import HybridLoads2
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Grout, Soil
 from ghedesigner.utilities import combine_sts_lts, simulate_detailed, solve_root
-
+from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 
 class GHE:
     def __init__(
@@ -30,7 +30,6 @@ class GHE:
         start_month: int,
         end_month: int,
         hourly_extraction_ground_loads: list,
-        hourly_ExFTghe_temps: list | None,
         radial_numerical: SingleUTube,
         field_type="N/A",
         field_specifier="N/A",
