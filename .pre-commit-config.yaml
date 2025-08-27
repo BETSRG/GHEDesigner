@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
         args: ["--maxkb=5000"]
@@ -24,7 +24,7 @@ repos:
       #   args: ["--pytest-test-first"]
       - id: trailing-whitespace
   - repo: https://github.com/crate-ci/typos
-    rev: v1.31.1
+    rev: v1.34.0
     hooks:
       - id: typos
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -33,14 +33,14 @@ repos:
       - id: prettier
         types_or: [json, markdown, toml, yaml]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+    rev: v1.17.1
     hooks:
       - id: mypy
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.5
+    rev: v0.12.9
     hooks:
       # Run the linter
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix, --output-format=full]
+      - id: ruff-check
+        args: [--fix, --verbose, --exit-non-zero-on-fix, --output-format=full]
       # Run the formatter
       - id: ruff-format
