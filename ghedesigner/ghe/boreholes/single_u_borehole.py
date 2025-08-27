@@ -11,7 +11,7 @@ from scipy.linalg.lapack import dgtsv
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
 from ghedesigner.ghe.boreholes.base import GHEDesignerBoreholeBase
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 
 
 class CellProps(IntEnum):
@@ -28,7 +28,7 @@ class SingleUTube(GHEDesignerBoreholeBase):
     def __init__(
         self,
         m_flow_borehole: float,
-        fluid: GHEFluid,
+        fluid: Fluid,
         borehole: Borehole,
         pipe: Pipe,
         grout: Grout,

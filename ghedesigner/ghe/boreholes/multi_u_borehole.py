@@ -10,7 +10,7 @@ from ghedesigner.enums import DoubleUTubeConnType
 from ghedesigner.ghe.boreholes.base import GHEDesignerBoreholeBase
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.utilities import solve_root
 
 
@@ -112,7 +112,7 @@ class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
     def __init__(
         self,
         m_flow_borehole: float,
-        fluid: GHEFluid,
+        fluid: Fluid,
         borehole: Borehole,
         pipe: Pipe,
         grout: Grout,

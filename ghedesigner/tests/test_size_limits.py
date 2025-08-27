@@ -2,7 +2,7 @@ from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
@@ -21,7 +21,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
 
     def test_small_loads(self):
         pipe = self.get_pipe()
-        fluid = GHEFluid("water", 0.0, 20.0)
+        fluid = Fluid("water")
         grout = Grout(1.0, 3901000.0)
         soil = Soil(3.493, 2.5797e06, 10.0)
         ground_loads = [1.0e2] * 8760
@@ -54,7 +54,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
 
     def test_big_loads(self):
         pipe = self.get_pipe()
-        fluid = GHEFluid("water", 0.0, 20.0)
+        fluid = Fluid("water")
         grout = Grout(1.0, 3901000.0)
         soil = Soil(3.493, 2.5797e06, 10.0)
         ground_loads = [1.0e6] * 8760
@@ -87,7 +87,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
 
     def test_big_loads_with_max_boreholes(self):
         pipe = self.get_pipe()
-        fluid = GHEFluid("water", 0.0, 20.0)
+        fluid = Fluid("water")
         grout = Grout(1.0, 3901000.0)
         soil = Soil(3.493, 2.5797e06, 10.0)
         ground_loads = [1.0e6] * 8760

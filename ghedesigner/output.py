@@ -358,8 +358,8 @@ class OutputManager:
         o += "Fluid Properties" + "\n"
         o += self.d_row(width, "Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.fluid.rhoCp / 1000, f_2f, n_tabs=1)
         o += self.d_row(width, "Thermal Conductivity, W/m-K:", ghe.bhe.fluid.k, f_2f, n_tabs=1)
-        o += self.d_row(width, "Viscosity, Pa-s:", ghe.bhe.fluid.dynamic_viscosity(), f_sci, n_tabs=1)
-        o += self.d_row(width, "Fluid Mix:", ghe.bhe.fluid.fluid.fluid_name, f_str, n_tabs=1)
+        o += self.d_row(width, "Viscosity, Pa-s:", ghe.bhe.fluid.mu, f_sci, n_tabs=1)
+        o += self.d_row(width, "Fluid Mix:", ghe.bhe.fluid.name, f_str, n_tabs=1)
         o += self.d_row(width, "Density, kg/m^3:", ghe.bhe.fluid.rho, f_2f, n_tabs=1)
         o += self.d_row(width, "Mass Flow Rate Per Borehole, kg/s:", ghe.bhe.m_flow_borehole, f_3f, n_tabs=1)
         if hasattr(ghe.bhe, "h_f"):
@@ -593,8 +593,8 @@ class OutputManager:
                 "soil_undisturbed_ground_temp": add_with_units(ghe.bhe.soil.ugt, "C"),
                 "fluid_volumetric_heat_capacity": add_with_units(ghe.bhe.fluid.rhoCp / 1000, "kJ/m3-K"),
                 "fluid_thermal_conductivity": add_with_units(ghe.bhe.fluid.k, "W/m-K"),
-                "fluid_viscosity": add_with_units(ghe.bhe.fluid.dynamic_viscosity(), "Pa-s"),
-                "fluid_mixture": ghe.bhe.fluid.fluid.fluid_name,  # TODO: Is this the right lookup!?!?!? :)
+                "fluid_viscosity": add_with_units(ghe.bhe.fluid.mu, "Pa-s"),
+                "fluid_mixture": ghe.bhe.fluid.name,
                 "fluid_density": add_with_units(ghe.bhe.fluid.rho, "kg/m3"),
                 "fluid_mass_flow_rate_per_borehole": add_with_units(ghe.bhe.m_flow_borehole, "kg/s"),
             },

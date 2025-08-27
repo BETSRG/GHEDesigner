@@ -7,7 +7,7 @@ from ghedesigner.enums import FlowConfigType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.utilities import borehole_spacing, check_bracket, eskilson_log_times, sign
 
 
@@ -18,7 +18,7 @@ class Bisection1D:
         field_descriptors: list,
         v_flow: float,
         borehole: Borehole,
-        fluid: GHEFluid,
+        fluid: Fluid,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
