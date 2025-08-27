@@ -61,7 +61,7 @@ class GHE:
         # Building cooling is negative, building heating is positive
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.times = np.empty((0,), dtype=np.float64)
-        self.loading = None
+        self.loading: list | None = None
 
         self.hybrid_load = HybridLoad(
             self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
