@@ -78,9 +78,14 @@ class DesignTiltedLine(DesignBase):
         n = floor(self.geometric_constraints.length / self.geometric_constraints.b) + 1
         number_of_boreholes = int(n)
 
-        self.tilted_coordinates_domain, self.tilted_fieldDescriptors, self.staggered_coordinates_domain,\
-            self.staggered_fieldDescriptors = straight_line(1, number_of_boreholes, self.geometric_constraints.b,
-                                                           self.geometric_constraints.tilt, self.max_height)
+        (
+            self.tilted_coordinates_domain,
+            self.tilted_fieldDescriptors,
+            self.staggered_coordinates_domain,
+            self.staggered_fieldDescriptors,
+        ) = straight_line(
+            1, number_of_boreholes, self.geometric_constraints.b, self.geometric_constraints.tilt, self.max_height
+        )
 
     def find_design(self, disp=False) -> Bisection1DTilt:
         if disp:
@@ -110,5 +115,5 @@ class DesignTiltedLine(DesignBase):
             field_type="Tilted Line",
             load_years=self.load_years,
             staggered_coordinates_domain=self.staggered_coordinates_domain,
-            staggered_field_descriptors=self.staggered_fieldDescriptors
+            staggered_field_descriptors=self.staggered_fieldDescriptors,
         )

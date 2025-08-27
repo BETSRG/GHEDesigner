@@ -1,5 +1,6 @@
 from math import cos, pi, sin
 
+
 def transpose_coordinates(coordinates) -> list[tuple[float, float]]:
     coordinates_transposed = []
     for x, y in coordinates:
@@ -151,7 +152,6 @@ def zoned_rectangle(
 
 
 def tilted_line(n: int, b: float, tilt: float) -> tuple[list[tuple[float, float]], list[float], list[float]]:
-
     # Create List of
     line_coordinates = []
     line_tilts = []
@@ -173,12 +173,17 @@ def staggered_line(n: int, b: float, tilt: float, borehole_height: float) -> lis
 
     return line_object
 
-def tilted_drill_pad(n: int,radius: float, tilt: float,center_x: float = 0.0,center_y: float = 0.0,
-                     ) -> tuple[list[tuple[float, float]], list[float], list[float]]:
 
+def tilted_drill_pad(
+    n: int,
+    radius: float,
+    tilt: float,
+    center_x: float = 0.0,
+    center_y: float = 0.0,
+) -> tuple[list[tuple[float, float]], list[float], list[float]]:
     coords: list[tuple[float, float]] = []
-    tilts:  list[float]               = []
-    orients:list[float]               = []
+    tilts: list[float] = []
+    orients: list[float] = []
 
     for i in range(n):
         angle = 2 * pi * i / n
@@ -191,7 +196,7 @@ def tilted_drill_pad(n: int,radius: float, tilt: float,center_x: float = 0.0,cen
     return coords, tilts, orients
 
 
-#def circle_of_points(n_points: int, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> \
+# def circle_of_points(n_points: int, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> \
 #        list[tuple[float, float]]:
 #    """
 #    Generates a list of equally spaced points around a circle.

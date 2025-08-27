@@ -26,6 +26,9 @@ jsonschema = "^4.19"
 numpy = "^2.0.0"
 pygfunction = { git = "https://github.com/mitchute/pygfunction.git", rev = "5515d19af49a6c38ac5bd6814d062917e1bf486e" }
 scipy = "^1.14"
+plotly = "^6.3.0"
+matplotlib = "^3.10.5"
+kaleido = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
 mkdocs-material = "^9.5"

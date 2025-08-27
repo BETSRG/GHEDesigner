@@ -134,7 +134,6 @@ class Bisection1DTiltDrillPad:
         return v_flow_system, m_flow_borehole
 
     def initialize_g_function(self, coords, h, tilts, orientations):
-
         self.ghe.bhe.b.H = h
         borehole = self.ghe.bhe.b
         fluid = self.ghe.bhe.fluid
@@ -202,7 +201,7 @@ class Bisection1DTiltDrillPad:
         return t_excess
 
     def search(self):
-        # bracket on pad‐count index
+        # bracket on pad-count index
         x_l = self.ndp_min
         x_r = self.ndp_max
 
@@ -210,21 +209,26 @@ class Bisection1DTiltDrillPad:
         scaled_loads_l = (1 / x_l) * base_loads
         scaled_loads_r = (1 / x_r) * base_loads
 
-
         # evaluate at smallest pad count
 
-        self.initialize_g_function(self.coordinates_domain[0][0], self.max_height , self.coordinates_domain[0][1], self.coordinates_domain[0][2])
-        t_l = self.calculate_excess(self.coordinates_domain[0][0], self.max_height, self.fieldDescriptors[x_l-1], scaled_loads_l)
-        t_r = self.calculate_excess(self.coordinates_domain[0][0], self.max_height, self.fieldDescriptors[x_r-1], scaled_loads_r)
+        self.initialize_g_function(
+            self.coordinates_domain[0][0], self.max_height, self.coordinates_domain[0][1], self.coordinates_domain[0][2]
+        )
+        t_l = self.calculate_excess(
+            self.coordinates_domain[0][0], self.max_height, self.fieldDescriptors[x_l - 1], scaled_loads_l
+        )
+        t_r = self.calculate_excess(
+            self.coordinates_domain[0][0], self.max_height, self.fieldDescriptors[x_r - 1], scaled_loads_r
+        )
 
-        self.calculated_temperatures[x_l-1] = t_l
-        self.calculated_temperatures[x_r-1] = t_r
+        self.calculated_temperatures[x_l - 1] = t_l
+        self.calculated_temperatures[x_r - 1] = t_r
 
         # check for valid bracket
         if check_bracket(sign(t_l), sign(t_r)):
-            if t_r > 0:  # undersize even at max pads
-                if self.continue_if_design_unmet:
-                    return x_r, self.coordinates_domain
+            if t_r > 0 and self.continue_if_design_unmet:  # undersize even at max pads
+                return x_r, self.coordinates_domain
+            else:
                 raise ValueError("Search failed: not enough pads available.")
 
         # bisection on index
@@ -238,8 +242,10 @@ class Bisection1DTiltDrillPad:
                 break
             prev_x_c = x_c
             scaled_loads_c = (1 / x_c) * base_loads
-            t_c = self.calculate_excess(self.coordinates_domain[0][0], self.max_height, self.fieldDescriptors[x_c-1], scaled_loads_c)
-            self.calculated_temperatures[x_c-1] = t_c
+            t_c = self.calculate_excess(
+                self.coordinates_domain[0][0], self.max_height, self.fieldDescriptors[x_c - 1], scaled_loads_c
+            )
+            self.calculated_temperatures[x_c - 1] = t_c
             if t_c < 0:
                 last_valid = x_c
                 x_r, t_r = x_c, t_c
@@ -249,10 +255,9 @@ class Bisection1DTiltDrillPad:
             valid = x_r - x_l
         if last_valid is not None:
             selection_key = last_valid
+        elif self.continue_if_design_unmet:
+            selection_key = x_r
         else:
-            if self.continue_if_design_unmet:
-                selection_key = x_r
-            else:
-                raise ValueError("Search failed: not enough pads available.")
+            raise ValueError("Search failed: not enough pads available.")
 
         return selection_key, self.coordinates_domain[0]

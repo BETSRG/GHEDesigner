@@ -18,11 +18,11 @@ from ghedesigner.ghe.design.birectangle_constrained import (
     GeometricConstraintsBiRectangleConstrained,
 )
 from ghedesigner.ghe.design.bizoned import DesignBiZoned, GeometricConstraintsBiZoned
+from ghedesigner.ghe.design.drill_pad import DesignDrillPad, GeometricConstraintsDrillPad
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.design.rectangle import DesignRectangle, GeometricConstraintsRectangle
 from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRowWise
 from ghedesigner.ghe.design.titled_line import DesignTiltedLine, GeometricConstraintsTiltedLine
-from ghedesigner.ghe.design.drill_pad import DesignDrillPad, GeometricConstraintsDrillPad
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
@@ -365,9 +365,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             )
         elif geom_type == DesignGeomType.TILTEDLINE:
             tilted_line_geometry: GeometricConstraintsTiltedLine = GeometricConstraintsTiltedLine(
-                b=geom["b"],
-                length=geom["length"],
-                tilt=geom["tilt"]
+                b=geom["b"], length=geom["length"], tilt=geom["tilt"]
             )
             design = DesignTiltedLine(
                 flow_rate,
@@ -396,8 +394,12 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         search = design.find_design()  # TODO: I wonder if it would simplify things to just return the GHE object
         search_time = time() - start_time
         found_ghe = cast(GHE, search.ghe)
-        found_ghe.compute_and_merge_g_functions(h_values=[max_height*0.7])
-        found_ghe.size(TimestepType.HYBRID, max_height, max_height*0.7, max_eft, min_eft)
+        if geom_type == DesignGeomType.TILTEDLINE or DesignGeomType.DRILLPAD:
+            found_ghe.compute_and_merge_g_functions(h_values=[max_height * 0.9])
+            found_ghe.size(TimestepType.HYBRID, max_height, max_height * 0.9, max_eft, min_eft)
+        else:
+            found_ghe.compute_and_merge_g_functions(h_values=[min_height])
+            found_ghe.size(TimestepType.HYBRID, max_height, min_height, max_eft, min_eft)
         return search, search_time, found_ghe
 
     def get_g_function(self, ghe_dict: dict, boundary_condition="MIFT") -> tuple[ndarray, ndarray, ndarray]:

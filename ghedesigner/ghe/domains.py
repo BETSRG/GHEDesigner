@@ -3,11 +3,11 @@ from typing import cast
 
 from ghedesigner.ghe.coordinates import (
     c_shape,
-    tilted_drill_pad,
     l_shape,
     lop_u,
     rectangle,
     staggered_line,
+    tilted_drill_pad,
     tilted_line,
     transpose_coordinates,
     zoned_rectangle,
@@ -254,10 +254,10 @@ def straight_line(lower: int, upper: int, b: float, tilt: float, borehole_height
     staggered_coordinates_domain = []
 
     for num_boreholes in range(lower, upper + 1):
-
         field_descriptors.append(f"Tilted_Line_{num_boreholes}_B{b:0.2f}_T{tilt:0.2f}")
-        staggered_field_descriptors.append(f"Staggered_Line_{num_boreholes}X_B{b:0.2f}_T{tilt:0.2f}"
-                                           f"_H{borehole_height:0.2f}")
+        staggered_field_descriptors.append(
+            f"Staggered_Line_{num_boreholes}X_B{b:0.2f}_T{tilt:0.2f}_H{borehole_height:0.2f}"
+        )
 
         coordinates_domain.append(tilted_line(num_boreholes, b, tilt))
         staggered_coordinates_domain.append(staggered_line(num_boreholes, b, tilt, borehole_height))
@@ -266,7 +266,6 @@ def straight_line(lower: int, upper: int, b: float, tilt: float, borehole_height
 
 
 def drill_pad(nbh: int, tilt: float, radius: float, ndp_min: int, ndp_max: int):
-
     coordinates_domain = []
     field_descriptors = []
     # Only create coordinates for 1 drill pad
@@ -275,8 +274,8 @@ def drill_pad(nbh: int, tilt: float, radius: float, ndp_min: int, ndp_max: int):
     for npads in range(ndp_min, ndp_max + 1):
         field_descriptors.append(f"{npads}X_Drill_Pads_{nbh}X_R{radius:.2f}_T{tilt:.2f}")
 
-
     return coordinates_domain, field_descriptors
+
 
 def zoned_rectangle_domain(length_x, length_y, n_x, n_y, transpose=False):
     # Make this work for the transpose

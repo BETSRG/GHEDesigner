@@ -38,8 +38,8 @@ class Bisection1DTilt:
         search=True,
         field_type="N/A",
         load_years=None,
-        staggered_coordinates_domain: list = None,
-        staggered_field_descriptors: list = None,
+        staggered_coordinates_domain: list = [],
+        staggered_field_descriptors: list = [],
     ) -> None:
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
@@ -90,7 +90,7 @@ class Bisection1DTilt:
             pipe,
             grout,
             soil,
-            solver='equivalent'
+            solver="equivalent",
         )
         self.last_g_function = g_function
 
@@ -143,9 +143,9 @@ class Bisection1DTilt:
 
         b = borehole_spacing(borehole, coordinates)
 
-        selected_solver = 'equivalent'
+        selected_solver = "equivalent"
         if tilts is not None and orientations is not None:
-            selected_solver = 'similarities'
+            selected_solver = "similarities"
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
@@ -339,8 +339,9 @@ class Bisection1DTilt:
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
         self.initialize_ghe(
-            self.staggered_coordinates_domain[selection_key], self.max_height,
-            self.staggered_fieldDescriptors[selection_key]
+            self.staggered_coordinates_domain[selection_key],
+            self.max_height,
+            self.staggered_fieldDescriptors[selection_key],
         )
         return selection_key, self.staggered_coordinates_domain[selection_key]
 
@@ -350,10 +351,13 @@ class Bisection1DTilt:
         staggered_selection_key, staggered_coords = self.staggered_search()
 
         # Determine whether approximate was too small or large
-        staggered_excess = self.calculate_excess(self.coordinates_domain[staggered_selection_key][0], self.max_height,
-                                                 self.fieldDescriptors[staggered_selection_key],
-                                                 tilts=self.coordinates_domain[staggered_selection_key][1],
-                                                 orientations=self.coordinates_domain[staggered_selection_key][2])
+        staggered_excess = self.calculate_excess(
+            self.coordinates_domain[staggered_selection_key][0],
+            self.max_height,
+            self.fieldDescriptors[staggered_selection_key],
+            tilts=self.coordinates_domain[staggered_selection_key][1],
+            orientations=self.coordinates_domain[staggered_selection_key][2],
+        )
 
         if staggered_excess == 0:
             return staggered_selection_key, self.coordinates_domain[staggered_selection_key][0]
@@ -369,11 +373,13 @@ class Bisection1DTilt:
         while i < self.max_iter:
             selection_key += search_direction
 
-            new_excess = self.calculate_excess(self.coordinates_domain[selection_key][0],
-                                               self.max_height,
-                                               self.fieldDescriptors[selection_key],
-                                               tilts=self.coordinates_domain[selection_key][1],
-                                               orientations=self.coordinates_domain[selection_key][2])
+            new_excess = self.calculate_excess(
+                self.coordinates_domain[selection_key][0],
+                self.max_height,
+                self.fieldDescriptors[selection_key],
+                tilts=self.coordinates_domain[selection_key][1],
+                orientations=self.coordinates_domain[selection_key][2],
+            )
             if search_direction == 1 and new_excess <= 0:
                 break
             elif search_direction == -1 and new_excess > 0:
@@ -382,8 +388,11 @@ class Bisection1DTilt:
             i += 1
 
         self.initialize_ghe(
-            self.coordinates_domain[selection_key][0], self.max_height, self.fieldDescriptors[selection_key],
-            tilts=self.coordinates_domain[selection_key][1],  orientations=self.coordinates_domain[selection_key][2]
+            self.coordinates_domain[selection_key][0],
+            self.max_height,
+            self.fieldDescriptors[selection_key],
+            tilts=self.coordinates_domain[selection_key][1],
+            orientations=self.coordinates_domain[selection_key][2],
         )
         self.ghe.gFunction = self.last_g_function
         return selection_key, self.coordinates_domain[selection_key]

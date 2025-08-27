@@ -6,14 +6,16 @@ from pygfunction.boreholes import Borehole
 from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_1d import Bisection1D
+from ghedesigner.ghe.search.bisection_1d_tilt_drill_pad_search import Bisection1DTiltDrillPad
+from ghedesigner.ghe.search.bisection_1d_tilt_search import Bisection1DTilt
 from ghedesigner.ghe.search.bisection_2d import Bisection2D
 from ghedesigner.ghe.search.bisection_zd import BisectionZD
 from ghedesigner.ghe.search.rowwise import RowWiseModifiedBisectionSearch
-from ghedesigner.ghe.search.bisection_1d_tilt_search import Bisection1DTilt
-from ghedesigner.ghe.search.bisection_1d_tilt_drill_pad_search import Bisection1DTiltDrillPad
 from ghedesigner.media import GHEFluid, Grout, Soil
 
-AnyBisectionType = Bisection1D | Bisection2D | BisectionZD | RowWiseModifiedBisectionSearch | Bisection1DTilt | Bisection1DTiltDrillPad
+AnyBisectionType = (
+    Bisection1D | Bisection2D | BisectionZD | RowWiseModifiedBisectionSearch | Bisection1DTilt | Bisection1DTiltDrillPad
+)
 
 
 @dataclass(init=False)

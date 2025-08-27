@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from math import ceil
-from time import time
+from typing import TYPE_CHECKING
+
 import numpy as np
 from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d
@@ -12,6 +15,9 @@ from ghedesigner.ghe.ground_loads import HybridLoad
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Grout, Soil
 from ghedesigner.utilities import combine_sts_lts, solve_root
+
+if TYPE_CHECKING:
+    from ghedesigner.ghe.search.bisection_1d_tilt_search import Bisection1DTilt
 
 
 class GHE:
@@ -42,7 +48,7 @@ class GHE:
         self.m_flow_borehole = m_flow_borehole
 
         # Cached g-function from bisection search
-        self.bisection = None
+        self.bisection: Bisection1DTilt | None = None
 
         # Borehole Heat Exchanger
         self.bhe_type = bhe_type
@@ -173,16 +179,15 @@ class GHE:
         return hp_eft, delta_tb
 
     def compute_g_functions(self, h_min: float, h_max: float):
-
         # Choosing Solver Method
-        selected_solver = 'equivalent'
+        selected_solver = "equivalent"
         if self.gFunction.bore_tilts is not None and self.gFunction.bore_orientations is not None:
-            selected_solver = 'similarities'
+            selected_solver = "similarities"
 
         # Compute g-functions for a bracketed solution, based on min and max height
         self.gFunction = calc_g_func_for_multiple_lengths(
             self.b_spacing,
-            [h_max * 0.70, h_max],
+            [h_min, h_max],
             self.bhe.b.r_b,
             self.bhe.b.D,
             self.bhe.m_flow_borehole,
@@ -195,13 +200,13 @@ class GHE:
             self.bhe.soil,
             tilts=self.gFunction.bore_tilts,
             orientations=self.gFunction.bore_orientations,
-            solver=selected_solver
+            solver=selected_solver,
         )
 
     def compute_and_merge_g_functions(self, h_values: list):
-        selected_solver = 'equivalent'
+        selected_solver = "equivalent"
         if self.gFunction.bore_tilts is not None and self.gFunction.bore_orientations is not None:
-            selected_solver = 'similarities'
+            selected_solver = "similarities"
 
         g_func_mid = calc_g_func_for_multiple_lengths(
             self.b_spacing,
@@ -218,7 +223,7 @@ class GHE:
             self.bhe.soil,
             tilts=self.gFunction.bore_tilts,
             orientations=self.gFunction.bore_orientations,
-            solver=selected_solver
+            solver=selected_solver,
         )
         g_func_max = self.gFunction
 
@@ -270,7 +275,12 @@ class GHE:
         return max(hp_eft), min(hp_eft)
 
     def size(
-        self, method: TimestepType, max_height: float, min_height: float, design_max_eft: float, design_min_eft: float,
+        self,
+        method: TimestepType,
+        max_height: float,
+        min_height: float,
+        design_max_eft: float,
+        design_min_eft: float,
     ) -> None:
         # Size the ground heat exchanger
         def local_objective(h: float):

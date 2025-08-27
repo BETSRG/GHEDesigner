@@ -5,24 +5,23 @@ from pygfunction.boreholes import Borehole
 from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
 from ghedesigner.ghe.domains import drill_pad
-from ghedesigner.ghe.search.bisection_1d_tilt_drill_pad_search import Bisection1DTiltDrillPad
 from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.ghe.search.bisection_1d_tilt_drill_pad_search import Bisection1DTiltDrillPad
 from ghedesigner.media import GHEFluid, Grout, Soil
 
 
 @dataclass
 class GeometricConstraintsDrillPad(GeometricConstraints):
     """
-        Geometric constraints for drill pad design algorithm
+    Geometric constraints for drill pad design algorithm
     """
 
-
-    nbh:    int
+    nbh: int
     radius: float
-    tilt:   float
+    tilt: float
     ndp_min: int
     ndp_max: int
-    type:   DesignGeomType = field(default=DesignGeomType.DRILLPAD, init=False, repr=False)
+    type: DesignGeomType = field(default=DesignGeomType.DRILLPAD, init=False, repr=False)
 
     def to_input(self) -> dict:
         return {
@@ -89,35 +88,34 @@ class DesignDrillPad(DesignBase):
             ndp_max=gc.ndp_max,
         )
 
-
     def find_design(self, disp=False) -> Bisection1DTiltDrillPad:
         if disp:
             title = "Find drill pad design.."
             print(title + "\n" + "=" * len(title))
 
         return Bisection1DTiltDrillPad(
-                self.coordinates_domain,
-                self.fieldDescriptors,
-                self.v_flow,
-                self.borehole,
-                self.fluid,
-                self.pipe,
-                self.grout,
-                self.soil,
-                self.max_boreholes,
-                self.min_height,
-                self.max_height,
-                self.ndp_min,
-                self.ndp_max,
-                self.continue_if_design_unmet,
-                self.start_month,
-                self.end_month,
-                self.min_eft,
-                self.max_eft,
-                self.hourly_extraction_ground_loads,
-                method=self.method,
-                flow_type=self.flow_type,
-                disp=disp,
-                field_type="Drill Pad",
-                load_years=self.load_years,
-            )
+            self.coordinates_domain,
+            self.fieldDescriptors,
+            self.v_flow,
+            self.borehole,
+            self.fluid,
+            self.pipe,
+            self.grout,
+            self.soil,
+            self.max_boreholes,
+            self.min_height,
+            self.max_height,
+            self.ndp_min,
+            self.ndp_max,
+            self.continue_if_design_unmet,
+            self.start_month,
+            self.end_month,
+            self.min_eft,
+            self.max_eft,
+            self.hourly_extraction_ground_loads,
+            method=self.method,
+            flow_type=self.flow_type,
+            disp=disp,
+            field_type="Drill Pad",
+            load_years=self.load_years,
+        )
