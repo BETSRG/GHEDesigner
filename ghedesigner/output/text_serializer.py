@@ -114,10 +114,10 @@ class TextSerializer:
         else:
             out += d_row(width, "Inner Pipe Thermal Conductivity, W/m-K:", ghe.bhe.pipe.k[0], f_3f, n_tabs=1)
             out += d_row(width, "Outer Pipe Thermal Conductivity, W/m-K:", ghe.bhe.pipe.k[1], f_3f, n_tabs=1)
-        out += d_row(width, "Pipe Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.pipe.rhoCp / 1000, f_2f, n_tabs=1)
+        out += d_row(width, "Pipe Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.pipe.rho_cp / 1000, f_2f, n_tabs=1)
         out += d_row(width, "Shank Spacing, mm:", ghe.bhe.pipe.s * 1e3, f_2f, n_tabs=1)
         out += d_row(width, "Grout Thermal Conductivity, W/(m-K):", ghe.bhe.grout.k, f_3f, n_tabs=1)
-        out += d_row(width, "Grout Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.grout.rhoCp / 1000, f_2f, n_tabs=1)
+        out += d_row(width, "Grout Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.grout.rho_cp / 1000, f_2f, n_tabs=1)
 
         # Reynolds & effective resistance
         if isinstance(ghe.bhe.pipe.r_out, float):
@@ -143,14 +143,14 @@ class TextSerializer:
         # Soil & Fluid
         out += "Soil Properties: \n"
         out += d_row(width, "Thermal Conductivity, W/m-K:", ghe.bhe.soil.k, f_3f, n_tabs=1)
-        out += d_row(width, "Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.soil.rhoCp / 1000, f_2f, n_tabs=1)
+        out += d_row(width, "Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.soil.rho_cp / 1000, f_2f, n_tabs=1)
         out += d_row(width, "Undisturbed Ground Temperature, C:", ghe.bhe.soil.ugt, f_2f, n_tabs=1)
 
         out += "Fluid Properties\n"
-        out += d_row(width, "Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.fluid.rhoCp / 1000, f_2f, n_tabs=1)
+        out += d_row(width, "Volumetric Heat Capacity, kJ/m3-K:", ghe.bhe.fluid.rho_cp / 1000, f_2f, n_tabs=1)
         out += d_row(width, "Thermal Conductivity, W/m-K:", ghe.bhe.fluid.k, f_2f, n_tabs=1)
-        out += d_row(width, "Viscosity, Pa-s:", ghe.bhe.fluid.dynamic_viscosity(), f_sci, n_tabs=1)
-        out += d_row(width, "Fluid Mix:", ghe.bhe.fluid.fluid.fluid_name, f_str, n_tabs=1)
+        out += d_row(width, "Viscosity, Pa-s:", ghe.bhe.fluid.mu, f_sci, n_tabs=1)
+        out += d_row(width, "Fluid Mix:", ghe.bhe.fluid.name, f_str, n_tabs=1)
         out += d_row(width, "Density, kg/m^3:", ghe.bhe.fluid.rho, f_2f, n_tabs=1)
         out += d_row(width, "Mass Flow Rate Per Borehole, kg/s:", ghe.bhe.m_flow_borehole, f_3f, n_tabs=1)
         if hasattr(ghe.bhe, "h_f"):
