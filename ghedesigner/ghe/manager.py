@@ -450,7 +450,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
     #         d_des["continue_if_design_unmet"] = simulation_parameters.continue_if_design_unmet
     #
     #     # pipe data
-    #     d_pipe = {"rho_cp": self.pipe.rhoCp, "roughness": self.pipe.roughness}
+    #     d_pipe = {"rho_cp": self.pipe.rho_cp, "roughness": self.pipe.roughness}
     #
     #     if self.pipe.type in [BHPipeType.SINGLEUTUBE, BHPipeType.DOUBLEUTUBEPARALLEL, BHPipeType.DOUBLEUTUBESERIES]:
     #         d_pipe["inner_diameter"] = self.pipe.r_in * 2.0

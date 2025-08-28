@@ -27,7 +27,7 @@ as [GLHEPRO](https://betsrg.org/ground-loop-heat-exchanger-design-software), GHE
 
 ## Background
 
-GHEDesigner was originally funded through US Department of Energy contract DE‐AC05‐00OR22725 via a subcontract from Oak
+GHEDesigner was originally funded through US Department of Energy contract DE-AC05-00OR22725 via a subcontract from Oak
 Ridge National Laboratory. The project led by Dr. Xiaobing Liu developed an
 online [screening tool](https://gshp.ornl.gov/login) ([Liu, et al. 2022](http://dx.doi.org/10.22488/okstate.22.000042))
 for techno-economic analysis and design of ground-source heat pump systems. The Oklahoma State University team led by
