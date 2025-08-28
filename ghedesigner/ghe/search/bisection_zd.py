@@ -4,7 +4,7 @@ from pygfunction.boreholes import Borehole
 from ghedesigner.enums import FlowConfigType, TimestepType
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_1d import Bisection1D
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 
 
 class BisectionZD(Bisection1D):
@@ -14,7 +14,7 @@ class BisectionZD(Bisection1D):
         field_descriptors: list,
         v_flow: float,
         borehole: Borehole,
-        fluid: GHEFluid,
+        fluid: Fluid,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,

@@ -3,7 +3,7 @@ from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.rectangle import DesignRectangle, GeometricConstraintsRectangle
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_1d import Bisection1D
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
@@ -22,7 +22,7 @@ class TestLoads(GHEBaseTest):
             shank_spacing=0.01856,
             roughness=1.0e-6,
         )
-        fluid = GHEFluid("water", 0.0, 20.0)
+        fluid = Fluid("water")
         grout = Grout(1.0, 3901000.0)
         soil = Soil(2.0, 2343493.0, 18.3)
         borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)

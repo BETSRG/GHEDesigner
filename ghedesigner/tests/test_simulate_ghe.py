@@ -4,7 +4,7 @@ from ghedesigner.ghe.coordinates import rectangle
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.utilities import eskilson_log_times
 
@@ -101,7 +101,7 @@ class TestGHE(GHEBaseTest):
 
         # -----------------------
         # Fluid properties
-        self.fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        self.fluid = Fluid(fluid_name="Water", percent=0.0)
         # System volumetric flow rate (L/s)
         self.v_flow_system = v_flow_borehole * float(nx * ny)
         # Total fluid mass flow rate per borehole (kg/s)

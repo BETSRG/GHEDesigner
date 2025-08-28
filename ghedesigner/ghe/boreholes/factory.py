@@ -5,13 +5,13 @@ from ghedesigner.ghe.boreholes.coaxial_borehole import CoaxialPipe
 from ghedesigner.ghe.boreholes.multi_u_borehole import MultipleUTube
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 
 
 def get_bhe_object(
     bhe_type: PipeType,
     m_flow_borehole: float,
-    fluid: GHEFluid,
+    fluid: Fluid,
     borehole: Borehole,
     pipe: Pipe,
     grout: Grout,

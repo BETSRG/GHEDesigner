@@ -107,7 +107,7 @@ def calc_g_func_for_multiple_lengths(
     r_b_values = dict.fromkeys(h_values, r_b)
     g_lts_values = {}
 
-    alpha = soil.k / soil.rhoCp
+    alpha = soil.k / soil.rho_cp
 
     for h in h_values:
         borehole = Borehole(h, depth, r_b, 0.0, 0.0)
