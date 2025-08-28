@@ -1,4 +1,5 @@
 import csv
+from json import dumps
 from pathlib import Path
 from typing import Any
 
@@ -117,7 +118,9 @@ class OutputManager:
             self.model_name,
             self.load_method,
         )
-        write_json(output_directory / f"SimulationSummary{file_suffix}.json", obj)
+
+        with open(output_directory / f"SimulationSummary{file_suffix}.json", "w", newline="") as f:
+            f.write(dumps(obj, indent=2))
 
     def write_presized_output_files(
         self,
