@@ -26,6 +26,14 @@ class Fluid:
         elif self.fluid_type == FluidType.WATER:
             self._fluid = Water()
 
+        # supported props
+        self.cp: float = 0.0
+        self.k: float = 0.0
+        self.mu: float = 0.0
+        self.rho: float = 0.0
+        self.rho_cp: float = 0.0
+        self.update_props_with_new_temp(temperature)
+
     @staticmethod
     def get_fluid_type(fluid_name: str) -> FluidType:
         fluid_name_upper = fluid_name.upper()
@@ -42,29 +50,13 @@ class Fluid:
 
         raise ValueError(f'Unsupported fluid type "{fluid_name}"')
 
-    @property
-    def cp(self) -> float:
-        return self._fluid.cp(self.temperature)
-
-    @property
-    def rho(self) -> float:
-        return self._fluid.rho(self.temperature)
-
-    @property
-    def mu(self) -> float:
-        return self._fluid.mu(self.temperature)
-
-    @property
-    def k(self) -> float:
-        return self._fluid.k(self.temperature)
-
-    @property
-    def rho_cp(self) -> float:
-        return self.rho * self.cp
-
-    @property
-    def alpha(self) -> float:
-        return self.k / self.rho_cp
+    def update_props_with_new_temp(self, temperature: float) -> None:
+        self.temperature = temperature
+        self.cp = self._fluid.cp(self.temperature)
+        self.k = self._fluid.k(self.temperature)
+        self.mu = self._fluid.mu(self.temperature)
+        self.rho = self._fluid.rho(self.temperature)
+        self.rho_cp = self.rho * self.cp
 
 
 class ThermalProperty:
