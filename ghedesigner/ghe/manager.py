@@ -22,7 +22,7 @@ from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRo
 from ghedesigner.ghe.gfunction import calculate_g_function
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.utilities import combine_sts_lts, eskilson_log_times, get_loads
 
 
@@ -42,7 +42,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         fluid_concentration_percent: float = 0.0,
         fluid_temperature: float = 20.0,
     ) -> None:
-        self.fluid = GHEFluid(fluid_name, fluid_concentration_percent, fluid_temperature)
+        self.fluid = Fluid(fluid_name, fluid_temperature, fluid_concentration_percent)
         self.grout = Grout(grout_conductivity, grout_rho_cp)
         self.soil = Soil(soil_conductivity, soil_rho_cp, soil_undisturbed_temperature)
         if pipe_arrangement_type == PipeType.SINGLEUTUBE:

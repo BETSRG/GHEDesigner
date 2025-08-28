@@ -6,7 +6,7 @@ from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRowWise
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 prop_boundary = [
@@ -58,7 +58,7 @@ class TestFindRowWiseDesign(GHEBaseTest):
     # design interface with a single U-tube borehole heat exchanger.
     def get_design(self, pipe: Pipe, flow_rate: float, spacing_ratio: float | None = None):
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
-        fluid = GHEFluid("water", 0.0, 20.0)
+        fluid = Fluid("water")
         grout = Grout(1.0, 3901000.0)
         ground_loads = self.get_atlanta_loads()
         borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
