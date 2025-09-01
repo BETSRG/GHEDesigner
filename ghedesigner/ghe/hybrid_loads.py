@@ -150,7 +150,6 @@ class HybridLoads2:
             else:
                 ground_loads.append(-(1 + 1/self.cop_c) * abs(bldg_loads[i]))
 
-        print("bldg loads have been converted to ground loads.")
         return ground_loads
 
     def split_heat_and_cool(self):
@@ -259,7 +258,8 @@ class HybridLoads2:
         """
         ts = self.borehole.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
-        resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
+        resist_bh_effective = 0.13
+        #resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
         print(f"resist_bh_effective = {resist_bh_effective}")
 
         # DEBUG: Check if g_sts is callable

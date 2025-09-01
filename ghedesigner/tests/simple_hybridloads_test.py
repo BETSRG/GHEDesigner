@@ -101,7 +101,7 @@ def create_mock_singletube():
     # Create mock borehole heat exchanger
     mock_bhe = Mock()
     mock_bhe.soil = mock_soil
-    mock_bhe.calc_effective_borehole_resistance.return_value = 0.13  # typical value m-K/W
+    mock_bhe.calc_effective_borehole_resistance.return_value = 0.13
 
     # Create mock radial numerical with improved g-function
     mock_radial = Mock()
@@ -165,18 +165,18 @@ def test_mock_dependencies():
 
         # Create the required components for SingleUTube
         pipe = Pipe.init_single_u_tube(
-            inner_diameter=0.0137,
-            outer_diameter=0.0167,
-            shank_spacing=0.075,
+            inner_diameter=0.06404,
+            outer_diameter=0.07216,
+            shank_spacing=0.02856,
             roughness=1.0e-6,
             conductivity=0.4,
             rho_cp=1542000.0,
         )
 
-        soil = Soil(k=1.4, rho_cp=2073600, ugt=17.5)
-        grout = Grout(k=1.4, rho_cp=3900000.0)
+        soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
+        grout = Grout(k=1.0, rho_cp=3901000.0)
         fluid = GHEFluid(fluid_str="water", percent=0.0, temperature=20.0)
-        borehole = Borehole(burial_depth=2.0, borehole_radius=0.075, borehole_height=100)
+        borehole = Borehole(burial_depth=2.0, borehole_radius=0.5, borehole_height=100)
 
         # Try different ways to create SingleUTube (the constructor signature might vary)
         try:
@@ -375,6 +375,141 @@ def test_basic_functionality(hybrid_loads):
         import traceback
         traceback.print_exc()
 
+def test_bldg_to_ground_load_function(hybrid_loads):
+    """Specifically test the bldg_to_ground_load function with detailed input/output logging"""
+    print("\n=== Testing bldg_to_ground_load Function ===")
+
+    # First, debug what we actually got
+    print(f"hybrid_loads type: {type(hybrid_loads)}")
+    print(f"hybrid_loads value: {hybrid_loads}")
+
+    # If it's not the right type, try to diagnose the issue
+    if not hasattr(hybrid_loads, 'bldg_to_ground_load'):
+        print("✗ bldg_to_ground_load method not found!")
+        print(f"Available attributes: {dir(hybrid_loads) if hasattr(hybrid_loads, '__dict__') else 'No attributes'}")
+
+        # If hybrid_loads is a list, it means our import test returned the wrong thing
+        if isinstance(hybrid_loads, list):
+            print("ERROR: hybrid_loads is a list, not a HybridLoads2 object!")
+            print("This suggests the test_hybridloads2_import() function returned the wrong value.")
+            print("Please check that function - it should return the HybridLoads2 instance, not the building loads.")
+
+        return
+
+    print("✓ bldg_to_ground_load method found")
+
+    # Get test building loads from get_test_loads function
+    building_loads = get_test_loads()
+
+    # Test with different input scenarios
+    test_scenarios = [
+        {
+            "name": "First 24 hours (1 day)",
+            "loads": building_loads[:24] if len(building_loads) >= 24 else building_loads,
+            "description": "Testing daily pattern"
+        },
+        #{
+        #     "name": "First 168 hours (1 week)",
+        #     "loads": building_loads[:168] if len(building_loads) >= 168 else building_loads,
+        #     "description": "Testing weekly pattern"
+        # },
+        # {
+        #     "name": "First 720 hours (~1 month)",
+        #     "loads": building_loads[:720] if len(building_loads) >= 720 else building_loads,
+        #     "description": "Testing monthly pattern"
+        # },
+        # {
+        #     "name": "Peak heating loads",
+        #     "loads": [max(building_loads)] * 24 if building_loads else [1000.0] * 24,
+        #     "description": "Testing peak heating scenario"
+        # },
+        # {
+        #     "name": "Peak cooling loads",
+        #     "loads": [min(building_loads)] * 24 if building_loads else [-1000.0] * 24,
+        #     "description": "Testing peak cooling scenario"
+        # },
+    ]
+
+    for i, scenario in enumerate(test_scenarios, 1):
+        print(f"\n--- Test Scenario {i}: {scenario['name']} ---")
+        print(f"Description: {scenario['description']}")
+
+        test_loads = scenario['loads']
+        print(f"Input loads length: {len(test_loads)}")
+        print(f"Input loads range: {min(test_loads):.1f} to {max(test_loads):.1f}")
+        print(f"Input loads (first 10): {[round(x, 1) for x in test_loads[:10]]}")
+        if len(test_loads) > 10:
+            print(f"Input loads (last 5): {[round(x, 1) for x in test_loads[-5:]]}")
+
+        # Analyze input loads
+        heating_count = sum(1 for x in test_loads if x > 0)
+        cooling_count = sum(1 for x in test_loads if x < 0)
+        zero_count = sum(1 for x in test_loads if x == 0)
+
+        print(f"Input analysis: {heating_count} heating, {cooling_count} cooling, {zero_count} zero loads")
+
+        try:
+            # Call the function and capture output
+            print("\nCalling bldg_to_ground_load...")
+            ground_loads = hybrid_loads.bldg_to_ground_load(test_loads)
+
+            print("✓ Function call successful!")
+            print(f"Output type: {type(ground_loads)}")
+            print(f"Output length: {len(ground_loads) if hasattr(ground_loads, '__len__') else 'N/A'}")
+
+            # Handle different possible return types
+            if isinstance(ground_loads, (list, tuple, np.ndarray)):
+                print(f"Output range: {min(ground_loads):.1f} to {max(ground_loads):.1f}")
+                print(f"Output (first 10): {[round(x, 1) for x in ground_loads[:10]]}")
+                if len(ground_loads) > 10:
+                    print(f"Output (last 5): {[round(x, 1) for x in ground_loads[-5:]]}")
+
+                # Analyze output loads
+                output_heating = sum(1 for x in ground_loads if x > 0)
+                output_cooling = sum(1 for x in ground_loads if x < 0)
+                output_zero = sum(1 for x in ground_loads if x == 0)
+
+                print(f"Output analysis: {output_heating} heating, {output_cooling} cooling, {output_zero} zero loads")
+
+                # Calculate conversion statistics
+                if len(test_loads) == len(ground_loads):
+                    total_input = sum(test_loads)
+                    total_output = sum(ground_loads)
+                    print(f"Total input load: {total_input:.1f}")
+                    print(f"Total output load: {total_output:.1f}")
+                    if total_input != 0:
+                        conversion_ratio = total_output / total_input
+                        print(f"Conversion ratio (output/input): {conversion_ratio:.3f}")
+
+                    # Show some input vs output pairs
+                    print("\nInput vs Output comparison (first 24 hours):")
+                    for j in range(min(24, len(test_loads))):
+                        print(f"  Hour {j+1:2d}: {test_loads[j]:8.1f} -> {ground_loads[j]:8.1f}")
+
+            elif isinstance(ground_loads, (int, float)):
+                print(f"Output value: {ground_loads:.1f}")
+            else:
+                print(f"Output: {ground_loads}")
+
+        except Exception as func_error:
+            print(f"✗ Function call failed: {func_error}")
+            print(f"Error type: {type(func_error)}")
+
+            # Try to get more details about the error
+            import traceback
+            print("Detailed error traceback:")
+            traceback.print_exc()
+
+            # Try to inspect the function signature
+            try:
+                import inspect
+                sig = inspect.signature(hybrid_loads.bldg_to_ground_load)
+                print(f"Function signature: {sig}")
+            except:
+                print("Could not inspect function signature")
+
+        print("-" * 60)
+
 def main():
     """Main test runner"""
     print("Starting HybridLoads2 Testing...")
@@ -389,6 +524,9 @@ def main():
 
         # Step 3: Test basic functionality
         test_basic_functionality(hybrid_loads)
+
+        #Step 4: Test bldg_to_ground_loads
+        test_bldg_to_ground_load_function(hybrid_loads)
 
         print("\n" + "=" * 50)
         print("✓ All basic tests passed!")
