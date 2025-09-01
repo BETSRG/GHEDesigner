@@ -11,7 +11,7 @@ from scipy.linalg.lapack import dgtsv
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
 from ghedesigner.ghe.boreholes.base import GHEDesignerBoreholeBase
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 
 
 class CellProps(IntEnum):
@@ -28,7 +28,7 @@ class SingleUTube(GHEDesignerBoreholeBase):
     def __init__(
         self,
         m_flow_borehole: float,
-        fluid: GHEFluid,
+        fluid: Fluid,
         borehole: Borehole,
         pipe: Pipe,
         grout: Grout,
@@ -156,7 +156,7 @@ class SingleUTube(GHEDesignerBoreholeBase):
         # The equivalent thermal mass of the fluid can be calculated from
         # equation (2)
         # pi (r_in_conv ** 2 - r_f **2) C_eq_f = 2pi r_p_in**2 * C_f
-        rho_cp_eq_fluid = 2.0 * (self.pipe.r_in**2) * self.fluid.rhoCp
+        rho_cp_eq_fluid = 2.0 * (self.pipe.r_in**2) * self.fluid.rho_cp
         rho_cp_eq_fluid /= (self.r_convection**2) - (self.r_fluid**2)
         conductivity_fluid = 200
         for idx in range(cell_summation, self.num_fluid_cells + cell_summation):
@@ -180,7 +180,7 @@ class SingleUTube(GHEDesignerBoreholeBase):
 
         # load pipe cells
         conductivity_pipe_grout = log(self.r_borehole / self.r_in_tube) / (TWO_PI * resist_pg_effective)
-        rho_cp_pipe = self.pipe.rhoCp
+        rho_cp_pipe = self.pipe.rho_cp
         for j, idx in enumerate(range(cell_summation, self.num_pipe_cells + cell_summation)):
             inner_radius_pipe_cell = self.r_in_tube + j * self.thickness_pipe_cell
             radial_cells[:, idx] = fill_single_cell(
@@ -190,7 +190,7 @@ class SingleUTube(GHEDesignerBoreholeBase):
         cell_summation += self.num_pipe_cells
 
         # load grout cells
-        rho_cp_grout = self.grout.rhoCp
+        rho_cp_grout = self.grout.rho_cp
         for j, idx in enumerate(range(cell_summation, self.num_grout_cells + cell_summation)):
             inner_radius_grout_cell = self.r_out_tube + j * self.thickness_grout_cell
             radial_cells[:, idx] = fill_single_cell(
@@ -201,7 +201,7 @@ class SingleUTube(GHEDesignerBoreholeBase):
 
         # load soil cells
         conductivity_soil = self.soil.k
-        rho_cp_soil = self.soil.rhoCp
+        rho_cp_soil = self.soil.rho_cp
         for j, idx in enumerate(range(cell_summation, self.num_soil_cells + cell_summation)):
             inner_radius_soil_cell = self.r_borehole + j * self.thickness_soil_cell
             radial_cells[:, idx] = fill_single_cell(

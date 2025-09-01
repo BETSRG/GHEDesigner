@@ -7,12 +7,12 @@ from ghedesigner.constants import PI
 from ghedesigner.ghe.boreholes.multi_u_borehole import GHEDesignerBoreholeWithMultiplePipes
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 
 
 class CoaxialPipe(GHEDesignerBoreholeWithMultiplePipes):
     def __init__(
-        self, m_flow_borehole: float, fluid: GHEFluid, borehole: Borehole, pipe: Pipe, grout: Grout, soil: Soil
+        self, m_flow_borehole: float, fluid: Fluid, borehole: Borehole, pipe: Pipe, grout: Grout, soil: Soil
     ) -> None:
         super().__init__(m_flow_borehole, fluid, borehole, pipe, grout, soil)
 
@@ -59,7 +59,7 @@ class CoaxialPipe(GHEDesignerBoreholeWithMultiplePipes):
 
         resist_conv = self.bhr_borehole.calc_fluid_resist(self.m_flow_borehole, self.soil.ugt)
         resist_pipe = self.bhr_borehole.calc_pipe_cond_resist()
-        preliminary = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rhoCp)
+        preliminary = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rho_cp)
 
         # Vary grout thermal conductivity to match effective borehole thermal
         # resistance
@@ -68,7 +68,7 @@ class CoaxialPipe(GHEDesignerBoreholeWithMultiplePipes):
         return new_single_u_tube
 
     @staticmethod
-    def compute_reynolds_concentric(m_flow_pipe: float, r_a_in: float, r_a_out: float, fluid: GHEFluid) -> float:
+    def compute_reynolds_concentric(m_flow_pipe: float, r_a_in: float, r_a_out: float, fluid: Fluid) -> float:
         # Hydraulic diameter and radius for concentric tube annulus region
         dia_hydraulic = 2 * (r_a_out - r_a_in)
         # r_h = dia_hydraulic / 2

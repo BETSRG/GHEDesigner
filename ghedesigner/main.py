@@ -11,7 +11,7 @@ from ghedesigner.constants import VERSION
 from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.heat_pump import HeatPump
-from ghedesigner.output import OutputManager
+from ghedesigner.output.manager import OutputManager
 from ghedesigner.utilities import write_idf
 from ghedesigner.validate import validate_input_file
 

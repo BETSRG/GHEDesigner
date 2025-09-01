@@ -8,7 +8,7 @@ from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
 from ghedesigner.ghe.domains import polygonal_land_constraint
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_zd import BisectionZD
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 
 
 def is_2d(property_boundary: list[list[float]] | list[list[list[float]]]) -> TypeGuard[list[list[float]]]:
@@ -58,7 +58,7 @@ class DesignBiRectangleConstrained(DesignBase):
         self,
         v_flow: float,
         borehole: Borehole,
-        fluid: GHEFluid,
+        fluid: Fluid,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,

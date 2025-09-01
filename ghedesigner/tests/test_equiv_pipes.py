@@ -2,7 +2,7 @@ from ghedesigner.ghe.boreholes.coaxial_borehole import CoaxialPipe
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.multi_u_borehole import MultipleUTube
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
@@ -39,7 +39,7 @@ class TestEquivalentPipes(GHEBaseTest):
         grout = Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = Fluid(fluid_name="Water", percent=0.0)
         v_flow_borehole = 0.8  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
@@ -113,7 +113,7 @@ class TestEquivalentPipes(GHEBaseTest):
         grout = Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = Fluid(fluid_name="Water", percent=0.0)
         v_flow_borehole = 0.5  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
