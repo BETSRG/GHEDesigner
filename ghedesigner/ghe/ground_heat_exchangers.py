@@ -5,7 +5,7 @@ from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d
 
 from ghedesigner.constants import SEC_IN_HR, TWO_PI, VERSION
-from ghedesigner.enums import PipeType, TimestepType
+from ghedesigner.enums import BHType, TimestepType
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_loads import HybridLoad
@@ -19,7 +19,7 @@ class GHE:
         self,
         v_flow_system: float,
         b_spacing: float,
-        bhe_type: PipeType,
+        bhe_type: BHType,
         fluid,
         borehole: Borehole,
         pipe: Pipe,
@@ -80,7 +80,6 @@ class GHE:
             "borehole_spacing": {"value": self.b_spacing, "units": "m"},
             "borehole_heat_exchanger": self.bhe.as_dict(),
             "equivalent_borehole_heat_exchanger": self.bhe_eq.as_dict(),
-            # "simulation_parameters": self.sim_params.as_dict(),
         }
         return output
 

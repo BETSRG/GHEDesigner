@@ -6,7 +6,7 @@ from numpy import array, exp, ndarray
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import DEG_TO_RAD, MONTHS_IN_YEAR
-from ghedesigner.enums import DesignGeomType, FlowConfigType, PipeType, TimestepType
+from ghedesigner.enums import BHType, DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 from ghedesigner.ghe.coordinates import rectangle
 from ghedesigner.ghe.design.base import DesignBase
@@ -36,7 +36,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         soil_undisturbed_temperature: float,
         borehole_buried_depth: float,
         borehole_radius: float,
-        pipe_arrangement_type: PipeType,
+        pipe_arrangement_type: BHType,
         pipe_parameters: dict,
         fluid_name: str = "Water",
         fluid_concentration_percent: float = 0.0,
@@ -45,18 +45,18 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.fluid = Fluid(fluid_name, fluid_temperature, fluid_concentration_percent)
         self.grout = Grout(grout_conductivity, grout_rho_cp)
         self.soil = Soil(soil_conductivity, soil_rho_cp, soil_undisturbed_temperature)
-        if pipe_arrangement_type == PipeType.SINGLEUTUBE:
+        if pipe_arrangement_type == BHType.SINGLEUTUBE:
             params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
             if not all(x in pipe_parameters for x in params):
                 raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
             pipe_parameters["num_pipes"] = 1
             self.pipe = Pipe.init_single_u_tube(**pipe_parameters)
-        elif pipe_arrangement_type == PipeType.DOUBLEUTUBESERIES:
+        elif pipe_arrangement_type == BHType.DOUBLEUTUBESERIES:
             params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
             if not all(x in pipe_parameters for x in params):
                 raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
             self.pipe = Pipe.init_double_u_tube_series(**pipe_parameters)
-        elif pipe_arrangement_type == PipeType.DOUBLEUTUBEPARALLEL:
+        elif pipe_arrangement_type == BHType.DOUBLEUTUBEPARALLEL:
             params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
             if not all(x in pipe_parameters for x in params):
                 raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
@@ -72,7 +72,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                 "outer_pipe_d_out",
             ]
             if not all(x in pipe_parameters for x in params):
-                raise ValueError(f"pipe_arrangement_type of {PipeType.COAXIAL!s} requires these inputs: {params}")
+                raise ValueError(f"pipe_arrangement_type of {BHType.COAXIAL!s} requires these inputs: {params}")
             pipe_parameters["conductivity"] = (
                 pipe_parameters["conductivity_inner"],
                 pipe_parameters["conductivity_outer"],
@@ -115,7 +115,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         temperature = fluid_dict.get("temperature", 20.0)
 
         pipe_parameters: dict = ghe_dict["pipe"]
-        pipe_type: PipeType = PipeType(pipe_parameters["arrangement"].upper())
+        pipe_type: BHType = BHType(pipe_parameters["arrangement"].upper())
         del pipe_parameters["arrangement"]
 
         ghe: GroundHeatExchanger = cls(

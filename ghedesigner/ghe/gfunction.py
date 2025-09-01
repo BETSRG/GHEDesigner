@@ -5,26 +5,26 @@ from math import log
 import numpy as np
 import pygfunction as gt
 from pygfunction.boreholes import Borehole
-from pygfunction.enums import PipeType as PyPipeType
+from pygfunction.enums import PipeType as PygBHType
 from pygfunction.gfunction import gFunction
 from scipy.interpolate import interp1d, lagrange
 
-from ghedesigner.enums import PipeType
+from ghedesigner.enums import BHType
 
 logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
 logger = logging.getLogger(__name__)
 
-pyg_pipe_type_map = {
-    PipeType.SINGLEUTUBE.name: PyPipeType.SINGLE_UTUBE.name,
-    PipeType.DOUBLEUTUBESERIES.name: PyPipeType.DOUBLE_UTUBE_SERIES.name,
-    PipeType.DOUBLEUTUBEPARALLEL.name: PyPipeType.DOUBLE_UTUBE_PARALLEL.name,
-    PipeType.COAXIAL.name: PyPipeType.COAXIAL_ANNULAR_OUT.name,
+pyg_bh_type_map = {
+    BHType.SINGLEUTUBE.name: PygBHType.SINGLE_UTUBE.name,
+    BHType.DOUBLEUTUBESERIES.name: PygBHType.DOUBLE_UTUBE_SERIES.name,
+    BHType.DOUBLEUTUBEPARALLEL.name: PygBHType.DOUBLE_UTUBE_PARALLEL.name,
+    BHType.COAXIAL.name: PygBHType.COAXIAL_ANNULAR_OUT.name,
 }
 
 
 def calculate_g_function(
     m_flow_borehole,
-    bhe_type: PipeType,
+    bh_type: BHType,
     time_values,
     coordinates,
     borehole,
@@ -34,17 +34,17 @@ def calculate_g_function(
     soil,
     boundary_condition="MIFT",
 ):
-    match bhe_type:
-        case PipeType.SINGLEUTUBE | PipeType.DOUBLEUTUBESERIES | PipeType.DOUBLEUTUBEPARALLEL:
+    match bh_type:
+        case BHType.SINGLEUTUBE | BHType.DOUBLEUTUBESERIES | BHType.DOUBLEUTUBEPARALLEL:
             r_inner = pipe.r_in
             r_outer = pipe.r_out
-        case PipeType.COAXIAL:
+        case BHType.COAXIAL:
             # converting to pygfunction coaxial pipe conventions
             # this assumes the pipe (not annulus) is the inlet
             r_inner = [pipe.r_in[0], pipe.r_out[0]]
             r_outer = [pipe.r_in[1], pipe.r_out[1]]
         case _:
-            raise ValueError(f"bhe_type {bhe_type} is not supported")
+            raise ValueError(f"bhe_type {bh_type} is not supported")
 
     # setup options
     # none of these were ever used or even exposed for users to access them. hardcoding them here until needed.
@@ -81,7 +81,7 @@ def calculate_g_function(
         pos=pipe.pos,
         r_in=r_inner,
         r_out=r_outer,
-        pipe_type_str=PyPipeType[pyg_pipe_type_map[bhe_type.name]].name,
+        pipe_type_str=PygBHType[pyg_bh_type_map[bh_type.name]].name,
         m_flow_network=m_flow_network,
     )
 
@@ -96,7 +96,7 @@ def calc_g_func_for_multiple_lengths(
     r_b,
     depth,
     m_flow_borehole,
-    bhe_type: PipeType,
+    bhe_type: BHType,
     log_time,
     coordinates,
     fluid,

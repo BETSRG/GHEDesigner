@@ -7,13 +7,14 @@ import numpy as np
 import pandas as pd
 
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
-from ghedesigner.enums import PipeType, SimCompType
+from ghedesigner.enums import BHType, SimCompType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.utilities import combine_sts_lts
+from ghedesigner.ghe.gfunction import calculate_g_function
 
 N_TIMESTEPS = 8760
 
@@ -33,7 +34,7 @@ class BaseSimComp(ABC):
 class GHX(BaseSimComp):
     MATRIX_ROWS = 4
 
-    def __init__(self, ghe_id: str, ghe_data: dict, fluid: GHEFluid):
+    def __init__(self, ghe_id: str, ghe_data: dict, fluid: Fluid):
         super().__init__()
         self.name = ghe_id
         self.comp_type = SimCompType.GROUND_HEAT_EXCHANGER
@@ -62,7 +63,7 @@ class GHX(BaseSimComp):
         )
 
         self.fluid = fluid
-        self.bhe_type = PipeType.SINGLEUTUBE
+        self.bh_type = BHType.SINGLEUTUBE
         self.split_ratio = None
 
         self.two_pi_k = TWO_PI * self.soil.k
@@ -73,7 +74,7 @@ class GHX(BaseSimComp):
         self.gFunction = None
         self.depth = None
 
-        self.mass_flow_ghe_borehole_design = None
+        self.mass_flow_borehole_design = None
         self.history_terms = None
         self.total_values_ghe = None
 
@@ -110,10 +111,10 @@ class GHX(BaseSimComp):
         self.height = self.borehole.H
         self.nbh = self.n_rows * self.n_cols
         self.total_length = self.height * self.nbh
-        self.mass_flow_ghe_borehole_design = self.mass_flow_ghe_design / self.nbh
+        self.mass_flow_borehole_design = self.mass_flow_ghe_design / self.nbh
         self.bhe = get_bhe_object(
-            self.bhe_type,
-            self.mass_flow_ghe_borehole_design,
+            self.bh_type,
+            self.mass_flow_borehole_design,
             self.fluid,
             self.borehole,
             self.pipe,
@@ -129,6 +130,11 @@ class GHX(BaseSimComp):
 
         self.log_time = np.linspace(-10, 4, 25).tolist()
 
+        self.g_new = calculate_g_function(
+            m_flow_borehole=self.mass_flow_borehole_design,
+            bh_type=
+        )
+
         self.gFunction = self.generate_g_function_object()
         self.g, _ = self.grab_g_function()
         self.c_n = self.calculation_of_ghe_constant_c_n()
@@ -136,7 +142,7 @@ class GHX(BaseSimComp):
     def generate_g_function_object(self):
         self.bh_effective_resist = self.bhe.calc_effective_borehole_resistance()
         self.depth = self.bhe.borehole.D
-        self.mass_flow_ghe_borehole_design = self.mass_flow_ghe_design / self.nbh
+        self.mass_flow_borehole_design = self.mass_flow_ghe_design / self.nbh
         h_values = [self.height]
         coordinates_ghe = [
             (i * self.row_spacing, j * self.row_spacing) for i in range(self.n_rows) for j in range(self.n_cols)
@@ -146,8 +152,8 @@ class GHX(BaseSimComp):
             h_values,
             self.bhe.borehole.r_b,
             self.depth,
-            self.mass_flow_ghe_borehole_design,
-            self.bhe_type,
+            self.mass_flow_borehole_design,
+            self.bh_type,
             self.log_time,
             coordinates_ghe,
             self.bhe.fluid,
@@ -419,8 +425,8 @@ class GHEHPSystem:
         building_data = json_data["building"]
         ghe_data = json_data["ground_heat_exchanger"]
 
-        self.fluid = GHEFluid(
-            fluid_str=fluid_data["fluid_name"],
+        self.fluid = Fluid(
+            fluid_name=fluid_data["fluid_name"],
             percent=fluid_data["concentration_percent"],
             temperature=fluid_data["temperature"],
         )
