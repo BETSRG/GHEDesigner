@@ -137,8 +137,6 @@ class HybridLoads2:
         self.hrly_extraction_loads_norm = []
         self.hrly_rejection_loads_norm = []
 
-    # Step 1----------------------------------------
-
     def bldg_to_ground_load(self, bldg_loads) -> list:
         """
         Acts as a constant COP heatpump
@@ -154,8 +152,6 @@ class HybridLoads2:
 
         print("bldg loads have been converted to ground loads.")
         return ground_loads
-
-    # Step 2  -----------------------------
 
     def split_heat_and_cool(self):
         """
@@ -257,23 +253,46 @@ class HybridLoads2:
             hours_in_previous_months += hours_in_month
 
         print("split_loads_by_month has run")
-
     def perform_hrly_ExFT_simulation(self, load_profile):
         """
         This performs an ExFT simulation given a loads profile
         """
-
         ts = self.borehole.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
         resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
         print(f"resist_bh_effective = {resist_bh_effective}")
-        g = self.borehole.g_sts
-        q = load_profile
 
+        # DEBUG: Check if g_sts is callable
+        g = self.borehole.g_sts
+        print(f"DEBUG: g type = {type(g)}")
+        print(f"DEBUG: g callable = {callable(g)}")
+        print(f"DEBUG: g value = {g}")
+
+        if g is None:
+            raise ValueError("g_sts function is None - check radial_numerical mock setup")
+        if not callable(g):
+            raise ValueError(f"g_sts is not callable, type: {type(g)}")
+
+        q = load_profile
         hours_in_year = list(range(len(q)))
         delta_t_fluid = self.simulate_hourly(hours_in_year,q,g,resist_bh_effective,two_pi_k,ts)
-
         return delta_t_fluid
+    # def perform_hrly_ExFT_simulation(self, load_profile):
+    #     """
+    #     This performs an ExFT simulation given a loads profile
+    #     """
+
+    #     ts = self.borehole.t_s
+    #     two_pi_k = TWO_PI * self.bhe.soil.k
+    #     resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
+    #     print(f"resist_bh_effective = {resist_bh_effective}")
+    #     g = self.borehole.g_sts
+    #     q = load_profile
+
+    #     hours_in_year = list(range(len(q)))
+    #     delta_t_fluid = self.simulate_hourly(hours_in_year,q,g,resist_bh_effective,two_pi_k,ts)
+
+    #     return delta_t_fluid
 
     def split_ExFT_by_month(self) -> None:
         """Slice the hourly ExFT of the GHE into months"""
