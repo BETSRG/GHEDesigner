@@ -171,9 +171,9 @@ class HybridLoads2:
     @staticmethod
     def normalize_loads(load) -> list:
         """
-        Normalize the ground loads to a peak of 4000 W since we do not know the size or
+        Normalize the ground loads to a peak of 1000 W since we do not know the size or
         configuration of the borehole field
-        :return: hourly ground loads normalized to 4000 W peak [Watts]
+        :return: hourly ground loads normalized to 1000 W peak [Watts]
         """
         # Handle case where all loads are zero
         if not load or all(x == 0 for x in load):
@@ -185,7 +185,7 @@ class HybridLoads2:
             print("Warning: Maximum load is zero, returning zeros")
             return [0.0] * len(load)
 
-        normalized_loads = [40 * 100 / max_ground_loads * load[i] for i in range(len(load))]
+        normalized_loads = [10 * 100 / max_ground_loads * load[i] for i in range(len(load))]
 
         print("Normalize loads has run.")
 
@@ -258,8 +258,8 @@ class HybridLoads2:
         """
         ts = self.borehole.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
-        resist_bh_effective = 0.13
-        #resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
+        #resist_bh_effective = 0.13
+        resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
         print(f"resist_bh_effective = {resist_bh_effective}")
 
         # DEBUG: Check if g_sts is callable
@@ -444,7 +444,7 @@ class HybridLoads2:
             while peak_duration < max_hours:
                 new_max_ExFT = self.perform_monthly_ExFT_simulation(pk_hour_of_month, hybrid_load)
 
-                print(f"Trying duration {peak_duration} hr: max ExFT = {new_max_ExFT:.2f}, target = {target_ExFT:.2f}")
+                #print(f"Trying duration {peak_duration} hr: max ExFT = {new_max_ExFT:.2f}, target = {target_ExFT:.2f}")
 
                 if new_max_ExFT > target_ExFT:
                     break
@@ -487,7 +487,7 @@ class HybridLoads2:
         ts = self.borehole.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
         resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
-        print(f"resist_bh_effective = {resist_bh_effective}")
+        #print(f"resist_bh_effective = {resist_bh_effective}")
         g = self.borehole.g_sts
         q = hybrid_load
 

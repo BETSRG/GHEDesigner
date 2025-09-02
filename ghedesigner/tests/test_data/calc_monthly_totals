@@ -1,0 +1,31 @@
+import pandas as pd
+
+# Load the CSV
+df = pd.read_csv("c:/Users/sadams2/Documents/GitHub/GHEDesigner/ghedesigner/tests/test_data/bldg_loads_1b_amadfard.csv", header=None, names=["Watts"])
+
+# Pad missing hour (if not 8760 hours)
+if len(df) < 8760:
+    last_value = df["Watts"].iloc[-1]
+    df = pd.concat([df, pd.DataFrame({"Watts": [last_value]})], ignore_index=True)
+
+# Create datetime index for a non-leap year
+date_range = pd.date_range(start="2024-01-01 00:00", periods=8760, freq="H")
+df["Datetime"] = date_range
+
+# Convert watts to kWh for each hour
+df["kWh"] = df["Watts"] / 1000
+
+# Separate heating (positive) and cooling (negative)
+df["Heating_kWh"] = df["kWh"].where(df["kWh"] > 0, 0)
+df["Cooling_kWh"] = df["kWh"].where(df["kWh"] < 0, 0).abs()  # take absolute value for cooling energy
+
+# Group by month and sum both separately
+monthly_totals = df.groupby(df["Datetime"].dt.month)[["Heating_kWh", "Cooling_kWh"]].sum()
+
+# Add month names
+monthly_totals.index = monthly_totals.index.map(lambda m: pd.Timestamp(year=2024, month=m, day=1).strftime('%B'))
+
+# Print results
+print(monthly_totals)
+print("\nTotal yearly heating kWh:", monthly_totals["Heating_kWh"].sum())
+print("Total yearly cooling kWh:", monthly_totals["Cooling_kWh"].sum())
