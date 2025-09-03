@@ -419,7 +419,7 @@ def test_normalization_issue():
         traceback.print_exc()
 
 
-def main():
+def test_main():
     """Run all tests"""
     print("Starting ExFT Simulation Debug Tests")
     print("=" * 60)
@@ -436,6 +436,3 @@ def main():
     print("4. Check that time scaling (ts) is appropriate")
     print("5. Verify unit consistency throughout the calculation chain")
 
-
-if __name__ == "__main__":
-    main()

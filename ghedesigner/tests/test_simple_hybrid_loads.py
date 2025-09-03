@@ -54,7 +54,7 @@ def get_test_loads():
         return synthetic_loads.tolist()
 
 
-def test_data_loading():
+def get_loading_data():
     """Test that we can load the building loads data"""
     print("=== Testing Data Loading ===")
     building_loads = get_test_loads()
@@ -616,14 +616,14 @@ def case_test_bldg_to_ground_load_function(hybrid_loads):
         print("-" * 60)
 
 
-def main():
+def test_main():
     """Main test runner"""
     print("Starting HybridLoads2 Testing...")
     print("=" * 50)
 
     try:
         # Step 1: Test data loading
-        building_loads = test_data_loading()
+        building_loads = get_loading_data()
 
         # Step 2: Test imports and instantiation
         hybrid_loads = test_hybridloads2_import()
@@ -657,6 +657,3 @@ def main():
         print("5. Verify that Mock objects have all required attributes")
         print("6. Make sure the g_sts function is properly mocked and callable")
 
-
-if __name__ == "__main__":
-    main()

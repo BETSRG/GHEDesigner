@@ -17,7 +17,7 @@ def get_atlanta_loads():
     return [float(x) for x in raw_lines[1:] if x.strip() != ""]
 
 
-def main():
+def test_main():
     pipe = Pipe.init_single_u_tube(
         inner_diameter=0.06404,
         outer_diameter=0.07216,
@@ -62,8 +62,8 @@ def main():
     search.ghe.size(method=TimestepType.HYBRID, min_height=60, max_height=135, design_min_eft=5, design_max_eft=35)
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 
     # hourly_temps = (
     # #     18 + 5 * np.sin(2 * np.pi * np.arange(8760) / 24 / 365) + 3 * np.sin(2 * np.pi * np.arange(8760) / 24)
