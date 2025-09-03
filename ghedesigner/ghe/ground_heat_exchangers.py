@@ -30,7 +30,6 @@ class GHE:
         start_month: int,
         end_month: int,
         hourly_extraction_ground_loads: list,
-        radial_numerical: SingleUTube,
         field_type="N/A",
         field_specifier="N/A",
 
