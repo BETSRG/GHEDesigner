@@ -1,14 +1,11 @@
 from calendar import monthrange
 from json import dumps
 from math import floor
-from pathlib import Path
+
 import numpy as np
-from scipy.interpolate import interp1d
 
 from ghedesigner.constants import HRS_IN_DAY, SEC_IN_HR, TWO_PI
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
-from ghedesigner import utilities
-
 
 # time array for hourly_temps
 hours_in_year = 24 * 365  # 8760 hours
@@ -27,7 +24,6 @@ class HybridLoads2:
         cop_h: float = 4.0,
         cop_c: float = 5.0,
     ) -> None:
-
         self.building_loads = building_loads
 
         # Initialize COP values
@@ -115,7 +111,7 @@ class HybridLoads2:
         # Process the loads and by month
         self.split_loads_by_month()
         # get target ExFT temperatures from the original loads for every hour of the year
-        self.target_ExFTghe_temps = self.perform_hrly_ExFT_simulation(
+        self.target_ExFThe_temps = self.perform_hrly_ExFT_simulation(
             self.normalize_loads(self.bldg_to_ground_load(self.building_loads))
         )
         # Process the ExFT by month
@@ -147,7 +143,7 @@ class HybridLoads2:
             if bldg_loads[i] >= 0:
                 ground_loads.append((self.cop_h - 1) / self.cop_h * bldg_loads[i])
             else:
-                ground_loads.append(-(1 + 1/self.cop_c) * abs(bldg_loads[i]))
+                ground_loads.append(-(1 + 1 / self.cop_c) * abs(bldg_loads[i]))
 
         return ground_loads
 
@@ -226,9 +222,13 @@ class HybridLoads2:
 
             # Average
             # monthly average cooling load (or heat rejection) in kW
-            self.monthly_avg_cl[i] = self.monthly_cl[i] / len(current_month_reject_norm_loads) if current_month_reject_norm_loads else 0.0
+            self.monthly_avg_cl[i] = (
+                self.monthly_cl[i] / len(current_month_reject_norm_loads) if current_month_reject_norm_loads else 0.0
+            )
             # monthly average heating load (or heat extraction) in kW
-            self.monthly_avg_hl[i] = self.monthly_hl[i] / len(current_month_extract_norm_loads) if current_month_extract_norm_loads else 0.0
+            self.monthly_avg_hl[i] = (
+                self.monthly_hl[i] / len(current_month_extract_norm_loads) if current_month_extract_norm_loads else 0.0
+            )
 
             # Day of month the peak heating load occurs
             # Handle case where peak might not exist
@@ -249,13 +249,14 @@ class HybridLoads2:
             hours_in_previous_months += hours_in_month
 
         print("split_loads_by_month has run")
+
     def perform_hrly_ExFT_simulation(self, load_profile):
         """
         This performs an ExFT simulation given a loads profile
         """
         ts = self.borehole.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
-        #resist_bh_effective = 0.13
+        # resist_bh_effective = 0.13
         resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
         print(f"resist_bh_effective = {resist_bh_effective}")
 
@@ -272,8 +273,9 @@ class HybridLoads2:
 
         q = load_profile
         hours_in_year = list(range(len(q)))
-        delta_t_fluid = self.simulate_hourly(hours_in_year,q,g,resist_bh_effective,two_pi_k,ts)
+        delta_t_fluid = self.simulate_hourly(hours_in_year, q, g, resist_bh_effective, two_pi_k, ts)
         return delta_t_fluid
+
     # def perform_hrly_ExFT_simulation(self, load_profile):
     #     """
     #     This performs an ExFT simulation given a loads profile
@@ -301,7 +303,7 @@ class HybridLoads2:
             hours_in_month = HRS_IN_DAY * self.days_in_month[i]
             # Slice the hours in this current month
 
-            current_month_ExFTs = self.target_ExFTghe_temps[
+            current_month_ExFTs = self.target_ExFThe_temps[
                 hours_in_previous_months : hours_in_previous_months + hours_in_month
             ]
 
@@ -355,12 +357,14 @@ class HybridLoads2:
         valid_entries = []
         for i, min_val in enumerate(self.monthly_min_ExFT):
             if i != 0 and min_val != 0:  # Skip index 0 and zero values
-                valid_entries.append((
-                    min_val,  # ExFT value
-                    int(self.monthly_min_GHE_ExFT_hour[i]),  # hour within month
-                    int(i),  # month index
-                    int(self.cumulative_hours[i] + self.monthly_min_GHE_ExFT_hour[i]),  # absolute hour of year
-            ))
+                valid_entries.append(
+                    (
+                        min_val,  # ExFT value
+                        int(self.monthly_min_GHE_ExFT_hour[i]),  # hour within month
+                        int(i),  # month index
+                        int(self.cumulative_hours[i] + self.monthly_min_GHE_ExFT_hour[i]),  # absolute hour of year
+                    )
+                )
 
         # Sort and take top 4 (or fewer if not enough valid entries)
         top_4_min = sorted(valid_entries, key=lambda x: x[0], reverse=True)[:4]
@@ -371,7 +375,7 @@ class HybridLoads2:
         else:
             min_4_ExFT = np.array(top_4_min)
 
-        print(f"min ExFT, hour of month, month, hour of year ")
+        print("min ExFT, hour of month, month, hour of year ")
         print(f"{min_4_ExFT}")
         return min_4_ExFT
 
@@ -385,12 +389,14 @@ class HybridLoads2:
         valid_entries = []
         for i, max_val in enumerate(self.monthly_max_ExFT):
             if i != 0 and max_val != 0:  # Skip index 0 and zero values
-                valid_entries.append((
-                    max_val,  # ExFT
-                    int(self.monthly_max_GHE_ExFT_hour[i]),  # hour within month
-                    int(i),  # month
-                    int(self.cumulative_hours[i] + self.monthly_max_GHE_ExFT_hour[i]),  # absolute hour of year
-                ))
+                valid_entries.append(
+                    (
+                        max_val,  # ExFT
+                        int(self.monthly_max_GHE_ExFT_hour[i]),  # hour within month
+                        int(i),  # month
+                        int(self.cumulative_hours[i] + self.monthly_max_GHE_ExFT_hour[i]),  # absolute hour of year
+                    )
+                )
 
         # Sort and take top 4 (or fewer if not enough valid entries)
         top_4 = sorted(valid_entries, key=lambda x: x[0], reverse=False)[:4]
@@ -401,7 +407,7 @@ class HybridLoads2:
         else:
             max_4_ExFT = np.array(top_4)
 
-        print(f"max ExFT, hour of month, month, hour of year ")
+        print("max ExFT, hour of month, month, hour of year ")
         print(f"{max_4_ExFT}")
         return max_4_ExFT
 
@@ -440,7 +446,7 @@ class HybridLoads2:
             while peak_duration < max_hours:
                 new_max_ExFT = self.perform_monthly_ExFT_simulation(pk_hour_of_month, hybrid_load)
 
-                #print(f"Trying duration {peak_duration} hr: max ExFT = {new_max_ExFT:.2f}, target = {target_ExFT:.2f}")
+                # print(f"Trying duration {peak_duration} hr: max ExFT = {new_max_ExFT:.2f}, target = {target_ExFT:.2f}")
 
                 if new_max_ExFT > target_ExFT:
                     break
@@ -483,7 +489,7 @@ class HybridLoads2:
         ts = self.borehole.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
         resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
-        #print(f"resist_bh_effective = {resist_bh_effective}")
+        # print(f"resist_bh_effective = {resist_bh_effective}")
         g = self.borehole.g_sts
         q = hybrid_load
 

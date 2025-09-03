@@ -3,13 +3,13 @@ Focused test for perform_hrly_ExFT_simulation method
 This test specifically targets the ExFT calculation to identify why values are too high
 """
 
-import numpy as np
 from unittest.mock import Mock
-from pathlib import Path
-import sys
+
+import numpy as np
 
 # Add the path to your hybrid_loads module
 # sys.path.append(str(Path(__file__).parent))
+
 
 def create_test_mock_objects():
     """Create properly configured mock objects for testing"""
@@ -47,6 +47,7 @@ def create_test_mock_objects():
 
     return mock_bhe, mock_radial
 
+
 def test_perform_hrly_exft_simulation():
     """Main test function for the ExFT simulation method"""
 
@@ -55,6 +56,7 @@ def test_perform_hrly_exft_simulation():
     # Import the HybridLoads2 class
     try:
         from ghedesigner.ghe.hybrid_loads import HybridLoads2
+
         print("✓ Successfully imported HybridLoads2")
     except ImportError as e:
         print(f"✗ Import failed: {e}")
@@ -67,18 +69,13 @@ def test_perform_hrly_exft_simulation():
     # Start with a very simple case: constant load
     simple_loads = [1000.0] * 24  # 1 kW for 24 hours
 
-    print(f"\nTest 1: Simple constant load")
+    print("\nTest 1: Simple constant load")
     print(f"Building loads: {len(simple_loads)} hours at {simple_loads[0]} W")
 
     try:
         # Create HybridLoads2 instance
         hybrid = HybridLoads2(
-            building_loads=simple_loads,
-            bhe=mock_bhe,
-            radial_numerical=mock_radial,
-            years=[2025],
-            cop_h=4.0,
-            cop_c=5.0
+            building_loads=simple_loads, bhe=mock_bhe, radial_numerical=mock_radial, years=[2025], cop_h=4.0, cop_c=5.0
         )
         print("✓ HybridLoads2 instance created successfully")
 
@@ -93,7 +90,7 @@ def test_perform_hrly_exft_simulation():
         print(f"Normalized loads range: {min(normalized_loads):.1f} to {max(normalized_loads):.1f} W")
 
         # Now test the ExFT simulation
-        print(f"\nTesting ExFT simulation...")
+        print("\nTesting ExFT simulation...")
         exft_results = hybrid.perform_hrly_ExFT_simulation(normalized_loads)
 
         print(f"ExFT results length: {len(exft_results)}")
@@ -113,12 +110,14 @@ def test_perform_hrly_exft_simulation():
     except Exception as e:
         print(f"✗ Error during testing: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 def debug_calculation_steps(hybrid, load_profile):
     """Debug the calculation steps to identify where high values come from"""
 
-    print(f"\n=== DEBUGGING CALCULATION STEPS ===")
+    print("\n=== DEBUGGING CALCULATION STEPS ===")
 
     # Extract the key parameters used in the calculation
     ts = hybrid.borehole.t_s
@@ -136,13 +135,13 @@ def debug_calculation_steps(hybrid, load_profile):
     test_times = np.array([1.0, 2.0, 4.0, 8.0, 24.0])  # Hours
     log_times = np.log(test_times * 3600 / ts)  # Convert to log(t/ts)
     g_values = g(log_times)
-    print(f"G-function test:")
+    print("G-function test:")
     print(f"  Times (hours): {test_times}")
     print(f"  Log(t/ts): {log_times}")
     print(f"  G-values: {g_values}")
 
     # Manual calculation for first few time steps
-    print(f"\nManual calculation verification:")
+    print("\nManual calculation verification:")
 
     q_arr = np.array(load_profile)
     print(f"Load array: {q_arr}")
@@ -167,7 +166,7 @@ def debug_calculation_steps(hybrid, load_profile):
         print(f"  Total ExFT: {(q_dt[0] / two_pi_k) * g_val[0] + q_arr[hour] * resist_bh_effective:.3f} °C")
 
     # Identify potential issues
-    print(f"\n=== POTENTIAL ISSUES ANALYSIS ===")
+    print("\n=== POTENTIAL ISSUES ANALYSIS ===")
 
     # Check if the time scale is appropriate
     if ts > 10000:
@@ -192,10 +191,11 @@ def debug_calculation_steps(hybrid, load_profile):
     if max_load > 10000:
         print(f"⚠ Normalized loads ({max_load:.1f} W) might be too high")
 
+
 def test_with_different_load_patterns():
     """Test with different load patterns to isolate the issue"""
 
-    print(f"\n=== TESTING DIFFERENT LOAD PATTERNS ===")
+    print("\n=== TESTING DIFFERENT LOAD PATTERNS ===")
 
     mock_bhe, mock_radial = create_test_mock_objects()
 
@@ -226,7 +226,7 @@ def test_with_different_load_patterns():
                     radial_numerical=mock_radial,
                     years=[2025],
                     cop_h=4.0,
-                    cop_c=5.0
+                    cop_c=5.0,
                 )
 
                 # Convert to ground loads and normalize
@@ -243,7 +243,7 @@ def test_with_different_load_patterns():
                 print(f"  Max ExFT change: {max_exft:.2f} °C")
 
                 if max_exft > 15.0:
-                    print(f"  ⚠ HIGH ExFT detected! Investigating...")
+                    print("  ⚠ HIGH ExFT detected! Investigating...")
                     # Print more details for problematic cases
                     print(f"    First 5 ExFT values: {exft_results[:5]}")
                     print(f"    Last 5 ExFT values: {exft_results[-5:]}")
@@ -254,10 +254,11 @@ def test_with_different_load_patterns():
     except ImportError as e:
         print(f"✗ Could not import HybridLoads2: {e}")
 
+
 def test_unit_conversion_check():
     """Check if there might be unit conversion issues"""
 
-    print(f"\n=== UNIT CONVERSION CHECK ===")
+    print("\n=== UNIT CONVERSION CHECK ===")
 
     mock_bhe, mock_radial = create_test_mock_objects()
 
@@ -278,7 +279,7 @@ def test_unit_conversion_check():
             radial_numerical=mock_radial,
             years=[2025],
             cop_h=4.0,
-            cop_c=5.0
+            cop_c=5.0,
         )
 
         # Step 1: Building to ground load conversion
@@ -297,31 +298,33 @@ def test_unit_conversion_check():
         print(f"Normalization factor: {40 * 100 / max_ground:.6f}")
 
         # This normalization seems to normalize to 4000W peak, which might be the issue!
-        print(f"⚠ POTENTIAL ISSUE: Normalization scales to 4000W peak (40 * 100)")
+        print("⚠ POTENTIAL ISSUE: Normalization scales to 4000W peak (40 * 100)")
 
         # Step 3: Check ExFT calculation parameters
         ts = mock_radial.t_s
         two_pi_k = 2 * np.pi * mock_bhe.soil.k
         resist_bh = 0.13
 
-        print(f"\nCalculation parameters:")
+        print("\nCalculation parameters:")
         print(f"  ts (time scale): {ts} seconds")
         print(f"  two_pi_k: {two_pi_k:.3f} W/m-K")
         print(f"  Borehole resistance: {resist_bh} K/(W/m)")
 
         # The resistance component alone for normalized load:
         resistance_component = normalized_single * resist_bh
-        print(f"  Resistance component: {normalized_single:.1f} W × {resist_bh} K/(W/m) = {resistance_component:.2f} °C")
+        print(
+            f"  Resistance component: {normalized_single:.1f} W × {resist_bh} K/(W/m) = {resistance_component:.2f} °C"
+        )
 
         if resistance_component > 10.0:
             print(f"⚠ WARNING: Resistance component alone gives {resistance_component:.2f}°C!")
-            print(f"           This suggests the normalization is creating unreasonably high loads")
+            print("           This suggests the normalization is creating unreasonably high loads")
 
         # Test full ExFT simulation
         normalized_loads = [normalized_single] * 48
         exft_result = hybrid.perform_hrly_ExFT_simulation(normalized_loads)
 
-        print(f"\nExFT simulation results:")
+        print("\nExFT simulation results:")
         print(f"  Result length: {len(exft_result)}")
         print(f"  First 5 values: {exft_result[:5]}")
         print(f"  Max ExFT: {max(exft_result):.2f} °C")
@@ -330,23 +333,25 @@ def test_unit_conversion_check():
         # Diagnosis
         max_exft = max(abs(x) for x in exft_result)
         if max_exft > 20.0:
-            print(f"\n🔍 DIAGNOSIS:")
+            print("\n🔍 DIAGNOSIS:")
             print(f"   ExFT values of {max_exft:.2f}°C are too high!")
-            print(f"   Likely causes:")
-            print(f"   1. Normalization to 4000W peak is too aggressive")
-            print(f"   2. Units might be inconsistent (W vs kW)")
-            print(f"   3. G-function or time scaling issues")
-            print(f"   4. Borehole resistance value too high")
+            print("   Likely causes:")
+            print("   1. Normalization to 4000W peak is too aggressive")
+            print("   2. Units might be inconsistent (W vs kW)")
+            print("   3. G-function or time scaling issues")
+            print("   4. Borehole resistance value too high")
 
     except Exception as e:
         print(f"✗ Error in unit conversion test: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 def test_normalization_issue():
     """Specifically test if the normalization is causing the problem"""
 
-    print(f"\n=== TESTING NORMALIZATION ISSUE ===")
+    print("\n=== TESTING NORMALIZATION ISSUE ===")
 
     mock_bhe, mock_radial = create_test_mock_objects()
 
@@ -369,7 +374,7 @@ def test_normalization_issue():
                 radial_numerical=mock_radial,
                 years=[2025],
                 cop_h=4.0,
-                cop_c=5.0
+                cop_c=5.0,
             )
 
             # Check ground loads
@@ -384,7 +389,7 @@ def test_normalization_issue():
 
             print(f"  Max normalized load: {max_normalized:.1f} W")
             print(f"  Normalization factor: {normalization_factor:.6f}")
-            print(f"  Expected normalized peak: 4000 W")
+            print("  Expected normalized peak: 4000 W")
 
             # The issue might be here - check if normalization is correct
             expected_norm_factor = 4000.0 / max_ground if max_ground > 0 else 0
@@ -400,13 +405,19 @@ def test_normalization_issue():
             print(f"  ExFT with 10% normalized loads: {max(abs(x) for x in exft_small):.2f} °C")
 
             # The scaling should be roughly linear
-            scaling_ratio = max(abs(x) for x in exft_full) / max(abs(x) for x in exft_small) if max(abs(x) for x in exft_small) > 0 else 0
+            scaling_ratio = (
+                max(abs(x) for x in exft_full) / max(abs(x) for x in exft_small)
+                if max(abs(x) for x in exft_small) > 0
+                else 0
+            )
             print(f"  Scaling ratio: {scaling_ratio:.1f} (should be ~10)")
 
     except Exception as e:
         print(f"✗ Error in normalization test: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 def main():
     """Run all tests"""
@@ -417,13 +428,14 @@ def main():
     test_unit_conversion_check()
     test_normalization_issue()
 
-    print(f"\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("SUMMARY OF POTENTIAL ISSUES:")
     print("1. Check if normalization to 4000W is appropriate for your system size")
     print("2. Verify that the g-function values are realistic for your borehole geometry")
     print("3. Confirm that the borehole resistance value (0.13 K/(W/m)) is correct")
     print("4. Check that time scaling (ts) is appropriate")
     print("5. Verify unit consistency throughout the calculation chain")
+
 
 if __name__ == "__main__":
     main()

@@ -9,11 +9,10 @@ from ghedesigner.enums import PipeType, TimestepType
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_loads import HybridLoad
-from ghedesigner.ghe.hybrid_loads import HybridLoads2
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Grout, Soil
-from ghedesigner.utilities import combine_sts_lts, simulate_hourly, solve_root
-from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
+from ghedesigner.utilities import combine_sts_lts, solve_root
+
 
 class GHE:
     def __init__(
@@ -32,7 +31,6 @@ class GHE:
         hourly_extraction_ground_loads: list,
         field_type="N/A",
         field_specifier="N/A",
-
     ) -> None:
         self.field_type = field_type
         self.fieldSpecifier = field_specifier

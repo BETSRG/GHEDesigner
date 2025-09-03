@@ -8,10 +8,13 @@ Key fixes:
 5. Fixed array handling in simulate_hourly
 """
 
-import sys
+import inspect
+import traceback
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
+
 import numpy as np
+
 
 def get_test_loads():
     """Load test building loads with error handling and fallback to synthetic data"""
@@ -50,6 +53,7 @@ def get_test_loads():
         print(f"Generated {len(synthetic_loads)} synthetic data points")
         return synthetic_loads.tolist()
 
+
 def test_data_loading():
     """Test that we can load the building loads data"""
     print("=== Testing Data Loading ===")
@@ -65,9 +69,9 @@ def test_data_loading():
     cooling_loads = [x for x in building_loads if x < 0]
     zero_loads = [x for x in building_loads if x == 0]
 
-    print(f"Heating loads (>0): {len(heating_loads)} ({len(heating_loads)/len(building_loads)*100:.1f}%)")
-    print(f"Cooling loads (<0): {len(cooling_loads)} ({len(cooling_loads)/len(building_loads)*100:.1f}%)")
-    print(f"Zero loads: {len(zero_loads)} ({len(zero_loads)/len(building_loads)*100:.1f}%)")
+    print(f"Heating loads (>0): {len(heating_loads)} ({len(heating_loads) / len(building_loads) * 100:.1f}%)")
+    print(f"Cooling loads (<0): {len(cooling_loads)} ({len(cooling_loads) / len(building_loads) * 100:.1f}%)")
+    print(f"Zero loads: {len(zero_loads)} ({len(zero_loads) / len(building_loads) * 100:.1f}%)")
 
     if len(heating_loads) > 0:
         print(f"Heating range: 0 to {max(heating_loads):.1f}")
@@ -82,13 +86,14 @@ def test_data_loading():
     start_hour = 0
     for month, hours in enumerate(monthly_hours, 1):
         if start_hour + hours <= len(building_loads):
-            month_loads = building_loads[start_hour:start_hour + hours]
+            month_loads = building_loads[start_hour : start_hour + hours]
             month_heating = [x for x in month_loads if x > 0]
             month_cooling = [x for x in month_loads if x < 0]
             print(f"Month {month:2d}: {len(month_heating):4d} heating, {len(month_cooling):4d} cooling hours")
             start_hour += hours
 
     return building_loads
+
 
 def create_mock_singletube():
     """Create properly configured mock SingleUTube objects"""
@@ -152,16 +157,17 @@ def create_mock_singletube():
 
     return mock_bhe, mock_radial
 
+
 def test_mock_dependencies():
     """Try to create real SingleUTube objects, fall back to mocks if needed"""
     print("\n=== Testing Dependencies ===")
 
     try:
         # Try to import and create real objects first
+        from ghedesigner.ghe.boreholes.core import Borehole
         from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
         from ghedesigner.ghe.pipe import Pipe
         from ghedesigner.media import Fluid, Grout, Soil
-        from ghedesigner.ghe.boreholes.core import Borehole
 
         # Create the required components for SingleUTube
         pipe = Pipe.init_single_u_tube(
@@ -181,14 +187,7 @@ def test_mock_dependencies():
         # Try different ways to create SingleUTube (the constructor signature might vary)
         try:
             # Method 1: Try to create real SingleUTube object
-            bhe_eq = SingleUTube(
-                m_flow_borehole=0.1,
-                borehole=borehole,
-                pipe=pipe,
-                grout=grout,
-                fluid=fluid,
-                soil=soil
-            )
+            bhe_eq = SingleUTube(m_flow_borehole=0.1, borehole=borehole, pipe=pipe, grout=grout, fluid=fluid, soil=soil)
             print("✓ Created real SingleUTube bhe_eq")
 
             # CRITICAL FIX: Add the missing g_sts function to the real objects
@@ -214,7 +213,7 @@ def test_mock_dependencies():
 
             # Add the g_sts function to the bhe_eq object
             bhe_eq.g_sts = mock_g_function
-            bhe_eq.t_s = 3600.0  # Add time scale factor
+            bhe_eq.t_s = 3600.0  # Add timescale factor
 
             print("✓ Added g_sts function to real bhe_eq object")
 
@@ -235,12 +234,14 @@ def test_mock_dependencies():
         print("Falling back to Mock objects...")
         return create_mock_singletube()
 
+
 def test_hybridloads2_import():
     """Test importing and basic instantiation"""
     print("\n=== Testing HybridLoads2 Import ===")
 
     try:
         from ghedesigner.ghe.hybrid_loads import HybridLoads2
+
         print("✓ Successfully imported HybridLoads2")
 
         # Get test data
@@ -303,7 +304,7 @@ def test_hybridloads2_import():
                 bhe=mock_bhe_eq,
                 years=[2025],  # Specify a year
                 cop_h=3.49,
-                cop_c=3.825
+                cop_c=3.825,
             )
             print("✓ Successfully created HybridLoads2 instance")
             print(f"Instance type: {type(hybrid_loads)}")
@@ -316,9 +317,7 @@ def test_hybridloads2_import():
 
             # Try to diagnose the issue
             print("\nDiagnosing the issue...")
-            import traceback
             traceback.print_exc()
-
             raise init_error
 
     except ImportError as import_error:
@@ -326,12 +325,13 @@ def test_hybridloads2_import():
         print("Make sure you're in the correct environment and ghedesigner is installed")
         raise import_error
 
-def test_basic_functionality(hybrid_loads):
+
+def case_test_basic_functionality(hybrid_loads):
     """Test basic functionality of the HybridLoads2 instance"""
     print("\n=== Testing Basic Functionality ===")
 
     # Check what attributes and methods are available
-    attributes = [attr for attr in dir(hybrid_loads) if not attr.startswith('_')]
+    attributes = [attr for attr in dir(hybrid_loads) if not attr.startswith("_")]
     print(f"Available attributes/methods: {attributes}")
 
     # Test some key attributes
@@ -341,28 +341,28 @@ def test_basic_functionality(hybrid_loads):
         print(f"✓ Years: {hybrid_loads.years}")
         print(f"✓ Building loads length: {len(hybrid_loads.building_loads)}")
 
-        if hasattr(hybrid_loads, 'monthly_cl'):
+        if hasattr(hybrid_loads, "monthly_cl"):
             print(f"✓ Monthly cooling loads (first 5): {hybrid_loads.monthly_cl[:5]}")
-        if hasattr(hybrid_loads, 'monthly_hl'):
+        if hasattr(hybrid_loads, "monthly_hl"):
             print(f"✓ Monthly heating loads (first 5): {hybrid_loads.monthly_hl[:5]}")
 
-        if hasattr(hybrid_loads, 'target_ExFTghe_temps'):
-            print(f"✓ Target ExFT temps length: {len(hybrid_loads.target_ExFTghe_temps)}")
+        if hasattr(hybrid_loads, "target_ExFThe_temps"):
+            print(f"✓ Target ExFT temps length: {len(hybrid_loads.target_ExFThe_temps)}")
 
-        if hasattr(hybrid_loads, 'max_4_ExFT'):
+        if hasattr(hybrid_loads, "max_4_ExFT"):
             print(f"✓ Max 4 ExFT shape: {hybrid_loads.max_4_ExFT.shape}")
             print(f"✓ Max 4 ExFT values:\n{hybrid_loads.max_4_ExFT}")
 
-        if hasattr(hybrid_loads, 'min_4_ExFT'):
+        if hasattr(hybrid_loads, "min_4_ExFT"):
             print(f"✓ Min 4 ExFT shape: {hybrid_loads.min_4_ExFT.shape}")
             print(f"✓ Min 4 ExFT values:\n{hybrid_loads.min_4_ExFT}")
 
     except Exception as func_error:
         print(f"✗ Error accessing attributes: {func_error}")
-        import traceback
         traceback.print_exc()
 
-def test_normalize_loads(hybrid_loads):
+
+def case_test_normalize_loads(hybrid_loads):
     """Specifically test the bldg_to_ground_load function with detailed input/output logging"""
     print("\n=== Testing normalize_loads Function ===")
 
@@ -371,7 +371,7 @@ def test_normalize_loads(hybrid_loads):
     print(f"hybrid_loads value: {hybrid_loads}")
 
     # If it's not the right type, try to diagnose the issue
-    if not hasattr(hybrid_loads, 'normalize_loads'):
+    if not hasattr(hybrid_loads, "normalize_loads"):
         print("✗ normalize_loads method not found!")
         print(f"Available attributes: {dir(hybrid_loads) if hasattr(hybrid_loads, '__dict__') else 'No attributes'}")
 
@@ -393,9 +393,8 @@ def test_normalize_loads(hybrid_loads):
         {
             "name": "First 24 hours (1 day)",
             "loads": building_loads[:24] if len(building_loads) >= 24 else building_loads,
-            "description": "Testing daily pattern"
+            "description": "Testing daily pattern",
         },
-
         #     "name": "Peak heating loads",
         #     "loads": [max(building_loads)] * 24 if building_loads else [1000.0] * 24,
         #     "description": "Testing peak heating scenario"
@@ -411,7 +410,7 @@ def test_normalize_loads(hybrid_loads):
         print(f"\n--- Test Scenario {i}: {scenario['name']} ---")
         print(f"Description: {scenario['description']}")
 
-        test_loads = scenario['loads']
+        test_loads = scenario["loads"]
         print(f"Input loads length: {len(test_loads)}")
         print(f"Input loads range: {min(test_loads):.1f} to {max(test_loads):.1f}")
         print(f"Input loads (first 10): {[round(x, 1) for x in test_loads[:10]]}")
@@ -458,7 +457,7 @@ def test_normalize_loads(hybrid_loads):
                     # Show some input vs output pairs
                     print("\nInput vs Output comparison (first 24 hours):")
                     for j in range(min(24, len(test_loads))):
-                        print(f"  Hour {j+1:2d}: {test_loads[j]:8.1f} -> {normalized_loads[j]:8.1f}")
+                        print(f"  Hour {j + 1:2d}: {test_loads[j]:8.1f} -> {normalized_loads[j]:8.1f}")
 
             elif isinstance(normalized_loads, (int, float)):
                 print(f"Output value: {normalized_loads:.1f}")
@@ -470,20 +469,20 @@ def test_normalize_loads(hybrid_loads):
             print(f"Error type: {type(func_error)}")
 
             # Try to get more details about the error
-            import traceback
             print("Detailed error traceback:")
             traceback.print_exc()
 
             # Try to inspect the function signature
             try:
-                import inspect
                 sig = inspect.signature(hybrid_loads.normalize_loads)
                 print(f"Function signature: {sig}")
             except:
                 print("Could not inspect function signature")
 
         print("-" * 60)
-def test_bldg_to_ground_load_function(hybrid_loads):
+
+
+def case_test_bldg_to_ground_load_function(hybrid_loads):
     """Specifically test the bldg_to_ground_load function with detailed input/output logging"""
     print("\n=== Testing bldg_to_ground_load Function ===")
 
@@ -492,7 +491,7 @@ def test_bldg_to_ground_load_function(hybrid_loads):
     print(f"hybrid_loads value: {hybrid_loads}")
 
     # If it's not the right type, try to diagnose the issue
-    if not hasattr(hybrid_loads, 'bldg_to_ground_load'):
+    if not hasattr(hybrid_loads, "bldg_to_ground_load"):
         print("✗ bldg_to_ground_load method not found!")
         print(f"Available attributes: {dir(hybrid_loads) if hasattr(hybrid_loads, '__dict__') else 'No attributes'}")
 
@@ -514,9 +513,9 @@ def test_bldg_to_ground_load_function(hybrid_loads):
         {
             "name": "First 24 hours (1 day)",
             "loads": building_loads[:24] if len(building_loads) >= 24 else building_loads,
-            "description": "Testing daily pattern"
+            "description": "Testing daily pattern",
         },
-        #{
+        # {
         #     "name": "First 168 hours (1 week)",
         #     "loads": building_loads[:168] if len(building_loads) >= 168 else building_loads,
         #     "description": "Testing weekly pattern"
@@ -542,7 +541,7 @@ def test_bldg_to_ground_load_function(hybrid_loads):
         print(f"\n--- Test Scenario {i}: {scenario['name']} ---")
         print(f"Description: {scenario['description']}")
 
-        test_loads = scenario['loads']
+        test_loads = scenario["loads"]
         print(f"Input loads length: {len(test_loads)}")
         print(f"Input loads range: {min(test_loads):.1f} to {max(test_loads):.1f}")
         print(f"Input loads (first 10): {[round(x, 1) for x in test_loads[:10]]}")
@@ -592,7 +591,7 @@ def test_bldg_to_ground_load_function(hybrid_loads):
                     # Show some input vs output pairs
                     print("\nInput vs Output comparison (first 24 hours):")
                     for j in range(min(24, len(test_loads))):
-                        print(f"  Hour {j+1:2d}: {test_loads[j]:8.1f} -> {ground_loads[j]:8.1f}")
+                        print(f"  Hour {j + 1:2d}: {test_loads[j]:8.1f} -> {ground_loads[j]:8.1f}")
 
             elif isinstance(ground_loads, (int, float)):
                 print(f"Output value: {ground_loads:.1f}")
@@ -604,19 +603,19 @@ def test_bldg_to_ground_load_function(hybrid_loads):
             print(f"Error type: {type(func_error)}")
 
             # Try to get more details about the error
-            import traceback
             print("Detailed error traceback:")
             traceback.print_exc()
 
             # Try to inspect the function signature
             try:
-                import inspect
                 sig = inspect.signature(hybrid_loads.bldg_to_ground_load)
                 print(f"Function signature: {sig}")
             except:
                 print("Could not inspect function signature")
 
         print("-" * 60)
+
+
 def main():
     """Main test runner"""
     print("Starting HybridLoads2 Testing...")
@@ -630,17 +629,16 @@ def main():
         hybrid_loads = test_hybridloads2_import()
 
         # Step 3: Test basic functionality
-        test_basic_functionality(hybrid_loads)
+        case_test_basic_functionality(hybrid_loads)
 
-        #Step 4: Test bldg_to_ground_loads
-        #test_bldg_to_ground_load_function(hybrid_loads)
+        # Step 4: Test bldg_to_ground_loads
+        # test_bldg_to_ground_load_function(hybrid_loads)
 
-        #step 5: test normalize_loads
-        test_normalize_loads(hybrid_loads)
+        # step 5: test normalize_loads
+        case_test_normalize_loads(hybrid_loads)
 
         print("\n" + "=" * 50)
         print("✓ All basic tests passed!")
-
 
     except Exception as e:
         print("\n" + "=" * 50)
@@ -648,7 +646,6 @@ def main():
         print(f"Error type: {type(e)}")
 
         # Print traceback for debugging
-        import traceback
         print("\nFull traceback:")
         traceback.print_exc()
 
@@ -659,6 +656,7 @@ def main():
         print("4. Check the actual SingleUTube constructor signature")
         print("5. Verify that Mock objects have all required attributes")
         print("6. Make sure the g_sts function is properly mocked and callable")
+
 
 if __name__ == "__main__":
     main()

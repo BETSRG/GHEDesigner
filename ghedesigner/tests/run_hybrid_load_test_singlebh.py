@@ -65,6 +65,6 @@ def main():
 if __name__ == "__main__":
     main()
 
-       # hourly_temps = (
-        # #     18 + 5 * np.sin(2 * np.pi * np.arange(8760) / 24 / 365) + 3 * np.sin(2 * np.pi * np.arange(8760) / 24)
-        # # )  # TODO eventually this will have to run a hourly sim for hourly temps
+    # hourly_temps = (
+    # #     18 + 5 * np.sin(2 * np.pi * np.arange(8760) / 24 / 365) + 3 * np.sin(2 * np.pi * np.arange(8760) / 24)
+    # # )  # TODO eventually this will have to run a hourly sim for hourly temps

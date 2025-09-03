@@ -10,7 +10,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.optimize import brentq
 
-from ghedesigner.constants import SEC_IN_HR, TWO_PI
+from ghedesigner.constants import SEC_IN_HR
 
 
 # Time functions
@@ -337,6 +337,7 @@ def read_csv_column(file_path: str | Path, column: int | str, try_convert_to_num
 
     return values
 
+
 @staticmethod
 def simulate_hourly(hour_time, q, g_sts, resist_bh, two_pi_k, ts):
     # An hourly simulation for the fluid temperature
@@ -357,6 +358,7 @@ def simulate_hourly(hour_time, q, g_sts, resist_bh, two_pi_k, ts):
         delta_t_fluid.append(tf_mean)
 
     return delta_t_fluid
+
 
 def get_loads(loads_dict: dict) -> list[float]:
     if "load_values" in loads_dict:
