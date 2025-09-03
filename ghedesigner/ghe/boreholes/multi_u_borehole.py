@@ -10,7 +10,7 @@ from ghedesigner.enums import DoubleUTubeConnType
 from ghedesigner.ghe.boreholes.base import GHEDesignerBoreholeBase
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.utilities import solve_root
 
 
@@ -56,7 +56,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         m_flow_borehole = self.m_flow_borehole
         fluid = self.fluid
 
-        grout = Grout(self.grout.k, self.grout.rhoCp)
+        grout = Grout(self.grout.k, self.grout.rho_cp)
         soil = self.soil
 
         # Maintain the same mass flow rate so that the Rb/Rb* is not diverged from
@@ -112,7 +112,7 @@ class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
     def __init__(
         self,
         m_flow_borehole: float,
-        fluid: GHEFluid,
+        fluid: Fluid,
         borehole: Borehole,
         pipe: Pipe,
         grout: Grout,
@@ -183,7 +183,7 @@ class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
         resist_pipe = self.bhr_borehole.calc_pipe_cond_resist()
         resist_conv = self.R_fp - resist_pipe
 
-        single_u_tube = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rhoCp)
+        single_u_tube = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rho_cp)
 
         # Vary grout thermal conductivity to match effective borehole thermal resistance
         self.match_effective_borehole_resistance(single_u_tube)

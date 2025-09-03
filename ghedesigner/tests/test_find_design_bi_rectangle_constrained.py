@@ -11,7 +11,7 @@ from ghedesigner.ghe.design.birectangle_constrained import (
     GeometricConstraintsBiRectangleConstrained,
 )
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 prop_boundary = [
@@ -75,7 +75,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         _no_go_boundaries: list[list[list[float]]],
     ):
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
-        fluid = GHEFluid("water", 0.0, 20.0)
+        fluid = Fluid("water")
         grout = Grout(1.0, 3901000.0)
         ground_loads = self.get_atlanta_loads()
         borehole = Borehole(burial_depth=2.0, borehole_radius=borehole_radius)

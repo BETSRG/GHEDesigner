@@ -8,7 +8,7 @@ from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.utilities import borehole_spacing, eskilson_log_times
 
 
@@ -18,7 +18,7 @@ class RowWiseModifiedBisectionSearch:
         self,
         v_flow: float,
         borehole: Borehole,
-        fluid: GHEFluid,
+        fluid: Fluid,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,

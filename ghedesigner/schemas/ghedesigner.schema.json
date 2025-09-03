@@ -25,11 +25,17 @@
       "format": "Meters",
       "description": "Minimum borehole-to-borehole spacing."
     },
+    "column": {
+      "type": ["string", "integer"]
+    },
     "conductivity": {
       "type": "number",
       "minimum": 0,
       "format": "Watts/Meter-Kelvin",
       "description": "Thermal conductivity."
+    },
+    "file_path": {
+      "type": "string"
     },
     "H": {
       "type": "number",
@@ -48,6 +54,54 @@
       "minimum": 0,
       "format": "Meters",
       "description": "Horizontal length of property boundary defining surface area available for ground heat exchanger."
+    },
+    "load_values": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "format": "Watts",
+      "minItems": 8760,
+      "maxItems": 8760,
+      "description": "Annual, hourly loads of the object. Positive value indicate heating/heat extraction, negative values indicate cooling/heat rejection."
+    },
+    "loads": {
+      "type": "object",
+      "properties": {
+        "column": {
+          "$ref": "#/$defs/column"
+        },
+        "file_path": {
+          "$ref": "#/$defs/file_path"
+        },
+        "load_values": {
+          "$ref": "#/$defs/load_values"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "load_values": {
+              "$ref": "#/$defs/load_values"
+            }
+          },
+          "required": ["load_values"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column": {
+              "$ref": "#/$defs/column"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            }
+          },
+          "required": ["file_path", "column"],
+          "additionalProperties": false
+        }
+      ],
+      "additionalProperties": false
     },
     "no_go_boundaries": {
       "type": "array",
@@ -186,7 +240,7 @@
         "additionalProperties": false
       }
     },
-    "ground-heat-exchanger": {
+    "ground_heat_exchanger": {
       "type": "object",
       "description": "A collection of objects that define a ground heat exchanger system.",
       "additionalProperties": {
@@ -776,16 +830,7 @@
             "additionalProperties": false
           },
           "loads": {
-            "type": "array",
-            "items": {
-              "items": {
-                "type": "number"
-              },
-              "format": "Watts",
-              "minItems": 8760,
-              "maxItems": 8760,
-              "description": "Annual, hourly heat extraction and heat rejection loads of the ground heat exchanger. Positive value indicate heat extraction, negative values indicate heat rejection."
-            }
+            "$ref": "#/$defs/loads"
           }
         },
         "required": [
@@ -799,38 +844,19 @@
         "additionalProperties": false
       }
     },
-    "pump": {
-      "type": "object",
-      "description": "",
-      "additionalProperties": false
-    },
-    "towers": {
-      "type": "object",
-      "description": "",
-      "additionalProperties": false
-    },
-    "generic-loads": {
-      "type": "object",
-      "description": "",
-      "additionalProperties": false
-    },
-    "simulation-control": {
+    "simulation_control": {
       "type": "object",
       "description": "",
       "properties": {
-        "thermal-sizing-run": {
+        "sizing_run": {
           "type": "boolean",
-          "description": "This field is currently unused. It will enable or disable running a sizing calculation for the ground heat exchanger"
+          "description": "Field enables or disables running sizing calculations."
         },
-        "hourly-run": {
+        "hourly_run": {
           "type": "boolean",
-          "description": "This field is currently unused."
+          "description": "Field enables running hour simulation."
         },
-        "hydraulic-run": {
-          "Type": "boolean",
-          "description": "This field is currently unused"
-        },
-        "simulation-months": {
+        "sizing_months": {
           "type": "number",
           "minimum": 1,
           "format": "Months",
@@ -843,7 +869,7 @@
           "description": "This field is currently unused. Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently available."
         }
       },
-      "required": ["simulation-months"],
+      "required": ["sizing_months"],
       "additionalProperties": false
     },
     "version": {
@@ -851,6 +877,6 @@
       "description": "An integer version ID for this input structure, for future-proofing."
     }
   },
-  "required": ["topology", "fluid", "ground-heat-exchanger", "version"],
+  "required": ["topology", "fluid", "ground_heat_exchanger", "version"],
   "additionalProperties": false
 }

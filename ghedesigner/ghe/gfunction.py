@@ -6,7 +6,7 @@ import numpy as np
 import pygfunction as gt
 from pygfunction.boreholes import Borehole
 from pygfunction.enums import PipeType as PyPipeType
-from pygfunction.ground_heat_exchanger import GroundHeatExchanger as PyGHE
+from pygfunction.gfunction import gFunction
 from scipy.interpolate import interp1d, lagrange
 
 from ghedesigner.enums import PipeType
@@ -14,11 +14,11 @@ from ghedesigner.enums import PipeType
 logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
 logger = logging.getLogger(__name__)
 
-pipe_map = {
-    PipeType.SINGLEUTUBE.name: PyPipeType.SINGLEUTUBE.name,
-    PipeType.DOUBLEUTUBESERIES.name: PyPipeType.DOUBLEUTUBESERIES.name,
-    PipeType.DOUBLEUTUBEPARALLEL.name: PyPipeType.DOUBLEUTUBEPARALLEL.name,
-    PipeType.COAXIAL.name: PyPipeType.COAXIALPIPEINLET.name,
+pyg_pipe_type_map = {
+    PipeType.SINGLEUTUBE.name: PyPipeType.SINGLE_UTUBE.name,
+    PipeType.DOUBLEUTUBESERIES.name: PyPipeType.DOUBLE_UTUBE_SERIES.name,
+    PipeType.DOUBLEUTUBEPARALLEL.name: PyPipeType.DOUBLE_UTUBE_PARALLEL.name,
+    PipeType.COAXIAL.name: PyPipeType.COAXIAL_ANNULAR_OUT.name,
 }
 
 
@@ -32,13 +32,7 @@ def calculate_g_function(
     pipe,
     grout,
     soil,
-    n_segments=8,
-    end_length_ratio=0.02,
-    segments="unequal",
-    solver="equivalent",
-    boundary="MIFT",
-    segment_ratios=None,
-    disp=False,
+    boundary_condition="MIFT",
 ):
     match bhe_type:
         case PipeType.SINGLEUTUBE | PipeType.DOUBLEUTUBESERIES | PipeType.DOUBLEUTUBEPARALLEL:
@@ -52,45 +46,48 @@ def calculate_g_function(
         case _:
             raise ValueError(f"bhe_type {bhe_type} is not supported")
 
-    pyg_ghe = PyGHE(
-        borehole.H,
-        borehole.D,
-        borehole.r_b,
-        [x for x, _ in coordinates],
-        [y for _, y in coordinates],
-        PyPipeType[pipe_map[bhe_type.name]],
-        pipe.pos,
-        r_inner,
-        r_outer,
-        soil.k,
-        grout.k,
-        pipe.k,
-        fluid.name,
-        fluid.concentration_percent,
-        m_flow_borehole * (len(coordinates)),
-        pipe.roughness,
-    )
-
     # setup options
-    segments = segments.lower()
-    if segments == "equal":
-        options = {"nSegments": n_segments, "disp": disp}
-    elif segments == "unequal":
-        if segment_ratios is None:
-            segment_ratios = gt.utilities.segment_ratios(n_segments, end_length_ratio=end_length_ratio)
-        options = {
-            "nSegments": n_segments,
-            "segment_ratios": segment_ratios,
-            "disp": disp,
-        }
-    else:
-        raise ValueError(f"Unknown segments: {segments}")
+    # none of these were ever used or even exposed for users to access them. hardcoding them here until needed.
+    solver = "equivalent"
+    disp = False
+    n_segments = 8
+    end_length_ratio = 0.02
 
-    gfunc = pyg_ghe.evaluate_g_function(
-        soil.alpha, time_values, method=solver, boundary_condition=boundary, options=options
+    options = {
+        "nSegments": n_segments,
+        "segment_ratios": gt.utilities.segment_ratios(nSegments=n_segments, end_length_ratio=end_length_ratio),
+        "disp": disp,
+    }
+
+    nbh = len(coordinates)
+    m_flow_network = nbh * m_flow_borehole
+
+    g_func = gFunction.from_static_params(
+        H=borehole.H,
+        D=borehole.D,
+        r_b=borehole.r_b,
+        x=[x for x, _ in coordinates],
+        y=[y for _, y in coordinates],
+        alpha=soil.alpha,
+        options=options,
+        method=solver,
+        boundary_condition=boundary_condition,
+        k_p=pipe.k,
+        k_s=soil.k,
+        k_g=grout.k,
+        epsilon=pipe.roughness,
+        fluid_str=fluid.name,
+        fluid_concentration_pct=fluid.concentration_percent,
+        pos=pipe.pos,
+        r_in=r_inner,
+        r_out=r_outer,
+        pipe_type_str=PyPipeType[pyg_pipe_type_map[bhe_type.name]].name,
+        m_flow_network=m_flow_network,
     )
 
-    return gfunc
+    g_func_vals = g_func.evaluate_g_function(time_values)
+
+    return g_func_vals
 
 
 def calc_g_func_for_multiple_lengths(
@@ -106,16 +103,11 @@ def calc_g_func_for_multiple_lengths(
     pipe,
     grout,
     soil,
-    n_segments=8,
-    segments="unequal",
-    solver="equivalent",
-    boundary="MIFT",
-    segment_ratios=None,
 ):
     r_b_values = dict.fromkeys(h_values, r_b)
     g_lts_values = {}
 
-    alpha = soil.k / soil.rhoCp
+    alpha = soil.k / soil.rho_cp
 
     for h in h_values:
         borehole = Borehole(h, depth, r_b, 0.0, 0.0)
@@ -133,11 +125,6 @@ def calc_g_func_for_multiple_lengths(
             pipe,
             grout,
             soil,
-            n_segments=n_segments,
-            segments=segments,
-            solver=solver,
-            boundary=boundary,
-            segment_ratios=segment_ratios,
         ).tolist()
 
     # Initialize the gFunction object

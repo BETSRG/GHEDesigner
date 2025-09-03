@@ -64,28 +64,7 @@ class GHE:
         # Building cooling is negative, building heating is positive
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.times = np.empty((0,), dtype=np.float64)
-        self.loading = None
-        self.radial_numerical = radial_numerical
-
-        hourly_ExFTghe_temps = simulate_detailed(
-            q_dot = self.hourly_extraction_ground_loads,
-            time_values = time_values,
-            g = self.gFunction,
-            nbh = self.nbh,
-            t_s = self.radial_numerical,
-            k = 0.48,
-            h = 100,
-            tg = 17.5,
-            rb = 0.13,
-            m_dot = 0.1,
-            cp = 3795
-        )
-
-        h = HybridLoads2(
-            building_loads = self.hourly_extraction_ground_loads,
-            bhe = self.bhe_eq,
-            radial_numerical = self.radial_numerical,
-        )
+        self.loading: list | None = None
 
         self.hybrid_load = HybridLoad(
             self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
