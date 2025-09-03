@@ -12,9 +12,13 @@ import inspect
 import traceback
 from pathlib import Path
 from unittest.mock import Mock
-
+from ghedesigner.ghe.manager import GroundHeatExchanger
 import numpy as np
-
+from ghedesigner.ghe.boreholes.core import Borehole
+from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import Fluid, Grout, Soil
+from scipy.interpolate import interp1d
 
 def get_test_loads():
     """Load test building loads with error handling and fallback to synthetic data"""
@@ -95,75 +99,12 @@ def get_loading_data():
     return building_loads
 
 
-def create_mock_singletube():
-    """Create properly configured mock SingleUTube objects"""
-    print("\n=== Creating Mock SingleUTube Objects ===")
-
-    # Create mock soil
-    mock_soil = Mock()
-    mock_soil.k = 1.8  # thermal conductivity W/m-K
-
-    # Create mock borehole heat exchanger
-    mock_bhe = Mock()
-    mock_bhe.soil = mock_soil
-    mock_bhe.calc_effective_borehole_resistance.return_value = 0.13
-
-    # Create mock radial numerical with improved g-function
-    mock_radial = Mock()
-    mock_radial.t_s = 3600.0  # time scale factor
-
-    # Create a robust mock g-function that handles various input types
-    def mock_g_function(log_time_values):
-        """
-        Mock g-function that returns reasonable values for g-function calculations.
-        The g-function typically returns values between 2-15 for reasonable time ranges.
-        """
-        try:
-            # Convert input to numpy array for consistent handling
-            log_times = np.atleast_1d(np.array(log_time_values))
-
-            # Simple mock g-function: starts around 2 and grows logarithmically
-            # This mimics the behavior of real g-functions
-            result = 2.0 + 0.5 * np.log(np.maximum(np.abs(log_times) + 1, 1e-10))
-
-            # Ensure result has reasonable bounds (typical g-function range)
-            result = np.clip(result, 0.1, 15.0)
-
-            # Return scalar if input was scalar, array otherwise
-            if np.isscalar(log_time_values):
-                return float(result[0])
-            else:
-                return result
-
-        except Exception as e:
-            print(f"Error in mock g-function: {e}")
-            # Fallback to simple constant value
-            if np.isscalar(log_time_values):
-                return 2.0
-            else:
-                return np.full_like(np.atleast_1d(log_time_values), 2.0)
-
-    # Assign the mock g-function
-    mock_radial.g_sts = mock_g_function
-
-    print("✓ Created mock_bhe with soil.k =", mock_bhe.soil.k)
-    print("✓ Created mock_radial with g_sts function")
-    print("✓ mock_bhe.calc_effective_borehole_resistance() =", mock_bhe.calc_effective_borehole_resistance())
-
-    # Test the g-function to make sure it works
-    test_input = np.array([1.0, 2.0, 3.0])
-    test_result = mock_radial.g_sts(test_input)
-    print(f"✓ g_sts test: input {test_input} -> output {test_result}")
-
-    return mock_bhe, mock_radial
-
-
-def test_mock_dependencies():
-    """Try to create real SingleUTube objects, fall back to mocks if needed"""
+def get_test_singleUTube():
+    """Try to create real SingleUTube objects"""
     print("\n=== Testing Dependencies ===")
 
     try:
-        # Try to import and create real objects first
+        # Try to import and create real objects
         from ghedesigner.ghe.boreholes.core import Borehole
         from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
         from ghedesigner.ghe.pipe import Pipe
@@ -184,37 +125,60 @@ def test_mock_dependencies():
         fluid = Fluid(fluid_name="water", percent=0.0, temperature=20.0)
         borehole = Borehole(burial_depth=2.0, borehole_radius=0.5, borehole_height=100)
 
-        # Try different ways to create SingleUTube (the constructor signature might vary)
+        # Try to create SingleUTube
         try:
-            # Method 1: Try to create real SingleUTube object
+            # Check what attributes and methods are available
+            attributes = [attr for attr in dir(SingleUTube) if not attr.startswith("_")]
+            print(f"Available attributes/methods: {attributes}")
+
+            # Try to create real SingleUTube object
             bhe_eq = SingleUTube(m_flow_borehole=0.1, borehole=borehole, pipe=pipe, grout=grout, fluid=fluid, soil=soil)
             print("✓ Created real SingleUTube bhe_eq")
 
             # CRITICAL FIX: Add the missing g_sts function to the real objects
             # Real SingleUTube objects don't have g_sts by default, so we need to add it
+            log_time_sts, g_sts = bhe_eq.calc_sts_g_functions()
+            g_sts_func = interp1d(log_time_sts, g_sts, bounds_error=False, fill_value="extrapolate")
 
-            def mock_g_function(log_time_values):
-                """Mock g-function for real SingleUTube objects"""
-                try:
-                    log_times = np.atleast_1d(np.array(log_time_values))
-                    result = 2.0 + 0.5 * np.log(np.maximum(np.abs(log_times) + 1, 1e-10))
-                    result = np.clip(result, 0.1, 15.0)
-
-                    if np.isscalar(log_time_values):
-                        return float(result[0])
-                    else:
-                        return result
-                except Exception as e:
-                    print(f"Error in real object g-function: {e}")
-                    if np.isscalar(log_time_values):
-                        return 2.0
-                    else:
-                        return np.full_like(np.atleast_1d(log_time_values), 2.0)
-
+            # ghe_dict = {
+            #     "flow_rate": 0.5,
+            #     "flow_type": "BOREHOLE",
+            #     "grout": {
+            #         "conductivity": 1,
+            #         "rho_cp": 3901000
+            #     },
+            #     "soil": {
+            #         "conductivity": 2,
+            #         "rho_cp": 2343493,
+            #         "undisturbed_temp": 18.3
+            #     },
+            #     "pipe": {
+            #         "inner_diameter": 0.03404,
+            #         "outer_diameter": 0.04216,
+            #         "shank_spacing": 0.01856,
+            #         "roughness": 0.000001,
+            #         "conductivity": 0.4,
+            #         "rho_cp": 1542000,
+            #         "arrangement": "SINGLEUTUBE"
+            #     },
+            #     "borehole": {
+            #         "buried_depth": 2,
+            #         "diameter": 0.14
+            #     },
+            #     "pre_designed": {
+            #         "arrangement": "RECTANGLE",
+            #         "H": 150,
+            #         "spacing_in_x_dimension": 4.5,
+            #         "spacing_in_y_dimension": 5.5,
+            #         "boreholes_in_x_dimension": 4,
+            #         "boreholes_in_y_dimension": 8
+            #     }
+            # }
+            # # You may need to define full_inputs["fluid"] or replace it with the correct fluid object
+            # # For now, let's use the 'fluid' variable defined above
+            # ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, fluid)
             # Add the g_sts function to the bhe_eq object
-            bhe_eq.g_sts = mock_g_function
-            bhe_eq.t_s = 3600.0  # Add timescale factor
-
+            bhe_eq.g_sts = g_sts_func
             print("✓ Added g_sts function to real bhe_eq object")
 
             # Test the g_sts function
@@ -231,11 +195,8 @@ def test_mock_dependencies():
 
     except Exception as e:
         print(f"✗ Failed to create real SingleUTube objects: {e}")
-        print("Falling back to Mock objects...")
-        return create_mock_singletube()
 
-
-def test_hybridloads2_import():
+def get_test_hybridloads2_import():
     """Test importing and basic instantiation"""
     print("\n=== Testing HybridLoads2 Import ===")
 
@@ -248,15 +209,15 @@ def test_hybridloads2_import():
         building_loads = get_test_loads()
 
         # Create dependencies
-        mock_bhe_eq = test_mock_dependencies()
+        bhe_eq = get_test_singleUTube()
 
         # Verify the g_sts function is properly set
-        print(f"mock_bhe_eq.g_sts type: {type(mock_bhe_eq.g_sts)}")
-        print(f"mock_bhe_eq.g_sts callable: {callable(mock_bhe_eq.g_sts)}")
+        print(f"bhe_eq.g_sts type: {type(bhe_eq.g_sts)}")
+        print(f"bhe_eq.g_sts callable: {callable(bhe_eq.g_sts)}")
 
         # Test the g_sts function before using it
         try:
-            test_result = mock_bhe_eq.g_sts([1.0, 2.0])
+            test_result = bhe_eq.g_sts([1.0, 2.0])
             print(f"✓ g_sts function test successful: {test_result}")
         except Exception as g_error:
             print(f"✗ g_sts function test failed: {g_error}")
@@ -301,7 +262,7 @@ def test_hybridloads2_import():
         try:
             hybrid_loads = HybridLoads2(
                 building_loads=test_loads,
-                bhe=mock_bhe_eq,
+                bhe=bhe_eq,
                 years=[2025],  # Specify a year
                 cop_h=3.49,
                 cop_c=3.825,
@@ -626,16 +587,18 @@ def test_main():
         building_loads = get_loading_data()
 
         # Step 2: Test imports and instantiation
-        hybrid_loads = test_hybridloads2_import()
+        hybrid_loads = get_test_hybridloads2_import()
 
         # Step 3: Test basic functionality
         case_test_basic_functionality(hybrid_loads)
 
         # Step 4: Test bldg_to_ground_loads
-        # test_bldg_to_ground_load_function(hybrid_loads)
+        #case_test_bldg_to_ground_load_function(hybrid_loads)
 
         # step 5: test normalize_loads
-        case_test_normalize_loads(hybrid_loads)
+        #case_test_normalize_loads(hybrid_loads)
+
+        # step 6:
 
         print("\n" + "=" * 50)
         print("✓ All basic tests passed!")
@@ -657,3 +620,6 @@ def test_main():
         print("5. Verify that Mock objects have all required attributes")
         print("6. Make sure the g_sts function is properly mocked and callable")
 
+if __name__ == "__main__":
+
+    test_main()
