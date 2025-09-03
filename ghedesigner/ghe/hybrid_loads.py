@@ -21,7 +21,6 @@ class HybridLoads2:
         self,
         building_loads: list,
         bhe: SingleUTube,
-        radial_numerical: SingleUTube,
         years=None,
         start_month=None,
         end_month=None,
@@ -63,7 +62,7 @@ class HybridLoads2:
 
         # Store the radial numerical g-function value
         # Note: this is intended to be a scipy.interp1d object
-        self.borehole = radial_numerical
+        self.borehole = self.bhe
         # self.sim_params = sim_params
         self.years = years
 
@@ -190,8 +189,6 @@ class HybridLoads2:
         print("Normalize loads has run.")
 
         return normalized_loads
-
-    # Part 3 ----------------
 
     def split_loads_by_month(self) -> None:
         """Split the loads into peak, total, and average loads for each month"""
@@ -408,7 +405,6 @@ class HybridLoads2:
         print(f"{max_4_ExFT}")
         return max_4_ExFT
 
-    # part 4 ----------------------
     def find_peak_durations(self):
         """
         find the peak load durations by using the GHE ExFT and increment peak load duration

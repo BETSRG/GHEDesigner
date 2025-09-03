@@ -12,7 +12,7 @@ from ghedesigner.ghe.ground_loads import HybridLoad
 from ghedesigner.ghe.hybrid_loads import HybridLoads2
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Grout, Soil
-from ghedesigner.utilities import combine_sts_lts, simulate_detailed, solve_root
+from ghedesigner.utilities import combine_sts_lts, simulate_hourly, solve_root
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 
 class GHE:

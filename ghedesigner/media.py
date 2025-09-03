@@ -77,7 +77,8 @@ class ThermalProperty:
 
 
 class Grout(ThermalProperty):
-    pass
+    def __init__(self, k, rho_cp: float) -> None:
+        super().__init__(k, rho_cp)
 
 
 class Soil(ThermalProperty):

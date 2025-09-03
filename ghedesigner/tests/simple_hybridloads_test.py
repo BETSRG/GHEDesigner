@@ -160,7 +160,7 @@ def test_mock_dependencies():
         # Try to import and create real objects first
         from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
         from ghedesigner.ghe.pipe import Pipe
-        from ghedesigner.media import GHEFluid, Grout, Soil
+        from ghedesigner.media import Fluid, Grout, Soil
         from ghedesigner.ghe.boreholes.core import Borehole
 
         # Create the required components for SingleUTube
@@ -175,7 +175,7 @@ def test_mock_dependencies():
 
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
         grout = Grout(k=1.0, rho_cp=3901000.0)
-        fluid = GHEFluid(fluid_str="water", percent=0.0, temperature=20.0)
+        fluid = Fluid(fluid_name="water", percent=0.0, temperature=20.0)
         borehole = Borehole(burial_depth=2.0, borehole_radius=0.5, borehole_height=100)
 
         # Try different ways to create SingleUTube (the constructor signature might vary)
@@ -190,17 +190,6 @@ def test_mock_dependencies():
                 soil=soil
             )
             print("✓ Created real SingleUTube bhe_eq")
-
-            # Create second instance for radial_numerical
-            radial_numerical = SingleUTube(
-                m_flow_borehole=0.1,
-                borehole=borehole,
-                pipe=pipe,
-                grout=grout,
-                fluid=fluid,
-                soil=soil
-            )
-            print("✓ Created real SingleUTube radial_numerical")
 
             # CRITICAL FIX: Add the missing g_sts function to the real objects
             # Real SingleUTube objects don't have g_sts by default, so we need to add it
@@ -223,20 +212,19 @@ def test_mock_dependencies():
                     else:
                         return np.full_like(np.atleast_1d(log_time_values), 2.0)
 
-            # Add the g_sts function to the radial_numerical object
-            radial_numerical.g_sts = mock_g_function
-            radial_numerical.t_s = 3600.0  # Add time scale factor
+            # Add the g_sts function to the bhe_eq object
+            bhe_eq.g_sts = mock_g_function
+            bhe_eq.t_s = 3600.0  # Add time scale factor
 
-            print("✓ Added g_sts function to real radial_numerical object")
+            print("✓ Added g_sts function to real bhe_eq object")
 
             # Test the g_sts function
-            test_result = radial_numerical.g_sts([1.0, 2.0])
+            test_result = bhe_eq.g_sts([1.0, 2.0])
             print(f"✓ g_sts test on real object: {test_result}")
 
             print(f"✓ Created real bhe_eq: {type(bhe_eq)}")
-            print(f"✓ Created real radial_numerical: {type(radial_numerical)}")
 
-            return bhe_eq, radial_numerical
+            return bhe_eq
 
         except Exception as e1:
             print(f"Failed to create real objects: {e1}")
@@ -259,15 +247,15 @@ def test_hybridloads2_import():
         building_loads = get_test_loads()
 
         # Create dependencies
-        mock_bhe_eq, mock_radial_numerical = test_mock_dependencies()
+        mock_bhe_eq = test_mock_dependencies()
 
         # Verify the g_sts function is properly set
-        print(f"mock_radial_numerical.g_sts type: {type(mock_radial_numerical.g_sts)}")
-        print(f"mock_radial_numerical.g_sts callable: {callable(mock_radial_numerical.g_sts)}")
+        print(f"mock_bhe_eq.g_sts type: {type(mock_bhe_eq.g_sts)}")
+        print(f"mock_bhe_eq.g_sts callable: {callable(mock_bhe_eq.g_sts)}")
 
         # Test the g_sts function before using it
         try:
-            test_result = mock_radial_numerical.g_sts([1.0, 2.0])
+            test_result = mock_bhe_eq.g_sts([1.0, 2.0])
             print(f"✓ g_sts function test successful: {test_result}")
         except Exception as g_error:
             print(f"✗ g_sts function test failed: {g_error}")
@@ -313,7 +301,6 @@ def test_hybridloads2_import():
             hybrid_loads = HybridLoads2(
                 building_loads=test_loads,
                 bhe=mock_bhe_eq,
-                radial_numerical=mock_radial_numerical,
                 years=[2025],  # Specify a year
                 cop_h=3.49,
                 cop_c=3.825
@@ -375,6 +362,127 @@ def test_basic_functionality(hybrid_loads):
         import traceback
         traceback.print_exc()
 
+def test_normalize_loads(hybrid_loads):
+    """Specifically test the bldg_to_ground_load function with detailed input/output logging"""
+    print("\n=== Testing normalize_loads Function ===")
+
+    # First, debug what we actually got
+    print(f"hybrid_loads type: {type(hybrid_loads)}")
+    print(f"hybrid_loads value: {hybrid_loads}")
+
+    # If it's not the right type, try to diagnose the issue
+    if not hasattr(hybrid_loads, 'normalize_loads'):
+        print("✗ normalize_loads method not found!")
+        print(f"Available attributes: {dir(hybrid_loads) if hasattr(hybrid_loads, '__dict__') else 'No attributes'}")
+
+        # If hybrid_loads is a list, it means our import test returned the wrong thing
+        if isinstance(hybrid_loads, list):
+            print("ERROR: hybrid_loads is a list, not a HybridLoads2 object!")
+            print("This suggests the test_hybridloads2_import() function returned the wrong value.")
+            print("Please check that function - it should return the HybridLoads2 instance, not the building loads.")
+
+        return
+
+    print("✓ normalize_loads method found")
+
+    # Get test building loads from get_test_loads function
+    building_loads = get_test_loads()
+
+    # Test with different input scenarios
+    test_scenarios = [
+        {
+            "name": "First 24 hours (1 day)",
+            "loads": building_loads[:24] if len(building_loads) >= 24 else building_loads,
+            "description": "Testing daily pattern"
+        },
+
+        #     "name": "Peak heating loads",
+        #     "loads": [max(building_loads)] * 24 if building_loads else [1000.0] * 24,
+        #     "description": "Testing peak heating scenario"
+        # },
+        # {
+        #     "name": "Peak cooling loads",
+        #     "loads": [min(building_loads)] * 24 if building_loads else [-1000.0] * 24,
+        #     "description": "Testing peak cooling scenario"
+        # },
+    ]
+
+    for i, scenario in enumerate(test_scenarios, 1):
+        print(f"\n--- Test Scenario {i}: {scenario['name']} ---")
+        print(f"Description: {scenario['description']}")
+
+        test_loads = scenario['loads']
+        print(f"Input loads length: {len(test_loads)}")
+        print(f"Input loads range: {min(test_loads):.1f} to {max(test_loads):.1f}")
+        print(f"Input loads (first 10): {[round(x, 1) for x in test_loads[:10]]}")
+        if len(test_loads) > 10:
+            print(f"Input loads (last 5): {[round(x, 1) for x in test_loads[-5:]]}")
+
+        # Analyze input loads
+        heating_count = sum(1 for x in test_loads if x > 0)
+        cooling_count = sum(1 for x in test_loads if x < 0)
+        zero_count = sum(1 for x in test_loads if x == 0)
+
+        print(f"Input analysis: {heating_count} heating, {cooling_count} cooling, {zero_count} zero loads")
+
+        try:
+            # Call the function and capture output
+            print("\nCalling normalize_loads...")
+            normalized_loads = hybrid_loads.normalize_loads(test_loads)
+
+            print("✓ Function call successful!")
+            print(f"Output type: {type(normalized_loads)}")
+            print(f"Output length: {len(normalized_loads) if hasattr(normalized_loads, '__len__') else 'N/A'}")
+
+            # Handle different possible return types
+            if isinstance(normalized_loads, (list, tuple, np.ndarray)):
+                print(f"Output range: {min(normalized_loads):.1f} to {max(normalized_loads):.1f}")
+                print(f"Output (first 10): {[round(x, 1) for x in normalized_loads[:10]]}")
+                if len(normalized_loads) > 10:
+                    print(f"Output (last 5): {[round(x, 1) for x in normalized_loads[-5:]]}")
+
+                # Analyze output loads
+                output_heating = sum(1 for x in normalized_loads if x > 0)
+                output_cooling = sum(1 for x in normalized_loads if x < 0)
+                output_zero = sum(1 for x in normalized_loads if x == 0)
+
+                print(f"Output analysis: {output_heating} heating, {output_cooling} cooling, {output_zero} zero loads")
+
+                # Calculate conversion statistics
+                if len(test_loads) == len(normalized_loads):
+                    total_input = sum(test_loads)
+                    total_output = sum(normalized_loads)
+                    print(f"Total input load: {total_input:.1f}")
+                    print(f"Total output load: {total_output:.1f}")
+
+                    # Show some input vs output pairs
+                    print("\nInput vs Output comparison (first 24 hours):")
+                    for j in range(min(24, len(test_loads))):
+                        print(f"  Hour {j+1:2d}: {test_loads[j]:8.1f} -> {normalized_loads[j]:8.1f}")
+
+            elif isinstance(normalized_loads, (int, float)):
+                print(f"Output value: {normalized_loads:.1f}")
+            else:
+                print(f"Output: {normalized_loads}")
+
+        except Exception as func_error:
+            print(f"✗ Function call failed: {func_error}")
+            print(f"Error type: {type(func_error)}")
+
+            # Try to get more details about the error
+            import traceback
+            print("Detailed error traceback:")
+            traceback.print_exc()
+
+            # Try to inspect the function signature
+            try:
+                import inspect
+                sig = inspect.signature(hybrid_loads.normalize_loads)
+                print(f"Function signature: {sig}")
+            except:
+                print("Could not inspect function signature")
+
+        print("-" * 60)
 def test_bldg_to_ground_load_function(hybrid_loads):
     """Specifically test the bldg_to_ground_load function with detailed input/output logging"""
     print("\n=== Testing bldg_to_ground_load Function ===")
@@ -509,7 +617,6 @@ def test_bldg_to_ground_load_function(hybrid_loads):
                 print("Could not inspect function signature")
 
         print("-" * 60)
-
 def main():
     """Main test runner"""
     print("Starting HybridLoads2 Testing...")
@@ -526,11 +633,14 @@ def main():
         test_basic_functionality(hybrid_loads)
 
         #Step 4: Test bldg_to_ground_loads
-        test_bldg_to_ground_load_function(hybrid_loads)
+        #test_bldg_to_ground_load_function(hybrid_loads)
+
+        #step 5: test normalize_loads
+        test_normalize_loads(hybrid_loads)
 
         print("\n" + "=" * 50)
         print("✓ All basic tests passed!")
-        print("You can now start writing more specific unit tests.")
+
 
     except Exception as e:
         print("\n" + "=" * 50)

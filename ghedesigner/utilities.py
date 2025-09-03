@@ -337,6 +337,26 @@ def read_csv_column(file_path: str | Path, column: int | str, try_convert_to_num
 
     return values
 
+@staticmethod
+def simulate_hourly(hour_time, q, g_sts, resist_bh, two_pi_k, ts):
+    # An hourly simulation for the fluid temperature
+    # Chapter 2 of Advances in Ground Source Heat Pumps
+
+    q_dt = np.hstack(q[1:] - q[:-1])
+
+    delta_t_fluid = [0]
+    for n in range(1, len(hour_time)):
+        # Take the last i elements of the reversed time array
+        _time = hour_time[n] - hour_time[0:n]
+        # _time = time_values_reversed[n - i:n]
+        g_values = g_sts(np.log((_time * SEC_IN_HR) / ts))
+        # Tb = Tg + (q_dt * g)  (Equation 2.12)
+        delta_tb_i = (q_dt[0:n] / two_pi_k).dot(g_values)
+        # Delta mean heat pump entering fluid temperature
+        tf_mean = delta_tb_i + q[n] * resist_bh
+        delta_t_fluid.append(tf_mean)
+
+    return delta_t_fluid
 
 def get_loads(loads_dict: dict) -> list[float]:
     if "load_values" in loads_dict:

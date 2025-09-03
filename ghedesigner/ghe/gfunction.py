@@ -15,10 +15,10 @@ logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
 logger = logging.getLogger(__name__)
 
 pyg_pipe_type_map = {
-    PipeType.SINGLEUTUBE.name: PyPipeType.SINGLE_UTUBE.name,
-    PipeType.DOUBLEUTUBESERIES.name: PyPipeType.DOUBLE_UTUBE_SERIES.name,
-    PipeType.DOUBLEUTUBEPARALLEL.name: PyPipeType.DOUBLE_UTUBE_PARALLEL.name,
-    PipeType.COAXIAL.name: PyPipeType.COAXIAL_ANNULAR_OUT.name,
+    PipeType.SINGLEUTUBE.name: PyPipeType.SINGLEUTUBE.name,
+    PipeType.DOUBLEUTUBESERIES.name: PyPipeType.DOUBLEUTUBESERIES.name,
+    PipeType.DOUBLEUTUBEPARALLEL.name: PyPipeType.DOUBLEUTUBEPARALLEL.name,
+    PipeType.COAXIAL.name: PyPipeType.COAXIALANNULARINLET.name,
 }
 
 
