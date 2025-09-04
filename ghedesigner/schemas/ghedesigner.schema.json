@@ -812,7 +812,14 @@
                     "$ref": "#/$defs/ndp_max"
                   }
                 },
-                "required": ["method", "nbh", "radius", "tilt", "ndp_min", "ndp_max"],
+                "required": [
+                  "method",
+                  "nbh",
+                  "radius",
+                  "tilt",
+                  "ndp_min",
+                  "ndp_max"
+                ],
                 "additionalProperties": false
               }
             ]
