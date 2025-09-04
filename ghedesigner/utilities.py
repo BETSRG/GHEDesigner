@@ -342,7 +342,8 @@ def read_csv_column(file_path: str | Path, column: int | str, try_convert_to_num
 def simulate_hourly(hour_time, q, g_sts, resist_bh, two_pi_k, ts):
     # An hourly simulation for the fluid temperature
     # Chapter 2 of Advances in Ground Source Heat Pumps
-
+    q = np.array(q)
+    hour_time = np.array(hour_time)
     q_dt = np.hstack(q[1:] - q[:-1])
 
     delta_t_fluid = [0]

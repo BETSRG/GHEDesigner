@@ -19,6 +19,8 @@ from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Grout, Soil
 from scipy.interpolate import interp1d
+from ghedesigner.output.manager import OutputManager
+from ghedesigner.ghe.ground_heat_exchangers import GHE
 
 def get_test_loads():
     """Load test building loads with error handling and fallback to synthetic data"""
@@ -99,8 +101,8 @@ def get_loading_data():
     return building_loads
 
 
-def get_test_singleUTube():
-    """Try to create real SingleUTube objects"""
+def create_GHE_instance():
+    """Try to create real GHE object"""
     print("\n=== Testing Dependencies ===")
 
     try:
@@ -109,8 +111,14 @@ def get_test_singleUTube():
         from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
         from ghedesigner.ghe.pipe import Pipe
         from ghedesigner.media import Fluid, Grout, Soil
+        from ghedesigner.ghe.ground_heat_exchangers import GHE
+        from ghedesigner.utilities import length_of_side
+        from ghedesigner.enums import PipeType, TimestepType
+        from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
 
-        # Create the required components for SingleUTube
+        # Create the required components for GHE
+
+
         pipe = Pipe.init_single_u_tube(
             inner_diameter=0.06404,
             outer_diameter=0.07216,
@@ -124,70 +132,87 @@ def get_test_singleUTube():
         grout = Grout(k=1.0, rho_cp=3901000.0)
         fluid = Fluid(fluid_name="water", percent=0.0, temperature=20.0)
         borehole = Borehole(burial_depth=2.0, borehole_radius=0.5, borehole_height=100)
+        building_loads = get_test_loads()
+        ground_loads = case_test_bldg_to_ground_load_function()
+        b = 5.0 #distance in between bore holes
+        number_of_boreholes = 1
+        length = length_of_side(number_of_boreholes, b)
+        # Try to create GHE
 
-        # Try to create SingleUTube
+        GHE_design = GHE(
+        v_flow_system = 0.4427, #L/s nominal flow rate
+        b_spacing = b,
+        bhe_type = PipeType,
+        fluid = fluid,
+        borehole = borehole,
+        pipe = pipe,
+        grout = grout,
+        soil= soil,
+        g_function = GFunction,
+        start_month = 1,
+        end_month = 12,
+        hourly_extraction_ground_loads = ground_loads,
+        )
         try:
             # Check what attributes and methods are available
-            attributes = [attr for attr in dir(SingleUTube) if not attr.startswith("_")]
+            attributes = [attr for attr in dir(GHE) if not attr.startswith("_")]
             print(f"Available attributes/methods: {attributes}")
 
-            # Try to create real SingleUTube object
-            bhe_eq = SingleUTube(m_flow_borehole=0.1, borehole=borehole, pipe=pipe, grout=grout, fluid=fluid, soil=soil)
-            print("✓ Created real SingleUTube bhe_eq")
+            # Try to create real GHE object
+            ghe_eq = GHE(m_flow_borehole=0.1, borehole=borehole, pipe=pipe, grout=grout, fluid=fluid, soil=soil)
+            print("✓ Created real GHE instance ghe_eq")
 
-            # CRITICAL FIX: Add the missing g_sts function to the real objects
-            # Real SingleUTube objects don't have g_sts by default, so we need to add it
-            log_time_sts, g_sts = bhe_eq.calc_sts_g_functions()
-            g_sts_func = interp1d(log_time_sts, g_sts, bounds_error=False, fill_value="extrapolate")
 
-            # ghe_dict = {
-            #     "flow_rate": 0.5,
-            #     "flow_type": "BOREHOLE",
-            #     "grout": {
-            #         "conductivity": 1,
-            #         "rho_cp": 3901000
-            #     },
-            #     "soil": {
-            #         "conductivity": 2,
-            #         "rho_cp": 2343493,
-            #         "undisturbed_temp": 18.3
-            #     },
-            #     "pipe": {
-            #         "inner_diameter": 0.03404,
-            #         "outer_diameter": 0.04216,
-            #         "shank_spacing": 0.01856,
-            #         "roughness": 0.000001,
-            #         "conductivity": 0.4,
-            #         "rho_cp": 1542000,
-            #         "arrangement": "SINGLEUTUBE"
-            #     },
-            #     "borehole": {
-            #         "buried_depth": 2,
-            #         "diameter": 0.14
-            #     },
-            #     "pre_designed": {
-            #         "arrangement": "RECTANGLE",
-            #         "H": 150,
-            #         "spacing_in_x_dimension": 4.5,
-            #         "spacing_in_y_dimension": 5.5,
-            #         "boreholes_in_x_dimension": 4,
-            #         "boreholes_in_y_dimension": 8
-            #     }
-            # }
-            # # You may need to define full_inputs["fluid"] or replace it with the correct fluid object
-            # # For now, let's use the 'fluid' variable defined above
-            # ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, fluid)
+            ghe_dict = {
+                "flow_rate": 0.5,
+                "flow_type": "BOREHOLE",
+                "grout": {
+                    "conductivity": 1,
+                    "rho_cp": 3901000
+                },
+                "soil": {
+                    "conductivity": 2,
+                    "rho_cp": 2343493,
+                    "undisturbed_temp": 18.3
+                },
+                "pipe": {
+                    "inner_diameter": 0.03404,
+                    "outer_diameter": 0.04216,
+                    "shank_spacing": 0.01856,
+                    "roughness": 0.000001,
+                    "conductivity": 0.4,
+                    "rho_cp": 1542000,
+                    "arrangement": "SINGLEUTUBE"
+                },
+                "borehole": {
+                    "buried_depth": 2,
+                    "diameter": 0.14
+                },
+                "pre_designed": {
+                    "arrangement": "RECTANGLE",
+                    "H": 150,
+                    "spacing_in_x_dimension": 4.5,
+                    "spacing_in_y_dimension": 5.5,
+                    "boreholes_in_x_dimension": 4,
+                    "boreholes_in_y_dimension": 8
+                }
+            }
+            # You may need to define full_inputs["fluid"] or replace it with the correct fluid object
+            # For now, let's use the 'fluid' variable defined above
+            ghe_g_funct = GroundHeatExchanger.init_from_dictionary(ghe_dict, fluid)
+            _, g_values, _ = ghe_g_funct.get_g_function(ghe_dict)
+
             # Add the g_sts function to the bhe_eq object
-            bhe_eq.g_sts = g_sts_func
+            ghe_eq.g_sts = ghe_g_funct.
             print("✓ Added g_sts function to real bhe_eq object")
 
             # Test the g_sts function
-            test_result = bhe_eq.g_sts([1.0, 2.0])
+            test_result = ghe_eq.g_sts([1.0, 2.0])
             print(f"✓ g_sts test on real object: {test_result}")
 
-            print(f"✓ Created real bhe_eq: {type(bhe_eq)}")
+            print(f"✓ Created real bhe_eq: {type(ghe_eq)}")
 
-            return bhe_eq
+            return ghe_eq
 
         except Exception as e1:
             print(f"Failed to create real objects: {e1}")
@@ -208,8 +233,8 @@ def get_test_hybridloads2_import():
         # Get test data
         building_loads = get_test_loads()
 
-        # Create dependencies
-        bhe_eq = get_test_singleUTube()
+        # Create dependencies-
+        bhe_eq = create_GHE_instance()
 
         # Verify the g_sts function is properly set
         print(f"bhe_eq.g_sts type: {type(bhe_eq.g_sts)}")

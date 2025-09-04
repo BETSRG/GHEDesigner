@@ -6,6 +6,8 @@ import numpy as np
 
 from ghedesigner.constants import HRS_IN_DAY, SEC_IN_HR, TWO_PI
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
+from ghedesigner.utilities import simulate_hourly
+from ghedesigner.ghe.ground_heat_exchangers import GHE
 
 # time array for hourly_temps
 hours_in_year = 24 * 365  # 8760 hours
@@ -17,7 +19,7 @@ class HybridLoads2:
     def __init__(
         self,
         building_loads: list,
-        bhe: SingleUTube,
+        ghe: GHE,
         years=None,
         start_month=None,
         end_month=None,
@@ -53,12 +55,12 @@ class HybridLoads2:
         for year in years:
             self.days_in_month.extend([monthrange(year, i)[1] for i in range(1, 13)])
 
-        # Store the borehole heat exchanger
-        self.bhe = bhe
+        # Store the ground heat exchanger
+        self.ghe = ghe
 
-        # Store the radial numerical g-function value
+        # Store the g-function value
         # Note: this is intended to be a scipy.interp1d object
-        self.borehole = self.bhe
+        
         # self.sim_params = sim_params
         self.years = years
 
@@ -110,9 +112,14 @@ class HybridLoads2:
         self.split_heat_and_cool()
         # Process the loads and by month
         self.split_loads_by_month()
-        # get target ExFT temperatures from the original loads for every hour of the year
-        self.target_ExFThe_temps = self.perform_hrly_ExFT_simulation(
-            self.normalize_loads(self.bldg_to_ground_load(self.building_loads))
+
+        # # get target ExFT temperatures from the original loads for every hour of the year
+        # self.target_ExFTghe_temps = self.perform_hrly_ExFT_simulation(
+        #     self.normalize_loads(self.bldg_to_ground_load(self.building_loads))
+        #)
+        # get target ExFT temperatures from the original loads for every hour of the year, exclude normalizing
+        self.target_ExFTghe_temps = self.perform_hrly_ExFT_simulation(
+            self.bldg_to_ground_load(self.building_loads)
         )
         # Process the ExFT by month
         self.split_ExFT_by_month()
@@ -254,44 +261,27 @@ class HybridLoads2:
         """
         This performs an ExFT simulation given a loads profile
         """
-        ts = self.borehole.t_s
+        ts = self.g_funct.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
         # resist_bh_effective = 0.13
         resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
         print(f"resist_bh_effective = {resist_bh_effective}")
 
         # DEBUG: Check if g_sts is callable
-        g = self.borehole.g_sts
+        g = self.g_funct.g_sts
         print(f"DEBUG: g type = {type(g)}")
         print(f"DEBUG: g callable = {callable(g)}")
         print(f"DEBUG: g value = {g}")
 
         if g is None:
-            raise ValueError("g_sts function is None - check radial_numerical mock setup")
+            raise ValueError("g_sts function is None - check setup")
         if not callable(g):
             raise ValueError(f"g_sts is not callable, type: {type(g)}")
 
         q = load_profile
         hours_in_year = list(range(len(q)))
-        delta_t_fluid = self.simulate_hourly(hours_in_year, q, g, resist_bh_effective, two_pi_k, ts)
+        delta_t_fluid = simulate_hourly(hours_in_year, q, g, resist_bh_effective, two_pi_k, ts)
         return delta_t_fluid
-
-    # def perform_hrly_ExFT_simulation(self, load_profile):
-    #     """
-    #     This performs an ExFT simulation given a loads profile
-    #     """
-
-    #     ts = self.borehole.t_s
-    #     two_pi_k = TWO_PI * self.bhe.soil.k
-    #     resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
-    #     print(f"resist_bh_effective = {resist_bh_effective}")
-    #     g = self.borehole.g_sts
-    #     q = load_profile
-
-    #     hours_in_year = list(range(len(q)))
-    #     delta_t_fluid = self.simulate_hourly(hours_in_year,q,g,resist_bh_effective,two_pi_k,ts)
-
-    #     return delta_t_fluid
 
     def split_ExFT_by_month(self) -> None:
         """Slice the hourly ExFT of the GHE into months"""
@@ -303,7 +293,7 @@ class HybridLoads2:
             hours_in_month = HRS_IN_DAY * self.days_in_month[i]
             # Slice the hours in this current month
 
-            current_month_ExFTs = self.target_ExFThe_temps[
+            current_month_ExFTs = self.target_ExFTghe_temps[
                 hours_in_previous_months : hours_in_previous_months + hours_in_month
             ]
 
@@ -359,7 +349,7 @@ class HybridLoads2:
             if i != 0 and min_val != 0:  # Skip index 0 and zero values
                 valid_entries.append(
                     (
-                        min_val,  # ExFT value
+                        int(min_val),  # ExFT value
                         int(self.monthly_min_GHE_ExFT_hour[i]),  # hour within month
                         int(i),  # month index
                         int(self.cumulative_hours[i] + self.monthly_min_GHE_ExFT_hour[i]),  # absolute hour of year
@@ -372,11 +362,16 @@ class HybridLoads2:
         if len(top_4_min) == 0:
             # Return empty array with correct shape if no valid data
             min_4_ExFT = np.array([]).reshape(0, 4)
+            print("min ExFT, hour of month, month, hour of year ")
+            print("No valid data found")
         else:
-            min_4_ExFT = np.array(top_4_min)
+            min_4_ExFT = np.array(top_4_min, dtype=int)  # Ensure integer dtype
+            print("min ExFT, hour of month, month, hour of year ")
 
-        print("min ExFT, hour of month, month, hour of year ")
-        print(f"{min_4_ExFT}")
+            # Format each row for clean integer display
+            for row in min_4_ExFT:
+                print(f"{row[0]:6d} {row[1]:12d} {row[2]:5d} {row[3]:12d}")
+
         return min_4_ExFT
 
     def get_max_4_ExFT_and_time(self):
@@ -391,7 +386,7 @@ class HybridLoads2:
             if i != 0 and max_val != 0:  # Skip index 0 and zero values
                 valid_entries.append(
                     (
-                        max_val,  # ExFT
+                        int(max_val),  # ExFT
                         int(self.monthly_max_GHE_ExFT_hour[i]),  # hour within month
                         int(i),  # month
                         int(self.cumulative_hours[i] + self.monthly_max_GHE_ExFT_hour[i]),  # absolute hour of year
@@ -404,11 +399,16 @@ class HybridLoads2:
         if len(top_4) == 0:
             # Return empty array with correct shape if no valid data
             max_4_ExFT = np.array([]).reshape(0, 4)
+            print("max ExFT, hour of month, month, hour of year ")
+            print("No valid data found")
         else:
-            max_4_ExFT = np.array(top_4)
+            max_4_ExFT = np.array(top_4, dtype=int)  # Ensure integer dtype
+            print("max ExFT, hour of month, month, hour of year ")
 
-        print("max ExFT, hour of month, month, hour of year ")
-        print(f"{max_4_ExFT}")
+            # Format each row for clean integer display
+            for row in max_4_ExFT:
+                print(f"{row[0]:6d} {row[1]:12d} {row[2]:5d} {row[3]:12d}")
+
         return max_4_ExFT
 
     def find_peak_durations(self):
@@ -486,64 +486,21 @@ class HybridLoads2:
         This performs a month long ExFT simulation given the new hybrid loads
         """
 
-        ts = self.borehole.t_s
+        ts = self.g_funct.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
         resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
         # print(f"resist_bh_effective = {resist_bh_effective}")
-        g = self.borehole.g_sts
+        g = self.g_funct.g_sts
         q = hybrid_load
 
         hrs_in_month = list(range(len(q)))
-        delta_t_fluid = self.simulate_hourly(
+        delta_t_fluid = simulate_hourly(
             hrs_in_month, q, g, resist_bh_effective, two_pi_k, ts
         )  # runs hourly fluid temperature simulation
 
         new_ExFT_hrly_w_pk = delta_t_fluid[pk_hour_of_month]
 
         return new_ExFT_hrly_w_pk
-
-    @staticmethod
-    def simulate_hourly(hour_time, q, g, resist_bh, two_pi_k, ts):
-        # An hourly simulation for the fluid temperature
-        # Chapter 2 of Advances in Ground Source Heat Pumps
-        q_arr = np.array(q)
-
-        # Handle edge case where q has only one element
-        if len(q_arr) <= 1:
-            return [0] if len(q_arr) == 0 else [0, q_arr[0] * resist_bh]
-
-        q_dt = np.hstack([q_arr[1:] - q_arr[:-1]])
-        hour_time_arr = np.array(hour_time)
-        delta_t_fluid = [0]
-
-        for n in range(1, len(hour_time)):
-            # Take the last i elements of the reversed time array
-            _time = hour_time_arr[n] - hour_time_arr[0:n]
-
-            # Ensure _time is positive and handle potential issues
-            _time = np.maximum(_time, 1e-10)  # Avoid log of zero or negative
-
-            try:
-                g_values = g(np.log((_time * SEC_IN_HR) / ts))
-                # Ensure g_values is an array
-                g_values = np.atleast_1d(g_values)
-
-                # Handle case where arrays might have different lengths
-                min_len = min(len(q_dt[0:n]), len(g_values))
-                if min_len > 0:
-                    # Tb = Tg + (q_dt * g)  (Equation 2.12)
-                    delta_tb_i = (q_dt[0:min_len] / two_pi_k).dot(g_values[0:min_len])
-                    # Delta mean heat pump entering fluid temperature
-                    tf_mean = delta_tb_i + q_arr[n] * resist_bh
-                    delta_t_fluid.append(tf_mean)
-                else:
-                    delta_t_fluid.append(q_arr[n] * resist_bh)
-            except Exception as e:
-                print(f"Warning in simulate_hourly at hour {n}: {e}")
-                # Fallback calculation
-                delta_t_fluid.append(q_arr[n] * resist_bh)
-
-        return delta_t_fluid
 
     def create_dataframe_of_peak_analysis(self) -> str:
         # The fields are: sum, peak, avg, peak day, peak duration
