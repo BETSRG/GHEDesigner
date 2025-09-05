@@ -57,10 +57,10 @@ class HybridLoads2:
 
         # Store the ground heat exchanger
         self.ghe = ghe
-
+        self.g_funct = self.ghe.compute_g_functions(60, 135)
         # Store the g-function value
         # Note: this is intended to be a scipy.interp1d object
-        
+
         # self.sim_params = sim_params
         self.years = years
 
@@ -262,9 +262,9 @@ class HybridLoads2:
         This performs an ExFT simulation given a loads profile
         """
         ts = self.g_funct.t_s
-        two_pi_k = TWO_PI * self.bhe.soil.k
+        two_pi_k = TWO_PI * self.ghe.bhe.soil.k
         # resist_bh_effective = 0.13
-        resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
+        resist_bh_effective = self.ghe.bhe.calc_effective_borehole_resistance()
         print(f"resist_bh_effective = {resist_bh_effective}")
 
         # DEBUG: Check if g_sts is callable
@@ -487,8 +487,8 @@ class HybridLoads2:
         """
 
         ts = self.g_funct.t_s
-        two_pi_k = TWO_PI * self.bhe.soil.k
-        resist_bh_effective = self.bhe.calc_effective_borehole_resistance()
+        two_pi_k = TWO_PI * self.ghe.bhe.soil.k
+        resist_bh_effective = self.ghe.bhe.calc_effective_borehole_resistance()
         # print(f"resist_bh_effective = {resist_bh_effective}")
         g = self.g_funct.g_sts
         q = hybrid_load
