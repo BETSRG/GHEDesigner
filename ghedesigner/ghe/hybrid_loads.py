@@ -57,7 +57,7 @@ class HybridLoads2:
 
         # Store the ground heat exchanger
         self.ghe = ghe
-        self.g_funct = self.ghe.compute_g_functions(60, 135)
+        self.g_funct = self.ghe.get_g_function()
         # Store the g-function value
         # Note: this is intended to be a scipy.interp1d object
 

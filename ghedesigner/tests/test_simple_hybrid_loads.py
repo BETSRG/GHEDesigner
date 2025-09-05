@@ -21,6 +21,48 @@ from ghedesigner.ghe.gfunction import GFunction
 from ghedesigner.ghe.manager import GroundHeatExchanger
 
 
+ghe_dict = {
+    "flow_rate": 0.5,
+    "flow_type": "BOREHOLE",
+    "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+    },
+    "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 18.3
+    },
+    "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+    },
+    "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+    },
+    "pre_designed": {
+        "arrangement": "RECTANGLE",
+        "H": 150,
+        "spacing_in_x_dimension": 4.5,
+        "spacing_in_y_dimension": 5.5,
+        "boreholes_in_x_dimension": 4,
+        "boreholes_in_y_dimension": 8
+    }
+}
+
+fluid_dict = {
+    "fluid_name": "WATER",
+    "concentration_percent": 0,
+    "temperature": 20
+}
+
+
 def get_test_loads():
     """Load test building loads with error handling and fallback to synthetic data"""
     try:
@@ -144,50 +186,11 @@ def test_create_ghe_instance():
 
     except Exception as e1:
         print(f"✗ first attempt failed to create GHE object: {e1}")
-        traceback.print_exc()
+        #traceback.print_exc()
         try:
             # Second attempt using init from dict
-            ghe_dict = {
-                "flow_rate": 0.5,
-                "flow_type": "BOREHOLE",
-                "grout": {
-                    "conductivity": 1,
-                    "rho_cp": 3901000
-                },
-                "soil": {
-                    "conductivity": 2,
-                    "rho_cp": 2343493,
-                    "undisturbed_temp": 18.3
-                },
-                "pipe": {
-                    "inner_diameter": 0.03404,
-                    "outer_diameter": 0.04216,
-                    "shank_spacing": 0.01856,
-                    "roughness": 0.000001,
-                    "conductivity": 0.4,
-                    "rho_cp": 1542000,
-                    "arrangement": "SINGLEUTUBE"
-                },
-                "borehole": {
-                    "buried_depth": 2,
-                    "diameter": 0.14
-                },
-                "pre_designed": {
-                    "arrangement": "RECTANGLE",
-                    "H": 150,
-                    "spacing_in_x_dimension": 4.5,
-                    "spacing_in_y_dimension": 5.5,
-                    "boreholes_in_x_dimension": 4,
-                    "boreholes_in_y_dimension": 8
-                }
-            }
-            fluid_dict = {
-                "fluid_name": "WATER",
-                "concentration_percent": 0,
-                "temperature": 20
-            }
             ghe_eq = GroundHeatExchanger.init_from_dictionary(ghe_dict, fluid_dict)
-
+            print(f"✓ Created real ghe_eq on 2nd attempt: {type(ghe_eq)}")
             return ghe_eq
         except Exception as e2:
             print(f"Second attempt also failed: {e2}")
@@ -306,7 +309,7 @@ def main():
         test_create_ghe_instance()
 
         # Step 2: Test imports and instantiation
-        #hybrid_loads = test_hybridloads2_import()
+        hybrid_loads = test_hybridloads2_import()
 
         # Step 3: Test basic functionality
         #test_basic_functionality(hybrid_loads)
