@@ -134,68 +134,14 @@ def test_create_ghe_instance():
     print("\n=== Testing GHE object creation ===")
 
     try:
-        # Create the required components for GHE
-        pipe_eq = Pipe.init_single_u_tube(
-            inner_diameter=0.06404,
-            outer_diameter=0.07216,
-            shank_spacing=0.02856,
-            roughness=1.0e-6,
-            conductivity=0.4,
-            rho_cp=1542000.0,
-        )
-
-        soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
-        grout = Grout(k=1.0, rho_cp=3901000.0)
-        fluid = Fluid(fluid_name="water", percent=0.0, temperature=20.0)
-        borehole = Borehole(burial_depth=2.0, borehole_radius=0.5, borehole_height=100)
-
-        # Get building loads and convert to ground loads
-        building_loads = get_test_loads()
-
-        # Simple conversion to ground loads (this mimics what HybridLoads2.bldg_to_ground_load does)
-        cop_h = 3.49
-        cop_c = 3.825
-        ground_loads = []
-        for load in building_loads:
-            if load >= 0:  # Heating
-                ground_loads.append((cop_h - 1) / cop_h * load)
-            else:  # Cooling
-                ground_loads.append(-(1 + 1 / cop_c) * abs(load))
-
-        b = 5.0  # distance between boreholes
-        number_of_boreholes = 1
-
-        # Create GHE object - fix parameter name issue
-        ghe_eq = GHE(
-            v_flow_system=0.4427,  # L/s nominal flow rate
-            b_spacing=b,
-            bhe_type= PipeType,
-            fluid=fluid,
-            borehole=borehole,
-            pipe=pipe_eq,
-            grout=grout,
-            soil=soil,
-            g_function=GFunction,
-            start_month=1,
-            end_month=12,
-            hourly_extraction_ground_loads=ground_loads,
-        )
-
-        print(f"✓ Created real ghe_eq: {type(ghe_eq)}")
+        # Second attempt using init from dict
+        ghe_eq = GroundHeatExchanger.init_from_dictionary(ghe_dict, fluid_dict)
+        print(f"✓ Created real ghe_eq on 2nd attempt: {type(ghe_eq)}")
         return ghe_eq
-
-    except Exception as e1:
-        print(f"✗ first attempt failed to create GHE object: {e1}")
-        #traceback.print_exc()
-        try:
-            # Second attempt using init from dict
-            ghe_eq = GroundHeatExchanger.init_from_dictionary(ghe_dict, fluid_dict)
-            print(f"✓ Created real ghe_eq on 2nd attempt: {type(ghe_eq)}")
-            return ghe_eq
-        except Exception as e2:
-            print(f"Second attempt also failed: {e2}")
-            # Optionally, re-raise or handle further
-            raise
+    except Exception as e2:
+        print(f"Second attempt also failed: {e2}")
+        # Optionally, re-raise or handle further
+        raise
 
 
 def test_hybridloads2_import():

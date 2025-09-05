@@ -8,6 +8,7 @@ from ghedesigner.constants import HRS_IN_DAY, SEC_IN_HR, TWO_PI
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 from ghedesigner.utilities import simulate_hourly
 from ghedesigner.ghe.ground_heat_exchangers import GHE
+from ghedesigner.ghe.manager import GroundHeatExchanger
 
 # time array for hourly_temps
 hours_in_year = 24 * 365  # 8760 hours
@@ -19,7 +20,7 @@ class HybridLoads2:
     def __init__(
         self,
         building_loads: list,
-        ghe: GHE,
+        ghe: GroundHeatExchanger,
         years=None,
         start_month=None,
         end_month=None,
