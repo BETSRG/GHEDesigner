@@ -6,6 +6,12 @@ def step_1():
     #output: ground_loads
     pass
 
+def step_1point5():
+    #parse out ground loads into peak and average for each month of the year
+    #inputs: ground_loads
+    #outputs: monthly_average_ground_loads (12), monthly_peak_ground_loads (12)
+    pass
+
 def step_2():
     # since borehole config and size is supposedly unknown,
     # Assume a 100m deep single borehole and 40W/m peak
@@ -17,7 +23,7 @@ def step_2():
 
 def step_3():
     # take the normalized ground loads and use
-    # a gfunction and ground heat exchanger parameters to get the hourly
+    # a gfunction and the other ground heat exchanger parameters to get the hourly
     # exiting fluid temperature from the ghe (same as entering to HP)
     #
     # inputs: normalized ground loads, ground heat exchanger parameters
@@ -36,6 +42,7 @@ def step_4():
 def step_5():
     #repeat step 4 but for heating
     #looking for lowest ExFTs instead, 4 month peaks and times
+    #
     # inputs: hourly_ExFTs
     #outputs: 4 min ExFTs, associated month, associated hour of the month
     pass
@@ -53,8 +60,9 @@ def step_6():
         #recalculate the average monthly load to maintain energy balence
     #repeat untin ExFT_hybrid >= ExFT_target
     #record load output for the month
-
+    #
     # inputs: peak_load_of_month_n, peak_ExFT_of_month, peak_ExFT_hour,
+    #
     #outputs: load amount and duration for that month(see below for example)
     #           [time,           load]
     #         [hrs 0:300,  average_load_for_month ]
@@ -64,9 +72,13 @@ def step_6():
 def step_7():
     # repeat step 6 for remaining heating and cooling peaks
     # run though all 8 months
+    #
     #input: 4 min ExFTs, associated month, associated hour of the month,
-    #input: 4 max ExFTs, associated month, associated hour of month
-    #outputs: hybridloads_heating_month1, hybrid_loads_heating_month2...hybrid_loads_cooling_month4
+    #       4 max ExFTs, associated month, associated hour of month
+    #
+    #outputs: hybridloads_heating_month1, hybrid_timesteps_month1
+    #           hybrid_loads_heating_month2, hybrid_timesteps_month2...
+    #          ...hybrid_loads_cooling_month8, hybrid_timestep_month8
     pass
 
 def step_8():
