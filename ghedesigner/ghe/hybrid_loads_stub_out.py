@@ -53,13 +53,13 @@ def step_6():
     # hourly sim's ExFT will be called ExFT_target
     # using the peak load for the month and the peak ExFT
     # assign the peak load of that month to a one hour duration and the average
-    # monthly load for the rest of the month.
-    # run ExFT simulation
+    # monthly load for the rest of the month. adjusted for energy balance
+    # run ExFT simulation with the hybrid load for the month
     # if ExFT_hybrid < ExFT_target
         # add 1 hour to the duration of the peak load
         #recalculate the average monthly load to maintain energy balence
-    #repeat untin ExFT_hybrid >= ExFT_target
-    #record load output for the month
+    #repeat until ExFT_hybrid >= ExFT_target
+    #record load quantities and times of occurance for the month
     #
     # inputs: peak_load_of_month_n, peak_ExFT_of_month, peak_ExFT_hour,
     #
