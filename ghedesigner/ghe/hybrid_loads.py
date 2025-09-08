@@ -266,8 +266,8 @@ class HybridLoads2:
             raise ValueError(f"g_sts is not callable, type: {type(g)}")
 
         q = load_profile
-        hours_in_year = list(range(len(q)))
-        delta_t_fluid = simulate_hourly(hours_in_year, q, g, resist_bh_effective, two_pi_k, ts)
+        hours_total = list(range(len(q)))
+        delta_t_fluid = simulate_hourly(hours_total, q, g, resist_bh_effective, two_pi_k, ts)
         return delta_t_fluid
 
     def split_ExFT_by_month(self) -> None:
