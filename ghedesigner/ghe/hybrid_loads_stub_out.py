@@ -110,26 +110,23 @@ class HybridLoadsCalc:
         def split_loads_by_month(self):
             """Split the normalized ground loads into peak, total, and average loads for each month"""
 
+            #convert W to kW
+            self.hourly_total_ground_loads = [x / 1000 for x in self.building_loads]
             #run split heat and cool. returns normed and unnormed heating and cooling ground loads. hourly for 1 year
-            split_heat_and_cool()
+            self.hrly_total_loads_norm = self.normalize_loads(self.hourly_total_ground_loads)
 
             num_unique_months = len(self.years) * 12 + 1
 
             #set up empty lists
-            # monthly total cooling energy (or heat rejection) in kWh
-            self.monthly_total_rejection = [0.0] * num_unique_months
-            # monthly total heating energy (or heat extraction) in kWh
-            self.monthly_total_extraction = [0.0] * num_unique_months
-
+            # monthly total ground energy in kWh
+            self.monthly_ground_load = [0.0] * num_unique_months
             # monthly peak cooling load (or heat rejection) in kW
             self.monthly_peak_rejection = [0.0] * num_unique_months
             # monthly peak heating load (or heat extraction) in kW
             self.monthly_peak_extraction = [0.0] * num_unique_months
+            # monthly average ground load in kW
+            self.monthly_ave_ground_load = [0.0] * num_unique_months
 
-            # monthly average cooling load (or heat rejection) in kW
-            self.monthly_avg_rejection = [0.0] * num_unique_months
-            # monthly average heating load (or heat extraction) in kW
-            self.monthly_avg_extraction = [0.0] * num_unique_months
 
             # Store the index of the last month's hours
             hours_in_previous_months: int = 0  # type is integer and set to a value of 0 to start
@@ -140,61 +137,36 @@ class HybridLoadsCalc:
                 hours_in_month = HRS_IN_DAY * self.days_in_month[i]  # e.g. 24 * 31, to give hrs in month
 
                 # Slice the hours in this current month
-                current_month_reject_norm_loads = self.hrly_rejection_loads_norm[
-                    hours_in_previous_months : hours_in_previous_months + hours_in_month
-                ]  # first slice will be from [0:0+24*31]
-                current_month_extract_norm_loads = self.hrly_extraction_loads_norm[
-                    hours_in_previous_months : hours_in_previous_months + hours_in_month
-                ]
-
+                current_month_norm_loads =  self.hrly_total_loads_norm[
+                    hours_in_previous_months : hours_in_previous_months + hours_in_month]
                 # Handle empty lists
-                if not current_month_reject_norm_loads:
-                    current_month_reject_norm_loads = [0.0]
-                if not current_month_extract_norm_loads:
-                    current_month_extract_norm_loads = [0.0]
+                if not current_month_norm_loads:
+                    current_month_norm_loads = [0.0]
 
                 # Sum
-                # monthly cooling loads (or heat rejection) in kWh
-                self.monthly_total_rejection[i] = sum(current_month_reject_norm_loads)
-                # monthly heating loads (or heat extraction) in kWh
-                self.monthly_total_extraction[i] = sum(current_month_extract_norm_loads)
+                #monthly net ground load
+                self.monthly_net_ground_load = sum(current_month_norm_loads)
 
                 # Peak
-                # monthly peak cooling load (or heat rejection) in kW
-                self.monthly_peak_rejection[i] = max(current_month_reject_norm_loads) if current_month_reject_norm_loads else 0.0
-                # monthly peak heating load (or heat extraction) in kW
-                self.monthly_peak_extraction[i] = max(current_month_extract_norm_loads) if current_month_extract_norm_loads else 0.0
+                # monthly peak heat rejection in kW
+                self.monthly_peak_rejection[i] = min(current_month_norm_loads) if current_month_norm_loads else 0.0
+                # monthly peak heat extraction in kW
+                self.monthly_peak_extraction[i] = max(current_month_norm_loads) if current_month_norm_loads else 0.0
 
                 # Average
-                # monthly average cooling load (or heat rejection) in kW
-                self.monthly_avg_rejection[i] = (
-                    self.monthly_total_rejection[i] / len(current_month_reject_norm_loads) if current_month_reject_norm_loads else 0.0
-                )
-                # monthly average heating load (or heat extraction) in kW
-                self.monthly_avg_extraction[i] = (
-                    self.monthly_total_extraction[i] / len(current_month_extract_norm_loads) if current_month_extract_norm_loads else 0.0
-                )
+                # monthly average ground load in kW
+                self.monthly_ave_ground_load[i] = self.monthly_ground_load[i] / hours_in_month
+                # self.monthly_avg_rejection[i] = (
+                #     self.monthly_total_rejection[i] / len(current_month_reject_norm_loads) if current_month_reject_norm_loads else 0.0
+                # )
+                # # monthly average heating load (or heat extraction) in kW
+                # self.monthly_avg_extraction[i] = (
+                #     self.monthly_total_extraction[i] / len(current_month_extract_norm_loads) if current_month_extract_norm_loads else 0.0
+                # )
 
                 hours_in_previous_months += hours_in_month
 
             print("split_loads_by_month has run")
-
-
-        def split_heat_and_cool(self):
-            """
-            Splits the hourly ground loads into heating and cooling
-            Heating is positive, cooling is negative.
-            :return: hourly ground loads split into heating and cooling in kilowatts
-            :return: hourly ExFTs split into heating and cooling lists in Celsius
-            """
-            #split hourly ground loads into extraction and rejection and also convert W into kWs
-            self.hourly_extraction_loads = [x / 1000.0 if x >= 0.0 else 0.0 for x in self.building_loads]
-            self.hourly_rejection_loads = [abs(x) / 1000.0 if x < 0.0 else 0.0 for x in self.building_loads]
-
-            self.hrly_extraction_loads_norm = self.normalize_loads(self.hourly_extraction_loads)
-            self.hrly_rejection_loads_norm = self.normalize_loads(self.hourly_rejection_loads)
-
-            print("split_heat_and_cool has run")
 
         pass
 
@@ -236,7 +208,7 @@ class HybridLoadsCalc:
             inputs: hourly_EXFTghe
             outputs:
             """
-        def split_ExFT_by_month(self) -> None:
+        def get_monthly_ExFT_maxs_mins_and_times(self) -> None:
             """Slice the hourly ExFT of the GHE into months
             input:
             output: self.monthly_min_ExFT
@@ -297,107 +269,22 @@ class HybridLoadsCalc:
         pass
 
     def step_5a():
-        #find the 4 highest peak exiting fluid temperatures for the year for cooling
-        # only one peak allowed per month
-        # return the time that the peak occurs
-
-        # inputs: hourly_ExFTs
-        #outputs: 4 peak ExFTs, associated month, associated hour of month
-        def get_max_4_ExFT_and_time(self):
-            """
-            Returns the 4 months in which peak ExFT occurs for cooling, the peak ExFT, and the hour of the month.
-            Stores the result as a 2D NumPy array with columns: [hour, month, ExFT value].
-            """
-
-            # Filter out zero/invalid entries and create valid entries
-            valid_entries = []
-            for i, max_val in enumerate(self.monthly_max_ExFT):
-                if i != 0 and max_val != 0:  # Skip index 0 and zero values
-                    valid_entries.append(
-                        (
-                            int(max_val),  # ExFT
-                            int(self.monthly_max_GHE_ExFT_hour[i]),  # hour within month
-                            int(i),  # month
-                            int(self.cumulative_hours[i] + self.monthly_max_GHE_ExFT_hour[i]),  # absolute hour of year
-                        )
-                    )
-
-            # Sort and take top 4 (or fewer if not enough valid entries)
-            top_4 = sorted(valid_entries, key=lambda x: x[0], reverse=False)[:4]
-
-            if len(top_4) == 0:
-                # Return empty array with correct shape if no valid data
-                max_4_ExFT = np.array([]).reshape(0, 4)
-                print("max ExFT, hour of month, month, hour of year ")
-                print("No valid data found")
-            else:
-                max_4_ExFT = np.array(top_4, dtype=int)  # Ensure integer dtype
-                print("max ExFT, hour of month, month, hour of year ")
-
-                # Format each row for clean integer display
-                for row in max_4_ExFT:
-                    print(f"{row[0]:6d} {row[1]:12d} {row[2]:5d} {row[3]:12d}")
-
-            return max_4_ExFT
-
-
-        pass
-
-    def step_5b():
-        #repeat step 4 but for heating
-        #looking for lowest ExFTs, 4 month peaks and times
-        #
-        # inputs: hourly_ExFTs
-        #outputs: 4 min ExFTs, associated month, associated hour of the month
-
-        def get_min_4_ExFT_and_time(self):
-            """
-            Returns the 4 months in which peak ExFT occurs for cooling, the peak ExFT, and the hour of the month.
-            Stores the result as a 2D NumPy array with columns: [ExFT value, hour of month, month, hour of year].
-            """
-
-            # Filter out zero/invalid entries and create valid entries
-            valid_entries = []
-            for i, min_val in enumerate(self.monthly_min_ExFT):
-                if i != 0 and min_val != 0:  # Skip index 0 and zero values
-                    valid_entries.append(
-                        (
-                            int(min_val),  # ExFT value
-                            int(self.monthly_min_GHE_ExFT_hour[i]),  # hour within month
-                            int(i),  # month index
-                            int(self.cumulative_hours[i] + self.monthly_min_GHE_ExFT_hour[i]),  # absolute hour of year
-                        )
-                    )
-
-            # Sort and take top 4 (or fewer if not enough valid entries)
-            top_4_min = sorted(valid_entries, key=lambda x: x[0], reverse=True)[:4]
-
-            if len(top_4_min) == 0:
-                # Return empty array with correct shape if no valid data
-                min_4_ExFT = np.array([]).reshape(0, 4)
-                print("min ExFT, hour of month, month, hour of year ")
-                print("No valid data found")
-            else:
-                min_4_ExFT = np.array(top_4_min, dtype=int)  # Ensure integer dtype
-                print("min ExFT, hour of month, month, hour of year ")
-
-                # Format each row for clean integer display
-                for row in min_4_ExFT:
-                    print(f"{row[0]:6d} {row[1]:12d} {row[2]:5d} {row[3]:12d}")
-
-            return min_4_ExFT
-
+        """ Identify 4 min ExFTs and 4 highest max ExFTs. Zero out all other ExFTs
+            going by month, if monthly_min_exft | monthly_max_exft '= 0
+                then: run find peak load durations
+                else: set month's load to average load
+        """
         pass
 
     def step_6():
         # figure out the peak load duration that allows for a
         # hybrid time step simulation's ExFT to match the hourly time step's peak ExFT
-        # hourly sim's ExFT will be called ExFT_target
+        # hourly sim's ExFT is called target_ExFT
         # using the peak load for the month and the peak ExFT
         # assign the peak load of that month to a one hour duration and the average
         # monthly load for the rest of the month. adjusted for energy balance
         # run ExFT simulation with the hybrid load for the month
-        # if ExFT_hybrid < ExFT_target
+        # if ExFT_hybrid < target_ExFT
             # add 1 hour to the duration of the peak load
             #recalculate the average monthly load to maintain energy balence
         #repeat until ExFT_hybrid >= ExFT_target
@@ -405,12 +292,10 @@ class HybridLoadsCalc:
         #
         # inputs: peak_load_of_month_n, peak_ExFT_of_month, peak_ExFT_hour,
         #
-        #outputs: load amount and duration for that month(see below for example)
-        #           [time,           load]
-        #         [hrs 0:300,  average_load_for_month ]
-        #         [hrs 301:305, peak_load_for_month]
-        #         [hrs 306:720,  average_load_for_month ]
-        def find_peak_durations(self):
+        #outputs: hybrid load profile for that month(see below for example)
+        # hybrid_load_month1 =  [ average, average, average, peak, peak, average,... average]
+
+        def find_peak_rejection_durations(self):
             """
             find the peak load durations by using the GHE ExFT and increment peak load duration
             1 hr at a time until ExFT matches hourly simulation
@@ -432,7 +317,7 @@ class HybridLoadsCalc:
                 peak_duration = 1
                 hours_in_month = self.days_in_month[month_index] * HRS_IN_DAY
 
-                hybrid_load = self.update_hybrid_loads(pk_hour_of_month, month_index, peak_duration)
+                hybrid_load = self.update_hybrid_rejection_loads_for_month(pk_hour_of_month, month_index, peak_duration)
 
                 print(
                     f"peak load for month {month_index} occurs at {pk_hour_of_month} hour and "
@@ -456,14 +341,20 @@ class HybridLoadsCalc:
             print("\nFinal peak durations (month, hours):", durations)
             return durations
 
-        def update_hybrid_loads(self, pk_hour_of_month, month_index, peak_duration):
+        def update_hybrid_rejection_loads_for_month(self, pk_hour_of_month, month_index, peak_duration):
+            """
+            inputs: pk_hour_of_month
+                    month_index
+                    peak_duration
+            output:hybrid_load
+            """
             hours_in_month = self.days_in_month[month_index] * HRS_IN_DAY
 
             # reset the average for the month to have energy balance
-            ave_old = self.monthly_avg_cl[month_index]
+            ave_old = self.monthly_avg_rejection[month_index]
             ave_new = (
-                self.monthly_avg_cl[month_index] * (hours_in_month - peak_duration)
-                - self.monthly_peak_cl[month_index] * peak_duration
+                self.monthly_avg_rejection[month_index] * (hours_in_month - peak_duration)
+                - self.monthly_peak_rejection[month_index] * peak_duration
             ) / hours_in_month
 
             print(f"ave_old = {ave_old}")
@@ -471,18 +362,17 @@ class HybridLoadsCalc:
 
             # creates a list that contains the monthly average load for every hour of the
             # month (ex: 31*24 identical entries for Jan)
-            hybrid_load = [ave_new] * hours_in_month
+            hybrid_load_for_month = [ave_new] * hours_in_month
 
             # updates the ave_load hourly list for the month by inserting the peak cooling
             # load at the hour of the month it occurs
-            hybrid_load[pk_hour_of_month] = self.monthly_peak_cl[month_index]
+            hybrid_load_for_month[pk_hour_of_month] = self.monthly_peak_cl[month_index]
 
-            print(f"sample of avg_load_hrly_w_pks array {hybrid_load[pk_hour_of_month - 2 : pk_hour_of_month + 3]}")
-            return hybrid_load
-
-
+            print(f"sample of avg_load_hrly_w_pks array {hybrid_load_for_month[pk_hour_of_month - 2 : pk_hour_of_month + 3]}")
+            return hybrid_load_for_month
 
         pass
+
     def step_7():
         # repeat step 6 for remaining heating and cooling peaks
         # run though all 8 months
