@@ -37,20 +37,6 @@ class HybridLoads2:
             years = [2025]
         self.years = years
 
-        self.start_month = start_month
-        self.end_month = end_month
-
-        # Simulation start and end month
-
-        if len(self.years) <= 1:
-            self.peak_retain_start = 12  # use peak loads for first 12 months
-            self.peak_retain_end = 12  # use peak loads for last 12 months
-        else:
-            self.peak_retain_start = len(self.years) * 6  # use peak loads for first n*6 months
-            self.peak_retain_end = (
-                len(self.years) * 6
-            )  # use peak loads for last n*6 months #TODO do we need this still?
-
         # Get the number of days in each month for a given year (make 0 NULL)
         self.days_in_month = [0]  # first entry reserved for annual total or peak, see line 72
         for year in years:
