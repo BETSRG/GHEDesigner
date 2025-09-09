@@ -52,7 +52,8 @@ class HybridLoadsCalc:
 
         return ground_loads
 
-    def step_2_normalize_loads(load) -> list:
+    @staticmethod
+    def step_2_normalize_loads(load: list[float]) -> list:
         """
         # since borehole config and size is unknown,
         # Assume a 100m deep single borehole and 40W/m peak
@@ -66,17 +67,16 @@ class HybridLoadsCalc:
         :return: hourly ground loads normalized to 4000 W peak [Watts]
         """
         # Handle case where all loads are zero
-        if not load or all(x == 0 for x in load):
+        if not load or all(x == 0.0 for x in load):
             print("Warning: All loads are zero, returning zeros")
             return [0.0] * len(load)
 
-        max_ground_loads = max(load)
-        if max_ground_loads == 0:
-            print("Warning: Maximum load is zero, returning zeros")
-            return [0.0] * len(load)
+        abs_ground_loads = [abs(x) for x in load]
+        max_ground_loads = max(abs_ground_loads)
+        scaling_factor = 4000.0 / max_ground_loads
 
         # normalized to 40W/m for a 100 m borehole
-        normalized_loads = [4000 / max_ground_loads * load[i] for i in range(len(load))]
+        normalized_loads = [scaling_factor * load_val for load_val in load]
 
         print("Normalize loads has run.")
 
