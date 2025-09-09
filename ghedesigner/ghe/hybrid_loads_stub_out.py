@@ -9,15 +9,13 @@ from ghedesigner.utilities import simulate_hourly
 class HybridLoadsCalc:
     def __init__(
         self,
-        building_loads: list[float],
         years: list[float] | None = None,
         start_month = None,
         end_month = None,
         cop_h: float = 3.8,
         cop_c: float = 4.5,
     ) -> None:
-        self.building_loads = building_loads
-
+        
         # (used in step 1) Initialize COP values
         self.cop_h = cop_h  # Heating COP
         self.cop_c = cop_c  # Cooling COP
@@ -32,7 +30,7 @@ class HybridLoadsCalc:
         for year in years:
             self.days_in_month.extend([monthrange(year, i)[1] for i in range(1, 13)])
 
-    def step_1_bldg_to_ground_load(self) -> list:
+    def step_1_bldg_to_ground_load(self, building_loads: list[float]) -> list:
         """
         #run heatpump with constant COPs to convert building loads to ground loads.
         #these are hourly loads
@@ -44,11 +42,11 @@ class HybridLoadsCalc:
         """
         ground_loads = []
 
-        for i in range(len(self.building_loads)):
-            if self.building_loads[i] >= 0:
-                ground_loads.append((self.cop_h - 1) / self.cop_h * self.building_loads[i])
+        for i in range(len(building_loads)):
+            if building_loads[i] >= 0:
+                ground_loads.append((self.cop_h - 1) / self.cop_h * building_loads[i])
             else:
-                ground_loads.append(-(1 + 1 / self.cop_c) * abs(self.building_loads[i]))
+                ground_loads.append(-(1 + 1 / self.cop_c) * abs(building_loads[i]))
 
         return ground_loads
 
@@ -82,11 +80,11 @@ class HybridLoadsCalc:
 
         return normalized_loads
 
-    def step_3_split_loads_by_month(self):
+    def step_3_split_loads_by_month(self, normalized_ground_loads: list[float]) -> None:
         """parse out ground loads into peak and average for each month of the year.
             also calculate total monthly totals for energy balance.
             done for both heating and cooling.
-        inputs: ground_loads
+        inputs: normalized_ground_loads, in Watts
         outputs: self.hrly_ground_loads,
                 self.hrly_ground_loads_norm,
                 self.monthly_peak_extraction,
@@ -95,32 +93,26 @@ class HybridLoadsCalc:
         pull out the peak, total, and average loads for each month from the normalized ground loads
         """
 
-        # convert W to kW
-        self.hrly_ground_loads = [x / 1000 for x in self.building_loads]
-        # run split heat and cool. returns normed and unnormed heating and cooling ground loads. hourly for 1 year
-        self.hrly_ground_loads_norm = self.step_2_normalize_loads(self.hrly_ground_loads)
-
         num_unique_months = len(self.years) * 12 + 1
 
         # set up empty lists
-        # monthly total ground energy in kWh
+        # monthly total ground energy in Wh
         self.monthly_ground_load = [0.0] * num_unique_months
-        # monthly peak cooling load (or heat rejection) in kW
+        # monthly peak cooling load (or heat rejection) in W
         self.monthly_peak_rejection = [0.0] * num_unique_months
-        # monthly peak heating load (or heat extraction) in kW
+        # monthly peak heating load (or heat extraction) in W
         self.monthly_peak_extraction = [0.0] * num_unique_months
-        # monthly average ground load in kW
+        # monthly average ground load in W
         self.monthly_ave_ground_load = [0.0] * num_unique_months
 
         # Store the index of the last month's hours
         hours_in_previous_months: int = 0  # type is integer and set to a value of 0 to start
-        i: int  # set i type to integer
         # cycle through each month
         for i in range(1, len(self.days_in_month)):
             hours_in_month = HRS_IN_DAY * self.days_in_month[i]  # e.g. 24 * 31, to give hrs in month
 
             # Slice the hours in this current month
-            current_month_norm_loads = self.hrly_ground_loads_norm[
+            current_month_norm_loads = normalized_ground_loads[
                 hours_in_previous_months : hours_in_previous_months + hours_in_month
             ]
             # Handle empty lists
@@ -129,21 +121,21 @@ class HybridLoadsCalc:
 
             # Sum
             # monthly net ground load
-            self.monthly_total_ground_load = sum(current_month_norm_loads)
+            # self.monthly_total_ground_load = sum(current_month_norm_loads)
 
             # Peak
-            # monthly peak heat rejection in kW
+            # monthly peak heat rejection in W
             self.monthly_peak_rejection[i] = min(current_month_norm_loads) if current_month_norm_loads else 0.0
-            # monthly peak heat extraction in kW
+            # monthly peak heat extraction in W
             self.monthly_peak_extraction[i] = max(current_month_norm_loads) if current_month_norm_loads else 0.0
 
             # Average
-            # monthly average ground load in kW
+            # monthly average ground load in W
             self.monthly_ave_ground_load[i] = self.monthly_ground_load[i] / hours_in_month
             # self.monthly_avg_rejection[i] = (
             #     self.monthly_total_rejection[i] / len(current_month_reject_norm_loads) if current_month_reject_norm_loads else 0.0
             # )
-            # # monthly average heating load (or heat extraction) in kW
+            # # monthly average heating load (or heat extraction) in W
             # self.monthly_avg_extraction[i] = (
             #     self.monthly_total_extraction[i] / len(current_month_extract_norm_loads) if current_month_extract_norm_loads else 0.0
             # )
@@ -371,7 +363,7 @@ class HybridLoadsCalc:
 def main():
     # run step 1
     building_loads = [1.0] * 8760
-    HybridLoadsCalc(building_loads).step_1_bldg_to_ground_load()
+    HybridLoadsCalc().step_1_bldg_to_ground_load(building_loads)
 
 
 if __name__ == "__main__":

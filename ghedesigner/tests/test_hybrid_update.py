@@ -4,8 +4,7 @@ from ghedesigner.ghe.hybrid_loads_stub_out import HybridLoadsCalc
 
 class TestHybridUpdate(GHEBaseTest):
     def get_default_hybrid_object(self):
-        building_loads = [100, 200, 300, -100, -200, -300]
-        return HybridLoadsCalc(building_loads)
+        return HybridLoadsCalc()
 
     def test_step_1(self):
 
@@ -15,7 +14,7 @@ class TestHybridUpdate(GHEBaseTest):
         expected_ghe_loads = [x * (1 - 1 / cop) if x >=
                               0 else x * (1 + 1/cop) for x in building_loads]
 
-        actual_ghe_loads = HybridLoadsCalc(building_loads, cop_h=3, cop_c=3).step_1_bldg_to_ground_load()
+        actual_ghe_loads = HybridLoadsCalc(cop_h=3, cop_c=3).step_1_bldg_to_ground_load(building_loads)
         for idx, actual in enumerate(actual_ghe_loads):
             expected = expected_ghe_loads[idx]
             self.assertAlmostEqual(actual, expected)
@@ -43,7 +42,36 @@ class TestHybridUpdate(GHEBaseTest):
         self.assertAlmostEqual(-4000.0, new_min)
         # self.assertAlmostEqual(0.0, new_max)
 
-        # check 4: typical ground loads
-        # ground_loads = h.step_1_bldg_to_ground_load()
-        # HybridLoadsCalc.step_2_normalize_loads(ground_loads)
+        # check 4: same peak up and down
+        ground_loads = [-1.0, 1.0]
+        normalized = HybridLoadsCalc.step_2_normalize_loads(ground_loads)
+        new_min = min(normalized)
+        new_max = max(normalized)
+        self.assertAlmostEqual(-4000.0, new_min)
+        self.assertAlmostEqual(4000.0, new_max)
 
+        # check 5: unbalanced peaks, higher positive
+        ground_loads = [-1.0, 2.0]
+        normalized = HybridLoadsCalc.step_2_normalize_loads(ground_loads)
+        new_min = min(normalized)
+        new_max = max(normalized)
+        self.assertAlmostEqual(-2000.0, new_min)
+        self.assertAlmostEqual(4000.0, new_max)
+
+        # check 6: unbalanced peaks, higher negative
+        ground_loads = [-2.0, 1.0]
+        normalized = HybridLoadsCalc.step_2_normalize_loads(ground_loads)
+        new_min = min(normalized)
+        new_max = max(normalized)
+        self.assertAlmostEqual(-4000.0, new_min)
+        self.assertAlmostEqual(2000.0, new_max)
+
+    def test_step_3(self):
+        h = self.get_default_hybrid_object()
+        building_loads = self.get_atlanta_loads()
+        ground_loads = HybridLoadsCalc().step_1_bldg_to_ground_load(building_loads)
+        normalized_loads = HybridLoadsCalc.step_2_normalize_loads(ground_loads)
+        with open('/tmp/normalized.csv', 'w') as f:
+            f.writelines([str(n) + '\n' for n in normalized_loads])
+        h.step_3_split_loads_by_month(normalized_loads)
+        self.assertEqual(13, len(h.monthly_ground_load))
