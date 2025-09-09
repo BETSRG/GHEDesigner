@@ -4,11 +4,9 @@ from math import floor
 
 import numpy as np
 
-from ghedesigner.constants import HRS_IN_DAY, SEC_IN_HR, TWO_PI
-from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
-from ghedesigner.utilities import simulate_hourly
-from ghedesigner.ghe.ground_heat_exchangers import GHE
+from ghedesigner.constants import HRS_IN_DAY, TWO_PI
 from ghedesigner.ghe.manager import GroundHeatExchanger
+from ghedesigner.utilities import simulate_hourly
 
 # time array for hourly_temps
 hours_in_year = 24 * 365  # 8760 hours
@@ -101,13 +99,11 @@ class HybridLoads2:
         self.split_loads_by_month()
 
         # # get target ExFT temperatures from the original loads for every hour of the year
-        # self.target_ExFTghe_temps = self.perform_hrly_ExFT_simulation(
+        # self.target_ExFThe_temps = self.perform_hrly_ExFT_simulation(
         #     self.normalize_loads(self.bldg_to_ground_load(self.building_loads))
-        #)
+        # )
         # get target ExFT temperatures from the original loads for every hour of the year, exclude normalizing
-        self.target_ExFTghe_temps = self.perform_hrly_ExFT_simulation(
-            self.bldg_to_ground_load(self.building_loads)
-        )
+        self.target_ExFThe_temps = self.perform_hrly_ExFT_simulation(self.bldg_to_ground_load(self.building_loads))
         # Process the ExFT by month
         self.split_ExFT_by_month()
         # return the highest 4 ExFTs for cooling
@@ -280,7 +276,7 @@ class HybridLoads2:
             hours_in_month = HRS_IN_DAY * self.days_in_month[i]
             # Slice the hours in this current month
 
-            current_month_ExFTs = self.target_ExFTghe_temps[
+            current_month_ExFTs = self.target_ExFThe_temps[
                 hours_in_previous_months : hours_in_previous_months + hours_in_month
             ]
 

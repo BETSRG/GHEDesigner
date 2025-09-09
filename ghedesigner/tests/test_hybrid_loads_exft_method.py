@@ -435,4 +435,3 @@ def test_main():
     print("3. Confirm that the borehole resistance value (0.13 K/(W/m)) is correct")
     print("4. Check that time scaling (ts) is appropriate")
     print("5. Verify unit consistency throughout the calculation chain")
-

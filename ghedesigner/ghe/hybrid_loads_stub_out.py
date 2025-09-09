@@ -1,6 +1,4 @@
 from calendar import monthrange
-from json import dumps
-from math import floor
 
 import numpy as np
 
@@ -21,11 +19,11 @@ class HybridLoadsCalc:
     ) -> None:
         self.building_loads = building_loads
 
-        #(used in step 1) Initialize COP values
+        # (used in step 1) Initialize COP values
         self.cop_h = cop_h  # Heating COP
         self.cop_c = cop_c  # Cooling COP
 
-        #(used in step 1.5) initialize months under study. Currently we only do one year, but in the future, the goal is to create hybrid loads for 10+ years
+        # (used in step 1.5) initialize months under study. Currently we only do one year, but in the future, the goal is to create hybrid loads for 10+ years
         if years is None:
             years = [2025]
         self.years = years
@@ -35,15 +33,12 @@ class HybridLoadsCalc:
         for year in years:
             self.days_in_month.extend([monthrange(year, i)[1] for i in range(1, 13)])
 
-
-
-
     def step_1():
-    #run heatpump with constant COPs to convert building loads to ground loads.
-    #these are hourly loads
-    #
-    #inputs: building_loads, COPc, COPh
-    #output: ground_loads
+        # run heatpump with constant COPs to convert building loads to ground loads.
+        # these are hourly loads
+        #
+        # inputs: building_loads, COPc, COPh
+        # output: ground_loads
 
         def bldg_to_ground_load(self, bldg_loads) -> list:
             """
@@ -59,7 +54,6 @@ class HybridLoadsCalc:
                     ground_loads.append(-(1 + 1 / self.cop_c) * abs(bldg_loads[i]))
 
             return ground_loads
-    pass
 
     def step_2():
         # since borehole config and size is unknown,
@@ -67,7 +61,7 @@ class HybridLoadsCalc:
         #  load and normalize to this peak (4000W max)
         #
         # inputs: ground_loads
-        #outputs: normalized_ground_loads
+        # outputs: normalized_ground_loads
 
         @staticmethod
         def normalize_loads(load) -> list:
@@ -86,17 +80,16 @@ class HybridLoadsCalc:
                 print("Warning: Maximum load is zero, returning zeros")
                 return [0.0] * len(load)
 
-            #normalized to 40W/m for a 100 m borehole
+            # normalized to 40W/m for a 100 m borehole
             normalized_loads = [4000 / max_ground_loads * load[i] for i in range(len(load))]
 
             print("Normalize loads has run.")
 
             return normalized_loads
-        pass
 
     def step_3():
         """parse out ground loads into peak and average for each month of the year.
-            also calculate total monthly totals for energy balence.
+            also calculate total monthly totals for energy balance.
             done for both heating and cooling.
         inputs: ground_loads
         outputs: self.monthly_total_rejection (list of 12),
@@ -110,14 +103,14 @@ class HybridLoadsCalc:
         def split_loads_by_month(self):
             """Split the normalized ground loads into peak, total, and average loads for each month"""
 
-            #convert W to kW
+            # convert W to kW
             self.hourly_total_ground_loads = [x / 1000 for x in self.building_loads]
-            #run split heat and cool. returns normed and unnormed heating and cooling ground loads. hourly for 1 year
+            # run split heat and cool. returns normed and unnormed heating and cooling ground loads. hourly for 1 year
             self.hrly_total_loads_norm = self.normalize_loads(self.hourly_total_ground_loads)
 
             num_unique_months = len(self.years) * 12 + 1
 
-            #set up empty lists
+            # set up empty lists
             # monthly total ground energy in kWh
             self.monthly_ground_load = [0.0] * num_unique_months
             # monthly peak cooling load (or heat rejection) in kW
@@ -127,24 +120,23 @@ class HybridLoadsCalc:
             # monthly average ground load in kW
             self.monthly_ave_ground_load = [0.0] * num_unique_months
 
-
             # Store the index of the last month's hours
             hours_in_previous_months: int = 0  # type is integer and set to a value of 0 to start
             i: int  # set i type to integer
-            #cycle through each month
+            # cycle through each month
             for i in range(1, len(self.days_in_month)):
-
                 hours_in_month = HRS_IN_DAY * self.days_in_month[i]  # e.g. 24 * 31, to give hrs in month
 
                 # Slice the hours in this current month
-                current_month_norm_loads =  self.hrly_total_loads_norm[
-                    hours_in_previous_months : hours_in_previous_months + hours_in_month]
+                current_month_norm_loads = self.hrly_total_loads_norm[
+                    hours_in_previous_months : hours_in_previous_months + hours_in_month
+                ]
                 # Handle empty lists
                 if not current_month_norm_loads:
                     current_month_norm_loads = [0.0]
 
                 # Sum
-                #monthly net ground load
+                # monthly net ground load
                 self.monthly_net_ground_load = sum(current_month_norm_loads)
 
                 # Peak
@@ -168,15 +160,13 @@ class HybridLoadsCalc:
 
             print("split_loads_by_month has run")
 
-        pass
-
     def step_4():
         # take the normalized ground loads and use
         # a gfunction and the other ground heat exchanger parameters to get the hourly
         # exiting fluid temperature from the ghe (same as entering to HP)
         #
         # inputs: normalized ground loads, ground heat exchanger parameters
-        #output: hourly exiting fluid temperature (ExFT) from the GHE
+        # output: hourly exiting fluid temperature (ExFT) from the GHE
         def perform_hrly_ExFT_simulation(self, load_profile):
             """
             This performs an ExFT simulation given a loads profile
@@ -204,10 +194,11 @@ class HybridLoadsCalc:
             return delta_t_fluid
 
     def step_5():
-        """ split the yearly ExFT of the GHE into months. Identify the peak and hour on which it occurs for each month
-            inputs: hourly_EXFTghe
-            outputs:
-            """
+        """split the yearly ExFT of the GHE into months. Identify the peak and hour on which it occurs for each month
+        inputs: hourly_EXFThe
+        outputs:
+        """
+
         def get_monthly_ExFT_maxs_mins_and_times(self) -> None:
             """Slice the hourly ExFT of the GHE into months
             input:
@@ -222,7 +213,7 @@ class HybridLoadsCalc:
                 hours_in_month = HRS_IN_DAY * self.days_in_month[i]
                 # Slice the hours in this current month
 
-                current_month_ExFTs = self.target_ExFTghe_temps[
+                current_month_ExFTs = self.target_ExFThe_temps[
                     hours_in_previous_months : hours_in_previous_months + hours_in_month
                 ]
 
@@ -266,15 +257,12 @@ class HybridLoadsCalc:
 
             print("split_ExFT_by_month has run")
 
-        pass
-
     def step_5a():
-        """ Identify 4 min ExFTs and 4 highest max ExFTs. Zero out all other ExFTs
-            going by month, if monthly_min_exft | monthly_max_exft '= 0
-                then: run find peak load durations
-                else: set month's load to average load
+        """Identify 4 min ExFTs and 4 highest max ExFTs. Zero out all other ExFTs
+        going by month, if monthly_min_exft | monthly_max_exft '= 0
+            then: run find peak load durations
+            else: set month's load to average load
         """
-        pass
 
     def step_6():
         # figure out the peak load duration that allows for a
@@ -285,14 +273,14 @@ class HybridLoadsCalc:
         # monthly load for the rest of the month. adjusted for energy balance
         # run ExFT simulation with the hybrid load for the month
         # if ExFT_hybrid < target_ExFT
-            # add 1 hour to the duration of the peak load
-            #recalculate the average monthly load to maintain energy balence
-        #repeat until ExFT_hybrid >= ExFT_target
-        #record load quantities and times of occurance for the month
+        # add 1 hour to the duration of the peak load
+        # recalculate the average monthly load to maintain energy balance
+        # repeat until ExFT_hybrid >= ExFT_target
+        # record load quantities and times of occurrence for the month
         #
         # inputs: peak_load_of_month_n, peak_ExFT_of_month, peak_ExFT_hour,
         #
-        #outputs: hybrid load profile for that month(see below for example)
+        # outputs: hybrid load profile for that month(see below for example)
         # hybrid_load_month1 =  [ average, average, average, peak, peak, average,... average]
 
         def find_peak_rejection_durations(self):
@@ -368,29 +356,29 @@ class HybridLoadsCalc:
             # load at the hour of the month it occurs
             hybrid_load_for_month[pk_hour_of_month] = self.monthly_peak_cl[month_index]
 
-            print(f"sample of avg_load_hrly_w_pks array {hybrid_load_for_month[pk_hour_of_month - 2 : pk_hour_of_month + 3]}")
+            print(
+                f"sample of avg_load_hrly_w_pks array {hybrid_load_for_month[pk_hour_of_month - 2 : pk_hour_of_month + 3]}"
+            )
             return hybrid_load_for_month
-
-        pass
 
     def step_7():
         # repeat step 6 for remaining heating and cooling peaks
         # run though all 8 months
         #
-        #input: 4 min ExFTs, associated month, associated hour of the month,
+        # input: 4 min ExFTs, associated month, associated hour of the month,
         #       4 max ExFTs, associated month, associated hour of month
         #
-        #outputs: hybridloads_heating_month1, hybrid_timesteps_month1
+        # outputs: hybridloads_heating_month1, hybrid_timesteps_month1
         #           hybrid_loads_heating_month2, hybrid_timesteps_month2...
         #          ...hybrid_loads_cooling_month8, hybrid_timestep_month8
         pass
 
     def step_8():
-        #compile new hybrid loads
+        # compile new hybrid loads
         # use monthly average load for all non-peak months
-        #inputs: all 12 month's new hybrid load profiles
-        #outputs: hybrid_loads_for_the_year, durations
-        #example
+        # inputs: all 12 month's new hybrid load profiles
+        # outputs: hybrid_loads_for_the_year, durations
+        # example
         # [320 W, 0:60 hrs] (jan)
         # [1600 W, 60:66 hrs] (jan peak)
         # [320 W, 67:720 hrs] (jan)
@@ -399,10 +387,11 @@ class HybridLoadsCalc:
 
         pass
 
-def main():
 
-    #run step 1
+def main():
+    # run step 1
     HybridLoadsCalc.step_1step_1()
+
 
 if __name__ == "__main__":
     main()

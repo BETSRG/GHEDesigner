@@ -9,7 +9,7 @@ from ghedesigner.utilities import length_of_side
 
 
 def get_test_loads():
-    """Load test building loads with error handling """
+    """Load test building loads with error handling"""
 
     test_data_directory = Path(__file__).parent / "test_data"
     print(f"Looking for data in: {test_data_directory}")
@@ -42,13 +42,13 @@ def test_main():
     fluid = Fluid(fluid_name="water", percent=0.0, temperature=20.0)
     borehole = Borehole(burial_depth=4.0, borehole_radius=0.075, borehole_height=100)
     building_loads = get_test_loads()
-    b = 5.0 #distance in between bore holes
+    b = 5.0  # distance in between bore holes
     number_of_boreholes = 1
     length = length_of_side(number_of_boreholes, b)
 
     geometry = GeometricConstraintsNearSquare(b=b, length=length)
     design = DesignNearSquare(
-        v_flow= 0.4427, #L/s nominal flow rate
+        v_flow=0.4427,  # L/s nominal flow rate
         borehole=borehole,
         fluid=fluid,
         pipe=pipe,
@@ -73,7 +73,4 @@ def test_main():
 
 
 if __name__ == "__main__":
-
     test_main()
-
-

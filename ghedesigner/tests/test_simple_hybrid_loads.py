@@ -10,29 +10,16 @@ Fixes:
 
 import traceback
 from pathlib import Path
-import numpy as np
-from ghedesigner.ghe.boreholes.core import Borehole
-from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import Fluid, Grout, Soil
-from ghedesigner.ghe.ground_heat_exchangers import GHE
-from ghedesigner.utilities import length_of_side
-from ghedesigner.enums import PipeType, TimestepType
-from ghedesigner.ghe.gfunction import GFunction
-from ghedesigner.ghe.manager import GroundHeatExchanger
 
+import numpy as np
+
+from ghedesigner.ghe.manager import GroundHeatExchanger
 
 ghe_dict = {
     "flow_rate": 0.5,
     "flow_type": "BOREHOLE",
-    "grout": {
-        "conductivity": 1,
-        "rho_cp": 3901000
-    },
-    "soil": {
-        "conductivity": 2,
-        "rho_cp": 2343493,
-        "undisturbed_temp": 18.3
-    },
+    "grout": {"conductivity": 1, "rho_cp": 3901000},
+    "soil": {"conductivity": 2, "rho_cp": 2343493, "undisturbed_temp": 18.3},
     "pipe": {
         "inner_diameter": 0.03404,
         "outer_diameter": 0.04216,
@@ -40,27 +27,20 @@ ghe_dict = {
         "roughness": 0.000001,
         "conductivity": 0.4,
         "rho_cp": 1542000,
-        "arrangement": "SINGLEUTUBE"
+        "arrangement": "SINGLEUTUBE",
     },
-    "borehole": {
-        "buried_depth": 2,
-        "diameter": 0.14
-    },
+    "borehole": {"buried_depth": 2, "diameter": 0.14},
     "pre_designed": {
         "arrangement": "RECTANGLE",
         "H": 150,
         "spacing_in_x_dimension": 4.5,
         "spacing_in_y_dimension": 5.5,
         "boreholes_in_x_dimension": 4,
-        "boreholes_in_y_dimension": 8
-    }
+        "boreholes_in_y_dimension": 8,
+    },
 }
 
-fluid_dict = {
-    "fluid_name": "WATER",
-    "concentration_percent": 0,
-    "temperature": 20
-}
+fluid_dict = {"fluid_name": "WATER", "concentration_percent": 0, "temperature": 20}
 
 
 def get_test_loads():
@@ -150,6 +130,7 @@ def test_hybridloads2_import():
 
     try:
         from ghedesigner.ghe.hybrid_loads import HybridLoads2
+
         print("✓ Successfully imported HybridLoads2")
 
         # Get test data
@@ -212,8 +193,8 @@ def test_basic_functionality(hybrid_loads):
         if hasattr(hybrid_loads, "monthly_hl"):
             print(f"✓ Monthly heating loads (first 5): {hybrid_loads.monthly_hl[:5]}")
 
-        if hasattr(hybrid_loads, "target_ExFTghe_temps"):
-            print(f"✓ Target ExFT temps length: {len(hybrid_loads.target_ExFTghe_temps)}")
+        if hasattr(hybrid_loads, "target_ExFThe_temps"):
+            print(f"✓ Target ExFT temps length: {len(hybrid_loads.target_ExFThe_temps)}")
 
         if hasattr(hybrid_loads, "max_4_ExFT"):
             print(f"✓ Max 4 ExFT shape: {hybrid_loads.max_4_ExFT.shape}")
@@ -249,16 +230,16 @@ def main():
 
     try:
         ## Step 1: Test data loading
-        #analyze_load_data()
+        # analyze_load_data()
 
-        #Step 1.5 Test initializing GHE object
+        # Step 1.5 Test initializing GHE object
         test_create_ghe_instance()
 
         # Step 2: Test imports and instantiation
         hybrid_loads = test_hybridloads2_import()
 
         # Step 3: Test basic functionality
-        #test_basic_functionality(hybrid_loads)
+        # test_basic_functionality(hybrid_loads)
 
         print("\n" + "=" * 50)
         print("✓ All tests passed successfully!")
@@ -269,5 +250,3 @@ def main():
         print(f"Error type: {type(e)}")
         print("\nFull traceback:")
         traceback.print_exc()
-
-
