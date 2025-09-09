@@ -87,19 +87,18 @@ class HybridLoadsCalc:
             also calculate total monthly totals for energy balance.
             done for both heating and cooling.
         inputs: ground_loads
-        outputs: self.monthly_total_rejection (list of 12),
-                self.monthly_total_extraction (list of 12),
-                self.monthly_peak_rejection,
+        outputs: self.hrly_ground_loads,
+                self.hrly_ground_loads_norm,
                 self.monthly_peak_extraction,
-                self.monthly_ave_rejection,
-                self.monthly_ave_extraction,
-        Split the normalized ground loads into peak, total, and average loads for each month
+                self.monthly_peak_rejection,
+                self.monthly_ave_ground_load,
+        pull out the peak, total, and average loads for each month from the normalized ground loads
         """
 
         # convert W to kW
-        self.hourly_total_ground_loads = [x / 1000 for x in self.building_loads]
+        self.hrly_ground_loads = [x / 1000 for x in self.building_loads]
         # run split heat and cool. returns normed and unnormed heating and cooling ground loads. hourly for 1 year
-        self.hrly_total_loads_norm = self.normalize_loads(self.hourly_total_ground_loads)
+        self.hrly_ground_loads_norm = self.step_2_normalize_loads(self.hrly_ground_loads)
 
         num_unique_months = len(self.years) * 12 + 1
 
@@ -121,7 +120,7 @@ class HybridLoadsCalc:
             hours_in_month = HRS_IN_DAY * self.days_in_month[i]  # e.g. 24 * 31, to give hrs in month
 
             # Slice the hours in this current month
-            current_month_norm_loads = self.hrly_total_loads_norm[
+            current_month_norm_loads = self.hrly_ground_loads_norm[
                 hours_in_previous_months : hours_in_previous_months + hours_in_month
             ]
             # Handle empty lists
@@ -130,7 +129,7 @@ class HybridLoadsCalc:
 
             # Sum
             # monthly net ground load
-            self.monthly_net_ground_load = sum(current_month_norm_loads)
+            self.monthly_total_ground_load = sum(current_month_norm_loads)
 
             # Peak
             # monthly peak heat rejection in kW
