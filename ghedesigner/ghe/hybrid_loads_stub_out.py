@@ -9,8 +9,7 @@ from ghedesigner.utilities import simulate_hourly
 class HybridLoadsCalc:
     def __init__(
         self,
-        building_loads: list,
-        ghe: GroundHeatExchanger,
+        building_loads: list[float],
         years: list[float] | None = None,
         start_month = None,
         end_month = None,
@@ -33,7 +32,7 @@ class HybridLoadsCalc:
         for year in years:
             self.days_in_month.extend([monthrange(year, i)[1] for i in range(1, 13)])
 
-    def step_1_bldg_to_ground_load(self, bldg_loads: list[float]) -> list:
+    def step_1_bldg_to_ground_load(self) -> list:
         """
         #run heatpump with constant COPs to convert building loads to ground loads.
         #these are hourly loads
@@ -45,11 +44,11 @@ class HybridLoadsCalc:
         """
         ground_loads = []
 
-        for i in range(len(bldg_loads)):
-            if bldg_loads[i] >= 0:
-                ground_loads.append((self.cop_h - 1) / self.cop_h * bldg_loads[i])
+        for i in range(len(self.building_loads)):
+            if self.building_loads[i] >= 0:
+                ground_loads.append((self.cop_h - 1) / self.cop_h * self.building_loads[i])
             else:
-                ground_loads.append(-(1 + 1 / self.cop_c) * abs(bldg_loads[i]))
+                ground_loads.append(-(1 + 1 / self.cop_c) * abs(self.building_loads[i]))
 
         return ground_loads
 
@@ -372,7 +371,8 @@ class HybridLoadsCalc:
 
 def main():
     # run step 1
-    HybridLoadsCalc.step_1step_1()
+    building_loads = [1.0] * 8760
+    HybridLoadsCalc(building_loads).step_1_bldg_to_ground_load()
 
 
 if __name__ == "__main__":
