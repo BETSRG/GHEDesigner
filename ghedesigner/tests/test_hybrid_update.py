@@ -74,8 +74,18 @@ class TestHybridUpdate(GHEBaseTest):
         with open('/tmp/normalized.csv', 'w') as f:
             f.writelines([str(n) + '\n' for n in normalized_loads])
         h.step_3_split_loads_by_month(normalized_loads)
-        self.assertEqual(13, len(h.monthly_ground_load))
+        self.assertEqual(13, len(h.monthly_total_ground_load))
         self.assertEqual(13, len(h.monthly_peak_extraction))
         self.assertEqual(13, len(h.monthly_peak_rejection))
         self.assertEqual(13, len(h.monthly_ave_ground_load))
+
+        #check values
+        #check absolute value of peak is 4000
+        self.assertAlmostEqual(4000, max(h.monthly_peak_extraction)|max(abs(h.monthly_peak_rejection)))
+
+        # check absolute highest monthly average is still below 4000 w
+        self.assertLessEqual (4000, max(abs(h.monthly_ave_ground_load)))
+
+        #check the higheset total monthly load is still <= the maximum value of 4000 w per hour for a 31 day month
+        self.assertLessEqual (4000 * 31 * 24, max(abs(h.monthly_total_ground_load)))
 
