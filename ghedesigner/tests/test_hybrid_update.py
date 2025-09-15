@@ -20,7 +20,7 @@ class TestHybridUpdate(GHEBaseTest):
             self.assertAlmostEqual(actual, expected)
 
     def test_step_2(self):
-        
+
         # check 1: zero ground load should result in zero normalized load
         zero_loads = [0.0] * 8760
         normalized = HybridLoadsCalc.step_2_normalize_loads(zero_loads)
@@ -75,3 +75,7 @@ class TestHybridUpdate(GHEBaseTest):
             f.writelines([str(n) + '\n' for n in normalized_loads])
         h.step_3_split_loads_by_month(normalized_loads)
         self.assertEqual(13, len(h.monthly_ground_load))
+        self.assertEqual(13, len(h.monthly_peak_extraction))
+        self.assertEqual(13, len(h.monthly_peak_rejection))
+        self.assertEqual(13, len(h.monthly_ave_ground_load))
+

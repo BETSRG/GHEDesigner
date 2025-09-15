@@ -15,7 +15,7 @@ class HybridLoadsCalc:
         cop_h: float = 3.8,
         cop_c: float = 4.5,
     ) -> None:
-        
+
         # (used in step 1) Initialize COP values
         self.cop_h = cop_h  # Heating COP
         self.cop_c = cop_c  # Cooling COP
@@ -97,7 +97,7 @@ class HybridLoadsCalc:
 
         # set up empty lists
         # monthly total ground energy in Wh
-        self.monthly_ground_load = [0.0] * num_unique_months
+        self.monthly_total_ground_load = [0.0] * num_unique_months
         # monthly peak cooling load (or heat rejection) in W
         self.monthly_peak_rejection = [0.0] * num_unique_months
         # monthly peak heating load (or heat extraction) in W
@@ -121,7 +121,7 @@ class HybridLoadsCalc:
 
             # Sum
             # monthly net ground load
-            # self.monthly_total_ground_load = sum(current_month_norm_loads)
+            self.monthly_total_ground_load = sum(current_month_norm_loads)
 
             # Peak
             # monthly peak heat rejection in W
@@ -132,13 +132,6 @@ class HybridLoadsCalc:
             # Average
             # monthly average ground load in W
             self.monthly_ave_ground_load[i] = self.monthly_ground_load[i] / hours_in_month
-            # self.monthly_avg_rejection[i] = (
-            #     self.monthly_total_rejection[i] / len(current_month_reject_norm_loads) if current_month_reject_norm_loads else 0.0
-            # )
-            # # monthly average heating load (or heat extraction) in W
-            # self.monthly_avg_extraction[i] = (
-            #     self.monthly_total_extraction[i] / len(current_month_extract_norm_loads) if current_month_extract_norm_loads else 0.0
-            # )
 
             hours_in_previous_months += hours_in_month
 
