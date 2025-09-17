@@ -152,66 +152,52 @@ class HybridLoadsCalc:
         delta_t_fluid = simulate_hourly(hour_indices, q, g, resist_bh_effective, two_pi_k, ts)
         return delta_t_fluid
 
-    def step_5_get_monthly_ExFT_maxs_mins_and_times(self) -> None:
-        """split the yearly ExFT of the GHE into months. Identify the peak and hour on which it occurs for each month
-        inputs: hourly_EXFThe
-        outputs:
-        Slice the hourly ExFT of the GHE into months
-        input:
-        output: self.monthly_min_ExFT
-                self.monthly_max_ExFT
+    def step_5_get_monthly_ExFT_maxs_mins_and_times(self, hourly_ExFTghe: list[float]) -> None:
+        """Split the yearly ExFT of the GHE into months.
+        Identify the peak ExFT and hour on which it occurs for each month.
+
+        Args:
+            hourly_ExFTghe: Hourly exiting fluid temperatures from GHE
+
+        Outputs:
+            self.monthly_min_ExFT: Monthly minimum ExFT [degrees C]
+            self.monthly_min_ExFT_time: Hour of month when min ExFT occurs
+            self.monthly_max_ExFT: Monthly maximum ExFT [degrees C]
+            self.monthly_max_ExFT_time: Hour of month when max ExFT occurs
         """
 
-        # Store the index of the last month's hours
-        hours_in_previous_months: int = 0
-        i: int
-        for i in range(1, len(self.days_in_month)):
-            hours_in_month = HRS_IN_DAY * self.days_in_month[i]
-            # Slice the hours in this current month
+        num_months = len(self.years) * 12 + 1
 
-            current_month_ExFTs = self.target_ExFThe_temps[
-                hours_in_previous_months : hours_in_previous_months + hours_in_month
-            ]
+        # Initialize monthly arrays
+        self.monthly_min_ExFT = [0.0] * num_months
+        self.monthly_min_ExFT_time = [0] * num_months  # Hours should be integers
+        self.monthly_max_ExFT = [0.0] * num_months
+        self.monthly_max_ExFT_time = [0] * num_months  # Hours should be integers
 
-            # Handle empty ExFT arrays
-            if not current_month_ExFTs:
-                self.monthly_min_ExFT[i] = 0.0
-                self.monthly_max_ExFT[i] = 0.0
-                self.monthly_min_GHE_ExFT_hour[i] = 0
-                self.monthly_max_GHE_ExFT_hour[i] = 0
-            else:
-                # Convert to numpy array and ensure it's at least 1D
-                current_month_ExFTs = np.atleast_1d(np.array(current_month_ExFTs))
+        start_hour = 0
 
-                # Peak
-                # monthly peak (min) exiting fluid temperature from the GHE [degrees C]
-                self.monthly_min_ExFT[i] = float(np.min(current_month_ExFTs))
-                # monthly peak exiting fluid temperature from the GHE [degrees C]
-                self.monthly_max_ExFT[i] = float(np.max(current_month_ExFTs))
+        for month_idx in range(1, len(self.days_in_month)):
+            hours_in_month = 24 * self.days_in_month[month_idx]
+            end_hour = start_hour + hours_in_month
 
-                # Hour of the month the min ExFT for the GHE occurs (EFT for heatpump). critical for heating
-                try:
-                    min_indices = np.where(current_month_ExFTs == self.monthly_min_ExFT[i])[0]
-                    if len(min_indices) > 0:
-                        self.monthly_min_GHE_ExFT_hour[i] = int(min_indices[0])
-                    else:
-                        self.monthly_min_GHE_ExFT_hour[i] = 0
-                except (IndexError, ValueError):
-                    self.monthly_min_GHE_ExFT_hour[i] = 0
+            month_ExFTs = hourly_ExFTghe[start_hour:end_hour]
 
-                # Hour of the month the max ExFT for the GHE occurs (EFT for heatpump). critical for cooling
-                try:
-                    max_indices = np.where(current_month_ExFTs == self.monthly_max_ExFT[i])[0]
-                    if len(max_indices) > 0:
-                        self.monthly_max_GHE_ExFT_hour[i] = int(max_indices[0])
-                    else:
-                        self.monthly_max_GHE_ExFT_hour[i] = 0
-                except (IndexError, ValueError):
-                    self.monthly_max_GHE_ExFT_hour[i] = 0
+            if month_ExFTs:  # Only process if we have data
+                # Find min and max values
+                self.monthly_min_ExFT[month_idx] = min(month_ExFTs)
+                self.monthly_max_ExFT[month_idx] = max(month_ExFTs)
 
-            hours_in_previous_months += hours_in_month
+                # Find the hours when min and max occur
+                min_hour_idx = month_ExFTs.index(self.monthly_min_ExFT[month_idx])
+                max_hour_idx = month_ExFTs.index(self.monthly_max_ExFT[month_idx])
 
-        print("split_ExFT_by_month has run")
+                # Store as 1-based hour of the month (hours are 1-744 for 31-day month)
+                self.monthly_min_ExFT_time[month_idx] = min_hour_idx + 1
+                self.monthly_max_ExFT_time[month_idx] = max_hour_idx + 1
+
+            start_hour = end_hour
+
+        print("step_5_get_monthly_ExFT_maxs_mins_and_times has run")
 
     def step_6_find_peak_rejection_durations(self):
         """
