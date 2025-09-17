@@ -80,62 +80,45 @@ class HybridLoadsCalc:
 
         return normalized_loads
 
-    def step_3_split_loads_by_month(self, normalized_ground_loads: list[float]) -> None:
-        """parse out ground loads into peak and average for each month of the year.
-            also calculate total monthly totals for energy balance.
-            done for both heating and cooling.
-        inputs: normalized_ground_loads, in Watts
-        outputs: self.hrly_ground_loads,
-                self.hrly_ground_loads_norm,
-                self.monthly_peak_extraction,
-                self.monthly_peak_rejection,
-                self.monthly_ave_ground_load,
-        pull out the peak, total, and average loads for each month from the normalized ground loads
+    def step_3_calc_monthly_load_metrics(self, normalized_ground_loads: list[float]) -> None:
+        """Calculates average, total, peak extraction
+         and peak rejection ground loads for each month of the year.
+        Inputs:
+            normalized_ground_loads: Ground loads in Watts
+        Outputs:
+            self.monthly_total_ground_load: Monthly total ground energy in Wh
+            self.monthly_peak_extraction: Monthly peak heating load (heat extraction) in W
+            self.monthly_peak_rejection: Monthly peak cooling load (heat rejection) in W
+            self.monthly_ave_ground_load: Monthly average ground load in W
         """
 
-        num_unique_months = len(self.years) * 12 + 1
+        num_months = len(self.years) * 12 + 1
 
-        # set up empty lists
-        # monthly total ground energy in Wh
-        self.monthly_total_ground_load = [0.0] * num_unique_months
-        # monthly peak cooling load (or heat rejection) in W
-        self.monthly_peak_rejection = [0.0] * num_unique_months
-        # monthly peak heating load (or heat extraction) in W
-        self.monthly_peak_extraction = [0.0] * num_unique_months
-        # monthly average ground load in W
-        self.monthly_ave_ground_load = [0.0] * num_unique_months
+        # Initialize all monthly arrays at once
+        self.monthly_total_ground_load = [0.0] * num_months
+        self.monthly_peak_rejection = [0.0] * num_months
+        self.monthly_peak_extraction = [0.0] * num_months
+        self.monthly_ave_ground_load = [0.0] * num_months
 
-        # Store the index of the last month's hours
-        hours_in_previous_months: int = 0  # type is integer and set to a value of 0 to start
-        # cycle through each month
-        for i in range(1, len(self.days_in_month)):
-            hours_in_month = HRS_IN_DAY * self.days_in_month[i]  # e.g. 24 * 31, to give hrs in month
+        start_hour = 0
 
-            # Slice the hours in this current month
-            current_month_norm_loads = normalized_ground_loads[
-                hours_in_previous_months : hours_in_previous_months + hours_in_month
-            ]
-            # Handle empty lists
-            if not current_month_norm_loads:
-                current_month_norm_loads = [0.0]
+        for month_idx in range(1, len(self.days_in_month)):
+            hours_in_month = 24 * self.days_in_month[month_idx]
+            end_hour = start_hour + hours_in_month
 
-            # Sum
-            # monthly net ground load
-            self.monthly_total_ground_load = sum(current_month_norm_loads)
+            # Get current month's load data
+            month_loads = normalized_ground_loads[start_hour:end_hour]
 
-            # Peak
-            # monthly peak heat rejection in W
-            self.monthly_peak_rejection[i] = min(current_month_norm_loads) if current_month_norm_loads else 0.0
-            # monthly peak heat extraction in W
-            self.monthly_peak_extraction[i] = max(current_month_norm_loads) if current_month_norm_loads else 0.0
+            if month_loads:  # Only process if we have data
+                # Calculate monthly metrics
+                self.monthly_total_ground_load[month_idx] = sum(month_loads)
+                self.monthly_peak_rejection[month_idx] = min(month_loads)
+                self.monthly_peak_extraction[month_idx] = max(month_loads)
+                self.monthly_ave_ground_load[month_idx] = sum(month_loads) / hours_in_month
 
-            # Average
-            # monthly average ground load in W
-            self.monthly_ave_ground_load[i] = self.monthly_ground_load[i] / hours_in_month
+            start_hour = end_hour
 
-            hours_in_previous_months += hours_in_month
-
-        print("split_loads_by_month has run")
+        print("step_3_calc_monthly_load_metrics")
 
     def step_4_perform_hrly_ExFT_simulation(self, load_profile):
         """

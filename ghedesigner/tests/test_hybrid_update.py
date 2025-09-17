@@ -73,7 +73,7 @@ class TestHybridUpdate(GHEBaseTest):
         normalized_loads = HybridLoadsCalc.step_2_normalize_loads(ground_loads)
         with open('/tmp/normalized.csv', 'w') as f:
             f.writelines([str(n) + '\n' for n in normalized_loads])
-        h.step_3_split_loads_by_month(normalized_loads)
+        h.step_3_calc_monthly_load_metrics(normalized_loads)
         self.assertEqual(13, len(h.monthly_total_ground_load))
         self.assertEqual(13, len(h.monthly_peak_extraction))
         self.assertEqual(13, len(h.monthly_peak_rejection))
