@@ -89,3 +89,26 @@ class TestHybridUpdate(GHEBaseTest):
         #check the higheset total monthly load is still <= the maximum value of 4000 w per hour for a 31 day month
         self.assertLessEqual (4000 * 31 * 24, max(abs(h.monthly_total_ground_load)))
 
+    def test_step_4(self):
+        pass
+    def test_step_5(self):
+        pass
+    def test_step_6(self):
+        pass
+    #test helper functions for step 7
+    def test_find_ExFT_peaks_in_month(self):
+        pass
+    def test_add_single_avg_month(self):
+        pass
+    def test_add_zero_peak_month(self):
+        pass
+    def test_add_single_peak_month(self):
+        pass
+    def test_add_double_peak_month(self):
+        pass
+    def test_calc_hybrid_load_durations(self):
+        pass
+
+
+    def test_step_7(self):
+        pass
