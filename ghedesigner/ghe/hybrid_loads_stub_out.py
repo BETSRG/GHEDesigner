@@ -25,10 +25,24 @@ class HybridLoadsCalc:
             years = [2025]
         self.years = years
 
-        # (used in step 1.5) Get the number of days in each month for a given year (make 0 NULL)
-        self.days_in_month = [0]  # first entry reserved for annual total or peak, see line 72
+        # Get the number of days in each month for a given year (make 0 NULL)
+        self.days_in_month = [0]
         for year in years:
             self.days_in_month.extend([monthrange(year, i)[1] for i in range(1, 13)])
+
+        #compute the starting hour (1-based) for each month in the simulation
+        self.month_start_hours = [0]
+        start_hour = 0
+        for days in self.days_in_month:
+            self.month_start_hours.append(start_hour + 1)
+            start_hour += days * 24
+
+        #compute the end hour (1-based) for each month
+        self.month_end_hours = [0] #list of end hours for each month
+        end_hour = self.days_in_month[0]*24
+        for days in self.days_in_month:
+            self.month_end_hours.append(end_hour+1)
+            end_hour += days *24
 
     def step_1_bldg_to_ground_load(self, building_loads: list[float]) -> list:
         """
@@ -102,7 +116,7 @@ class HybridLoadsCalc:
 
         start_hour = 0
 
-        for month_idx in range(1, len(self.days_in_month)):
+        for month_idx in range(1, len(self.days_in_month)+1):
             hours_in_month = 24 * self.days_in_month[month_idx]
             end_hour = start_hour + hours_in_month
 
@@ -176,7 +190,7 @@ class HybridLoadsCalc:
 
         start_hour = 0
 
-        for month_idx in range(1, len(self.days_in_month)):
+        for month_idx in range(1, len(self.days_in_month)+1):
             hours_in_month = 24 * self.days_in_month[month_idx]
             end_hour = start_hour + hours_in_month
 
@@ -247,7 +261,7 @@ class HybridLoadsCalc:
     def step_7_create_hybrid_loads(self):
         """
         This function sets the framework for the final hybrid loads values and timestamps.
-        It calls on helper functions _get_month_start_hour, find_peaks_in_month,
+        It calls on helper functions _get_month_start_and_end_hours, find_peaks_in_month,
         _add_single_period, _add_single_peak_period, _add_double_peak_period,
 
         inputs: self.n_monthly_min_ExFTs_sorted : list
@@ -269,42 +283,38 @@ class HybridLoadsCalc:
         self.hybrid_time_step_start_hour = []
         #TODO g_funct must be itteratively built
         #starting with month #1 and stepping through each month,
-        for month_idx in range (1, len(self.days_in_month)):
+        for month_idx in range (1, len(self.days_in_month)+1):
             #Calculate month boundaries in terms of hours of the year
-            month_start_hour = self._get_month_start_hour(month_idx)
-            month_end_hour = month_start_hour + (24 * self.days_in_month[month_idx])
+            month_start_hour = self.month_start_hours[month_idx]
 
             # Find peaks that occur in this month
-            peaks_in_month = self._find_peaks_in_month(month_idx, month_start_hour, month_end_hour)
+            ExFT_peaks_in_month = self._find_ExFT_peaks_in_month(month_idx)
 
 
-            if len(peaks_in_month) == 0:
+            if len(ExFT_peaks_in_month) == 0:
                 #No peak ExFT, append 1 entry of average load for month
-                self._add_single_avg_period(month_start_hour, month_idx)
+                self._add_single_avg_month(month_start_hour, month_idx)
 
-            elif len(peaks_in_month) == 1:
+            elif len(ExFT_peaks_in_month) == 1:
                 # One peak ExFT - append up to 3 entries (pre-peak, on-peak, post-peak)
-                self._add_single_peak_periods(peaks_in_month[0], month_start_hour, month_end_hour, month_idx)
+                self._add_single_peak_month(ExFT_peaks_in_month, month_idx)
 
-            elif len(peaks_in_month) == 2:
+            elif len(ExFT_peaks_in_month) == 2:
                 # Two peak ExFTs - append up to 5 entries (pre-peak 1, on-peak 1, pre-peak 2, on-peak 2, post-peak 2)
-                self._add_double_peak_periods(peaks_in_month, month_start_hour, month_end_hour, month_idx)
+                self._add_double_peak_month(ExFT_peaks_in_month, month_idx)
 
-    def _get_month_start_hour(self, month_idx):
-        """Calculate the starting hour of the year for a given month"""
-        start_hour = 0
-        for i in range(1, month_idx):
-            start_hour == 24 * self.days_in_month[i]
-        return start_hour + 1 # 1-based indexing
+    def _find_ExFT_peaks_in_month(self, month_idx):
+        """ Find all peak ExFTs (min and max ExFTs) that occur within the given month"""
 
-    def _find_peaks_in_month(self, month_idx, month_start_hour, month_end_hour):
-        """ Find all peaks (min and max ExFTs) that occur within the given month"""
-        peaks = []
+        ExFT_peaks = []
+
+        month_start_hour = self.month_start_hours[month_idx]
+        month_end_hour = self.month_end_hours [month_idx]
 
         # Check for min ExFT peaks in this month
         for i, hour in enumerate(self.n_monthly_min_ExFTs_time_sorted):
             if hour in range (month_start_hour, month_end_hour + 1):
-                peaks.append({
+                ExFT_peaks.append({
                     'type': 'min',
                     'hour': hour,
                     'value': self.n_monthly_min_ExFTs_sorted[i],
@@ -314,17 +324,17 @@ class HybridLoadsCalc:
         # Check for max ExFT peaks in this month
         for i, hour in enumerate(self.n_monthly_max_ExFTs_time_sorted):
             if hour in range (month_start_hour, month_end_hour + 1):
-                peaks.append({
+                ExFT_peaks.append({
                     'type': 'max',
                     'hour': hour,
                     'value': self.n_monthly_min_ExFTs_sorted[i],
                     'original_month': month_idx
                 })
 
-        peaks.sort(key=lambda x: x['hour'])
-        return peaks
+        ExFT_peaks.sort(key=lambda x: x['hour'])
+        return ExFT_peaks
 
-    def _add_single_avg_period(self, start_hour, month_idx):
+    def _add_single_avg_month(self, start_hour, month_idx):
         """Add a single month with no peaks"""
         # Calculate average load for the entire month
         avg_load = self.monthly_ave_ground_load[month_idx]
@@ -332,15 +342,18 @@ class HybridLoadsCalc:
         self.hybrid_loads.append(avg_load)
         self.hybrid_time_step_start_hour.append(start_hour)
 
-    def _add_single_peak_periods(self, peak, month_start_hour, month_end_hour, month_idx):
+    def _add_single_peak_month(self, ExFT_peak, month_idx):
         """Add periods for a month with one peak (up to 3 periods)
         args: peak, month_start_hour, month_end_hour, month index
         output: updated self.hybrid_loads and updated self.hybrid_time_step_start_hour
         """
-        peak_hour = peak['hour']
+        on_peak_end_hour = ExFT_peak['hour']
+
+        month_start_hour = self.month_start_hours[month_idx]
+        month_end_hour = self.month_end_hours[month_idx]
 
         # Call helper function to get pre-peak load, peak load, duration
-        pre_peak_load, on_peak_load, on_peak_start_hour, on_peak_end_hour = self._calc_on_and_pre_peak(peak, month_start_hour, month_end_hour, month_idx)
+        pre_peak_load, on_peak_load, on_peak_start_hour = self._calc_on_and_pre_peak(ExFT_peak, month_idx)
 
         # Pre-peak period (if peak doesn't start at beginning of month)
         if on_peak_start_hour > month_start_hour:
@@ -357,18 +370,21 @@ class HybridLoadsCalc:
             self.hybrid_loads.append(post_peak_load)
             self.hybrid_time_step_start_hour.append(on_peak_end_hour)
 
-    def _add_double_peak_periods(self, peaks_in_month, month_start_hour, month_end_hour, month_idx):
+    def _add_double_peak_month(self, peaks_in_month, month_idx):
         """Add periods for a month with two peaks (up to 5 periods)
         args: peak, month_start_hour, month_end_hour, month index
         output: updated self.hybrid_loads and updated self.hybrid_time_step_start_hour
         """
-        peak1, peak2 = peaks_in_month[0], peaks_in_month[1]
+        ExFT_peak1, ExFT_peak2 = peaks_in_month[0], peaks_in_month[1]
+        on_peak1_end_hour = ExFT_peak1['hour']
+        on_peak2_end_hour = ExFT_peak2['hour']
 
         # Get peak loads and durations for both peaks
-        pre_peak1_load, on_peak1_load, on_peak1_start_hour, on_peak1_end_hour = self._calc_on_and_pre_peak(peak1, month_start_hour, month_end_hour, month_idx)
+        pre_peak1_load, on_peak1_load, on_peak1_start_hour = self._calc_on_and_pre_peak(ExFT_peak1, month_idx)
+        pre_peak2_load, on_peak2_load, on_peak2_start_hour = self._calc_on_and_pre_peak(ExFT_peak2, month_idx)
 
-        on_peak2_load, on_peak2_start_hour, on_peak2_duration = self._find_peak_durations(peak2)
-        on_peak2_end_hour = on_peak2_start_hour + on_peak2_duration
+        month_start_hour = self.month_start_hours[month_idx]
+        month_end_hour = self.month_end_hours[month_idx]
 
         # Pre-peak 1 period
         if on_peak1_start_hour > month_start_hour:
@@ -382,7 +398,7 @@ class HybridLoadsCalc:
         # Between peaks period
         if on_peak1_end_hour < on_peak2_start_hour:
             between_peaks_load = self.monthly_ave_ground_load[month_idx]
-            self.hybrid_loads.append(between_peaks_load)
+            self.hybrid_loads.append(pre_peak2_load)
             self.hybrid_time_step_start_hour.append(on_peak1_end_hour)
 
         # On-peak 2 period
@@ -395,7 +411,7 @@ class HybridLoadsCalc:
             self.hybrid_loads.append(post_peak2_load)
             self.hybrid_time_step_start_hour.append(on_peak2_end_hour)
 
-    def _calc_on_and_pre_peak(self, peak, month_start_hour, month_end_hour, month_idx):
+    def _calc_on_and_pre_peak(self, ExFT_peak, month_idx):
         """
         # calculate the on-peak load duration and pre-peak load that allows for a
         # hybrid time step ExFT to match the hourly time step peak (max or min) ExFT
@@ -411,14 +427,18 @@ class HybridLoadsCalc:
         # repeat until ExFT_hybrid >= ExFT_target
         # record load quantities and times of occurrence for the month
         #
-        # inputs:
+        # inputs: ExFT_peak : dictionary?
+                month_start_hour : integer
+                month_end_hour : integer
+                month_index : integer
         #
-        # outputs: peak_load, start_hour, duration
+        # outputs: pre_peak_load, on_peak_load, on_peak_start_hour
 
-        find the peak load durations by using the GHE ExFT and increment peak load duration
-        1 hr at a time until ExFT matches hourly simulation
-        :return: the 4 peak load durations
         """
+        month_start_hour = self.month_start_hours[month_idx]
+        month_end_hour = self.month_end_hours[month_idx]
+
+        pass
 
     def _run_ExFT_simulation_hybrid(self):
         """runs the ExFT simulation given a set of hybrid loads
@@ -430,6 +450,7 @@ class HybridLoadsCalc:
         """runs the ExFT simulation given a set of hourly loads
         inputs: ground_loads_hourly
         output:hourly ExFTs
+
 
         """
 
