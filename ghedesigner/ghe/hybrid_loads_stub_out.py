@@ -366,7 +366,7 @@ class HybridLoadsCalc:
 
         # Post-peak period (if peak doesn't extend to end of month)
         if on_peak_end_hour < month_end_hour:
-            post_peak_load = self.monthly_ave_ground_load[month_idx]  # or calculate specific load
+            post_peak_load = self.monthly_ave_ground_load[month_idx]
             self.hybrid_loads.append(post_peak_load)
             self.hybrid_time_step_start_hour.append(on_peak_end_hour)
 
