@@ -16,11 +16,11 @@ class HybridLoadsCalc:
         cop_c: float = 4.5,
     ) -> None:
 
-        # (used in step 1) Initialize COP values
+        # Initialize COP values
         self.cop_h = cop_h  # Heating COP
         self.cop_c = cop_c  # Cooling COP
 
-        # (used in step 1.5) initialize months under study. Currently we only do one year, but in the future, the goal is to create hybrid loads for 10+ years
+        # initialize months under study. Currently we only do one year, but in the future, the goal is to create hybrid loads for 10+ years
         if years is None:
             years = [2025]
         self.years = years
@@ -342,18 +342,28 @@ class HybridLoadsCalc:
         self.hybrid_loads.append(avg_load)
         self.hybrid_time_step_start_hour.append(start_hour)
 
-    def _add_single_peak_month(self, ExFT_peak, month_idx):
+    def _add_single_peak_month(self, ExFT_peak_this_month, month_idx):
         """Add periods for a month with one peak (up to 3 periods)
         args: peak, month_start_hour, month_end_hour, month index
         output: updated self.hybrid_loads and updated self.hybrid_time_step_start_hour
         """
-        on_peak_end_hour = ExFT_peak['hour']
+        on_peak_end_hour = ExFT_peak_this_month['hour']
+        peak_type = ExFT_peak_this_month['type']
 
         month_start_hour = self.month_start_hours[month_idx]
         month_end_hour = self.month_end_hours[month_idx]
 
-        # Call helper function to get pre-peak load, peak load, duration
-        pre_peak_load, on_peak_load, on_peak_start_hour = self._calc_hybrid_load_durations(ExFT_peak, month_idx)
+        #pull on-peak load
+        if peak_type == 'min':
+            on_peak_load = self.monthly_peak_extraction
+        elif peak_type == 'max':
+            on_peak_load = self.monthly_peak_rejection
+        else:
+            Warning (f"ExFT_peak_not found for month {month_idx}")
+
+
+        # Call helper function to get pre-peak load, duration
+        pre_peak_load, on_peak_start_hour = self._calc_hybrid_load_durations(ExFT_peak_this_month, month_idx)
 
         # Pre-peak period (if peak doesn't start at beginning of month)
         if on_peak_start_hour > month_start_hour:
@@ -416,40 +426,51 @@ class HybridLoadsCalc:
         # calculate the on-peak load duration and pre-peak load that allows for a
         # hybrid time step ExFT to match the hourly time step peak (max or min) ExFT
         #
-        # Using the peak load and the peak ExFT for the month,
-        # first assign the peak load of the month a one hour duration
-        # and adjusted pre-peak average for the hours before the peak
+
         #
         # run ExFT simulation with the hybrid load for the month
-        # if ExFT_hybrid < target_ExFT
-        # add 1 hour to the duration of the peak load
+
         # recalculate the average monthly load to maintain energy balance
         # repeat until ExFT_hybrid >= ExFT_target
         # record load quantities and times of occurrence for the month
         #
-        # inputs: ExFT_peak['hour'], ExFT_value, peak_load_value
+        # inputs: ExFT_peak['hour','value','type','month'], month index
         #
         # outputs: pre_peak_load, peak_start_hour
 
         """
+        #pull in the peak load value for the month
 
-        ExFT_peak_hour = ExFT_peak['hour']
-        ExFT_value = ExFT_peak ['value']
-        ExFT_type = ExFT_peak['type']
-        ExFT_month = ExFT_peak['month']
 
-        normalized_ground_load = self.step_2_normalize_loads()
-        ExFTs_hourly = self.step_4_perform_hrly_ExFT_simulation(normalized_ground_load)
+
+
+
+        # Pull in the target peak ExFT for the month and the hour of the year it occurs
+        ExFT_target_value = ExFT_peak ['value']
+        ExFT_target_peak_hour = ExFT_peak['hour']
+        ExFT_target_type = ExFT_peak['type']
+
+        # check for month matching?
+        # ExFT_target_month = ExFT_peak['month']
+        # if ExFT_target_month == month_idx
+
+        # assign the hybrid peak load of the month a one hour duration
+
+        # adjust pre-peak average for the hours before the peak to maintain energy conservation
+        # if ExFT_hybrid < target_ExFT add 1 hour to the duration of the peak load
 
 
         pass
 
     def _run_ExFT_simulation_hybrid(self):
-        """runs the ExFT simulation given a set of hybrid loads
-        inputs: self.hybrid_loads
+        """runs the ExFT simulation given a set of hybrid loads.
+        hybrid loads updates with all previous months
+        inputs: self.hybrid_loads, self.hybrid_loads_duration
         Output: ExFT_at_end_hour
 
         """
+
+
         pass
 
 
