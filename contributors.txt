@@ -5,3 +5,4 @@ Edwin Lee <edwin.lee@nrel.gov>
 Xiaobing Liu <liux2@ornl.gov>
 Matt Mitchell <matt.mitchell@nrel.gov>
 Timothy West <timothy.west@okstate.edu>
+Alex Swindler <alex.swindler@nrel.gov>
