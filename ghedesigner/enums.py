@@ -39,3 +39,4 @@ class FluidType(Enum):
     METHYLALCOHOL = auto()
     PROPYLENEGLYCOL = auto()
     WATER = auto()
+    CUSTOMFLUID = auto()

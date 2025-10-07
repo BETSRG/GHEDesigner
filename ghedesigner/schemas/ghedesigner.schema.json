@@ -34,8 +34,38 @@
       "format": "Watts/Meter-Kelvin",
       "description": "Thermal conductivity."
     },
+    "density": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Kilograms/Meter^3",
+      "description": "Density."
+    },
     "file_path": {
       "type": "string"
+    },
+    "fluid_concentration_percent": {
+      "type": "number",
+      "maximum": 60,
+      "minimum": 0,
+      "format": "Percent",
+      "description": "Mass fraction concentration percent of circulation fluid. e.g.: '0' indicates pure water; '20' indicates 20% antifreeze, 80% pure water."
+    },
+    "fluid_name": {
+      "type": "string",
+      "enum": [
+        "WATER",
+        "ETHYLALCOHOL",
+        "ETHYLENEGLYCOL",
+        "METHYLALCOHOL",
+        "PROPYLENEGLYCOL",
+        "CUSTOMFLUID"
+      ],
+      "description": "Circulation fluid type."
+    },
+    "fluid_temperature": {
+      "type": "number",
+      "format": "Centigrade",
+      "description": "Average design fluid temperature at peak conditions."
     },
     "H": {
       "type": "number",
@@ -158,6 +188,18 @@
       "format": "Meters",
       "description": "Spacing between up/down legs of u-tube pipe, as measured from nearest outer surfaces of each pipe (o<-- s -->o)."
     },
+    "specific_heat": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Joules/Kilogram-Kelvin",
+      "description": "Specific Heat."
+    },
+    "viscosity": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Pascal-Second",
+      "description": "Dynamic viscosity."
+    },
     "width": {
       "type": "number",
       "minimum": 0,
@@ -191,30 +233,71 @@
       "description": "A fluid definition object.",
       "properties": {
         "fluid_name": {
-          "type": "string",
-          "enum": [
-            "WATER",
-            "ETHYLALCOHOL",
-            "ETHYLENEGLYCOL",
-            "METHYLALCOHOL",
-            "PROPYLENEGLYCOL"
-          ],
-          "description": "Circulation fluid type."
+          "$ref": "#/$defs/fluid_name"
         },
         "concentration_percent": {
-          "type": "number",
-          "maximum": 60,
-          "minimum": 0,
-          "format": "Percent",
-          "description": "Mass fraction concentration percent of circulation fluid. e.g.: '0' indicates pure water; '20' indicates 20% antifreeze, 80% pure water."
+          "$ref": "#/$defs/fluid_concentration_percent"
         },
         "temperature": {
-          "type": "number",
-          "format": "Centigrade",
-          "description": "Average design fluid temperature at peak conditions."
+          "#ref": "#/$defs/fluid_temperature"
+        },
+        "density": {
+          "#ref": "#/$defs/density"
+        },
+        "specific_heat": {
+          "#ref": "#/$defs/specific_heat"
+        },
+        "conductivity": {
+          "#ref": "#/$defs/conductivity"
+        },
+        "viscosity": {
+          "#ref": "#/$defs/viscosity"
         }
       },
-      "required": ["fluid_name", "concentration_percent", "temperature"],
+      "oneOf": [
+        {
+          "properties": {
+            "fluid_name": {
+              "$ref": "#/$defs/fluid_name"
+            },
+            "concentration_percent": {
+              "$ref": "#/$defs/fluid_concentration_percent"
+            },
+            "temperature": {
+              "#ref": "#/$defs/fluid_temperature"
+            }
+          },
+          "required": ["fluid_name", "concentration_percent", "temperature"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "fluid_name": {
+              "$ref": "#/$defs/fluid_name"
+            },
+            "density": {
+              "#ref": "#/$defs/density"
+            },
+            "specific_heat": {
+              "#ref": "#/$defs/specific_heat"
+            },
+            "conductivity": {
+              "#ref": "#/$defs/conductivity"
+            },
+            "viscosity": {
+              "#ref": "#/$defs/viscosity"
+            }
+          },
+          "required": [
+            "fluid_name",
+            "density",
+            "conductivity",
+            "specific_heat",
+            "viscosity"
+          ],
+          "additionalProperties": false
+        }
+      ],
       "additionalProperties": false
     },
     "building": {
