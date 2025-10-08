@@ -97,17 +97,6 @@
     },
     "loads": {
       "type": "object",
-      "properties": {
-        "column": {
-          "$ref": "#/$defs/column"
-        },
-        "file_path": {
-          "$ref": "#/$defs/file_path"
-        },
-        "load_values": {
-          "$ref": "#/$defs/load_values"
-        }
-      },
       "oneOf": [
         {
           "properties": {
@@ -130,8 +119,7 @@
           "required": ["file_path", "column"],
           "additionalProperties": false
         }
-      ],
-      "additionalProperties": false
+      ]
     },
     "no_go_boundaries": {
       "type": "array",
