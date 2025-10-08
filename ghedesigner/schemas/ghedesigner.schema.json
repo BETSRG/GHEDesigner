@@ -231,29 +231,6 @@
     "fluid": {
       "type": "object",
       "description": "A fluid definition object.",
-      "properties": {
-        "fluid_name": {
-          "$ref": "#/$defs/fluid_name"
-        },
-        "concentration_percent": {
-          "$ref": "#/$defs/fluid_concentration_percent"
-        },
-        "temperature": {
-          "#ref": "#/$defs/fluid_temperature"
-        },
-        "density": {
-          "#ref": "#/$defs/density"
-        },
-        "specific_heat": {
-          "#ref": "#/$defs/specific_heat"
-        },
-        "conductivity": {
-          "#ref": "#/$defs/conductivity"
-        },
-        "viscosity": {
-          "#ref": "#/$defs/viscosity"
-        }
-      },
       "oneOf": [
         {
           "properties": {
@@ -264,7 +241,7 @@
               "$ref": "#/$defs/fluid_concentration_percent"
             },
             "temperature": {
-              "#ref": "#/$defs/fluid_temperature"
+              "$ref": "#/$defs/fluid_temperature"
             }
           },
           "required": ["fluid_name", "concentration_percent", "temperature"],
@@ -276,16 +253,16 @@
               "$ref": "#/$defs/fluid_name"
             },
             "density": {
-              "#ref": "#/$defs/density"
+              "$ref": "#/$defs/density"
             },
             "specific_heat": {
-              "#ref": "#/$defs/specific_heat"
+              "$ref": "#/$defs/specific_heat"
             },
             "conductivity": {
-              "#ref": "#/$defs/conductivity"
+              "$ref": "#/$defs/conductivity"
             },
             "viscosity": {
-              "#ref": "#/$defs/viscosity"
+              "$ref": "#/$defs/viscosity"
             }
           },
           "required": [
@@ -297,8 +274,7 @@
           ],
           "additionalProperties": false
         }
-      ],
-      "additionalProperties": false
+      ]
     },
     "building": {
       "type": "object",
