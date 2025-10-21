@@ -12,23 +12,23 @@ class ParallelPipeSystem:
         self,
         x_coord: float,
         y_coord: float,
-        fluid_temp: float,
-        epsilon_x: float,
-        beta: float,
+        # fluid_temp: float,
+        # epsilon_x: float,
+        # beta: float,
         pipe: Pipe,
         soil: Soil,
     ):
         self.pipe = pipe
         self.soil = soil
-        self.T_f0 = fluid_temp
-        self.epsilon_x = epsilon_x
-        self.beta = beta
+        # self.T_f0 = fluid_temp
+        # self.epsilon_x = epsilon_x
+        # self.beta = beta
         self.B = x_coord
         self.D = y_coord
         self.r_p = pipe.r_out
 
         self.characteristic_time = (pipe.r_out) ** 2 / soil.k
-        self.pipe_resistance = beta / (TWO_PI * pipe.k)
+        # self.pipe_resistance = beta / (TWO_PI * pipe.k)
 
     def radial_distance(self, radius, psi, n):  # rename variables to make logical sense
         pipe_one = 1
@@ -67,61 +67,86 @@ class ParallelPipeSystem:
     def laplace_integral_sum(self, sigma: complex, epsilon_x: float):
         epsilons = {2: epsilon_x, 3: -epsilon_x, 4: -1.0}
 
-        def integrand(psi):
+        def integrand_real(psi):
             sum_val = 0.0
             for n in range(2, 5):
                 dist = self.radial_distance(self.r_p, psi, n)
                 argument = (dist / self.r_p) * sigma
-                sum_val += epsilons[n] * special.k0(argument)
-            return sum_val
+                sum_val += epsilons[n] * special.kv(0, argument)
+            return np.real(sum_val)  # Return only the real part
 
-        integral_result, _ = integrate.quad(integrand, -math.pi, math.pi)
+        def integrand_imag(psi):
+            sum_val = 0.0
+            for n in range(2, 5):
+                dist = self.radial_distance(self.r_p, psi, n)
+                argument = (dist / self.r_p) * sigma
+                sum_val += epsilons[n] * special.kv(0, argument)
+            return np.imag(sum_val)  # Return only the imaginary part
 
+        real_result, _ = integrate.quad(integrand_real, -math.pi, math.pi)
+        imag_result, _ = integrate.quad(integrand_imag, -math.pi, math.pi)
+
+        integral_result = complex(real_result, imag_result)
         return (1 / (TWO_PI)) * integral_result
 
     def laplace_integral_sum_derivative(self, sigma: complex, epsilon_x: float):
         epsilons = {2: epsilon_x, 3: -epsilon_x, 4: -1.0}
 
-        def integrand(psi):
+        def integrand_real(psi):
             sum_val = 0.0
             for n in range(2, 5):
                 dist = self.radial_distance(self.r_p, psi, n)
                 dist_deriv = self.radial_distance_derivative(self.r_p, psi, n)
                 argument = (dist / self.r_p) * sigma
-                sum_val += epsilons[n] * special.k1(argument) * dist_deriv
-            return sum_val
+                sum_val += epsilons[n] * special.kv(1, argument) * dist_deriv
+            return np.real(sum_val)
 
-        integral_result, _ = integrate.quad(integrand, -math.pi, math.pi)
+        def integrand_imag(psi):
+            sum_val = 0.0
+            for n in range(2, 5):
+                dist = self.radial_distance(self.r_p, psi, n)
+                dist_deriv = self.radial_distance_derivative(self.r_p, psi, n)
+                argument = (dist / self.r_p) * sigma
+                sum_val += epsilons[n] * special.kv(1, argument) * dist_deriv
+            return np.imag(sum_val)
 
+        real_result, _ = integrate.quad(integrand_real, -math.pi, math.pi)
+        imag_result, _ = integrate.quad(integrand_imag, -math.pi, math.pi)
+
+        integral_result = complex(real_result, imag_result)
         return (1 / (TWO_PI)) * integral_result
 
-    def steady_state_heat_flow(self, epsilon_x):
+    def steady_state_heat_flow(self, epsilon_x, beta):
         return 1 / (
             math.log((2 * self.D) / self.r_p)
             + epsilon_x * math.log((math.sqrt(self.B**2 + self.D**2)) / (self.B))
-            + self.beta
+            + beta
         )
 
-    def n_function(self, sigma: complex, epsilon_x: float):
-        numerator = special.k1(sigma) + self.laplace_integral_sum_derivative(sigma, epsilon_x)
+    def n_function(self, sigma: complex, epsilon_x: float, beta: float):
+        numerator = special.kv(1, sigma) + self.laplace_integral_sum_derivative(sigma, epsilon_x)
         denominator = (
-            special.k0(sigma)
+            special.kv(0, sigma)
             + self.laplace_integral_sum(sigma, epsilon_x)
-            + self.beta * sigma * (special.k1(sigma) + self.laplace_integral_sum_derivative(sigma, epsilon_x))
+            + beta * sigma * (special.kv(1, sigma) + self.laplace_integral_sum_derivative(sigma, epsilon_x))
         )
 
         return numerator / denominator
 
-    def heat_transfer(self, time, epsilon_x):
+    def heat_transfer(self, time, epsilon_x, beta):
+        # Handle the t=0 edge case first
+        if time <= 0:
+            return 1.0 / beta
+
         tau = time / self.characteristic_time
 
         def integrand(u):
             sigma = 1j * u
 
-            real_n = np.real(self.N_function(sigma, epsilon_x))
+            real_n = np.real(self.n_function(sigma, epsilon_x, beta))
 
             return math.exp(-tau * u**2) * real_n
 
         integral_result, _ = integrate.quad(integrand, 0, 5 / math.sqrt(tau))
 
-        return (2 / math.pi) * integral_result + self.steady_state_heat_flow(epsilon_x)
+        return (2 / math.pi) * integral_result + self.steady_state_heat_flow(epsilon_x, beta)
