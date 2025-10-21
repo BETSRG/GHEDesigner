@@ -150,3 +150,35 @@ class ParallelPipeSystem:
         integral_result, _ = integrate.quad(integrand, 0, 5 / math.sqrt(tau))
 
         return (2 / math.pi) * integral_result + self.steady_state_heat_flow(epsilon_x, beta)
+
+    def calculate_fluid_temp(
+        self,
+        known_heat_loss: float,
+        time: float,
+        epsilon_x: float,
+        beta: float,
+    ) -> float:
+        heat_flux = self.heat_transfer(time, epsilon_x, beta)
+
+        lambda_soil = self.soil.k
+
+        # handle divide by 0 error
+        if heat_flux == 0:
+            return 0
+
+        fluid_temp = known_heat_loss / (TWO_PI * lambda_soil * heat_flux)
+
+        return fluid_temp
+
+
+class SinglePipeSystem:
+    def __init__(
+        self,
+        pipe: Pipe,
+        soil: Soil,
+    ):
+        self.pipe = pipe
+        self.soil = soil
+        self.r_p = pipe.r_out
+
+    # add functions from page 10 for single pipe system
