@@ -3,6 +3,7 @@ import math
 import numpy as np
 import pytest
 
+from ghedesigner.constants import TWO_PI
 from ghedesigner.horizontal_pipe_heat_exchange import ParallelPipeSystem
 
 
@@ -121,3 +122,18 @@ def test_heat_transfer_after_long_time(pipe_system):
     calculated_steady_state_value = pipe_system.heat_transfer(time, epsilon_x, beta)
 
     assert calculated_steady_state_value == pytest.approx(known_steady_state_value)
+
+
+def test_temperature_calculation(pipe_system):
+    epsilon_x = 1
+    beta = 0.7
+    time = 10
+    known_heat_loss = 1
+
+    known_temperature = known_heat_loss / (
+        TWO_PI * pipe_system.soil.k * pipe_system.heat_transfer(time, epsilon_x, beta)
+    )
+
+    calculated_temperature = pipe_system.calculate_fluid_temp(known_heat_loss, time, epsilon_x, beta)
+
+    assert calculated_temperature == pytest.approx(known_temperature)
