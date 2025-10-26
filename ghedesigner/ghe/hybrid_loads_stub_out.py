@@ -116,7 +116,7 @@ class HybridLoadsCalc:
 
         start_hour = 0
 
-        for month_idx in range(1, len(self.days_in_month)+1):
+        for month_idx in range(1, len(self.days_in_month)):
             hours_in_month = 24 * self.days_in_month[month_idx]
             end_hour = start_hour + hours_in_month
 
