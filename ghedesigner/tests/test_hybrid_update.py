@@ -1,5 +1,5 @@
-from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.ghe.hybrid_loads_stub_out import HybridLoadsCalc
+from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
 class TestHybridUpdate(GHEBaseTest):
@@ -7,12 +7,10 @@ class TestHybridUpdate(GHEBaseTest):
         return HybridLoadsCalc()
 
     def test_step_1(self):
-
         cop = 3
 
         building_loads = [100, 200, 300, -100, -200, -300]
-        expected_ghe_loads = [x * (1 - 1 / cop) if x >=
-                              0 else x * (1 + 1/cop) for x in building_loads]
+        expected_ghe_loads = [x * (1 - 1 / cop) if x >= 0 else x * (1 + 1 / cop) for x in building_loads]
 
         actual_ghe_loads = HybridLoadsCalc(cop_h=3, cop_c=3).step_1_bldg_to_ground_load(building_loads)
         for idx, actual in enumerate(actual_ghe_loads):
@@ -20,7 +18,6 @@ class TestHybridUpdate(GHEBaseTest):
             self.assertAlmostEqual(actual, expected)
 
     def test_step_2(self):
-
         # check 1: zero ground load should result in zero normalized load
         zero_loads = [0.0] * 8760
         normalized = HybridLoadsCalc.step_2_normalize_loads(zero_loads)
@@ -71,44 +68,51 @@ class TestHybridUpdate(GHEBaseTest):
         building_loads = self.get_atlanta_loads()
         ground_loads = HybridLoadsCalc().step_1_bldg_to_ground_load(building_loads)
         normalized_loads = HybridLoadsCalc.step_2_normalize_loads(ground_loads)
-        with open('/tmp/normalized.csv', 'w') as f:
-            f.writelines([str(n) + '\n' for n in normalized_loads])
+        with open("/tmp/normalized.csv", "w") as f:
+            f.writelines([str(n) + "\n" for n in normalized_loads])
         h.step_3_calc_monthly_load_metrics(normalized_loads)
         self.assertEqual(13, len(h.monthly_total_ground_load))
         self.assertEqual(13, len(h.monthly_peak_extraction))
         self.assertEqual(13, len(h.monthly_peak_rejection))
         self.assertEqual(13, len(h.monthly_ave_ground_load))
 
-        #check values
-        #check absolute value of peak is 4000
-        self.assertAlmostEqual(4000, max(h.monthly_peak_extraction)|max(abs(h.monthly_peak_rejection)))
+        # check values
+        # check absolute value of peak is 4000
+        self.assertAlmostEqual(4000, max(h.monthly_peak_extraction) | max(abs(h.monthly_peak_rejection)))
 
         # check absolute highest monthly average is still below 4000 w
-        self.assertLessEqual (4000, max(abs(h.monthly_ave_ground_load)))
+        self.assertLessEqual(4000, max(abs(h.monthly_ave_ground_load)))
 
-        #check the higheset total monthly load is still <= the maximum value of 4000 w per hour for a 31 day month
-        self.assertLessEqual (4000 * 31 * 24, max(abs(h.monthly_total_ground_load)))
+        # check the higheset total monthly load is still <= the maximum value of 4000 w per hour for a 31 day month
+        self.assertLessEqual(4000 * 31 * 24, max(abs(h.monthly_total_ground_load)))
 
     def test_step_4(self):
         pass
+
     def test_step_5(self):
         pass
+
     def test_step_6(self):
         pass
-    #test helper functions for step 7
+
+    # test helper functions for step 7
     def test_find_ExFT_peaks_in_month(self):
         pass
+
     def test_add_single_avg_month(self):
         pass
+
     def test_add_zero_peak_month(self):
         pass
+
     def test_add_single_peak_month(self):
         pass
+
     def test_add_double_peak_month(self):
         pass
+
     def test_calc_hybrid_load_durations(self):
         pass
-
 
     def test_step_7(self):
         pass
