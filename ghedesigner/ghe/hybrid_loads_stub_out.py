@@ -1,8 +1,5 @@
 from calendar import monthrange
 
-import numpy as np
-
-from ghedesigner.constants import HRS_IN_DAY
 from ghedesigner.utilities import simulate_hourly
 
 
@@ -10,13 +7,14 @@ class HybridLoadsCalc:
     def __init__(
         self,
         years: list[float] | None = None,
-        start_month = None,
-        end_month = None,
+        start_month=None,
+        end_month=None,
         cop_h: float = 3.8,
         cop_c: float = 4.5,
     ) -> None:
 
         # Initialize COP values
+        # (used in step 1) Initialize COP values
         self.cop_h = cop_h  # Heating COP
         self.cop_c = cop_c  # Cooling COP
 
@@ -30,19 +28,19 @@ class HybridLoadsCalc:
         for year in years:
             self.days_in_month.extend([monthrange(year, i)[1] for i in range(1, 13)])
 
-        #compute the starting hour (1-based) for each month in the simulation
+        # compute the starting hour (1-based) for each month in the simulation
         self.month_start_hours = [0]
         start_hour = 0
         for days in self.days_in_month:
             self.month_start_hours.append(start_hour + 1)
             start_hour += days * 24
 
-        #compute the end hour (1-based) for each month
-        self.month_end_hours = [0] #list of end hours for each month
-        end_hour = self.days_in_month[0]*24
+        # compute the end hour (1-based) for each month
+        self.month_end_hours = [0]  # list of end hours for each month
+        end_hour = self.days_in_month[0] * 24
         for days in self.days_in_month:
-            self.month_end_hours.append(end_hour+1)
-            end_hour += days *24
+            self.month_end_hours.append(end_hour + 1)
+            end_hour += days * 24
 
     def step_1_bldg_to_ground_load(self, building_loads: list[float]) -> list:
         """
@@ -116,7 +114,7 @@ class HybridLoadsCalc:
 
         start_hour = 0
 
-        for month_idx in range(1, len(self.days_in_month)+1):
+        for month_idx in range(1, len(self.days_in_month)):
             hours_in_month = 24 * self.days_in_month[month_idx]
             end_hour = start_hour + hours_in_month
 
@@ -166,12 +164,12 @@ class HybridLoadsCalc:
         delta_t_fluid = simulate_hourly(hour_indices, q, g, resist_bh_effective, two_pi_k, ts)
         return delta_t_fluid
 
-    def step_5_get_monthly_ExFT_maxs_mins_and_times(self, hourly_ExFTghe: list[float]) -> None:
+    def step_5_get_monthly_ExFT_maxs_mins_and_times(self, hourly_ExFThe: list[float]) -> None:
         """Split the yearly ExFT of the GHE into months.
         Identify the min and max ExFT for each month and hour of the year on which it occurs.
 
         Args:
-            hourly_ExFTghe: Hourly exiting fluid temperatures from GHE
+            hourly_ExFThe: Hourly exiting fluid temperatures from GHE
 
         Outputs:
             self.monthly_min_ExFT: Monthly minimum ExFT [degrees C]
@@ -190,11 +188,11 @@ class HybridLoadsCalc:
 
         start_hour = 0
 
-        for month_idx in range(1, len(self.days_in_month)+1):
+        for month_idx in range(1, len(self.days_in_month) + 1):
             hours_in_month = 24 * self.days_in_month[month_idx]
             end_hour = start_hour + hours_in_month
 
-            month_ExFTs = hourly_ExFTghe[start_hour:end_hour]
+            month_ExFTs = hourly_ExFThe[start_hour:end_hour]
 
             if month_ExFTs:  # Only process if we have data
                 # Find min and max values
@@ -230,9 +228,9 @@ class HybridLoadsCalc:
                 self.n_monthly_max_ExFTs_sorted
                 self.n_monthly_max_ExFTs_time_sorted
         """
-        #pair up temperatures and corresponding hours of year
-        sorted_min_pairs = sorted (zip(self.monthly_min_ExFT, self.monthly_min_ExFT_time))
-        sorted_max_pairs = sorted (zip(self.monthly_max_ExFT, self.monthly_max_ExFT_time),reverse=True)
+        # pair up temperatures and corresponding hours of year
+        sorted_min_pairs = sorted(zip(self.monthly_min_ExFT, self.monthly_min_ExFT_time))
+        sorted_max_pairs = sorted(zip(self.monthly_max_ExFT, self.monthly_max_ExFT_time), reverse=True)
 
         # Separate back into sorted lists
         sorted_min_temps, sorted_min_hours = zip(*sorted_min_pairs)
@@ -243,20 +241,19 @@ class HybridLoadsCalc:
         sorted_max_temps = list(sorted_max_temps)
         sorted_max_hours = list(sorted_max_hours)
 
-        #pull out top N number of temps and timestamps
+        # pull out top N number of temps and timestamps
 
-        self.n_monthly_min_ExFTs_sorted = sorted_min_temps[:(n-1)]
-        self.n_monthly_min_ExFTs_time_sorted = sorted_min_temps[:(n-1)]
+        self.n_monthly_min_ExFTs_sorted = sorted_min_temps[: (n - 1)]
+        self.n_monthly_min_ExFTs_time_sorted = sorted_min_temps[: (n - 1)]
 
-        self.n_monthly_max_ExFTs_sorted = sorted_max_temps[:(n-1)]
-        self.n_monthly_max_ExFTs_time_sorted = sorted_max_temps[:(n-1)]
+        self.n_monthly_max_ExFTs_sorted = sorted_max_temps[: (n - 1)]
+        self.n_monthly_max_ExFTs_time_sorted = sorted_max_temps[: (n - 1)]
 
         print("step_6_sort_n_ExFTpks has run")
         print(f" highest {n} max ExFT are {self.n_monthly_max_ExFTs_sorted}")
         print(f" max ExFTs occur on these hours {self.n_monthly_max_ExFTs_time_sorted}")
         print(f" lowest {n} min ExFT are {self.n_monthly_max_ExFTs_sorted}")
         print(f" min ExFTs occur on these hours {self.n_monthly_min_ExFTs_time_sorted}")
-
 
     def step_7_create_hybrid_loads(self):
         """
@@ -281,18 +278,17 @@ class HybridLoadsCalc:
         # Initialize output lists
         self.hybrid_loads = []
         self.hybrid_time_step_start_hour = []
-        #TODO g_funct must be itteratively built
-        #starting with month #1 and stepping through each month,
-        for month_idx in range (1, len(self.days_in_month)+1):
-            #Calculate month boundaries in terms of hours of the year
+        # TODO g_funct must be itteratively built
+        # starting with month #1 and stepping through each month,
+        for month_idx in range(1, len(self.days_in_month) + 1):
+            # Calculate month boundaries in terms of hours of the year
             month_start_hour = self.month_start_hours[month_idx]
 
             # Find peaks that occur in this month
             ExFT_peaks_in_month = self._find_ExFT_peaks_in_month(month_idx)
 
-
             if len(ExFT_peaks_in_month) == 0:
-                #No peak ExFT, append 1 entry of average load for month
+                # No peak ExFT, append 1 entry of average load for month
                 self._add_zero_peak_month(month_start_hour, month_idx)
 
             elif len(ExFT_peaks_in_month) == 1:
@@ -304,34 +300,28 @@ class HybridLoadsCalc:
                 self._add_double_peak_month(ExFT_peaks_in_month, month_idx)
 
     def _find_ExFT_peaks_in_month(self, month_idx):
-        """ Find all peak ExFTs (min and max ExFTs) that occur within the given month"""
+        """Find all peak ExFTs (min and max ExFTs) that occur within the given month"""
 
         ExFT_peaks = []
 
         month_start_hour = self.month_start_hours[month_idx]
-        month_end_hour = self.month_end_hours [month_idx]
+        month_end_hour = self.month_end_hours[month_idx]
 
         # Check for min ExFT peaks in this month
         for i, hour in enumerate(self.n_monthly_min_ExFTs_time_sorted):
-            if hour in range (month_start_hour, month_end_hour + 1):
-                ExFT_peaks.append({
-                    'type': 'min',
-                    'hour': hour,
-                    'value': self.n_monthly_min_ExFTs_sorted[i],
-                    'month': month_idx
-                })
+            if hour in range(month_start_hour, month_end_hour + 1):
+                ExFT_peaks.append(
+                    {"type": "min", "hour": hour, "value": self.n_monthly_min_ExFTs_sorted[i], "month": month_idx}
+                )
 
         # Check for max ExFT peaks in this month
         for i, hour in enumerate(self.n_monthly_max_ExFTs_time_sorted):
-            if hour in range (month_start_hour, month_end_hour + 1):
-                ExFT_peaks.append({
-                    'type': 'max',
-                    'hour': hour,
-                    'value': self.n_monthly_min_ExFTs_sorted[i],
-                    'month': month_idx
-                })
+            if hour in range(month_start_hour, month_end_hour + 1):
+                ExFT_peaks.append(
+                    {"type": "max", "hour": hour, "value": self.n_monthly_min_ExFTs_sorted[i], "month": month_idx}
+                )
 
-        ExFT_peaks.sort(key=lambda x: x['hour'])
+        ExFT_peaks.sort(key=lambda x: x["hour"])
         return ExFT_peaks
 
     def _add_zero_peak_month(self, start_hour, month_idx):
@@ -349,6 +339,7 @@ class HybridLoadsCalc:
         """
         on_peak_end_hour = ExFT_peak_this_month['hour']
         peak_type = ExFT_peak_this_month['type']
+        on_peak_end_hour = ExFT_peak["hour"]
 
         month_start_hour = self.month_start_hours[month_idx]
         month_end_hour = self.month_end_hours[month_idx]
@@ -386,8 +377,8 @@ class HybridLoadsCalc:
         output: updated self.hybrid_loads and updated self.hybrid_time_step_start_hour
         """
         ExFT_peak1, ExFT_peak2 = peaks_in_month[0], peaks_in_month[1]
-        on_peak1_end_hour = ExFT_peak1['hour']
-        on_peak2_end_hour = ExFT_peak2['hour']
+        on_peak1_end_hour = ExFT_peak1["hour"]
+        on_peak2_end_hour = ExFT_peak2["hour"]
 
         # Get peak loads and durations for both peaks
         pre_peak1_load, on_peak1_load, on_peak1_start_hour = self._calc_hybrid_load_durations(ExFT_peak1, month_idx)
@@ -459,8 +450,13 @@ class HybridLoadsCalc:
         # adjust pre-peak average for the hours before the peak to maintain energy conservation
         # if ExFT_hybrid < target_ExFT add 1 hour to the duration of the peak load
 
+        ExFT_peak_hour = ExFT_peak["hour"]
+        ExFT_value = ExFT_peak["value"]
+        ExFT_type = ExFT_peak["type"]
+        ExFT_month = ExFT_peak["month"]
 
-        pass
+        normalized_ground_load = self.step_2_normalize_loads()
+        ExFTs_hourly = self.step_4_perform_hrly_ExFT_simulation(normalized_ground_load)
 
     def _run_ExFT_simulation_hybrid(self):
         """runs the ExFT simulation given a set of hybrid loads.
@@ -505,8 +501,6 @@ class HybridLoadsCalc:
     #         f"sample of avg_load_hrly_w_pks array {hybrid_load_for_month[pk_hour_of_month - 2 : pk_hour_of_month + 3]}"
     #     )
     #     return hybrid_load_for_month
-
-
 
     def step_8():
         # reformat hybrid loads into something that GHE designer can use
