@@ -27,13 +27,14 @@ class ParallelPipeSystem:
         self.D = y_coord
         self.r_p = pipe.r_out
 
-        self.characteristic_time = (pipe.r_out) ** 2 / soil.k
-        # self.pipe_resistance = beta / (TWO_PI * pipe.k)
+        kappa = soil.k / soil.rhocp
+        self.characteristic_time = (self.r_p) ** 2 / kappa
 
-    def radial_distance(self, radius, psi, n):  # rename variables to make logical sense
+    def radial_distance(self, radius, psi, n):
         pipe_one = 1
         pipe_two = 2
         pipe_three = 3
+        pipe_four = 4
         if n == pipe_one:
             return radius
         elif n == pipe_two:
@@ -46,7 +47,7 @@ class ParallelPipeSystem:
                 + 4 * self.B * radius * math.cos(psi)
                 + 4 * self.D * radius * math.sin(psi)
             )
-        else:  # add error handling for n greater than 4
+        elif n == pipe_four:
             return math.sqrt(4 * self.D**2 + radius**2 + 4 * self.D * radius * math.sin(psi))
 
     def radial_distance_derivative(self, radius, psi, n):  # rename variables to make logical sense
