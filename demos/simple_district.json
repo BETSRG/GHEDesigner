@@ -17,7 +17,7 @@
   },
   "heat_pump": {
     "hp1": {
-      "cooling": {
+      "cooling_performance": {
         "a": 0.0001,
         "b": 0.00112,
         "c": 1.13,
@@ -27,7 +27,7 @@
         "design_cap": 4396.0
       },
       "design_flow_rate": 0.296,
-      "heating": {
+      "heating_performance": {
         "a": -7.13e-5,
         "b": 0.00534,
         "c": 0.734,
@@ -40,16 +40,16 @@
   },
   "building": {
     "building1": {
-      "heating": {
+      "heating_load": {
         "loads": {
-          "column": "Small",
+          "column_name": "Small",
           "file_path": "../ghedesigner/tests/test_data/Simple_Load_Data.csv"
         },
         "heat_pump": "hp1"
       },
-      "cooling": {
+      "cooling_load": {
         "loads": {
-          "column": "Zero",
+          "column_name": "Zero",
           "file_path": "../ghedesigner/tests/test_data/Simple_Load_Data.csv"
         },
         "heat_pump": "hp1"

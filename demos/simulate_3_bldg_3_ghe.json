@@ -45,7 +45,7 @@
   },
   "heat_pump": {
     "hp1": {
-      "cooling": {
+      "cooling_performance": {
         "a": 0.0001,
         "b": 0.00112,
         "c": 1.13,
@@ -55,7 +55,7 @@
         "design_cap": 4396.0
       },
       "design_flow_rate": 0.296,
-      "heating": {
+      "heating_performance": {
         "a": -7.13e-5,
         "b": 0.00534,
         "c": 0.734,
@@ -66,7 +66,7 @@
       }
     },
     "hp2": {
-      "cooling": {
+      "cooling_performance": {
         "a": 0.0001,
         "b": -0.00041,
         "c": 1.15,
@@ -76,7 +76,7 @@
         "design_cap": 6709.0
       },
       "design_flow_rate": 0.495,
-      "heating": {
+      "heating_performance": {
         "a": -7.86e-5,
         "b": 0.00539,
         "c": 0.734,
@@ -87,7 +87,7 @@
       }
     },
     "hp3": {
-      "cooling": {
+      "cooling_performance": {
         "a": 0.0001,
         "b": -0.00084,
         "c": 1.16,
@@ -97,7 +97,7 @@
         "design_cap": 9752.0
       },
       "design_flow_rate": 0.693,
-      "heating": {
+      "heating_performance": {
         "a": -6.8e-5,
         "b": 0.00497,
         "c": 0.738,
@@ -108,7 +108,7 @@
       }
     },
     "hp4": {
-      "cooling": {
+      "cooling_performance": {
         "a": 0.0,
         "b": 0.0,
         "c": 0.0,
@@ -118,7 +118,7 @@
         "design_cap": 0.0
       },
       "design_flow_rate": 0.425,
-      "heating": {
+      "heating_performance": {
         "a": -6.06e-5,
         "b": 0.0051,
         "c": 0.692,
@@ -131,75 +131,75 @@
   },
   "building": {
     "building1": {
-      "heating": {
+      "heating_load": {
         "loads": {
-          "column": "B1Z1_HPHtgLd_W",
+          "column_name": "B1Z1_HPHtgLd_W",
           "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp1"
       },
-      "cooling": {
+      "cooling_load": {
         "loads": {
-          "column": "B1Z1_HPClgLd_W",
+          "column_name": "B1Z1_HPClgLd_W",
           "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp1"
       }
     },
     "building2": {
-      "heating": {
+      "heating_load": {
         "loads": {
-          "column": "B1Z2_HPHtgLd_W",
+          "column_name": "B1Z2_HPHtgLd_W",
           "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp4"
       }
     },
     "building3": {
-      "heating": {
+      "heating_load": {
         "loads": {
-          "column": "B2Z1_HPHtgLd_W",
+          "column_name": "B2Z1_HPHtgLd_W",
           "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp2"
       },
-      "cooling": {
+      "cooling_load": {
         "loads": {
-          "column": "B2Z1_HPClgLd_W",
+          "column_name": "B2Z1_HPClgLd_W",
           "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp2"
       }
     },
     "building4": {
-      "heating": {
+      "heating_load": {
         "loads": {
-          "column": "B2Z2_HPHtgLd_W",
+          "column_name": "B2Z2_HPHtgLd_W",
           "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp4"
       }
     },
     "building5": {
-      "heating": {
+      "heating_load": {
         "loads": {
-          "column": "B3Z1_HPHtgLd_W",
+          "column_name": "B3Z1_HPHtgLd_W",
           "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp3"
       },
-      "cooling": {
+      "cooling_load": {
         "loads": {
-          "column": "B3Z1_HPClgLd_W",
+          "column_name": "B3Z1_HPClgLd_W",
           "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp3"
       }
     },
     "building6": {
-      "heating": {
+      "heating_load": {
         "loads": {
-          "column": "B3Z2_HPHtgLd_W",
+          "column_name": "B3Z2_HPHtgLd_W",
           "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv"
         },
         "heat_pump": "hp4"

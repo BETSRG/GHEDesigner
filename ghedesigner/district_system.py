@@ -14,7 +14,6 @@ from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.utilities import combine_sts_lts
-from ghedesigner.ghe.gfunction import calculate_g_function
 
 N_TIMESTEPS = 8760
 
@@ -130,10 +129,10 @@ class GHX(BaseSimComp):
 
         self.log_time = np.linspace(-10, 4, 25).tolist()
 
-        self.g_new = calculate_g_function(
-            m_flow_borehole=self.mass_flow_borehole_design,
-            bh_type=
-        )
+        # self.g_new = calculate_g_function(
+        #     m_flow_borehole=self.mass_flow_borehole_design,
+        #     bh_type=
+        # )
 
         self.gFunction = self.generate_g_function_object()
         self.g, _ = self.grab_g_function()
@@ -285,29 +284,43 @@ class Building(BaseSimComp):
         self.matrix_size: int | None = None
         self.cp: float | None = None
 
-        self.heating_exists = bool("heating" in bldg_data)
-        self.cooling_exists = bool("cooling" in bldg_data)
+        self.heating_exists = bool("heating_load" in bldg_data)
+        self.cooling_exists = bool("cooling_load" in bldg_data)
 
         self.htg_vals = np.zeros(N_TIMESTEPS, dtype=float)
         self.clg_vals = np.zeros(N_TIMESTEPS, dtype=float)
 
         if self.heating_exists:
-            hp_htg_name = bldg_data["heating"]["heat_pump"]
+            hp_htg_name = bldg_data["heating_load"]["heat_pump"]
             hp_htg_data = hp_data[hp_htg_name]
             self.hp_htg = HPmodel(hp_htg_name, hp_htg_data)
-            htg_loads_path = parent_dir / bldg_data["heating"]["loads"]["file_path"]
+            htg_loads_path = parent_dir / bldg_data["heating_load"]["loads"]["file_path"]
             htg_loads_path = htg_loads_path.resolve()
-            htg_col = bldg_data["heating"]["loads"]["column"]
+            if "column_name" in bldg_data["heating_load"]["loads"]:
+                htg_col = bldg_data["heating_load"]["loads"]["column_name"]
+            elif "column_number" in bldg_data["heating_load"]["loads"]:
+                htg_col = int(bldg_data["heating_load"]["loads"]["column_number"])
+            else:
+                raise ValueError(
+                    f'building "{bldg_id}" heating_load.loads requires either "column_name" or "column_number"'
+                )
             df_htg = pd.read_csv(htg_loads_path, usecols=[htg_col])
             self.htg_vals = df_htg[htg_col].to_numpy()
 
         if self.cooling_exists:
-            hp_clg_name = bldg_data["cooling"]["heat_pump"]
+            hp_clg_name = bldg_data["cooling_load"]["heat_pump"]
             hp_clg_data = hp_data[hp_clg_name]
             self.hp_clg = HPmodel(hp_clg_name, hp_clg_data)
-            clg_loads_path = parent_dir / bldg_data["cooling"]["loads"]["file_path"]
+            clg_loads_path = parent_dir / bldg_data["cooling_load"]["loads"]["file_path"]
             clg_loads_path = clg_loads_path.resolve()
-            clg_col = bldg_data["cooling"]["loads"]["column"]
+            if "column_name" in bldg_data["cooling_load"]["loads"]:
+                clg_col = bldg_data["cooling_load"]["loads"]["column_name"]
+            elif "column_number" in bldg_data["cooling_load"]["loads"]:
+                clg_col = int(bldg_data["cooling_load"]["loads"]["column_number"])
+            else:
+                raise ValueError(
+                    f'building "{bldg_id}" cooling_load.loads requires either "column_name" or "column_number"'
+                )
             df_clg = pd.read_csv(clg_loads_path, usecols=[clg_col])
             self.clg_vals = df_clg[clg_col].to_numpy()
 
@@ -388,25 +401,25 @@ class HPmodel:
     def __init__(self, hp_id: str, hp_data: dict):
         self.name = hp_id
 
-        self.a_htg = hp_data["heating"]["a"]
-        self.b_htg = hp_data["heating"]["b"]
-        self.c_htg = hp_data["heating"]["c"]
+        self.a_htg = hp_data["heating_performance"]["a"]
+        self.b_htg = hp_data["heating_performance"]["b"]
+        self.c_htg = hp_data["heating_performance"]["c"]
 
-        self.a_clg = hp_data["cooling"]["a"]
-        self.b_clg = hp_data["cooling"]["b"]
-        self.c_clg = hp_data["cooling"]["c"]
+        self.a_clg = hp_data["cooling_performance"]["a"]
+        self.b_clg = hp_data["cooling_performance"]["b"]
+        self.c_clg = hp_data["cooling_performance"]["c"]
 
-        self.c1_htg = hp_data["heating"]["c1"]
-        self.c2_htg = hp_data["heating"]["c2"]
-        self.c3_htg = hp_data["heating"]["c3"]
+        self.c1_htg = hp_data["heating_performance"]["c1"]
+        self.c2_htg = hp_data["heating_performance"]["c2"]
+        self.c3_htg = hp_data["heating_performance"]["c3"]
 
-        self.c1_clg = hp_data["cooling"]["c1"]
-        self.c2_clg = hp_data["cooling"]["c2"]
-        self.c3_clg = hp_data["cooling"]["c3"]
+        self.c1_clg = hp_data["cooling_performance"]["c1"]
+        self.c2_clg = hp_data["cooling_performance"]["c2"]
+        self.c3_clg = hp_data["cooling_performance"]["c3"]
 
         self.m_flow_single_hp = hp_data["design_flow_rate"]
-        self.design_htg_cap_single_hp = hp_data["heating"]["design_cap"]
-        self.design_clg_cap_single_hp = hp_data["cooling"]["design_cap"]
+        self.design_htg_cap_single_hp = hp_data["heating_performance"]["design_cap"]
+        self.design_clg_cap_single_hp = hp_data["cooling_performance"]["design_cap"]
 
 
 class GHEHPSystem:
@@ -547,4 +560,6 @@ class GHEHPSystem:
                 output_data[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe
                 output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
 
+        if not output_path.parent.exists():
+            output_path.parent.mkdir(parents=True)
         output_data.to_csv(output_path, float_format="%0.8f")

@@ -25,8 +25,24 @@
       "format": "Meters",
       "description": "Minimum borehole-to-borehole spacing."
     },
-    "column": {
-      "type": ["string", "integer"]
+    "building_load": {
+      "type": "object",
+      "properties": {
+        "loads": {
+          "$ref": "#/$defs/load_inputs"
+        },
+        "heat_pump": {
+          "type": "string"
+        }
+      },
+      "required": ["loads", "heat_pump"],
+      "additionalProperties": false
+    },
+    "column_name": {
+      "type": "string"
+    },
+    "column_number": {
+      "type": "integer"
     },
     "conductivity": {
       "type": "number",
@@ -65,11 +81,14 @@
       "maxItems": 8760,
       "description": "Annual, hourly loads of the object. Positive value indicate heating/heat extraction, negative values indicate cooling/heat rejection."
     },
-    "loads": {
+    "load_inputs": {
       "type": "object",
       "properties": {
-        "column": {
-          "$ref": "#/$defs/column"
+        "column_name": {
+          "$ref": "#/$defs/column_name"
+        },
+        "column_number": {
+          "$ref": "#/$defs/column_number"
         },
         "file_path": {
           "$ref": "#/$defs/file_path"
@@ -90,14 +109,26 @@
         },
         {
           "properties": {
-            "column": {
-              "$ref": "#/$defs/column"
+            "column_name": {
+              "$ref": "#/$defs/column_name"
             },
             "file_path": {
               "$ref": "#/$defs/file_path"
             }
           },
-          "required": ["file_path", "column"],
+          "required": ["file_path", "column_name"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column_number": {
+              "$ref": "#/$defs/column_number"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            }
+          },
+          "required": ["file_path", "column_number"],
           "additionalProperties": false
         }
       ],
@@ -125,6 +156,48 @@
       "minimum": 0,
       "format": "Meters",
       "description": "Outer diameter of pipe."
+    },
+    "performance_data": {
+      "type": "object",
+      "properties": {
+        "a": {
+          "type": "number",
+          "format": "Watts/Watts",
+          "description": "Performance coefficient for the ratio of heat extraction to heating capacity, or the ratio of heat rejection to cooling capacity."
+        },
+        "b": {
+          "type": "number",
+          "format": "Watts/Watts-Celsius",
+          "description": "Performance coefficient for the ratio of heat extraction to heating capacity, or the ratio of heat rejection to cooling capacity."
+        },
+        "c": {
+          "type": "number",
+          "format": "Watts/Watts-Celsius^2",
+          "description": "Performance coefficient for the ratio of heat extraction to heating capacity, or the ratio of heat rejection to cooling capacity."
+        },
+        "c1": {
+          "type": "number",
+          "format": "Watts",
+          "description": "Performance coefficient for the heating or cooling capacity."
+        },
+        "c2": {
+          "type": "number",
+          "format": "Watts/Celsius",
+          "description": "Performance coefficient for the heating or cooling capacity."
+        },
+        "c3": {
+          "type": "number",
+          "format": "Watts/Celsius^2",
+          "description": "Performance coefficient for the heating or cooling capacity."
+        },
+        "design_cap": {
+          "type": "number",
+          "format": "Watts",
+          "description": "Design heating or cooling capacity used to develop performance coefficients."
+        }
+      },
+      "required": ["a", "b", "c", "c1", "c2", "c3", "design_cap"],
+      "additionalProperties": false
     },
     "property_boundary": {
       "type": "array",
@@ -217,26 +290,46 @@
       "required": ["fluid_name", "concentration_percent", "temperature"],
       "additionalProperties": false
     },
-    "building": {
+    "heat_pump": {
       "type": "object",
-      "description": "A map of available building definition objects.",
+      "description": "A collection of data that define a heat pump.",
       "additionalProperties": {
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string"
+          "cooling_performance": {
+            "$ref": "#/$defs/performance_data"
           },
-          "loads": {
-            "type": "string"
+          "heating_performance": {
+            "$ref": "#/$defs/performance_data"
           },
-          "cop": {
-            "type": "number"
-          },
-          "capacity": {
-            "type": "string"
+          "design_flow_rate": {
+            "type": "number",
+            "format": "Kilograms/Sec",
+            "description": "Design flow rate"
           }
         },
-        "required": ["name", "loads", "cop", "capacity"],
+        "required": [
+          "cooling_performance",
+          "heating_performance",
+          "design_flow_rate"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "building": {
+      "type": "object",
+      "description": "A collection of objects that define a building.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "cooling_load": {
+            "$ref": "#/$defs/building_load"
+          },
+          "heating_load": {
+            "$ref": "#/$defs/building_load"
+          }
+        },
+        "required": ["cooling_load", "heating_load"],
         "additionalProperties": false
       }
     },
@@ -449,7 +542,7 @@
                   "conductivity_inner": {
                     "type": "number",
                     "minimum": 0,
-                    "format": "Watts/Meters-Kelvin",
+                    "format": "Watts/Meter-Kelvin",
                     "description": "Thermal conductivity of inner pipe."
                   },
                   "conductivity_outer": {
@@ -830,7 +923,7 @@
             "additionalProperties": false
           },
           "loads": {
-            "$ref": "#/$defs/loads"
+            "$ref": "#/$defs/load_inputs"
           }
         },
         "required": [
