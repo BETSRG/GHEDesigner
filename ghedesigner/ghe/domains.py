@@ -1,4 +1,4 @@
-from math import ceil, floor, inf
+from math import ceil, floor, inf, pi
 from typing import cast
 
 from ghedesigner.ghe.coordinates import (
@@ -265,17 +265,27 @@ def straight_line(lower: int, upper: int, b: float, tilt: float, borehole_height
     return coordinates_domain, field_descriptors, staggered_coordinates_domain, staggered_field_descriptors
 
 
-def drill_pad(nbh: int, tilt: float, radius: float, ndp_min: int, ndp_max: int):
-    coordinates_domain = []
-    field_descriptors = []
-    # Only create coordinates for 1 drill pad
-    coordinates_domain.append(tilted_drill_pad(nbh, radius, tilt, center_x=0.0, center_y=0.0))
+def drill_pad(nbh: int, tilt: float, radius: float, pad_centers: list[tuple[float, float]]):
+    all_coordinates = []
+    all_tilts = []
+    all_orientations = []
 
-    for npads in range(ndp_min, ndp_max + 1):
-        field_descriptors.append(f"{npads}X_Drill_Pads_{nbh}X_R{radius:.2f}_T{tilt:.2f}")
+    for (cx, cy) in pad_centers:
+        coords, tilts, orients = tilted_drill_pad(
+            n=nbh,
+            tilt=tilt,
+            radius=radius,
+            center_x=cx,
+            center_y=cy
+        )
+        all_coordinates.extend(coords)
+        all_tilts.extend(tilts)
+        all_orientations.extend(orients)
+
+    coordinates_domain = [(all_coordinates, all_tilts, all_orientations)]
+    field_descriptors = [f"{len(pad_centers)}Pads_X{nbh}_R:{radius:.2f}_T:{tilt*180/pi:.2f}°"]
 
     return coordinates_domain, field_descriptors
-
 
 def zoned_rectangle_domain(length_x, length_y, n_x, n_y, transpose=False):
     # Make this work for the transpose
@@ -474,7 +484,7 @@ def polygonal_land_constraint(
             )
             if len(new_coordinates) == 0:
                 continue
-            # Remove boreholes inside of building
+            # Remove boreholes inside building
             if len(no_go_boundaries) > 0:
                 new_coordinates = remove_cutout(
                     new_coordinates, no_go_boundaries, remove_inside=True, keep_contour=keep_contour[1]
@@ -504,3 +514,4 @@ def reorder_domain(domain, descriptors):
     """
 
     return zip(*sorted(zip(domain, descriptors), key=lambda x: len(x[0])))
+

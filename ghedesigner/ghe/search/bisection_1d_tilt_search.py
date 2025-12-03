@@ -10,6 +10,8 @@ from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.utilities import borehole_spacing, check_bracket, eskilson_log_times, sign
 
+from ghedesigner.ghe.shape import point_polygon_check
+
 
 class Bisection1DTilt:
     def __init__(

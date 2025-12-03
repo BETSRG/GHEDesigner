@@ -1,4 +1,4 @@
-from math import ceil, pi
+from math import ceil
 
 import numpy as np
 from pygfunction.boreholes import Borehole
@@ -9,6 +9,9 @@ from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.utilities import borehole_spacing, check_bracket, eskilson_log_times, sign
+
+from ghedesigner.ghe.shape import point_polygon_check, Shapes
+from ghedesigner.ghe.coordinates import borehole_prism
 
 
 class Bisection1DTiltDrillPad:
@@ -25,8 +28,6 @@ class Bisection1DTiltDrillPad:
         max_boreholes: int | None,
         min_height: float,
         max_height: float,
-        ndp_min: int,
-        ndp_max: int,
         continue_if_design_unmet: bool,
         start_month: int,
         end_month: int,
@@ -40,6 +41,11 @@ class Bisection1DTiltDrillPad:
         search=True,
         field_type="DRILLPAD",
         load_years=None,
+        tilt: float | None = None,
+        tilt_min: float | None = None,
+        tilt_max: float | None = None,
+        property_boundary=None,
+        check_constructability=None,
     ) -> None:
         # defaults for load years
         if load_years is None:
@@ -58,8 +64,6 @@ class Bisection1DTiltDrillPad:
         self.max_boreholes = max_boreholes
         self.min_height = min_height
         self.max_height = max_height
-        self.ndp_min = ndp_min
-        self.ndp_max = ndp_max
         self.continue_if_design_unmet = continue_if_design_unmet
         self.start_month = start_month
         self.end_month = end_month
@@ -71,6 +75,11 @@ class Bisection1DTiltDrillPad:
         self.field_type = field_type
         self.max_iter = max_iter
         self.disp = disp
+        self.tilt = tilt
+        self.tilt_min = tilt_min
+        self.tilt_max = tilt_max
+        self.property_boundary = property_boundary
+        self._check_constructability = check_constructability
 
         # take first layout as initial
         coords = self.coordinates_domain[0][0]
@@ -165,7 +174,7 @@ class Bisection1DTiltDrillPad:
 
         self.g_function = g_function
 
-    def initialize_ghe(self, coords, h, field_specifier, scaled_loads):
+    def initialize_ghe(self, coords, h, field_specifier, loads):
         # update borehole depth
         self.ghe.bhe.b.H = h
         borehole = self.ghe.bhe.b
@@ -188,25 +197,74 @@ class Bisection1DTiltDrillPad:
             self.g_function,
             self.start_month,
             self.end_month,
-            scaled_loads,
+            loads,
             field_specifier=field_specifier,
             field_type=self.field_type,
         )
 
-    def calculate_excess(self, coords, h, field_specifier, scaled_loads):
-        self.initialize_ghe(coords, h, field_specifier, scaled_loads)
+    def calculate_excess(self, coords, h, field_specifier, loads):
+        self.initialize_ghe(coords, h, field_specifier, loads)
         max_hp_eft, min_hp_eft = self.ghe.simulate(method=self.method)
         t_excess = self.ghe.cost(max_hp_eft, min_hp_eft, self.max_eft, self.min_eft)
         self.searchTracker.append([field_specifier, t_excess, max_hp_eft, min_hp_eft])
         return t_excess
 
+    def layout_constructable(self, coords, tilts, orients, max_height, clearance):
+        prisms = []
+        for (x, y), tilt, orientation in zip(coords, tilts, orients):
+            poly = borehole_prism(
+                x=x,
+                y=y,
+                max_height=max_height,
+                tilt=tilt,
+                orientation=orientation,
+                clearance=clearance,
+            )
+            prisms.append(poly)
+
+        if self.property_boundary is not None:
+            for poly in prisms:
+                for (px, py) in poly[:-1]:
+                    loc = point_polygon_check(self.property_boundary, (px, py))
+                    if loc == -1:
+                        return False
+
+        for i in range(len(prisms)):
+            shape_i = Shapes(np.array(prisms[i]))
+            for j in range(i + 1, len(prisms)):
+                shape_j = Shapes(np.array(prisms[j]))
+                if self.borehole_collision_detector(shape_i, shape_j):
+                    return False
+        return True
+
+    def borehole_collision_detector(self, shape_a: Shapes, shape_b: Shapes, tol: float = 1e-6) -> bool:
+        # 1. Do any edges cross?
+        for i in range(len(shape_a.c) - 1):
+            ax1, ay1 = shape_a.c[i]
+            ax2, ay2 = shape_a.c[i + 1]
+            hits = shape_b.line_intersect([ax1, ay1, ax2, ay2], intersection_tolerance=tol)
+            if len(hits) > 0:
+                return True
+
+        for j in range(len(shape_b.c) - 1):
+            bx1, by1 = shape_b.c[j]
+            bx2, by2 = shape_b.c[j + 1]
+            hits = shape_a.line_intersect([bx1, by1, bx2, by2], intersection_tolerance=tol)
+            if len(hits) > 0:
+                return True
+
+        if shape_b.point_intersect(shape_a.c[0]):
+            return True
+        if shape_a.point_intersect(shape_b.c[0]):
+            return True
+
+        return False
+
     def search(self):
         # bracket on pad-count index
-        x_l = self.ndp_min
-        x_r = self.ndp_max
 
-        base_loads = np.array(self.hourly_extraction_ground_loads, dtype=float) * pi
-        scaled_loads_l = (1 / x_l) * base_loads
+        base_loads = np.array(self.hourly_extraction_ground_loads, dtype=float)
+        loads_l = (1 / x_l) * base_loads
         scaled_loads_r = (1 / x_r) * base_loads
 
         # evaluate at smallest pad count
@@ -227,9 +285,8 @@ class Bisection1DTiltDrillPad:
         # check for valid bracket
         if check_bracket(sign(t_l), sign(t_r)):
             if t_r > 0 and self.continue_if_design_unmet:  # undersize even at max pads
-                return x_r, self.coordinates_domain
-            else:
                 raise ValueError("Search failed: not enough pads available.")
+
 
         # bisection on index
         i = 0

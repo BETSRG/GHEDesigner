@@ -394,7 +394,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         search = design.find_design()  # TODO: I wonder if it would simplify things to just return the GHE object
         search_time = time() - start_time
         found_ghe = cast(GHE, search.ghe)
-        if geom_type == DesignGeomType.TILTEDLINE or DesignGeomType.DRILLPAD:
+        if geom_type == DesignGeomType.TILTEDLINE:
             found_ghe.compute_and_merge_g_functions(h_values=[max_height * 0.9])
             found_ghe.size(TimestepType.HYBRID, max_height, max_height * 0.9, max_eft, min_eft)
         else:

@@ -4,7 +4,7 @@ from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
-from ghedesigner.ghe.domains import drill_pad
+from ghedesigner.ghe.domains import dill_pad
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_1d_tilt_drill_pad_search import Bisection1DTiltDrillPad
 from ghedesigner.media import GHEFluid, Grout, Soil
@@ -19,8 +19,7 @@ class GeometricConstraintsDrillPad(GeometricConstraints):
     nbh: int
     radius: float
     tilt: float
-    ndp_min: int
-    ndp_max: int
+    pad_centers: list[tuple[float, float]]
     type: DesignGeomType = field(default=DesignGeomType.DRILLPAD, init=False, repr=False)
 
     def to_input(self) -> dict:
@@ -77,15 +76,12 @@ class DesignDrillPad(DesignBase):
         gc = geometric_constraints
         self.min_eft = min_eft
         self.max_eft = max_eft
-        self.ndp_min = geometric_constraints.ndp_min
-        self.ndp_max = geometric_constraints.ndp_max
         # always *one* pad layout
         self.coordinates_domain, self.fieldDescriptors = drill_pad(
             nbh=gc.nbh,
             tilt=gc.tilt,
             radius=gc.radius,
-            ndp_min=gc.ndp_min,
-            ndp_max=gc.ndp_max,
+            pad_centers=gc.pad_centers,
         )
 
     def find_design(self, disp=False) -> Bisection1DTiltDrillPad:
@@ -105,8 +101,6 @@ class DesignDrillPad(DesignBase):
             self.max_boreholes,
             self.min_height,
             self.max_height,
-            self.ndp_min,
-            self.ndp_max,
             self.continue_if_design_unmet,
             self.start_month,
             self.end_month,
