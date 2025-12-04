@@ -3,27 +3,27 @@
   "topology": [
     {
       "type": "building",
-      "name": "building1"
+      "name": "building1_htg_clg"
     },
     {
       "type": "building",
-      "name": "building2"
+      "name": "building1_dhw"
     },
     {
       "type": "building",
-      "name": "building3"
+      "name": "building2_htg_clg"
     },
     {
       "type": "building",
-      "name": "building4"
+      "name": "building2_dhw"
     },
     {
       "type": "building",
-      "name": "building5"
+      "name": "building3_htg_clg"
     },
     {
       "type": "building",
-      "name": "building6"
+      "name": "building3_dhw"
     },
     {
       "type": "ground_heat_exchanger",
@@ -130,7 +130,7 @@
     }
   },
   "building": {
-    "building1": {
+    "building1_htg_clg": {
       "heating_load": {
         "loads": {
           "column_name": "B1Z1_HPHtgLd_W",
@@ -146,7 +146,7 @@
         "heat_pump": "hp1"
       }
     },
-    "building2": {
+    "building1_dhw": {
       "heating_load": {
         "loads": {
           "column_name": "B1Z2_HPHtgLd_W",
@@ -155,7 +155,7 @@
         "heat_pump": "hp4"
       }
     },
-    "building3": {
+    "building2_htg_clg": {
       "heating_load": {
         "loads": {
           "column_name": "B2Z1_HPHtgLd_W",
@@ -171,7 +171,7 @@
         "heat_pump": "hp2"
       }
     },
-    "building4": {
+    "building2_dhw": {
       "heating_load": {
         "loads": {
           "column_name": "B2Z2_HPHtgLd_W",
@@ -180,7 +180,7 @@
         "heat_pump": "hp4"
       }
     },
-    "building5": {
+    "building3_htg_clg": {
       "heating_load": {
         "loads": {
           "column_name": "B3Z1_HPHtgLd_W",
@@ -196,7 +196,7 @@
         "heat_pump": "hp3"
       }
     },
-    "building6": {
+    "building3_dhw": {
       "heating_load": {
         "loads": {
           "column_name": "B3Z2_HPHtgLd_W",

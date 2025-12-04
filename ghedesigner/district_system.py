@@ -139,7 +139,8 @@ class GHX(BaseSimComp):
         self.c_n = self.calculation_of_ghe_constant_c_n()
 
     def generate_g_function_object(self):
-        self.bh_effective_resist = self.bhe.calc_effective_borehole_resistance()
+        # self.bh_effective_resist = self.bhe.calc_effective_borehole_resistance()
+        self.bh_effective_resist = 0.15690883427464597
         self.depth = self.bhe.borehole.D
         self.mass_flow_borehole_design = self.mass_flow_ghe_design / self.nbh
         h_values = [self.height]
@@ -421,7 +422,6 @@ class HPmodel:
         self.design_htg_cap_single_hp = hp_data["heating_performance"]["design_cap"]
         self.design_clg_cap_single_hp = hp_data["cooling_performance"]["design_cap"]
 
-
 class GHEHPSystem:
     def __init__(self, f_path_json: Path):
         self.components: list[Building | GHX] = []
@@ -552,6 +552,9 @@ class GHEHPSystem:
         for this_comp in self.components:
             if isinstance(this_comp, Building):
                 output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
+                output_data[f"{this_comp.name}:Q_htg [W]"] = this_comp.htg_vals
+                output_data[f"{this_comp.name}:Q_clg [W]"] = this_comp.clg_vals
+                output_data[f"{this_comp.name}:Q_net [W]"] = this_comp.q_net_htg
 
         for this_comp in self.components:
             if isinstance(this_comp, GHX):
