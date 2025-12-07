@@ -1,4 +1,3 @@
-import json
 import time
 from pathlib import Path
 
@@ -167,9 +166,7 @@ class GHX:
         Updates self.total_values_ghe and self.H_n_ghe in place.
         """
         if i == 0:
-            H_n_ghe[i] = tg
-            total_values_ghe[i] = 0
-            return
+            raise IndexError("Timestep index error")
 
         time_n = time_array[i]
 
@@ -1032,161 +1029,72 @@ class GHEHPSystem:
                 ISHX.P_ishx_cp[i] = ISHX.m_loop_ISHX_array[i] / (
                         density * self.ISHX_cp_efficiency) * delta_P_ISHX * self.beta_ISHX_delta_P
 
-    def createOutput(self, output_path: Path):
+    def write_state_outputs(self, output_path: Path):
+
+        output_data = pd.DataFrame()
+        output_data.index.name = "Hour"
+
         if self.configuration == "1-pipe":
-            # Step 1: create csv files
-            n_timesteps = self.time_array_size
-            data_rows = []
 
-            for i in range(n_timesteps):
-                row = []
-                for zone in self.zones:
-                    row.append(zone.t_eft[i])
+            for zone_num, this_zone in enumerate(self.zones):
+                output_data[f"Zone{zone_num}_EFT[C]"] = this_zone.t_eft
 
-                for GHX in self.GHXs:
-                    row.append(GHX.t_eft[i])
-                    row.append(GHX.t_mft[i])
-                    row.append(GHX.q_ghe[i])
-                    row.append(GHX.t_exft[i])
+            for ghx_num, this_ghx in enumerate(self.GHXs):
+                output_data[f"GHX{ghx_num}_EFT[C]"] = this_ghx.t_eft
+                output_data[f"GHX{ghx_num}_MFT[C]"] = this_ghx.t_mft
+                output_data[f"GHX{ghx_num}_q_ghe[W/m]"] = this_ghx.q_ghe
+                output_data[f"GHX{ghx_num}_ExFT[C]"] = this_ghx.t_exft
 
-                for ISHX in self.ISHXs:
-                    row.append(ISHX.t_n_eft[i])
-                    row.append(ISHX.t_n_exft[i])
-                    row.append(ISHX.t_hp_eft[i])
+            for hx_num, this_hx in enumerate(self.ISHXs):
+                output_data[f"ISHX{hx_num}_N_EFT[C]"] = this_hx.t_n_eft
+                output_data[f"ISHX{hx_num}_N_ExFT[C]"] = this_hx.t_n_exft
+                output_data[f"ISHX{hx_num}_HP_EFT[C]"] = this_hx.t_hp_eft
 
-                data_rows.append(row)
-
-            # Step 2: Create column labels
-            column_names = []
-
-            for j, zone in enumerate(self.zones):
-                column_names.append(f"Zone{j}_EFT[C]")
-
-            for j, GHX in enumerate(self.GHXs):
-                column_names += [
-                    f"GHX{j}_EFT[C]",
-                    f"GHX{j}_MFT[C]",
-                    f"GHX{j}_q_ghe[W/m]",
-                    f"GHX{j}_ExFT[C]"
-                ]
-
-            for j, ISHX in enumerate(self.ISHXs):
-                column_names += [
-                    f"ISHX{j}_N_EFT[C]",
-                    f"ISHX{j}_N_ExFT[C]",
-                    f"ISHX{j}_HP_EFT[C]"
-                ]
         elif self.configuration == "2-pipe":
-            # Step 1: create csv files
-            n_timesteps = self.time_array_size
-            data_rows = []
 
-            for i in range(n_timesteps):
-                row = []
-                for zone in self.zones:
-                    row.append(zone.t_eft[i])
-                    row.append(zone.t_exft[i])
-                    row.append(zone.t_combining_node[i])
+            for zone_num, this_zone in enumerate(self.zones):
+                output_data[f"Zone{zone_num}_EFT[C]"] = this_zone.t_eft
+                output_data[f"Zone{zone_num}_ExFT[C]"] = this_zone.t_exft
+                output_data[f"Zone{zone_num}_CNT[C]"] = this_zone.t_combining_node
 
-                for GHX in self.GHXs:
-                    row.append(GHX.t_eft[i])
-                    row.append(GHX.t_mft[i])
-                    row.append(GHX.q_ghe[i])
-                    row.append(GHX.t_exft[i])
-                    row.append(GHX.t_combining_node[i])
+            for ghx_num, this_ghx in enumerate(self.GHXs):
+                output_data[f"GHX{ghx_num}_EFT[C]"] = this_ghx.t_eft
+                output_data[f"GHX{ghx_num}_MFT[C]"] = this_ghx.t_mft
+                output_data[f"GHX{ghx_num}_q_ghe[W/m]"] = this_ghx.q_ghe
+                output_data[f"GHX{ghx_num}_ExFT[C]"] = this_ghx.t_exft
+                output_data[f"GHX{ghx_num}_CNT[C]"] = this_ghx.t_combining_node
 
-                for ISHX in self.ISHXs:
-                    row.append(ISHX.t_n_eft[i])
-                    row.append(ISHX.t_n_exft[i])
-                    row.append(ISHX.t_hp_eft[i])
+            for hx_num, this_hx in enumerate(self.ISHXs):
+                output_data[f"ISHX{hx_num}_N_EFT[C]"] = this_hx.t_n_eft
+                output_data[f"ISHX{hx_num}_N_ExFT[C]"] = this_hx.t_n_exft
+                output_data[f"ISHX{hx_num}_HP_EFT[C]"] = this_hx.t_hp_eft
 
-                data_rows.append(row)
-
-            # Step 2: Create column labels
-            column_names = []
-
-            for j, zone in enumerate(self.zones):
-                column_names.append(f"Zone{j}_EFT[C]")
-                column_names.append(f"Zone{j}_ExFT[C]")
-                column_names.append(f"Zone{j}_CNT[C]")
-
-            for j, GHX in enumerate(self.GHXs):
-                column_names += [
-                    f"GHX{j}_EFT[C]",
-                    f"GHX{j}_MFT[C]",
-                    f"GHX{j}_q_ghe[W/m]",
-                    f"GHX{j}_ExFT[C]",
-                    f"GHX{j}_CNT[C]"
-                ]
-
-            for j, ISHX in enumerate(self.ISHXs):
-                column_names += [
-                    f"ISHX{j}_N_EFT",
-                    f"ISHX{j}_N_ExFT",
-                    f"ISHX{j}_HP_EFT"
-                ]
         else:
             raise ValueError(f"Invalid configuration type: {self.configuration}")
 
-        # Step 3: Create and save DataFrame
-        self.df = pd.DataFrame(data_rows, columns=column_names)
-        self.df.index.name = "Hour"
+        output_data = output_data.iloc[1:]
+        output_data.to_csv(output_path, float_format="%.6f")
 
-        # Drop timestep 0 and reindex starting from 1
-        self.df = self.df.iloc[1:]
-        self.df.index = range(1, len(self.df) + 1)
+    def write_energy_outputs(self, output_path: Path):
 
-        # Save to CSV
-        self.df.to_csv(output_path, float_format="%.6f")
+        output_data = pd.DataFrame()
+        output_data.index.name = "Hour"
 
-    def output_file_energy_consumption(self, output_path: Path):
-        # create csv files
-        n_timesteps = self.time_array_size
-        data_rows = []
+        for zone_num, this_zone in enumerate(self.zones):
+            output_data[f"Zone{zone_num}_P_htg"] = this_zone.P_zone_htg
+            output_data[f"Zone{zone_num}_P_clg"] = this_zone.P_zone_clg
+            output_data[f"Zone{zone_num}_P_cp"] = this_zone.P_zone_cp
 
-        for i in range(n_timesteps):
-            row = []
-            for zone in self.zones:
-                row.append(zone.P_zone_htg[i])
-                row.append(zone.P_zone_clg[i])
-                row.append(zone.P_zone_cp[i])
+        output_data["central_loop_P_cp"] = self.P_cl_cp
 
-            row.append(self.P_cl_cp[i])
+        for ghx_num, this_hx in enumerate(self.GHXs):
+            output_data[f"GHX{ghx_num}_P_cp"] = this_hx.P_ghe_cp
 
-            for GHX in self.GHXs:
-                row.append(GHX.P_ghe_cp[i])
+        for hx_num, this_hx in enumerate(self.ISHXs):
+            output_data[f"ISHX{hx_num}_P_cp"] = this_hx.P_ishx_cp
 
-            for ISHX in self.ISHXs:
-                row.append(ISHX.P_ishx_cp[i])
-
-            data_rows.append(row)
-
-        # Step 2: Create column labels
-        column_names = []
-
-        for j, zone in enumerate(self.zones):
-            column_names.append(f"Zone{j}_P_htg")
-            column_names.append(f"Zone{j}_P_clg")
-            column_names.append(f"Zone{j}_P_cp")
-
-        column_names.append(f"central_loop_P_cp")
-
-        for j, GHX in enumerate(self.GHXs):
-            column_names.append(f"GHX{j}_P_cp")
-
-        for j, ISHX in enumerate(self.ISHXs):
-            column_names.append(f"ISHX{j}_P_cp")
-
-        # Step 3: Create and save DataFrame
-        self.df1 = pd.DataFrame(data_rows, columns=column_names)
-        self.df1.index.name = "Hour"
-
-        # Drop timestep 0 and reindex starting from 1
-        self.df1 = self.df1.iloc[1:]
-        self.df1.index = range(1, len(self.df) + 1)
-
-        # Save to CSV
-        self.df1.to_csv(output_path, float_format="%.6f")
+        output_data = output_data.iloc[1:]
+        output_data.to_csv(output_path, float_format="%.6f")
 
     def UpdateConnections(self):
 
@@ -1264,7 +1172,7 @@ class GHEHPSystem:
             GHX.upstream_device = device
             device.downstream_device = GHX
 
-        # finding upstream and donwstream device for zones
+        # finding upstream and downstream device for zones
 
         for zone in self.zones:
             # find the first upstream mixing node
@@ -1293,7 +1201,7 @@ class GHEHPSystem:
             zone.upstream_device = device
             device.downstream_device = zone
 
-        # finding upstream and donwstream device for ISHX
+        # finding upstream and downstream device for ISHX
         for ISHX in self.ISHXs:
             # find first upstream node
             device = ISHX.input
@@ -1355,28 +1263,3 @@ def FindItemByID(ID, objectlist):
             return item  # then return this one
     # next item
     return None  # couldn't find it
-
-
-def main():
-    f1 = open("tests/test_data/1-pipe_3ghe-6hp_system_wo_ISHX_input.txt", 'r')
-    data = f1.readlines()  # read the entire file as a list of strings
-    f1.close()  # close the file  ... very important
-
-    f2 = open("/home/mitchute/Projects/GHEDesigner/demos/find_design_bi_rectangle_single_u_tube.json", 'r')
-    json_data = json.load(f2)
-
-    System = GHEHPSystem()
-    System.read_GHEHPSystem_data(data)
-    System.read_data_from_json_file(json_data)
-
-    fluid, pipe, grout, soil, borehole = System.read_data_from_json_file(json_data)
-    System.solveSystem(fluid, pipe, grout, soil, borehole)
-    System.createOutput()
-    System.output_file_energy_consumption()
-
-
-if __name__ == "__main__":
-    main()
-
-end = time.time()
-print(f"Execution time: {end - start:.4f} seconds")
