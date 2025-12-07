@@ -73,13 +73,12 @@ class Pipe(ThermalProperty):
         outer_diameter: float,
         shank_spacing: float,
         roughness: float,
-        num_pipes: int = 1,
     ) -> "Pipe":
         check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
         p = cls(BHType.SINGLEUTUBE, conductivity, rho_cp)  # TODO: Untangle this a little more
         r_in = inner_diameter / 2.0
         r_out = outer_diameter / 2.0
-        pipe_positions = Pipe.place_pipes(shank_spacing, r_out, num_pipes)
+        pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 1)
         p._finalize(pipe_positions, r_in, r_out, shank_spacing, roughness)
         return p
 
