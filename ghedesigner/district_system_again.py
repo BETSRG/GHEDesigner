@@ -1,4 +1,4 @@
-import time
+import json
 from pathlib import Path
 
 import numpy as np
@@ -13,7 +13,33 @@ from ghedesigner.media import Grout, Soil, Fluid
 from ghedesigner.utilities import combine_sts_lts
 from ghedesigner.utilities import eskilson_log_times
 
-start = time.time()
+
+class HPmodel:
+    def __init__(self, hp_id: str, hp_data: dict):
+        self.name = hp_id
+        self.ID = hp_id.upper()
+
+        self.a_htg = hp_data["heating_performance"]["a"]
+        self.b_htg = hp_data["heating_performance"]["b"]
+        self.c_htg = hp_data["heating_performance"]["c"]
+
+        self.a_clg = hp_data["cooling_performance"]["a"]
+        self.b_clg = hp_data["cooling_performance"]["b"]
+        self.c_clg = hp_data["cooling_performance"]["c"]
+
+        self.c1_htg = hp_data["heating_performance"]["c1"]
+        self.c2_htg = hp_data["heating_performance"]["c2"]
+        self.c3_htg = hp_data["heating_performance"]["c3"]
+
+        self.c1_clg = hp_data["cooling_performance"]["c1"]
+        self.c2_clg = hp_data["cooling_performance"]["c2"]
+        self.c3_clg = hp_data["cooling_performance"]["c3"]
+
+        self.m_flow_single_hp = hp_data["design_flow_rate"]
+        self.delta_P_HP = hp_data["design_pressure_loss"]
+
+        self.design_htg_cap_single_hp = hp_data["heating_performance"]["design_cap"]
+        self.design_clg_cap_single_hp = hp_data["cooling_performance"]["design_cap"]
 
 
 class GHX:
@@ -160,7 +186,8 @@ class GHX:
 
         return c_n
 
-    def compute_history_term(self, i, time_array, ts, two_pi_k, g, tg, H_n_ghe, total_values_ghe, q_ghe):
+    @staticmethod
+    def compute_history_term(i, time_array, ts, two_pi_k, g, tg, H_n_ghe, total_values_ghe, q_ghe):
         """
         Computes the history term H_n for this GHX at time index `i`.
         Updates self.total_values_ghe and self.H_n_ghe in place.
@@ -309,8 +336,8 @@ class Zone:
         else:
             rtf = abs(self.h[i] / cap_htg) + abs(self.c[i] / cap_clg)
 
-        m_single_hp = hp.m_single_hp
-        self.mass_flow_zone = rtf * m_single_hp
+        m_flow_single_hp = hp.m_flow_single_hp
+        self.mass_flow_zone = rtf * m_flow_single_hp
 
         return self.mass_flow_zone
 
@@ -445,20 +472,6 @@ class Pipe:
         self.type = None
 
 
-class HPmodel:
-    def __init__(self):
-        self.name = None
-        self.ID = None
-        self.a_htg, self.b_htg, self.c_htg = None, None, None
-        self.a_clg, self.b_clg, self.c_clg = None, None, None
-        self.c1_htg, self.c2_htg, self.c3_htg = None, None, None
-        self.c1_clg, self.c2_clg, self.c3_clg = None, None, None
-        self.m_single_hp = None
-        self.design_htg_cap = None
-        self.design_clg_cap = None
-        self.delta_P_HP = None
-
-
 class IsolationHX:
     def __init__(self):
         self.name = None
@@ -513,15 +526,22 @@ class IsolationHX:
 
 
 class GHEHPSystem:
-    def __init__(self):
-        self.title = None
+    def __init__(self, f_path_json: Path):
+
+        json_data = json.loads(f_path_json.read_text())
+
+        self.HPmodels = []
+
+        all_hp_data = json_data["heat_pump"]
+        for hp_name, hp_data in all_hp_data.items():
+            self.HPmodels.append(HPmodel(hp_name, hp_data))
+
         self.configuration = None
         self.GHXs = []
         self.buildings = []
         self.zones = []
         self.nodes = []
         self.pipes = []
-        self.HPmodels = []
         self.ISHXs = []
         self.current_row = 0
         self.m_loop = None
@@ -551,11 +571,6 @@ class GHEHPSystem:
         self.beta_ISHX_loop = None
         self.beta_cl_cp_delta_P = None
 
-        self.df = None
-        self.df1 = None
-        self.current_frame = 0
-        self.data = None
-
         # for energy consumption calculations
         self.HP_cp_efficiency = None
         self.ISHX_cp_efficiency = None
@@ -576,9 +591,6 @@ class GHEHPSystem:
 
             if keyword == "configuration":
                 self.configuration = cells[1].replace("'", "")
-
-            if keyword == 'title':
-                self.title = cells[1].replace("'", "")
 
             if keyword == 'ghx':
                 thisghx = GHX()
@@ -649,21 +661,21 @@ class GHEHPSystem:
                 thispipe.length = float(cells[5])
                 self.pipes.append(thispipe)
 
-            if keyword == 'hpmodel':
-                thishpmodel = HPmodel()
-                thishpmodel.name = str(cells[1])
-                thishpmodel.ID = str(cells[2])
-                thishpmodel.a_htg, thishpmodel.b_htg, thishpmodel.c_htg = (float(cells[3]), float(cells[4]),
-                                                                           float(cells[5]))
-                thishpmodel.a_clg, thishpmodel.b_clg, thishpmodel.c_clg = (float(cells[6]), float(cells[7]),
-                                                                           float(cells[8]))
-                thishpmodel.c1_htg, thishpmodel.c2_htg, thishpmodel.c3_htg = (float(cells[9]), float(cells[10]),
-                                                                              float(cells[11]))
-                thishpmodel.c1_clg, thishpmodel.c2_clg, thishpmodel.c3_clg = (float(cells[12]), float(cells[13]),
-                                                                              float(cells[14]))
-                thishpmodel.m_single_hp = float(cells[15])
-                thishpmodel.delta_P_HP = float(cells[16])
-                self.HPmodels.append(thishpmodel)
+            # if keyword == 'hpmodel':
+            #     thishpmodel = HPmodel()
+            #     thishpmodel.name = str(cells[1])
+            #     thishpmodel.ID = str(cells[2])
+            #     thishpmodel.a_htg, thishpmodel.b_htg, thishpmodel.c_htg = (float(cells[3]), float(cells[4]),
+            #                                                                float(cells[5]))
+            #     thishpmodel.a_clg, thishpmodel.b_clg, thishpmodel.c_clg = (float(cells[6]), float(cells[7]),
+            #                                                                float(cells[8]))
+            #     thishpmodel.c1_htg, thishpmodel.c2_htg, thishpmodel.c3_htg = (float(cells[9]), float(cells[10]),
+            #                                                                   float(cells[11]))
+            #     thishpmodel.c1_clg, thishpmodel.c2_clg, thishpmodel.c3_clg = (float(cells[12]), float(cells[13]),
+            #                                                                   float(cells[14]))
+            #     thishpmodel.m_single_hp = float(cells[15])
+            #     thishpmodel.delta_P_HP = float(cells[16])
+            #     self.HPmodels.append(thishpmodel)
 
             if keyword == "pressure_drop":
                 self.CL_P_per_m = float(cells[1])
@@ -691,16 +703,12 @@ class GHEHPSystem:
 
     def read_data_from_json_file(self, json_data: dict):
 
-        self.data = json_data
-
         # Extract input values
         fluid_data = json_data["fluid"]
         soil_data = json_data["ground_heat_exchanger"]["ghe1"]["soil"]
         grout_data = json_data["ground_heat_exchanger"]["ghe1"]["grout"]
         pipe_data = json_data["ground_heat_exchanger"]["ghe1"]["pipe"]
         borehole_data = json_data["ground_heat_exchanger"]["ghe1"]["borehole"]
-        geometric_data = json_data["ground_heat_exchanger"]["ghe1"]["geometric_constraints"]
-        design_data = json_data["ground_heat_exchanger"]["ghe1"]["design"]
 
         # Construct objects
         fluid = (
