@@ -9,11 +9,12 @@ Run with:
     python app.py
 """
 
-import dash
-from dash import Dash, dcc, html, Input, Output, State, no_update
-import plotly.express as px
-import pandas as pd
 from pathlib import Path
+
+import dash
+import pandas as pd
+import plotly.express as px
+from dash import Dash, Input, Output, State, dcc, html, no_update
 
 # ----------------------------------------------------------------------
 # Load data
@@ -84,15 +85,11 @@ app.layout = html.Div(
         dcc.Store(id="x-range-store"),
         dcc.Store(id="building-y-range-store"),
         dcc.Store(id="ghe-y-range-store"),
-
         html.H1("District GHE Dashboard", style={"marginBottom": "0.5rem"}),
-
         html.P(
-            "Interactive example using output_simple_district.csv and "
-            "output_3_bldg_3_ghe_district.csv",
+            "Interactive example using output_simple_district.csv and output_3_bldg_3_ghe_district.csv",
             style={"color": "#555", "marginBottom": "1.5rem"},
         ),
-
         # Controls
         html.Div(
             style={
@@ -107,10 +104,7 @@ app.layout = html.Div(
                         html.Label("Dataset", style={"fontWeight": "600"}),
                         dcc.Dropdown(
                             id="dataset-dropdown",
-                            options=[
-                                {"label": name, "value": name}
-                                for name in DATA_FILES.keys()
-                            ],
+                            options=[{"label": name, "value": name} for name in DATA_FILES],
                             value=list(DATA_FILES.keys())[0],
                             clearable=False,
                         ),
@@ -121,7 +115,7 @@ app.layout = html.Div(
                         html.Label("Building metric", style={"fontWeight": "600"}),
                         dcc.Dropdown(
                             id="bldg-metric-dropdown",
-                            options=[],   # populated by callback
+                            options=[],  # populated by callback
                             value=None,
                             clearable=False,
                         ),
@@ -132,7 +126,7 @@ app.layout = html.Div(
                         html.Label("GHE metric", style={"fontWeight": "600"}),
                         dcc.Dropdown(
                             id="ghe-metric-dropdown",
-                            options=[],   # populated by callback
+                            options=[],  # populated by callback
                             value=None,
                             clearable=False,
                         ),
@@ -140,7 +134,6 @@ app.layout = html.Div(
                 ),
             ],
         ),
-
         # Plots stacked vertically
         html.Div(
             style={
@@ -193,14 +186,10 @@ app.layout = html.Div(
 def update_dropdowns(dataset_name):
     meta = dataset_meta[dataset_name]
 
-    bldg_metric_options = [
-        {"label": m, "value": m} for m in meta["bldg_metrics"]
-    ]
+    bldg_metric_options = [{"label": m, "value": m} for m in meta["bldg_metrics"]]
     bldg_metric_value = meta["bldg_metrics"][0] if meta["bldg_metrics"] else None
 
-    ghe_metric_options = [
-        {"label": m, "value": m} for m in meta["ghe_metrics"]
-    ]
+    ghe_metric_options = [{"label": m, "value": m} for m in meta["ghe_metrics"]]
     ghe_metric_value = meta["ghe_metrics"][0] if meta["ghe_metrics"] else None
 
     return (
@@ -226,10 +215,7 @@ def update_building_graph(dataset_name, bldg_metric, x_range, y_range):
 
     # Find all building columns for the chosen metric
     bldg_cols = [
-        col for col in df.columns
-        if col.startswith("building")
-        and ":" in col
-        and col.split(":", 1)[1] == bldg_metric
+        col for col in df.columns if col.startswith("building") and ":" in col and col.split(":", 1)[1] == bldg_metric
     ]
 
     if not bldg_cols:
@@ -284,10 +270,7 @@ def update_ghe_graph(dataset_name, ghe_metric, x_range, y_range):
 
     # Find all GHE columns for the chosen metric
     ghe_cols = [
-        col for col in df.columns
-        if col.startswith("ghe")
-        and ":" in col
-        and col.split(":", 1)[1] == ghe_metric
+        col for col in df.columns if col.startswith("ghe") and ":" in col and col.split(":", 1)[1] == ghe_metric
     ]
 
     if not ghe_cols:
@@ -339,8 +322,7 @@ def update_ghe_graph(dataset_name, ghe_metric, x_range, y_range):
     State("ghe-y-range-store", "data"),
     prevent_initial_call=True,
 )
-def sync_ranges(building_relayout, ghe_relayout,
-                current_x, current_building_y, current_ghe_y):
+def sync_ranges(building_relayout, ghe_relayout, current_x, current_building_y, current_ghe_y):
     ctx = dash.callback_context
     if not ctx.triggered:
         return no_update, no_update, no_update

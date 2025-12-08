@@ -28,7 +28,6 @@ class Pipe(ThermalProperty):
                     outer_diameter=pipe_props["outer_diameter"],
                     shank_spacing=pipe_props["shank_spacing"],
                     roughness=pipe_props["roughness"],
-                    num_pipes=pipe_props.get("num_pipes", 1),
                 )
             case BHType.DOUBLEUTUBESERIES:
                 k = pipe_props["conductivity"]

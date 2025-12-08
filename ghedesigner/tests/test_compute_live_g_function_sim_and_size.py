@@ -44,7 +44,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # Thermal properties
         # ------------------
         # Pipe
-        pipe = Pipe.init_single_u_tube(k_p, rho_cp_p, d_in, d_out, s, epsilon, 1)
+        pipe = Pipe.init_single_u_tube(k_p, rho_cp_p, d_in, d_out, s, epsilon)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = Soil(k_s, rho_cp_s, ugt)

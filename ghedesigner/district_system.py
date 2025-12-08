@@ -234,9 +234,9 @@ class GHX(BaseSimComp):
         # Contribution from the last time step only
         dim1_less_time = np.log((time_n - self.time_array[idx_timestep - 1]) / (self.ts / SEC_IN_HR))
         history_terms[idx_timestep] = (
-                self.soil.ugt
-                - total_values_ghe[idx_timestep]
-                + (q_ghe[idx_timestep - 1] / self.two_pi_k * self.g(dim1_less_time))
+            self.soil.ugt
+            - total_values_ghe[idx_timestep]
+            + (q_ghe[idx_timestep - 1] / self.two_pi_k * self.g(dim1_less_time))
         )
 
         return history_terms, total_values_ghe
@@ -331,14 +331,14 @@ class Building(BaseSimComp):
 
     def calc_bldg_mass_flow_rate(self, t_in, idx_timestep):
         if self.heating_exists:
-            cap_htg = self.hp_htg.c1_htg * t_in ** 2 + self.hp_htg.c2_htg * t_in + self.hp_htg.c3_htg
+            cap_htg = self.hp_htg.c1_htg * t_in**2 + self.hp_htg.c2_htg * t_in + self.hp_htg.c3_htg
             m_single_hp_htg = self.hp_htg.m_flow_single_hp
         else:
             cap_htg = 0.0
             m_single_hp_htg = 0.0
 
         if self.cooling_exists:
-            cap_clg = self.hp_clg.c1_clg * t_in ** 2 + self.hp_clg.c2_clg * t_in + self.hp_clg.c3_clg
+            cap_clg = self.hp_clg.c1_clg * t_in**2 + self.hp_clg.c2_clg * t_in + self.hp_clg.c3_clg
             m_single_hp_clg = self.hp_clg.m_flow_single_hp
         else:
             cap_clg = 0.0
@@ -371,14 +371,14 @@ class Building(BaseSimComp):
         # Heating calculations
         if self.heating_exists:
             slope_htg = 2 * self.hp_htg.a_htg * t_in + self.hp_htg.b_htg
-            ratio_htg = self.hp_htg.a_htg * t_in ** 2 + self.hp_htg.b_htg * t_in + self.hp_htg.c_htg
+            ratio_htg = self.hp_htg.a_htg * t_in**2 + self.hp_htg.b_htg * t_in + self.hp_htg.c_htg
             u = ratio_htg - slope_htg * t_in
             v = slope_htg
 
         # Cooling calculations
         if self.cooling_exists:
             slope_clg = 2 * self.hp_clg.a_clg * t_in + self.hp_clg.b_clg
-            ratio_clg = self.hp_clg.a_clg * t_in ** 2 + self.hp_clg.b_clg * t_in + self.hp_clg.c_clg
+            ratio_clg = self.hp_clg.a_clg * t_in**2 + self.hp_clg.b_clg * t_in + self.hp_clg.c_clg
             a = ratio_clg - slope_clg * t_in
             b = slope_clg
 

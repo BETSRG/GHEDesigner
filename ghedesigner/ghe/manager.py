@@ -49,7 +49,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]
             if not all(x in pipe_parameters for x in params):
                 raise ValueError(f"pipe_arrangement_type of {pipe_arrangement_type!s} requires these inputs: {params}")
-            pipe_parameters["num_pipes"] = 1
             self.pipe = Pipe.init_single_u_tube(**pipe_parameters)
         elif pipe_arrangement_type == BHType.DOUBLEUTUBESERIES:
             params = ["conductivity", "rho_cp", "inner_diameter", "outer_diameter", "shank_spacing", "roughness"]

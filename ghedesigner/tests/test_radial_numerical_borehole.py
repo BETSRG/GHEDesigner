@@ -18,7 +18,7 @@ class TestRadialNumericalBorehole(unittest.TestCase):
         roughness = 1e-6
         k_pipe = 0.4
         rho_cp_pipe = 1542000
-        pipe = Pipe.init_single_u_tube(k_pipe, rho_cp_pipe, r_in * 2, r_out * 2, shank_spacing, roughness, 1)
+        pipe = Pipe.init_single_u_tube(k_pipe, rho_cp_pipe, r_in * 2, r_out * 2, shank_spacing, roughness)
         soil = Soil(k=2.0, rho_cp=3901000, ugt=20)
         m_dot_bh = 0.5
         bh = SingleUTube(m_dot_bh, fluid, borehole, pipe, grout, soil)

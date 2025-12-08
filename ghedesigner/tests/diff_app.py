@@ -4,10 +4,10 @@ import json
 from pathlib import Path
 
 import dash
-from dash import dcc, html, Input, Output, State, no_update
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import pandas as pd
+import plotly.graph_objects as go
+from dash import Input, Output, State, dcc, html
+from plotly.subplots import make_subplots
 
 # ----------------------------------------------------------------------
 # Config file handling for persistent CSV paths
@@ -53,7 +53,6 @@ app.layout = html.Div(
     style={"margin": "20px"},
     children=[
         html.H2("CSV Series Comparison Tool"),
-
         html.Div(
             style={"display": "flex", "gap": "20px"},
             children=[
@@ -81,7 +80,6 @@ app.layout = html.Div(
                         ),
                     ],
                 ),
-
                 # File 2 column
                 html.Div(
                     style={"flex": "1", "border": "1px solid #ccc", "padding": "10px"},
@@ -108,7 +106,6 @@ app.layout = html.Div(
                 ),
             ],
         ),
-
         html.Div(
             style={"marginTop": "10px", "marginBottom": "10px"},
             children=[
@@ -124,13 +121,10 @@ app.layout = html.Div(
                 ),
             ],
         ),
-
         html.Hr(),
-
         # Stores for parsed dataframes
         dcc.Store(id="store-data-1"),
         dcc.Store(id="store-data-2"),
-
         # Single graph with two vertically stacked panes
         html.Div(
             children=[
