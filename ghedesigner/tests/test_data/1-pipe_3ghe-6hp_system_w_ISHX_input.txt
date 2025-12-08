@@ -35,77 +35,67 @@ ISHX,        counter_flow,   ishx1,   n2,                       n10,            
 
 
 # nodes data
-# keyword, id,   type,      x,   y,  z
-node,      n1,   mixing,    30,  65, 0
-node,      n2,   device_in, 40,  65, 0
-node,      n3,   device_in, 50,  80, 0
-node,      n4,   simple,    60,  80, 0
-node,      n5,   mixing,    60,  70, 0
-node,      n6,   device_in, 70,  70, 0
-node,      n7,   mixing,    60,  60, 0
-node,      n8,   device_in, 70,  60, 0
-node,      n9,   simple,    60,  50, 0
-node,     n10,   device_in, 50,  50, 0
-node,     n11,   mixing,    30,  40, 0
-node,     n12,   device_in, 40,  40, 0
-node,     n13,   mixing,    30,  30, 0
-node,     n14,   device_in, 40,  30, 0
-node,     n15,   mixing,    30,  20, 0
-node,     n16,   device_in, 40,  20, 0
-node,     n17,   mixing,    30,  10, 0
-node,     n18,   device_in, 40,  10, 0
-node,     n19,   simple,    30,  0,  0
-node,     n20,   simple,    10,  0,  0
-node,     n21,   mixing,    10,  25, 0
-node,     n22,   device_in, 0,   25, 0
-node,     n23,   mixing,    10,  45, 0
-node,     n24,   device_in, 0,   45, 0
-node,     n25,   mixing,    10,  65, 0
-node,     n26,   device_in, 0,   65, 0
-node,     n27,   simple,    10,  90, 0
-node,     n28,   simple,    30,  90, 0
+# keyword, id,   type,
+node,      n1,   mixing,
+node,      n2,   device_in,
+node,      n3,   device_in,
+node,      n4,   simple,
+node,      n5,   mixing,
+node,      n6,   device_in,
+node,      n7,   mixing,
+node,      n8,   device_in,
+node,      n9,   simple,
+node,     n10,   device_in,
+node,     n11,   mixing,
+node,     n12,   device_in,
+node,     n13,   mixing,
+node,     n14,   device_in,
+node,     n15,   mixing,
+node,     n16,   device_in,
+node,     n17,   mixing,
+node,     n18,   device_in,
+node,     n19,   simple,
+node,     n20,   simple,
+node,     n21,   mixing,
+node,     n22,   device_in,
+node,     n23,   mixing,
+node,     n24,   device_in,
+node,     n25,   mixing,
+node,     n26,   device_in,
+node,     n27,   simple,
+node,     n28,   simple,
 
 
 # Pipes Data
 
-# keyword, id,    type,       node_in_name,    node_out_name,    length
-pipe,      p1,    branch,     n1,             n2,               10
-pipe,      p2,    1way,       n3,             n4,               10
-pipe,      p3,    1way,       n4,             n5,               10
-pipe,      p4,    branch,     n5,             n6,               10
-pipe,      p5,    1way,       n5,             n7,               10
-pipe,      p6,    branch,     n7,             n8,               10
-pipe,      p7,    1way,       n7,             n9,               10
-pipe,      p8,    1way,       n9,             n10,              10
-pipe,      p9,    1way,       n1,             n11,              30
-pipe,      p10,   branch,     n11,            n12,              10
-pipe,      p11,   1way,       n11,            n13,              10
-pipe,      p12,   branch,     n13,            n14,              10
-pipe,      p13,   1way,       n13,            n15,              10
-pipe,      p14,   branch,     n15,            n16,              10
-pipe,      p15,   1way,       n15,            n17,              10
-pipe,      p16,   branch,     n17,            n18,              10
-pipe,      p17,   1way,       n17,            n19,              10
-pipe,      p18,   1way,       n19,            n20,              20
-pipe,      p19,   1way,       n20,            n21,              10
-pipe,      p20,   branch,     n21,            n22,              10
-pipe,      p21,   1way,       n21,            n23,              25
-pipe,      p22,   branch,     n23,            n24,              10
-pipe,      p23,   1way,       n23,            n25,              25
-pipe,      p24,   branch,     n25,            n26,              10
-pipe,      p25,   1way,       n25,            n27,              10
-pipe,      p26,   1way,       n27,            n28,              20
-pipe,      p27,   1way,       n28,            n1,               25
-
-
-
-# Heat Pump Model Library
-
-# keyword, name,   id,   a_htg,     b_htg,   c_htg, a_clg,   b_clg,   c_clg, c1_htg, c2_htg, c3_htg, c1_clg,  c2_clg, c3_clg, m_single_hp, delta_P_HP
-HPmodel,   HP_AtW, HP1, -0.0000713, 0.00534, 0.734, 0.0001,  0.00112, 1.13, -0.124,  112,    4114,  -0.393,  -30.3,   6777,   0.296,       46000
-HPmodel,   HP_AtW, HP2, -0.0000786, 0.00539, 0.734, 0.0001, -0.00041, 1.15,  0.178,  158,    6712,  -1.2,    -4.72,   9629,   0.495,       30000
-HPmodel,   HP_AtW, HP3, -0.000068, 0.00497,  0.738, 0.0001, -0.00084, 1.16,  0.091,  224,    9422,  -2.16,    46.8,   12397,  0.693,       19000
-HPmodel,   HP_WtW, HP4, -0.0000606, 0.0051,  0.692, 0,       0,       0,    -1.19,   212,    8932,   0,       0,      0,      0.425,       50000
+# keyword, id,    type,       node_in_name,    node_out_name,
+pipe,      p1,    branch,     n1,             n2,
+pipe,      p2,    1way,       n3,             n4,
+pipe,      p3,    1way,       n4,             n5,
+pipe,      p4,    branch,     n5,             n6,
+pipe,      p5,    1way,       n5,             n7,
+pipe,      p6,    branch,     n7,             n8,
+pipe,      p7,    1way,       n7,             n9,
+pipe,      p8,    1way,       n9,             n10,
+pipe,      p9,    1way,       n1,             n11,
+pipe,      p10,   branch,     n11,            n12,
+pipe,      p11,   1way,       n11,            n13,
+pipe,      p12,   branch,     n13,            n14,
+pipe,      p13,   1way,       n13,            n15,
+pipe,      p14,   branch,     n15,            n16,
+pipe,      p15,   1way,       n15,            n17,
+pipe,      p16,   branch,     n17,            n18,
+pipe,      p17,   1way,       n17,            n19,
+pipe,      p18,   1way,       n19,            n20,
+pipe,      p19,   1way,       n20,            n21,
+pipe,      p20,   branch,     n21,            n22,
+pipe,      p21,   1way,       n21,            n23,
+pipe,      p22,   branch,     n23,            n24,
+pipe,      p23,   1way,       n23,            n25,
+pipe,      p24,   branch,     n25,            n26,
+pipe,      p25,   1way,       n25,            n27,
+pipe,      p26,   1way,       n27,            n28,
+pipe,      p27,   1way,       n28,            n1,
 
 # System constants
 

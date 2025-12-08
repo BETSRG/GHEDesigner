@@ -93,7 +93,6 @@ class GHX:
         self.t_exft = None
         self.t_bw = None
         self.t_combining_node = None
-        self.sim_params = None
 
         # for initializing gFunction object
         self.bore_locations = None
@@ -452,9 +451,6 @@ class Node:
     def __init__(self):
         self.ID = None
         self.type = None
-        self.x = None
-        self.y = None
-        self.z = None
         self.input = None
         self.output = None
         self.diversion = None
@@ -468,7 +464,6 @@ class Pipe:
         self.node_out_name = None
         self.input = None
         self.output = None
-        self.length = None
         self.type = None
 
 
@@ -549,7 +544,7 @@ class GHEHPSystem:
         self.g_value = {}
         self.c_n = {}
         self.time_array = None
-        self.time_array_size = None
+        self.num_hours = None
 
         # Thermal object references (to be set during setup)
         self.pipe = None
@@ -617,7 +612,7 @@ class GHEHPSystem:
             if keyword == 'zone':
                 df = pd.read_csv(in_file_dir / cells[7])
                 self.time_array = df['Hours'].values
-                self.time_array_size = len(self.time_array)
+                self.num_hours = len(self.time_array)
 
                 thiszone = Zone()
                 thiszone.name = str(cells[1])
@@ -647,9 +642,6 @@ class GHEHPSystem:
                 thisnode = Node()
                 thisnode.ID = str(cells[1])
                 thisnode.type = str(cells[2])
-                thisnode.x = float(cells[3])
-                thisnode.y = float(cells[4])
-                thisnode.z = float(cells[5])
                 self.nodes.append(thisnode)
 
             if keyword == 'pipe':
@@ -658,24 +650,7 @@ class GHEHPSystem:
                 thispipe.type = str(cells[2])
                 thispipe.node_in_name = str(cells[3])
                 thispipe.node_out_name = str(cells[4])
-                thispipe.length = float(cells[5])
                 self.pipes.append(thispipe)
-
-            # if keyword == 'hpmodel':
-            #     thishpmodel = HPmodel()
-            #     thishpmodel.name = str(cells[1])
-            #     thishpmodel.ID = str(cells[2])
-            #     thishpmodel.a_htg, thishpmodel.b_htg, thishpmodel.c_htg = (float(cells[3]), float(cells[4]),
-            #                                                                float(cells[5]))
-            #     thishpmodel.a_clg, thishpmodel.b_clg, thishpmodel.c_clg = (float(cells[6]), float(cells[7]),
-            #                                                                float(cells[8]))
-            #     thishpmodel.c1_htg, thishpmodel.c2_htg, thishpmodel.c3_htg = (float(cells[9]), float(cells[10]),
-            #                                                                   float(cells[11]))
-            #     thishpmodel.c1_clg, thishpmodel.c2_clg, thishpmodel.c3_clg = (float(cells[12]), float(cells[13]),
-            #                                                                   float(cells[14]))
-            #     thishpmodel.m_single_hp = float(cells[15])
-            #     thishpmodel.delta_P_HP = float(cells[16])
-            #     self.HPmodels.append(thishpmodel)
 
             if keyword == "pressure_drop":
                 self.CL_P_per_m = float(cells[1])
@@ -732,18 +707,12 @@ class GHEHPSystem:
         grout = Grout(grout_data["conductivity"], grout_data["rho_cp"])
         borehole = Borehole(100.0, borehole_data["buried_depth"], borehole_data["diameter"] / 2.0, 0.0, 0.0)
 
-        # Simulation parameters
-        # self.sim_params = SimulationParameters(num_months=12)
-        # self.sim_params.set_design_heights(geometric_data["max_height"], geometric_data["min_height"])
-        # self.sim_params.set_design_temps(design_data["max_eft"], design_data["min_eft"])
-
         return fluid, pipe, grout, soil, borehole
 
     def solveSystem(self, fluid, pipe, grout, soil, borehole):
         # precompute all time invariant constants
 
         time_array = self.time_array
-        n_timesteps = self.time_array_size
         configuration = self.configuration
 
         if configuration == "1-pipe":
@@ -782,32 +751,32 @@ class GHEHPSystem:
             self.g, _ = GHX.grab_g_function()
             # self.bhe_effective_resist = GHX.bhe.calc_effective_borehole_resistance()
             self.bhe_effective_resist = 0.15690883427464597  # TODO: Fix this
-            GHX.c_n = GHX.calculation_of_ghe_constant_c_n(self.g, ts, time_array, n_timesteps,
+            GHX.c_n = GHX.calculation_of_ghe_constant_c_n(self.g, ts, time_array, self.num_hours,
                                                           self.bhe_effective_resist)
 
         # Initializing the values
         for GHX in self.GHXs:
-            GHX.H_n_ghe, GHX.total_values_ghe, GHX.q_ghe = np.full(n_timesteps, tg), np.zeros(
-                n_timesteps), np.zeros(n_timesteps)
+            GHX.H_n_ghe, GHX.total_values_ghe, GHX.q_ghe = np.full(self.num_hours, tg), np.zeros(
+                self.num_hours), np.zeros(self.num_hours)
 
         # Initializing t_eft, t_mean, q_ghe, t_exit
         for zone in self.zones:
-            zone.t_eft = np.full(n_timesteps, tg)
-            zone.t_exft = np.full(n_timesteps, tg)
-            zone.t_combining_node = np.full(n_timesteps, tg)
+            zone.t_eft = np.full(self.num_hours, tg)
+            zone.t_exft = np.full(self.num_hours, tg)
+            zone.t_combining_node = np.full(self.num_hours, tg)
 
         for GHX in self.GHXs:
-            GHX.t_eft = np.full(n_timesteps, tg)
-            GHX.t_mft = np.full(n_timesteps, tg)
-            GHX.t_bhw = np.full(n_timesteps, tg)
-            GHX.q_ghe = np.zeros(n_timesteps)
-            GHX.t_exft = np.full(n_timesteps, tg)
-            GHX.t_combining_node = np.full(n_timesteps, tg)
+            GHX.t_eft = np.full(self.num_hours, tg)
+            GHX.t_mft = np.full(self.num_hours, tg)
+            GHX.t_bhw = np.full(self.num_hours, tg)
+            GHX.q_ghe = np.zeros(self.num_hours)
+            GHX.t_exft = np.full(self.num_hours, tg)
+            GHX.t_combining_node = np.full(self.num_hours, tg)
 
         for ISHX in self.ISHXs:
-            ISHX.t_n_eft = np.full(n_timesteps, tg)
-            ISHX.t_n_exft = np.full(n_timesteps, tg)
-            ISHX.t_hp_eft = np.full(n_timesteps, tg)
+            ISHX.t_n_eft = np.full(self.num_hours, tg)
+            ISHX.t_n_exft = np.full(self.num_hours, tg)
+            ISHX.t_hp_eft = np.full(self.num_hours, tg)
 
         # Assigning row_indices
         if configuration == "1-pipe":
@@ -830,21 +799,21 @@ class GHEHPSystem:
             raise ValueError(f"Invalid configuration type: {configuration}")
 
         # Initializing
-        m_loop_array = np.zeros(n_timesteps)
+        m_loop_array = np.zeros(self.num_hours)
         for ISHX in self.ISHXs:
-            ISHX.m_loop_ISHX_array = np.zeros(n_timesteps)
+            ISHX.m_loop_ISHX_array = np.zeros(self.num_hours)
 
         for zone in self.zones:
-            zone.P_zone_htg = np.zeros(n_timesteps)
-            zone.P_zone_clg = np.zeros(n_timesteps)
-            zone.P_zone_cp = np.zeros(n_timesteps)
-        self.P_cl_cp = np.zeros(n_timesteps)
+            zone.P_zone_htg = np.zeros(self.num_hours)
+            zone.P_zone_clg = np.zeros(self.num_hours)
+            zone.P_zone_cp = np.zeros(self.num_hours)
+        self.P_cl_cp = np.zeros(self.num_hours)
         for GHX in self.GHXs:
-            GHX.P_ghe_cp = np.zeros(n_timesteps)
+            GHX.P_ghe_cp = np.zeros(self.num_hours)
         for ISHX in self.ISHXs:
-            ISHX.P_ishx_cp = np.zeros(n_timesteps)
+            ISHX.P_ishx_cp = np.zeros(self.num_hours)
 
-        for i in range(1, n_timesteps):  # loop over all timestep
+        for i in range(1, self.num_hours):  # loop over all timestep
             matrix_rows = []
             matrix_rhs = []
             # Calculating total hp flows in each ISHX
@@ -1025,12 +994,12 @@ class GHEHPSystem:
         # central loop energy consumption
         m_ref_loop = max(m_loop_array)
         CL_delta_P = self.CL_P_per_m * self.length_CL
-        for i in range(1, n_timesteps):
+        for i in range(1, self.num_hours):
             delta_P_loop = (CL_delta_P / m_ref_loop ** 2) * m_loop_array[i] ** 2
             self.P_cl_cp[i] = m_loop_array[i] / (density * self.CL_efficiency) * delta_P_loop
 
         # ISHX loop energy consumption
-        for i in range(1, n_timesteps):
+        for i in range(1, self.num_hours):
             for ISHX in self.ISHXs:
                 m_ref_ISHX = max(ISHX.m_loop_ISHX_array)
                 delta_P_ISHX = (self.delta_P_ref_ISHX / m_ref_ISHX ** 2) * ISHX.m_loop_ISHX_array[i] ** 2
