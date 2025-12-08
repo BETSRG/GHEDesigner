@@ -39,8 +39,8 @@
     }
   ],
   "fluid": {
-    "fluid_name": "PROPYLENEGLYCOL",
-    "concentration_percent": 30,
+    "fluid_name": "WATER",
+    "concentration_percent": 0,
     "temperature": 20
   },
   "heat_pump": {

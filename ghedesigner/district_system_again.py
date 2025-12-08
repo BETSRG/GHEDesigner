@@ -521,6 +521,13 @@ class GHEHPSystem:
 
         json_data = json.loads(f_path_json.read_text())
 
+        fluid_data = json_data["fluid"]
+        self.fluid = Fluid(
+            fluid_name=fluid_data["fluid_name"],
+            temperature=fluid_data["temperature"],
+            percent=fluid_data.get("concentration_percent", 0),
+        )
+
         self.HPmodels = []
         all_hp_data = json_data["heat_pump"]
         for hp_name, hp_data in all_hp_data.items():
@@ -551,7 +558,6 @@ class GHEHPSystem:
         self.soil = None
         self.grout = None
         self.borehole = None
-        self.fluid = None
         self.mass_flow_ghe_borehole = None
         self.nbh_total = None
         self.gFunction = None
@@ -682,19 +688,10 @@ class GHEHPSystem:
     def read_data_from_json_file(self, json_data: dict):
 
         # Extract input values
-        fluid_data = json_data["fluid"]
         soil_data = json_data["ground_heat_exchanger"]["ghe1"]["soil"]
         grout_data = json_data["ground_heat_exchanger"]["ghe1"]["grout"]
         pipe_data = json_data["ground_heat_exchanger"]["ghe1"]["pipe"]
         borehole_data = json_data["ground_heat_exchanger"]["ghe1"]["borehole"]
-
-        # Construct objects
-        fluid = (
-            Fluid(
-                fluid_data["fluid_name"],
-                fluid_data["concentration_percent"],
-                fluid_data["temperature"]
-            ))
 
         # Pipe object (Single U-tube)
         pipe = MediaPipe.init_single_u_tube(
@@ -710,9 +707,9 @@ class GHEHPSystem:
         grout = Grout(grout_data["conductivity"], grout_data["rho_cp"])
         borehole = Borehole(100.0, borehole_data["buried_depth"], borehole_data["diameter"] / 2.0, 0.0, 0.0)
 
-        return fluid, pipe, grout, soil, borehole
+        return pipe, grout, soil, borehole
 
-    def solveSystem(self, fluid, pipe, grout, soil, borehole):
+    def solveSystem(self, pipe, grout, soil, borehole):
         # precompute all time invariant constants
 
         time_array = self.time_array
@@ -726,7 +723,7 @@ class GHEHPSystem:
             raise ValueError(f"Invalid configuration type: {configuration}")
 
         for GHX in self.GHXs:
-            GHX.fluid = fluid
+            GHX.fluid = self.fluid
             GHX.pipe = pipe
             GHX.grout = grout
             GHX.soil = soil
@@ -739,11 +736,11 @@ class GHEHPSystem:
             GHX.height = GHX.borehole.H
             GHX.nbh = len(GHX.gFunction.bore_locations)
             GHX.mass_flow_ghe_borehole_design = GHX.mass_flow_ghe_design / GHX.nbh
-            GHX.bhe = get_bhe_object(GHX.bhe_type, GHX.mass_flow_ghe_borehole_design, GHX.fluid, GHX.borehole,
+            GHX.bhe = get_bhe_object(GHX.bhe_type, GHX.mass_flow_ghe_borehole_design, self.fluid, GHX.borehole,
                                      GHX.pipe, GHX.grout, GHX.soil)
             GHX.bhe_eq = GHX.bhe.to_single()
             GHX.bhe_eq.calc_sts_g_functions()
-            log_time = eskilson_log_times()
+
             self.gFunction = GHX.compute_g_functions()
             ts = GHX.bhe_eq.t_s
             self.log_time = eskilson_log_times()
