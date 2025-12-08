@@ -76,7 +76,7 @@ class GHX:
 
         self.ID = ghx_id
         self.type = "GHX"
-        self.nodeID = None
+
         self.input = None
         self.upstream_device = None
         self.downstream_device = None
@@ -94,7 +94,6 @@ class GHX:
 
         # Computed properties
         self.bhe = None
-        self.r_b = None
         self.gFunction = None
         self.mass_flow_ghe = None
         self.depth = None
@@ -112,9 +111,6 @@ class GHX:
         self.t_bw = None
         self.t_combining_node = None
 
-        # for initializing gFunction object
-        self.log_time = None
-
         # All dummy values are used, because the goal is only to generate
         # self.gFunction as an object of class GFunction so that I can
         # initialize self.gFunction in "initialize_gFunction_object" method
@@ -129,25 +125,16 @@ class GHX:
         self.gFunction.log_time = eskilson_log_times()
 
     def compute_g_functions(self):
-        # Compute g-functions for a bracketed solution, based on min and max
-        # height
-        min_height = 100  # TODO: fix this
-        max_height = 100
-        avg_height = (min_height + max_height) / 2.0
-        h_values = [min_height, avg_height, max_height]
-
-        coordinates = self.gFunction.bore_locations
-        log_time = self.gFunction.log_time
 
         g_function = calc_g_func_for_multiple_lengths(
             self.row_spacing,
-            h_values,
-            0.07,  # TODO: fix this, borehole radius
-            2,  # TODO: fix this, depth of top of borehole
+            [self.ghe_height],
+            self.borehole.r_b,
+            self.borehole.D,
             self.bhe.m_flow_borehole,
             self.bhe_type,
-            log_time,
-            coordinates,
+            self.gFunction.log_time,
+            self.gFunction.bore_locations,
             self.bhe.fluid,
             self.bhe.pipe,
             self.bhe.grout,
@@ -169,7 +156,7 @@ class GHX:
         g_function_corrected = self.gFunction.borehole_radius_correction(
             g_function,
             rb_value,
-            0.07,  # TODO: Fix this, borehole radius
+            self.borehole.r_b
         )
 
         # Combine STS and LTS g-functions
@@ -303,7 +290,6 @@ class Zone:
         self.ID = None
         self.type = "zone"
         self.connection_downstream = None
-        self.nodeID = None
         self.node = None
         self.HPmodel = None
         self.HP = None
@@ -573,7 +559,6 @@ class GHEHPSystem:
         self.gFunction = None
         self.g = None
         self.g_bhw = None
-        self.log_time = None
         self.mass_flow_ghe = None
         self.bhe_eq = None
         self.c_n = None
@@ -688,7 +673,7 @@ class GHEHPSystem:
         # end for line
         self.UpdateConnections()
 
-    def solveSystem(self):
+    def solve_system(self):
         # precompute all time invariant constants
 
         time_array = self.time_array
@@ -717,8 +702,7 @@ class GHEHPSystem:
 
             self.gFunction = GHX.compute_g_functions()
             ts = GHX.bhe_eq.t_s
-            self.log_time = eskilson_log_times()
-            cp = 3857.004010495233  # TODO: fix this
+            cp = self.fluid.cp
             tg = GHX.bhe.soil.ugt
 
             self.g, _ = GHX.grab_g_function()
@@ -946,7 +930,8 @@ class GHEHPSystem:
                 m_flow_zone = zone.zone_mass_flow_rate(t_eft, i)
                 cp_efficiency = self.HP_cp_efficiency
                 delta_P_HP = zone.HP.delta_P_HP
-                density = 1023.7849656966806  # TODO: fix this
+                # density = 1023.7849656966806  # TODO: fix this
+                density = self.fluid.rho
                 zone.P_zone_htg[i], zone.P_zone_clg[i], zone.P_zone_cp[i] = zone.zone_energy_consumption(
                     t_eft, i, m_flow_zone, density, cp_efficiency, self.beta_HP_delta_P, delta_P_HP
                 )
@@ -958,11 +943,11 @@ class GHEHPSystem:
                 split_ratio = nbh / nbh_total
                 mass_flow_ghe = m_loop * split_ratio
                 pipe_dia = 2 * GHX.pipe.r_in
-                roughness = 0.000001  # check this and all values
+                roughness = GHX.pipe.roughness
+                dynamic_viscosity = self.fluid.mu
+                density = self.fluid.rho
                 velocity = (mass_flow_ghe / nbh) / (density * np.pi * GHX.pipe.r_in**2)
-                Re_n = (
-                    velocity * GHX.pipe.r_in * 2 / (0.0029649746891525514 / density)
-                )  # TODO: fix this: kinematic viscosity
+                Re_n = velocity * GHX.pipe.r_in * 2 / (dynamic_viscosity / density)
                 A = 2.457 * np.log((7 / Re_n) ** 0.9 + 0.27 * (roughness / pipe_dia)) ** 16
                 B = (37530 / Re_n) ** 16
                 friction_factor = 8 * ((8 / Re_n) ** 12 + (A + B) ** -1.5) ** (1 / 12)
@@ -976,11 +961,13 @@ class GHEHPSystem:
         CL_delta_P = self.CL_P_per_m * self.length_CL
         for i in range(1, self.num_hours):
             delta_P_loop = (CL_delta_P / m_ref_loop**2) * m_loop_array[i] ** 2
+            density = self.fluid.rho
             self.P_cl_cp[i] = m_loop_array[i] / (density * self.CL_efficiency) * delta_P_loop
 
         # ISHX loop energy consumption
         for i in range(1, self.num_hours):
             for ISHX in self.ISHXs:
+                density = self.fluid.rho
                 m_ref_ISHX = max(ISHX.m_loop_ISHX_array)
                 delta_P_ISHX = (self.delta_P_ref_ISHX / m_ref_ISHX**2) * ISHX.m_loop_ISHX_array[i] ** 2
                 ISHX.P_ishx_cp[i] = (

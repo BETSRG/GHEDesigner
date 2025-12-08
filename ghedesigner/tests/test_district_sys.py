@@ -31,7 +31,7 @@ class TestDistrictSysAgain(GHEBaseTest):
         System = GHEHPSystemAgain(f_path_json)
         System.read_GHEHPSystem_data(f1)
 
-        System.solveSystem()
+        System.solve_system()
         System.write_state_outputs(self.test_data_directory / f"{f1.stem.strip('_input_')}_output.csv")
         System.write_energy_outputs(self.test_data_directory / f"{f1.stem.strip('_input_')}_energy.csv")
 
@@ -42,7 +42,7 @@ class TestDistrictSysAgain(GHEBaseTest):
         System = GHEHPSystemAgain(f_path_json)
         System.read_GHEHPSystem_data(f1)
 
-        System.solveSystem()
+        System.solve_system()
         System.write_state_outputs(self.test_data_directory / f"{f1.stem.strip('_input_')}_output.csv")
         System.write_energy_outputs(self.test_data_directory / f"{f1.stem.strip('_input_')}_energy.csv")
 
@@ -53,6 +53,6 @@ class TestDistrictSysAgain(GHEBaseTest):
         System = GHEHPSystemAgain(f_path_json)
         System.read_GHEHPSystem_data(f1)
 
-        System.solveSystem()
+        System.solve_system()
         System.write_state_outputs(self.test_data_directory / f"{f1.stem.strip('_input_')}_output.csv")
         System.write_energy_outputs(self.test_data_directory / f"{f1.stem.strip('_input_')}_energy.csv")
