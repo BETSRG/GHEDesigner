@@ -43,7 +43,8 @@ class HPmodel:
 
 
 class GHX:
-    def __init__(self):
+    def __init__(self, ghx_id=None, ghx_data=None):
+
         self.ID = None
         self.type = "GHX"
         self.nodeID = None
@@ -168,7 +169,7 @@ class GHX:
         )
         return g, g_bhw
 
-    def calculation_of_ghe_constant_c_n(self, g, ts, time_array, n_timesteps, bhe_effective_resist):
+    def calc_cn_constant(self, g, ts, time_array, n_timesteps, bhe_effective_resist):
         """
         Calculate C_n values for three GHEs based on their g-functions.
 
@@ -186,7 +187,7 @@ class GHX:
         return c_n
 
     @staticmethod
-    def compute_history_term(i, time_array, ts, two_pi_k, g, tg, H_n_ghe, total_values_ghe, q_ghe):
+    def calc_history_term(i, time_array, ts, two_pi_k, g, tg, H_n_ghe, total_values_ghe, q_ghe):
         """
         Computes the history term H_n for this GHX at time index `i`.
         Updates self.total_values_ghe and self.H_n_ghe in place.
@@ -288,7 +289,6 @@ class Zone:
         self.node = None
         self.HPmodel = None
         self.HP = None
-        self.loads_file = None
         self.matrix_line = None
         self.row_index = None
         self.index = None
@@ -308,7 +308,7 @@ class Zone:
         self.h = None
         self.c = None
 
-    def q_net_clg(self):
+    def get_zone_loads(self):
         """
         Calculate net heat extracted/rejected each hour for the zone.
         If either column is missing, default to zeros.
@@ -322,8 +322,6 @@ class Zone:
             self.c = np.array(self.df_zone["HPClgLd_W"])
         else:
             self.c = np.zeros(len(self.df_zone))
-
-        return self.c - self.h
 
     def zone_mass_flow_rate(self, t_eft, i):
         hp = self.HP
@@ -450,7 +448,6 @@ class Zone:
 class Node:
     def __init__(self):
         self.ID = None
-        self.type = None
         self.input = None
         self.output = None
         self.diversion = None
@@ -464,7 +461,6 @@ class Pipe:
         self.node_out_name = None
         self.input = None
         self.output = None
-        self.type = None
 
 
 class IsolationHX:
@@ -526,13 +522,17 @@ class GHEHPSystem:
         json_data = json.loads(f_path_json.read_text())
 
         self.HPmodels = []
-
         all_hp_data = json_data["heat_pump"]
         for hp_name, hp_data in all_hp_data.items():
             self.HPmodels.append(HPmodel(hp_name, hp_data))
 
-        self.configuration = None
         self.GHXs = []
+        # all_ghx_data = json_data["ground_heat_exchanger"]
+        # for ghx_name, ghx_data in all_ghx_data.items():
+        #     self.GHXs.append(GHX(ghx_name, ghx_data))
+
+        self.configuration = None
+
         self.buildings = []
         self.zones = []
         self.nodes = []
@@ -621,7 +621,7 @@ class GHEHPSystem:
                 thiszone.inlet_nodeID = str(cells[4])
                 thiszone.outlet_nodeID = str(cells[5])
                 thiszone.HPmodel = str(cells[6])
-                thiszone.loads_file = pd.read_csv(in_file_dir / cells[7])
+                thiszone.df_zone = pd.read_csv(in_file_dir / cells[7])
                 thiszone.matrix_line = next_matrix_line
                 next_matrix_line += 1
                 self.zones.append(thiszone)
@@ -672,6 +672,9 @@ class GHEHPSystem:
 
             if keyword == "length":
                 self.length_CL = float(cells[1])
+
+        for zone in self.zones:
+            zone.get_zone_loads()
 
         # end for line
         self.UpdateConnections()
@@ -751,13 +754,13 @@ class GHEHPSystem:
             self.g, _ = GHX.grab_g_function()
             # self.bhe_effective_resist = GHX.bhe.calc_effective_borehole_resistance()
             self.bhe_effective_resist = 0.15690883427464597  # TODO: Fix this
-            GHX.c_n = GHX.calculation_of_ghe_constant_c_n(self.g, ts, time_array, self.num_hours,
-                                                          self.bhe_effective_resist)
+            GHX.c_n = GHX.calc_cn_constant(self.g, ts, time_array, self.num_hours, self.bhe_effective_resist)
 
         # Initializing the values
         for GHX in self.GHXs:
-            GHX.H_n_ghe, GHX.total_values_ghe, GHX.q_ghe = np.full(self.num_hours, tg), np.zeros(
-                self.num_hours), np.zeros(self.num_hours)
+            GHX.H_n_ghe = np.full(self.num_hours, tg)
+            GHX.total_values_ghe = np.zeros(self.num_hours)
+            GHX.q_ghe = np.zeros(self.num_hours)
 
         # Initializing t_eft, t_mean, q_ghe, t_exit
         for zone in self.zones:
@@ -807,9 +810,12 @@ class GHEHPSystem:
             zone.P_zone_htg = np.zeros(self.num_hours)
             zone.P_zone_clg = np.zeros(self.num_hours)
             zone.P_zone_cp = np.zeros(self.num_hours)
+
         self.P_cl_cp = np.zeros(self.num_hours)
+
         for GHX in self.GHXs:
             GHX.P_ghe_cp = np.zeros(self.num_hours)
+
         for ISHX in self.ISHXs:
             ISHX.P_ishx_cp = np.zeros(self.num_hours)
 
@@ -823,8 +829,6 @@ class GHEHPSystem:
                 for zone in self.zones:
                     if zone in ISHX.zones:
                         t_eft = zone.t_eft[i - 1]
-                        zone.df_zone = zone.loads_file
-                        q_net_clg = zone.q_net_clg()
                         m_zone = zone.zone_mass_flow_rate(t_eft, i)
                         total_hp_flow_ISHX += m_zone
                         ISHX.m_loop_hp = total_hp_flow_ISHX * self.beta_ISHX_HP_flow
@@ -834,8 +838,6 @@ class GHEHPSystem:
             for zone in self.zones:
                 if zone.ISHX_ID == "None":
                     t_eft = zone.t_eft[i - 1]
-                    zone.df_zone = zone.loads_file
-                    q_net_clg = zone.q_net_clg()
                     m_zone = zone.zone_mass_flow_rate(t_eft, i)
                     total_hp_flow += m_zone
 
@@ -858,7 +860,6 @@ class GHEHPSystem:
                         m_loop = ISHX.m_loop_hp
                         t_eft = zone.t_eft[i - 1]
                         r1, r2 = zone.calculate_r1_r2(t_eft, i)
-                        q_net_clg = zone.q_net_clg()
                         mass_flow_zone = zone.zone_mass_flow_rate(t_eft, i)
                         m_loop_zone += mass_flow_zone
                         this_zone_row, rhs = zone.generate_zone_matrix_row(matrix_size, zone_inlet_index, r1,
@@ -897,8 +898,8 @@ class GHEHPSystem:
                 split_ratio = GHX.nbh / nbh_total
                 mass_flow_ghe = m_loop * split_ratio
                 c_n = GHX.c_n  # this is array, while using this in matrix we pick c_n[i], a single float number
-                H_n_ghe = GHX.compute_history_term(i, time_array, ts, two_pi_k, self.g, tg, GHX.H_n_ghe,
-                                                   GHX.total_values_ghe, q_ghe)
+                H_n_ghe = GHX.calc_history_term(i, time_array, ts, two_pi_k, self.g, tg, GHX.H_n_ghe,
+                                                GHX.total_values_ghe, q_ghe)
                 m_loop_ghe += mass_flow_ghe
 
                 rows, rhs_values = GHX.generate_GHX_matrix_row(matrix_size, c_n, i, GHX_inlet_index, mass_flow_ghe, cp,
@@ -960,7 +961,6 @@ class GHEHPSystem:
 
             # zone energy consumption
             for zone in self.zones:
-                q_net_clg = zone.q_net_clg()
                 t_eft = zone.t_eft[i - 1]
                 m_flow_zone = zone.zone_mass_flow_rate(t_eft, i)
                 cp_efficiency = self.HP_cp_efficiency
