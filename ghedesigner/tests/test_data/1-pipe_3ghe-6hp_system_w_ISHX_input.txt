@@ -24,10 +24,10 @@ Zone,      water_htg,        None,     b3z1,   n16,              None,          
 Zone,      water_htg,        None,     b3z2,   n18,              None,           HP4,         B3Z2.csv
 
 
-#  keyword, id,     inlet_nodeID,   outlet_nodeID,   n_rows,   n_cols,   row_spacing (m), col_spacing (m),  height     m_flow_ghe_design
-GHX,        ghe1,   n22,            None,            15,       10,       5,               5, 		        100,       50.63
-GHX,        ghe2,   n24,            None,            10,       8,        5,               5,                100,       27
-GHX,        ghe3,   n26,            None,            10,       7,        5,               5,                100,       23.63
+#  keyword, id,     inlet_nodeID,   outlet_nodeID,
+GHX,        ghe1,   n22,            None,
+GHX,        ghe2,   n24,            None,
+GHX,        ghe3,   n26,            None,
 
 
 # keyword,   name,            id,     node_network_inlet_ID,    node_HP_inlet_ID,       node_HP_outlet_ID,    beta_ishx,   effectiveness,     zoneID

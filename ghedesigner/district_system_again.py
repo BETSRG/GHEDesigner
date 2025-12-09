@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from ghedesigner.constants import LPS_TO_M3S, TWO_PI
 from ghedesigner.enums import BHType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
@@ -70,9 +71,11 @@ class GHX:
         self.n_cols = ghx_data["pre_designed"]["boreholes_in_y_dimension"]
         self.row_spacing = ghx_data["pre_designed"]["spacing_in_x_dimension"]
         self.col_spacing = ghx_data["pre_designed"]["spacing_in_y_dimension"]
-        self.ghe_height = ghx_data["pre_designed"]["H"]
+        self.height = ghx_data["pre_designed"]["H"]
         self.nbh = self.n_rows * self.n_cols
-        self.mass_flow_ghe_design = ghx_data["flow_rate"] * self.nbh
+        self.mass_flow_per_borehole = ghx_data["flow_rate"] * LPS_TO_M3S * self.fluid.rho
+        self.mass_flow_ghe = self.mass_flow_per_borehole * self.nbh
+        self.two_pi_k = TWO_PI * self.soil.k
 
         self.ID = ghx_id
         self.type = "GHX"
@@ -96,10 +99,7 @@ class GHX:
         self.bhe = None
         self.gFunction = None
         self.mass_flow_ghe = None
-        self.depth = None
 
-        self.mass_flow_ghe_design = None
-        self.mass_flow_ghe_borehole_design = None
         self.H_n_ghe = None
         self.total_values_ghe = None
 
@@ -125,10 +125,9 @@ class GHX:
         self.gFunction.log_time = eskilson_log_times()
 
     def compute_g_functions(self):
-
         g_function = calc_g_func_for_multiple_lengths(
             self.row_spacing,
-            [self.ghe_height],
+            [self.height],
             self.borehole.r_b,
             self.borehole.D,
             self.bhe.m_flow_borehole,
@@ -150,14 +149,10 @@ class GHX:
         """
 
         # Interpolate LTS g-function
-        g_function, rb_value, _, _ = self.gFunction.g_function_interpolation(self.row_spacing / self.ghe_height)
+        g_function, rb_value, _, _ = self.gFunction.g_function_interpolation(self.row_spacing / self.height)
 
         # Correct the g-function for borehole radius
-        g_function_corrected = self.gFunction.borehole_radius_correction(
-            g_function,
-            rb_value,
-            self.borehole.r_b
-        )
+        g_function_corrected = self.gFunction.borehole_radius_correction(g_function, rb_value, self.borehole.r_b)
 
         # Combine STS and LTS g-functions
         g = combine_sts_lts(
@@ -182,18 +177,17 @@ class GHX:
         Cn = 1 / (2 * pi * K_s) * g((tn - tn-1) / t_s) + R_b
         """
 
-        two_pi_k = 2 * np.pi * self.soil.k
         c_n = np.zeros(n_timesteps, dtype=float)
+        ts_hr = ts / 3600
 
         for i in range(1, n_timesteps):
-            delta_log_time = np.log((time_array[i] - time_array[i - 1]) / (ts / 3600.0))
+            delta_log_time = np.log((time_array[i] - time_array[i - 1]) / ts_hr)
             g_val = g(delta_log_time)
-            c_n[i] = (1 / two_pi_k * g_val) + bhe_effective_resist
+            c_n[i] = (1 / self.two_pi_k * g_val) + bhe_effective_resist
 
         return c_n
 
-    @staticmethod
-    def calc_history_term(i, time_array, ts, two_pi_k, g, tg, H_n_ghe, total_values_ghe, q_ghe):
+    def calc_history_term(self, i, time_array, ts, g, tg, H_n_ghe, total_values_ghe, q_ghe):
         """
         Computes the history term H_n for this GHX at time index `i`.
         Updates self.total_values_ghe and self.H_n_ghe in place.
@@ -201,22 +195,23 @@ class GHX:
         if i == 0:
             raise IndexError("Timestep index error")
 
+        ts_hr = ts / 3600
         time_n = time_array[i]
 
         # Compute dimensionless time for all indices from 1 to i-1
         indices = np.arange(1, i)
-        dim_less_time = np.log((time_n - time_array[indices - 1]) / (ts / 3600.0))
+        dim_less_time = np.log((time_n - time_array[indices - 1]) / ts_hr)
 
         # Compute contributions from all previous steps
-        delta_q_ghe = (q_ghe[indices] - q_ghe[indices - 1]) / two_pi_k
+        delta_q_ghe = (q_ghe[indices] - q_ghe[indices - 1]) / self.two_pi_k
         values = np.sum(delta_q_ghe * g(dim_less_time))
 
         total_values_ghe[i] = values
 
         # Contribution from the last time step only
-        dim1_less_time = np.log((time_n - time_array[i - 1]) / (ts / 3600.0))
+        dim1_less_time = np.log((time_n - time_array[i - 1]) / ts_hr)
 
-        H_n_ghe[i] = tg + total_values_ghe[i] - (q_ghe[i - 1] / two_pi_k * g(dim1_less_time))
+        H_n_ghe[i] = tg + total_values_ghe[i] - (q_ghe[i - 1] / self.two_pi_k * g(dim1_less_time))
         return H_n_ghe[i]
 
     def generate_GHX_matrix_row(
@@ -243,7 +238,7 @@ class GHX:
             row3[row_index + 3] = -1
 
             row4[row_index] = mass_flow_ghe * cp
-            row4[row_index + 2] = -self.ghe_height * (self.n_rows * self.n_cols)
+            row4[row_index + 2] = -self.height * (self.n_rows * self.n_cols)
             row4[row_index + 3] = -mass_flow_ghe * cp
 
             rhs1, rhs2, rhs3, rhs4 = 0, H_n_ghe, 0, 0
@@ -258,7 +253,7 @@ class GHX:
 
             row3[GHX_inlet_index] = mass_flow_ghe * cp
             row3[row_index + 3] = -mass_flow_ghe * cp
-            row3[row_index + 2] = -self.ghe_height * (self.n_rows * self.n_cols)
+            row3[row_index + 2] = -self.height * (self.n_rows * self.n_cols)
 
             row4[row_index] = (m_loop_ghe - mass_flow_ghe) * cp
             row4[row_index + 3] = mass_flow_ghe * cp
@@ -592,7 +587,6 @@ class GHEHPSystem:
                     if str(cells[1]) == ghx.ID:
                         ghx.inlet_nodeID = str(cells[2])
                         ghx.outlet_nodeID = str(cells[3])
-                        ghx.mass_flow_ghe_design = float(cells[9])
                         ghx.matrix_line = next_matrix_line
                         next_matrix_line += 4
 
@@ -691,11 +685,8 @@ class GHEHPSystem:
 
         # for getting g_functions and bhe object
         for GHX in self.GHXs:
-            GHX.height = GHX.borehole.H
-            GHX.nbh = len(GHX.gFunction.bore_locations)
-            GHX.mass_flow_ghe_borehole_design = GHX.mass_flow_ghe_design / GHX.nbh
             GHX.bhe = get_bhe_object(
-                GHX.bhe_type, GHX.mass_flow_ghe_borehole_design, self.fluid, GHX.borehole, GHX.pipe, GHX.grout, GHX.soil
+                GHX.bhe_type, GHX.mass_flow_per_borehole, self.fluid, GHX.borehole, GHX.pipe, GHX.grout, GHX.soil
             )
             GHX.bhe_eq = GHX.bhe.to_single()
             GHX.bhe_eq.calc_sts_g_functions()
@@ -855,14 +846,10 @@ class GHEHPSystem:
             GHX_inlet_index = self.GHXs[0].row_index
             for j, GHX in enumerate(self.GHXs):
                 q_ghe = GHX.q_ghe[:i]  # <--- FIXED: slice of all past values, it is an array
-                two_pi_k = 2 * np.pi * GHX.soil.k
-                GHX.nbh = len(GHX.gFunction.bore_locations)
                 split_ratio = GHX.nbh / nbh_total
                 mass_flow_ghe = m_loop * split_ratio
                 c_n = GHX.c_n  # this is array, while using this in matrix we pick c_n[i], a single float number
-                H_n_ghe = GHX.calc_history_term(
-                    i, time_array, ts, two_pi_k, self.g, tg, GHX.H_n_ghe, GHX.total_values_ghe, q_ghe
-                )
+                H_n_ghe = GHX.calc_history_term(i, time_array, ts, self.g, tg, GHX.H_n_ghe, GHX.total_values_ghe, q_ghe)
                 m_loop_ghe += mass_flow_ghe
 
                 rows, rhs_values = GHX.generate_GHX_matrix_row(
@@ -930,7 +917,6 @@ class GHEHPSystem:
                 m_flow_zone = zone.zone_mass_flow_rate(t_eft, i)
                 cp_efficiency = self.HP_cp_efficiency
                 delta_P_HP = zone.HP.delta_P_HP
-                # density = 1023.7849656966806  # TODO: fix this
                 density = self.fluid.rho
                 zone.P_zone_htg[i], zone.P_zone_clg[i], zone.P_zone_cp[i] = zone.zone_energy_consumption(
                     t_eft, i, m_flow_zone, density, cp_efficiency, self.beta_HP_delta_P, delta_P_HP
