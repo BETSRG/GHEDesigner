@@ -613,7 +613,7 @@ class GHEHPSystem:
                         ghx.inlet_nodeID = str(cells[2])
                         ghx.outlet_nodeID = str(cells[3])
                         ghx.matrix_line = next_matrix_line
-                        next_matrix_line += 4
+                        next_matrix_line += GHX.MATRIX_ROWS
 
             if keyword == "building":
                 thisbuilding = Building()
@@ -699,36 +699,46 @@ class GHEHPSystem:
         configuration = self.configuration
 
         if configuration == "1-pipe":
-            matrix_size = len(self.zones) + 4 * len(self.GHXs) + 3 * len(self.ISHXs)
+            matrix_size = len(self.zones) + GHX.MATRIX_ROWS * len(self.GHXs) + IsolationHX.MATRIX_ROWS * len(self.ISHXs)
         elif configuration == "2-pipe":
-            matrix_size = 2 * len(self.zones) + 4 * len(self.GHXs) + 3 * len(self.ISHXs)
+            matrix_size = (
+                Zone.MATRIX_ROWS_2_PIPE * len(self.zones)
+                + GHX.MATRIX_ROWS * len(self.GHXs)
+                + IsolationHX.MATRIX_ROWS * len(self.ISHXs)
+            )
         else:
             raise ValueError(f"Invalid configuration type: {configuration}")
 
-        for GHX in self.GHXs:
-            GHX.initialize_gFunction_object()
+        for this_ghx in self.GHXs:
+            this_ghx.initialize_gFunction_object()
 
         # for getting g_functions and bhe object
-        for GHX in self.GHXs:
-            GHX.bhe = get_bhe_object(
-                GHX.bhe_type, GHX.mass_flow_per_borehole, self.fluid, GHX.borehole, GHX.pipe, GHX.grout, GHX.soil
+        for this_ghx in self.GHXs:
+            this_ghx.bhe = get_bhe_object(
+                this_ghx.bhe_type,
+                this_ghx.mass_flow_per_borehole,
+                self.fluid,
+                this_ghx.borehole,
+                this_ghx.pipe,
+                this_ghx.grout,
+                this_ghx.soil,
             )
-            GHX.bhe_eq = GHX.bhe.to_single()
-            GHX.bhe_eq.calc_sts_g_functions()
+            this_ghx.bhe_eq = this_ghx.bhe.to_single()
+            this_ghx.bhe_eq.calc_sts_g_functions()
 
-            self.gFunction = GHX.compute_g_functions()
+            self.gFunction = this_ghx.compute_g_functions()
             cp = self.fluid.cp
 
-            self.g, _ = GHX.grab_g_function()
-            # self.bhe_effective_resist = GHX.bhe.calc_effective_borehole_resistance()
+            self.g, _ = this_ghx.grab_g_function()
+            # self.bhe_effective_resist = this_ghx.bhe.calc_effective_borehole_resistance()
             self.bhe_effective_resist = 0.15690883427464597  # TODO: Fix this
-            GHX.set_cn_const_array(self.g, time_array, self.num_hours, self.bhe_effective_resist)
+            this_ghx.set_cn_const_array(self.g, time_array, self.num_hours, self.bhe_effective_resist)
 
         # Initializing the values
-        for GHX in self.GHXs:
-            GHX.H_n_ghe = np.full(self.num_hours, self.initial_temp)
-            GHX.total_values_ghe = np.zeros(self.num_hours)
-            GHX.q_ghe = np.zeros(self.num_hours)
+        for this_ghx in self.GHXs:
+            this_ghx.H_n_ghe = np.full(self.num_hours, self.initial_temp)
+            this_ghx.total_values_ghe = np.zeros(self.num_hours)
+            this_ghx.q_ghe = np.zeros(self.num_hours)
 
         # Initializing t_eft, t_mean, q_ghe, t_exit
         for zone in self.zones:
@@ -736,43 +746,43 @@ class GHEHPSystem:
             zone.t_exft = np.full(self.num_hours, self.initial_temp)
             zone.t_combining_node = np.full(self.num_hours, self.initial_temp)
 
-        for GHX in self.GHXs:
-            GHX.t_eft = np.full(self.num_hours, self.initial_temp)
-            GHX.t_mft = np.full(self.num_hours, self.initial_temp)
-            GHX.t_bhw = np.full(self.num_hours, self.initial_temp)
-            GHX.q_ghe = np.zeros(self.num_hours)
-            GHX.t_exft = np.full(self.num_hours, self.initial_temp)
-            GHX.t_combining_node = np.full(self.num_hours, self.initial_temp)
+        for this_ghx in self.GHXs:
+            this_ghx.t_eft = np.full(self.num_hours, self.initial_temp)
+            this_ghx.t_mft = np.full(self.num_hours, self.initial_temp)
+            this_ghx.t_bhw = np.full(self.num_hours, self.initial_temp)
+            this_ghx.q_ghe = np.zeros(self.num_hours)
+            this_ghx.t_exft = np.full(self.num_hours, self.initial_temp)
+            this_ghx.t_combining_node = np.full(self.num_hours, self.initial_temp)
 
-        for ISHX in self.ISHXs:
-            ISHX.t_n_eft = np.full(self.num_hours, self.initial_temp)
-            ISHX.t_n_exft = np.full(self.num_hours, self.initial_temp)
-            ISHX.t_hp_eft = np.full(self.num_hours, self.initial_temp)
+        for this_ihx in self.ISHXs:
+            this_ihx.t_n_eft = np.full(self.num_hours, self.initial_temp)
+            this_ihx.t_n_exft = np.full(self.num_hours, self.initial_temp)
+            this_ihx.t_hp_eft = np.full(self.num_hours, self.initial_temp)
 
         # Assigning row_indices
         if configuration == "1-pipe":
             for k, zone in enumerate(self.zones):
                 zone.row_index = k
-            for k, GHX in enumerate(self.GHXs):
-                GHX.row_index = len(self.zones) + k * 4
-            for k, ISHX in enumerate(self.ISHXs):
-                ISHX.row_index = len(self.zones) + len(self.GHXs) * 4
+            for k, this_ghx in enumerate(self.GHXs):
+                this_ghx.row_index = len(self.zones) + k * GHX.MATRIX_ROWS
+            for k, this_ihx in enumerate(self.ISHXs):
+                this_ihx.row_index = len(self.zones) + len(self.GHXs) * GHX.MATRIX_ROWS
 
         elif configuration == "2-pipe":
             for k, zone in enumerate(self.zones):
-                zone.row_index = k * 2
-            for k, GHX in enumerate(self.GHXs):
-                GHX.row_index = 2 * len(self.zones) + k * 4
-            for k, ISHX in enumerate(self.ISHXs):
-                ISHX.row_index = len(self.zones) + len(self.GHXs) * 4
+                zone.row_index = k * Zone.MATRIX_ROWS_2_PIPE
+            for k, this_ghx in enumerate(self.GHXs):
+                this_ghx.row_index = Zone.MATRIX_ROWS_2_PIPE * len(self.zones) + k * GHX.MATRIX_ROWS
+            for k, this_ihx in enumerate(self.ISHXs):
+                this_ihx.row_index = len(self.zones) + len(self.GHXs) * GHX.MATRIX_ROWS
 
         else:
             raise ValueError(f"Invalid configuration type: {configuration}")
 
         # Initializing
         m_loop_array = np.zeros(self.num_hours)
-        for ISHX in self.ISHXs:
-            ISHX.m_loop_ISHX_array = np.zeros(self.num_hours)
+        for this_ihx in self.ISHXs:
+            this_ihx.m_loop_ISHX_array = np.zeros(self.num_hours)
 
         for zone in self.zones:
             zone.P_zone_htg = np.zeros(self.num_hours)
@@ -781,25 +791,25 @@ class GHEHPSystem:
 
         self.P_cl_cp = np.zeros(self.num_hours)
 
-        for GHX in self.GHXs:
-            GHX.P_ghe_cp = np.zeros(self.num_hours)
+        for this_ghx in self.GHXs:
+            this_ghx.P_ghe_cp = np.zeros(self.num_hours)
 
-        for ISHX in self.ISHXs:
-            ISHX.P_ishx_cp = np.zeros(self.num_hours)
+        for this_ihx in self.ISHXs:
+            this_ihx.P_ishx_cp = np.zeros(self.num_hours)
 
         for i in range(1, self.num_hours):  # loop over all timestep
             matrix_rows = []
             matrix_rhs = []
             # Calculating total hp flows in each ISHX
 
-            for ISHX in self.ISHXs:
+            for this_ihx in self.ISHXs:
                 total_hp_flow_ISHX = 0
                 for zone in self.zones:
-                    if zone in ISHX.zones:
+                    if zone in this_ihx.zones:
                         t_eft = zone.t_eft[i - 1]
                         m_zone = zone.zone_mass_flow_rate(t_eft, i)
                         total_hp_flow_ISHX += m_zone
-                        ISHX.m_loop_hp = total_hp_flow_ISHX * self.beta_ISHX_HP_flow
+                        this_ihx.m_loop_hp = total_hp_flow_ISHX * self.beta_ISHX_HP_flow
 
             # Calculating total hp flows in heat pumps connected directly to loop
             total_hp_flow = 0
@@ -810,10 +820,10 @@ class GHEHPSystem:
                     total_hp_flow += m_zone
 
             total_m_loop_n = 0
-            for ISHX in self.ISHXs:
-                ISHX.m_loop_n = ISHX.m_loop_hp * self.beta_ISHX_N_flow
-                total_m_loop_n += ISHX.m_loop_n
-                ISHX.m_loop_ISHX_array[i] = total_m_loop_n
+            for this_ihx in self.ISHXs:
+                this_ihx.m_loop_n = this_ihx.m_loop_hp * self.beta_ISHX_N_flow
+                total_m_loop_n += this_ihx.m_loop_n
+                this_ihx.m_loop_ISHX_array[i] = total_m_loop_n
 
             m_loop = (total_m_loop_n + total_hp_flow) * self.beta_CL_flow
             m_loop_array[i] = m_loop
@@ -822,10 +832,10 @@ class GHEHPSystem:
 
             # Generating matrix for zones connected to ISHX
             m_loop_zone = 0
-            for ISHX in self.ISHXs:
+            for this_ihx in self.ISHXs:
                 for zone in self.zones:
-                    if zone in ISHX.zones:
-                        m_loop = ISHX.m_loop_hp
+                    if zone in this_ihx.zones:
+                        m_loop = this_ihx.m_loop_hp
                         t_eft = zone.t_eft[i - 1]
                         r1, r2 = zone.calculate_r1_r2(t_eft, i)
                         mass_flow_zone = zone.zone_mass_flow_rate(t_eft, i)
@@ -866,15 +876,15 @@ class GHEHPSystem:
             # Generating matrix for ground heat exchangers
             m_loop_ghe = 0
             GHX_inlet_index = self.GHXs[0].row_index
-            for j, GHX in enumerate(self.GHXs):
-                q_ghe = GHX.q_ghe[:i]  # <--- FIXED: slice of all past values, it is an array
-                mass_flow_ghe = m_loop * GHX.split_ratio
-                H_n_ghe = GHX.calc_history_term(
-                    i, time_array, self.g, self.initial_temp, GHX.H_n_ghe, GHX.total_values_ghe, q_ghe
+            for j, this_ghx in enumerate(self.GHXs):
+                q_ghe = this_ghx.q_ghe[:i]  # <--- FIXED: slice of all past values, it is an array
+                mass_flow_ghe = m_loop * this_ghx.split_ratio
+                H_n_ghe = this_ghx.calc_history_term(
+                    i, time_array, self.g, self.initial_temp, this_ghx.H_n_ghe, this_ghx.total_values_ghe, q_ghe
                 )
                 m_loop_ghe += mass_flow_ghe
 
-                rows, rhs_values = GHX.generate_GHX_matrix_row(
+                rows, rhs_values = this_ghx.generate_GHX_matrix_row(
                     matrix_size, i, GHX_inlet_index, mass_flow_ghe, cp, m_loop_ghe, H_n_ghe, m_loop, configuration
                 )
 
@@ -883,9 +893,9 @@ class GHEHPSystem:
                     matrix_rhs.append(rhs)
 
             # Generating matrix for isolation heat exchanger
-            for ISHX in self.ISHXs:
+            for this_ihx in self.ISHXs:
                 m_loop = (total_m_loop_n + total_hp_flow) * self.beta_CL_flow
-                rows, rhs_values = ISHX.generate_ISHX_matrix_row(matrix_size, m_loop, cp)
+                rows, rhs_values = this_ihx.generate_ISHX_matrix_row(matrix_size, m_loop, cp)
                 for row, rhs in zip(rows, rhs_values):
                     matrix_rows.append(row)
                     matrix_rhs.append(rhs)
@@ -901,16 +911,16 @@ class GHEHPSystem:
                 for zone in self.zones:
                     zone.t_eft[i] = X[zone.row_index]
 
-                for GHX in self.GHXs:
-                    GHX.t_eft[i] = X[GHX.row_index]
-                    GHX.t_mft[i] = X[GHX.row_index + 1]
-                    GHX.q_ghe[i] = X[GHX.row_index + 2]
-                    GHX.t_exft[i] = X[GHX.row_index + 3]
+                for this_ghx in self.GHXs:
+                    this_ghx.t_eft[i] = X[this_ghx.row_index]
+                    this_ghx.t_mft[i] = X[this_ghx.row_index + 1]
+                    this_ghx.q_ghe[i] = X[this_ghx.row_index + 2]
+                    this_ghx.t_exft[i] = X[this_ghx.row_index + 3]
 
-                for ISHX in self.ISHXs:
-                    ISHX.t_n_eft[i] = X[ISHX.row_index]
-                    ISHX.t_n_exft[i] = X[ISHX.row_index + 1]
-                    ISHX.t_hp_eft[i] = X[ISHX.row_index + 2]
+                for this_ihx in self.ISHXs:
+                    this_ihx.t_n_eft[i] = X[this_ihx.row_index]
+                    this_ihx.t_n_exft[i] = X[this_ihx.row_index + 1]
+                    this_ihx.t_hp_eft[i] = X[this_ihx.row_index + 2]
 
             # for getting values for 2-pipe system
             if self.configuration == "2-pipe":
@@ -919,12 +929,12 @@ class GHEHPSystem:
                     zone.t_exft[i] = X[zone.row_index + 1]
                     zone.t_combining_node[i] = X[zone.downstream_device.row_index]
 
-                for GHX in self.GHXs:
-                    GHX.t_eft[i] = X[GHX_inlet_index]
-                    GHX.t_mft[i] = X[GHX.row_index + 1]
-                    GHX.q_ghe[i] = X[GHX.row_index + 2]
-                    GHX.t_exft[i] = X[GHX.row_index + 3]
-                    GHX.t_combining_node[i] = X[GHX.downstream_device.row_index]
+                for this_ghx in self.GHXs:
+                    this_ghx.t_eft[i] = X[GHX_inlet_index]
+                    this_ghx.t_mft[i] = X[this_ghx.row_index + 1]
+                    this_ghx.q_ghe[i] = X[this_ghx.row_index + 2]
+                    this_ghx.t_exft[i] = X[this_ghx.row_index + 3]
+                    this_ghx.t_combining_node[i] = X[this_ghx.downstream_device.row_index]
 
             # zone energy consumption
             for zone in self.zones:
@@ -938,21 +948,21 @@ class GHEHPSystem:
                 )
 
             # ground heat exchanger energy consumption
-            for GHX in self.GHXs:
-                nbh = len(GHX.gFunction.bore_locations)
-                length_ghe = 2 * GHX.height
-                mass_flow_ghe = m_loop * GHX.split_ratio
-                pipe_dia = 2 * GHX.pipe.r_in
-                roughness = GHX.pipe.roughness
+            for this_ghx in self.GHXs:
+                nbh = len(this_ghx.gFunction.bore_locations)
+                length_ghe = 2 * this_ghx.height
+                mass_flow_ghe = m_loop * this_ghx.split_ratio
+                pipe_dia = 2 * this_ghx.pipe.r_in
+                roughness = this_ghx.pipe.roughness
                 dynamic_viscosity = self.fluid.mu
                 density = self.fluid.rho
-                velocity = (mass_flow_ghe / nbh) / (density * np.pi * GHX.pipe.r_in**2)
-                Re_n = velocity * GHX.pipe.r_in * 2 / (dynamic_viscosity / density)
+                velocity = (mass_flow_ghe / nbh) / (density * np.pi * this_ghx.pipe.r_in**2)
+                Re_n = velocity * this_ghx.pipe.r_in * 2 / (dynamic_viscosity / density)
                 A = 2.457 * np.log((7 / Re_n) ** 0.9 + 0.27 * (roughness / pipe_dia)) ** 16
                 B = (37530 / Re_n) ** 16
                 friction_factor = 8 * ((8 / Re_n) ** 12 + (A + B) ** -1.5) ** (1 / 12)
                 delta_P_GHE = friction_factor * length_ghe * density * velocity**2 / (2 * pipe_dia)
-                GHX.P_ghe_cp[i] = (
+                this_ghx.P_ghe_cp[i] = (
                     mass_flow_ghe / (density * self.GHE_cp_efficiency) * delta_P_GHE * self.beta_GHE_delta_P
                 )
 
@@ -966,12 +976,12 @@ class GHEHPSystem:
 
         # ISHX loop energy consumption
         for i in range(1, self.num_hours):
-            for ISHX in self.ISHXs:
+            for this_ihx in self.ISHXs:
                 density = self.fluid.rho
-                m_ref_ISHX = max(ISHX.m_loop_ISHX_array)
-                delta_P_ISHX = (self.delta_P_ref_ISHX / m_ref_ISHX**2) * ISHX.m_loop_ISHX_array[i] ** 2
-                ISHX.P_ishx_cp[i] = (
-                    ISHX.m_loop_ISHX_array[i]
+                m_ref_ISHX = max(this_ihx.m_loop_ISHX_array)
+                delta_P_ISHX = (self.delta_P_ref_ISHX / m_ref_ISHX**2) * this_ihx.m_loop_ISHX_array[i] ** 2
+                this_ihx.P_ishx_cp[i] = (
+                    this_ihx.m_loop_ISHX_array[i]
                     / (density * self.ISHX_cp_efficiency)
                     * delta_P_ISHX
                     * self.beta_ISHX_delta_P
