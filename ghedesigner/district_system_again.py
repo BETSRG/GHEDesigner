@@ -162,7 +162,7 @@ class GHX:
 
         return g_fn
 
-    def set_cn_const_array(self, g, time_array, n_timesteps, bhe_effective_resist):
+    def set_cn_const_array(self, time_array, n_timesteps, bhe_effective_resist):
         """
         Calculate C_n values for three GHEs based on their g-functions.
 
@@ -175,12 +175,12 @@ class GHX:
 
         for i in range(1, n_timesteps):
             delta_log_time = np.log((time_array[i] - time_array[i - 1]) / ts_hr)
-            g_val = g(delta_log_time)
+            g_val = self.g_fn(delta_log_time)
             c_n[i] = (1 / self.two_pi_k * g_val) + bhe_effective_resist
 
         self.c_n = c_n
 
-    def calc_history_term(self, i, time_array, g, tg, H_n_ghe, total_values_ghe, q_ghe):
+    def calc_history_term(self, i, time_array, tg, H_n_ghe, total_values_ghe, q_ghe):
         """
         Computes the history term H_n for this GHX at time index `i`.
         Updates self.total_values_ghe and self.H_n_ghe in place.
@@ -198,14 +198,14 @@ class GHX:
 
         # Compute contributions from all previous steps
         delta_q_ghe = (q_ghe[indices] - q_ghe[indices - 1]) / self.two_pi_k
-        values = np.sum(delta_q_ghe * g(dim_less_time))
+        values = np.sum(delta_q_ghe * self.g_fn(dim_less_time))
 
         total_values_ghe[i] = values
 
         # Contribution from the last time step only
         dim1_less_time = np.log((time_n - time_array[i - 1]) / ts_hr)
 
-        H_n_ghe[i] = tg + total_values_ghe[i] - (q_ghe[i - 1] / self.two_pi_k * g(dim1_less_time))
+        H_n_ghe[i] = tg + total_values_ghe[i] - (q_ghe[i - 1] / self.two_pi_k * self.g_fn(dim1_less_time))
         return H_n_ghe[i]
 
     def generate_GHX_matrix_row(
@@ -262,14 +262,6 @@ class GHX:
         rhs = [rhs1, rhs2, rhs3, rhs4]
 
         return rows, rhs
-
-
-class Building:
-    def __init__(self):
-        self.name = None
-        self.ID = None
-        self.zoneIDs = []  # list of zone ids
-        self.zones = []  # list of zones
 
 
 class Zone:
@@ -561,7 +553,6 @@ class GHEHPSystem:
 
         # Thermal object references (to be set during setup)
         self.nbh_total = None
-        self.g = None
         self.mass_flow_ghe = None
         self.m_loop = None
         self.beta_CL_flow = None
@@ -673,12 +664,14 @@ class GHEHPSystem:
         configuration = self.configuration
 
         if configuration == "1-pipe":
-            matrix_size = len(self.zones) + GHX.MATRIX_ROWS * len(self.GHXs) + IsolationHX.MATRIX_ROWS * len(self.ISHXs)
+            matrix_size = np.dot(
+                [len(self.zones), len(self.GHXs), len(self.ISHXs)],
+                [Zone.MATRIX_ROWS_1_PIPE, GHX.MATRIX_ROWS, IsolationHX.MATRIX_ROWS],
+            )
         elif configuration == "2-pipe":
-            matrix_size = (
-                Zone.MATRIX_ROWS_2_PIPE * len(self.zones)
-                + GHX.MATRIX_ROWS * len(self.GHXs)
-                + IsolationHX.MATRIX_ROWS * len(self.ISHXs)
+            matrix_size = np.dot(
+                [len(self.zones), len(self.GHXs), len(self.ISHXs)],
+                [Zone.MATRIX_ROWS_2_PIPE, GHX.MATRIX_ROWS, IsolationHX.MATRIX_ROWS],
             )
         else:
             raise ValueError(f"Invalid configuration type: {configuration}")
@@ -686,10 +679,9 @@ class GHEHPSystem:
         # for getting g_functions and bhe object
         for this_ghx in self.GHXs:
             cp = self.fluid.cp
-            self.g = this_ghx.compute_g_functions()
             # self.bhe_effective_resist = this_ghx.bhe.calc_effective_borehole_resistance()
             self.bhe_effective_resist = 0.15690883427464597  # TODO: Fix this
-            this_ghx.set_cn_const_array(self.g, time_array, self.num_hours, self.bhe_effective_resist)
+            this_ghx.set_cn_const_array(time_array, self.num_hours, self.bhe_effective_resist)
 
         # Initializing the values
         for this_ghx in self.GHXs:
@@ -837,7 +829,7 @@ class GHEHPSystem:
                 q_ghe = this_ghx.q_ghe[:i]  # <--- FIXED: slice of all past values, it is an array
                 mass_flow_ghe = m_loop * this_ghx.split_ratio
                 H_n_ghe = this_ghx.calc_history_term(
-                    i, time_array, self.g, self.initial_temp, this_ghx.H_n_ghe, this_ghx.total_values_ghe, q_ghe
+                    i, time_array, self.initial_temp, this_ghx.H_n_ghe, this_ghx.total_values_ghe, q_ghe
                 )
                 m_loop_ghe += mass_flow_ghe
 
