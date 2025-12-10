@@ -8,7 +8,7 @@ from ghedesigner.constants import LPS_TO_M3S, TWO_PI
 from ghedesigner.enums import BHType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
-from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
+from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.utilities import combine_sts_lts, eskilson_log_times
@@ -93,16 +93,10 @@ class GHX:
         # Parameters to be assigned later
         self.m_dot_total = None
 
-        # Thermal object references (to be set during setup)
-        self.g_function: GFunction
-
         self.bhe_type = BHType.SINGLEUTUBE
         self.split_ratio = None
 
         # Computed properties
-        self.bhe = None
-        self.bhe_eq = None
-        self.gFunction = None
         self.mass_flow_ghe = None
 
         self.H_n_ghe = None
@@ -116,64 +110,57 @@ class GHX:
         self.t_bw = None
         self.t_combining_node = None
 
-        # All dummy values are used, because the goal is only to generate
-        # self.gFunction as an object of class GFunction so that I can
-        # initialize self.gFunction in "initialize_gFunction_object" method
-        self.gFunction = GFunction(b=0.0, d=0.0, r_b_values={}, g_lts={}, log_time=[], bore_locations=[])
+        self.bhe = get_bhe_object(
+            self.bhe_type,
+            self.mass_flow_per_borehole,
+            self.fluid,
+            self.borehole,
+            self.pipe,
+            self.grout,
+            self.soil,
+        )
 
-    def initialize_gFunction_object(self):
-        self.gFunction.bore_locations = [
+        self.g_fn = self.compute_g_functions()
+
+    def compute_g_functions(self):
+        self.bhe.calc_sts_g_functions()
+
+        bore_locations = [
             (i * self.row_spacing, j * self.row_spacing)
             for i in range(int(self.n_rows))
             for j in range(int(self.n_cols))
         ]
-        self.gFunction.log_time = eskilson_log_times()
 
-    def compute_g_functions(self):
-        g_function = calc_g_func_for_multiple_lengths(
+        g_lts = calc_g_func_for_multiple_lengths(
             self.row_spacing,
             [self.height],
             self.borehole.r_b,
             self.borehole.D,
             self.bhe.m_flow_borehole,
             self.bhe_type,
-            self.gFunction.log_time,
-            self.gFunction.bore_locations,
+            eskilson_log_times(),
+            bore_locations,
             self.bhe.fluid,
             self.bhe.pipe,
             self.bhe.grout,
             self.bhe.soil,
         )
 
-        self.gFunction = g_function
-
-    def grab_g_function(self):
-        """
-        Interpolates g-function values using self.gFunction and self.bhe,
-        and returns g and g_bhw arrays.
-        """
-
         # Interpolate LTS g-function
-        g_function, rb_value, _, _ = self.gFunction.g_function_interpolation(self.row_spacing / self.height)
+        g_lts_vals, rb_value, _, _ = g_lts.g_function_interpolation(self.row_spacing / self.height)
 
         # Correct the g-function for borehole radius
-        g_function_corrected = self.gFunction.borehole_radius_correction(g_function, rb_value, self.borehole.r_b)
+        g_lts_corrected = g_lts.borehole_radius_correction(g_lts_vals, rb_value, self.borehole.r_b)
 
         # Combine STS and LTS g-functions
-        g = combine_sts_lts(
-            self.gFunction.log_time,
-            g_function_corrected,
+        g_fn = combine_sts_lts(
+            eskilson_log_times(),
+            g_lts_corrected,
             self.bhe.lntts.tolist(),
             self.bhe.g.tolist(),
         )
 
-        g_bhw = combine_sts_lts(
-            self.gFunction.log_time,
-            g_function_corrected,
-            self.bhe.lntts.tolist(),
-            self.bhe.g_bhw.tolist(),
-        )
-        return g, g_bhw
+        return g_fn
 
     def set_cn_const_array(self, g, time_array, n_timesteps, bhe_effective_resist):
         """
@@ -183,7 +170,7 @@ class GHX:
         """
 
         c_n = np.zeros(n_timesteps, dtype=float)
-        ts = self.bhe_eq.t_s
+        ts = self.bhe.t_s
         ts_hr = ts / 3600
 
         for i in range(1, n_timesteps):
@@ -201,7 +188,7 @@ class GHX:
         if i == 0:
             raise IndexError("Timestep index error")
 
-        ts = self.bhe_eq.t_s
+        ts = self.bhe.t_s
         ts_hr = ts / 3600
         time_n = time_array[i]
 
@@ -563,25 +550,19 @@ class GHEHPSystem:
 
         self.configuration = None
 
-        self.buildings = []
         self.zones = []
         self.nodes = []
         self.pipes = []
         self.ISHXs = []
         self.current_row = 0
         self.m_loop = None
-        self.bhe = None
-        self.g_value = {}
         self.time_array = None
         self.num_hours = None
 
         # Thermal object references (to be set during setup)
         self.nbh_total = None
-        self.gFunction = None
         self.g = None
-        self.g_bhw = None
         self.mass_flow_ghe = None
-        self.bhe_eq = None
         self.m_loop = None
         self.beta_CL_flow = None
         self.beta_ISHX_loop = None
@@ -614,13 +595,6 @@ class GHEHPSystem:
                         ghx.outlet_nodeID = str(cells[3])
                         ghx.matrix_line = next_matrix_line
                         next_matrix_line += GHX.MATRIX_ROWS
-
-            if keyword == "building":
-                thisbuilding = Building()
-                thisbuilding.name = str(cells[1])
-                thisbuilding.ID = str(cells[2])
-                thisbuilding.zoneIDs = [zones.strip() for zones in cells[3:]]
-                self.buildings.append(thisbuilding)
 
             if keyword == "zone":
                 df = pd.read_csv(in_file_dir / cells[7])
@@ -709,27 +683,10 @@ class GHEHPSystem:
         else:
             raise ValueError(f"Invalid configuration type: {configuration}")
 
-        for this_ghx in self.GHXs:
-            this_ghx.initialize_gFunction_object()
-
         # for getting g_functions and bhe object
         for this_ghx in self.GHXs:
-            this_ghx.bhe = get_bhe_object(
-                this_ghx.bhe_type,
-                this_ghx.mass_flow_per_borehole,
-                self.fluid,
-                this_ghx.borehole,
-                this_ghx.pipe,
-                this_ghx.grout,
-                this_ghx.soil,
-            )
-            this_ghx.bhe_eq = this_ghx.bhe.to_single()
-            this_ghx.bhe_eq.calc_sts_g_functions()
-
-            self.gFunction = this_ghx.compute_g_functions()
             cp = self.fluid.cp
-
-            self.g, _ = this_ghx.grab_g_function()
+            self.g = this_ghx.compute_g_functions()
             # self.bhe_effective_resist = this_ghx.bhe.calc_effective_borehole_resistance()
             self.bhe_effective_resist = 0.15690883427464597  # TODO: Fix this
             this_ghx.set_cn_const_array(self.g, time_array, self.num_hours, self.bhe_effective_resist)
@@ -949,14 +906,13 @@ class GHEHPSystem:
 
             # ground heat exchanger energy consumption
             for this_ghx in self.GHXs:
-                nbh = len(this_ghx.gFunction.bore_locations)
                 length_ghe = 2 * this_ghx.height
                 mass_flow_ghe = m_loop * this_ghx.split_ratio
                 pipe_dia = 2 * this_ghx.pipe.r_in
                 roughness = this_ghx.pipe.roughness
                 dynamic_viscosity = self.fluid.mu
                 density = self.fluid.rho
-                velocity = (mass_flow_ghe / nbh) / (density * np.pi * this_ghx.pipe.r_in**2)
+                velocity = (mass_flow_ghe / this_ghx.nbh) / (density * np.pi * this_ghx.pipe.r_in**2)
                 Re_n = velocity * this_ghx.pipe.r_in * 2 / (dynamic_viscosity / density)
                 A = 2.457 * np.log((7 / Re_n) ** 0.9 + 0.27 * (roughness / pipe_dia)) ** 16
                 B = (37530 / Re_n) ** 16
@@ -1071,11 +1027,6 @@ class GHEHPSystem:
             if self.configuration == "2-pipe":
                 zone.output = FindItemByID(zone.outlet_nodeID, self.nodes)
                 zone.output.input = zone
-
-        for building in self.buildings:
-            for zoneID in building.zoneIDs:
-                zone = FindItemByID(zoneID, self.zones)
-                building.zones.append(zone)
 
         for GHX in self.GHXs:
             GHX.input = FindItemByID(GHX.inlet_nodeID, self.nodes)

@@ -4,16 +4,6 @@ Title, '2-pipe 3ghe-6hp system_w_pumping_station'
 
 configuration, '2-pipe'
 
-# Ground heat exchanger data
-
-# Building Data
-
-# keyword, name,            id, zoneID
-Building, Hospital, 	    B1, b1z1, b1z2
-Building, Midriseapartment, B2, b2z1, b2z2
-Building, Mediumoffice,     B3, b3z1, b3z2
-
-
 # Zone data
 
 # keyword, name,             ISHX_ID,  id,     inlet_nodeID,      outlet_nodeID,       HPmodel,  loads_file
