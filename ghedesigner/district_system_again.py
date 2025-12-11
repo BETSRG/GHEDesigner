@@ -732,15 +732,15 @@ class GHEHPSystem:
         else:
             raise ValueError(f"Invalid configuration type: {self.configuration}")
 
-        # for idx, this_zone in enumerate(self.zones):
-        #     print(f"Zone_{idx} - Self: {this_zone.row_index} - Down: {this_zone.downstream_device.row_index}")
-        #
-        # for idx, this_ghx in enumerate(self.GHXs):
-        #     print(f"GHX_{idx} - Self: {this_ghx.row_index} - Down: {this_ghx.downstream_device.row_index}")
-        #
-        # for idx, this_isx in enumerate(self.ISHXs):
-        #     print(f"IHX_{idx} - Self: {this_isx.row_index} - Down: {this_isx.downstream_device.row_index}")
-        #     print(f"IHX_{idx} - Self HP: {this_isx.row_index} - Down HP: {this_isx.downstream_device_HP.row_index}")
+        print("\nDevice,RowIDX,Downstream Device,Downstream RowIDX,Downstream HP Device,Downstream HP RowIDX")
+        for idx, this_zone in enumerate(self.zones):
+            print(f"{this_zone.type}-{this_zone.ID},{this_zone.row_index},{this_zone.downstream_device.type}-{this_zone.downstream_device.ID},{this_zone.downstream_device.row_index}")
+
+        for idx, this_ghx in enumerate(self.GHXs):
+            print(f"{this_ghx.type}-{this_ghx.ID},{this_ghx.row_index},{this_ghx.downstream_device.type}-{this_ghx.downstream_device.ID},{this_ghx.downstream_device.row_index}")
+
+        for idx, this_isx in enumerate(self.ISHXs):
+            print(f"{this_isx.type}-{this_isx.ID},{this_isx.row_index},{this_isx.downstream_device.type}-{this_isx.downstream_device.ID},{this_isx.downstream_device.row_index},{this_isx.downstream_device_HP.type}-{this_isx.downstream_device_HP.ID},{this_isx.downstream_device_HP.row_index}")
 
     def solve_system(self):
         # precompute all time invariant constants
