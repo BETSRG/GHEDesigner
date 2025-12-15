@@ -35,17 +35,6 @@ class TestDistrictSysAgain(GHEBaseTest):
         System.write_state_outputs(self.test_data_directory / f"{f1.stem.strip('_input_')}_output.csv")
         System.write_energy_outputs(self.test_data_directory / f"{f1.stem.strip('_input_')}_energy.csv")
 
-    def test_updated_1_pipe_3_ghe_6_bldg_with_hx(self):
-        f1 = self.test_data_directory / "1-pipe_3ghe-6hp_system_w_ISHX_input.txt"
-        f_path_json = self.demos_path / "simulate_1_pipe_3_bldg_3_ghe_with_hx.json"
-
-        System = GHEHPSystemAgain(f_path_json)
-        System.read_GHEHPSystem_data(f1)
-
-        System.solve_system()
-        System.write_state_outputs(self.test_data_directory / f"{f1.stem.strip('_input_')}_output.csv")
-        System.write_energy_outputs(self.test_data_directory / f"{f1.stem.strip('_input_')}_energy.csv")
-
     def test_updated_2_pipe_3_ghe_6_bldg_without_hx(self):
         f1 = self.test_data_directory / "2-pipe_3ghe-6hp_system_wo_ISHX_input.txt"
         f_path_json = self.demos_path / "simulate_2_pipe_3_bldg_3_ghe_without_hx.json"

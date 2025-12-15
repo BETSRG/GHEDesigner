@@ -7,13 +7,13 @@ configuration, '1-pipe'
 
 # Zone data
 
-# keyword, name,            ISHX_ID,  id,    inlet_nodeID,  oulet_nodeID,  HPmodel,  loads_file
-Zone,      space_htg/clg,   None,     b1z1,  n2,            None,          HP1,      B1Z1.csv
-Zone,      space_htg/clg,   None,     b1z2,  n4,            None,          HP4,      B1Z2.csv
-Zone,      space_htg/clg,   None,     b2z1,  n6,            None,          HP2,      B2Z1.csv
-Zone,      water_htg,       None,     b2z2,  n8,            None,          HP4,      B2Z2.csv
-Zone,      water_htg,       None,     b3z1,  n10,           None,          HP3,      B3Z1.csv
-Zone,      water_htg,       None,     b3z2,  n12,           None,          HP4,      B3Z2.csv
+# keyword, name,            id,    inlet_nodeID,  oulet_nodeID,  HPmodel,  loads_file
+Zone,      space_htg/clg,   b1z1,  n2,            None,          HP1,      B1Z1.csv
+Zone,      space_htg/clg,   b1z2,  n4,            None,          HP4,      B1Z2.csv
+Zone,      space_htg/clg,   b2z1,  n6,            None,          HP2,      B2Z1.csv
+Zone,      water_htg,       b2z2,  n8,            None,          HP4,      B2Z2.csv
+Zone,      water_htg,       b3z1,  n10,           None,          HP3,      B3Z1.csv
+Zone,      water_htg,       b3z2,  n12,           None,          HP4,      B3Z2.csv
 
 
 #  keyword, id,    inlet_nodeID, outlet_nodeID,
@@ -76,16 +76,16 @@ pipe,      p22,  1way,        n22,            n1,
 
 # System constants
 
-# keyword,            CL_P/m,          delta_P_ref_ISHX
-pressure_drop,         100,                      50000
+# keyword,            CL_P/m,
+pressure_drop,         100,
 
-# keyword,       beta_CL_flow,   beta_ISHX_HP_flow,    beta_ISHX_N_flow,     beta_HP_delta_P,    beta_GHE_delta_P,     beta_ISHX_delta_P
-beta,            1.5,            1.5,                   1.0,                   1.2,                1.2,                  1.2
+# keyword,       beta_CL_flow,   beta_HP_delta_P,    beta_GHE_delta_P,
+beta,            1.5,              1.2,                1.2,
 
 # Circulating pump efficiency
 
-# keyword,      HP_cp_efficiency,    ISHX_cp_efficiency,   GHE_cp_efficiency,     CL_efficiency
-efficiency,     0.2,                 0.2,                  0.2,                   0.2
+# keyword,      HP_cp_efficiency,   GHE_cp_efficiency,     CL_efficiency
+efficiency,     0.2,                0.2,                   0.2
 
 # length of central loop
 length,        200
