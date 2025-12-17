@@ -55,7 +55,6 @@
         "design_cap": 4396.0
       },
       "design_flow_rate": 0.296,
-      "design_pressure_loss": 46000,
       "heating_performance": {
         "a": -7.13e-5,
         "b": 0.00534,
@@ -77,7 +76,6 @@
         "design_cap": 6709.0
       },
       "design_flow_rate": 0.495,
-      "design_pressure_loss": 30000,
       "heating_performance": {
         "a": -7.86e-5,
         "b": 0.00539,
@@ -99,7 +97,6 @@
         "design_cap": 9752.0
       },
       "design_flow_rate": 0.693,
-      "design_pressure_loss": 19000,
       "heating_performance": {
         "a": -6.8e-5,
         "b": 0.00497,
@@ -121,7 +118,6 @@
         "design_cap": 0.0
       },
       "design_flow_rate": 0.425,
-      "design_pressure_loss": 50000,
       "heating_performance": {
         "a": -6.06e-5,
         "b": 0.0051,
@@ -212,7 +208,7 @@
   },
   "ground_heat_exchanger": {
     "ghe1": {
-      "flow_rate": 0.3369,
+      "flow_rate": 0.33753,
       "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
@@ -246,7 +242,7 @@
       }
     },
     "ghe2": {
-      "flow_rate": 0.3369,
+      "flow_rate": 0.3375,
       "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
@@ -280,7 +276,7 @@
       }
     },
     "ghe3": {
-      "flow_rate": 0.3369,
+      "flow_rate": 0.33757,
       "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,

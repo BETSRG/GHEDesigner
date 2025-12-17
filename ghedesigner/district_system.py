@@ -129,11 +129,6 @@ class GHX(BaseSimComp):
 
         self.log_time = np.linspace(-10, 4, 25).tolist()
 
-        # self.g_new = calculate_g_function(
-        #     m_flow_borehole=self.mass_flow_borehole_design,
-        #     bh_type=
-        # )
-
         self.gFunction = self.generate_g_function_object()
         self.g, _ = self.grab_g_function()
         self.c_n = self.calc_cn_constant()
@@ -346,7 +341,7 @@ class Building(BaseSimComp):
 
         m_single_hp = max(m_single_hp_htg, m_single_hp_clg)
 
-        q_i = self.q_net_htg[idx_timestep]
+        q_i = self.q_net_htg[idx_timestep - 1]
         hp_capacity = cap_htg if q_i > 0 else cap_clg
 
         # compute mass flow rates
@@ -365,8 +360,8 @@ class Building(BaseSimComp):
         v = 0
 
         # Extract loads
-        h = self.htg_vals[idx_timestep]
-        c = self.clg_vals[idx_timestep]
+        h = self.htg_vals[idx_timestep - 1]
+        c = self.clg_vals[idx_timestep - 1]
 
         # Heating calculations
         if self.heating_exists:
@@ -383,8 +378,8 @@ class Building(BaseSimComp):
             b = slope_clg
 
         # Final arrays
-        r1 = v * h - b * c
-        r2 = u * h - a * c
+        r1 = b * c - v * h
+        r2 = a * c - u * h
 
         return r1, r2
 
@@ -392,9 +387,9 @@ class Building(BaseSimComp):
         t_in = self.t_in[idx_timestep - 1]
         r1, r2 = self.calc_r1_r2(t_in, idx_timestep)
         row = np.zeros(self.matrix_size, dtype=float)
-        row[self.row_index] = 1 - r1 / (m_loop * self.cp)
+        row[self.row_index] = 1 + r1 / (m_loop * self.cp)
         row[self.downstream_index] = -1
-        rhs = r2 / (m_loop * self.cp)
+        rhs = -r2 / (m_loop * self.cp)
         return [row], [rhs]
 
 
@@ -508,7 +503,7 @@ class GHEHPSystem:
             idx_comp += this_comp.MATRIX_ROWS
             this_comp.downstream_index = idx_comp
 
-        # set last component to loops back to the start
+        # set the last component to loops back to the start
         self.components[-1].downstream_index = 0
 
     def solve_system(self):
