@@ -941,14 +941,6 @@
       "type": "object",
       "description": "",
       "properties": {
-        "sizing_run": {
-          "type": "boolean",
-          "description": "Field enables or disables running sizing calculations."
-        },
-        "hourly_run": {
-          "type": "boolean",
-          "description": "Field enables running hour simulation."
-        },
         "sizing_months": {
           "type": "number",
           "minimum": 1,

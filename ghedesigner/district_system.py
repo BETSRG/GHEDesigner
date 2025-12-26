@@ -139,8 +139,7 @@ class GHX(BaseSimComp):
         self.c_n = self.calc_cn_constant()
 
     def generate_g_function_object(self):
-        # self.bh_effective_resist = self.bhe.calc_effective_borehole_resistance()
-        self.bh_effective_resist = 0.15690883427464597
+        self.bh_effective_resist = self.bhe.calc_effective_borehole_resistance()
         self.depth = self.bhe.borehole.D
         self.mass_flow_borehole_design = self.mass_flow_ghe_design / self.nbh
         h_values = [self.height]

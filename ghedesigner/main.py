@@ -27,7 +27,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
     :param output_directory: path to write output files. Output directory must be a valid path.
     """
 
-    # validate inputs against schema before doing anything
+    # validate inputs against the schema before doing anything
     try:
         validate_input_file(input_file_path)
     except ValidationError:

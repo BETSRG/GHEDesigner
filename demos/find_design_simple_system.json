@@ -13,8 +13,7 @@
     "building1": {
       "name": "load 1",
       "loads": "test_data/test_bldg_loads.csv",
-      "cop": 3,
-      "capacity": "AUTOSIZE"
+      "cop": 3
     }
   },
   "ground_heat_exchanger": {
@@ -60,8 +59,7 @@
     }
   },
   "simulation_control": {
-    "sizing_run": true,
-    "hourly_run": true,
+
     "sizing_months": 240
   }
 }

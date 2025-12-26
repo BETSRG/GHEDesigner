@@ -1832,8 +1832,7 @@
     }
   },
   "simulation_control": {
-    "sizing_run": false,
-    "hourly_run": false,
+
     "sizing_months": 240
   }
 }
