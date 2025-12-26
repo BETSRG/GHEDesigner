@@ -38,7 +38,13 @@
       "name": "ghe3"
     }
   ],
-  "loop_configuration": "ONEPIPE",
+  "central_loop": {
+    "pipe_configuration": "ONEPIPE",
+    "flow_factor": 1.5,
+    "pump_efficiency": 0.5,
+    "loop_length": 200,
+    "design_pressure_loss": 200
+  },
   "fluid": {
     "fluid_name": "WATER",
     "concentration_percent": 0,

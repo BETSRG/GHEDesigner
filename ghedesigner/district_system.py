@@ -439,6 +439,7 @@ class Building(BaseSimComp):
                 self.m_flow / (self.fluid.rho * self.hp_clg.pump_efficiency) * self.hp_clg.design_pressure_loss
             )
 
+
 class HPmodel:
     def __init__(self, hp_id: str, hp_data: dict):
         self.name = hp_id
@@ -470,13 +471,17 @@ class GHEHPSystem:
     def __init__(self, f_path_json: Path):
         self.components: list[Building | GHX] = []
         self.nbh_total = None
-        self.beta = 1.5
         self.matrix_size = 0
 
         json_data = json.loads(f_path_json.read_text())
         input_dir = f_path_json.resolve().parent
 
-        self.loop_config = CentralLoopType[json_data["loop_configuration"].upper()]
+        self.loop_config = CentralLoopType[json_data["central_loop"]["pipe_configuration"].upper()]
+        self.loop_flow_factor = json_data["central_loop"]["flow_factor"]
+        self.loop_pump_efficiency = json_data["central_loop"]["pump_efficiency"]
+        self.loop_length = json_data["central_loop"]["loop_length"]
+        self.loop_design_pressure_loss_per_meter = json_data["central_loop"]["design_pressure_loss"]
+
         fluid_data = json_data["fluid"]
         topology_data = json_data["topology"]
         heat_pump_data = json_data["heat_pump"]
@@ -525,6 +530,9 @@ class GHEHPSystem:
         self.num_ghx = len(ground_heat_exchangers)
         self.matrix_size = GHX.MATRIX_ROWS * self.num_ghx + self.num_buildings * Building.MATRIX_ROWS
 
+        self.m_flow_loop = np.zeros(N_TIMESTEPS)
+        self.pump_power_loop = np.zeros(N_TIMESTEPS)
+
         def get_bldg(name: str):
             return copy.deepcopy(next((obj for obj in buildings if obj.name.upper() == name.upper()), None))
 
@@ -569,7 +577,7 @@ class GHEHPSystem:
                     m_bldg = this_comp.calc_mass_flow_rate(t_in, idx_timestep)
                     total_hp_flow += m_bldg
 
-            m_loop = max(total_hp_flow * self.beta, 0.1)
+            m_loop = max(total_hp_flow * self.loop_flow_factor, 0.1)
 
             for this_comp in self.components:
                 rows, rhs = this_comp.generate_matrix(m_loop, idx_timestep)
@@ -579,8 +587,10 @@ class GHEHPSystem:
             # Solve the system = A * X = B
             a_matrix = np.array(matrix_rows, dtype=float)
             b_vector = np.array(matrix_rhs, dtype=float)
-
             x_vector = np.linalg.solve(a_matrix, b_vector)
+
+            # save output data
+            self.m_flow_loop[idx_timestep] = m_loop
 
             for this_comp in self.components:
                 row_index = this_comp.row_index
@@ -592,14 +602,25 @@ class GHEHPSystem:
                     this_comp.q_ghe[idx_timestep] = x_vector[row_index + 2]
                     this_comp.t_out[idx_timestep] = x_vector[row_index + 3]
 
+    def calc_energy(self):
+        self.pump_power_loop = (
+            self.m_flow_loop
+            / (self.fluid.rho * self.loop_pump_efficiency)
+            * self.loop_design_pressure_loss_per_meter
+            * self.loop_length
+        )
+
     def create_output(self, output_path: Path):
         output_data = pd.DataFrame()
         output_data.index.name = "Hour"
 
-        network_m_flow_tot = np.zeros(N_TIMESTEPS, dtype=float)
         network_q_net_bldg_tot = np.zeros(N_TIMESTEPS, dtype=float)
         network_q_net_ghe_tot = np.zeros(N_TIMESTEPS, dtype=float)
 
+        # compute energy use for central loop
+        self.calc_energy()
+
+        # compute energy use for all components
         for this_comp in self.components:
             this_comp.calc_energy()
 
@@ -610,7 +631,6 @@ class GHEHPSystem:
                 output_data[f"{this_comp.name}:Q_clg [W]"] = this_comp.clg_vals
                 output_data[f"{this_comp.name}:Q_net [W]"] = this_comp.q_net
                 output_data[f"{this_comp.name}:M_flow [kg/s]"] = this_comp.m_flow
-                network_m_flow_tot += this_comp.m_flow
                 network_q_net_bldg_tot += this_comp.q_net
                 output_data[f"{this_comp.name}:P_hp_htg [W]"] = this_comp.power_hp_htg
                 output_data[f"{this_comp.name}:P_hp_clg [W]"] = this_comp.power_hp_clg
@@ -625,7 +645,8 @@ class GHEHPSystem:
                 output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
                 network_q_net_ghe_tot += this_comp.q_ghe * this_comp.nbh * this_comp.height
 
-        output_data["Network:M_flow [kg/s]"] = network_m_flow_tot
+        output_data["Network:M_flow [kg/s]"] = self.m_flow_loop
+        output_data["Network:P_pump [W]"] = self.pump_power_loop
         output_data["Network:Q_net_bldg [W]"] = network_q_net_bldg_tot
         output_data["Network:Q_net_ghe [W]"] = network_q_net_ghe_tot
 
