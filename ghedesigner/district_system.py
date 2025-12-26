@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from ghedesigner.constants import SEC_IN_HR, TWO_PI
-from ghedesigner.enums import BHType, SimCompType
+from ghedesigner.enums import BHType, CentralLoopType, SimCompType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
@@ -29,16 +29,20 @@ class BaseSimComp(ABC):
     def generate_matrix(self, m_loop: float, idx_timestep: int):
         pass
 
+    def calc_energy(self):
+        pass
+
 
 class GHX(BaseSimComp):
     MATRIX_ROWS = 4
 
-    def __init__(self, ghe_id: str, ghe_data: dict, fluid: Fluid):
+    def __init__(self, ghe_id: str, ghe_data: dict, fluid: Fluid, loop_config: CentralLoopType):
         super().__init__()
         self.name = ghe_id
         self.comp_type = SimCompType.GROUND_HEAT_EXCHANGER
         self.height = None
         self.m_dot_total = None
+        self.loop_config = loop_config
 
         self.pipe = Pipe.init_single_u_tube(
             inner_diameter=ghe_data["pipe"]["inner_diameter"],
@@ -58,7 +62,9 @@ class GHX(BaseSimComp):
         self.grout = Grout(k=ghe_data["grout"]["conductivity"], rho_cp=ghe_data["grout"]["rho_cp"])
 
         self.borehole = Borehole(
-            burial_depth=ghe_data["borehole"]["buried_depth"], borehole_radius=ghe_data["borehole"]["diameter"] / 2.0
+            burial_depth=ghe_data["borehole"]["buried_depth"],
+            borehole_radius=ghe_data["borehole"]["diameter"] / 2.0,
+            borehole_height=ghe_data["pre_designed"]["H"],
         )
 
         self.fluid = fluid
@@ -87,7 +93,6 @@ class GHX(BaseSimComp):
         self.n_cols = ghe_data["pre_designed"]["boreholes_in_y_dimension"]
         self.row_spacing = ghe_data["pre_designed"]["spacing_in_x_dimension"]
         self.col_spacing = ghe_data["pre_designed"]["spacing_in_y_dimension"]
-        self.ghe_height = ghe_data["pre_designed"]["H"]
         self.nbh = self.n_rows * self.n_cols
         self.mass_flow_ghe_design = ghe_data["flow_rate"] * self.nbh
         self.matrix_size = None
@@ -273,13 +278,24 @@ class GHX(BaseSimComp):
 class Building(BaseSimComp):
     MATRIX_ROWS = 1
 
-    def __init__(self, bldg_id: str, bldg_data: dict, hp_data: dict, parent_dir: Path, tg):
+    def __init__(
+        self,
+        bldg_id: str,
+        bldg_data: dict,
+        hp_data: dict,
+        parent_dir: Path,
+        tg,
+        fluid: Fluid,
+        loop_config: CentralLoopType,
+    ):
         super().__init__()
         self.name = bldg_id
         self.comp_type = SimCompType.BUILDING
         self.matrix_size: int | None = None
         self.cp: float | None = None
 
+        self.fluid = fluid
+        self.loop_config = loop_config
         self.heating_exists = bool("heating_load" in bldg_data)
         self.cooling_exists = bool("cooling_load" in bldg_data)
 
@@ -320,11 +336,16 @@ class Building(BaseSimComp):
             df_clg = pd.read_csv(clg_loads_path, usecols=[clg_col])
             self.clg_vals = df_clg[clg_col].to_numpy()
 
-        self.q_net_htg = self.htg_vals - self.clg_vals
+        self.q_net = self.htg_vals - self.clg_vals
         self.t_in = np.full(N_TIMESTEPS, tg, dtype=float)
         self.t_out = np.full(N_TIMESTEPS, tg, dtype=float)
+        self.m_flow = np.zeros(N_TIMESTEPS, dtype=float)
+        self.power_hp_htg = np.zeros(N_TIMESTEPS, dtype=float)
+        self.power_hp_clg = np.zeros(N_TIMESTEPS, dtype=float)
+        self.power_hp_tot = np.zeros(N_TIMESTEPS, dtype=float)
+        self.power_circ_pump = np.zeros(N_TIMESTEPS, dtype=float)
 
-    def calc_bldg_mass_flow_rate(self, t_in, idx_timestep):
+    def calc_mass_flow_rate(self, t_in, idx_timestep):
         if self.heating_exists:
             cap_htg = self.hp_htg.c1_htg * t_in**2 + self.hp_htg.c2_htg * t_in + self.hp_htg.c3_htg
             m_single_hp_htg = self.hp_htg.m_flow_single_hp
@@ -341,11 +362,14 @@ class Building(BaseSimComp):
 
         m_single_hp = max(m_single_hp_htg, m_single_hp_clg)
 
-        q_i = self.q_net_htg[idx_timestep - 1]
-        hp_capacity = cap_htg if q_i > 0 else cap_clg
+        q_net_i = self.q_net[idx_timestep - 1]
+        hp_capacity = cap_htg if q_net_i > 0 else cap_clg
 
         # compute mass flow rates
-        mass_flow_bldg = np.abs(q_i) / hp_capacity * m_single_hp
+        mass_flow_bldg = np.abs(q_net_i) / hp_capacity * m_single_hp
+
+        # save for later
+        self.m_flow[idx_timestep] = mass_flow_bldg
 
         return mass_flow_bldg
 
@@ -392,6 +416,28 @@ class Building(BaseSimComp):
         rhs = -r2 / (m_loop * self.cp)
         return [row], [rhs]
 
+    def calc_energy(self):
+        """Calculate energy consumption of the heat pump system."""
+
+        if self.cooling_exists:
+            ratio_clg = self.hp_clg.a_htg * self.t_in**2 + self.hp_clg.b_htg * self.t_in + self.hp_clg.c_htg
+            self.power_hp_clg = np.abs(self.clg_vals * (ratio_clg - 1))
+
+        if self.heating_exists:
+            ratio_htg = self.hp_htg.a_htg * self.t_in**2 + self.hp_htg.b_htg * self.t_in + self.hp_htg.c_htg
+            self.power_hp_htg = self.htg_vals * (1 - ratio_htg)
+
+        self.power_hp_tot = self.power_hp_clg + self.power_hp_htg
+
+        # power consumed by circulating pump
+        if self.heating_exists:
+            self.power_circ_pump = (
+                self.m_flow / (self.fluid.rho * self.hp_htg.pump_efficiency) * self.hp_htg.design_pressure_loss
+            )
+        if self.cooling_exists:
+            self.power_circ_pump = (
+                self.m_flow / (self.fluid.rho * self.hp_clg.pump_efficiency) * self.hp_clg.design_pressure_loss
+            )
 
 class HPmodel:
     def __init__(self, hp_id: str, hp_data: dict):
@@ -414,6 +460,8 @@ class HPmodel:
         self.c3_clg = hp_data["cooling_performance"]["c3"]
 
         self.m_flow_single_hp = hp_data["design_flow_rate"]
+        self.design_pressure_loss = hp_data["design_pressure_loss"]
+        self.pump_efficiency = hp_data["pump_efficiency"]
         self.design_htg_cap_single_hp = hp_data["heating_performance"]["design_cap"]
         self.design_clg_cap_single_hp = hp_data["cooling_performance"]["design_cap"]
 
@@ -428,6 +476,7 @@ class GHEHPSystem:
         json_data = json.loads(f_path_json.read_text())
         input_dir = f_path_json.resolve().parent
 
+        self.loop_config = CentralLoopType[json_data["loop_configuration"].upper()]
         fluid_data = json_data["fluid"]
         topology_data = json_data["topology"]
         heat_pump_data = json_data["heat_pump"]
@@ -456,7 +505,9 @@ class GHEHPSystem:
         buildings = []
         for this_building_id, this_bldg_data in building_data.items():
             if this_building_id.upper() in building_names:
-                this_bldg = Building(this_building_id, this_bldg_data, heat_pump_data, input_dir, tg)
+                this_bldg = Building(
+                    this_building_id, this_bldg_data, heat_pump_data, input_dir, tg, self.fluid, self.loop_config
+                )
                 buildings.append(this_bldg)
 
         self.num_buildings = len(buildings)
@@ -466,7 +517,7 @@ class GHEHPSystem:
         ground_heat_exchangers = []
         for ghx_id, ghe_data in ghe_data.items():
             if ghx_id.upper() in ghx_names:
-                this_ghx = GHX(ghx_id, ghe_data, self.fluid)
+                this_ghx = GHX(ghx_id, ghe_data, self.fluid, self.loop_config)
                 cp = this_ghx.cp
                 ground_heat_exchangers.append(this_ghx)
 
@@ -515,7 +566,7 @@ class GHEHPSystem:
             for this_comp in self.components:
                 if isinstance(this_comp, Building):
                     t_in = this_comp.t_in[idx_timestep - 1]
-                    m_bldg = this_comp.calc_bldg_mass_flow_rate(t_in, idx_timestep)
+                    m_bldg = this_comp.calc_mass_flow_rate(t_in, idx_timestep)
                     total_hp_flow += m_bldg
 
             m_loop = max(total_hp_flow * self.beta, 0.1)
@@ -545,12 +596,26 @@ class GHEHPSystem:
         output_data = pd.DataFrame()
         output_data.index.name = "Hour"
 
+        network_m_flow_tot = np.zeros(N_TIMESTEPS, dtype=float)
+        network_q_net_bldg_tot = np.zeros(N_TIMESTEPS, dtype=float)
+        network_q_net_ghe_tot = np.zeros(N_TIMESTEPS, dtype=float)
+
+        for this_comp in self.components:
+            this_comp.calc_energy()
+
         for this_comp in self.components:
             if isinstance(this_comp, Building):
                 output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
                 output_data[f"{this_comp.name}:Q_htg [W]"] = this_comp.htg_vals
                 output_data[f"{this_comp.name}:Q_clg [W]"] = this_comp.clg_vals
-                output_data[f"{this_comp.name}:Q_net [W]"] = this_comp.q_net_htg
+                output_data[f"{this_comp.name}:Q_net [W]"] = this_comp.q_net
+                output_data[f"{this_comp.name}:M_flow [kg/s]"] = this_comp.m_flow
+                network_m_flow_tot += this_comp.m_flow
+                network_q_net_bldg_tot += this_comp.q_net
+                output_data[f"{this_comp.name}:P_hp_htg [W]"] = this_comp.power_hp_htg
+                output_data[f"{this_comp.name}:P_hp_clg [W]"] = this_comp.power_hp_clg
+                output_data[f"{this_comp.name}:P_hp_tot [W]"] = this_comp.power_hp_tot
+                output_data[f"{this_comp.name}:P_pump [W]"] = this_comp.power_circ_pump
 
         for this_comp in self.components:
             if isinstance(this_comp, GHX):
@@ -558,6 +623,11 @@ class GHEHPSystem:
                 output_data[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean
                 output_data[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe
                 output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
+                network_q_net_ghe_tot += this_comp.q_ghe * this_comp.nbh * this_comp.height
+
+        output_data["Network:M_flow [kg/s]"] = network_m_flow_tot
+        output_data["Network:Q_net_bldg [W]"] = network_q_net_bldg_tot
+        output_data["Network:Q_net_ghe [W]"] = network_q_net_ghe_tot
 
         if not output_path.parent.exists():
             output_path.parent.mkdir(parents=True)

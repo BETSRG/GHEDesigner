@@ -10,6 +10,7 @@
       "name": "ghe1"
     }
   ],
+  "loop_configuration": "ONEPIPE",
   "fluid": {
     "fluid_name": "PROPYLENEGLYCOL",
     "concentration_percent": 20,
@@ -27,6 +28,8 @@
         "design_cap": 4396.0
       },
       "design_flow_rate": 0.296,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
       "heating_performance": {
         "a": -7.13e-5,
         "b": 0.00534,

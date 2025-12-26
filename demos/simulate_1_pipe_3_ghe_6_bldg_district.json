@@ -38,6 +38,7 @@
       "name": "ghe3"
     }
   ],
+  "loop_configuration": "ONEPIPE",
   "fluid": {
     "fluid_name": "WATER",
     "concentration_percent": 0,
@@ -55,6 +56,8 @@
         "design_cap": 4396.0
       },
       "design_flow_rate": 0.296,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
       "heating_performance": {
         "a": -7.13e-5,
         "b": 0.00534,
@@ -76,6 +79,8 @@
         "design_cap": 6709.0
       },
       "design_flow_rate": 0.495,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
       "heating_performance": {
         "a": -7.86e-5,
         "b": 0.00539,
@@ -97,6 +102,8 @@
         "design_cap": 9752.0
       },
       "design_flow_rate": 0.693,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
       "heating_performance": {
         "a": -6.8e-5,
         "b": 0.00497,
@@ -118,6 +125,8 @@
         "design_cap": 0.0
       },
       "design_flow_rate": 0.425,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
       "heating_performance": {
         "a": -6.06e-5,
         "b": 0.0051,
