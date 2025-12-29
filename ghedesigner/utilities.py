@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from json import dumps, loads
 from math import sqrt
 from pathlib import Path
@@ -336,8 +337,69 @@ def read_csv_column(file_path: str | Path, column: int | str, try_convert_to_num
     return values
 
 
-def get_loads(loads_dict: dict) -> list[float]:
-    if "load_values" in loads_dict:
-        return loads_dict["load_values"]
+def get_loads(name, comp_type: str, data: dict) -> list[float]:
+    if "load_values" in data:
+        return data["load_values"]
     else:
-        return read_csv_column(loads_dict["file_path"], loads_dict["column"])
+        if "column_name" in data and "column_number" in data:
+            raise ValueError(
+                f"Both column_name and column_number cannot be provided for loads in {comp_type}, '{name}'"
+            )
+        elif "column_name" in data:
+            column = data["column_name"]
+        elif "column_number" in data:
+            column = data["column_number"]
+        else:
+            raise ValueError(f"column_name or column_number must be provided for loads in {comp_type}, '{name}'")
+
+        return read_csv_column(data["file_path"], column)
+
+
+def absolutize_file_paths(json_path: Path, inplace: bool = False) -> dict:
+    """
+    Read a JSON file, traverse all nested structures, and convert any
+    'file_path' entries to absolute paths. Relative paths are resolved
+    relative to the JSON file's directory.
+
+    Parameters
+    ----------
+    json_path : Path
+        Path to the input JSON file.
+    inplace : bool, optional
+        If True, overwrite the input file with updated paths.
+        If False, return the updated data only.
+
+    Returns
+    -------
+    dict
+        The updated JSON data.
+    """
+
+    json_path = json_path.resolve()
+    base_dir = json_path.parent
+
+    data = json.loads(json_path.read_text())
+
+    def _walk(obj: Any) -> None:
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                if key == "file_path" and isinstance(value, str):
+                    path = Path(value)
+                    if not path.is_absolute():
+                        obj[key] = str((base_dir / path).resolve())
+                else:
+                    _walk(value)
+        elif isinstance(obj, list):
+            for item in obj:
+                _walk(item)
+
+    _walk(data)
+
+    if inplace:
+        json_path.write_text(json.dumps(data, indent=2))
+
+    return data
+
+
+def load_input_file(f_path: Path) -> dict:
+    return absolutize_file_paths(f_path, inplace=False)

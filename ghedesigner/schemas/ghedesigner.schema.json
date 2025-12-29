@@ -25,19 +25,6 @@
       "format": "Meters",
       "description": "Minimum borehole-to-borehole spacing."
     },
-    "building_load": {
-      "type": "object",
-      "properties": {
-        "loads": {
-          "$ref": "#/$defs/load_inputs"
-        },
-        "heat_pump": {
-          "type": "string"
-        }
-      },
-      "required": ["loads", "heat_pump"],
-      "additionalProperties": false
-    },
     "column_name": {
       "type": "string"
     },
@@ -50,14 +37,36 @@
       "format": "Watts/Meter-Kelvin",
       "description": "Thermal conductivity."
     },
+    "design_flow_rate": {
+      "type": "number",
+      "format": "Kilograms/Sec",
+      "description": "Design flow rate"
+    },
+    "design_pressure_loss": {
+      "type": "number",
+      "format": "Pascal",
+      "description": "Design pressure loss"
+    },
     "file_path": {
       "type": "string"
+    },
+    "flow_factor": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Dimensionless",
+      "description": "Scaling factor for loop flow rate"
     },
     "H": {
       "type": "number",
       "minimum": 0,
       "format": "Meters",
       "description": "Length of each borehole"
+    },
+    "heat_pump_name": {
+      "type": "string"
+    },
+    "heat_pump_cop": {
+      "type": "number"
     },
     "inner_diameter": {
       "type": "number",
@@ -95,6 +104,12 @@
         },
         "load_values": {
           "$ref": "#/$defs/load_values"
+        },
+        "heat_pump_name": {
+          "$ref": "#/$defs/heat_pump_name"
+        },
+        "heat_pump_cop": {
+          "$ref": "#/$defs/heat_pump_cop"
         }
       },
       "oneOf": [
@@ -130,9 +145,99 @@
           },
           "required": ["file_path", "column_number"],
           "additionalProperties": false
+        },
+        {
+          "properties": {
+            "load_values": {
+              "$ref": "#/$defs/load_values"
+            },
+            "heat_pump_name": {
+              "$ref": "#/$defs/heat_pump_name"
+            }
+          },
+          "required": ["load_values", "heat_pump_name"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column_name": {
+              "$ref": "#/$defs/column_name"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            },
+            "heat_pump_name": {
+              "$ref": "#/$defs/heat_pump_name"
+            }
+          },
+          "required": ["file_path", "column_name", "heat_pump_name"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column_number": {
+              "$ref": "#/$defs/column_number"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            },
+            "heat_pump_name": {
+              "$ref": "#/$defs/heat_pump_name"
+            }
+          },
+          "required": ["file_path", "column_number", "heat_pump_name"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "load_values": {
+              "$ref": "#/$defs/load_values"
+            },
+            "heat_pump_cop": {
+              "$ref": "#/$defs/heat_pump_cop"
+            }
+          },
+          "required": ["load_values", "heat_pump_cop"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column_name": {
+              "$ref": "#/$defs/column_name"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            },
+            "heat_pump_cop": {
+              "$ref": "#/$defs/heat_pump_cop"
+            }
+          },
+          "required": ["file_path", "column_name", "heat_pump_cop"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column_number": {
+              "$ref": "#/$defs/column_number"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            },
+            "heat_pump_cop": {
+              "$ref": "#/$defs/heat_pump_cop"
+            }
+          },
+          "required": ["file_path", "column_number", "heat_pump_cop"],
+          "additionalProperties": false
         }
       ],
       "additionalProperties": false
+    },
+    "loop_length": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Length of loop in meters."
     },
     "no_go_boundaries": {
       "type": "array",
@@ -156,6 +261,16 @@
       "minimum": 0,
       "format": "Meters",
       "description": "Outer diameter of pipe."
+    },
+    "pipe_configuration": {
+      "type": "string",
+      "enum": ["ONEPIPE"]
+    },
+    "pump_efficiency": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Pump efficiency as a decimal fraction (0-1)."
     },
     "performance_data": {
       "type": "object",
@@ -240,6 +355,24 @@
   },
   "type": "object",
   "properties": {
+    "central_loop": {
+      "type": "object",
+      "description": "A collection of central loop properties",
+      "properties": {
+        "pipe_configuration": {
+          "$ref": "#/$defs/pipe_configuration"
+        },
+        "pump_efficiency": {
+          "$ref": "#/$defs/pump_efficiency"
+        },
+        "loop_length": {
+          "$ref": "#/$defs/loop_length"
+        },
+        "design_pressure_loss": {
+          "$ref": "#/$defs/design_pressure_loss"
+        }
+      }
+    },
     "topology": {
       "type": "array",
       "description": "A list of name/type map objects that define the system topology.",
@@ -303,15 +436,21 @@
             "$ref": "#/$defs/performance_data"
           },
           "design_flow_rate": {
-            "type": "number",
-            "format": "Kilograms/Sec",
-            "description": "Design flow rate"
+            "$ref": "#/$defs/design_flow_rate"
+          },
+          "design_pressure_loss": {
+            "$ref": "#/$defs/design_pressure_loss"
+          },
+          "pump_efficiency": {
+            "$ref": "#/$defs/pump_efficiency"
           }
         },
         "required": [
           "cooling_performance",
           "heating_performance",
-          "design_flow_rate"
+          "design_flow_rate",
+          "design_pressure_loss",
+          "pump_efficiency"
         ],
         "additionalProperties": false
       }
@@ -323,13 +462,56 @@
         "type": "object",
         "properties": {
           "cooling_load": {
-            "$ref": "#/$defs/building_load"
+            "$ref": "#/$defs/load_inputs"
           },
           "heating_load": {
-            "$ref": "#/$defs/building_load"
+            "$ref": "#/$defs/load_inputs"
+          },
+          "total_load": {
+            "$ref": "#/$defs/load_inputs"
           }
         },
-        "required": ["cooling_load", "heating_load"],
+        "oneOf": [
+          {
+            "properties": {
+              "cooling_load": {
+                "$ref": "#/$defs/load_inputs"
+              },
+              "heating_load": {
+                "$ref": "#/$defs/load_inputs"
+              }
+            },
+            "required": ["cooling_load", "heating_load"],
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "total_load": {
+                "$ref": "#/$defs/load_inputs"
+              }
+            },
+            "required": ["total_load"],
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "cooling_load": {
+                "$ref": "#/$defs/load_inputs"
+              }
+            },
+            "required": ["cooling_load"],
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "heating_load": {
+                "$ref": "#/$defs/load_inputs"
+              }
+            },
+            "required": ["heating_load"],
+            "additionalProperties": false
+          }
+        ],
         "additionalProperties": false
       }
     },
@@ -962,6 +1144,5 @@
       "description": "An integer version ID for this input structure, for future-proofing."
     }
   },
-  "required": ["topology", "fluid", "ground_heat_exchanger", "version"],
-  "additionalProperties": false
+  "required": ["topology", "fluid", "ground_heat_exchanger", "version"]
 }

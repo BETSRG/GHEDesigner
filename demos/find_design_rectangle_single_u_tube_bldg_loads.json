@@ -1,8 +1,14 @@
 {
   "version": 2,
   "topology": [
-    { "type": "building", "name": "building1" },
-    { "type": "ground_heat_exchanger", "name": "ghe1" }
+    {
+      "type": "building",
+      "name": "building1"
+    },
+    {
+      "type": "ground_heat_exchanger",
+      "name": "ghe1"
+    }
   ],
   "fluid": {
     "fluid_name": "WATER",
@@ -11,9 +17,11 @@
   },
   "building": {
     "building1": {
-      "name": "load 1",
-      "loads": "test_data/test_bldg_loads.csv",
-      "cop": 3
+      "total_load": {
+        "column_number": 0,
+        "file_path": "../ghedesigner/tests/test_data/test_bldg_loads.csv",
+        "heat_pump_cop": 3
+      }
     }
   },
   "ground_heat_exchanger": {
@@ -59,7 +67,6 @@
     }
   },
   "simulation_control": {
-
     "sizing_months": 240
   }
 }

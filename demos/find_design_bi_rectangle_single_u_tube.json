@@ -1794,7 +1794,6 @@
     }
   },
   "simulation_control": {
-
     "sizing_months": 240
   }
 }

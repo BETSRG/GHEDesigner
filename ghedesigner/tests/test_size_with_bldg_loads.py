@@ -1,31 +1,24 @@
-from pathlib import Path
-
-from ghedesigner.building import Building
 from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.rectangle import DesignRectangle, GeometricConstraintsRectangle
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.heat_pump import HeatPump
+from ghedesigner.heat_pump_fixed_cop import HeatPumpFixedCOP
 from ghedesigner.media import Fluid, Grout, Soil
-from ghedesigner.system import System
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
-class TestNewWorkflows(GHEBaseTest):
-    def test_new_workflow(self):
-        system = System()
-        system.set_simulation_parameters(num_months=240)
+class TestSizeWithBldgLoads(GHEBaseTest):
+    def test_size_with_bldg_loads(self):
+        hp_data = {
+            "total_load": {
+                "column_number": 0,
+                "file_path": self.test_data_directory / "test_bldg_loads.csv",
+                "heat_pump_cop": 3,
+            }
+        }
 
-        # read building loads
-        heat_pump = HeatPump("load 1")
-        building_loads_path = Path(__file__).parent / "test_data" / "test_bldg_loads.csv"
-        heat_pump.set_loads_from_file(building_loads_path)
-        heat_pump.set_fixed_cop(3)
-        heat_pump.do_sizing()
-
-        # size building heat pump
-        building = Building("building")
-        building.add_heat_pump(heat_pump)
+        heat_pump = HeatPumpFixedCOP("hp 1", hp_data)
+        ground_loads = heat_pump.get_ground_loads()
 
         # size ghe
         pipe = Pipe.init_single_u_tube(
@@ -39,7 +32,6 @@ class TestNewWorkflows(GHEBaseTest):
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
         fluid = Fluid("water")
         grout = Grout(1.0, 3901000.0)
-        ground_loads = self.get_atlanta_loads()
         borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
         geometry = GeometricConstraintsRectangle(width=36.5, length=85.0, b_min=3.0, b_max=10)
         min_height = 60
@@ -74,7 +66,3 @@ class TestNewWorkflows(GHEBaseTest):
             design_min_eft=5,
             design_max_eft=35,
         )
-        # simulate hourly
-        system.set_building(building)
-        system.set_ghe(search.ghe)
-        system.simulate()

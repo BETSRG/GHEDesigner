@@ -6,7 +6,7 @@ from numpy import array, exp, ndarray
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import DEG_TO_RAD, MONTHS_IN_YEAR
-from ghedesigner.enums import BHType, DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.enums import BHType, DesignGeomType, FlowConfigType, SimCompType, TimestepType
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 from ghedesigner.ghe.coordinates import rectangle
 from ghedesigner.ghe.design.base import DesignBase
@@ -134,7 +134,11 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         return ghe
 
     def design_and_size_ghe(self, ghe_dict: dict, end_month: int, loads_override: list[float] | None = None):
-        ghe_loads = loads_override if loads_override else get_loads(ghe_dict["loads"])
+        ghe_loads = (
+            loads_override
+            if loads_override
+            else get_loads(ghe_dict["name"], SimCompType.GROUND_HEAT_EXCHANGER.name, ghe_dict["loads"])
+        )
 
         if (end_month % MONTHS_IN_YEAR) > 0:
             raise ValueError(f"end_month must be a multiple of {MONTHS_IN_YEAR}")

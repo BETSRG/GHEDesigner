@@ -44,6 +44,7 @@ class FluidType(Enum):
 class SimCompType(Enum):
     BUILDING = auto()
     GROUND_HEAT_EXCHANGER = auto()
+    HEAT_PUMP = auto()
 
 
 class CentralLoopType(Enum):

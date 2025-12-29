@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import json
 from pathlib import Path
 
@@ -21,7 +19,7 @@ def load_config():
         try:
             with CONFIG_FILE.open("r", encoding="utf-8") as f:
                 return json.load(f)
-        except Exception:
+        except (OSError, json.JSONDecodeError):
             return {}
     return {}
 
@@ -35,7 +33,7 @@ def save_config(path1: str | None, path2: str | None):
     try:
         with CONFIG_FILE.open("w", encoding="utf-8") as f:
             json.dump(cfg, f, indent=2)
-    except Exception as e:
+    except (OSError, TypeError) as e:
         print(f"Failed to save config: {e}")
 
 
@@ -144,21 +142,21 @@ def empty_figure(message: str = "Load two CSV files and select a series from eac
         shared_xaxes=True,
         vertical_spacing=0.08,
         row_heights=[0.6, 0.4],
-        subplot_titles=("Selected Series", "Difference (File 1 − File 2)"),
+        subplot_titles=("Selected Series", "Difference (File 1 - File 2)"),
     )
     fig.update_layout(
         annotations=[
-            dict(
-                text=message,
-                x=0.5,
-                y=0.5,
-                xref="paper",
-                yref="paper",
-                showarrow=False,
-                font=dict(size=14),
-            )
+            {
+                "text": message,
+                "x": 0.5,
+                "y": 0.5,
+                "xref": "paper",
+                "yref": "paper",
+                "showarrow": False,
+                "font": {"size": 14},
+            }
         ],
-        margin=dict(l=40, r=20, t=60, b=40),
+        margin={"l": 40, "r": 20, "t": 60, "b": 40},
     )
     fig.update_xaxes(title_text="Index", row=2, col=1)
     fig.update_yaxes(title_text="Value", row=1, col=1)
@@ -181,7 +179,7 @@ def empty_figure(message: str = "Load two CSV files and select a series from eac
     State("file2-path", "value"),
     prevent_initial_call=True,
 )
-def load_files(n_clicks, path1, path2):
+def load_files(_n_clicks, path1, path2):
     df1_json = None
     df2_json = None
     options1 = []
@@ -203,7 +201,7 @@ def load_files(n_clicks, path1, path2):
                 numeric_cols1 = df1.select_dtypes(include="number").columns.tolist()
                 options1 = [{"label": c, "value": c} for c in numeric_cols1]
                 info1 = f"Loaded {p1} with {len(df1)} rows. Numeric columns: {', '.join(numeric_cols1) or 'None'}"
-            except Exception as e:
+            except (OSError, TypeError) as e:
                 info1 = f"Failed to read {p1}: {e}"
         else:
             info1 = f"File not found: {p1}"
@@ -220,7 +218,7 @@ def load_files(n_clicks, path1, path2):
                 numeric_cols2 = df2.select_dtypes(include="number").columns.tolist()
                 options2 = [{"label": c, "value": c} for c in numeric_cols2]
                 info2 = f"Loaded {p2} with {len(df2)} rows. Numeric columns: {', '.join(numeric_cols2) or 'None'}"
-            except Exception as e:
+            except (OSError, TypeError) as e:
                 info2 = f"Failed to read {p2}: {e}"
         else:
             info2 = f"File not found: {p2}"
@@ -234,7 +232,7 @@ def load_files(n_clicks, path1, path2):
 
 
 # ----------------------------------------------------------------------
-# Plot callback – uses stored data and selected columns
+# Plot callback - uses stored data and selected columns
 # ----------------------------------------------------------------------
 @app.callback(
     Output("comparison-graph", "figure"),
@@ -271,7 +269,7 @@ def update_plots(data1, data2, col1, col2):
         shared_xaxes=True,
         vertical_spacing=0.08,
         row_heights=[0.6, 0.4],
-        subplot_titles=("Selected Series", "Difference (File 1 − File 2)"),
+        subplot_titles=("Selected Series", "Difference (File 1 - File 2)"),
     )
 
     # Top pane: both series
@@ -289,14 +287,14 @@ def update_plots(data1, data2, col1, col2):
     # Bottom pane: difference
     diff = s1 - s2
     fig.add_trace(
-        go.Scatter(x=x, y=diff, mode="lines", name=f"{col1} − {col2}"),
+        go.Scatter(x=x, y=diff, mode="lines", name=f"{col1} - {col2}"),
         row=2,
         col=1,
     )
 
     fig.update_layout(
-        legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1),
-        margin=dict(l=40, r=20, t=60, b=40),
+        legend={"orientation": "h", "yanchor": "bottom", "y": 1.05, "xanchor": "right", "x": 1},
+        margin={"l": 40, "r": 20, "t": 60, "b": 40},
     )
     fig.update_xaxes(title_text="Index", row=2, col=1)
     fig.update_yaxes(title_text="Value", row=1, col=1)

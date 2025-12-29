@@ -1,15 +1,13 @@
-#!/usr/bin/env python3
-"""
-Run with:
-    pip install dash plotly pandas
-    python app.py
+"""Run with:
+pip install dash plotly pandas
+python app.py
 """
 
 from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import dash
 import pandas as pd
@@ -19,63 +17,65 @@ from dash import Dash, Input, Output, State, dcc, html, no_update
 # ----------------------------------------------------------------------
 # Data sources (edit paths as needed)
 # ----------------------------------------------------------------------
-DATA_FILES = {
-    "1-bldg, 1 GHE": "/home/mitchute/Projects/GHEDesigner/ghedesigner/tests/test_data/simulate_1_pipe_1_ghe_1_bldg_district.csv",
-    "6-bldg, 3-GHE": "/home/mitchute/Projects/GHEDesigner/ghedesigner/tests/test_data/simulate_1_pipe_3_ghe_6_bldg_district.csv",
+_TEST_DATA_DIR = Path(__file__).resolve().parent / "test_data"
+
+DATA_FILES: dict[str, Path] = {
+    "1-bldg, 1 GHE": _TEST_DATA_DIR / "simulate_1_pipe_1_ghe_1_bldg_district.csv",
+    "6-bldg, 3-GHE": _TEST_DATA_DIR / "simulate_1_pipe_3_ghe_6_bldg_district.csv",
 }
 
 
-def load_dataset(path_str: str) -> pd.DataFrame:
-    path = Path(path_str)
-    if not path.exists():
-        raise FileNotFoundError(f"Could not find {path_str}")
-    return pd.read_csv(path)
+def load_dataset(path: str | Path) -> pd.DataFrame:
+    csv_path = Path(path)
+    if not csv_path.exists():
+        raise FileNotFoundError(f"Could not find {csv_path}")
+    return pd.read_csv(csv_path)
 
 
 # ----------------------------------------------------------------------
 # Helpers to extract building + GHE + Network info from column names
 # ----------------------------------------------------------------------
-def get_buildings(df: pd.DataFrame) -> List[str]:
+def get_buildings(data_frame: pd.DataFrame) -> list[str]:
     # column format: "building1:Q_htg [W]"
-    buildings = {col.split(":", 1)[0] for col in df.columns if col.startswith("building")}
+    buildings = {col.split(":", 1)[0] for col in data_frame.columns if col.startswith("building")}
     return sorted(buildings)
 
 
-def get_building_metrics(df: pd.DataFrame) -> List[str]:
-    metrics = set()
-    for col in df.columns:
+def get_building_metrics(data_frame: pd.DataFrame) -> list[str]:
+    metrics: set[str] = set()
+    for col in data_frame.columns:
         if col.startswith("building") and ":" in col:
             _, metric = col.split(":", 1)
             metrics.add(metric)
     return sorted(metrics)
 
 
-def get_ghe_metrics(df: pd.DataFrame) -> List[str]:
+def get_ghe_metrics(data_frame: pd.DataFrame) -> list[str]:
     # column format: "ghe1:EFT [C]"
-    metrics = set()
-    for col in df.columns:
+    metrics: set[str] = set()
+    for col in data_frame.columns:
         if col.startswith("ghe") and ":" in col:
             _, metric = col.split(":", 1)
             metrics.add(metric)
     return sorted(metrics)
 
 
-def get_network_metrics(df: pd.DataFrame) -> List[str]:
+def get_network_metrics(data_frame: pd.DataFrame) -> list[str]:
     # column format: "Network:M_flow [kg/s]"
-    metrics = set()
-    for col in df.columns:
+    metrics: set[str] = set()
+    for col in data_frame.columns:
         if col.startswith("Network") and ":" in col:
             _, metric = col.split(":", 1)
             metrics.add(metric)
     return sorted(metrics)
 
 
-def compute_dataset_meta(df: pd.DataFrame) -> Dict[str, List[str]]:
+def compute_dataset_meta(data_frame: pd.DataFrame) -> dict[str, list[str]]:
     return {
-        "buildings": get_buildings(df),
-        "bldg_metrics": get_building_metrics(df),
-        "ghe_metrics": get_ghe_metrics(df),
-        "network_metrics": get_network_metrics(df),
+        "buildings": get_buildings(data_frame),
+        "bldg_metrics": get_building_metrics(data_frame),
+        "ghe_metrics": get_ghe_metrics(data_frame),
+        "network_metrics": get_network_metrics(data_frame),
     }
 
 
@@ -116,7 +116,7 @@ app.layout = html.Div(
                         dcc.Dropdown(
                             id="dataset-dropdown",
                             options=[{"label": name, "value": name} for name in DATA_FILES],
-                            value=list(DATA_FILES.keys())[0],
+                            value=next(iter(DATA_FILES.keys())),
                             clearable=False,
                         ),
                     ]
@@ -185,10 +185,7 @@ app.layout = html.Div(
                             "Building time series (all buildings)",
                             style={"marginBottom": "0.5rem"},
                         ),
-                        dcc.Graph(
-                            id="building-graph",
-                            style={"height": "400px"},
-                        ),
+                        dcc.Graph(id="building-graph", style={"height": "400px"}),
                     ]
                 ),
                 html.Div(
@@ -197,22 +194,13 @@ app.layout = html.Div(
                             "GHE time series (all GHEs)",
                             style={"marginBottom": "0.5rem"},
                         ),
-                        dcc.Graph(
-                            id="ghe-graph",
-                            style={"height": "400px"},
-                        ),
+                        dcc.Graph(id="ghe-graph", style={"height": "400px"}),
                     ]
                 ),
                 html.Div(
                     children=[
-                        html.H3(
-                            "Network time series",
-                            style={"marginBottom": "0.5rem"},
-                        ),
-                        dcc.Graph(
-                            id="network-graph",
-                            style={"height": "400px"},
-                        ),
+                        html.H3("Network time series", style={"marginBottom": "0.5rem"}),
+                        dcc.Graph(id="network-graph", style={"height": "400px"}),
                     ]
                 ),
             ],
@@ -234,18 +222,18 @@ app.layout = html.Div(
 )
 def reload_datasets(n_clicks: int):
     """(Re)load CSVs from disk into dcc.Store, and compute per-dataset metadata."""
-    datasets_data: Dict[str, List[Dict[str, Any]]] = {}
-    meta_data: Dict[str, Dict[str, List[str]]] = {}
+    datasets_data: dict[str, list[dict[str, Any]]] = {}
+    meta_data: dict[str, dict[str, list[str]]] = {}
 
     try:
         for name, path in DATA_FILES.items():
-            df = load_dataset(path)
-            datasets_data[name] = df.to_dict("records")
-            meta_data[name] = compute_dataset_meta(df)
-    except Exception as e:
+            data_frame = load_dataset(path)
+            datasets_data[name] = data_frame.to_dict("records")
+            meta_data[name] = compute_dataset_meta(data_frame)
+    except (FileNotFoundError, OSError, ValueError, pd.errors.ParserError) as exc:
         # Keep previous state if reload fails
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        status = f"Reload failed at {ts}: {e}"
+        status = f"Reload failed at {ts}: {exc}"
         return no_update, no_update, status
 
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -264,7 +252,7 @@ def reload_datasets(n_clicks: int):
     Input("dataset-dropdown", "value"),
     Input("dataset-meta-store", "data"),
 )
-def update_dropdowns(dataset_name: str, meta_store: Optional[Dict[str, Any]]):
+def update_dropdowns(dataset_name: str, meta_store: dict[str, Any] | None):
     if not meta_store or dataset_name not in meta_store:
         return [], None, [], None, [], None
 
@@ -302,32 +290,34 @@ def update_dropdowns(dataset_name: str, meta_store: Optional[Dict[str, Any]]):
 )
 def update_building_graph(
     dataset_name: str,
-    bldg_metric: Optional[str],
-    x_range: Optional[List[Any]],
-    y_range: Optional[List[Any]],
-    datasets_store: Optional[Dict[str, Any]],
+    bldg_metric: str | None,
+    x_range: list[Any] | None,
+    y_range: list[Any] | None,
+    datasets_store: dict[str, Any] | None,
 ):
     if not datasets_store or dataset_name not in datasets_store:
         return px.line(title="No data loaded")
 
-    df = pd.DataFrame(datasets_store[dataset_name])
+    data_frame = pd.DataFrame(datasets_store[dataset_name])
 
     if not bldg_metric:
         return px.line(title="No building metric selected")
 
-    if "Hour" not in df.columns:
+    if "Hour" not in data_frame.columns:
         return px.line(title="Missing required column: Hour")
 
     # Find all building columns for the chosen metric
     bldg_cols = [
-        col for col in df.columns if col.startswith("building") and ":" in col and col.split(":", 1)[1] == bldg_metric
+        col
+        for col in data_frame.columns
+        if col.startswith("building") and ":" in col and col.split(":", 1)[1] == bldg_metric
     ]
 
     if not bldg_cols:
         return px.line(title=f"No building columns for metric '{bldg_metric}' in this dataset")
 
     # Melt into long format for multi-line plot
-    melted = df.melt(
+    melted = data_frame.melt(
         id_vars=["Hour"],
         value_vars=bldg_cols,
         var_name="Building",
@@ -342,7 +332,7 @@ def update_building_graph(
         x="Hour",
         y="value",
         color="Building",
-        title=f"Buildings – {bldg_metric} vs Hour",
+        title=f"Buildings - {bldg_metric} vs Hour",
     )
 
     if x_range and isinstance(x_range, list) and len(x_range) == 2:
@@ -353,7 +343,7 @@ def update_building_graph(
     fig.update_layout(
         xaxis_title="Hour",
         yaxis_title=bldg_metric,
-        margin=dict(l=40, r=10, t=40, b=40),
+        margin={"l": 40, "r": 10, "t": 40, "b": 40},
         legend_title="Building",
         height=350,
     )
@@ -370,32 +360,32 @@ def update_building_graph(
 )
 def update_ghe_graph(
     dataset_name: str,
-    ghe_metric: Optional[str],
-    x_range: Optional[List[Any]],
-    y_range: Optional[List[Any]],
-    datasets_store: Optional[Dict[str, Any]],
+    ghe_metric: str | None,
+    x_range: list[Any] | None,
+    y_range: list[Any] | None,
+    datasets_store: dict[str, Any] | None,
 ):
     if not datasets_store or dataset_name not in datasets_store:
         return px.line(title="No data loaded")
 
-    df = pd.DataFrame(datasets_store[dataset_name])
+    data_frame = pd.DataFrame(datasets_store[dataset_name])
 
     if not ghe_metric:
         return px.line(title="No GHE metric selected")
 
-    if "Hour" not in df.columns:
+    if "Hour" not in data_frame.columns:
         return px.line(title="Missing required column: Hour")
 
     # Find all GHE columns for the chosen metric
     ghe_cols = [
-        col for col in df.columns if col.startswith("ghe") and ":" in col and col.split(":", 1)[1] == ghe_metric
+        col for col in data_frame.columns if col.startswith("ghe") and ":" in col and col.split(":", 1)[1] == ghe_metric
     ]
 
     if not ghe_cols:
         return px.line(title=f"No GHE columns for metric '{ghe_metric}' in this dataset")
 
     # Melt into long format for multi-line plot
-    melted = df.melt(
+    melted = data_frame.melt(
         id_vars=["Hour"],
         value_vars=ghe_cols,
         var_name="GHE",
@@ -410,7 +400,7 @@ def update_ghe_graph(
         x="Hour",
         y="value",
         color="GHE",
-        title=f"GHEs – {ghe_metric} vs Hour",
+        title=f"GHEs - {ghe_metric} vs Hour",
     )
 
     if x_range and isinstance(x_range, list) and len(x_range) == 2:
@@ -421,7 +411,7 @@ def update_ghe_graph(
     fig.update_layout(
         xaxis_title="Hour",
         yaxis_title=ghe_metric,
-        margin=dict(l=40, r=10, t=40, b=40),
+        margin={"l": 40, "r": 10, "t": 40, "b": 40},
         legend_title="GHE",
         height=350,
     )
@@ -438,37 +428,39 @@ def update_ghe_graph(
 )
 def update_network_graph(
     dataset_name: str,
-    network_metric: Optional[str],
-    x_range: Optional[List[Any]],
-    y_range: Optional[List[Any]],
-    datasets_store: Optional[Dict[str, Any]],
+    network_metric: str | None,
+    x_range: list[Any] | None,
+    y_range: list[Any] | None,
+    datasets_store: dict[str, Any] | None,
 ):
     if not datasets_store or dataset_name not in datasets_store:
         return px.line(title="No data loaded")
 
-    df = pd.DataFrame(datasets_store[dataset_name])
+    data_frame = pd.DataFrame(datasets_store[dataset_name])
 
     if not network_metric:
         return px.line(title="No Network metric selected")
 
-    if "Hour" not in df.columns:
+    if "Hour" not in data_frame.columns:
         return px.line(title="Missing required column: Hour")
 
     col = f"Network:{network_metric}"
-    if col not in df.columns:
+    if col not in data_frame.columns:
         # Some files may use a different capitalization or prefix; fall back to search
         candidates = [
-            c for c in df.columns if c.startswith("Network") and ":" in c and c.split(":", 1)[1] == network_metric
+            c
+            for c in data_frame.columns
+            if c.startswith("Network") and ":" in c and c.split(":", 1)[1] == network_metric
         ]
         if not candidates:
             return px.line(title=f"No Network column for metric '{network_metric}' in this dataset")
         col = candidates[0]
 
     fig = px.line(
-        df,
+        data_frame,
         x="Hour",
         y=col,
-        title=f"Network – {network_metric} vs Hour",
+        title=f"Network - {network_metric} vs Hour",
     )
 
     if x_range and isinstance(x_range, list) and len(x_range) == 2:
@@ -479,7 +471,7 @@ def update_network_graph(
     fig.update_layout(
         xaxis_title="Hour",
         yaxis_title=network_metric,
-        margin=dict(l=40, r=10, t=40, b=40),
+        margin={"l": 40, "r": 10, "t": 40, "b": 40},
         height=350,
     )
     return fig
@@ -501,13 +493,13 @@ def update_network_graph(
     prevent_initial_call=True,
 )
 def sync_ranges(
-    building_relayout,
-    ghe_relayout,
-    network_relayout,
-    current_x,
-    current_building_y,
-    current_ghe_y,
-    current_network_y,
+    building_relayout: dict[str, Any] | None,
+    ghe_relayout: dict[str, Any] | None,
+    network_relayout: dict[str, Any] | None,
+    current_x: list[Any] | None,
+    current_building_y: list[Any] | None,
+    current_ghe_y: list[Any] | None,
+    current_network_y: list[Any] | None,
 ):
     ctx = dash.callback_context
     if not ctx.triggered:
@@ -521,8 +513,9 @@ def sync_ranges(
     new_ghe_y = current_ghe_y
     new_network_y = current_network_y
 
-    def update_from_relayout(relayout: dict, y_target: str):
+    def update_from_relayout(relayout: dict[str, Any], y_target: str) -> None:
         nonlocal new_x, new_building_y, new_ghe_y, new_network_y
+
         # X-axis changes
         if "xaxis.range[0]" in relayout and "xaxis.range[1]" in relayout:
             new_x = [relayout["xaxis.range[0]"], relayout["xaxis.range[1]"]]

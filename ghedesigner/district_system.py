@@ -1,5 +1,4 @@
 import copy
-import json
 from abc import ABC, abstractmethod
 from pathlib import Path
 
@@ -13,7 +12,7 @@ from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Grout, Soil
-from ghedesigner.utilities import combine_sts_lts
+from ghedesigner.utilities import combine_sts_lts, get_loads, load_input_file
 
 N_TIMESTEPS = 8760
 
@@ -282,7 +281,6 @@ class Building(BaseSimComp):
         bldg_id: str,
         bldg_data: dict,
         hp_data: dict,
-        parent_dir: Path,
         tg,
         fluid: Fluid,
         loop_config: CentralLoopType,
@@ -302,38 +300,16 @@ class Building(BaseSimComp):
         self.clg_vals = np.zeros(N_TIMESTEPS, dtype=float)
 
         if self.heating_exists:
-            hp_htg_name = bldg_data["heating_load"]["heat_pump"]
+            hp_htg_name = bldg_data["heating_load"]["heat_pump_name"]
             hp_htg_data = hp_data[hp_htg_name]
+            self.htg_vals = np.array(get_loads(hp_htg_name, SimCompType.HEAT_PUMP.name, bldg_data["heating_load"]))
             self.hp_htg = HPmodel(hp_htg_name, hp_htg_data)
-            htg_loads_path = parent_dir / bldg_data["heating_load"]["loads"]["file_path"]
-            htg_loads_path = htg_loads_path.resolve()
-            if "column_name" in bldg_data["heating_load"]["loads"]:
-                htg_col = bldg_data["heating_load"]["loads"]["column_name"]
-            elif "column_number" in bldg_data["heating_load"]["loads"]:
-                htg_col = int(bldg_data["heating_load"]["loads"]["column_number"])
-            else:
-                raise ValueError(
-                    f'building "{bldg_id}" heating_load.loads requires either "column_name" or "column_number"'
-                )
-            df_htg = pd.read_csv(htg_loads_path, usecols=[htg_col])
-            self.htg_vals = df_htg[htg_col].to_numpy()
 
         if self.cooling_exists:
-            hp_clg_name = bldg_data["cooling_load"]["heat_pump"]
+            hp_clg_name = bldg_data["cooling_load"]["heat_pump_name"]
             hp_clg_data = hp_data[hp_clg_name]
+            self.clg_vals = np.array(get_loads(hp_clg_name, SimCompType.HEAT_PUMP.name, bldg_data["cooling_load"]))
             self.hp_clg = HPmodel(hp_clg_name, hp_clg_data)
-            clg_loads_path = parent_dir / bldg_data["cooling_load"]["loads"]["file_path"]
-            clg_loads_path = clg_loads_path.resolve()
-            if "column_name" in bldg_data["cooling_load"]["loads"]:
-                clg_col = bldg_data["cooling_load"]["loads"]["column_name"]
-            elif "column_number" in bldg_data["cooling_load"]["loads"]:
-                clg_col = int(bldg_data["cooling_load"]["loads"]["column_number"])
-            else:
-                raise ValueError(
-                    f'building "{bldg_id}" cooling_load.loads requires either "column_name" or "column_number"'
-                )
-            df_clg = pd.read_csv(clg_loads_path, usecols=[clg_col])
-            self.clg_vals = df_clg[clg_col].to_numpy()
 
         self.q_net = self.htg_vals - self.clg_vals
         self.t_in = np.full(N_TIMESTEPS, tg, dtype=float)
@@ -472,8 +448,7 @@ class GHEHPSystem:
         self.nbh_total = None
         self.matrix_size = 0
 
-        json_data = json.loads(f_path_json.read_text())
-        input_dir = f_path_json.resolve().parent
+        json_data = load_input_file(f_path_json)
 
         self.loop_config = CentralLoopType[json_data["central_loop"]["pipe_configuration"].upper()]
         self.loop_flow_factor = json_data["central_loop"]["flow_factor"]
@@ -509,9 +484,7 @@ class GHEHPSystem:
         buildings = []
         for this_building_id, this_bldg_data in building_data.items():
             if this_building_id.upper() in building_names:
-                this_bldg = Building(
-                    this_building_id, this_bldg_data, heat_pump_data, input_dir, tg, self.fluid, self.loop_config
-                )
+                this_bldg = Building(this_building_id, this_bldg_data, heat_pump_data, tg, self.fluid, self.loop_config)
                 buildings.append(this_bldg)
 
         self.num_buildings = len(buildings)

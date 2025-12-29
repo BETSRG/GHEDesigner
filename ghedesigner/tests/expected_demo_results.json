@@ -47,6 +47,10 @@
     "active_borehole_length": 126.9189257757176,
     "number_of_boreholes": 88
   },
+  "find_design_rectangle_single_u_tube_bldg_loads": {
+    "active_borehole_length": 127.66883222990803,
+    "number_of_boreholes": 121
+  },
   "find_design_rowwise_single_u_tube": {
     "active_borehole_length": 134.1055519615925,
     "number_of_boreholes": 66
@@ -63,12 +67,16 @@
     "active_borehole_length": 163.18908326908007,
     "number_of_boreholes": 180
   },
-  "find_design_simple_system": {
-    "active_borehole_length": 127.6688322298669,
-    "number_of_boreholes": 121
+  "pre_designed_manual": {
+    "skip_checks": true
   },
-  "run_simulation_presized": {
-    "active_borehole_length": 1,
-    "number_of_boreholes": 1
+  "pre_designed_rectangle": {
+    "skip_checks": true
+  },
+  "simulate_1_pipe_1_ghe_1_bldg_district": {
+    "skip_checks": true
+  },
+  "simulate_1_pipe_3_ghe_6_bldg_district": {
+    "skip_checks": true
   }
 }

@@ -50,18 +50,14 @@
   "building": {
     "building1": {
       "heating_load": {
-        "loads": {
-          "column_name": "Small",
-          "file_path": "../ghedesigner/tests/test_data/Simple_Load_Data.csv"
-        },
-        "heat_pump": "hp1"
+        "column_name": "Small",
+        "file_path": "../ghedesigner/tests/test_data/Simple_Load_Data.csv",
+        "heat_pump_name": "hp1"
       },
       "cooling_load": {
-        "loads": {
-          "column_name": "Zero",
-          "file_path": "../ghedesigner/tests/test_data/Simple_Load_Data.csv"
-        },
-        "heat_pump": "hp1"
+        "column_name": "Zero",
+        "file_path": "../ghedesigner/tests/test_data/Simple_Load_Data.csv",
+        "heat_pump_name": "hp1"
       }
     }
   },
@@ -102,7 +98,6 @@
     }
   },
   "simulation_control": {
-
     "sizing_months": 240
   }
 }
