@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from ghedesigner.enums import PipeType
+from ghedesigner.enums import BHType
 from ghedesigner.ghe.manager import GroundHeatExchanger
 
 
@@ -30,7 +30,7 @@ class TestPreDesignedGHE(TestCase):
             soil_undisturbed_temperature=ugt,
             borehole_buried_depth=burial_depth,
             borehole_radius=bh_radius,
-            pipe_arrangement_type=PipeType.SINGLEUTUBE,
+            pipe_arrangement_type=BHType.SINGLEUTUBE,
             pipe_parameters=pipe_params,
             fluid_name="water",
             fluid_concentration_percent=0,

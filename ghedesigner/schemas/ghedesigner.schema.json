@@ -25,8 +25,11 @@
       "format": "Meters",
       "description": "Minimum borehole-to-borehole spacing."
     },
-    "column": {
-      "type": ["string", "integer"]
+    "column_name": {
+      "type": "string"
+    },
+    "column_number": {
+      "type": "integer"
     },
     "conductivity": {
       "type": "number",
@@ -34,14 +37,35 @@
       "format": "Watts/Meter-Kelvin",
       "description": "Thermal conductivity."
     },
+    "design_flow_rate": {
+      "type": "number",
+      "format": "Kilograms/Second",
+      "description": "Design flow rate."
+    },
+    "design_pressure_loss": {
+      "type": "number",
+      "format": "Pascals",
+      "description": "Design pressure loss."
+    },
     "file_path": {
       "type": "string"
+    },
+    "flow_factor": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Scaling factor for loop flow rate, dimensionless."
     },
     "H": {
       "type": "number",
       "minimum": 0,
       "format": "Meters",
-      "description": "Length of each borehole"
+      "description": "Length of each borehole."
+    },
+    "heat_pump_name": {
+      "type": "string"
+    },
+    "heat_pump_cop": {
+      "type": "number"
     },
     "inner_diameter": {
       "type": "number",
@@ -65,17 +89,26 @@
       "maxItems": 8760,
       "description": "Annual, hourly loads of the object. Positive value indicate heating/heat extraction, negative values indicate cooling/heat rejection."
     },
-    "loads": {
+    "load_inputs": {
       "type": "object",
       "properties": {
-        "column": {
-          "$ref": "#/$defs/column"
+        "column_name": {
+          "$ref": "#/$defs/column_name"
+        },
+        "column_number": {
+          "$ref": "#/$defs/column_number"
         },
         "file_path": {
           "$ref": "#/$defs/file_path"
         },
         "load_values": {
           "$ref": "#/$defs/load_values"
+        },
+        "heat_pump_name": {
+          "$ref": "#/$defs/heat_pump_name"
+        },
+        "heat_pump_cop": {
+          "$ref": "#/$defs/heat_pump_cop"
         }
       },
       "oneOf": [
@@ -90,18 +123,120 @@
         },
         {
           "properties": {
-            "column": {
-              "$ref": "#/$defs/column"
+            "column_name": {
+              "$ref": "#/$defs/column_name"
             },
             "file_path": {
               "$ref": "#/$defs/file_path"
             }
           },
-          "required": ["file_path", "column"],
+          "required": ["file_path", "column_name"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column_number": {
+              "$ref": "#/$defs/column_number"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            }
+          },
+          "required": ["file_path", "column_number"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "load_values": {
+              "$ref": "#/$defs/load_values"
+            },
+            "heat_pump_name": {
+              "$ref": "#/$defs/heat_pump_name"
+            }
+          },
+          "required": ["load_values", "heat_pump_name"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column_name": {
+              "$ref": "#/$defs/column_name"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            },
+            "heat_pump_name": {
+              "$ref": "#/$defs/heat_pump_name"
+            }
+          },
+          "required": ["file_path", "column_name", "heat_pump_name"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column_number": {
+              "$ref": "#/$defs/column_number"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            },
+            "heat_pump_name": {
+              "$ref": "#/$defs/heat_pump_name"
+            }
+          },
+          "required": ["file_path", "column_number", "heat_pump_name"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "load_values": {
+              "$ref": "#/$defs/load_values"
+            },
+            "heat_pump_cop": {
+              "$ref": "#/$defs/heat_pump_cop"
+            }
+          },
+          "required": ["load_values", "heat_pump_cop"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column_name": {
+              "$ref": "#/$defs/column_name"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            },
+            "heat_pump_cop": {
+              "$ref": "#/$defs/heat_pump_cop"
+            }
+          },
+          "required": ["file_path", "column_name", "heat_pump_cop"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column_number": {
+              "$ref": "#/$defs/column_number"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            },
+            "heat_pump_cop": {
+              "$ref": "#/$defs/heat_pump_cop"
+            }
+          },
+          "required": ["file_path", "column_number", "heat_pump_cop"],
           "additionalProperties": false
         }
       ],
       "additionalProperties": false
+    },
+    "loop_length": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Length of loop in meters."
     },
     "no_go_boundaries": {
       "type": "array",
@@ -125,6 +260,58 @@
       "minimum": 0,
       "format": "Meters",
       "description": "Outer diameter of pipe."
+    },
+    "pipe_configuration": {
+      "type": "string",
+      "enum": ["ONEPIPE"]
+    },
+    "pump_efficiency": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Pump efficiency as a decimal fraction (0-1)."
+    },
+    "performance_data": {
+      "type": "object",
+      "properties": {
+        "a": {
+          "type": "number",
+          "format": "Watts/Watts",
+          "description": "Performance coefficient for the ratio of heat extraction to heating capacity, or the ratio of heat rejection to cooling capacity."
+        },
+        "b": {
+          "type": "number",
+          "format": "Watts/Watts-Celsius",
+          "description": "Performance coefficient for the ratio of heat extraction to heating capacity, or the ratio of heat rejection to cooling capacity."
+        },
+        "c": {
+          "type": "number",
+          "format": "Watts/Watts-Celsius^2",
+          "description": "Performance coefficient for the ratio of heat extraction to heating capacity, or the ratio of heat rejection to cooling capacity."
+        },
+        "c1": {
+          "type": "number",
+          "format": "Watts",
+          "description": "Performance coefficient for the heating or cooling capacity."
+        },
+        "c2": {
+          "type": "number",
+          "format": "Watts/Celsius",
+          "description": "Performance coefficient for the heating or cooling capacity."
+        },
+        "c3": {
+          "type": "number",
+          "format": "Watts/Celsius^2",
+          "description": "Performance coefficient for the heating or cooling capacity."
+        },
+        "design_cap": {
+          "type": "number",
+          "format": "Watts",
+          "description": "Design heating or cooling capacity used to develop performance coefficients."
+        }
+      },
+      "required": ["a", "b", "c", "c1", "c2", "c3", "design_cap"],
+      "additionalProperties": false
     },
     "property_boundary": {
       "type": "array",
@@ -167,6 +354,24 @@
   },
   "type": "object",
   "properties": {
+    "central_loop": {
+      "type": "object",
+      "description": "A collection of central loop properties.",
+      "properties": {
+        "pipe_configuration": {
+          "$ref": "#/$defs/pipe_configuration"
+        },
+        "pump_efficiency": {
+          "$ref": "#/$defs/pump_efficiency"
+        },
+        "loop_length": {
+          "$ref": "#/$defs/loop_length"
+        },
+        "design_pressure_loss": {
+          "$ref": "#/$defs/design_pressure_loss"
+        }
+      }
+    },
     "topology": {
       "type": "array",
       "description": "A list of name/type map objects that define the system topology.",
@@ -217,26 +422,95 @@
       "required": ["fluid_name", "concentration_percent", "temperature"],
       "additionalProperties": false
     },
-    "building": {
+    "heat_pump": {
       "type": "object",
-      "description": "A map of available building definition objects.",
+      "description": "A collection of data that define a heat pump.",
       "additionalProperties": {
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string"
+          "cooling_performance": {
+            "$ref": "#/$defs/performance_data"
           },
-          "loads": {
-            "type": "string"
+          "heating_performance": {
+            "$ref": "#/$defs/performance_data"
           },
-          "cop": {
-            "type": "number"
+          "design_flow_rate": {
+            "$ref": "#/$defs/design_flow_rate"
           },
-          "capacity": {
-            "type": "string"
+          "design_pressure_loss": {
+            "$ref": "#/$defs/design_pressure_loss"
+          },
+          "pump_efficiency": {
+            "$ref": "#/$defs/pump_efficiency"
           }
         },
-        "required": ["name", "loads", "cop", "capacity"],
+        "required": [
+          "cooling_performance",
+          "heating_performance",
+          "design_flow_rate",
+          "design_pressure_loss",
+          "pump_efficiency"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "building": {
+      "type": "object",
+      "description": "A collection of objects that define a building.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "cooling_load": {
+            "$ref": "#/$defs/load_inputs"
+          },
+          "heating_load": {
+            "$ref": "#/$defs/load_inputs"
+          },
+          "total_load": {
+            "$ref": "#/$defs/load_inputs"
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "cooling_load": {
+                "$ref": "#/$defs/load_inputs"
+              },
+              "heating_load": {
+                "$ref": "#/$defs/load_inputs"
+              }
+            },
+            "required": ["cooling_load", "heating_load"],
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "total_load": {
+                "$ref": "#/$defs/load_inputs"
+              }
+            },
+            "required": ["total_load"],
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "cooling_load": {
+                "$ref": "#/$defs/load_inputs"
+              }
+            },
+            "required": ["cooling_load"],
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "heating_load": {
+                "$ref": "#/$defs/load_inputs"
+              }
+            },
+            "required": ["heating_load"],
+            "additionalProperties": false
+          }
+        ],
         "additionalProperties": false
       }
     },
@@ -449,7 +723,7 @@
                   "conductivity_inner": {
                     "type": "number",
                     "minimum": 0,
-                    "format": "Watts/Meters-Kelvin",
+                    "format": "Watts/Meter-Kelvin",
                     "description": "Thermal conductivity of inner pipe."
                   },
                   "conductivity_outer": {
@@ -516,14 +790,14 @@
                   },
                   "x": {
                     "type": "array",
-                    "description": "For MANUAL arrangement, this provides an array of x coordinate positions, one for each borehole in the field",
+                    "description": "For MANUAL arrangement, this provides an array of x coordinate positions, one for each borehole in the field.",
                     "items": {
                       "type": "number"
                     }
                   },
                   "y": {
                     "type": "array",
-                    "description": "For MANUAL arrangement, this provides an array of y coordinate positions, one for each borehole in the field",
+                    "description": "For MANUAL arrangement, this provides an array of y coordinate positions, one for each borehole in the field.",
                     "items": {
                       "type": "number"
                     }
@@ -543,24 +817,24 @@
                   "boreholes_in_x_dimension": {
                     "type": "integer",
                     "minimum": 0,
-                    "description": "Number of boreholes in the x direction of the field, dimensionless"
+                    "description": "Number of boreholes in the x direction of the field, dimensionless."
                   },
                   "boreholes_in_y_dimension": {
                     "type": "integer",
                     "minimum": 0,
-                    "description": "Number of boreholes in the y direction of the field, dimensionless"
+                    "description": "Number of boreholes in the y direction of the field, dimensionless."
                   },
                   "spacing_in_x_dimension": {
                     "type": "number",
                     "minimum": 0,
                     "format": "Meters",
-                    "description": "Borehole spacing in the x direction of the field, in meters (ignored if boreholes_in_x_dimension = 1)"
+                    "description": "Borehole spacing in the x direction of the field, in meters (ignored if boreholes_in_x_dimension = 1)."
                   },
                   "spacing_in_y_dimension": {
                     "type": "number",
                     "minimum": 0,
                     "format": "Meters",
-                    "description": "Borehole spacing in the y direction of the field, in meters (ignored if boreholes_in_y_dimension = 1)"
+                    "description": "Borehole spacing in the y direction of the field, in meters (ignored if boreholes_in_y_dimension = 1)."
                   }
                 },
                 "required": [
@@ -774,8 +1048,7 @@
                   "perimeter_spacing_ratio": {
                     "type": "number",
                     "minimum": 0,
-                    "format": "fraction",
-                    "description": "The ratio between the minimum spacing between boreholes placed along the property and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes."
+                    "description": "The ratio between the minimum spacing between boreholes placed along the property and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes, dimensionless."
                   }
                 },
                 "required": [
@@ -830,7 +1103,7 @@
             "additionalProperties": false
           },
           "loads": {
-            "$ref": "#/$defs/loads"
+            "$ref": "#/$defs/load_inputs"
           }
         },
         "required": [
@@ -848,14 +1121,6 @@
       "type": "object",
       "description": "",
       "properties": {
-        "sizing_run": {
-          "type": "boolean",
-          "description": "Field enables or disables running sizing calculations."
-        },
-        "hourly_run": {
-          "type": "boolean",
-          "description": "Field enables running hour simulation."
-        },
         "sizing_months": {
           "type": "number",
           "minimum": 1,

@@ -50,7 +50,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
 
         # New pipe geometry
         roughness = self.pipe.roughness
-        pipe = Pipe.init_single_u_tube(k_p_prime, rho_cp_p, r_p_i_prime * 2, r_p_o_prime * 2, s, roughness, 1)
+        pipe = Pipe.init_single_u_tube(k_p_prime, rho_cp_p, r_p_i_prime * 2, r_p_o_prime * 2, s, roughness)
 
         # Don't tie together the original and equivalent BHEs
         m_flow_borehole = self.m_flow_borehole

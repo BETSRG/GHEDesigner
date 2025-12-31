@@ -1,4 +1,4 @@
-from ghedesigner.enums import PipeType, TimestepType
+from ghedesigner.enums import BHType, TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.coordinates import rectangle
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
@@ -132,7 +132,7 @@ class TestGHE(GHEBaseTest):
             self.dia / 2.0,
             self.bh_depth,
             self.m_flow_borehole,
-            PipeType.SINGLEUTUBE,
+            BHType.SINGLEUTUBE,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -145,7 +145,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.v_flow_system,
             self.B,
-            PipeType.SINGLEUTUBE,
+            BHType.SINGLEUTUBE,
             self.fluid,
             borehole,
             self.pipe_s,
@@ -178,7 +178,7 @@ class TestGHE(GHEBaseTest):
             self.dia / 2.0,
             self.bh_depth,
             self.m_flow_borehole,
-            PipeType.DOUBLEUTUBEPARALLEL,
+            BHType.DOUBLEUTUBEPARALLEL,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -191,7 +191,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.v_flow_system,
             self.B,
-            PipeType.DOUBLEUTUBEPARALLEL,
+            BHType.DOUBLEUTUBEPARALLEL,
             self.fluid,
             borehole,
             self.pipe_d,
@@ -224,7 +224,7 @@ class TestGHE(GHEBaseTest):
             self.dia / 2.0,
             self.bh_depth,
             self.m_flow_borehole,
-            PipeType.COAXIAL,
+            BHType.COAXIAL,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -237,7 +237,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.v_flow_system,
             self.B,
-            PipeType.COAXIAL,
+            BHType.COAXIAL,
             self.fluid,
             borehole,
             self.pipe_c,

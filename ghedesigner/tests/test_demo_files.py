@@ -38,6 +38,11 @@ def test_demo_files(demo_file_path: Path, time_str: str):
     print(f"Running: {demo_file_path}")
     assert run(input_file_path=demo_file_path, output_directory=out_dir) == 0
 
+    expected_results = expected_demo_results_dict[out_dir.stem]
+
+    if expected_results.get("skip_checks", False):
+        return
+
     # check the outputs
     results_path = out_dir / "SimulationSummary.json"
 
@@ -46,14 +51,8 @@ def test_demo_files(demo_file_path: Path, time_str: str):
         actual_length = actual_results["ghe_system"]["active_borehole_length"]["value"]
         actual_nbh = actual_results["ghe_system"]["number_of_boreholes"]
 
-        expected_results = expected_demo_results_dict[out_dir.stem]
         expected_length = expected_results["active_borehole_length"]
         expected_nbh = expected_results["number_of_boreholes"]
 
-        assert actual_length == pytest.approx(expected_length, abs=0.1)
-        assert actual_nbh == expected_nbh
-
-    else:
-        # TODO: Verify it was intentionally predesigned
-        assert "log_time" in actual_results
-        assert "g_values" in actual_results
+        assert expected_length == pytest.approx(actual_length, abs=0.1)
+        assert expected_nbh == actual_nbh

@@ -86,14 +86,12 @@
         "min_height": 60
       },
       "loads": {
-        "column": "Hourly heat extraction (W)",
+        "column_name": "Hourly heat extraction (W)",
         "file_path": "../ghedesigner/tests/test_data/Atlanta_Office_Building_Loads.csv"
       }
     }
   },
   "simulation_control": {
-    "sizing_run": false,
-    "hourly_run": false,
     "sizing_months": 240
   }
 }
