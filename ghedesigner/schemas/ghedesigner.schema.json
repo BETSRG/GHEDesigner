@@ -39,13 +39,13 @@
     },
     "design_flow_rate": {
       "type": "number",
-      "format": "Kilograms/Sec",
-      "description": "Design flow rate"
+      "format": "Kilograms/Second",
+      "description": "Design flow rate."
     },
     "design_pressure_loss": {
       "type": "number",
-      "format": "Pascal",
-      "description": "Design pressure loss"
+      "format": "Pascals",
+      "description": "Design pressure loss."
     },
     "file_path": {
       "type": "string"
@@ -53,14 +53,13 @@
     "flow_factor": {
       "type": "number",
       "minimum": 0,
-      "format": "Dimensionless",
-      "description": "Scaling factor for loop flow rate"
+      "description": "Scaling factor for loop flow rate, dimensionless."
     },
     "H": {
       "type": "number",
       "minimum": 0,
       "format": "Meters",
-      "description": "Length of each borehole"
+      "description": "Length of each borehole."
     },
     "heat_pump_name": {
       "type": "string"
@@ -357,7 +356,7 @@
   "properties": {
     "central_loop": {
       "type": "object",
-      "description": "A collection of central loop properties",
+      "description": "A collection of central loop properties.",
       "properties": {
         "pipe_configuration": {
           "$ref": "#/$defs/pipe_configuration"
@@ -791,14 +790,14 @@
                   },
                   "x": {
                     "type": "array",
-                    "description": "For MANUAL arrangement, this provides an array of x coordinate positions, one for each borehole in the field",
+                    "description": "For MANUAL arrangement, this provides an array of x coordinate positions, one for each borehole in the field.",
                     "items": {
                       "type": "number"
                     }
                   },
                   "y": {
                     "type": "array",
-                    "description": "For MANUAL arrangement, this provides an array of y coordinate positions, one for each borehole in the field",
+                    "description": "For MANUAL arrangement, this provides an array of y coordinate positions, one for each borehole in the field.",
                     "items": {
                       "type": "number"
                     }
@@ -818,24 +817,24 @@
                   "boreholes_in_x_dimension": {
                     "type": "integer",
                     "minimum": 0,
-                    "description": "Number of boreholes in the x direction of the field, dimensionless"
+                    "description": "Number of boreholes in the x direction of the field, dimensionless."
                   },
                   "boreholes_in_y_dimension": {
                     "type": "integer",
                     "minimum": 0,
-                    "description": "Number of boreholes in the y direction of the field, dimensionless"
+                    "description": "Number of boreholes in the y direction of the field, dimensionless."
                   },
                   "spacing_in_x_dimension": {
                     "type": "number",
                     "minimum": 0,
                     "format": "Meters",
-                    "description": "Borehole spacing in the x direction of the field, in meters (ignored if boreholes_in_x_dimension = 1)"
+                    "description": "Borehole spacing in the x direction of the field, in meters (ignored if boreholes_in_x_dimension = 1)."
                   },
                   "spacing_in_y_dimension": {
                     "type": "number",
                     "minimum": 0,
                     "format": "Meters",
-                    "description": "Borehole spacing in the y direction of the field, in meters (ignored if boreholes_in_y_dimension = 1)"
+                    "description": "Borehole spacing in the y direction of the field, in meters (ignored if boreholes_in_y_dimension = 1)."
                   }
                 },
                 "required": [
@@ -1049,8 +1048,7 @@
                   "perimeter_spacing_ratio": {
                     "type": "number",
                     "minimum": 0,
-                    "format": "fraction",
-                    "description": "The ratio between the minimum spacing between boreholes placed along the property and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes."
+                    "description": "The ratio between the minimum spacing between boreholes placed along the property and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes, dimensionless."
                   }
                 },
                 "required": [
@@ -1144,5 +1142,6 @@
       "description": "An integer version ID for this input structure, for future-proofing."
     }
   },
-  "required": ["topology", "fluid", "ground_heat_exchanger", "version"]
+  "required": ["topology", "fluid", "ground_heat_exchanger", "version"],
+  "additionalProperties": false
 }
