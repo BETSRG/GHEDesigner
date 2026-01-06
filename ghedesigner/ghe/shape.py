@@ -73,8 +73,8 @@ class Shapes:
             the x,y values of the intersections
         """
         x1, y1, x2, y2 = xy
-        minx, maxx = (x1, x2) if x1 < x2 else (x2, x1)
-        miny, maxy = (y1, y2) if y1 < y2 else (y2, y1)
+        # minx, maxx = (x1, x2) if x1 < x2 else (x2, x1)
+        # miny, maxy = (y1, y2) if y1 < y2 else (y2, y1)
 
         r_a = []
 

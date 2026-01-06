@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import csv
+from collections.abc import Callable
 from json import dumps, loads
 from math import sqrt
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 from scipy.interpolate import interp1d

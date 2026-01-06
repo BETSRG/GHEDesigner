@@ -34,8 +34,8 @@ mkdocs-material = "^9.5"
 mkdocs-schema-reader = "^0.11.1"
 mkdocstrings = { version = "^0.27.0", extras = ["python"] }
 pre-commit = "^4.0.0"
-pytest = "^8.0.0"
-pytest-cov = "^6.0.0"
+pytest = "^9.0.0"
+pytest-cov = "^7.0.0"
 pytest-xdist = "^3.6"
 recursive-diff = "^1.1.0"
 
