@@ -10,7 +10,7 @@ from ghedesigner.main import run
 expected_results_path = Path(__file__).parent / "expected_demo_results.json"
 expected_demo_results_dict = loads(expected_results_path.read_text())
 
-# override this with a list of Paths to JSON config files to run, or set to None to run all demo files
+# override this with a list of Paths to JSON config files to run, or set to `None` to run all demo files
 files_to_debug: list[Path] = [
     # Path(__file__).parent.parent.parent / "demos" / "find_design_rowwise_single_u_tube.json"
 ]
