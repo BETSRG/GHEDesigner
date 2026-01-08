@@ -13,6 +13,7 @@ from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Grout, Soil
 from ghedesigner.utilities import combine_sts_lts, solve_root
 
+# An attempt at learning how to commit, push, pull and merge. TH01082026
 
 class GHE:
     def __init__(
