@@ -171,6 +171,100 @@ class ParallelPipeSystem:
 
         return fluid_temp
 
+    def calculate_temps_from_asymmetric_heat_loss(
+        self, q_p1: float, q_p2: float, time: float, beta: float
+    ) -> tuple[float, float]:
+        """
+        Calculates the required fluid temperatures for two different,
+        asymmetric heat loss inputs (q_p1 and q_p2) at a given time.
+
+        :param q_p1: The heat loss for pipe 1 (W/m).
+        :param q_p2: The heat loss for pipe 2 (W/m).
+        :param time: The time for the calculation [s].
+        :param beta: The dimensionless pipe thermal resistance parameter.
+        :return: A tuple containing (T_f1, T_f2), the required
+                 temperatures for pipe 1 and pipe 2.
+        """
+
+        # 1. Decompose the target heat losses into even and odd components
+        q_pe = (q_p1 + q_p2) / 2.0  # Even heat loss
+        q_po = (q_p1 - q_p2) / 2.0  # Odd heat loss
+
+        # 2. Get the dimensionless heat flux (q') for both basic cases
+        q_prime_even = self.heat_transfer(time, epsilon_x=1.0, beta=beta)
+        q_prime_odd = self.heat_transfer(time, epsilon_x=-1.0, beta=beta)
+
+        lambda_soil = self.soil.k
+
+        # 3. Calculate the required even and odd TEMPERATURES
+
+        # Handle potential divide-by-zero if q' is zero
+        t_fe = 0.0 if q_prime_even == 0 else q_pe / (TWO_PI * lambda_soil * q_prime_even)
+
+        t_f0 = 0.0 if q_prime_odd == 0 else q_po / (TWO_PI * lambda_soil * q_prime_odd)
+
+        # 4. Superpose the temperatures to find the final answer
+        t_f1 = t_fe + t_f0
+        t_f2 = t_fe - t_f0
+
+        return (t_f1, t_f2)
+
+    def simulate_temperature_response(
+        self, heat_load_series: np.ndarray, response_factors: np.ndarray, beta: float
+    ) -> np.ndarray:
+        """
+        Calculates the fluid temperature evolution for a variable heat load
+        using temporal superposition (thermal history).
+
+        :param heat_load_series: Array of heat loads (W/m) at each time step.
+        :param response_factors: Array of q' values corresponding to the time steps.
+                                 Must be the same length or longer than heat_load_series.
+        :param beta: The dimensionless pipe thermal resistance parameter.
+        :return: Array of fluid temperatures (T_f0) in Celsius.
+        """
+
+        num_steps = len(heat_load_series)
+        temperature_history = np.zeros(num_steps)
+        delta_t_history = []  # Stores the step-changes in temperature
+
+        # Calculate q'(0) - the immediate response
+        # From PDF page 7, q'(0) = 1 / beta
+        q_prime_0 = 1.0 / beta
+
+        lambda_soil = self.soil.k
+        current_t = 0.0
+
+        # Run the superposition loop
+        for n in range(num_steps):
+            # 1. Current Load Term
+            q_n = heat_load_series[n]
+            load_term = q_n / (TWO_PI * lambda_soil)
+
+            # 2. History Term (Convolution of past changes * response)
+            history_term = 0.0
+            if n > 0:
+                # We need q' values for elapsed times [dt, 2dt, ... (n)*dt]
+                # These correspond to indices [0, 1, ... n-1] in the response_factors array
+                relevant_q = response_factors[:n]
+
+                # Reverse deltas so the most recent change multiplies the earliest q'
+                reversed_deltas = delta_t_history[::-1]
+
+                # Use dot product for speed
+                history_term = np.dot(reversed_deltas, relevant_q)
+
+            # 3. Solve for NEW temperature step
+            # Formula derived from superposition of step pulses
+            delta_t = (load_term - history_term) / q_prime_0
+
+            # 4. Update state
+            current_t += delta_t
+
+            delta_t_history.append(delta_t)
+            temperature_history[n] = current_t
+
+        return temperature_history
+
 
 class SinglePipeSystem:
     def __init__(
