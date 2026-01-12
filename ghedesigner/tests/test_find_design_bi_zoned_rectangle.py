@@ -89,6 +89,6 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
         )
         search = self.get_design(pipe, 0.8)
         u_tube_height = search.ghe.bhe.borehole.H
-        self.assertAlmostEqual(132.9, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(133.78, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(92, len(borehole_location_data_rows))

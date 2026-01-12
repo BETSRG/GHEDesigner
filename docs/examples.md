@@ -5,7 +5,7 @@
 A basic programmatic example is shown below. Additional examples are found at [https://github.com/BETSRG/GHEDesigner/tree/main/ghedesigner/tests](https://github.com/BETSRG/GHEDesigner/tree/main/ghedesigner/tests)
 
 ```python
-ghe = GHEManager()
+ghe = GroundHeatExchanger()
 ghe.set_single_u_tube_pipe(
     inner_diameter=0.03404,
     outer_diameter=0.04216,
