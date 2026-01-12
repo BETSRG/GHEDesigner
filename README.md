@@ -146,8 +146,9 @@ git clone git@github.com:BETSRG/GHEDesigner.git
 During development, we can [serve docs locally](https://squidfunk.github.io/mkdocs-material/creating-your-site/#previewing-as-you-write) and view updates with every save.
 
 1. Start a documentation update branch: `git checkout -b <branch_name>`
-2. `mkdocs serve`
-3. Point browser to [http://localhost:8000/](http://localhost:8000/)
+2. Ensure that the environment variable `LANGUAGE` is set to `en_US` before running `mkdocs serve` to avoid babel errors
+3. `uv run mkdocs serve`
+4. Point browser to [http://localhost:8000/](http://localhost:8000/)
 
 ## Questions
 

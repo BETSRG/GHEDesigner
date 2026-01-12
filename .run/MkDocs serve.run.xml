@@ -7,7 +7,9 @@
     </option>
     <option name="checkSync" value="true" />
     <option name="env">
-      <map />
+      <map>
+        <entry key="LANGUAGE" value="en_US" />
+      </map>
     </option>
     <option name="runType" value="MODULE" />
     <option name="scriptOrModule" value="mkdocs" />
