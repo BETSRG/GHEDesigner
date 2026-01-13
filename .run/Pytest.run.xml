@@ -10,7 +10,8 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="_new_additionalArguments" value="&quot;-n auto&quot;" />
+    <option name="RUN_TOOL" value="true" />
+    <option name="_new_additionalArguments" value="&quot;-v -n auto&quot;" />
     <option name="_new_target" value="&quot;ghedesigner.tests&quot;" />
     <option name="_new_targetType" value="&quot;PYTHON&quot;" />
     <method v="2" />

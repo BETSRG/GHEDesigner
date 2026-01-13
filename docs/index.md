@@ -123,8 +123,8 @@ ghedesigner demos/find_design_rectangle_single_u_tube.json ./tmp
 git clone git@github.com:BETSRG/GHEDesigner.git
 ```
 
-- [Poetry](https://python-poetry.org/) is used to manage the project & dependencies. After cloning, run
-  `pip install poetry` and `poetry install`. If the dependencies change, run `poetry lock` to update the lockfile.
+- [uv](https://docs.astral.sh/uv/) is used to manage the project & dependencies. After cloning (and with uv installed at
+  the system level), run `uv sync`.
 - Developers can then call `pytest` (which may take 10-30 minutes to run the full test suite) to confirm all dev
   dependencies have been installed and everything is working as expected.
 - Activate [pre-commit](https://pre-commit.com/) (only required once, after cloning the repo) with:
