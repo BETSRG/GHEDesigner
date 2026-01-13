@@ -1,0 +1,1654 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../examples/">
+      
+      
+        <link rel="next" href="../schema/ghedesigner.schema/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Design Manager - GHEDesigner</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#full-documentation-of-the-groundheatexchanger-class" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="GHEDesigner" class="md-header__button md-logo" aria-label="GHEDesigner" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            GHEDesigner
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Design Manager
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/BETSRG/GHEDesigner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="GHEDesigner" class="md-nav__button md-logo" aria-label="GHEDesigner" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    GHEDesigner
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/BETSRG/GHEDesigner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using the CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Manager
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Manager
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#full-documentation-of-the-groundheatexchanger-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full documentation of the GroundHeatExchanger class
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ghedesigner.ghe.manager.GroundHeatExchanger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GroundHeatExchanger
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ghedesigner.ghe.manager.GroundHeatExchanger.init_from_dictionary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        init_from_dictionary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Schema
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Schema
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schema/ghedesigner.schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ghedesigner.schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#full-documentation-of-the-groundheatexchanger-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full documentation of the GroundHeatExchanger class
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ghedesigner.ghe.manager.GroundHeatExchanger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GroundHeatExchanger
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ghedesigner.ghe.manager.GroundHeatExchanger.init_from_dictionary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        init_from_dictionary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Design Manager</h1>
+
+<h2 id="full-documentation-of-the-groundheatexchanger-class">Full documentation of the GroundHeatExchanger class</h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<a id="ghedesigner.ghe.manager.GroundHeatExchanger"></a>
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>ghedesigner/ghe/manager.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">GroundHeatExchanger</span><span class="p">:</span>  <span class="c1"># TODO: Rename this.  Just GHEDesignerManager?  GHEDesigner?</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">grout_conductivity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">grout_rho_cp</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">soil_conductivity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">soil_rho_cp</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">soil_undisturbed_temperature</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">borehole_buried_depth</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">borehole_radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">pipe_arrangement_type</span><span class="p">:</span> <span class="n">PipeType</span><span class="p">,</span>
+        <span class="n">pipe_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">fluid_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Water&quot;</span><span class="p">,</span>
+        <span class="n">fluid_concentration_percent</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">fluid_temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">20.0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fluid</span> <span class="o">=</span> <span class="n">Fluid</span><span class="p">(</span><span class="n">fluid_name</span><span class="p">,</span> <span class="n">fluid_temperature</span><span class="p">,</span> <span class="n">fluid_concentration_percent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grout</span> <span class="o">=</span> <span class="n">Grout</span><span class="p">(</span><span class="n">grout_conductivity</span><span class="p">,</span> <span class="n">grout_rho_cp</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">soil</span> <span class="o">=</span> <span class="n">Soil</span><span class="p">(</span><span class="n">soil_conductivity</span><span class="p">,</span> <span class="n">soil_rho_cp</span><span class="p">,</span> <span class="n">soil_undisturbed_temperature</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pipe_arrangement_type</span> <span class="o">==</span> <span class="n">PipeType</span><span class="o">.</span><span class="n">SINGLEUTUBE</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;conductivity&quot;</span><span class="p">,</span> <span class="s2">&quot;rho_cp&quot;</span><span class="p">,</span> <span class="s2">&quot;inner_diameter&quot;</span><span class="p">,</span> <span class="s2">&quot;outer_diameter&quot;</span><span class="p">,</span> <span class="s2">&quot;shank_spacing&quot;</span><span class="p">,</span> <span class="s2">&quot;roughness&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">pipe_parameters</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">params</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;pipe_arrangement_type of </span><span class="si">{</span><span class="n">pipe_arrangement_type</span><span class="si">!s}</span><span class="s2"> requires these inputs: </span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">pipe_parameters</span><span class="p">[</span><span class="s2">&quot;num_pipes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipe</span> <span class="o">=</span> <span class="n">Pipe</span><span class="o">.</span><span class="n">init_single_u_tube</span><span class="p">(</span><span class="o">**</span><span class="n">pipe_parameters</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">pipe_arrangement_type</span> <span class="o">==</span> <span class="n">PipeType</span><span class="o">.</span><span class="n">DOUBLEUTUBESERIES</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;conductivity&quot;</span><span class="p">,</span> <span class="s2">&quot;rho_cp&quot;</span><span class="p">,</span> <span class="s2">&quot;inner_diameter&quot;</span><span class="p">,</span> <span class="s2">&quot;outer_diameter&quot;</span><span class="p">,</span> <span class="s2">&quot;shank_spacing&quot;</span><span class="p">,</span> <span class="s2">&quot;roughness&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">pipe_parameters</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">params</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;pipe_arrangement_type of </span><span class="si">{</span><span class="n">pipe_arrangement_type</span><span class="si">!s}</span><span class="s2"> requires these inputs: </span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipe</span> <span class="o">=</span> <span class="n">Pipe</span><span class="o">.</span><span class="n">init_double_u_tube_series</span><span class="p">(</span><span class="o">**</span><span class="n">pipe_parameters</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">pipe_arrangement_type</span> <span class="o">==</span> <span class="n">PipeType</span><span class="o">.</span><span class="n">DOUBLEUTUBEPARALLEL</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;conductivity&quot;</span><span class="p">,</span> <span class="s2">&quot;rho_cp&quot;</span><span class="p">,</span> <span class="s2">&quot;inner_diameter&quot;</span><span class="p">,</span> <span class="s2">&quot;outer_diameter&quot;</span><span class="p">,</span> <span class="s2">&quot;shank_spacing&quot;</span><span class="p">,</span> <span class="s2">&quot;roughness&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">pipe_parameters</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">params</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;pipe_arrangement_type of </span><span class="si">{</span><span class="n">pipe_arrangement_type</span><span class="si">!s}</span><span class="s2"> requires these inputs: </span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipe</span> <span class="o">=</span> <span class="n">Pipe</span><span class="o">.</span><span class="n">init_double_u_tube_parallel</span><span class="p">(</span><span class="o">**</span><span class="n">pipe_parameters</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># Assuming coaxial</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s2">&quot;conductivity_inner&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;rho_cp&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;conductivity_outer&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;inner_pipe_d_in&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;inner_pipe_d_out&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;outer_pipe_d_in&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;outer_pipe_d_out&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">pipe_parameters</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">params</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;pipe_arrangement_type of </span><span class="si">{</span><span class="n">PipeType</span><span class="o">.</span><span class="n">COAXIAL</span><span class="si">!s}</span><span class="s2"> requires these inputs: </span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">pipe_parameters</span><span class="p">[</span><span class="s2">&quot;conductivity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">pipe_parameters</span><span class="p">[</span><span class="s2">&quot;conductivity_inner&quot;</span><span class="p">],</span>
+                <span class="n">pipe_parameters</span><span class="p">[</span><span class="s2">&quot;conductivity_outer&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="k">del</span> <span class="n">pipe_parameters</span><span class="p">[</span><span class="s2">&quot;conductivity_inner&quot;</span><span class="p">]</span>
+            <span class="k">del</span> <span class="n">pipe_parameters</span><span class="p">[</span><span class="s2">&quot;conductivity_outer&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipe</span> <span class="o">=</span> <span class="n">Pipe</span><span class="o">.</span><span class="n">init_coaxial</span><span class="p">(</span><span class="o">**</span><span class="n">pipe_parameters</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pygfunction_borehole</span> <span class="o">=</span> <span class="n">Borehole</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">borehole_buried_depth</span><span class="p">,</span> <span class="n">borehole_radius</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_from_dictionary</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">ghe_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">fluid_inputs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GroundHeatExchanger&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a GroundHeatExchanger object from input dictionaries, performing validation and ultimately calling</span>
+<span class="sd">        the main object constructor.</span>
+<span class="sd">        :param ghe_dict: Dictionary of ground heat exchanger parameters, see the input schema specification for required</span>
+<span class="sd">                         inputs in the ground_heat_exchanger schema field.</span>
+<span class="sd">        :param fluid_inputs: Optional dictionary of fluid input parameters, see the input schema fluid spec for details.</span>
+<span class="sd">        :return: GroundHeatExchanger object.</span>
+<span class="sd">        # TODO: Add validation back in to the input fields</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">grout_parameters</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;grout&quot;</span><span class="p">]</span>
+        <span class="n">g_c</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">grout_parameters</span><span class="p">[</span><span class="s2">&quot;conductivity&quot;</span><span class="p">]</span>
+        <span class="n">g_rho_cp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">grout_parameters</span><span class="p">[</span><span class="s2">&quot;rho_cp&quot;</span><span class="p">]</span>
+
+        <span class="n">soil_parameters</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;soil&quot;</span><span class="p">]</span>
+        <span class="n">s_k</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">soil_parameters</span><span class="p">[</span><span class="s2">&quot;conductivity&quot;</span><span class="p">]</span>
+        <span class="n">s_rho_cp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">soil_parameters</span><span class="p">[</span><span class="s2">&quot;rho_cp&quot;</span><span class="p">]</span>
+        <span class="n">s_temp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">soil_parameters</span><span class="p">[</span><span class="s2">&quot;undisturbed_temp&quot;</span><span class="p">]</span>
+
+        <span class="n">borehole_parameters</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;borehole&quot;</span><span class="p">]</span>
+        <span class="n">buried_depth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">borehole_parameters</span><span class="p">[</span><span class="s2">&quot;buried_depth&quot;</span><span class="p">]</span>
+        <span class="n">diameter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">borehole_parameters</span><span class="p">[</span><span class="s2">&quot;diameter&quot;</span><span class="p">]</span>
+        <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">diameter</span> <span class="o">/</span> <span class="mf">2.0</span>
+
+        <span class="n">fluid_dict</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">fluid_inputs</span> <span class="k">if</span> <span class="n">fluid_inputs</span> <span class="k">else</span> <span class="p">{</span><span class="s2">&quot;fluid_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Water&quot;</span><span class="p">,</span> <span class="s2">&quot;concentration_percent&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">fluid_name</span> <span class="o">=</span> <span class="n">fluid_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fluid_name&quot;</span><span class="p">,</span> <span class="s2">&quot;Water&quot;</span><span class="p">)</span>
+        <span class="n">concentration_percent</span> <span class="o">=</span> <span class="n">fluid_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;concentration_percent&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">temperature</span> <span class="o">=</span> <span class="n">fluid_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)</span>
+
+        <span class="n">pipe_parameters</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;pipe&quot;</span><span class="p">]</span>
+        <span class="n">pipe_type</span><span class="p">:</span> <span class="n">PipeType</span> <span class="o">=</span> <span class="n">PipeType</span><span class="p">(</span><span class="n">pipe_parameters</span><span class="p">[</span><span class="s2">&quot;arrangement&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+        <span class="k">del</span> <span class="n">pipe_parameters</span><span class="p">[</span><span class="s2">&quot;arrangement&quot;</span><span class="p">]</span>
+
+        <span class="n">ghe</span><span class="p">:</span> <span class="n">GroundHeatExchanger</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">g_c</span><span class="p">,</span>
+            <span class="n">g_rho_cp</span><span class="p">,</span>
+            <span class="n">s_k</span><span class="p">,</span>
+            <span class="n">s_rho_cp</span><span class="p">,</span>
+            <span class="n">s_temp</span><span class="p">,</span>
+            <span class="n">buried_depth</span><span class="p">,</span>
+            <span class="n">radius</span><span class="p">,</span>
+            <span class="n">pipe_type</span><span class="p">,</span>
+            <span class="n">pipe_parameters</span><span class="p">,</span>
+            <span class="n">fluid_name</span><span class="p">,</span>
+            <span class="n">concentration_percent</span><span class="p">,</span>
+            <span class="n">temperature</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ghe</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">design_and_size_ghe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ghe_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">end_month</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">loads_override</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">ghe_loads</span> <span class="o">=</span> <span class="n">loads_override</span> <span class="k">if</span> <span class="n">loads_override</span> <span class="k">else</span> <span class="n">get_loads</span><span class="p">(</span><span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;loads&quot;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">end_month</span> <span class="o">%</span> <span class="n">MONTHS_IN_YEAR</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;end_month must be a multiple of </span><span class="si">{</span><span class="n">MONTHS_IN_YEAR</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">flow_type_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;flow_type&quot;</span><span class="p">]</span>
+        <span class="n">flow_type</span> <span class="o">=</span> <span class="n">FlowConfigType</span><span class="p">(</span><span class="n">flow_type_str</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+        <span class="n">flow_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;flow_rate&quot;</span><span class="p">]</span>
+
+        <span class="c1"># grab some design conditions</span>
+        <span class="n">design_parameters</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;design&quot;</span><span class="p">]</span>
+        <span class="n">continue_if_design_unmet</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">design_parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;continue_if_design_unmet&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">min_eft</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">design_parameters</span><span class="p">[</span><span class="s2">&quot;min_eft&quot;</span><span class="p">]</span>
+        <span class="n">max_eft</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">design_parameters</span><span class="p">[</span><span class="s2">&quot;max_eft&quot;</span><span class="p">]</span>
+        <span class="n">max_height</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">design_parameters</span><span class="p">[</span><span class="s2">&quot;max_height&quot;</span><span class="p">]</span>
+        <span class="n">min_height</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">design_parameters</span><span class="p">[</span><span class="s2">&quot;min_height&quot;</span><span class="p">]</span>
+        <span class="n">max_boreholes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">design_parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_boreholes&quot;</span><span class="p">)</span>
+        <span class="c1"># check_arg_bounds(min_eft, max_eft, &quot;min_eft&quot;, &quot;max_eft&quot;)</span>
+
+        <span class="c1"># set up the geometry constraints section</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;geometric_constraints&quot;</span><span class="p">]</span>
+        <span class="n">geometry_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">geom</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">geom</span> <span class="k">for</span> <span class="n">geom</span> <span class="ow">in</span> <span class="n">DesignGeomType</span><span class="p">}</span>
+        <span class="n">geom_type</span> <span class="o">=</span> <span class="n">geometry_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+        <span class="n">design</span><span class="p">:</span> <span class="n">DesignBase</span>
+
+        <span class="k">match</span> <span class="n">geom_type</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">DesignGeomType</span><span class="o">.</span><span class="n">RECTANGLE</span><span class="p">:</span>
+                <span class="c1"># max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float</span>
+                <span class="n">rect_geometry</span><span class="p">:</span> <span class="n">GeometricConstraintsRectangle</span> <span class="o">=</span> <span class="n">GeometricConstraintsRectangle</span><span class="p">(</span>
+                    <span class="n">length</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">],</span>
+                    <span class="n">width</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;width&quot;</span><span class="p">],</span>
+                    <span class="n">b_min</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;b_min&quot;</span><span class="p">],</span>
+                    <span class="n">b_max</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;b_max&quot;</span><span class="p">],</span>
+                <span class="p">)</span>
+                <span class="n">design</span> <span class="o">=</span> <span class="n">DesignRectangle</span><span class="p">(</span>
+                    <span class="n">flow_rate</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pygfunction_borehole</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fluid</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pipe</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">grout</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">soil</span><span class="p">,</span>
+                    <span class="mi">1</span><span class="p">,</span>
+                    <span class="n">end_month</span><span class="p">,</span>
+                    <span class="n">max_eft</span><span class="p">,</span>
+                    <span class="n">min_eft</span><span class="p">,</span>
+                    <span class="n">max_height</span><span class="p">,</span>
+                    <span class="n">min_height</span><span class="p">,</span>
+                    <span class="n">continue_if_design_unmet</span><span class="p">,</span>
+                    <span class="n">max_boreholes</span><span class="p">,</span>
+                    <span class="n">rect_geometry</span><span class="p">,</span>
+                    <span class="n">ghe_loads</span><span class="p">,</span>
+                    <span class="n">flow_type</span><span class="o">=</span><span class="n">flow_type</span><span class="p">,</span>
+                    <span class="n">method</span><span class="o">=</span><span class="n">TimestepType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="n">DesignGeomType</span><span class="o">.</span><span class="n">NEARSQUARE</span><span class="p">:</span>
+                <span class="n">near_sq_geometry</span><span class="p">:</span> <span class="n">GeometricConstraintsNearSquare</span> <span class="o">=</span> <span class="n">GeometricConstraintsNearSquare</span><span class="p">(</span>
+                    <span class="n">b</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;b&quot;</span><span class="p">],</span>
+                    <span class="n">length</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">],</span>
+                <span class="p">)</span>
+                <span class="n">design</span> <span class="o">=</span> <span class="n">DesignNearSquare</span><span class="p">(</span>
+                    <span class="n">flow_rate</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pygfunction_borehole</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fluid</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pipe</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">grout</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">soil</span><span class="p">,</span>
+                    <span class="mi">1</span><span class="p">,</span>
+                    <span class="n">end_month</span><span class="p">,</span>
+                    <span class="n">max_eft</span><span class="p">,</span>
+                    <span class="n">min_eft</span><span class="p">,</span>
+                    <span class="n">max_height</span><span class="p">,</span>
+                    <span class="n">min_height</span><span class="p">,</span>
+                    <span class="n">continue_if_design_unmet</span><span class="p">,</span>
+                    <span class="n">max_boreholes</span><span class="p">,</span>
+                    <span class="n">near_sq_geometry</span><span class="p">,</span>
+                    <span class="n">ghe_loads</span><span class="p">,</span>
+                    <span class="n">flow_type</span><span class="o">=</span><span class="n">flow_type</span><span class="p">,</span>
+                    <span class="n">method</span><span class="o">=</span><span class="n">TimestepType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="n">DesignGeomType</span><span class="o">.</span><span class="n">BIRECTANGLE</span><span class="p">:</span>
+                <span class="n">bi_rect_geometry</span><span class="p">:</span> <span class="n">GeometricConstraintsBiRectangle</span> <span class="o">=</span> <span class="n">GeometricConstraintsBiRectangle</span><span class="p">(</span>
+                    <span class="n">length</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">],</span>
+                    <span class="n">width</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;width&quot;</span><span class="p">],</span>
+                    <span class="n">b_min</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;b_min&quot;</span><span class="p">],</span>
+                    <span class="n">b_max_x</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;b_max_x&quot;</span><span class="p">],</span>
+                    <span class="n">b_max_y</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;b_max_y&quot;</span><span class="p">],</span>
+                <span class="p">)</span>
+                <span class="n">design</span> <span class="o">=</span> <span class="n">DesignBiRectangle</span><span class="p">(</span>
+                    <span class="n">flow_rate</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pygfunction_borehole</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fluid</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pipe</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">grout</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">soil</span><span class="p">,</span>
+                    <span class="mi">1</span><span class="p">,</span>
+                    <span class="n">end_month</span><span class="p">,</span>
+                    <span class="n">max_eft</span><span class="p">,</span>
+                    <span class="n">min_eft</span><span class="p">,</span>
+                    <span class="n">max_height</span><span class="p">,</span>
+                    <span class="n">min_height</span><span class="p">,</span>
+                    <span class="n">continue_if_design_unmet</span><span class="p">,</span>
+                    <span class="n">max_boreholes</span><span class="p">,</span>
+                    <span class="n">bi_rect_geometry</span><span class="p">,</span>
+                    <span class="n">ghe_loads</span><span class="p">,</span>
+                    <span class="n">flow_type</span><span class="o">=</span><span class="n">flow_type</span><span class="p">,</span>
+                    <span class="n">method</span><span class="o">=</span><span class="n">TimestepType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="n">DesignGeomType</span><span class="o">.</span><span class="n">BIZONEDRECTANGLE</span><span class="p">:</span>
+                <span class="n">bi_zoned_geometry</span><span class="p">:</span> <span class="n">GeometricConstraintsBiZoned</span> <span class="o">=</span> <span class="n">GeometricConstraintsBiZoned</span><span class="p">(</span>
+                    <span class="n">length</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">],</span>
+                    <span class="n">width</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;width&quot;</span><span class="p">],</span>
+                    <span class="n">b_min</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;b_min&quot;</span><span class="p">],</span>
+                    <span class="n">b_max_x</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;b_max_x&quot;</span><span class="p">],</span>
+                    <span class="n">b_max_y</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;b_max_y&quot;</span><span class="p">],</span>
+                <span class="p">)</span>
+                <span class="n">design</span> <span class="o">=</span> <span class="n">DesignBiZoned</span><span class="p">(</span>
+                    <span class="n">flow_rate</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pygfunction_borehole</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fluid</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pipe</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">grout</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">soil</span><span class="p">,</span>
+                    <span class="mi">1</span><span class="p">,</span>
+                    <span class="n">end_month</span><span class="p">,</span>
+                    <span class="n">max_eft</span><span class="p">,</span>
+                    <span class="n">min_eft</span><span class="p">,</span>
+                    <span class="n">max_height</span><span class="p">,</span>
+                    <span class="n">min_height</span><span class="p">,</span>
+                    <span class="n">continue_if_design_unmet</span><span class="p">,</span>
+                    <span class="n">max_boreholes</span><span class="p">,</span>
+                    <span class="n">bi_zoned_geometry</span><span class="p">,</span>
+                    <span class="n">ghe_loads</span><span class="p">,</span>
+                    <span class="n">flow_type</span><span class="o">=</span><span class="n">flow_type</span><span class="p">,</span>
+                    <span class="n">method</span><span class="o">=</span><span class="n">TimestepType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="n">DesignGeomType</span><span class="o">.</span><span class="n">BIRECTANGLECONSTRAINED</span><span class="p">:</span>
+                <span class="n">no_go_boundaries</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;no_go_boundaries&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">bi_rect_const_geometry</span><span class="p">:</span> <span class="n">GeometricConstraintsBiRectangleConstrained</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">GeometricConstraintsBiRectangleConstrained</span><span class="p">(</span>
+                        <span class="n">b_min</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;b_min&quot;</span><span class="p">],</span>
+                        <span class="n">b_max_x</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;b_max_x&quot;</span><span class="p">],</span>
+                        <span class="n">b_max_y</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;b_max_y&quot;</span><span class="p">],</span>
+                        <span class="n">property_boundary</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;property_boundary&quot;</span><span class="p">],</span>
+                        <span class="n">no_go_boundaries</span><span class="o">=</span><span class="n">no_go_boundaries</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">design</span> <span class="o">=</span> <span class="n">DesignBiRectangleConstrained</span><span class="p">(</span>
+                    <span class="n">flow_rate</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pygfunction_borehole</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fluid</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pipe</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">grout</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">soil</span><span class="p">,</span>
+                    <span class="mi">1</span><span class="p">,</span>
+                    <span class="n">end_month</span><span class="p">,</span>
+                    <span class="n">max_eft</span><span class="p">,</span>
+                    <span class="n">min_eft</span><span class="p">,</span>
+                    <span class="n">max_height</span><span class="p">,</span>
+                    <span class="n">min_height</span><span class="p">,</span>
+                    <span class="n">continue_if_design_unmet</span><span class="p">,</span>
+                    <span class="n">max_boreholes</span><span class="p">,</span>
+                    <span class="n">bi_rect_const_geometry</span><span class="p">,</span>
+                    <span class="n">ghe_loads</span><span class="p">,</span>
+                    <span class="n">flow_type</span><span class="o">=</span><span class="n">flow_type</span><span class="p">,</span>
+                    <span class="n">method</span><span class="o">=</span><span class="n">TimestepType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="n">DesignGeomType</span><span class="o">.</span><span class="n">ROWWISE</span><span class="p">:</span>
+                <span class="c1"># use perimeter calculations if present</span>
+                <span class="n">perimeter_spacing_ratio</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;perimeter_spacing_ratio&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">spacing_step</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;spacing_step&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">no_go_boundaries</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;no_go_boundaries&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">geometry_row</span><span class="p">:</span> <span class="n">GeometricConstraintsRowWise</span> <span class="o">=</span> <span class="n">GeometricConstraintsRowWise</span><span class="p">(</span>
+                    <span class="n">perimeter_spacing_ratio</span><span class="o">=</span><span class="n">perimeter_spacing_ratio</span><span class="p">,</span>
+                    <span class="n">max_spacing</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;max_spacing&quot;</span><span class="p">],</span>
+                    <span class="n">min_spacing</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;min_spacing&quot;</span><span class="p">],</span>
+                    <span class="n">spacing_step</span><span class="o">=</span><span class="n">spacing_step</span><span class="p">,</span>
+                    <span class="n">max_rotation</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;max_rotation&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">DEG_TO_RAD</span><span class="p">,</span>
+                    <span class="n">min_rotation</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;min_rotation&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">DEG_TO_RAD</span><span class="p">,</span>
+                    <span class="n">rotate_step</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;rotate_step&quot;</span><span class="p">],</span>
+                    <span class="n">property_boundary</span><span class="o">=</span><span class="n">geom</span><span class="p">[</span><span class="s2">&quot;property_boundary&quot;</span><span class="p">],</span>
+                    <span class="n">no_go_boundaries</span><span class="o">=</span><span class="n">no_go_boundaries</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">design</span> <span class="o">=</span> <span class="n">DesignRowWise</span><span class="p">(</span>
+                    <span class="n">flow_rate</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pygfunction_borehole</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fluid</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pipe</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">grout</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">soil</span><span class="p">,</span>
+                    <span class="mi">1</span><span class="p">,</span>
+                    <span class="n">end_month</span><span class="p">,</span>
+                    <span class="n">max_eft</span><span class="p">,</span>
+                    <span class="n">min_eft</span><span class="p">,</span>
+                    <span class="n">max_height</span><span class="p">,</span>
+                    <span class="n">min_height</span><span class="p">,</span>
+                    <span class="n">continue_if_design_unmet</span><span class="p">,</span>
+                    <span class="n">max_boreholes</span><span class="p">,</span>
+                    <span class="n">geometry_row</span><span class="p">,</span>
+                    <span class="n">ghe_loads</span><span class="p">,</span>
+                    <span class="n">flow_type</span><span class="o">=</span><span class="n">flow_type</span><span class="p">,</span>
+                    <span class="n">method</span><span class="o">=</span><span class="n">TimestepType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;DesignGeomType &quot;</span><span class="si">{</span><span class="n">geom_type</span><span class="si">}</span><span class="s1">&quot; not supported&#39;</span><span class="p">)</span>
+
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="n">search</span> <span class="o">=</span> <span class="n">design</span><span class="o">.</span><span class="n">find_design</span><span class="p">()</span>  <span class="c1"># TODO: I wonder if it would simplify things to just return the GHE object</span>
+        <span class="n">search_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="n">found_ghe</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">GHE</span><span class="p">,</span> <span class="n">search</span><span class="o">.</span><span class="n">ghe</span><span class="p">)</span>
+        <span class="n">found_ghe</span><span class="o">.</span><span class="n">compute_g_functions</span><span class="p">(</span><span class="n">min_height</span><span class="p">,</span> <span class="n">max_height</span><span class="p">)</span>
+        <span class="n">found_ghe</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">TimestepType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">,</span> <span class="n">max_height</span><span class="p">,</span> <span class="n">min_height</span><span class="p">,</span> <span class="n">max_eft</span><span class="p">,</span> <span class="n">min_eft</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">search</span><span class="p">,</span> <span class="n">search_time</span><span class="p">,</span> <span class="n">found_ghe</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_g_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ghe_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">boundary_condition</span><span class="o">=</span><span class="s2">&quot;MIFT&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">]:</span>
+        <span class="c1"># TODO: Create a SingleUTube class or something in order to get the STS stitched up</span>
+        <span class="n">pre_designed</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;pre_designed&quot;</span><span class="p">]</span>
+        <span class="n">borehole_height</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">pre_designed</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">pre_designed</span><span class="p">[</span><span class="s2">&quot;arrangement&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;MANUAL&quot;</span><span class="p">:</span>
+            <span class="n">x_positions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">pre_designed</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span>
+            <span class="n">y_positions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">pre_designed</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_positions</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_positions</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Borehole location coordinate mismatch, make sure length of x and y are equal&quot;</span><span class="p">)</span>
+            <span class="n">locations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x_positions</span><span class="p">,</span> <span class="n">y_positions</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">pre_designed</span><span class="p">[</span><span class="s2">&quot;arrangement&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;RECTANGLE&quot;</span><span class="p">:</span>
+            <span class="n">num_bh_x</span> <span class="o">=</span> <span class="n">pre_designed</span><span class="p">[</span><span class="s2">&quot;boreholes_in_x_dimension&quot;</span><span class="p">]</span>
+            <span class="n">num_bh_y</span> <span class="o">=</span> <span class="n">pre_designed</span><span class="p">[</span><span class="s2">&quot;boreholes_in_y_dimension&quot;</span><span class="p">]</span>
+            <span class="n">spacing_x</span> <span class="o">=</span> <span class="n">pre_designed</span><span class="p">[</span><span class="s2">&quot;spacing_in_x_dimension&quot;</span><span class="p">]</span>
+            <span class="n">spacing_y</span> <span class="o">=</span> <span class="n">pre_designed</span><span class="p">[</span><span class="s2">&quot;spacing_in_y_dimension&quot;</span><span class="p">]</span>
+            <span class="n">locations</span> <span class="o">=</span> <span class="n">rectangle</span><span class="p">(</span><span class="n">num_bh_x</span><span class="p">,</span> <span class="n">num_bh_y</span><span class="p">,</span> <span class="n">spacing_x</span><span class="p">,</span> <span class="n">spacing_y</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Invalid arrangement type for pre_designed borehole field&quot;</span><span class="p">)</span>
+
+        <span class="n">nbh</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">locations</span><span class="p">)</span>
+        <span class="n">flow_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;flow_rate&quot;</span><span class="p">]</span>
+        <span class="n">flow_type_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;flow_type&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">flow_type_str</span> <span class="o">==</span> <span class="n">FlowConfigType</span><span class="o">.</span><span class="n">BOREHOLE</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="n">m_flow_borehole</span> <span class="o">=</span> <span class="n">flow_rate</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fluid</span><span class="o">.</span><span class="n">rho</span> <span class="o">/</span> <span class="mi">1000</span>  <span class="c1"># conv lps to m3s to kgs</span>
+        <span class="k">elif</span> <span class="n">flow_type_str</span> <span class="o">==</span> <span class="n">FlowConfigType</span><span class="o">.</span><span class="n">SYSTEM</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="n">m_flow_ghe</span> <span class="o">=</span> <span class="n">flow_rate</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fluid</span><span class="o">.</span><span class="n">rho</span> <span class="o">/</span> <span class="mi">1000</span>  <span class="c1"># conv lps to m3s to kgs</span>
+            <span class="n">m_flow_borehole</span> <span class="o">=</span> <span class="n">m_flow_ghe</span> <span class="o">/</span> <span class="n">nbh</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;FlowConfigType </span><span class="si">{</span><span class="n">flow_type_str</span><span class="si">}</span><span class="s2"> not implemented.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pygfunction_borehole</span><span class="o">.</span><span class="n">H</span> <span class="o">=</span> <span class="n">borehole_height</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">borehole_height</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">9</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">soil</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="n">log_time_lts</span> <span class="o">=</span> <span class="n">eskilson_log_times</span><span class="p">()</span>
+        <span class="n">time_values</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">log_time_lts</span><span class="p">)</span> <span class="o">*</span> <span class="n">ts</span>
+
+        <span class="n">g_lts</span> <span class="o">=</span> <span class="n">calculate_g_function</span><span class="p">(</span>
+            <span class="n">m_flow_borehole</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipe</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
+            <span class="n">time_values</span><span class="p">,</span>
+            <span class="n">locations</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pygfunction_borehole</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fluid</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pipe</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grout</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">soil</span><span class="p">,</span>
+            <span class="n">boundary_condition</span><span class="o">=</span><span class="n">boundary_condition</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">single_u_bh</span> <span class="o">=</span> <span class="n">SingleUTube</span><span class="p">(</span>
+            <span class="n">m_flow_borehole</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fluid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pygfunction_borehole</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipe</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">soil</span>
+        <span class="p">)</span>
+
+        <span class="n">log_time_sts</span><span class="p">,</span> <span class="n">g_sts</span> <span class="o">=</span> <span class="n">single_u_bh</span><span class="o">.</span><span class="n">calc_sts_g_functions</span><span class="p">()</span>
+        <span class="n">g_bhw</span> <span class="o">=</span> <span class="n">single_u_bh</span><span class="o">.</span><span class="n">g_bhw</span>
+
+        <span class="n">g_interp</span> <span class="o">=</span> <span class="n">combine_sts_lts</span><span class="p">(</span>
+            <span class="n">log_time_lts</span><span class="p">,</span>
+            <span class="n">g_lts</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="n">log_time_sts</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="n">g_sts</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+        <span class="n">g_bhw_interp</span> <span class="o">=</span> <span class="n">combine_sts_lts</span><span class="p">(</span>
+            <span class="n">log_time_lts</span><span class="p">,</span>
+            <span class="n">g_lts</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="n">log_time_sts</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="n">g_bhw</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+        <span class="n">log_time_to_write</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">log_time_sts</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">+</span> <span class="n">log_time_lts</span><span class="p">)</span>
+        <span class="n">g_to_write</span> <span class="o">=</span> <span class="n">g_interp</span><span class="p">(</span><span class="n">log_time_to_write</span><span class="p">)</span>
+        <span class="n">g_bhw_to_write</span> <span class="o">=</span> <span class="n">g_bhw_interp</span><span class="p">(</span><span class="n">log_time_to_write</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">log_time_to_write</span><span class="p">,</span> <span class="n">g_to_write</span><span class="p">,</span> <span class="n">g_bhw_to_write</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="ghedesigner.ghe.manager.GroundHeatExchanger.init_from_dictionary" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">init_from_dictionary</span><span class="p">(</span><span class="n">ghe_dict</span><span class="p">,</span> <span class="n">fluid_inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize a GroundHeatExchanger object from input dictionaries, performing validation and ultimately calling
+the main object constructor.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>ghe_dict</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dictionary of ground heat exchanger parameters, see the input schema specification for required inputs in the ground_heat_exchanger schema field.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fluid_inputs</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional dictionary of fluid input parameters, see the input schema fluid spec for details.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="ghedesigner.ghe.manager.GroundHeatExchanger" href="#ghedesigner.ghe.manager.GroundHeatExchanger">GroundHeatExchanger</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>GroundHeatExchanger object. # TODO: Add validation back in to the input fields</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>ghedesigner/ghe/manager.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_from_dictionary</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">ghe_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">fluid_inputs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GroundHeatExchanger&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initialize a GroundHeatExchanger object from input dictionaries, performing validation and ultimately calling</span>
+<span class="sd">    the main object constructor.</span>
+<span class="sd">    :param ghe_dict: Dictionary of ground heat exchanger parameters, see the input schema specification for required</span>
+<span class="sd">                     inputs in the ground_heat_exchanger schema field.</span>
+<span class="sd">    :param fluid_inputs: Optional dictionary of fluid input parameters, see the input schema fluid spec for details.</span>
+<span class="sd">    :return: GroundHeatExchanger object.</span>
+<span class="sd">    # TODO: Add validation back in to the input fields</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">grout_parameters</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;grout&quot;</span><span class="p">]</span>
+    <span class="n">g_c</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">grout_parameters</span><span class="p">[</span><span class="s2">&quot;conductivity&quot;</span><span class="p">]</span>
+    <span class="n">g_rho_cp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">grout_parameters</span><span class="p">[</span><span class="s2">&quot;rho_cp&quot;</span><span class="p">]</span>
+
+    <span class="n">soil_parameters</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;soil&quot;</span><span class="p">]</span>
+    <span class="n">s_k</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">soil_parameters</span><span class="p">[</span><span class="s2">&quot;conductivity&quot;</span><span class="p">]</span>
+    <span class="n">s_rho_cp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">soil_parameters</span><span class="p">[</span><span class="s2">&quot;rho_cp&quot;</span><span class="p">]</span>
+    <span class="n">s_temp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">soil_parameters</span><span class="p">[</span><span class="s2">&quot;undisturbed_temp&quot;</span><span class="p">]</span>
+
+    <span class="n">borehole_parameters</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;borehole&quot;</span><span class="p">]</span>
+    <span class="n">buried_depth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">borehole_parameters</span><span class="p">[</span><span class="s2">&quot;buried_depth&quot;</span><span class="p">]</span>
+    <span class="n">diameter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">borehole_parameters</span><span class="p">[</span><span class="s2">&quot;diameter&quot;</span><span class="p">]</span>
+    <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">diameter</span> <span class="o">/</span> <span class="mf">2.0</span>
+
+    <span class="n">fluid_dict</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">fluid_inputs</span> <span class="k">if</span> <span class="n">fluid_inputs</span> <span class="k">else</span> <span class="p">{</span><span class="s2">&quot;fluid_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Water&quot;</span><span class="p">,</span> <span class="s2">&quot;concentration_percent&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">fluid_name</span> <span class="o">=</span> <span class="n">fluid_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fluid_name&quot;</span><span class="p">,</span> <span class="s2">&quot;Water&quot;</span><span class="p">)</span>
+    <span class="n">concentration_percent</span> <span class="o">=</span> <span class="n">fluid_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;concentration_percent&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">temperature</span> <span class="o">=</span> <span class="n">fluid_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)</span>
+
+    <span class="n">pipe_parameters</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">ghe_dict</span><span class="p">[</span><span class="s2">&quot;pipe&quot;</span><span class="p">]</span>
+    <span class="n">pipe_type</span><span class="p">:</span> <span class="n">PipeType</span> <span class="o">=</span> <span class="n">PipeType</span><span class="p">(</span><span class="n">pipe_parameters</span><span class="p">[</span><span class="s2">&quot;arrangement&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+    <span class="k">del</span> <span class="n">pipe_parameters</span><span class="p">[</span><span class="s2">&quot;arrangement&quot;</span><span class="p">]</span>
+
+    <span class="n">ghe</span><span class="p">:</span> <span class="n">GroundHeatExchanger</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
+        <span class="n">g_c</span><span class="p">,</span>
+        <span class="n">g_rho_cp</span><span class="p">,</span>
+        <span class="n">s_k</span><span class="p">,</span>
+        <span class="n">s_rho_cp</span><span class="p">,</span>
+        <span class="n">s_temp</span><span class="p">,</span>
+        <span class="n">buried_depth</span><span class="p">,</span>
+        <span class="n">radius</span><span class="p">,</span>
+        <span class="n">pipe_type</span><span class="p">,</span>
+        <span class="n">pipe_parameters</span><span class="p">,</span>
+        <span class="n">fluid_name</span><span class="p">,</span>
+        <span class="n">concentration_percent</span><span class="p">,</span>
+        <span class="n">temperature</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ghe</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

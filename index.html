@@ -1,0 +1,969 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+        <link rel="next" href="cli/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>GHEDesigner</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ghedesigner-a-flexible-and-automatic-ground-heat-exchanger-design-tool" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="GHEDesigner" class="md-header__button md-logo" aria-label="GHEDesigner" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            GHEDesigner
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Home
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/BETSRG/GHEDesigner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="GHEDesigner" class="md-nav__button md-logo" aria-label="GHEDesigner" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    GHEDesigner
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/BETSRG/GHEDesigner" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#background" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#borehole-field-design-algorithms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Borehole Field Design Algorithms
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limitations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#updating-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Updating documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acknowledgements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acknowledgements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using the CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="manager/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Manager
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Schema
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Schema
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="schema/ghedesigner.schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ghedesigner.schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#background" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#borehole-field-design-algorithms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Borehole Field Design Algorithms
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limitations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#updating-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Updating documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acknowledgements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acknowledgements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="ghedesigner-a-flexible-and-automatic-ground-heat-exchanger-design-tool">GHEDesigner - A Flexible and Automatic Ground Heat Exchanger Design Tool</h1>
+<p><img alt="PyPI" src="https://img.shields.io/pypi/v/ghedesigner" />
+<img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/ghedesigner?label=PyPI%20Downloads" />
+<img alt="Python Versions" src="https://img.shields.io/pypi/pyversions/ghedesigner" />
+<a href="https://github.com/BETSRG/GHEDesigner/actions/workflows/tests.yml"><img alt="Tests" src="https://github.com/BETSRG/GHEDesigner/actions/workflows/tests.yml/badge.svg" /></a></p>
+<h2 id="introduction">Introduction</h2>
+<p>GHEDesigner is a Python package for designing ground heat exchangers (GHE) used with ground source heat pump (GSHP)
+systems. Compared to currently available tools such
+as <a href="https://betsrg.org/ground-loop-heat-exchanger-design-software">GLHEPRO</a>, GHEDesigner:</p>
+<ul>
+<li>is flexible. It can synthesize borehole fields that are custom fit to the user's property description,</li>
+<li>implements the RowWise algorithm (<a href="https://doi.org/10.22488/okstate.22.000016">Spitler, et al. 2022a</a>) for
+  automatically placing and sizing boreholes in any land area with complex geometry,</li>
+<li>is highly automated. It can select library configurations or custom configurations and determine the final number and
+  depth requirement of boreholes,</li>
+<li>can make automated conversion of hourly loads to an improved hybrid time step
+  representation (<a href="https://doi.org/10.1016/j.geothermics.2011.01.001">Cullin and Spitler 2011</a>), and</li>
+<li>is under continuing development at Oklahoma State University (OSU), Oak Ridge National Laboratory (ORNL), and the
+  National Laboratory of the Rockies (NLR). (GLHEPRO remains under development at OSU.)</li>
+</ul>
+<h2 id="background">Background</h2>
+<p>GHEDesigner was originally funded through US Department of Energy contract DE‐AC05‐00OR22725 via a subcontract from Oak
+Ridge National Laboratory. The project led by Dr. Xiaobing Liu developed an
+online <a href="https://gshp.ornl.gov/login">screening tool</a> (<a href="http://dx.doi.org/10.22488/okstate.22.000042">Liu, et al. 2022</a>)
+for techno-economic analysis and design of ground-source heat pump systems. The Oklahoma State University team led by
+Prof. Jeffrey D. Spitler was contracted to investigate fast methods for computing g-functions. An outgrowth of this
+research was a tool for automatically selecting and sizing borehole configurations. This tool, originally called GHEDT,
+is described in an MS thesis (<a href="https://hdl.handle.net/11244/335489">Cook 2021</a>). Since that time, the tool has been
+renamed GHEDesigner, and work has continued at Oklahoma State University, Oak Ridge National Laboratory, and the
+National Laboratory of the Rockies.</p>
+<p>Updates since <a href="https://hdl.handle.net/11244/335489">Cook (2021)</a> include:</p>
+<ul>
+<li>Development and addition of RowWise algorithm to efficiently place boreholes in the available land area.</li>
+<li>Extensive refactoring for creating a user-focused, stable API.</li>
+<li>Simplification of library dependencies.</li>
+<li>Development of automated testing and deployment procedures.</li>
+</ul>
+<h2 id="borehole-field-design-algorithms">Borehole Field Design Algorithms</h2>
+<ul>
+<li>Long time-step g-functions are calculated using pygfunction (Cimmino 2018) using the equivalent borehole
+  method (<a href="https://doi.org/10.1080/19401493.2021.1968953">Prieto and Cimmino 2021</a>). It's also possible to read
+  g-functions from a library (<a href="https://doi.org/10.15121/1811518">Spitler, et al. 2021</a>).</li>
+<li>Borehole thermal resistance is computed for single and double U-tube configurations via the multipole
+  method (<a href="https://doi.org/10.1080/10789669.2011.609927">Claesson and Hellström 2011</a>). For coaxial ground heat
+  exchangers, it is computed from fundamental heat transfer relationships.</li>
+<li>Short time-step g-functions are computed using the
+  <a href="https://hvac.okstate.edu/sites/default/files/pubs/papers/2006/07-Xu_Spitler_06.pdf">Xu and Spitler (2006)</a> method.</li>
+<li>GHEDesigner contains a novel design methodology for automated selection of borehole fields. The advanced methodology
+  performs optimization based on a target drilling depth. An integer bisection routine is utilized to quickly search
+  over a uni-modal domain of boreholes. GHEDesigner can consider the available land area for drilling and no-drilling
+  zones defined as polygons.</li>
+<li>GHEDesigner can synthesize a range of regularly shaped borehole configurations, including previously available
+  shapes (rectangles, open rectangles, L-shape, U-shape, line) and shapes not previously available (C-shapes and zoned
+  rectangles). More information about these shapes can be found in the documentation for a publicly available g-function
+  library. (<a href="https://doi.org/10.15121/1811518">Spitler, et al. 2021</a>, <a href="https://doi.org/10.22488/okstate.22.000040">2022b</a>)</li>
+<li>GHEDesigner can synthesize on the fly irregularly shaped borehole configurations using the RowWise
+  algorithm (<a href="https://doi.org/10.22488/okstate.22.000016">Spitler, et al. 2022a</a>) or the bi-uniform polygonal constrained
+  rectangular search (BUPCRS) (<a href="https://hdl.handle.net/11244/335489">Cook 2021</a>). Both configurations are adapted to the
+  user-specified property boundaries and no-drill zones, if any. <a href="https://doi.org/10.22488/okstate.22.000016">Spitler, et al. 2022a</a>
+  gives an example where the RowWise algorithm saves 12-18% compared to the BUPCRS algorithm. The RowWise algorithm takes
+  longer to run, though.</li>
+<li>A set of search routines can be used to size different types of configurations:</li>
+<li>The unconstrained square/near-square search will search a domain of square (<em>n</em> x <em>n</em>) and near-square
+    (<em>n-1</em> x <em>n</em>) boreholes fields, with uniform spacing between the boreholes.</li>
+<li>Uniform and bi-uniform constrained rectangular searches will search domains of rectangular configurations that
+    have either uniform spacing or "bi-uniform" spacing – that is, uniform in the x direction and uniform in the y
+    direction, but the two spacings may be different.</li>
+<li>The bi-uniform constrained zoned rectangular search allows for rectangular configurations with different interior
+    and perimeter spacings.</li>
+<li>The bi-uniform polygonal constrained rectangular search (BUPCRS) can search configurations with an outer perimeter
+    and no-go zones described as irregular polygons. This is still referred to as a rectangular search because it is
+    still based on a rectangular grid, from which boreholes that are outside the perimeter or inside a no-go zone are
+    removed.</li>
+<li>The RowWise method generates and searches custom borehole fields that make full use of the available property. The
+    RowWise algorithms are described by <a href="https://shareok.org/handle/11244/336846">Spitler et al. (2022a)</a>.</li>
+</ul>
+<h2 id="limitations">Limitations</h2>
+<p>GHEDesigner does not have every feature that is found in a tool like GLHEPRO. Features that are currently missing
+include:</p>
+<ul>
+<li>Heat pumps are not modeled. Users input heat rejection/extraction rates.</li>
+<li>An hourly simulation is available, but it doesn't make use of load aggregation, so is very slow.</li>
+<li>GHEDesigner only covers vertical borehole ground heat exchangers. Horizontal ground heat exchangers are not treated.</li>
+<li>GHEDesigner does not calculate the head loss in the ground heat exchanger or warn the user that head loss may be
+  excessive.</li>
+<li>GHEDesigner does not have a graphical user interface.</li>
+<li>GHEDesigner is a Python package and requires some Python knowledge to use.</li>
+</ul>
+<h2 id="requirements">Requirements</h2>
+<p>GHEDesigner is supported for Python versions &gt;= 3.10, and is tested with Python 3.10-3.13. GHEDesigner is dependent on
+the following packages:</p>
+<ul>
+<li><a href="https://click.palletsprojects.com/en/8.1.x/">click</a></li>
+<li><a href="https://pypi.org/project/jsonschema/">jsonschema</a></li>
+<li><a href="https://numpy.org/doc/stable/">numpy</a></li>
+<li><a href="https://github.com/MassimoCimmino/pygfunction">pygfunction</a></li>
+<li><a href="https://docs.scipy.org/doc/scipy/">scipy</a></li>
+</ul>
+<h2 id="quick-start">Quick Start</h2>
+<p><strong>Users</strong> - Install <code>GHEDesigner</code> via the package installer for Python (<a href="https://pip.pypa.io/en/latest/">pip</a>):</p>
+<pre><code class="language-bash">pip install ghedesigner
+</code></pre>
+<p>Run a demo file using GHEDesigner:</p>
+<pre><code class="language-bash">ghedesigner demos/find_design_rectangle_single_u_tube.json ./tmp
+</code></pre>
+<p><strong>Developers</strong> - Clone the repository via git:</p>
+<pre><code>git clone git@github.com:BETSRG/GHEDesigner.git
+</code></pre>
+<ul>
+<li><a href="https://docs.astral.sh/uv/">uv</a> is used to manage the project &amp; dependencies. After cloning (and with uv installed at
+  the system level), run <code>uv sync</code>.</li>
+<li>Developers can then call <code>pytest</code> (which may take 10-30 minutes to run the full test suite) to confirm all dev
+  dependencies have been installed and everything is working as expected.</li>
+<li>Activate <a href="https://pre-commit.com/">pre-commit</a> (only required once, after cloning the repo) with:
+  <code>pre-commit install</code>. On your first commit it will install the pre-commit environments, then run pre-commit hooks at
+  every commit.</li>
+<li>Before pushing to GitHub, run pre-commit on all files with <code>pre-commit run -a</code> to highlight any linting/formatting
+  errors that will cause CI to fail.</li>
+<li>PyCharm users may need to add Ruff as a <a href="https://docs.astral.sh/ruff/editors/setup/#via-third-party-plugin">3rd-party plugin</a> or install it as an
+  <a href="https://docs.astral.sh/ruff/editors/setup/#pycharm">external tool</a> to their IDE to ensure linting &amp; formatting is consistent.</li>
+</ul>
+<h3 id="updating-documentation">Updating documentation</h3>
+<p>During development, we can <a href="https://squidfunk.github.io/mkdocs-material/creating-your-site/#previewing-as-you-write">serve docs locally</a> and view updates with every save.</p>
+<ol>
+<li>Start a documentation update branch: <code>git checkout -b &lt;branch_name&gt;</code></li>
+<li><code>mkdocs serve</code></li>
+<li>Point browser to <a href="http://localhost:8000/">http://localhost:8000/</a></li>
+</ol>
+<h2 id="questions">Questions</h2>
+<p>If there are any questions, comments or concerns please <a href="https://github.com/BETSRG/GHEDesigner/issues/new">create</a> an issue, comment on an <a href="https://github.com/BETSRG/GHEDesigner/issues">open</a> issue,
+comment on a <a href="https://github.com/BETSRG/GHEDesigner/issues?q=is%3Aissue+is%3Aclosed">closed</a> issue.</p>
+<h2 id="acknowledgements">Acknowledgements</h2>
+<p>The initial release of this work was financially supported by the U.S. Department of Energy through research
+subcontracts from Oak Ridge National Laboratory and the National Laboratory of the Rockies, and by OSU through the
+Center for Integrated Building Systems, the OG&amp;E Energy Technology Chair, and Oklahoma State University via return of
+indirect costs to Dr. Jeffrey D. Spitler.</p>
+<h2 id="references">References</h2>
+<ul>
+<li>
+<p>Cimmino, M. 2018. pygfunction: an open-source toolbox for the evaluation of thermal. eSim 2018, Montreál, IBPSA Canada.
+  492-501. http://www.ibpsa.org/proceedings/eSimPapers/2018/2-3-A-4.pdf</p>
+</li>
+<li>
+<p>Claesson, J. and G. Hellström. 2011. Multipole method to calculate borehole thermal resistances in a borehole heat
+  exchanger. HVAC&amp;R Research 17(6): 895-911. https://doi.org/10.1080/10789669.2011.609927</p>
+</li>
+<li>
+<p>Cook, J.C. (2021). Development of Computer Programs for Fast Computation of g-Functions and Automated Ground Heat
+  Exchanger Design. Master's Thesis, Oklahoma State University, Stillwater, OK. https://hdl.handle.net/11244/335489</p>
+</li>
+<li>
+<p>Cullin, J.R. and J.D. Spitler. 2011. A Computationally Efficient Hybrid Time Step Methodology for Simulation of Ground
+  Heat Exchangers. Geothermics. 40(2): 144-156. https://doi.org/10.1016/j.geothermics.2011.01.001</p>
+</li>
+<li>
+<p>Liu X., J. Degraw, M. Malhotra, W. Forman, M. Adams, G. Accawi, B. Brass, N. Kunwar, J. New, J. Guo. 2022. Development
+  of a Web-based Screening Tool for Ground Source Heat Pump Applications. 2022. IGSHPA Research Conference Proceedings.
+  Pp. 280-290. December 6-8. Las Vegas. http://dx.doi.org/10.22488/okstate.22.000042</p>
+</li>
+<li>
+<p>Prieto, C. and M. Cimmino. 2021. Thermal interactions in large irregular fields of geothermal boreholes: the method of
+  equivalent boreholes. Journal of Building Performance Simulation 14(4):
+  446-460. https://doi.org/10.1080/19401493.2021.1968953</p>
+</li>
+<li>
+<p>Spitler, J. D., J. Cook, T. West and X. Liu 2021. G-Function Library for Modeling Vertical Bore Ground Heat Exchanger,
+  Oak Ridge National Laboratory. https://doi.org/10.15121/1811518</p>
+</li>
+<li>
+<p>Spitler, J.D., T.N. West and X. Liu. 2022a. Ground Heat Exchanger Design Tool with RowWise Placement of Boreholes.
+  IGSHPA Research Conference Proceedings. Pp. 53-60. Las Vegas. Dec. 6-8. https://doi.org/10.22488/okstate.22.000016</p>
+</li>
+<li>
+<p>Spitler, J.D., T.N. West, X. Liu and I. Borshon. 2022b. An open library of g-functions for 34,321 configurations. IGSHPA
+  Research Conference Proceedings. Pp. 264-271. Las Vegas. Dec. 6-8 https://doi.org/10.22488/okstate.22.000040</p>
+</li>
+<li>
+<p>Xu, X. and J. D. Spitler. 2006. Modelling of Vertical Ground Loop Heat Exchangers with Variable Convective Resistance
+  and Thermal Mass of the Fluid. 10th International Conference on Thermal Energy Storage - Ecostock 2006, Pomona,
+  NJ. https://hvac.okstate.edu/sites/default/files/pubs/papers/2006/07-Xu_Spitler_06.pdf</p>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": [], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
