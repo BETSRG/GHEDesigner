@@ -38,11 +38,9 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         borehole_radius: float,
         pipe_arrangement_type: PipeType,
         pipe_parameters: dict,
-        fluid_name: str = "Water",
-        fluid_concentration_percent: float = 0.0,
-        fluid_temperature: float = 20.0,
+        fluid_parameters: dict,
     ) -> None:
-        self.fluid = Fluid(fluid_name, fluid_temperature, fluid_concentration_percent)
+        self.fluid = Fluid.init_from_dictionary(fluid_parameters)
         self.grout = Grout(grout_conductivity, grout_rho_cp)
         self.soil = Soil(soil_conductivity, soil_rho_cp, soil_undisturbed_temperature)
         if pipe_arrangement_type == PipeType.SINGLEUTUBE:
@@ -110,9 +108,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         fluid_dict = (
             fluid_inputs if fluid_inputs else {"fluid_name": "Water", "concentration_percent": 0.0, "temperature": 20.0}
         )
-        fluid_name = fluid_dict.get("fluid_name", "Water")
-        concentration_percent = fluid_dict.get("concentration_percent", 0.0)
-        temperature = fluid_dict.get("temperature", 20.0)
 
         pipe_parameters: dict = ghe_dict["pipe"]
         pipe_type: PipeType = PipeType(pipe_parameters["arrangement"].upper())
@@ -128,9 +123,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             radius,
             pipe_type,
             pipe_parameters,
-            fluid_name,
-            concentration_percent,
-            temperature,
+            fluid_dict,
         )
         return ghe
 

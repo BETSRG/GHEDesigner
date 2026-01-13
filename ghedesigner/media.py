@@ -7,12 +7,49 @@ from scp.water import Water
 from ghedesigner.enums import FluidType
 
 
+class CustomFluid:
+    def __init__(self, fluid_name: str, density: float, specific_heat: float, conductivity: float, viscosity: float):
+        self.name = fluid_name
+        self.density = density
+        self.specific_heat = specific_heat
+        self.conductivity = conductivity
+        self.viscosity = viscosity
+
+    def rho(self, _unused):
+        return self.density
+
+    def cp(self, _unused):
+        return self.specific_heat
+
+    def k(self, _unused):
+        return self.conductivity
+
+    def mu(self, _unused):
+        return self.viscosity
+
+
 class Fluid:
-    def __init__(self, fluid_name: str, temperature: float = 20, percent: float = 0) -> None:
+    def __init__(
+        self,
+        fluid_name: str,
+        temperature: float = 20,
+        percent: float = 0.0,
+        density: float = 0.0,
+        specific_heat: float = 0.0,
+        conductivity: float = 0.0,
+        viscosity: float = 0.0,
+    ) -> None:
         self.name = fluid_name
         self.fluid_type = self.get_fluid_type(fluid_name)
         self.temperature = temperature
         self.concentration_percent = percent
+
+        # supported props
+        self.cp: float = 0.0
+        self.k: float = 0.0
+        self.mu: float = 0.0
+        self.rho: float = 0.0
+        self.rho_cp: float = 0.0
 
         concentration_frac = self.concentration_percent / 100
         if self.fluid_type == FluidType.ETHYLALCOHOL:
@@ -25,14 +62,27 @@ class Fluid:
             self._fluid = PropyleneGlycol(concentration_frac)
         elif self.fluid_type == FluidType.WATER:
             self._fluid = Water()
+        elif self.fluid_type == FluidType.CUSTOMFLUID:
+            self._fluid = CustomFluid(fluid_name, density, specific_heat, conductivity, viscosity)
+        else:
+            raise NotImplementedError(f"{self.fluid_type.name} not implemented via this calling path.")
 
-        # supported props
-        self.cp: float = 0.0
-        self.k: float = 0.0
-        self.mu: float = 0.0
-        self.rho: float = 0.0
-        self.rho_cp: float = 0.0
         self.update_props_with_new_temp(temperature)
+
+    @staticmethod
+    def init_from_dictionary(fluid_inputs: dict) -> "Fluid":
+        required_keys_opt_1 = ["fluid_name", "concentration_percent", "temperature"]
+        if all(key in fluid_inputs for key in required_keys_opt_1):
+            fluid_name = fluid_inputs["fluid_name"]
+            percent = fluid_inputs["concentration_percent"]
+            temperature = fluid_inputs["temperature"]
+            return Fluid(fluid_name, percent, temperature)
+
+        required_keys_opt_2 = ["fluid_name", "density", "specific_heat", "conductivity", "viscosity"]
+        if all(key in fluid_inputs for key in required_keys_opt_2):
+            return Fluid(**fluid_inputs)
+
+        raise NotImplementedError("This combination of fluid inputs is not implemented.")
 
     @staticmethod
     def get_fluid_type(fluid_name: str) -> FluidType:
@@ -47,6 +97,8 @@ class Fluid:
             return FluidType.PROPYLENEGLYCOL
         if fluid_name_upper == "WATER":
             return FluidType.WATER
+        if fluid_name_upper == "CUSTOMFLUID":
+            return FluidType.CUSTOMFLUID
 
         raise ValueError(f'Unsupported fluid type "{fluid_name}"')
 

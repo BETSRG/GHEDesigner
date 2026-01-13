@@ -32,9 +32,11 @@ class TestPreDesignedGHE(TestCase):
             borehole_radius=bh_radius,
             pipe_arrangement_type=PipeType.SINGLEUTUBE,
             pipe_parameters=pipe_params,
-            fluid_name="water",
-            fluid_concentration_percent=0,
-            fluid_temperature=20,
+            fluid_parameters={
+                "fluid_name": "water",
+                "concentration_percent": 0,
+                "temperature": 20,
+            }
         )
 
         # testing using UBWT for comparisons against the GDR g-function library
