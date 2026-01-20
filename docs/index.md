@@ -19,7 +19,7 @@ as [GLHEPRO](https://betsrg.org/ground-loop-heat-exchanger-design-software), GHE
 - can make automated conversion of hourly loads to an improved hybrid time step
   representation ([Cullin and Spitler 2011](https://doi.org/10.1016/j.geothermics.2011.01.001)), and
 - is under continuing development at Oklahoma State University (OSU), Oak Ridge National Laboratory (ORNL), and the
-  National Renewable Energy Laboratory (NREL). (GLHEPRO remains under development at OSU.)
+  National Laboratory of the Rockies (NLR). (GLHEPRO remains under development at OSU.)
 
 ## Background
 
@@ -31,7 +31,7 @@ Prof. Jeffrey D. Spitler was contracted to investigate fast methods for computin
 research was a tool for automatically selecting and sizing borehole configurations. This tool, originally called GHEDT,
 is described in an MS thesis ([Cook 2021](https://hdl.handle.net/11244/335489)). Since that time, the tool has been
 renamed GHEDesigner, and work has continued at Oklahoma State University, Oak Ridge National Laboratory, and the
-National Renewable Energy Laboratory.
+National Laboratory of the Rockies.
 
 Updates since [Cook (2021)](https://hdl.handle.net/11244/335489) include:
 
@@ -123,8 +123,8 @@ ghedesigner demos/find_design_rectangle_single_u_tube.json ./tmp
 git clone git@github.com:BETSRG/GHEDesigner.git
 ```
 
-- [Poetry](https://python-poetry.org/) is used to manage the project & dependencies. After cloning, run
-  `pip install poetry` and `poetry install`. If the dependencies change, run `poetry lock` to update the lockfile.
+- [uv](https://docs.astral.sh/uv/) is used to manage the project & dependencies. After cloning (and with uv installed at
+  the system level), run `uv sync`.
 - Developers can then call `pytest` (which may take 10-30 minutes to run the full test suite) to confirm all dev
   dependencies have been installed and everything is working as expected.
 - Activate [pre-commit](https://pre-commit.com/) (only required once, after cloning the repo) with:
@@ -151,7 +151,7 @@ comment on a [closed][closed] issue.
 ## Acknowledgements
 
 The initial release of this work was financially supported by the U.S. Department of Energy through research
-subcontracts from Oak Ridge National Laboratory and the National Renewable Energy Laboratory, and by OSU through the
+subcontracts from Oak Ridge National Laboratory and the National Laboratory of the Rockies, and by OSU through the
 Center for Integrated Building Systems, the OG&E Energy Technology Chair, and Oklahoma State University via return of
 indirect costs to Dr. Jeffrey D. Spitler.
 

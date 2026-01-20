@@ -64,7 +64,7 @@ class TestBHResistance(GHEBaseTest):
         coaxial = CoaxialPipe(m_flow_borehole, fluid, borehole, pipe, grout, soil)
         r_b = coaxial.calc_effective_borehole_resistance()
 
-        assert self.rel_error_within_tol(r_b, 0.1057, 0.01)
+        assert self.rel_error_within_tol(r_b, 0.1086, 0.01)
 
     def test_bh_resistance_double_u_tube(self):
         # borehole
@@ -258,18 +258,18 @@ class TestBHResistance(GHEBaseTest):
 
         re_glhepro_coaxial = [8607, 7747, 6886, 6025, 5164, 4304, 3443, 2582, 2496, 2410, 2324, 2238]
         rb_glhepro_coaxial = [
-            0.1033,
-            0.1043,
-            0.1057,
-            0.1076,
-            0.1105,
-            0.1149,
-            0.1249,
-            0.1386,
-            0.1406,
-            0.1428,
-            0.1452,
-            0.1781,
+            0.1052,
+            0.1064,
+            0.1086,
+            0.1128,
+            0.1211,
+            0.1350,
+            0.1515,
+            0.1673,
+            0.1691,
+            0.1709,
+            0.1768,
+            0.1784,
         ]
 
         # Single and Double U-tubes

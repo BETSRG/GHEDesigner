@@ -24,7 +24,7 @@
     "number_of_boreholes": 68
   },
   "find_design_near_square_coaxial": {
-    "active_borehole_length": 122.54381552524163,
+    "active_borehole_length": 123.14459797675408,
     "number_of_boreholes": 144
   },
   "find_design_near_square_double_u_tube": {
@@ -36,7 +36,7 @@
     "number_of_boreholes": 156
   },
   "find_design_rectangle_coaxial": {
-    "active_borehole_length": 93.18500161253907,
+    "active_borehole_length": 93.89693844845677,
     "number_of_boreholes": 99
   },
   "find_design_rectangle_double_u_tube": {

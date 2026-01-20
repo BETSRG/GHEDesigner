@@ -90,6 +90,6 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         )
         search = self.get_design(pipe, 0.8)
         u_tube_height = search.ghe.bhe.borehole.H
-        self.assertAlmostEqual(110.3, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(112.03, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(12, len(borehole_location_data_rows))

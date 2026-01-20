@@ -602,7 +602,7 @@ def gen_borehole_config(
         :param no_go:
         :param rotate:
         :param intersection_tolerance:
-        :param duplicate_spacing_ratio
+        :param duplicate_spacing_ratio:
         :param partition_ratio: float
             Defines the size of the space partitioning
 
