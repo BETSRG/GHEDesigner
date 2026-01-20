@@ -378,7 +378,7 @@ def absolutize_file_paths(json_path: Path, inplace: bool = False) -> dict:
     json_path = json_path.resolve()
     base_dir = json_path.parent
 
-    data = json.loads(json_path.read_text())
+    data = loads(json_path.read_text())
 
     def _walk(obj: Any) -> None:
         if isinstance(obj, dict):
@@ -396,7 +396,7 @@ def absolutize_file_paths(json_path: Path, inplace: bool = False) -> dict:
     _walk(data)
 
     if inplace:
-        json_path.write_text(json.dumps(data, indent=2))
+        json_path.write_text(dumps(data, indent=2))
 
     return data
 

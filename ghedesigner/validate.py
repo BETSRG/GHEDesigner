@@ -6,7 +6,7 @@ import sys
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import ValidationError
@@ -43,7 +43,7 @@ def _schema_property_names(schema: dict) -> list[str]:
     return []
 
 
-def _extract_additional_properties_name(message: str) -> Optional[str]:
+def _extract_additional_properties_name(message: str) -> str | None:
     # jsonschema messages often look like: "Additional properties are not allowed ('heat_pump_cop' was unexpected)"
     m = re.search(r"\('([^']+)' was unexpected\)", message)
     return m.group(1) if m else None
@@ -209,7 +209,7 @@ def validate_input_file(input_file_path: Path) -> None:
     raise err
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate GHEDesigner input JSON against schema.")
     parser.add_argument("input_json", type=Path, help="Path to input JSON file")
     args = parser.parse_args(argv)
