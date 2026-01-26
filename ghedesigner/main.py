@@ -6,7 +6,7 @@ from pathlib import Path
 import click
 from jsonschema.exceptions import ValidationError
 
-from ghedesigner.constants import VERSION
+from ghedesigner.constants import MONTHS_IN_YEAR, VERSION
 from ghedesigner.district_system import GHEHPSystem
 from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.manager import GroundHeatExchanger
@@ -93,9 +93,8 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             else:
                 # TODO: Assert that "design" data is in the ghe object
                 ghe_dict["name"] = ghe_name
-                search, search_time, _ = ghe.design_and_size_ghe(
-                    ghe_dict, full_inputs["simulation_control"]["sizing_months"]
-                )
+                end_month = full_inputs["simulation_control"]["sizing_years"] * MONTHS_IN_YEAR
+                search, search_time, _ = ghe.design_and_size_ghe(ghe_dict, end_month)
                 results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
                 results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
                 results.write_all_output_files(output_directory=output_directory, file_suffix="")
@@ -111,9 +110,8 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             log_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
             print(g_values, g_bhw_values)
         else:
-            search, search_time, _ = ghe.design_and_size_ghe(
-                ghe_dict, full_inputs["simulation_control"]["sizing_months"], loads_override=ghe_loads
-            )
+            end_month = full_inputs["simulation_control"]["sizing_years"] * MONTHS_IN_YEAR
+            search, search_time, _ = ghe.design_and_size_ghe(ghe_dict, end_month, loads_override=ghe_loads)
             results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
             results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
             results.write_all_output_files(output_directory=output_directory, file_suffix="")

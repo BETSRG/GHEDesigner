@@ -1121,11 +1121,11 @@
       "type": "object",
       "description": "",
       "properties": {
-        "sizing_months": {
+        "sizing_years": {
           "type": "number",
           "minimum": 1,
-          "format": "Months",
-          "description": "Number of months used in ground heat exchanger sizing."
+          "format": "Years",
+          "description": "Number of years used in ground heat exchanger sizing."
         },
         "timestep": {
           "type": "string",
@@ -1134,7 +1134,7 @@
           "description": "This field is currently unused. Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently available."
         }
       },
-      "required": ["sizing_months"],
+      "required": ["sizing_years"],
       "additionalProperties": false
     },
     "version": {
