@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from ghedesigner.constants import SEC_IN_HR, TWO_PI
+from ghedesigner.constants import HOURS_IN_YEAR, SEC_IN_HR, TWO_PI
 from ghedesigner.enums import BHType, CentralLoopType, SimCompType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
@@ -13,8 +13,6 @@ from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.utilities import combine_sts_lts, get_loads, load_input_file
-
-N_TIMESTEPS = 8760
 
 
 class BaseSimComp(ABC):
@@ -35,7 +33,7 @@ class BaseSimComp(ABC):
 class GHX(BaseSimComp):
     MATRIX_ROWS = 4
 
-    def __init__(self, ghe_id: str, ghe_data: dict, fluid: Fluid, loop_config: CentralLoopType):
+    def __init__(self, ghe_id: str, ghe_data: dict, fluid: Fluid, loop_config: CentralLoopType, num_timesteps: int):
         super().__init__()
         self.name = ghe_id
         self.comp_type = SimCompType.GROUND_HEAT_EXCHANGER
@@ -95,18 +93,18 @@ class GHX(BaseSimComp):
         self.nbh = self.n_rows * self.n_cols
         self.mass_flow_ghe_design = ghe_data["flow_rate"] * self.nbh
         self.matrix_size = None
-
+        self.num_timesteps = num_timesteps
         self.history_terms, self.total_values_ghe, self.q_ghe = (
-            np.full(N_TIMESTEPS, self.soil.ugt, dtype=float),
-            np.zeros(N_TIMESTEPS, dtype=float),
-            np.zeros(N_TIMESTEPS, dtype=float),
+            np.full(self.num_timesteps, self.soil.ugt, dtype=float),
+            np.zeros(self.num_timesteps, dtype=float),
+            np.zeros(self.num_timesteps, dtype=float),
         )
 
-        self.t_in = np.full(N_TIMESTEPS, self.soil.ugt, dtype=float)
-        self.t_mean = np.full(N_TIMESTEPS, self.soil.ugt, dtype=float)
-        self.t_out = np.full(N_TIMESTEPS, self.soil.ugt, dtype=float)
-        self.q_ghe = np.zeros(N_TIMESTEPS)
-        self.time_array = np.arange(1, N_TIMESTEPS + 1)
+        self.t_in = np.full(self.num_timesteps, self.soil.ugt, dtype=float)
+        self.t_mean = np.full(self.num_timesteps, self.soil.ugt, dtype=float)
+        self.t_out = np.full(self.num_timesteps, self.soil.ugt, dtype=float)
+        self.q_ghe = np.zeros(self.num_timesteps)
+        self.time_array = np.arange(1, self.num_timesteps + 1)
         self.gFunction = None
         self.g = None
         self.c_n = None
@@ -197,9 +195,9 @@ class GHX(BaseSimComp):
         Cn = 1 / (2 * pi * K_s) * g((tn - tn-1) / t_s) + R_b
         """
 
-        c_n = np.zeros(N_TIMESTEPS, dtype=float)
+        c_n = np.zeros(self.num_timesteps, dtype=float)
 
-        for i in range(1, N_TIMESTEPS):
+        for i in range(1, self.num_timesteps):
             delta_log_time = np.log((self.time_array[i] - self.time_array[i - 1]) / (self.ts / SEC_IN_HR))
             g_val = self.g(delta_log_time)
 
@@ -284,6 +282,7 @@ class Building(BaseSimComp):
         tg,
         fluid: Fluid,
         loop_config: CentralLoopType,
+        num_timesteps: int,
     ):
         super().__init__()
         self.name = bldg_id
@@ -295,30 +294,34 @@ class Building(BaseSimComp):
         self.loop_config = loop_config
         self.heating_exists = bool("heating_load" in bldg_data)
         self.cooling_exists = bool("cooling_load" in bldg_data)
+        self.num_timesteps = num_timesteps
+        self.sim_years = num_timesteps // HOURS_IN_YEAR
 
-        self.htg_vals = np.zeros(N_TIMESTEPS, dtype=float)
-        self.clg_vals = np.zeros(N_TIMESTEPS, dtype=float)
+        self.htg_vals = np.zeros(self.num_timesteps, dtype=float)
+        self.clg_vals = np.zeros(self.num_timesteps, dtype=float)
 
         if self.heating_exists:
             hp_htg_name = bldg_data["heating_load"]["heat_pump_name"]
             hp_htg_data = hp_data[hp_htg_name]
-            self.htg_vals = np.array(get_loads(hp_htg_name, SimCompType.HEAT_PUMP.name, bldg_data["heating_load"]))
+            one_yr_htg_vals = np.array(get_loads(hp_htg_name, SimCompType.HEAT_PUMP.name, bldg_data["heating_load"]))
+            self.htg_vals = np.tile(one_yr_htg_vals, self.sim_years)
             self.hp_htg = HPmodel(hp_htg_name, hp_htg_data)
 
         if self.cooling_exists:
             hp_clg_name = bldg_data["cooling_load"]["heat_pump_name"]
             hp_clg_data = hp_data[hp_clg_name]
-            self.clg_vals = np.array(get_loads(hp_clg_name, SimCompType.HEAT_PUMP.name, bldg_data["cooling_load"]))
+            one_yr_clg_vals = np.array(get_loads(hp_clg_name, SimCompType.HEAT_PUMP.name, bldg_data["cooling_load"]))
+            self.clg_vals = np.tile(one_yr_clg_vals, self.sim_years)
             self.hp_clg = HPmodel(hp_clg_name, hp_clg_data)
 
         self.q_net = self.htg_vals - self.clg_vals
-        self.t_in = np.full(N_TIMESTEPS, tg, dtype=float)
-        self.t_out = np.full(N_TIMESTEPS, tg, dtype=float)
-        self.m_flow = np.zeros(N_TIMESTEPS, dtype=float)
-        self.power_hp_htg = np.zeros(N_TIMESTEPS, dtype=float)
-        self.power_hp_clg = np.zeros(N_TIMESTEPS, dtype=float)
-        self.power_hp_tot = np.zeros(N_TIMESTEPS, dtype=float)
-        self.power_circ_pump = np.zeros(N_TIMESTEPS, dtype=float)
+        self.t_in = np.full(self.num_timesteps, tg, dtype=float)
+        self.t_out = np.full(self.num_timesteps, tg, dtype=float)
+        self.m_flow = np.zeros(self.num_timesteps, dtype=float)
+        self.power_hp_htg = np.zeros(self.num_timesteps, dtype=float)
+        self.power_hp_clg = np.zeros(self.num_timesteps, dtype=float)
+        self.power_hp_tot = np.zeros(self.num_timesteps, dtype=float)
+        self.power_circ_pump = np.zeros(self.num_timesteps, dtype=float)
 
     def calc_mass_flow_rate(self, t_in, idx_timestep):
         if self.heating_exists:
@@ -470,6 +473,9 @@ class GHEHPSystem:
 
         tg = json_data["ground_heat_exchanger"]["ghe1"]["soil"]["undisturbed_temp"]  # TODO: fix this
 
+        self.sim_years = json_data["simulation_control"]["simulation_years"]
+        self.num_timesteps = self.sim_years * HOURS_IN_YEAR
+
         # get component names we need to build
         building_names = [
             c["name"].upper() for c in topology_data if SimCompType[c["type"].upper()] == SimCompType.BUILDING
@@ -484,7 +490,15 @@ class GHEHPSystem:
         buildings = []
         for this_building_id, this_bldg_data in building_data.items():
             if this_building_id.upper() in building_names:
-                this_bldg = Building(this_building_id, this_bldg_data, heat_pump_data, tg, self.fluid, self.loop_config)
+                this_bldg = Building(
+                    this_building_id,
+                    this_bldg_data,
+                    heat_pump_data,
+                    tg,
+                    self.fluid,
+                    self.loop_config,
+                    self.num_timesteps,
+                )
                 buildings.append(this_bldg)
 
         self.num_buildings = len(buildings)
@@ -494,7 +508,7 @@ class GHEHPSystem:
         ground_heat_exchangers = []
         for ghx_id, ghe_data in ghe_data.items():
             if ghx_id.upper() in ghx_names:
-                this_ghx = GHX(ghx_id, ghe_data, self.fluid, self.loop_config)
+                this_ghx = GHX(ghx_id, ghe_data, self.fluid, self.loop_config, self.num_timesteps)
                 cp = this_ghx.cp
                 ground_heat_exchangers.append(this_ghx)
 
@@ -502,8 +516,8 @@ class GHEHPSystem:
         self.num_ghx = len(ground_heat_exchangers)
         self.matrix_size = GHX.MATRIX_ROWS * self.num_ghx + self.num_buildings * Building.MATRIX_ROWS
 
-        self.m_flow_loop = np.zeros(N_TIMESTEPS)
-        self.pump_power_loop = np.zeros(N_TIMESTEPS)
+        self.m_flow_loop = np.zeros(self.num_timesteps)
+        self.pump_power_loop = np.zeros(self.num_timesteps)
 
         def get_bldg(name: str):
             return copy.deepcopy(next((obj for obj in buildings if obj.name.upper() == name.upper()), None))
@@ -538,7 +552,7 @@ class GHEHPSystem:
         self.components[-1].downstream_index = 0
 
     def solve_system(self):
-        for idx_timestep in range(1, N_TIMESTEPS):  # loop over all timestep
+        for idx_timestep in range(1, self.num_timesteps):  # loop over all timestep
             matrix_rows = []
             matrix_rhs = []
             total_hp_flow = 0
@@ -586,8 +600,8 @@ class GHEHPSystem:
         output_data = pd.DataFrame()
         output_data.index.name = "Hour"
 
-        network_q_net_bldg_tot = np.zeros(N_TIMESTEPS, dtype=float)
-        network_q_net_ghe_tot = np.zeros(N_TIMESTEPS, dtype=float)
+        network_q_net_bldg_tot = np.zeros(self.num_timesteps, dtype=float)
+        network_q_net_ghe_tot = np.zeros(self.num_timesteps, dtype=float)
 
         # compute energy use for central loop
         self.calc_energy()

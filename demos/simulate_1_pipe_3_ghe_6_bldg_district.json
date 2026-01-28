@@ -308,6 +308,6 @@
     }
   },
   "simulation_control": {
-    "sizing_years": 20
+    "simulation_years": 1
   }
 }

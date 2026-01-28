@@ -339,6 +339,18 @@
       "format": "Meters",
       "description": "Surface roughness of pipe."
     },
+    "simulation_years": {
+      "type": "number",
+      "minimum": 1,
+      "format": "Years",
+      "description": "Number of years used in system simulation."
+    },
+    "sizing_years": {
+      "type": "number",
+      "minimum": 1,
+      "format": "Years",
+      "description": "Number of years used in ground heat exchanger sizing."
+    },
     "shank_spacing": {
       "type": "number",
       "minimum": 0,
@@ -1121,11 +1133,11 @@
       "type": "object",
       "description": "",
       "properties": {
+        "simulation_years": {
+          "$ref": "#/$defs/simulation_years"
+        },
         "sizing_years": {
-          "type": "number",
-          "minimum": 1,
-          "format": "Years",
-          "description": "Number of years used in ground heat exchanger sizing."
+          "$ref": "#/$defs/sizing_years"
         },
         "timestep": {
           "type": "string",
@@ -1134,8 +1146,26 @@
           "description": "This field is currently unused. Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently available."
         }
       },
-      "required": ["sizing_years"],
-      "additionalProperties": false
+      "oneOf": [
+        {
+          "properties": {
+            "simulation_years": {
+              "$ref": "#/$defs/simulation_years"
+            }
+          },
+          "required": ["simulation_years"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "sizing_years": {
+              "$ref": "#/$defs/sizing_years"
+            }
+          },
+          "required": ["sizing_years"],
+          "additionalProperties": false
+        }
+      ]
     },
     "version": {
       "type": "integer",
