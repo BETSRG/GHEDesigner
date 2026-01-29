@@ -9,6 +9,7 @@ from ghedesigner.enums import PipeType, TimestepType
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_loads import HybridLoad
+from ghedesigner.ghe.ground_loads_v2 import HybridLoadV2
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Grout, Soil
 from ghedesigner.utilities import combine_sts_lts, solve_root
@@ -31,6 +32,7 @@ class GHE:
         hourly_extraction_ground_loads: list,
         field_type="N/A",
         field_specifier="N/A",
+        use_v2_hybrid: bool = False,
     ) -> None:
         self.field_type = field_type
         self.fieldSpecifier = field_specifier
@@ -63,9 +65,14 @@ class GHE:
         self.times = np.empty((0,), dtype=np.float64)
         self.loading: list | None = None
 
-        self.hybrid_load = HybridLoad(
-            self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
-        )
+        if use_v2_hybrid:
+            self.hybrid_load = HybridLoadV2(
+                self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
+            )
+        else:
+            self.hybrid_load = HybridLoad(
+                self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
+            )
 
         # List of heat pump exiting fluid temperatures
         self.hp_eft: list[float] = []
