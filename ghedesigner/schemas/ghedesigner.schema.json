@@ -1167,6 +1167,41 @@
         }
       ]
     },
+    "source_sink_heat_exchanger": {
+      "type": "object",
+      "description": "A collection of data that define a source-sink heat exchanger.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "effectiveness": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "source_temperature": {
+            "type": "number"
+          },
+          "source_flow_rate": {
+            "type": "number",
+            "minimum": 0
+          },
+          "cut_in_temperature": {
+            "type": "number"
+          },
+          "cut_out_temperature": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "effectiveness",
+          "source_temperature",
+          "source_flow_rate",
+          "cut_in_temperature",
+          "cut_out_temperature"
+        ],
+        "additionalProperties": false
+      }
+    },
     "version": {
       "type": "integer",
       "description": "An integer version ID for this input structure, for future-proofing."

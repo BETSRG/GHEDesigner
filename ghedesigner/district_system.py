@@ -47,6 +47,7 @@ class SourceSinkHeatExchanger(BaseSimComp):
         self.cut_in_temp = hx_data["cut_in_temperature"]
         self.cut_out_temp = hx_data["cut_out_temperature"]
         self.t_in = np.full(self.num_timesteps, tg, dtype=float)
+        self.t_out = np.full(self.num_timesteps, tg, dtype=float)
         self.op_mode = SourceSinkOpMode.SOURCE if self.cut_out_temp > self.cut_in_temp else SourceSinkOpMode.SINK
         self.was_running_last_time = False
         self.operating = np.full(self.num_timesteps, False, dtype=bool)
@@ -181,6 +182,7 @@ class GHX(BaseSimComp):
 
         self.t_in = np.full(self.num_timesteps, self.soil.ugt, dtype=float)
         self.t_mean = np.full(self.num_timesteps, self.soil.ugt, dtype=float)
+        self.t_mix_out = np.full(self.num_timesteps, self.soil.ugt, dtype=float)
         self.t_out = np.full(self.num_timesteps, self.soil.ugt, dtype=float)
         self.q_ghe = np.zeros(self.num_timesteps)
         self.time_array = np.arange(1, self.num_timesteps + 1)
@@ -683,13 +685,17 @@ class GHEHPSystem:
                 row_index = this_comp.row_index
                 if this_comp.comp_type == SimCompType.BUILDING:
                     this_comp.t_in[idx_timestep] = x_vector[row_index]
+                    this_comp.t_out[idx_timestep] = x_vector[this_comp.downstream_index]
                 elif this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
                     this_comp.t_in[idx_timestep] = x_vector[row_index]
                     this_comp.t_mean[idx_timestep] = x_vector[row_index + 1]
                     this_comp.q_ghe[idx_timestep] = x_vector[row_index + 2]
                     this_comp.t_out[idx_timestep] = x_vector[row_index + 3]
+                    this_comp.t_mix_out[idx_timestep] = x_vector[this_comp.downstream_index]
+
                 elif this_comp.comp_type == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
                     this_comp.t_in[idx_timestep] = x_vector[row_index]
+                    this_comp.t_out[idx_timestep] = x_vector[this_comp.downstream_index]
 
     def calc_energy(self):
         self.pump_power_loop = (
@@ -716,6 +722,7 @@ class GHEHPSystem:
         for this_comp in self.components:
             if isinstance(this_comp, Building):
                 output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
                 output_data[f"{this_comp.name}:Q_htg [W]"] = this_comp.htg_vals
                 output_data[f"{this_comp.name}:Q_clg [W]"] = this_comp.clg_vals
                 output_data[f"{this_comp.name}:Q_net [W]"] = this_comp.q_net
@@ -731,20 +738,24 @@ class GHEHPSystem:
                 output_data[f"{this_comp.name}:Q_src_htg [W]"] = q_src_htg
                 output_data[f"{this_comp.name}:Q_src_het [W]"] = q_src_htg - q_src_clg
 
-
         for this_comp in self.components:
             if isinstance(this_comp, GHX):
                 output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
+                output_data[f"{this_comp.name}:ExFT Mixed Loop [C]"] = this_comp.t_mix_out
                 output_data[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean
                 output_data[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe
                 output_data[f"{this_comp.name}:Q_tot [W]"] = this_comp.q_ghe * this_comp.nbh * this_comp.height
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
                 network_q_net_ghe_tot += this_comp.q_ghe * this_comp.nbh * this_comp.height
 
         for this_comp in self.components:
             if isinstance(this_comp, SourceSinkHeatExchanger):
                 output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
-                output_data[f"{this_comp.name}:Operating"] = this_comp.operating
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
+                output_data[f"{this_comp.name}:Operating [T/F]"] = this_comp.operating
+                output_data[f"{this_comp.name}:Q [W]"] = (
+                    this_comp.operating * self.m_flow_loop * self.fluid.cp * (this_comp.t_out - this_comp.t_in)
+                )
 
         output_data["Network:M_flow [kg/s]"] = self.m_flow_loop
         output_data["Network:P_pump [W]"] = self.pump_power_loop

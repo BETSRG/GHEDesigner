@@ -15,12 +15,12 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import dash
 import pandas as pd
 import plotly.graph_objects as go
-from dash import Dash, Input, Output, State, ALL, dcc, html, no_update
+from dash import ALL, Dash, Input, Output, State, dcc, html, no_update
 from plotly.subplots import make_subplots
 
 # ----------------------------------------------------------------------
@@ -32,10 +32,26 @@ HERE = Path(__file__).resolve().parent
 DATA_FILES: dict[str, Path] = {
     "1-bldg, 1 GHE": HERE / "test_data" / "simulate_1_pipe_1_ghe_1_bldg_district.csv",
     "6-bldg, 3-GHE": HERE / "test_data" / "simulate_1_pipe_3_ghe_6_bldg_district.csv",
-    "1-bldg, 1-GHE, 1-HX": HERE / "test_data" /"simulate_1_pipe_1_ghe_1_hx_1_bldg_district.csv",
+    "1-bldg, 1-GHE, 1-HX": HERE / "test_data" / "simulate_1_pipe_1_ghe_1_hx_1_bldg_district.csv",
 }
 
 X_COL = "Hour"
+
+CONTROL_CARD_STYLE = {
+    "display": "flex",
+    "flexDirection": "column",
+    "gap": "0.5rem",
+}
+
+CONTROL_LABEL_STYLE = {
+    "fontWeight": "600",
+    "minHeight": "1.2rem",  # keeps labels aligned
+}
+
+CONTROL_BUTTON_STYLE = {
+    "width": "100%",
+    "height": "2.4rem",  # makes all buttons same height
+}
 
 
 def load_dataset(path: str | Path) -> pd.DataFrame:
@@ -88,9 +104,7 @@ def default_panes(df: pd.DataFrame) -> list[dict[str, Any]]:
         metrics = sorted({_metric(c) for c in by_cat["Buildings"] if ":" in c})
         if metrics:
             m0 = metrics[0]
-            panes.append(
-                {"title": f"Buildings — {m0}", "columns": [c for c in by_cat["Buildings"] if c.endswith(m0)]}
-            )
+            panes.append({"title": f"Buildings — {m0}", "columns": [c for c in by_cat["Buildings"] if c.endswith(m0)]})
 
     if "GHEs" in by_cat:
         metrics = sorted({_metric(c) for c in by_cat["GHEs"] if ":" in c})
@@ -102,9 +116,7 @@ def default_panes(df: pd.DataFrame) -> list[dict[str, Any]]:
         metrics = sorted({_metric(c) for c in by_cat["Network"] if ":" in c})
         if metrics:
             m0 = metrics[0]
-            panes.append(
-                {"title": f"Network — {m0}", "columns": [c for c in by_cat["Network"] if c.endswith(m0)]}
-            )
+            panes.append({"title": f"Network — {m0}", "columns": [c for c in by_cat["Network"] if c.endswith(m0)]})
 
     return panes or [{"title": "Pane 1", "columns": []}]
 
@@ -115,21 +127,21 @@ def sanitize_panes(panes: list[dict[str, Any]], available_cols: list[str]) -> li
     for i, p in enumerate(panes or []):
         out.append(
             {
-                "title": str(p.get("title") or f"Pane {i+1}"),
+                "title": str(p.get("title") or f"Pane {i + 1}"),
                 "columns": [c for c in (p.get("columns") or []) if c in avail],
             }
         )
     return out or [{"title": "Pane 1", "columns": []}]
 
 
-def parse_relayout(relayout: dict[str, Any]) -> tuple[Optional[list[Any]], dict[int, Optional[list[Any]]]]:
+def parse_relayout(relayout: dict[str, Any]) -> tuple[list[Any] | None, dict[int, list[Any] | None]]:
     """
     Extract:
       - shared x range from xaxis.*
       - per-pane y ranges from yaxis, yaxis2, yaxis3, ...
     """
-    x_range: Optional[list[Any]] = None
-    y_ranges: dict[int, Optional[list[Any]]] = {}
+    x_range: list[Any] | None = None
+    y_ranges: dict[int, list[Any] | None] = {}
 
     # X
     if "xaxis.range[0]" in relayout and "xaxis.range[1]" in relayout:
@@ -158,7 +170,7 @@ def parse_relayout(relayout: dict[str, Any]) -> tuple[Optional[list[Any]], dict[
 def build_figure(df: pd.DataFrame, panes: list[dict[str, Any]], axis_state: dict[str, Any] | None) -> go.Figure:
     axis_state = axis_state or {"x": None, "y": {}}
     x_range = axis_state.get("x")
-    y_ranges: dict[int, Optional[list[Any]]] = axis_state.get("y", {}) or {}
+    y_ranges: dict[int, list[Any] | None] = axis_state.get("y", {}) or {}
 
     n = max(1, len(panes))
     fig = make_subplots(
@@ -166,7 +178,7 @@ def build_figure(df: pd.DataFrame, panes: list[dict[str, Any]], axis_state: dict
         cols=1,
         shared_xaxes=True,
         vertical_spacing=0.03,
-        subplot_titles=[p.get("title", f"Pane {i+1}") for i, p in enumerate(panes)],
+        subplot_titles=[p.get("title", f"Pane {i + 1}") for i, p in enumerate(panes)],
     )
 
     x = df[X_COL]
@@ -191,8 +203,7 @@ def build_figure(df: pd.DataFrame, panes: list[dict[str, Any]], axis_state: dict
             continue
 
         for c in cols:
-            label = c.split(":", 1)[0] if ":" in c else c
-            fig.add_trace(go.Scatter(x=x, y=df[c], mode="lines", name=label), row=row, col=1)
+            fig.add_trace(go.Scatter(x=x, y=df[c], mode="lines", name=c), row=row, col=1)
 
     # Apply persisted ranges
     if isinstance(x_range, list) and len(x_range) == 2:
@@ -235,10 +246,8 @@ app.layout = html.Div(
         dcc.Store(id="panes-store"),
         dcc.Store(id="axis-store"),
         dcc.Interval(id="poll-interval", interval=300000, n_intervals=0),  # 2s polling
-
         html.H1("District Time-Series Dashboard", style={"marginBottom": "0.25rem"}),
         html.P("Multi-pane time-series explorer (linked x-axis, live reload).", style={"color": "#555"}),
-
         html.Div(
             style={
                 "display": "grid",
@@ -260,39 +269,39 @@ app.layout = html.Div(
                     ]
                 ),
                 html.Div(
+                    style=CONTROL_CARD_STYLE,
                     children=[
-                        html.Label("Panes", style={"fontWeight": "600"}),
+                        html.Label("Panes", style=CONTROL_LABEL_STYLE),
+                        html.Button("Add pane", id="add-pane", n_clicks=0, style=CONTROL_BUTTON_STYLE),
+                        html.Button("Remove pane", id="remove-pane", n_clicks=0, style=CONTROL_BUTTON_STYLE),
+                        html.Div(" ", style={"fontSize": "0.9rem", "minHeight": "1.1rem"}),  # spacer to match others
+                    ],
+                ),
+                html.Div(
+                    style=CONTROL_CARD_STYLE,
+                    children=[
+                        html.Label("Data", style=CONTROL_LABEL_STYLE),
+                        html.Button("Reload CSV files now", id="reload-button", n_clicks=0, style=CONTROL_BUTTON_STYLE),
                         html.Div(
-                            style={"display": "flex", "gap": "0.5rem"},
-                            children=[
-                                html.Button("Add pane", id="add-pane", n_clicks=0, style={"flex": "1"}),
-                                html.Button("Remove pane", id="remove-pane", n_clicks=0, style={"flex": "1"}),
-                            ],
+                            "Polled every 300 seconds.",
+                            style={"color": "#666", "fontSize": "0.9rem", "minHeight": "1.1rem"},
                         ),
-                    ]
+                    ],
                 ),
                 html.Div(
+                    style=CONTROL_CARD_STYLE,
                     children=[
-                        html.Label("Data", style={"fontWeight": "600"}),
-                        html.Button("Reload CSV files now", id="reload-button", n_clicks=0, style={"width": "100%"}),
-                        html.Div("Also polled every 300 seconds.", style={"color": "#666", "fontSize": "0.9rem"}),
-                    ]
-                ),
-                html.Div(
-                    children=[
-                        html.Label("Reset view", style={"fontWeight": "600"}),
-                        html.Button("Reset zoom/pan", id="reset-view", n_clicks=0, style={"width": "100%"}),
-                    ]
+                        html.Label("Reset view", style=CONTROL_LABEL_STYLE),
+                        html.Button("Reset zoom/pan", id="reset-view", n_clicks=0, style=CONTROL_BUTTON_STYLE),
+                        html.Div(" ", style={"fontSize": "0.9rem", "minHeight": "1.1rem"}),  # spacer to match others
+                    ],
                 ),
             ],
         ),
-
         html.Div(id="reload-status", style={"color": "#555", "marginBottom": "0.75rem"}),
-
         html.Hr(style={"margin": "1rem 0"}),
         html.Div(id="pane-controls", style={"display": "flex", "flexDirection": "column", "gap": "0.75rem"}),
         html.Hr(style={"margin": "1rem 0"}),
-
         dcc.Graph(id="main-graph", style={"height": "700px"}),
     ],
 )
@@ -387,17 +396,22 @@ def render_controls(dataset: str, panes: list[dict[str, Any]] | None, col_store:
     for i, p in enumerate(panes):
         children.append(
             html.Div(
-                style={"border": "1px solid #ddd", "borderRadius": "8px", "padding": "0.75rem", "background": "#fafafa"},
+                style={
+                    "border": "1px solid #ddd",
+                    "borderRadius": "8px",
+                    "padding": "0.75rem",
+                    "background": "#fafafa",
+                },
                 children=[
                     html.Div(
                         style={"display": "grid", "gridTemplateColumns": "240px 1fr", "gap": "0.75rem"},
                         children=[
                             html.Div(
                                 children=[
-                                    html.Label(f"Pane {i+1} title", style={"fontWeight": "600"}),
+                                    html.Label(f"Pane {i + 1} title", style={"fontWeight": "600"}),
                                     dcc.Input(
                                         id={"type": "pane-title", "index": i},
-                                        value=p.get("title", f"Pane {i+1}"),
+                                        value=p.get("title", f"Pane {i + 1}"),
                                         type="text",
                                         debounce=True,
                                         style={"width": "100%"},
@@ -444,7 +458,7 @@ def update_panes_store(titles: list[str], columns: list[list[str]], panes: list[
     for i in range(n):
         out.append(
             {
-                "title": titles[i] if titles[i] else panes[i].get("title", f"Pane {i+1}"),
+                "title": titles[i] if titles[i] else panes[i].get("title", f"Pane {i + 1}"),
                 "columns": columns[i] if columns[i] is not None else panes[i].get("columns", []),
             }
         )
@@ -495,7 +509,9 @@ def sync_axes(relayout: dict[str, Any] | None, _reset: int, axis: dict[str, Any]
     Input("panes-store", "data"),
     Input("axis-store", "data"),
 )
-def update_figure(dataset: str, ds_store: dict[str, Any] | None, panes: list[dict[str, Any]] | None, axis: dict[str, Any] | None):
+def update_figure(
+    dataset: str, ds_store: dict[str, Any] | None, panes: list[dict[str, Any]] | None, axis: dict[str, Any] | None
+):
     if not ds_store or dataset not in ds_store:
         fig = go.Figure()
         fig.update_layout(title="No data loaded")

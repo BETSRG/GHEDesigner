@@ -31,8 +31,8 @@
       "effectiveness": 0.7,
       "source_temperature": 40,
       "source_flow_rate": 0.1,
-      "cut_in_temperature": 12,
-      "cut_out_temperature": 14
+      "cut_in_temperature": 5,
+      "cut_out_temperature": 10
     }
   },
   "heat_pump": {
