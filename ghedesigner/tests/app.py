@@ -1,113 +1,251 @@
-"""Run with:
-pip install dash plotly pandas
-python app.py
+"""
+Run with:
+    pip install dash plotly pandas plotly
+    python app.py
+
+Features
+--------
+- Any number of panes (subplots), any number of series per pane.
+- Fixed plot-area sizing: legend outside, fixed right margin.
+- Live CSV polling + manual reload; zoom/pan preserved.
+- Linked x-axis: zoom/pan any pane keeps all panes aligned.
 """
 
 from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import dash
 import pandas as pd
-import plotly.express as px
-from dash import Dash, Input, Output, State, dcc, html, no_update
+import plotly.graph_objects as go
+from dash import Dash, Input, Output, State, ALL, dcc, html, no_update
+from plotly.subplots import make_subplots
 
 # ----------------------------------------------------------------------
 # Data sources (edit paths as needed)
 # ----------------------------------------------------------------------
-_TEST_DATA_DIR = Path(__file__).resolve().parent / "test_data"
+# Defaults to the example CSVs placed next to this app.py.
+HERE = Path(__file__).resolve().parent
 
 DATA_FILES: dict[str, Path] = {
-    "1-bldg, 1 GHE": _TEST_DATA_DIR / "simulate_1_pipe_1_ghe_1_bldg_district.csv",
-    "6-bldg, 3-GHE": _TEST_DATA_DIR / "simulate_1_pipe_3_ghe_6_bldg_district.csv",
+    "1-bldg, 1 GHE": HERE / "test_data" / "simulate_1_pipe_1_ghe_1_bldg_district.csv",
+    "6-bldg, 3-GHE": HERE / "test_data" / "simulate_1_pipe_3_ghe_6_bldg_district.csv",
+    "1-bldg, 1-GHE, 1-HX": HERE / "test_data" /"simulate_1_pipe_1_ghe_1_hx_1_bldg_district.csv",
 }
+
+X_COL = "Hour"
 
 
 def load_dataset(path: str | Path) -> pd.DataFrame:
-    csv_path = Path(path)
-    if not csv_path.exists():
-        raise FileNotFoundError(f"Could not find {csv_path}")
-    return pd.read_csv(csv_path)
+    p = Path(path)
+    if not p.exists():
+        raise FileNotFoundError(f"Could not find {p}")
+    df = pd.read_csv(p)
+    if X_COL not in df.columns:
+        raise ValueError(f"Missing required column '{X_COL}' in {p}")
+    return df
 
 
 # ----------------------------------------------------------------------
-# Helpers to extract building + GHE + Network info from column names
+# Pane helpers
 # ----------------------------------------------------------------------
-def get_buildings(data_frame: pd.DataFrame) -> list[str]:
-    # column format: "building1:Q_htg [W]"
-    buildings = {col.split(":", 1)[0] for col in data_frame.columns if col.startswith("building")}
-    return sorted(buildings)
+def _category(col: str) -> str:
+    """
+    Heuristic grouping used ONLY for the initial default panes.
+    """
+    base = col.split(":", 1)[0] if ":" in col else col
+    low = base.lower()
+    if low.startswith("building"):
+        return "Buildings"
+    if low.startswith("ghe"):
+        return "GHEs"
+    if low.startswith("network"):
+        return "Network"
+    return base
 
 
-def get_building_metrics(data_frame: pd.DataFrame) -> list[str]:
-    metrics: set[str] = set()
-    for col in data_frame.columns:
-        if col.startswith("building") and ":" in col:
-            _, metric = col.split(":", 1)
-            metrics.add(metric)
-    return sorted(metrics)
+def _metric(col: str) -> str:
+    return col.split(":", 1)[1] if ":" in col else col
 
 
-def get_ghe_metrics(data_frame: pd.DataFrame) -> list[str]:
-    # column format: "ghe1:EFT [C]"
-    metrics: set[str] = set()
-    for col in data_frame.columns:
-        if col.startswith("ghe") and ":" in col:
-            _, metric = col.split(":", 1)
-            metrics.add(metric)
-    return sorted(metrics)
+def default_panes(df: pd.DataFrame) -> list[dict[str, Any]]:
+    """
+    Build default panes based on what's in the dataset:
+      - Buildings pane: first building metric across all buildings
+      - GHE pane: first ghe metric across all ghes
+      - Network pane: first network metric
+    """
+    cols = [c for c in df.columns if c != X_COL]
+    by_cat: dict[str, list[str]] = {}
+    for c in cols:
+        by_cat.setdefault(_category(c), []).append(c)
+
+    panes: list[dict[str, Any]] = []
+
+    if "Buildings" in by_cat:
+        metrics = sorted({_metric(c) for c in by_cat["Buildings"] if ":" in c})
+        if metrics:
+            m0 = metrics[0]
+            panes.append(
+                {"title": f"Buildings — {m0}", "columns": [c for c in by_cat["Buildings"] if c.endswith(m0)]}
+            )
+
+    if "GHEs" in by_cat:
+        metrics = sorted({_metric(c) for c in by_cat["GHEs"] if ":" in c})
+        if metrics:
+            m0 = metrics[0]
+            panes.append({"title": f"GHEs — {m0}", "columns": [c for c in by_cat["GHEs"] if c.endswith(m0)]})
+
+    if "Network" in by_cat:
+        metrics = sorted({_metric(c) for c in by_cat["Network"] if ":" in c})
+        if metrics:
+            m0 = metrics[0]
+            panes.append(
+                {"title": f"Network — {m0}", "columns": [c for c in by_cat["Network"] if c.endswith(m0)]}
+            )
+
+    return panes or [{"title": "Pane 1", "columns": []}]
 
 
-def get_network_metrics(data_frame: pd.DataFrame) -> list[str]:
-    # column format: "Network:M_flow [kg/s]"
-    metrics: set[str] = set()
-    for col in data_frame.columns:
-        if col.startswith("Network") and ":" in col:
-            _, metric = col.split(":", 1)
-            metrics.add(metric)
-    return sorted(metrics)
+def sanitize_panes(panes: list[dict[str, Any]], available_cols: list[str]) -> list[dict[str, Any]]:
+    avail = set(available_cols)
+    out: list[dict[str, Any]] = []
+    for i, p in enumerate(panes or []):
+        out.append(
+            {
+                "title": str(p.get("title") or f"Pane {i+1}"),
+                "columns": [c for c in (p.get("columns") or []) if c in avail],
+            }
+        )
+    return out or [{"title": "Pane 1", "columns": []}]
 
 
-def compute_dataset_meta(data_frame: pd.DataFrame) -> dict[str, list[str]]:
-    return {
-        "buildings": get_buildings(data_frame),
-        "bldg_metrics": get_building_metrics(data_frame),
-        "ghe_metrics": get_ghe_metrics(data_frame),
-        "network_metrics": get_network_metrics(data_frame),
-    }
+def parse_relayout(relayout: dict[str, Any]) -> tuple[Optional[list[Any]], dict[int, Optional[list[Any]]]]:
+    """
+    Extract:
+      - shared x range from xaxis.*
+      - per-pane y ranges from yaxis, yaxis2, yaxis3, ...
+    """
+    x_range: Optional[list[Any]] = None
+    y_ranges: dict[int, Optional[list[Any]]] = {}
+
+    # X
+    if "xaxis.range[0]" in relayout and "xaxis.range[1]" in relayout:
+        x_range = [relayout["xaxis.range[0]"], relayout["xaxis.range[1]"]]
+    elif relayout.get("xaxis.autorange"):
+        x_range = None
+
+    # Y (per subplot axis)
+    for k, v in relayout.items():
+        if not k.startswith("yaxis"):
+            continue
+        axis_part, rest = k.split(".", 1) if "." in k else (k, "")
+        idx_str = axis_part.replace("yaxis", "")
+        axis_idx = int(idx_str) if idx_str else 1
+
+        if rest.startswith("range[0]"):
+            hi_key = f"{axis_part}.range[1]"
+            if hi_key in relayout:
+                y_ranges[axis_idx] = [v, relayout[hi_key]]
+        elif rest == "autorange" and bool(v):
+            y_ranges[axis_idx] = None
+
+    return x_range, y_ranges
+
+
+def build_figure(df: pd.DataFrame, panes: list[dict[str, Any]], axis_state: dict[str, Any] | None) -> go.Figure:
+    axis_state = axis_state or {"x": None, "y": {}}
+    x_range = axis_state.get("x")
+    y_ranges: dict[int, Optional[list[Any]]] = axis_state.get("y", {}) or {}
+
+    n = max(1, len(panes))
+    fig = make_subplots(
+        rows=n,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.03,
+        subplot_titles=[p.get("title", f"Pane {i+1}") for i, p in enumerate(panes)],
+    )
+
+    x = df[X_COL]
+
+    for row, pane in enumerate(panes, start=1):
+        cols = pane.get("columns", []) or []
+        if not cols:
+            fig.add_trace(
+                go.Scatter(x=x, y=[None] * len(df), mode="lines", showlegend=False),
+                row=row,
+                col=1,
+            )
+            fig.add_annotation(
+                x=0.5,
+                y=0.5,
+                xref=f"x{'' if row == 1 else row} domain",
+                yref=f"y{'' if row == 1 else row} domain",
+                text="No series selected for this pane",
+                showarrow=False,
+                font={"color": "#888"},
+            )
+            continue
+
+        for c in cols:
+            label = c.split(":", 1)[0] if ":" in c else c
+            fig.add_trace(go.Scatter(x=x, y=df[c], mode="lines", name=label), row=row, col=1)
+
+    # Apply persisted ranges
+    if isinstance(x_range, list) and len(x_range) == 2:
+        fig.update_xaxes(range=x_range)
+    for row in range(1, n + 1):
+        yr = y_ranges.get(row)
+        if isinstance(yr, list) and len(yr) == 2:
+            fig.update_yaxes(range=yr, row=row, col=1)
+
+    # Fixed right margin prevents legend size from resizing plot areas.
+    fig.update_layout(
+        margin={"l": 60, "r": 260, "t": 60, "b": 50},
+        legend={
+            "orientation": "v",
+            "x": 1.02,
+            "y": 1.0,
+            "xanchor": "left",
+            "yanchor": "top",
+            "title": {"text": "Series"},
+        },
+        hovermode="x unified",
+        uirevision="keep",  # critical: preserves zoom/pan across updates
+        height=260 * n + 80,
+    )
+    fig.update_xaxes(title_text="Hour", row=n, col=1)
+    return fig
 
 
 # ----------------------------------------------------------------------
-# App layout
+# Dash app
 # ----------------------------------------------------------------------
 app = Dash(__name__)
-app.title = "District GHE Dashboard"
+app.title = "District Time-Series Dashboard"
 
 app.layout = html.Div(
     style={"fontFamily": "system-ui, sans-serif", "margin": "20px"},
     children=[
-        # Stores for linked / persistent ranges + runtime-loaded datasets
-        dcc.Store(id="x-range-store"),
-        dcc.Store(id="building-y-range-store"),
-        dcc.Store(id="ghe-y-range-store"),
-        dcc.Store(id="network-y-range-store"),
-        dcc.Store(id="datasets-store"),  # {dataset_name: [records...]}
-        dcc.Store(id="dataset-meta-store"),  # {dataset_name: {buildings, bldg_metrics, ghe_metrics, network_metrics}}
-        html.H1("District GHE Dashboard", style={"marginBottom": "0.5rem"}),
-        html.P(
-            "Interactive dashboard for district simulation CSV outputs.",
-            style={"color": "#555", "marginBottom": "1.0rem"},
-        ),
-        # Controls
+        dcc.Store(id="datasets-store"),
+        dcc.Store(id="columns-store"),
+        dcc.Store(id="panes-store"),
+        dcc.Store(id="axis-store"),
+        dcc.Interval(id="poll-interval", interval=300000, n_intervals=0),  # 2s polling
+
+        html.H1("District Time-Series Dashboard", style={"marginBottom": "0.25rem"}),
+        html.P("Multi-pane time-series explorer (linked x-axis, live reload).", style={"color": "#555"}),
+
         html.Div(
             style={
                 "display": "grid",
-                "gridTemplateColumns": "repeat(5, minmax(220px, 260px))",
+                "gridTemplateColumns": "repeat(4, minmax(240px, 1fr))",
                 "gap": "1rem",
-                "marginBottom": "0.75rem",
                 "alignItems": "end",
+                "marginBottom": "0.75rem",
             },
             children=[
                 html.Div(
@@ -123,434 +261,252 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     children=[
-                        html.Label("Building metric", style={"fontWeight": "600"}),
-                        dcc.Dropdown(
-                            id="bldg-metric-dropdown",
-                            options=[],  # populated by callback
-                            value=None,
-                            clearable=False,
-                        ),
-                    ]
-                ),
-                html.Div(
-                    children=[
-                        html.Label("GHE metric", style={"fontWeight": "600"}),
-                        dcc.Dropdown(
-                            id="ghe-metric-dropdown",
-                            options=[],  # populated by callback
-                            value=None,
-                            clearable=False,
-                        ),
-                    ]
-                ),
-                html.Div(
-                    children=[
-                        html.Label("Network metric", style={"fontWeight": "600"}),
-                        dcc.Dropdown(
-                            id="network-metric-dropdown",
-                            options=[],  # populated by callback
-                            value=None,
-                            clearable=False,
+                        html.Label("Panes", style={"fontWeight": "600"}),
+                        html.Div(
+                            style={"display": "flex", "gap": "0.5rem"},
+                            children=[
+                                html.Button("Add pane", id="add-pane", n_clicks=0, style={"flex": "1"}),
+                                html.Button("Remove pane", id="remove-pane", n_clicks=0, style={"flex": "1"}),
+                            ],
                         ),
                     ]
                 ),
                 html.Div(
                     children=[
                         html.Label("Data", style={"fontWeight": "600"}),
-                        html.Button(
-                            "Reload CSV files",
-                            id="reload-button",
-                            n_clicks=0,
-                            style={"width": "100%"},
-                        ),
+                        html.Button("Reload CSV files now", id="reload-button", n_clicks=0, style={"width": "100%"}),
+                        html.Div("Also polled every 300 seconds.", style={"color": "#666", "fontSize": "0.9rem"}),
+                    ]
+                ),
+                html.Div(
+                    children=[
+                        html.Label("Reset view", style={"fontWeight": "600"}),
+                        html.Button("Reset zoom/pan", id="reset-view", n_clicks=0, style={"width": "100%"}),
                     ]
                 ),
             ],
         ),
-        html.Div(
-            id="reload-status",
-            style={"color": "#555", "marginBottom": "1.5rem"},
-        ),
-        # Plots stacked vertically
-        html.Div(
-            style={
-                "display": "flex",
-                "flexDirection": "column",
-                "gap": "1.5rem",
-            },
-            children=[
-                html.Div(
-                    children=[
-                        html.H3(
-                            "Building time series (all buildings)",
-                            style={"marginBottom": "0.5rem"},
-                        ),
-                        dcc.Graph(id="building-graph", style={"height": "400px"}),
-                    ]
-                ),
-                html.Div(
-                    children=[
-                        html.H3(
-                            "GHE time series (all GHEs)",
-                            style={"marginBottom": "0.5rem"},
-                        ),
-                        dcc.Graph(id="ghe-graph", style={"height": "400px"}),
-                    ]
-                ),
-                html.Div(
-                    children=[
-                        html.H3("Network time series", style={"marginBottom": "0.5rem"}),
-                        dcc.Graph(id="network-graph", style={"height": "400px"}),
-                    ]
-                ),
-            ],
-        ),
+
+        html.Div(id="reload-status", style={"color": "#555", "marginBottom": "0.75rem"}),
+
+        html.Hr(style={"margin": "1rem 0"}),
+        html.Div(id="pane-controls", style={"display": "flex", "flexDirection": "column", "gap": "0.75rem"}),
+        html.Hr(style={"margin": "1rem 0"}),
+
+        dcc.Graph(id="main-graph", style={"height": "700px"}),
     ],
 )
 
-# ----------------------------------------------------------------------
-# Callbacks
-# ----------------------------------------------------------------------
 
-
+# ----------------------------------------------------------------------
+# Data loading (poll + manual reload)
+# ----------------------------------------------------------------------
 @app.callback(
     Output("datasets-store", "data"),
-    Output("dataset-meta-store", "data"),
+    Output("columns-store", "data"),
     Output("reload-status", "children"),
+    Input("poll-interval", "n_intervals"),
     Input("reload-button", "n_clicks"),
     prevent_initial_call=False,
 )
-def reload_datasets(n_clicks: int):
-    """(Re)load CSVs from disk into dcc.Store, and compute per-dataset metadata."""
-    datasets_data: dict[str, list[dict[str, Any]]] = {}
-    meta_data: dict[str, dict[str, list[str]]] = {}
-
+def load_all(_n_intervals: int, _n_clicks: int):
+    datasets: dict[str, list[dict[str, Any]]] = {}
+    columns: dict[str, list[str]] = {}
     try:
         for name, path in DATA_FILES.items():
-            data_frame = load_dataset(path)
-            datasets_data[name] = data_frame.to_dict("records")
-            meta_data[name] = compute_dataset_meta(data_frame)
+            df = load_dataset(path)
+            datasets[name] = df.to_dict("records")
+            columns[name] = [c for c in df.columns if c != X_COL]
     except (FileNotFoundError, OSError, ValueError, pd.errors.ParserError) as exc:
-        # Keep previous state if reload fails
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        status = f"Reload failed at {ts}: {exc}"
-        return no_update, no_update, status
+        return no_update, no_update, f"Reload failed at {ts}: {exc}"
 
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    status = f"Reloaded CSV files at {ts}." if (n_clicks and n_clicks > 0) else f"Loaded CSV files at {ts}."
-
-    return datasets_data, meta_data, status
+    return datasets, columns, f"Loaded/updated datasets at {ts}."
 
 
+# ----------------------------------------------------------------------
+# Initialize panes on first load / sanitize on dataset change
+# ----------------------------------------------------------------------
 @app.callback(
-    Output("bldg-metric-dropdown", "options"),
-    Output("bldg-metric-dropdown", "value"),
-    Output("ghe-metric-dropdown", "options"),
-    Output("ghe-metric-dropdown", "value"),
-    Output("network-metric-dropdown", "options"),
-    Output("network-metric-dropdown", "value"),
+    Output("panes-store", "data"),
     Input("dataset-dropdown", "value"),
-    Input("dataset-meta-store", "data"),
-)
-def update_dropdowns(dataset_name: str, meta_store: dict[str, Any] | None):
-    if not meta_store or dataset_name not in meta_store:
-        return [], None, [], None, [], None
-
-    meta = meta_store[dataset_name]
-
-    bldg_metrics = meta.get("bldg_metrics", []) or []
-    ghe_metrics = meta.get("ghe_metrics", []) or []
-    network_metrics = meta.get("network_metrics", []) or []
-
-    bldg_metric_options = [{"label": m, "value": m} for m in bldg_metrics]
-    ghe_metric_options = [{"label": m, "value": m} for m in ghe_metrics]
-    network_metric_options = [{"label": m, "value": m} for m in network_metrics]
-
-    bldg_metric_value = bldg_metrics[0] if bldg_metrics else None
-    ghe_metric_value = ghe_metrics[0] if ghe_metrics else None
-    network_metric_value = network_metrics[0] if network_metrics else None
-
-    return (
-        bldg_metric_options,
-        bldg_metric_value,
-        ghe_metric_options,
-        ghe_metric_value,
-        network_metric_options,
-        network_metric_value,
-    )
-
-
-@app.callback(
-    Output("building-graph", "figure"),
-    Input("dataset-dropdown", "value"),
-    Input("bldg-metric-dropdown", "value"),
-    Input("x-range-store", "data"),
-    Input("building-y-range-store", "data"),
     Input("datasets-store", "data"),
+    State("panes-store", "data"),
+    prevent_initial_call=False,
 )
-def update_building_graph(
-    dataset_name: str,
-    bldg_metric: str | None,
-    x_range: list[Any] | None,
-    y_range: list[Any] | None,
-    datasets_store: dict[str, Any] | None,
-):
-    if not datasets_store or dataset_name not in datasets_store:
-        return px.line(title="No data loaded")
+def init_or_sanitize_panes(dataset: str, ds_store: dict[str, Any] | None, panes_state: Any):
+    if not ds_store or dataset not in ds_store:
+        return panes_state or [{"title": "Pane 1", "columns": []}]
+    df = pd.DataFrame(ds_store[dataset])
+    avail = [c for c in df.columns if c != X_COL]
 
-    data_frame = pd.DataFrame(datasets_store[dataset_name])
+    if isinstance(panes_state, list) and panes_state:
+        return sanitize_panes(panes_state, avail)
 
-    if not bldg_metric:
-        return px.line(title="No building metric selected")
-
-    if "Hour" not in data_frame.columns:
-        return px.line(title="Missing required column: Hour")
-
-    # Find all building columns for the chosen metric
-    bldg_cols = [
-        col
-        for col in data_frame.columns
-        if col.startswith("building") and ":" in col and col.split(":", 1)[1] == bldg_metric
-    ]
-
-    if not bldg_cols:
-        return px.line(title=f"No building columns for metric '{bldg_metric}' in this dataset")
-
-    # Melt into long format for multi-line plot
-    melted = data_frame.melt(
-        id_vars=["Hour"],
-        value_vars=bldg_cols,
-        var_name="Building",
-        value_name="value",
-    )
-
-    # "building1:Q_htg [W]" -> "building1"
-    melted["Building"] = melted["Building"].str.split(":", n=1).str[0]
-
-    fig = px.line(
-        melted,
-        x="Hour",
-        y="value",
-        color="Building",
-        title=f"Buildings - {bldg_metric} vs Hour",
-    )
-
-    if x_range and isinstance(x_range, list) and len(x_range) == 2:
-        fig.update_xaxes(range=x_range)
-    if y_range and isinstance(y_range, list) and len(y_range) == 2:
-        fig.update_yaxes(range=y_range)
-
-    fig.update_layout(
-        xaxis_title="Hour",
-        yaxis_title=bldg_metric,
-        margin={"l": 40, "r": 10, "t": 40, "b": 40},
-        legend_title="Building",
-        height=350,
-    )
-    return fig
+    return default_panes(df)
 
 
+# ----------------------------------------------------------------------
+# Add/remove panes
+# ----------------------------------------------------------------------
 @app.callback(
-    Output("ghe-graph", "figure"),
-    Input("dataset-dropdown", "value"),
-    Input("ghe-metric-dropdown", "value"),
-    Input("x-range-store", "data"),
-    Input("ghe-y-range-store", "data"),
-    Input("datasets-store", "data"),
-)
-def update_ghe_graph(
-    dataset_name: str,
-    ghe_metric: str | None,
-    x_range: list[Any] | None,
-    y_range: list[Any] | None,
-    datasets_store: dict[str, Any] | None,
-):
-    if not datasets_store or dataset_name not in datasets_store:
-        return px.line(title="No data loaded")
-
-    data_frame = pd.DataFrame(datasets_store[dataset_name])
-
-    if not ghe_metric:
-        return px.line(title="No GHE metric selected")
-
-    if "Hour" not in data_frame.columns:
-        return px.line(title="Missing required column: Hour")
-
-    # Find all GHE columns for the chosen metric
-    ghe_cols = [
-        col for col in data_frame.columns if col.startswith("ghe") and ":" in col and col.split(":", 1)[1] == ghe_metric
-    ]
-
-    if not ghe_cols:
-        return px.line(title=f"No GHE columns for metric '{ghe_metric}' in this dataset")
-
-    # Melt into long format for multi-line plot
-    melted = data_frame.melt(
-        id_vars=["Hour"],
-        value_vars=ghe_cols,
-        var_name="GHE",
-        value_name="value",
-    )
-
-    # "ghe1:EFT [C]" -> "ghe1"
-    melted["GHE"] = melted["GHE"].str.split(":", n=1).str[0]
-
-    fig = px.line(
-        melted,
-        x="Hour",
-        y="value",
-        color="GHE",
-        title=f"GHEs - {ghe_metric} vs Hour",
-    )
-
-    if x_range and isinstance(x_range, list) and len(x_range) == 2:
-        fig.update_xaxes(range=x_range)
-    if y_range and isinstance(y_range, list) and len(y_range) == 2:
-        fig.update_yaxes(range=y_range)
-
-    fig.update_layout(
-        xaxis_title="Hour",
-        yaxis_title=ghe_metric,
-        margin={"l": 40, "r": 10, "t": 40, "b": 40},
-        legend_title="GHE",
-        height=350,
-    )
-    return fig
-
-
-@app.callback(
-    Output("network-graph", "figure"),
-    Input("dataset-dropdown", "value"),
-    Input("network-metric-dropdown", "value"),
-    Input("x-range-store", "data"),
-    Input("network-y-range-store", "data"),
-    Input("datasets-store", "data"),
-)
-def update_network_graph(
-    dataset_name: str,
-    network_metric: str | None,
-    x_range: list[Any] | None,
-    y_range: list[Any] | None,
-    datasets_store: dict[str, Any] | None,
-):
-    if not datasets_store or dataset_name not in datasets_store:
-        return px.line(title="No data loaded")
-
-    data_frame = pd.DataFrame(datasets_store[dataset_name])
-
-    if not network_metric:
-        return px.line(title="No Network metric selected")
-
-    if "Hour" not in data_frame.columns:
-        return px.line(title="Missing required column: Hour")
-
-    col = f"Network:{network_metric}"
-    if col not in data_frame.columns:
-        # Some files may use a different capitalization or prefix; fall back to search
-        candidates = [
-            c
-            for c in data_frame.columns
-            if c.startswith("Network") and ":" in c and c.split(":", 1)[1] == network_metric
-        ]
-        if not candidates:
-            return px.line(title=f"No Network column for metric '{network_metric}' in this dataset")
-        col = candidates[0]
-
-    fig = px.line(
-        data_frame,
-        x="Hour",
-        y=col,
-        title=f"Network - {network_metric} vs Hour",
-    )
-
-    if x_range and isinstance(x_range, list) and len(x_range) == 2:
-        fig.update_xaxes(range=x_range)
-    if y_range and isinstance(y_range, list) and len(y_range) == 2:
-        fig.update_yaxes(range=y_range)
-
-    fig.update_layout(
-        xaxis_title="Hour",
-        yaxis_title=network_metric,
-        margin={"l": 40, "r": 10, "t": 40, "b": 40},
-        height=350,
-    )
-    return fig
-
-
-# Shared range sync: read relayoutData, store x-range and each panel's y-range
-@app.callback(
-    Output("x-range-store", "data"),
-    Output("building-y-range-store", "data"),
-    Output("ghe-y-range-store", "data"),
-    Output("network-y-range-store", "data"),
-    Input("building-graph", "relayoutData"),
-    Input("ghe-graph", "relayoutData"),
-    Input("network-graph", "relayoutData"),
-    State("x-range-store", "data"),
-    State("building-y-range-store", "data"),
-    State("ghe-y-range-store", "data"),
-    State("network-y-range-store", "data"),
+    Output("panes-store", "data", allow_duplicate=True),
+    Input("add-pane", "n_clicks"),
+    Input("remove-pane", "n_clicks"),
+    State("panes-store", "data"),
     prevent_initial_call=True,
 )
-def sync_ranges(
-    building_relayout: dict[str, Any] | None,
-    ghe_relayout: dict[str, Any] | None,
-    network_relayout: dict[str, Any] | None,
-    current_x: list[Any] | None,
-    current_building_y: list[Any] | None,
-    current_ghe_y: list[Any] | None,
-    current_network_y: list[Any] | None,
-):
-    ctx = dash.callback_context
-    if not ctx.triggered:
-        return no_update, no_update, no_update, no_update
+def edit_panes(_add: int, _remove: int, panes: list[dict[str, Any]] | None):
+    panes = list(panes or [{"title": "Pane 1", "columns": []}])
+    trig = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
 
-    trigger = ctx.triggered[0]["prop_id"].split(".")[0]
+    if trig == "add-pane":
+        panes.append({"title": f"Pane {len(panes) + 1}", "columns": []})
+    elif trig == "remove-pane" and len(panes) > 1:
+        panes.pop()
 
-    # Start from existing ranges
-    new_x = current_x
-    new_building_y = current_building_y
-    new_ghe_y = current_ghe_y
-    new_network_y = current_network_y
-
-    def update_from_relayout(relayout: dict[str, Any], y_target: str) -> None:
-        nonlocal new_x, new_building_y, new_ghe_y, new_network_y
-
-        # X-axis changes
-        if "xaxis.range[0]" in relayout and "xaxis.range[1]" in relayout:
-            new_x = [relayout["xaxis.range[0]"], relayout["xaxis.range[1]"]]
-        elif relayout.get("xaxis.autorange", False):
-            new_x = None
-
-        # Y-axis changes
-        if "yaxis.range[0]" in relayout and "yaxis.range[1]" in relayout:
-            y_val = [relayout["yaxis.range[0]"], relayout["yaxis.range[1]"]]
-            if y_target == "building":
-                new_building_y = y_val
-            elif y_target == "ghe":
-                new_ghe_y = y_val
-            elif y_target == "network":
-                new_network_y = y_val
-        elif relayout.get("yaxis.autorange", False):
-            if y_target == "building":
-                new_building_y = None
-            elif y_target == "ghe":
-                new_ghe_y = None
-            elif y_target == "network":
-                new_network_y = None
-
-    if trigger == "building-graph":
-        update_from_relayout(building_relayout or {}, "building")
-    elif trigger == "ghe-graph":
-        update_from_relayout(ghe_relayout or {}, "ghe")
-    elif trigger == "network-graph":
-        update_from_relayout(network_relayout or {}, "network")
-
-    return new_x, new_building_y, new_ghe_y, new_network_y
+    return panes
 
 
 # ----------------------------------------------------------------------
-# Main
+# Pane controls UI (dynamic components)
 # ----------------------------------------------------------------------
+@app.callback(
+    Output("pane-controls", "children"),
+    Input("dataset-dropdown", "value"),
+    Input("panes-store", "data"),
+    Input("columns-store", "data"),
+)
+def render_controls(dataset: str, panes: list[dict[str, Any]] | None, col_store: dict[str, Any] | None):
+    panes = panes or [{"title": "Pane 1", "columns": []}]
+    cols = (col_store or {}).get(dataset, []) or []
+    options = [{"label": c, "value": c} for c in cols]
+
+    children: list[Any] = []
+    for i, p in enumerate(panes):
+        children.append(
+            html.Div(
+                style={"border": "1px solid #ddd", "borderRadius": "8px", "padding": "0.75rem", "background": "#fafafa"},
+                children=[
+                    html.Div(
+                        style={"display": "grid", "gridTemplateColumns": "240px 1fr", "gap": "0.75rem"},
+                        children=[
+                            html.Div(
+                                children=[
+                                    html.Label(f"Pane {i+1} title", style={"fontWeight": "600"}),
+                                    dcc.Input(
+                                        id={"type": "pane-title", "index": i},
+                                        value=p.get("title", f"Pane {i+1}"),
+                                        type="text",
+                                        debounce=True,
+                                        style={"width": "100%"},
+                                    ),
+                                ]
+                            ),
+                            html.Div(
+                                children=[
+                                    html.Label("Series (columns)", style={"fontWeight": "600"}),
+                                    dcc.Dropdown(
+                                        id={"type": "pane-columns", "index": i},
+                                        options=options,
+                                        value=p.get("columns", []),
+                                        multi=True,
+                                        placeholder="Select one or more columns…",
+                                    ),
+                                ]
+                            ),
+                        ],
+                    )
+                ],
+            )
+        )
+    return children
+
+
+@app.callback(
+    Output("panes-store", "data", allow_duplicate=True),
+    Input({"type": "pane-title", "index": ALL}, "value"),
+    Input({"type": "pane-columns", "index": ALL}, "value"),
+    State("panes-store", "data"),
+    prevent_initial_call=True,
+)
+def update_panes_store(titles: list[str], columns: list[list[str]], panes: list[dict[str, Any]] | None):
+    panes = list(panes or [])
+    if not panes:
+        return no_update
+
+    n = len(panes)
+    titles = (titles or [])[:n] + [None] * max(0, n - len(titles or []))
+    columns = (columns or [])[:n] + [None] * max(0, n - len(columns or []))
+
+    out: list[dict[str, Any]] = []
+    for i in range(n):
+        out.append(
+            {
+                "title": titles[i] if titles[i] else panes[i].get("title", f"Pane {i+1}"),
+                "columns": columns[i] if columns[i] is not None else panes[i].get("columns", []),
+            }
+        )
+    return out
+
+
+# ----------------------------------------------------------------------
+# Axis sync store
+# ----------------------------------------------------------------------
+@app.callback(
+    Output("axis-store", "data"),
+    Input("main-graph", "relayoutData"),
+    Input("reset-view", "n_clicks"),
+    State("axis-store", "data"),
+    prevent_initial_call=True,
+)
+def sync_axes(relayout: dict[str, Any] | None, _reset: int, axis: dict[str, Any] | None):
+    axis = axis or {"x": None, "y": {}}
+    trig = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+
+    if trig == "reset-view":
+        return {"x": None, "y": {}}
+
+    if not relayout:
+        return no_update
+
+    x_new, y_new = parse_relayout(relayout)
+    out = {"x": axis.get("x"), "y": dict(axis.get("y", {}) or {})}
+
+    # update x if relayout touched x
+    if "xaxis.autorange" in relayout or ("xaxis.range[0]" in relayout and "xaxis.range[1]" in relayout):
+        out["x"] = x_new
+
+    # update only y axes mentioned
+    for idx, yr in y_new.items():
+        out["y"][idx] = yr
+
+    return out
+
+
+# ----------------------------------------------------------------------
+# Main figure callback
+# ----------------------------------------------------------------------
+@app.callback(
+    Output("main-graph", "figure"),
+    Input("dataset-dropdown", "value"),
+    Input("datasets-store", "data"),
+    Input("panes-store", "data"),
+    Input("axis-store", "data"),
+)
+def update_figure(dataset: str, ds_store: dict[str, Any] | None, panes: list[dict[str, Any]] | None, axis: dict[str, Any] | None):
+    if not ds_store or dataset not in ds_store:
+        fig = go.Figure()
+        fig.update_layout(title="No data loaded")
+        return fig
+
+    df = pd.DataFrame(ds_store[dataset])
+    panes = panes or [{"title": "Pane 1", "columns": []}]
+    panes = sanitize_panes(panes, [c for c in df.columns if c != X_COL])
+
+    return build_figure(df, panes, axis)
+
+
 if __name__ == "__main__":
     app.run(debug=True)

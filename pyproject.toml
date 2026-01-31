@@ -16,6 +16,7 @@ dependencies = [
     "click>=8.3.1",
     "jsonschema>=4.26.0",
     "numpy>=2.2.6",
+    "pandas-stubs~=2.3.3",
     "pygfunction>=2.3.1",
     "scipy>=1.15.3",
     "secondarycoolantprops>=1.4",

@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from ghedesigner.constants import HOURS_IN_YEAR, SEC_IN_HR, TWO_PI
-from ghedesigner.enums import BHType, CentralLoopType, SimCompType
+from ghedesigner.enums import BHType, CentralLoopType, SimCompType, SourceSinkOpMode
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
@@ -17,8 +17,9 @@ from ghedesigner.utilities import combine_sts_lts, get_loads, load_input_file
 
 class BaseSimComp(ABC):
     def __init__(self):
-        self.name = str | None
-        self.comp_type = SimCompType | None
+        self.name: str | None = None
+        self.comp_type: SimCompType | None = None
+        self.matrix_size: int | None = None
         self.row_index: int | None = None
         self.downstream_index: int | None = None
 
@@ -28,6 +29,84 @@ class BaseSimComp(ABC):
 
     def calc_energy(self):
         pass
+
+
+class SourceSinkHeatExchanger(BaseSimComp):
+    MATRIX_ROWS = 1
+
+    def __init__(self, hx_id: str, hx_data: dict, tg: float, num_timesteps: int):
+        super().__init__()
+        self.name = hx_id
+        self.comp_type = SimCompType.SOURCE_SINK_HEAT_EXCHANGER
+        self.cp: float | None = None
+        self.num_timesteps = num_timesteps
+
+        self.effectiveness = hx_data["effectiveness"]
+        self.source_temp = hx_data["source_temperature"]
+        self.source_flow_rate = hx_data["source_flow_rate"]
+        self.cut_in_temp = hx_data["cut_in_temperature"]
+        self.cut_out_temp = hx_data["cut_out_temperature"]
+        self.t_in = np.full(self.num_timesteps, tg, dtype=float)
+        self.op_mode = SourceSinkOpMode.SOURCE if self.cut_out_temp > self.cut_in_temp else SourceSinkOpMode.SINK
+        self.was_running_last_time = False
+        self.operating = np.full(self.num_timesteps, False, dtype=bool)
+
+        # Validate hysteresis definition
+        if self.op_mode == SourceSinkOpMode.SOURCE and self.cut_in_temp >= self.cut_out_temp:
+            raise ValueError("SOURCE mode requires cut_in_temp < cut_out_temp")
+
+        if self.op_mode == SourceSinkOpMode.SINK and self.cut_in_temp <= self.cut_out_temp:
+            raise ValueError("SINK mode requires cut_in_temp > cut_out_temp")
+
+    def is_running(self, t_in: float) -> bool:
+        # Hysteresis assumes a proper band:
+        #  - SOURCE (heating): cut_in_temp < cut_out_temp
+        #  - SINK (cooling): cut_out_temp < cut_in_temp (on at higher temp, off at lower)
+        if self.op_mode == SourceSinkOpMode.SOURCE:
+            # Turn ON when cold
+            if t_in < self.cut_in_temp:
+                self.was_running_last_time = True
+                return True
+
+            # Stay ON until it rises above cut_out
+            if self.was_running_last_time and t_in <= self.cut_out_temp:
+                return True
+
+            self.was_running_last_time = False
+            return False
+
+        elif self.op_mode == SourceSinkOpMode.SINK:
+            # Turn ON when hot
+            if t_in > self.cut_in_temp:
+                self.was_running_last_time = True
+                return True
+
+            # Stay ON until it drops below cut_out
+            if self.was_running_last_time and t_in >= self.cut_out_temp:
+                return True
+
+            self.was_running_last_time = False
+            return False
+
+        self.was_running_last_time = False
+        return False
+
+    def generate_matrix(self, m_loop: float, idx_timestep: int):
+        t_in = self.t_in[idx_timestep - 1]
+        is_running = self.is_running(t_in)
+        self.operating[idx_timestep] = is_running
+        m_flow_source = self.source_flow_rate if is_running else 0
+        c_source = m_flow_source * self.cp
+        c_loop = m_loop * self.cp
+        c_min = min(c_source, c_loop)
+        eff_c_min = self.effectiveness * c_min
+        row = np.zeros(self.matrix_size, dtype=float)
+
+        # (C_loop - εCmin)*T_d,in - C_loop*T_d,out = -(εCmin)*T_s,in
+        row[self.row_index] = c_loop - eff_c_min
+        row[self.downstream_index] = -c_loop
+        rhs = -eff_c_min * self.source_temp
+        return [row], [rhs]
 
 
 class GHX(BaseSimComp):
@@ -398,7 +477,7 @@ class Building(BaseSimComp):
         """Calculate energy consumption of the heat pump system."""
 
         if self.cooling_exists:
-            ratio_clg = self.hp_clg.a_htg * self.t_in**2 + self.hp_clg.b_htg * self.t_in + self.hp_clg.c_htg
+            ratio_clg = self.hp_clg.a_clg * self.t_in**2 + self.hp_clg.b_clg * self.t_in + self.hp_clg.c_clg
             self.power_hp_clg = np.abs(self.clg_vals * (ratio_clg - 1))
 
         if self.heating_exists:
@@ -462,8 +541,9 @@ class GHEHPSystem:
         fluid_data = json_data["fluid"]
         topology_data = json_data["topology"]
         heat_pump_data = json_data["heat_pump"]
-        building_data = json_data["building"]
-        ghe_data = json_data["ground_heat_exchanger"]
+        building_data = json_data.get("building", {})
+        ghe_data = json_data.get("ground_heat_exchanger", {})
+        hx_data = json_data.get("source_sink_heat_exchanger", {})
 
         self.fluid = Fluid(
             fluid_name=fluid_data["fluid_name"],
@@ -485,6 +565,11 @@ class GHEHPSystem:
             for c in topology_data
             if SimCompType[c["type"].upper()] == SimCompType.GROUND_HEAT_EXCHANGER
         ]
+        hx_names = [
+            c["name"].upper()
+            for c in topology_data
+            if SimCompType[c["type"].upper()] == SimCompType.SOURCE_SINK_HEAT_EXCHANGER
+        ]
 
         # get needed buildings
         buildings = []
@@ -503,6 +588,14 @@ class GHEHPSystem:
 
         self.num_buildings = len(buildings)
 
+        heat_exchangers = []
+        for this_hx_id, this_hx_data in hx_data.items():
+            if this_hx_id.upper() in hx_names:
+                this_hx = SourceSinkHeatExchanger(this_hx_id, this_hx_data, tg, self.num_timesteps)
+                heat_exchangers.append(this_hx)
+
+        self.num_heat_exchangers = len(heat_exchangers)
+
         cp = 0.0
 
         ground_heat_exchangers = []
@@ -514,7 +607,10 @@ class GHEHPSystem:
 
         self.nbh_total = sum(x.nbh for x in ground_heat_exchangers)
         self.num_ghx = len(ground_heat_exchangers)
-        self.matrix_size = GHX.MATRIX_ROWS * self.num_ghx + self.num_buildings * Building.MATRIX_ROWS
+        self.matrix_size = np.dot(
+            [GHX.MATRIX_ROWS, Building.MATRIX_ROWS, SourceSinkHeatExchanger.MATRIX_ROWS],
+            [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
+        )
 
         self.m_flow_loop = np.zeros(self.num_timesteps)
         self.pump_power_loop = np.zeros(self.num_timesteps)
@@ -527,18 +623,23 @@ class GHEHPSystem:
                 next((obj for obj in ground_heat_exchangers if obj.name.upper() == name.upper()), None)
             )
 
+        def get_hx(name: str):
+            return copy.deepcopy(next((obj for obj in heat_exchangers if obj.name.upper() == name.upper()), None))
+
         for v in topology_data:
             comp_type = v["type"]
             if SimCompType[comp_type.upper()] == SimCompType.BUILDING:
                 self.components.append(get_bldg(v["name"]))
             elif SimCompType[comp_type.upper()] == SimCompType.GROUND_HEAT_EXCHANGER:
                 self.components.append(get_ghx(v["name"]))
+            elif SimCompType[comp_type.upper()] == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
+                self.components.append(get_hx(v["name"]))
 
         for this_comp in self.components:
             this_comp.matrix_size = self.matrix_size
             if isinstance(this_comp, GHX):
                 this_comp.split_ratio = this_comp.nbh / self.nbh_total
-            elif isinstance(this_comp, Building):
+            elif isinstance(this_comp, (Building, SourceSinkHeatExchanger)):
                 this_comp.cp = cp
 
         # Assigning row_indices
@@ -587,6 +688,8 @@ class GHEHPSystem:
                     this_comp.t_mean[idx_timestep] = x_vector[row_index + 1]
                     this_comp.q_ghe[idx_timestep] = x_vector[row_index + 2]
                     this_comp.t_out[idx_timestep] = x_vector[row_index + 3]
+                elif this_comp.comp_type == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
+                    this_comp.t_in[idx_timestep] = x_vector[row_index]
 
     def calc_energy(self):
         self.pump_power_loop = (
@@ -622,14 +725,26 @@ class GHEHPSystem:
                 output_data[f"{this_comp.name}:P_hp_clg [W]"] = this_comp.power_hp_clg
                 output_data[f"{this_comp.name}:P_hp_tot [W]"] = this_comp.power_hp_tot
                 output_data[f"{this_comp.name}:P_pump [W]"] = this_comp.power_circ_pump
+                q_src_clg = this_comp.clg_vals + this_comp.power_hp_clg
+                q_src_htg = this_comp.htg_vals - this_comp.power_hp_htg
+                output_data[f"{this_comp.name}:Q_src_clg [W]"] = q_src_clg
+                output_data[f"{this_comp.name}:Q_src_htg [W]"] = q_src_htg
+                output_data[f"{this_comp.name}:Q_src_het [W]"] = q_src_htg - q_src_clg
+
 
         for this_comp in self.components:
             if isinstance(this_comp, GHX):
                 output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
                 output_data[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean
                 output_data[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe
+                output_data[f"{this_comp.name}:Q_tot [W]"] = this_comp.q_ghe * this_comp.nbh * this_comp.height
                 output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
                 network_q_net_ghe_tot += this_comp.q_ghe * this_comp.nbh * this_comp.height
+
+        for this_comp in self.components:
+            if isinstance(this_comp, SourceSinkHeatExchanger):
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
+                output_data[f"{this_comp.name}:Operating"] = this_comp.operating
 
         output_data["Network:M_flow [kg/s]"] = self.m_flow_loop
         output_data["Network:P_pump [W]"] = self.pump_power_loop
