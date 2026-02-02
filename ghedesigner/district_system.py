@@ -425,7 +425,7 @@ class Building(BaseSimComp):
         hp_capacity = cap_htg if q_net_i > 0 else cap_clg
 
         # compute mass flow rates
-        mass_flow_bldg = np.abs(q_net_i) / hp_capacity * m_single_hp
+        mass_flow_bldg = max(np.abs(q_net_i) / hp_capacity * m_single_hp, m_single_hp)
 
         # save for later
         self.m_flow[idx_timestep] = mass_flow_bldg
@@ -558,20 +558,22 @@ class GHEHPSystem:
         self.sim_years = json_data["simulation_control"]["simulation_years"]
         self.num_timesteps = self.sim_years * HOURS_IN_YEAR
 
-        # get component names we need to build
-        building_names = [
-            c["name"].upper() for c in topology_data if SimCompType[c["type"].upper()] == SimCompType.BUILDING
-        ]
-        ghx_names = [
-            c["name"].upper()
-            for c in topology_data
-            if SimCompType[c["type"].upper()] == SimCompType.GROUND_HEAT_EXCHANGER
-        ]
-        hx_names = [
-            c["name"].upper()
-            for c in topology_data
-            if SimCompType[c["type"].upper()] == SimCompType.SOURCE_SINK_HEAT_EXCHANGER
-        ]
+        # get component names we need to build, validate they exist and are referenced correctly
+        def get_comp_names(topology: dict, comp_list: dict, comp_type_to_check: SimCompType) -> list[str]:
+            comp_names = [c["name"].upper() for c in topology if SimCompType[c["type"].upper()] == comp_type_to_check]
+
+            avail_comps = {k.upper() for k in comp_list}
+            for name in comp_names:
+                if name not in avail_comps:
+                    c_type_name = comp_type_to_check.name
+                    msg = f"{c_type_name} name '{name}' in 'topology' not found in key '{c_type_name}'"
+                    raise ValueError(msg)
+
+            return comp_names
+
+        building_names = get_comp_names(topology_data, building_data, SimCompType.BUILDING)
+        ghx_names = get_comp_names(topology_data, ghe_data, SimCompType.GROUND_HEAT_EXCHANGER)
+        hx_names = get_comp_names(topology_data, hx_data, SimCompType.SOURCE_SINK_HEAT_EXCHANGER)
 
         # get needed buildings
         buildings = []

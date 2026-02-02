@@ -1,0 +1,116 @@
+{
+  "version": 2,
+  "topology": [
+    {
+      "type": "building",
+      "name": "building1_htg_clg"
+    },
+    {
+      "type": "ground_heat_exchanger",
+      "name": "ghe1"
+    },
+    {
+      "type": "source_sink_heat_exchanger",
+      "name": "hx1"
+    }
+  ],
+  "central_loop": {
+    "pipe_configuration": "ONEPIPE",
+    "flow_factor": 1.5,
+    "pump_efficiency": 0.5,
+    "loop_length": 200,
+    "design_pressure_loss": 200
+  },
+  "fluid": {
+    "fluid_name": "PROPYLENEGLYCOL",
+    "concentration_percent": 20,
+    "temperature": 20
+  },
+  "source_sink_heat_exchanger": {
+    "hx1": {
+      "effectiveness": 0.7,
+      "source_temperature": 10,
+      "source_flow_rate": 1,
+      "cut_in_temperature": 40,
+      "cut_out_temperature": 35
+    }
+  },
+  "heat_pump": {
+    "hp1": {
+      "cooling_performance": {
+        "a": 0.0001,
+        "b": 0.00112,
+        "c": 1.13,
+        "c1": -0.393,
+        "c2": -30.3,
+        "c3": 6777.0,
+        "design_cap": 4396.0
+      },
+      "design_flow_rate": 0.296,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
+      "heating_performance": {
+        "a": -7.13e-5,
+        "b": 0.00534,
+        "c": 0.734,
+        "c1": -0.124,
+        "c2": 112.0,
+        "c3": 4114.0,
+        "design_cap": 4140.0
+      }
+    }
+  },
+  "building": {
+    "building1_htg_clg": {
+      "heating_load": {
+        "column_name": "B1Z1_HPHtgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "cooling_load": {
+        "column_name": "B1Z1_HPClgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp1"
+      }
+    }
+  },
+  "ground_heat_exchanger": {
+    "ghe1": {
+      "flow_rate": 0.5,
+      "flow_type": "BOREHOLE",
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 20
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "pre_designed": {
+        "arrangement": "RECTANGLE",
+        "H": 100,
+        "spacing_in_x_dimension": 5,
+        "spacing_in_y_dimension": 5,
+        "boreholes_in_x_dimension": 12,
+        "boreholes_in_y_dimension": 12
+      }
+    }
+  },
+  "simulation_control": {
+    "simulation_years": 1
+  }
+}
