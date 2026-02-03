@@ -574,9 +574,10 @@ class HybridLoadV2:
                 # Place peaks within the month
                 cursor = fmh  # current hour position
                 for center, _peak_type, peak_load, duration in events:
-                    # Peak centered on its temperature hour
-                    peak_first_hour = fmh + center - duration / 2.0
-                    peak_last_hour = peak_first_hour + duration
+                    # Peak load ends at the peak temperature hour
+                    # (duration extends backward in time from the temperature peak)
+                    peak_last_hour = fmh + center
+                    peak_first_hour = peak_last_hour - duration
 
                     # Clamp to month boundaries
                     if peak_first_hour < fmh:
