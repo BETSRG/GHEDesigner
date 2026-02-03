@@ -646,5 +646,116 @@ class TestEdgeCase2_PeakSpanningMonthBoundary(unittest.TestCase):
 class TestEdgeCase3_TwoPeaksCollideInMonth(unittest.TestCase):
     pass
 
+
+class TestMultiYearSimulation(unittest.TestCase):
+    """Tests for multi-year simulation and leap year handling."""
+
+    def _make_full_v2(self, loads, start_month=1, end_month=12):
+        """Build a complete HybridLoadV2 with mock BHE."""
+        bhe = _make_mock_bhe()
+        return HybridLoadV2(loads, bhe, bhe, start_month, end_month)
+
+    def test_multi_year_construction(self):
+        """HybridLoadV2 should construct successfully with end_month > 12."""
+        loads = [500.0] * 8760
+        obj = self._make_full_v2(loads, start_month=1, end_month=240)
+        self.assertGreater(len(obj.load), 0)
+        self.assertGreater(len(obj.hour), 0)
+        self.assertEqual(len(obj.load), len(obj.hour))
+
+    def test_multi_year_years_list(self):
+        """years list should have one entry per simulated year."""
+        loads = [500.0] * 8760
+        obj = self._make_full_v2(loads, start_month=1, end_month=240)
+        self.assertEqual(len(obj.years), 20)
+
+    def test_single_year_years_list(self):
+        """Single-year simulation should have exactly one year."""
+        loads = [500.0] * 8760
+        obj = self._make_full_v2(loads, start_month=1, end_month=12)
+        self.assertEqual(len(obj.years), 1)
+
+    def test_multi_year_hour_monotonic(self):
+        """Hour array should be strictly monotonic for multi-year simulation."""
+        loads = [1000.0 * np.sin(2 * np.pi * h / 8760) for h in range(8760)]
+        obj = self._make_full_v2(loads, start_month=1, end_month=240)
+        for i in range(2, len(obj.hour)):
+            self.assertGreater(
+                obj.hour[i], obj.hour[i - 1],
+                f"Hour array not monotonic at index {i}: {obj.hour[i]} <= {obj.hour[i-1]}"
+            )
+
+    def test_multi_year_final_hour(self):
+        """Last hour should cover 20 years of hours."""
+        loads = [500.0] * 8760
+        obj = self._make_full_v2(loads, start_month=1, end_month=240)
+        # 20 years ~= 20 * 8760 = 175200 hours (varies with leap years)
+        self.assertGreater(obj.hour[-1], 175000)
+        self.assertLess(obj.hour[-1], 176000)
+
+    def test_multi_year_load_hour_same_length(self):
+        """load and hour arrays must be the same length for multi-year."""
+        loads = [1000.0 * np.sin(2 * np.pi * h / 8760) for h in range(8760)]
+        obj = self._make_full_v2(loads, start_month=1, end_month=240)
+        self.assertEqual(len(obj.load), len(obj.hour))
+        self.assertEqual(len(obj.step_func_load), len(obj.hour))
+
+    def test_leap_year_february_hours(self):
+        """Leap year February should have 696 hours (29 days), not 672."""
+        from calendar import monthrange
+        loads = [500.0] * 8760
+        obj = self._make_full_v2(loads, start_month=1, end_month=48)  # 4 years
+
+        # Base year is 2026. Year 3 (index 2) is 2028, which is a leap year.
+        # Month 26 = February of year 3 (2028).
+        self.assertEqual(obj.years[2], 2028)
+        self.assertEqual(monthrange(2028, 2)[1], 29)
+
+        # Find the hour span for month 26 (Feb of year 3)
+        # by looking at the hour array boundaries.
+        # The total hours in the first 25 months should differ from the
+        # total hours in the first 26 months by 29*24 = 696.
+        # We verify this indirectly: the total simulation hours for 4 years
+        # should include one leap year (2028).
+        expected_hours = 0
+        for y in range(4):
+            year = 2026 + y
+            for m in range(1, 13):
+                expected_hours += monthrange(year, m)[1] * HRS_IN_DAY
+        self.assertAlmostEqual(obj.hour[-1], expected_hours, delta=1.0)
+
+    def test_leap_year_total_hours_differ_from_non_leap(self):
+        """A simulation spanning a leap year should have 24 more hours than
+        the same span without a leap year."""
+        loads = [500.0] * 8760
+
+        # 2 years starting 2026: 2026 (non-leap) + 2027 (non-leap)
+        obj_no_leap = self._make_full_v2(loads, start_month=1, end_month=24)
+
+        # 2 years starting 2027: 2027 (non-leap) + 2028 (leap)
+        # We can't change the base year directly, but we can check 3 years
+        # and verify the 3rd year adds 8784 hours instead of 8760.
+        obj_with_leap = self._make_full_v2(loads, start_month=1, end_month=36)
+
+        # Years 1-2 (2026-2027): no leap years, ~17520 hours
+        hours_first_two = obj_no_leap.hour[-1]
+        # Year 3 (2028): leap year, should add 8784 hours
+        hours_three = obj_with_leap.hour[-1]
+        year_3_hours = hours_three - hours_first_two
+        self.assertEqual(year_3_hours, 366 * HRS_IN_DAY)
+
+    def test_step_func_load_values_multi_year(self):
+        """step_func_load[i] should equal load[i] - load[i-1] for multi-year."""
+        loads = [1000.0 * np.sin(2 * np.pi * h / 8760) for h in range(8760)]
+        obj = self._make_full_v2(loads, start_month=1, end_month=60)
+        self.assertAlmostEqual(obj.step_func_load[0], 0.0)
+        for i in range(1, len(obj.step_func_load)):
+            expected = obj.load[i] - obj.load[i - 1]
+            self.assertAlmostEqual(
+                obj.step_func_load[i], expected, places=10,
+                msg=f"step_func_load mismatch at index {i}"
+            )
+
+
 if __name__ == "__main__":
     unittest.main()

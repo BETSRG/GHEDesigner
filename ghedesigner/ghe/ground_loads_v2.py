@@ -37,12 +37,15 @@ class HybridLoadV2:
         self.start_month = start_month
         self.end_month = end_month
 
-        self.years = [2019]
+        # Compute years for multi-year simulation and leap year support
+        num_years = max(1, (end_month + 11) // 12)
+        base_year = 2026 #TODO - in the input file, the user should be able to specify what year, that way if using multiyear loads, leap years are correctly accounted for)
+        self.years = [base_year + y for y in range(num_years)]
 
-        # Days in each month (index 0 is placeholder)
+        # Days in each month for the first year only (index 0 is placeholder).
+        # Steps 1-6 operate on a single year of hourly data (8760 or 8784 hours).
         self.days_in_month = [0]
-        for year in self.years:
-            self.days_in_month.extend([monthrange(year, i)[1] for i in range(1, 13)])
+        self.days_in_month.extend([monthrange(self.years[0], i)[1] for i in range(1, 13)])
 
         # --- Step 1: Normalize the loads ---
         self.normalized_loads = self.normalize_loads(self.raw_loads)
@@ -476,40 +479,40 @@ class HybridLoadV2:
 
         Non-peak months get a single time step at the net average load.
         Peak months get time steps for: non-peak, peak(s), non-peak.
-        """
-        from ghedesigner.ghe.ground_loads import first_month_hour, last_month_hour, monthdays
 
-        # Compute peak hour within month for each month (hours from month start)
-        month_hour_offset = [0] * 14
+        Properly handles multi-year simulations and leap years by
+        precomputing month boundaries using the actual calendar year
+        for each simulated month.
+        """
+        # Peak hour offsets within their BASE calendar month (0-based from
+        # month start). These come from the single-year hourly simulation
+        # (steps 1-6) and are reused for every repetition of that month.
+        month_hour_offset_base = [0] * 14
         for m in range(1, 14):
             if m <= 12:
-                month_hour_offset[m] = sum(
+                month_hour_offset_base[m] = sum(
                     HRS_IN_DAY * self.days_in_month[j] for j in range(1, m)
                 )
             else:
-                month_hour_offset[13] = sum(
+                month_hour_offset_base[13] = sum(
                     HRS_IN_DAY * self.days_in_month[j] for j in range(1, 13)
                 )
 
-        # Peak hour offsets within their month (0-based from month start)
         peak_cl_hour_in_month = [0] * 13
         peak_hl_hour_in_month = [0] * 13
         for m in range(1, 13):
             if self.monthly_max_dt_hour[m] > 0:
-                peak_cl_hour_in_month[m] = self.monthly_max_dt_hour[m] - month_hour_offset[m]
+                peak_cl_hour_in_month[m] = self.monthly_max_dt_hour[m] - month_hour_offset_base[m]
             if self.monthly_min_dt_hour[m] > 0:
-                peak_hl_hour_in_month[m] = self.monthly_min_dt_hour[m] - month_hour_offset[m]
+                peak_hl_hour_in_month[m] = self.monthly_min_dt_hour[m] - month_hour_offset_base[m]
 
-        # Sets for quick lookup
         cooling_peak_set = set(self.peak_cooling_months)
         heating_peak_set = set(self.peak_heating_months)
 
         # Extend monthly data arrays for multi-year simulation
         for i in range(self.start_month, self.end_month + 1):
             if i > 12:
-                mi = i % 12
-                if mi == 0:
-                    mi = 12
+                mi = ((i - 1) % 12) + 1
                 self.monthly_cl.append(self.monthly_cl[mi])
                 self.monthly_hl.append(self.monthly_hl[mi])
                 self.monthly_peak_cl.append(self.monthly_peak_cl[mi])
@@ -517,21 +520,37 @@ class HybridLoadV2:
                 self.monthly_peak_cl_duration.append(self.monthly_peak_cl_duration[mi])
                 self.monthly_peak_hl_duration.append(self.monthly_peak_hl_duration[mi])
 
+        # Precompute month boundaries for all simulated months,
+        # using the actual calendar year for leap year correctness.
+        total_months = self.end_month
+        month_num_hours = [0] * (total_months + 1)  # index 0 unused
+        for i in range(1, total_months + 1):
+            year_idx = (i - 1) // 12
+            cal_month = ((i - 1) % 12) + 1
+            year = self.years[year_idx] if year_idx < len(self.years) else self.years[-1]
+            month_num_hours[i] = monthrange(year, cal_month)[1] * HRS_IN_DAY
+
+        # Cumulative hour boundaries (fmh is 1-indexed to match existing convention)
+        fmh_arr = [0] * (total_months + 1)
+        lmh_arr = [0] * (total_months + 1)
+        cumulative = 0
+        for i in range(1, total_months + 1):
+            fmh_arr[i] = cumulative + 1
+            cumulative += month_num_hours[i]
+            lmh_arr[i] = cumulative
+
         # Start arrays with zero load before simulation
         self.load = np.append(self.load, 0)
-        last_zero_hour = first_month_hour(self.start_month, self.years) - 1
+        last_zero_hour = fmh_arr[self.start_month] - 1
         self.hour = np.append(self.hour, last_zero_hour)
 
         for i in range(self.start_month, self.end_month + 1):
-            # Map to base month (1-12) for peak type lookup
-            mi = i % 12 if i > 12 else i
-            if mi == 0:
-                mi = 12
+            # Map to base calendar month (1-12) for peak type lookup
+            mi = ((i - 1) % 12) + 1
 
-            current_year = self.years[0]
-            month_hours = monthdays(i, current_year) * HRS_IN_DAY
-            fmh = first_month_hour(i, self.years)
-            lmh = last_month_hour(i, self.years)
+            month_hours = month_num_hours[i]
+            fmh = fmh_arr[i]
+            lmh = lmh_arr[i]
 
             has_cooling_peak = mi in cooling_peak_set
             has_heating_peak = mi in heating_peak_set
