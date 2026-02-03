@@ -756,6 +756,61 @@ class TestMultiYearSimulation(unittest.TestCase):
                 msg=f"step_func_load mismatch at index {i}"
             )
 
+    def test_multiyear_loading_example_csv(self):
+        """Multi-year simulation using first year of Multiyear_Loading_Example.csv.
+
+        The CSV contains 35064 hourly values spanning 4 years (2026-2029),
+        including leap year 2028. This test uses the first year (8760 hours)
+        as the repeating load profile and runs a 4-year (48-month) simulation.
+        """
+        from pathlib import Path
+        csv_path = Path(__file__).parent / "test_data" / "Multiyear_Loading_Example.csv"
+        if not csv_path.exists():
+            self.skipTest("Multiyear_Loading_Example.csv not found")
+
+        raw_lines = csv_path.read_text().split("\n")
+        all_loads = [float(x) for x in raw_lines[1:] if x.strip() != ""]
+        self.assertEqual(len(all_loads), 35064, "Expected 35064 hourly values (4 years)")
+
+        # Use first year as the repeating load profile
+        first_year_loads = all_loads[:8760]
+
+        obj = self._make_full_v2(first_year_loads, start_month=1, end_month=48)
+
+        # Years list should cover 4 years including leap year 2028
+        self.assertEqual(len(obj.years), 4)
+        self.assertIn(2028, obj.years)
+
+        # Arrays should be well-formed
+        self.assertEqual(len(obj.load), len(obj.hour))
+        self.assertEqual(len(obj.step_func_load), len(obj.hour))
+
+        # Hour array should be strictly monotonic
+        for i in range(2, len(obj.hour)):
+            self.assertGreater(
+                obj.hour[i], obj.hour[i - 1],
+                f"Hour array not monotonic at index {i}"
+            )
+
+        # Final hour should account for leap year 2028
+        # 2026: 8760, 2027: 8760, 2028: 8784, 2029: 8760 = 35064 total
+        from calendar import monthrange
+        expected_hours = 0
+        for year in obj.years:
+            for m in range(1, 13):
+                expected_hours += monthrange(year, m)[1] * HRS_IN_DAY
+        self.assertAlmostEqual(obj.hour[-1], expected_hours, delta=1.0)
+
+        # Peak months should be identified
+        self.assertEqual(len(obj.peak_cooling_months), HybridLoadV2.NUM_PEAK_MONTHS)
+        self.assertEqual(len(obj.peak_heating_months), HybridLoadV2.NUM_PEAK_MONTHS)
+
+        # All peak durations should be positive
+        for m in obj.peak_cooling_months:
+            self.assertGreater(obj.monthly_peak_cl_duration[m], 0.0)
+        for m in obj.peak_heating_months:
+            self.assertGreater(obj.monthly_peak_hl_duration[m], 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

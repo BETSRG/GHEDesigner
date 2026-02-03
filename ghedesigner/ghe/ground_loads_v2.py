@@ -611,6 +611,13 @@ class HybridLoadV2:
                         peak_last_hour = lmh
                         peak_first_hour = lmh - duration
 
+                    # Prevent overlap with previous peak event
+                    if peak_first_hour < cursor:
+                        peak_first_hour = cursor
+                        peak_last_hour = cursor + duration
+                        if peak_last_hour > lmh:
+                            peak_last_hour = lmh
+
                     # Non-peak period before this peak
                     if peak_first_hour > cursor:
                         self.load = np.append(self.load, month_rate)
