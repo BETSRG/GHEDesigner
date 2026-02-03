@@ -2,7 +2,7 @@ from calendar import monthrange
 
 import numpy as np
 
-from ghedesigner.constants import HRS_IN_DAY, SEC_IN_HR, TWO_PI
+from ghedesigner.constants import HRS_IN_DAY, MONTHS_IN_YEAR, SEC_IN_HR, TWO_PI
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 
 
@@ -38,8 +38,10 @@ class HybridLoadV2:
         self.end_month = end_month
 
         # Compute years for multi-year simulation and leap year support
-        num_years = max(1, (end_month + 11) // 12)
-        base_year = 2026 #TODO - in the input file, the user should be able to specify what year, that way if using multiyear loads, leap years are correctly accounted for)
+        num_years = max(1, (end_month + 11) // MONTHS_IN_YEAR)
+        # TODO - in the input file, the user should be able to specify what year,
+        #  that way if using multiyear loads, leap years are correctly accounted for)
+        base_year = 2026
         self.years = [base_year + y for y in range(num_years)]
 
         # Days in each month for the first year only (index 0 is placeholder).
@@ -129,7 +131,7 @@ class HybridLoadV2:
         hours_in_previous_months = 0
         for i in range(1, num_months):
             hours_in_month = HRS_IN_DAY * self.days_in_month[i]
-            month_loads = self.raw_loads[hours_in_previous_months:hours_in_previous_months + hours_in_month]
+            month_loads = self.raw_loads[hours_in_previous_months : hours_in_previous_months + hours_in_month]
 
             # Split into rejection (negative raw = cooling) and extraction (positive raw = heating)
             month_rejection = [abs(x) / 1000.0 if x < 0 else 0.0 for x in month_loads]
@@ -279,9 +281,7 @@ class HybridLoadV2:
         # monthly_hour_offset[1] = 0 (January starts at index 0)
         monthly_hour_offset = [0] * 14
         for m in range(1, 13):
-            monthly_hour_offset[m + 1] = (
-                monthly_hour_offset[m] + HRS_IN_DAY * self.days_in_month[m]
-            )
+            monthly_hour_offset[m + 1] = monthly_hour_offset[m] + HRS_IN_DAY * self.days_in_month[m]
         # Shift so month 1 starts at 0
         # monthly_hour_offset[1] = 0, [2] = 744 (hours in Jan), etc.
         # But currently [0]=0, [1]=0, [2]=Jan_hours... Let me fix the indexing.
@@ -289,14 +289,10 @@ class HybridLoadV2:
         # offset[1] = 0, offset[2] = hours_in_jan, ..., offset[13] = 8760
         month_hour_offset = [0] * 14
         for m in range(1, 14):
-            if m <= 12:
-                month_hour_offset[m] = sum(
-                    HRS_IN_DAY * self.days_in_month[j] for j in range(1, m)
-                )
+            if m <= MONTHS_IN_YEAR:
+                month_hour_offset[m] = sum(HRS_IN_DAY * self.days_in_month[j] for j in range(1, m))
             else:
-                month_hour_offset[13] = sum(
-                    HRS_IN_DAY * self.days_in_month[j] for j in range(1, 13)
-                )
+                month_hour_offset[13] = sum(HRS_IN_DAY * self.days_in_month[j] for j in range(1, 13))
 
         # Monthly net average loads (sim convention, positive = rejection)
         monthly_net_avg_sim = [0.0] * 13
@@ -400,7 +396,7 @@ class HybridLoadV2:
         peak_hour_in_month = peak_hour_0idx - m_start_offset + 1  # count of hours from month start to peak
 
         # Sum of hourly sim-convention loads from month start to peak hour (inclusive)
-        hourly_sum_to_peak = float(np.sum(sim_loads[m_start_offset:peak_hour_0idx + 1]))
+        hourly_sum_to_peak = float(np.sum(sim_loads[m_start_offset : peak_hour_0idx + 1]))
 
         prev_predicted_dt = None
         prev_d = 0
@@ -411,11 +407,7 @@ class HybridLoadV2:
             # Q_non_peak = (sum_hourly - d * Q_peak) / non_peak_hours
             non_peak_hours = peak_hour_in_month - d
             peak_energy = d * q_peak
-
-            if non_peak_hours > 0:
-                q_non_peak = (hourly_sum_to_peak - peak_energy) / non_peak_hours
-            else:
-                q_non_peak = 0.0
+            q_non_peak = (hourly_sum_to_peak - peak_energy) / non_peak_hours if non_peak_hours > 0 else 0.0
 
             # Build hybrid load sequence: [0, prev_months..., non_peak, peak]
             # Times are in hours (matching the hourly simulation's time axis)
@@ -439,23 +431,16 @@ class HybridLoadV2:
             # Simulate this hybrid sequence
             hour_arr = np.array(hours_list)
             load_arr = np.array(loads_list)
-            delta_t = self.simulate_hourly(
-                hour_arr, load_arr, g_sts, resist_bh, two_pi_k, ts
-            )
+            delta_t = self.simulate_hourly(hour_arr, load_arr, g_sts, resist_bh, two_pi_k, ts)
             predicted_dt = delta_t[-1]
 
             # Check if predicted peak temp has reached/exceeded the target
-            if is_cooling:
-                exceeded = predicted_dt >= target_dt
-            else:
-                exceeded = predicted_dt <= target_dt
+            exceeded = predicted_dt >= target_dt if is_cooling else predicted_dt <= target_dt
 
             if exceeded:
                 # Interpolate between previous and current duration
                 if prev_predicted_dt is not None and prev_d > 0:
-                    frac = (target_dt - prev_predicted_dt) / (
-                        predicted_dt - prev_predicted_dt
-                    )
+                    frac = (target_dt - prev_predicted_dt) / (predicted_dt - prev_predicted_dt)
                     return prev_d + frac
                 else:
                     return float(d)
@@ -489,14 +474,10 @@ class HybridLoadV2:
         # (steps 1-6) and are reused for every repetition of that month.
         month_hour_offset_base = [0] * 14
         for m in range(1, 14):
-            if m <= 12:
-                month_hour_offset_base[m] = sum(
-                    HRS_IN_DAY * self.days_in_month[j] for j in range(1, m)
-                )
+            if m <= MONTHS_IN_YEAR:
+                month_hour_offset_base[m] = sum(HRS_IN_DAY * self.days_in_month[j] for j in range(1, m))
             else:
-                month_hour_offset_base[13] = sum(
-                    HRS_IN_DAY * self.days_in_month[j] for j in range(1, 13)
-                )
+                month_hour_offset_base[13] = sum(HRS_IN_DAY * self.days_in_month[j] for j in range(1, 13))
 
         peak_cl_hour_in_month = [0] * 13
         peak_hl_hour_in_month = [0] * 13
@@ -511,8 +492,8 @@ class HybridLoadV2:
 
         # Extend monthly data arrays for multi-year simulation
         for i in range(self.start_month, self.end_month + 1):
-            if i > 12:
-                mi = ((i - 1) % 12) + 1
+            if i > MONTHS_IN_YEAR:
+                mi = ((i - 1) % MONTHS_IN_YEAR) + 1
                 self.monthly_cl.append(self.monthly_cl[mi])
                 self.monthly_hl.append(self.monthly_hl[mi])
                 self.monthly_peak_cl.append(self.monthly_peak_cl[mi])
@@ -525,8 +506,8 @@ class HybridLoadV2:
         total_months = self.end_month
         month_num_hours = [0] * (total_months + 1)  # index 0 unused
         for i in range(1, total_months + 1):
-            year_idx = (i - 1) // 12
-            cal_month = ((i - 1) % 12) + 1
+            year_idx = (i - 1) // MONTHS_IN_YEAR
+            cal_month = ((i - 1) % MONTHS_IN_YEAR) + 1
             year = self.years[year_idx] if year_idx < len(self.years) else self.years[-1]
             month_num_hours[i] = monthrange(year, cal_month)[1] * HRS_IN_DAY
 
@@ -546,7 +527,7 @@ class HybridLoadV2:
 
         for i in range(self.start_month, self.end_month + 1):
             # Map to base calendar month (1-12) for peak type lookup
-            mi = ((i - 1) % 12) + 1
+            mi = ((i - 1) % MONTHS_IN_YEAR) + 1
 
             month_hours = month_num_hours[i]
             fmh = fmh_arr[i]
@@ -557,10 +538,7 @@ class HybridLoadV2:
 
             if not has_cooling_peak and not has_heating_peak:
                 # Non-peak month: single time step at net average
-                if month_hours > 0:
-                    month_rate = (self.monthly_cl[i] - self.monthly_hl[i]) / month_hours
-                else:
-                    month_rate = 0.0
+                month_rate = (self.monthly_cl[i] - self.monthly_hl[i]) / month_hours if month_hours > 0 else 0.0
                 self.load = np.append(self.load, month_rate)
                 self.hour = np.append(self.hour, lmh)
             else:
@@ -576,13 +554,10 @@ class HybridLoadV2:
                 non_peak_hours = month_hours - d_cl - d_hl
                 month_net_energy = self.monthly_cl[i] - self.monthly_hl[i]
 
-                if non_peak_hours > 0:
-                    # Eq. 4: adjust non-peak load for energy conservation
-                    month_rate = (
-                        month_net_energy - peak_cl_energy + peak_hl_energy
-                    ) / non_peak_hours
-                else:
-                    month_rate = 0.0
+                # Eq. 4: adjust non-peak load for energy conservation
+                month_rate = (
+                    (month_net_energy - peak_cl_energy + peak_hl_energy) / non_peak_hours if non_peak_hours > 0 else 0.0
+                )
 
                 # Build peak events: (center_hour_from_month_start, type, load, duration)
                 events = []
@@ -615,8 +590,7 @@ class HybridLoadV2:
                     if peak_first_hour < cursor:
                         peak_first_hour = cursor
                         peak_last_hour = cursor + duration
-                        if peak_last_hour > lmh:
-                            peak_last_hour = lmh
+                        peak_last_hour = min(peak_last_hour, lmh)
 
                     # Non-peak period before this peak
                     if peak_first_hour > cursor:
