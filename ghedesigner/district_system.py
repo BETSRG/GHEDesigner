@@ -16,7 +16,7 @@ from ghedesigner.utilities import combine_sts_lts, get_loads, load_input_file
 
 
 class BaseSimComp(ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         self.name: str | None = None
         self.comp_type: SimCompType | None = None
         self.matrix_size: int | None = None
@@ -24,17 +24,17 @@ class BaseSimComp(ABC):
         self.downstream_index: int | None = None
 
     @abstractmethod
-    def generate_matrix(self, m_loop: float, idx_timestep: int):
+    def generate_matrix(self, m_loop: float, idx_timestep: int) -> None:
         pass
 
-    def calc_energy(self):
+    def calc_energy(self) -> None:
         pass
 
 
 class SourceSinkHeatExchanger(BaseSimComp):
     MATRIX_ROWS = 1
 
-    def __init__(self, hx_id: str, hx_data: dict, tg: float, num_timesteps: int):
+    def __init__(self, hx_id: str, hx_data: dict, tg: float, num_timesteps: int) -> None:
         super().__init__()
         self.name = hx_id
         self.comp_type = SimCompType.SOURCE_SINK_HEAT_EXCHANGER
@@ -93,15 +93,20 @@ class SourceSinkHeatExchanger(BaseSimComp):
         return False
 
     def generate_matrix(self, m_loop: float, idx_timestep: int):
+        if self.cp is None:
+            raise ValueError("cp is uninitialized")
+        if self.matrix_size is None:
+            raise ValueError("matrix_size is uninitialized")
+
         t_in = self.t_in[idx_timestep - 1]
         is_running = self.is_running(t_in)
         self.operating[idx_timestep] = is_running
-        m_flow_source = self.source_flow_rate if is_running else 0
+        m_flow_source: float = self.source_flow_rate if is_running else 0.0
         c_source = m_flow_source * self.cp
         c_loop = m_loop * self.cp
         c_min = min(c_source, c_loop)
         eff_c_min = self.effectiveness * c_min
-        row = np.zeros(self.matrix_size, dtype=float)
+        row = np.zeros(self.matrix_size, dtype=np.float64)
 
         # (C_loop - εCmin)*T_d,in - C_loop*T_d,out = -(εCmin)*T_s,in
         row[self.row_index] = c_loop - eff_c_min
@@ -323,10 +328,10 @@ class GHX(BaseSimComp):
             idx_timestep, self.history_terms, self.total_values_ghe
         )
 
-        row_1 = np.zeros(self.matrix_size, dtype=float)
-        row_2 = np.zeros(self.matrix_size, dtype=float)
-        row_3 = np.zeros(self.matrix_size, dtype=float)
-        row_4 = np.zeros(self.matrix_size, dtype=float)
+        row_1 = np.zeros(self.matrix_size, dtype=np.float64)
+        row_2 = np.zeros(self.matrix_size, dtype=np.float64)
+        row_3 = np.zeros(self.matrix_size, dtype=np.float64)
+        row_4 = np.zeros(self.matrix_size, dtype=np.float64)
 
         mass_flow_ghe = m_loop * self.split_ratio
 
@@ -528,7 +533,7 @@ class HPmodel:
 
 class GHEHPSystem:
     def __init__(self, f_path_json: Path):
-        self.components: list[Building | GHX] = []
+        self.components: list[Building | GHX | SourceSinkHeatExchanger] = []
         self.nbh_total = None
         self.matrix_size = 0
 
@@ -576,7 +581,7 @@ class GHEHPSystem:
         hx_names = get_comp_names(topology_data, hx_data, SimCompType.SOURCE_SINK_HEAT_EXCHANGER)
 
         # get needed buildings
-        buildings = []
+        buildings: list[Building] = []
         for this_building_id, this_bldg_data in building_data.items():
             if this_building_id.upper() in building_names:
                 this_bldg = Building(
@@ -592,7 +597,7 @@ class GHEHPSystem:
 
         self.num_buildings = len(buildings)
 
-        heat_exchangers = []
+        heat_exchangers: list[SourceSinkHeatExchanger] = []
         for this_hx_id, this_hx_data in hx_data.items():
             if this_hx_id.upper() in hx_names:
                 this_hx = SourceSinkHeatExchanger(this_hx_id, this_hx_data, tg, self.num_timesteps)
@@ -602,7 +607,7 @@ class GHEHPSystem:
 
         cp = 0.0
 
-        ground_heat_exchangers = []
+        ground_heat_exchangers: list[GHX] = []
         for ghx_id, ghe_data in ghe_data.items():
             if ghx_id.upper() in ghx_names:
                 this_ghx = GHX(ghx_id, ghe_data, self.fluid, self.loop_config, self.num_timesteps)
@@ -619,25 +624,36 @@ class GHEHPSystem:
         self.m_flow_loop = np.zeros(self.num_timesteps)
         self.pump_power_loop = np.zeros(self.num_timesteps)
 
-        def get_bldg(name: str):
-            return copy.deepcopy(next((obj for obj in buildings if obj.name.upper() == name.upper()), None))
-
-        def get_ghx(name: str):
+        def get_bldg(name: str) -> Building | None:
             return copy.deepcopy(
-                next((obj for obj in ground_heat_exchangers if obj.name.upper() == name.upper()), None)
+                next((obj for obj in buildings if obj.name and obj.name.upper() == name.upper()), None)
             )
 
-        def get_hx(name: str):
-            return copy.deepcopy(next((obj for obj in heat_exchangers if obj.name.upper() == name.upper()), None))
+        def get_ghx(name: str) -> GHX | None:
+            return copy.deepcopy(
+                next((obj for obj in ground_heat_exchangers if obj.name and obj.name.upper() == name.upper()), None)
+            )
+
+        def get_hx(name: str) -> SourceSinkHeatExchanger | None:
+            return copy.deepcopy(
+                next((obj for obj in heat_exchangers if obj.name and obj.name.upper() == name.upper()), None)
+            )
 
         for v in topology_data:
             comp_type = v["type"]
+            comp: Building | GHX | SourceSinkHeatExchanger | None
             if SimCompType[comp_type.upper()] == SimCompType.BUILDING:
-                self.components.append(get_bldg(v["name"]))
+                comp = get_bldg(v["name"])
+                if comp is not None:
+                    self.components.append(comp)
             elif SimCompType[comp_type.upper()] == SimCompType.GROUND_HEAT_EXCHANGER:
-                self.components.append(get_ghx(v["name"]))
+                comp = get_ghx(v["name"])
+                if comp is not None:
+                    self.components.append(comp)
             elif SimCompType[comp_type.upper()] == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
-                self.components.append(get_hx(v["name"]))
+                comp = get_hx(v["name"])
+                if comp is not None:
+                    self.components.append(comp)
 
         for this_comp in self.components:
             this_comp.matrix_size = self.matrix_size

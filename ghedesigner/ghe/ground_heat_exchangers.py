@@ -61,7 +61,7 @@ class GHE:
         # Building cooling is negative, building heating is positive
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.times = np.empty((0,), dtype=np.float64)
-        self.loading: list | None = None
+        self.loading: np.ndarray | None = None
 
         self.hybrid_load = HybridLoad(
             self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
@@ -174,7 +174,7 @@ class GHE:
             self.bhe.soil,
         )
 
-    def simulate(self, method: TimestepType):
+    def simulate(self, method: TimestepType) -> tuple[float, float]:
         b = self.b_spacing
         b_over_h = b / self.bhe.borehole.H
 
@@ -196,17 +196,17 @@ class GHE:
         elif method == TimestepType.HOURLY:
             n_months = self.end_month - self.start_month + 1
             n_hours = int(n_months / 12.0 * 8760.0)
-            q_dot = self.hourly_extraction_ground_loads
+            q_dot_list = self.hourly_extraction_ground_loads
             # How many times does q need to be repeated?
             n_years = ceil(n_hours / 8760)
-            if len(q_dot) // 8760 < n_years:
-                q_dot = q_dot * n_years
+            if len(q_dot_list) // 8760 < n_years:
+                q_dot_list = q_dot_list * n_years
             else:
-                n_hours = len(q_dot)
-            q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
+                n_hours = len(q_dot_list)
+            q_dot = -1.0 * np.array(q_dot_list)  # Convert loads to rejection
             # print("Times:",self.times)
             if len(self.times) == 0:
-                self.times = np.arange(1, n_hours + 1, 1)
+                self.times = np.arange(1, n_hours + 1, 1, dtype=np.float64)
             t = self.times
             self.loading = q_dot
 

@@ -11,8 +11,6 @@ Features
 - Linked x-axis: zoom/pan any pane keeps all panes aligned.
 """
 
-from __future__ import annotations
-
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -325,7 +323,7 @@ def load_all(_n_intervals: int, _n_clicks: int):
     try:
         for name, path in DATA_FILES.items():
             df = load_dataset(path)
-            datasets[name] = df.to_dict("records")
+            datasets[name] = [{str(k): v for k, v in record.items()} for record in df.to_dict("records")]
             columns[name] = [c for c in df.columns if c != X_COL]
     except (FileNotFoundError, OSError, ValueError, pd.errors.ParserError) as exc:
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -446,21 +444,23 @@ def render_controls(dataset: str, panes: list[dict[str, Any]] | None, col_store:
     State("panes-store", "data"),
     prevent_initial_call=True,
 )
-def update_panes_store(titles: list[str], columns: list[list[str]], panes: list[dict[str, Any]] | None):
+def update_panes_store(
+    titles: list[str], columns: list[list[str]], panes: list[dict[str, str | list[str]]]
+) -> list[dict[str, str | list[str]]]:
     panes = list(panes or [])
     if not panes:
         return no_update
 
     n = len(panes)
-    titles = (titles or [])[:n] + [None] * max(0, n - len(titles or []))
-    columns = (columns or [])[:n] + [None] * max(0, n - len(columns or []))
+    resized_titles = (titles or [])[:n] + [None] * max(0, n - len(titles or []))
+    resized_columns = (columns or [])[:n] + [None] * max(0, n - len(columns or []))
 
-    out: list[dict[str, Any]] = []
+    out: list[dict[str, str | list[str]]] = []
     for i in range(n):
         out.append(
             {
-                "title": titles[i] if titles[i] else panes[i].get("title", f"Pane {i + 1}"),
-                "columns": columns[i] if columns[i] is not None else panes[i].get("columns", []),
+                "title": resized_titles[i] or panes[i].get("title", f"Pane {i + 1}"),
+                "columns": resized_columns[i] or panes[i].get("columns", []),
             }
         )
     return out
@@ -487,17 +487,18 @@ def sync_axes(relayout: dict[str, Any] | None, _reset: int, axis: dict[str, Any]
         return no_update
 
     x_new, y_new = parse_relayout(relayout)
-    out = {"x": axis.get("x"), "y": dict(axis.get("y", {}) or {})}
+    x_range_out = axis.get("x")
+    y_ranges_dict = dict(axis.get("y", {}) or {})
 
     # update x if relayout touched x
     if "xaxis.autorange" in relayout or ("xaxis.range[0]" in relayout and "xaxis.range[1]" in relayout):
-        out["x"] = x_new
+        x_range_out = x_new
 
     # update only y axes mentioned
     for idx, yr in y_new.items():
-        out["y"][idx] = yr
+        y_ranges_dict[idx] = yr
 
-    return out
+    return {"x": x_range_out, "y": y_ranges_dict}
 
 
 # ----------------------------------------------------------------------

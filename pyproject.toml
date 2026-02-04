@@ -16,7 +16,6 @@ dependencies = [
     "click>=8.3.1",
     "jsonschema>=4.26.0",
     "numpy>=2.2.6",
-    "pandas-stubs~=2.3.3",
     "pygfunction>=2.3.1",
     "scipy>=1.15.3",
     "secondarycoolantprops>=1.4",
@@ -41,6 +40,11 @@ classifiers = [
 ghedesigner = "ghedesigner.main:run_manager_from_cli"
 
 [dependency-groups]
+app = [
+    "dash>=4.0.0",
+    "pandas<=3.0.0",
+    "plotly>=6.5.0"
+]
 dev = [
     "pre-commit>=4.5.1",
     "pytest>=9.0.2",
@@ -59,7 +63,7 @@ testpaths = "ghedesigner/tests"
 addopts = ["--cov=ghedesigner", "--cov-report=html"]
 
 [tool.uv]
-default-groups = ["dev", "docs"]
+default-groups = ["app", "dev", "docs"]
 
 [tool.uv.build-backend]
 module-root = ""
