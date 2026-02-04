@@ -782,4 +782,4 @@ class GHEHPSystem:
 
         if not output_path.parent.exists():
             output_path.parent.mkdir(parents=True)
-        output_data.to_csv(output_path, float_format="%0.8f")
+        output_data.to_csv(output_path, float_format="%0.4f")
