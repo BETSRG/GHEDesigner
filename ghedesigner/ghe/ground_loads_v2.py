@@ -54,9 +54,12 @@ class HybridLoadV2:
         self.normalized_loads = self.normalize_loads(self.raw_loads)
 
         # --- Step 2: Monthly load metrics (on original loads, for later use) ---
-        self.monthly_cl, self.monthly_hl = None, None
-        self.monthly_peak_cl, self.monthly_peak_hl = None, None
-        self.monthly_avg_cl, self.monthly_avg_hl = None, None
+        self.monthly_cl: list[float]
+        self.monthly_hl: list[float]
+        self.monthly_peak_cl: list[float]
+        self.monthly_peak_hl: list[float]
+        self.monthly_avg_cl: list[float]
+        self.monthly_avg_hl: list[float]
         self.split_loads_by_month()
 
         # --- Step 3: Hourly simulation on normalized loads ---
@@ -514,8 +517,8 @@ class HybridLoadV2:
             month_num_hours[i] = monthrange(year, cal_month_1indexed)[1] * HRS_IN_DAY
 
         # Cumulative hour boundaries
-        fmh_arr = [0] * total_months
-        lmh_arr = [0] * total_months
+        fmh_arr = [0.0] * total_months
+        lmh_arr = [0.0] * total_months
         cumulative = 0
         for i in range(total_months):
             fmh_arr[i] = cumulative + 1

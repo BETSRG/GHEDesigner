@@ -64,6 +64,7 @@ class GHE:
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.times = np.empty((0,), dtype=np.float64)
         self.loading: list | None = None
+        self.hybrid_load: HybridLoad | HybridLoadV2
 
         if use_v2_hybrid:
             self.hybrid_load = HybridLoadV2(
