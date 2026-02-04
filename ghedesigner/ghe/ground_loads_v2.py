@@ -225,14 +225,20 @@ class HybridLoadV2:
                 continue
 
             # Max delta_T (peak rejection/cooling temperature)
+            # Only record if positive -- a negative max means this month
+            # has no cooling/rejection activity worth peaking.
             max_idx = int(np.argmax(month_dt))
-            self.monthly_max_dt[m] = month_dt[max_idx]
-            self.monthly_max_dt_hour[m] = hours_in_previous_months + max_idx + 1
+            if month_dt[max_idx] > 0.0:
+                self.monthly_max_dt[m] = month_dt[max_idx]
+                self.monthly_max_dt_hour[m] = hours_in_previous_months + max_idx + 1
 
             # Min delta_T (peak extraction/heating temperature)
+            # Only record if negative -- a positive min means this month
+            # has no heating/extraction activity worth peaking.
             min_idx = int(np.argmin(month_dt))
-            self.monthly_min_dt[m] = month_dt[min_idx]
-            self.monthly_min_dt_hour[m] = hours_in_previous_months + min_idx + 1
+            if month_dt[min_idx] < 0.0:
+                self.monthly_min_dt[m] = month_dt[min_idx]
+                self.monthly_min_dt_hour[m] = hours_in_previous_months + min_idx + 1
 
             hours_in_previous_months += hours_in_month
 
@@ -243,20 +249,23 @@ class HybridLoadV2:
         """Identify the top NUM_PEAK_MONTHS months with highest max delta_T
         (cooling peaks) and lowest min delta_T (heating peaks).
 
+        Only months with a positive max delta_T qualify as cooling peaks,
+        and only months with a negative min delta_T qualify as heating peaks.
+        This means fewer than NUM_PEAK_MONTHS may be selected when the load
+        profile is predominantly one-sided.
+
         Only these months will get peak time steps in the hybrid simulation;
         all other months are treated as single average-load time steps.
         """
         n = self.NUM_PEAK_MONTHS
 
-        # Months 0-11 with their max delta_T values
-        month_max_pairs = [(m, self.monthly_max_dt[m]) for m in range(MONTHS_IN_YEAR)]
-        # Sort descending by max delta_T -- highest temperature rises first
+        # Cooling peaks: only months where max delta_T > 0 (actual rejection)
+        month_max_pairs = [(m, self.monthly_max_dt[m]) for m in range(MONTHS_IN_YEAR) if self.monthly_max_dt[m] > 0.0]
         month_max_pairs.sort(key=lambda x: x[1], reverse=True)
         self.peak_cooling_months = [m for m, _ in month_max_pairs[:n]]
 
-        # Months 0-11 with their min delta_T values
-        month_min_pairs = [(m, self.monthly_min_dt[m]) for m in range(MONTHS_IN_YEAR)]
-        # Sort ascending by min delta_T -- lowest temperature drops first
+        # Heating peaks: only months where min delta_T < 0 (actual extraction)
+        month_min_pairs = [(m, self.monthly_min_dt[m]) for m in range(MONTHS_IN_YEAR) if self.monthly_min_dt[m] < 0.0]
         month_min_pairs.sort(key=lambda x: x[1])
         self.peak_heating_months = [m for m, _ in month_min_pairs[:n]]
 
