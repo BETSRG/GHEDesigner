@@ -465,12 +465,19 @@ class HybridLoadV2:
         - self.step_func_load: load step changes (load[i] - load[i-1])
 
         Non-peak months get a single time step at the net average load.
-        Peak months get time steps for: non-peak, peak(s), non-peak.
+        Peak months have three regions:
+        - Pre-peak: load computed to conserve energy from cursor to peak end
+        - Peak: the peak load for the calibrated duration
+        - Post-peak: monthly average load for remaining hours
 
         Properly handles multi-year simulations and leap years by
         precomputing month boundaries using the actual calendar year
         for each simulated month.
         """
+        # Hourly loads in output convention (kW, rejection positive, extraction negative).
+        # Used for energy conservation in pre-peak load computation.
+        net_loads_kw = -np.array(self.raw_loads, dtype=float) / 1000.0
+
         # Cumulative hour offsets for the base year (used to compute
         # peak hour positions within each calendar month).
         # month_hour_offset_base[m] = hours before month m starts
@@ -553,18 +560,7 @@ class HybridLoadV2:
                 d_cl = self.monthly_peak_cl_duration[i] if has_cooling_peak else 0.0
                 d_hl = self.monthly_peak_hl_duration[i] if has_heating_peak else 0.0
 
-                # Energy balance: net monthly energy = sum of all period energies
-                # Convention: rejection positive, extraction negative
-                peak_cl_energy = d_cl * self.monthly_peak_cl[i] if has_cooling_peak else 0.0
-                peak_hl_energy = d_hl * self.monthly_peak_hl[i] if has_heating_peak else 0.0
-
-                non_peak_hours = month_hours - d_cl - d_hl
                 month_net_energy = self.monthly_cl[i] - self.monthly_hl[i]
-
-                # Eq. 4: adjust non-peak load for energy conservation
-                month_rate = (
-                    (month_net_energy - peak_cl_energy + peak_hl_energy) / non_peak_hours if non_peak_hours > 0 else 0.0
-                )
 
                 # Build peak events: (peak_temp_hour_in_month, type, load, duration)
                 events = []
@@ -578,8 +574,13 @@ class HybridLoadV2:
                 # Sort by peak temperature hour so peaks are placed chronologically
                 events.sort(key=lambda x: x[0])
 
-                # Place peaks within the month
+                # Base-year offset for this calendar month in the hourly array
+                base = month_hour_offset_base[mi]
+
+                # Place peaks within the month, tracking consumed energy
                 cursor = fmh  # current hour position
+                consumed_energy = 0.0  # total energy (kWh) placed so far
+
                 for peak_temp_hr, _peak_type, peak_load, duration in events:
                     # Peak load ends at the peak temperature hour
                     # (duration extends backward in time from the temperature peak)
@@ -600,20 +601,34 @@ class HybridLoadV2:
                         peak_last_hour = cursor + duration
                         peak_last_hour = min(peak_last_hour, lmh)
 
-                    # Non-peak period before this peak
-                    if peak_first_hour > cursor:
-                        self.load = np.append(self.load, month_rate)
+                    # Pre-peak load: conserve energy from cursor to peak end
+                    # Sum hourly loads (kW) from cursor to peak_last_hour
+                    cursor_offset = int(cursor - fmh)
+                    peak_end_offset = int(peak_last_hour - fmh)
+                    energy_to_peak_end = float(np.sum(net_loads_kw[base + cursor_offset : base + peak_end_offset]))
+
+                    pre_peak_hours = peak_first_hour - cursor
+                    actual_duration = peak_last_hour - peak_first_hour
+                    peak_energy = actual_duration * peak_load
+
+                    if pre_peak_hours > 0:
+                        q_pre = (energy_to_peak_end - peak_energy) / pre_peak_hours
+                        self.load = np.append(self.load, q_pre)
                         self.hour = np.append(self.hour, peak_first_hour)
+                        consumed_energy += q_pre * pre_peak_hours
 
                     # Peak period
                     self.load = np.append(self.load, peak_load)
                     self.hour = np.append(self.hour, peak_last_hour)
+                    consumed_energy += peak_energy
 
                     cursor = peak_last_hour
 
-                # Non-peak period after last peak (rest of month)
+                # Post-peak: conserve remaining monthly energy
                 if cursor < lmh:
-                    self.load = np.append(self.load, month_rate)
+                    post_peak_hours = lmh - cursor
+                    q_post = (month_net_energy - consumed_energy) / post_peak_hours if post_peak_hours > 0 else 0.0
+                    self.load = np.append(self.load, q_post)
                     self.hour = np.append(self.hour, lmh)
 
         # Build step function loads

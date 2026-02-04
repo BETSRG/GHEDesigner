@@ -417,11 +417,9 @@ class TestProcessMonthLoads(unittest.TestCase):
         original_energy = obj.monthly_cl[6] - obj.monthly_hl[6]
         if abs(original_energy) > 1.0:
             rel_error = abs(hybrid_energy - original_energy) / abs(original_energy)
-            # Dual-peak months have more approximation error from two
-            # fractional durations; allow 10% tolerance here.
             self.assertLess(
                 rel_error,
-                0.10,
+                0.05,
                 f"July energy not conserved: hybrid={hybrid_energy:.1f} kWh vs "
                 f"original={original_energy:.1f} kWh (rel error {rel_error:.3f})",
             )
