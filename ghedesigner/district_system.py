@@ -383,8 +383,8 @@ class Building(BaseSimComp):
         self.num_timesteps = num_timesteps
         self.sim_years = num_timesteps // HOURS_IN_YEAR
 
-        self.htg_vals = np.zeros(self.num_timesteps, dtype=float)
-        self.clg_vals = np.zeros(self.num_timesteps, dtype=float)
+        self.htg_vals: np.ndarray = np.zeros(self.num_timesteps, dtype=float)
+        self.clg_vals: np.ndarray = np.zeros(self.num_timesteps, dtype=float)
 
         if self.heating_exists:
             hp_htg_name = bldg_data["heating_load"]["heat_pump_name"]
