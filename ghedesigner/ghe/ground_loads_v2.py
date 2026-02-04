@@ -17,6 +17,8 @@ class HybridLoadV2:
       remaining months are single average-load time steps.
     - Peak durations are iteratively calibrated so the hybrid simulation
       reproduces the same peak temperature as the hourly simulation.
+
+    All monthly arrays use 0-based indexing: index 0 = January, 11 = December.
     """
 
     # Normalization target: 40 W/m * 100 m = 4000 W
@@ -44,10 +46,9 @@ class HybridLoadV2:
         base_year = 2026
         self.years = [base_year + y for y in range(num_years)]
 
-        # Days in each month for the first year only (index 0 is placeholder).
+        # Days in each month for the first year (0-indexed: 0=Jan, 11=Dec).
         # Steps 1-6 operate on a single year of hourly data (8760 or 8784 hours).
-        self.days_in_month = [0]
-        self.days_in_month.extend([monthrange(self.years[0], i)[1] for i in range(1, 13)])
+        self.days_in_month = [monthrange(self.years[0], m + 1)[1] for m in range(MONTHS_IN_YEAR)]
 
         # --- Step 1: Normalize the loads ---
         self.normalized_loads = self.normalize_loads(self.raw_loads)
@@ -63,21 +64,21 @@ class HybridLoadV2:
 
         # --- Step 4: Identify peak temperature months ---
         # Per-month: max delta_T (cooling/rejection peak), min delta_T (heating/extraction peak)
-        # and the hour-of-year at which each occurs
-        self.monthly_max_dt = [0.0] * 13  # max delta_T per month (index 1-12)
-        self.monthly_min_dt = [0.0] * 13  # min delta_T per month
-        self.monthly_max_dt_hour = [0] * 13  # hour-of-year of max delta_T
-        self.monthly_min_dt_hour = [0] * 13  # hour-of-year of min delta_T
+        # and the hour-of-year at which each occurs (0-indexed: 0=Jan, 11=Dec)
+        self.monthly_max_dt = [0.0] * MONTHS_IN_YEAR
+        self.monthly_min_dt = [0.0] * MONTHS_IN_YEAR
+        self.monthly_max_dt_hour = [0] * MONTHS_IN_YEAR
+        self.monthly_min_dt_hour = [0] * MONTHS_IN_YEAR
         self._find_monthly_peak_temperatures()
 
         # --- Step 5: Select top 4 peak months for cooling and heating ---
-        self.peak_cooling_months: list[int] = []  # months with highest max delta_T
-        self.peak_heating_months: list[int] = []  # months with lowest min delta_T
+        self.peak_cooling_months: list[int] = []  # months with highest max delta_T (0-indexed)
+        self.peak_heating_months: list[int] = []  # months with lowest min delta_T (0-indexed)
         self._select_peak_months()
 
         # --- Step 6: Find peak durations ---
-        self.monthly_peak_cl_duration = [0.0] * 13
-        self.monthly_peak_hl_duration = [0.0] * 13
+        self.monthly_peak_cl_duration = [0.0] * MONTHS_IN_YEAR
+        self.monthly_peak_hl_duration = [0.0] * MONTHS_IN_YEAR
         self._find_peak_durations()
 
         # --- Step 7: Construct hybrid time step arrays ---
@@ -118,31 +119,30 @@ class HybridLoadV2:
         and will be used later when constructing the final hybrid time
         step arrays with actual load magnitudes.
         """
-        num_months = len(self.days_in_month)
+        n = MONTHS_IN_YEAR
 
-        # All arrays use index 0 as placeholder, 1-12 for months
-        self.monthly_cl = [0.0] * num_months  # total cooling (rejection) kWh
-        self.monthly_hl = [0.0] * num_months  # total heating (extraction) kWh
-        self.monthly_peak_cl = [0.0] * num_months  # peak cooling kW
-        self.monthly_peak_hl = [0.0] * num_months  # peak heating kW
-        self.monthly_avg_cl = [0.0] * num_months  # average cooling kW
-        self.monthly_avg_hl = [0.0] * num_months  # average heating kW
+        self.monthly_cl = [0.0] * n  # total cooling (rejection) kWh
+        self.monthly_hl = [0.0] * n  # total heating (extraction) kWh
+        self.monthly_peak_cl = [0.0] * n  # peak cooling kW
+        self.monthly_peak_hl = [0.0] * n  # peak heating kW
+        self.monthly_avg_cl = [0.0] * n  # average cooling kW
+        self.monthly_avg_hl = [0.0] * n  # average heating kW
 
         hours_in_previous_months = 0
-        for i in range(1, num_months):
-            hours_in_month = HRS_IN_DAY * self.days_in_month[i]
+        for m in range(n):
+            hours_in_month = HRS_IN_DAY * self.days_in_month[m]
             month_loads = self.raw_loads[hours_in_previous_months : hours_in_previous_months + hours_in_month]
 
             # Split into rejection (negative raw = cooling) and extraction (positive raw = heating)
             month_rejection = [abs(x) / 1000.0 if x < 0 else 0.0 for x in month_loads]
             month_extraction = [x / 1000.0 if x >= 0 else 0.0 for x in month_loads]
 
-            self.monthly_cl[i] = sum(month_rejection)
-            self.monthly_hl[i] = sum(month_extraction)
-            self.monthly_peak_cl[i] = max(month_rejection)
-            self.monthly_peak_hl[i] = max(month_extraction)
-            self.monthly_avg_cl[i] = self.monthly_cl[i] / hours_in_month if hours_in_month > 0 else 0.0
-            self.monthly_avg_hl[i] = self.monthly_hl[i] / hours_in_month if hours_in_month > 0 else 0.0
+            self.monthly_cl[m] = sum(month_rejection)
+            self.monthly_hl[m] = sum(month_extraction)
+            self.monthly_peak_cl[m] = max(month_rejection)
+            self.monthly_peak_hl[m] = max(month_extraction)
+            self.monthly_avg_cl[m] = self.monthly_cl[m] / hours_in_month if hours_in_month > 0 else 0.0
+            self.monthly_avg_hl[m] = self.monthly_hl[m] / hours_in_month if hours_in_month > 0 else 0.0
 
             hours_in_previous_months += hours_in_month
 
@@ -212,8 +212,8 @@ class HybridLoadV2:
         Min delta_T corresponds to peak heating/extraction (coldest fluid).
         """
         hours_in_previous_months = 0
-        for month_idx in range(1, len(self.days_in_month)):
-            hours_in_month = HRS_IN_DAY * self.days_in_month[month_idx]
+        for m in range(MONTHS_IN_YEAR):
+            hours_in_month = HRS_IN_DAY * self.days_in_month[m]
 
             # Slice delta_T for this month (hours are 1-indexed in the sim)
             start_hr = hours_in_previous_months + 1
@@ -226,13 +226,13 @@ class HybridLoadV2:
 
             # Max delta_T (peak rejection/cooling temperature)
             max_idx = int(np.argmax(month_dt))
-            self.monthly_max_dt[month_idx] = month_dt[max_idx]
-            self.monthly_max_dt_hour[month_idx] = hours_in_previous_months + max_idx + 1
+            self.monthly_max_dt[m] = month_dt[max_idx]
+            self.monthly_max_dt_hour[m] = hours_in_previous_months + max_idx + 1
 
             # Min delta_T (peak extraction/heating temperature)
             min_idx = int(np.argmin(month_dt))
-            self.monthly_min_dt[month_idx] = month_dt[min_idx]
-            self.monthly_min_dt_hour[month_idx] = hours_in_previous_months + min_idx + 1
+            self.monthly_min_dt[m] = month_dt[min_idx]
+            self.monthly_min_dt_hour[m] = hours_in_previous_months + min_idx + 1
 
             hours_in_previous_months += hours_in_month
 
@@ -248,14 +248,14 @@ class HybridLoadV2:
         """
         n = self.NUM_PEAK_MONTHS
 
-        # Months 1-12 with their max delta_T values
-        month_max_pairs = [(m, self.monthly_max_dt[m]) for m in range(1, 13)]
+        # Months 0-11 with their max delta_T values
+        month_max_pairs = [(m, self.monthly_max_dt[m]) for m in range(MONTHS_IN_YEAR)]
         # Sort descending by max delta_T -- highest temperature rises first
         month_max_pairs.sort(key=lambda x: x[1], reverse=True)
         self.peak_cooling_months = [m for m, _ in month_max_pairs[:n]]
 
-        # Months 1-12 with their min delta_T values
-        month_min_pairs = [(m, self.monthly_min_dt[m]) for m in range(1, 13)]
+        # Months 0-11 with their min delta_T values
+        month_min_pairs = [(m, self.monthly_min_dt[m]) for m in range(MONTHS_IN_YEAR)]
         # Sort ascending by min delta_T -- lowest temperature drops first
         month_min_pairs.sort(key=lambda x: x[1])
         self.peak_heating_months = [m for m, _ in month_min_pairs[:n]]
@@ -276,27 +276,16 @@ class HybridLoadV2:
         # Convert normalized loads to sim convention (positive = rejection)
         sim_loads = -np.array(self.normalized_loads)
 
-        # Precompute cumulative hour offsets for each month boundary
-        # monthly_hour_offset[m] = total hours before month m starts (0-indexed into loads)
-        # monthly_hour_offset[1] = 0 (January starts at index 0)
-        monthly_hour_offset = [0] * 14
-        for m in range(1, 13):
-            monthly_hour_offset[m + 1] = monthly_hour_offset[m] + HRS_IN_DAY * self.days_in_month[m]
-        # Shift so month 1 starts at 0
-        # monthly_hour_offset[1] = 0, [2] = 744 (hours in Jan), etc.
-        # But currently [0]=0, [1]=0, [2]=Jan_hours... Let me fix the indexing.
-        # We want: offset[m] = hours before month m (for m=1..12)
-        # offset[1] = 0, offset[2] = hours_in_jan, ..., offset[13] = 8760
-        month_hour_offset = [0] * 14
-        for m in range(1, 14):
-            if m <= MONTHS_IN_YEAR:
-                month_hour_offset[m] = sum(HRS_IN_DAY * self.days_in_month[j] for j in range(1, m))
-            else:
-                month_hour_offset[13] = sum(HRS_IN_DAY * self.days_in_month[j] for j in range(1, 13))
+        # Cumulative hour offsets for month boundaries (0-indexed months).
+        # month_hour_offset[m] = total hours before month m starts (0-based into loads array)
+        # month_hour_offset[0] = 0, month_hour_offset[12] = 8760
+        month_hour_offset = [0] * (MONTHS_IN_YEAR + 1)
+        for m in range(MONTHS_IN_YEAR):
+            month_hour_offset[m + 1] = month_hour_offset[m] + HRS_IN_DAY * self.days_in_month[m]
 
         # Monthly net average loads (sim convention, positive = rejection)
-        monthly_net_avg_sim = [0.0] * 13
-        for m in range(1, 13):
+        monthly_net_avg_sim = [0.0] * MONTHS_IN_YEAR
+        for m in range(MONTHS_IN_YEAR):
             m_start = month_hour_offset[m]
             m_end = month_hour_offset[m + 1]
             if m_end > m_start:
@@ -387,6 +376,7 @@ class HybridLoadV2:
         Per Eq. 3-4 of Spitler (2024), the non-peak load is adjusted so
         total energy from month start to peak hour is conserved.
 
+        :param peak_month: 0-indexed month (0=Jan, 11=Dec)
         :return: Peak duration in hours (may be fractional)
         """
         m_start_offset = month_hour_offset[peak_month]
@@ -415,7 +405,7 @@ class HybridLoadV2:
             loads_list = [0.0]
 
             # Previous months: one time step each at net average
-            for pm in range(1, peak_month):
+            for pm in range(peak_month):
                 hours_list.append(float(month_hour_offset[pm + 1]))
                 loads_list.append(monthly_net_avg_sim[pm])
 
@@ -469,19 +459,20 @@ class HybridLoadV2:
         precomputing month boundaries using the actual calendar year
         for each simulated month.
         """
-        # Peak hour offsets within their BASE calendar month (0-based from
-        # month start). These come from the single-year hourly simulation
-        # (steps 1-6) and are reused for every repetition of that month.
-        month_hour_offset_base = [0] * 14
-        for m in range(1, 14):
-            if m <= MONTHS_IN_YEAR:
-                month_hour_offset_base[m] = sum(HRS_IN_DAY * self.days_in_month[j] for j in range(1, m))
-            else:
-                month_hour_offset_base[13] = sum(HRS_IN_DAY * self.days_in_month[j] for j in range(1, 13))
+        # Cumulative hour offsets for the base year (used to compute
+        # peak hour positions within each calendar month).
+        # month_hour_offset_base[m] = hours before month m starts
+        # month_hour_offset_base[0] = 0, [12] = 8760
+        month_hour_offset_base = [0] * (MONTHS_IN_YEAR + 1)
+        for m in range(MONTHS_IN_YEAR):
+            month_hour_offset_base[m + 1] = month_hour_offset_base[m] + HRS_IN_DAY * self.days_in_month[m]
 
-        peak_cl_hour_in_month = [0] * 13
-        peak_hl_hour_in_month = [0] * 13
-        for m in range(1, 13):
+        # Peak hour offsets within their calendar month (0-based from month start).
+        # These come from the single-year hourly simulation (steps 1-6)
+        # and are reused for every repetition of that month.
+        peak_cl_hour_in_month = [0] * MONTHS_IN_YEAR
+        peak_hl_hour_in_month = [0] * MONTHS_IN_YEAR
+        for m in range(MONTHS_IN_YEAR):
             if self.monthly_max_dt_hour[m] > 0:
                 peak_cl_hour_in_month[m] = self.monthly_max_dt_hour[m] - month_hour_offset_base[m]
             if self.monthly_min_dt_hour[m] > 0:
@@ -490,44 +481,48 @@ class HybridLoadV2:
         cooling_peak_set = set(self.peak_cooling_months)
         heating_peak_set = set(self.peak_heating_months)
 
-        # Extend monthly data arrays for multi-year simulation
-        for i in range(self.start_month, self.end_month + 1):
-            if i > MONTHS_IN_YEAR:
-                mi = ((i - 1) % MONTHS_IN_YEAR) + 1
-                self.monthly_cl.append(self.monthly_cl[mi])
-                self.monthly_hl.append(self.monthly_hl[mi])
-                self.monthly_peak_cl.append(self.monthly_peak_cl[mi])
-                self.monthly_peak_hl.append(self.monthly_peak_hl[mi])
-                self.monthly_peak_cl_duration.append(self.monthly_peak_cl_duration[mi])
-                self.monthly_peak_hl_duration.append(self.monthly_peak_hl_duration[mi])
+        # Extend monthly data arrays for multi-year simulation.
+        # Base arrays have 12 entries (indices 0-11). For simulation months
+        # beyond 12, append copies from the corresponding base month.
+        for i in range(MONTHS_IN_YEAR, self.end_month):
+            mi = i % MONTHS_IN_YEAR  # 0-indexed calendar month
+            self.monthly_cl.append(self.monthly_cl[mi])
+            self.monthly_hl.append(self.monthly_hl[mi])
+            self.monthly_peak_cl.append(self.monthly_peak_cl[mi])
+            self.monthly_peak_hl.append(self.monthly_peak_hl[mi])
+            self.monthly_peak_cl_duration.append(self.monthly_peak_cl_duration[mi])
+            self.monthly_peak_hl_duration.append(self.monthly_peak_hl_duration[mi])
 
         # Precompute month boundaries for all simulated months,
         # using the actual calendar year for leap year correctness.
+        # Arrays are 0-indexed: index 0 = simulation month 1.
         total_months = self.end_month
-        month_num_hours = [0] * (total_months + 1)  # index 0 unused
-        for i in range(1, total_months + 1):
-            year_idx = (i - 1) // MONTHS_IN_YEAR
-            cal_month = ((i - 1) % MONTHS_IN_YEAR) + 1
+        month_num_hours = [0] * total_months
+        for i in range(total_months):
+            year_idx = i // MONTHS_IN_YEAR
+            cal_month_1indexed = (i % MONTHS_IN_YEAR) + 1
             year = self.years[year_idx] if year_idx < len(self.years) else self.years[-1]
-            month_num_hours[i] = monthrange(year, cal_month)[1] * HRS_IN_DAY
+            month_num_hours[i] = monthrange(year, cal_month_1indexed)[1] * HRS_IN_DAY
 
-        # Cumulative hour boundaries (fmh is 1-indexed to match existing convention)
-        fmh_arr = [0] * (total_months + 1)
-        lmh_arr = [0] * (total_months + 1)
+        # Cumulative hour boundaries
+        fmh_arr = [0] * total_months
+        lmh_arr = [0] * total_months
         cumulative = 0
-        for i in range(1, total_months + 1):
+        for i in range(total_months):
             fmh_arr[i] = cumulative + 1
             cumulative += month_num_hours[i]
             lmh_arr[i] = cumulative
 
         # Start arrays with zero load before simulation
+        # start_month is 1-indexed, convert to 0-indexed for array access
+        start_idx = self.start_month - 1
         self.load = np.append(self.load, 0)
-        last_zero_hour = fmh_arr[self.start_month] - 1
+        last_zero_hour = fmh_arr[start_idx] - 1
         self.hour = np.append(self.hour, last_zero_hour)
 
-        for i in range(self.start_month, self.end_month + 1):
-            # Map to base calendar month (1-12) for peak type lookup
-            mi = ((i - 1) % MONTHS_IN_YEAR) + 1
+        for i in range(start_idx, self.end_month):
+            # Calendar month index (0-indexed) for peak type lookup
+            mi = i % MONTHS_IN_YEAR
 
             month_hours = month_num_hours[i]
             fmh = fmh_arr[i]
@@ -559,24 +554,24 @@ class HybridLoadV2:
                     (month_net_energy - peak_cl_energy + peak_hl_energy) / non_peak_hours if non_peak_hours > 0 else 0.0
                 )
 
-                # Build peak events: (center_hour_from_month_start, type, load, duration)
+                # Build peak events: (peak_temp_hour_in_month, type, load, duration)
                 events = []
                 if has_cooling_peak:
-                    center = peak_cl_hour_in_month[mi]
-                    events.append((center, "cl", self.monthly_peak_cl[i], d_cl))
+                    peak_hr = peak_cl_hour_in_month[mi]
+                    events.append((peak_hr, "cl", self.monthly_peak_cl[i], d_cl))
                 if has_heating_peak:
-                    center = peak_hl_hour_in_month[mi]
-                    events.append((center, "hl", -self.monthly_peak_hl[i], d_hl))
+                    peak_hr = peak_hl_hour_in_month[mi]
+                    events.append((peak_hr, "hl", -self.monthly_peak_hl[i], d_hl))
 
-                # Sort by center hour so peaks are placed chronologically
+                # Sort by peak temperature hour so peaks are placed chronologically
                 events.sort(key=lambda x: x[0])
 
                 # Place peaks within the month
                 cursor = fmh  # current hour position
-                for center, _peak_type, peak_load, duration in events:
+                for peak_temp_hr, _peak_type, peak_load, duration in events:
                     # Peak load ends at the peak temperature hour
                     # (duration extends backward in time from the temperature peak)
-                    peak_last_hour = fmh + center
+                    peak_last_hour = fmh + peak_temp_hr
                     peak_first_hour = peak_last_hour - duration
 
                     # Clamp to month boundaries

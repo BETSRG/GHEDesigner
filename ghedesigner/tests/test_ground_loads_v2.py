@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 from scipy.interpolate import interp1d
 
-from ghedesigner.constants import HOURS_IN_YEAR, HRS_IN_DAY
+from ghedesigner.constants import HOURS_IN_YEAR, HRS_IN_DAY, MONTHS_IN_YEAR
 from ghedesigner.ghe.ground_loads import first_month_hour, last_month_hour
 from ghedesigner.ghe.ground_loads_v2 import HybridLoadV2
 
@@ -172,7 +172,7 @@ class TestSplitLoadsByMonth(unittest.TestCase):
         loads = [-1000.0] * HOURS_IN_YEAR
         obj = _make_v2_with_loads(loads)
         # Every month should have non-zero cooling total
-        for m in range(1, 13):
+        for m in range(MONTHS_IN_YEAR):
             self.assertGreater(obj.monthly_cl[m], 0.0)
             self.assertAlmostEqual(obj.monthly_hl[m], 0.0)
 
@@ -180,34 +180,33 @@ class TestSplitLoadsByMonth(unittest.TestCase):
         """All-extraction loads: monthly_hl should have totals, monthly_cl should be zero."""
         loads = [1000.0] * HOURS_IN_YEAR
         obj = _make_v2_with_loads(loads)
-        for m in range(1, 13):
+        for m in range(MONTHS_IN_YEAR):
             self.assertAlmostEqual(obj.monthly_cl[m], 0.0)
             self.assertGreater(obj.monthly_hl[m], 0.0)
 
     def test_peak_values_correct(self):
         """Verify peak values match the expected max hourly load in each month."""
-        # January = extraction 500W, February = rejection 800W, rest = 0
         loads = [0.0] * HOURS_IN_YEAR
         # January: hours 0-743 (744 hours in Jan)
         for h in range(744):
             loads[h] = 500.0  # extraction
         loads[100] = 2000.0  # peak extraction in January
-        # February: hours 744-1415 (672 hours in Feb for 2019)
+        # February: hours 744-1415 (672 hours in Feb for non-leap year)
         for h in range(744, 744 + 672):
             loads[h] = -800.0  # rejection
         loads[800] = -3000.0  # peak rejection in February
 
         obj = _make_v2_with_loads(loads)
-        # January peak extraction = 2000 W = 2.0 kW
-        self.assertAlmostEqual(obj.monthly_peak_hl[1], 2.0)
-        # February peak rejection = 3000 W = 3.0 kW
-        self.assertAlmostEqual(obj.monthly_peak_cl[2], 3.0)
+        # January (index 0) peak extraction = 2000 W = 2.0 kW
+        self.assertAlmostEqual(obj.monthly_peak_hl[0], 2.0)
+        # February (index 1) peak rejection = 3000 W = 3.0 kW
+        self.assertAlmostEqual(obj.monthly_peak_cl[1], 3.0)
 
     def test_total_hours_match_8760(self):
         """Sum of hours across all months should be 8760 for non-leap year."""
         loads = [100.0] * HOURS_IN_YEAR
         obj = _make_v2_with_loads(loads)
-        total_hours = sum(HRS_IN_DAY * obj.days_in_month[m] for m in range(1, 13))
+        total_hours = sum(HRS_IN_DAY * obj.days_in_month[m] for m in range(MONTHS_IN_YEAR))
         self.assertEqual(total_hours, HOURS_IN_YEAR)
 
 
@@ -236,7 +235,7 @@ class TestPeakTemperatureIdentification(unittest.TestCase):
 
         # Peak cooling months should have max_dt >= all non-peak months
         peak_max_dts = [obj.monthly_max_dt[m] for m in obj.peak_cooling_months]
-        non_peak_months = [m for m in range(1, 13) if m not in obj.peak_cooling_months]
+        non_peak_months = [m for m in range(MONTHS_IN_YEAR) if m not in obj.peak_cooling_months]
         non_peak_max_dts = [obj.monthly_max_dt[m] for m in non_peak_months]
         self.assertGreaterEqual(min(peak_max_dts), max(non_peak_max_dts))
 
@@ -249,7 +248,7 @@ class TestPeakTemperatureIdentification(unittest.TestCase):
         obj = _make_v2_with_synthetic_dt(dt)
 
         peak_min_dts = [obj.monthly_min_dt[m] for m in obj.peak_heating_months]
-        non_peak_months = [m for m in range(1, 13) if m not in obj.peak_heating_months]
+        non_peak_months = [m for m in range(MONTHS_IN_YEAR) if m not in obj.peak_heating_months]
         non_peak_min_dts = [obj.monthly_min_dt[m] for m in non_peak_months]
         self.assertLessEqual(max(peak_min_dts), min(non_peak_min_dts))
 
@@ -270,7 +269,7 @@ class TestPeakTemperatureIdentification(unittest.TestCase):
         obj = _make_v2_with_synthetic_dt(dt.tolist())
 
         hours_in_previous = 0
-        for m in range(1, 13):
+        for m in range(MONTHS_IN_YEAR):
             hours_in_month = HRS_IN_DAY * obj.days_in_month[m]
             start_hr = hours_in_previous + 1
             end_hr = hours_in_previous + hours_in_month
@@ -338,7 +337,6 @@ class TestProcessMonthLoads(unittest.TestCase):
         """Last hour should be at or near 8760 for a 12-month simulation."""
         loads = [500.0] * HOURS_IN_YEAR
         obj = _make_full_v2(loads)
-        # last_month_hour(12, [2019]) should be 8760
         self.assertAlmostEqual(obj.hour[-1], HOURS_IN_YEAR, delta=1.0)
 
     def test_dual_peak_month_constructs_successfully(self):
@@ -374,17 +372,16 @@ class TestProcessMonthLoads(unittest.TestCase):
 
         obj = _make_full_v2(loads)
 
-        # July should be in both peak lists
-        self.assertIn(7, obj.peak_cooling_months, f"July not in cooling peaks: {obj.peak_cooling_months}")
-        self.assertIn(7, obj.peak_heating_months, f"July not in heating peaks: {obj.peak_heating_months}")
+        # July (index 6) should be in both peak lists
+        self.assertIn(6, obj.peak_cooling_months, f"July not in cooling peaks: {obj.peak_cooling_months}")
+        self.assertIn(6, obj.peak_heating_months, f"July not in heating peaks: {obj.peak_heating_months}")
 
         # Both durations should be positive
-        self.assertGreater(obj.monthly_peak_cl_duration[7], 0.0)
-        self.assertGreater(obj.monthly_peak_hl_duration[7], 0.0)
+        self.assertGreater(obj.monthly_peak_cl_duration[6], 0.0)
+        self.assertGreater(obj.monthly_peak_hl_duration[6], 0.0)
 
         # The output arrays should contain both a positive and negative
-        # peak load within July's hour range
-
+        # peak load within July's hour range (first_month_hour uses 1-indexed months)
         fmh = first_month_hour(7, obj.years)
         lmh = last_month_hour(7, obj.years)
 
@@ -417,7 +414,7 @@ class TestProcessMonthLoads(unittest.TestCase):
             duration = step_end - step_start
             hybrid_energy += obj.load[i] * duration
 
-        original_energy = obj.monthly_cl[7] - obj.monthly_hl[7]
+        original_energy = obj.monthly_cl[6] - obj.monthly_hl[6]
         if abs(original_energy) > 1.0:
             rel_error = abs(hybrid_energy - original_energy) / abs(original_energy)
             # Dual-peak months have more approximation error from two
@@ -489,10 +486,10 @@ class TestIntegrationWithAtlantaLoads(unittest.TestCase):
 
         # Verify that for each month in the hybrid representation,
         # the total energy (load * duration) roughly equals the original monthly net
-
-        for m in range(1, 13):
-            fmh = first_month_hour(m, obj.years)
-            lmh = last_month_hour(m, obj.years)
+        for m in range(MONTHS_IN_YEAR):
+            # first_month_hour/last_month_hour use 1-indexed months
+            fmh = first_month_hour(m + 1, obj.years)
+            lmh = last_month_hour(m + 1, obj.years)
 
             # Find all hybrid steps within this month
             hybrid_energy = 0.0
@@ -554,13 +551,14 @@ class TestEdgeCase1PeakAtMonthStart(unittest.TestCase):
         bhe = _make_mock_bhe()
         obj = HybridLoadV2(loads, bhe, bhe, 1, 12)
 
-        # The heating peak for January should be month 1
-        self.assertIn(1, obj.peak_heating_months)
+        # The heating peak for January should be month 0
+        self.assertIn(0, obj.peak_heating_months)
 
         # The peak duration should be >= 1 hour
-        d = obj.monthly_peak_hl_duration[1]
+        d = obj.monthly_peak_hl_duration[0]
         self.assertGreaterEqual(d, 1.0, "Peak duration should be >= 1 hour")
 
+        # first_month_hour uses 1-indexed months
         fmh = first_month_hour(1, obj.years)
 
         # Find the heating peak step in the load array
@@ -629,19 +627,11 @@ class TestEdgeCase2PeakSpanningMonthBoundary(unittest.TestCase):
         bhe = _make_mock_bhe()
         obj = HybridLoadV2(loads, bhe, bhe, 1, 12)
 
-        # jan_lmh = last_month_hour(1, obj.years)
-        # feb_fmh = first_month_hour(2, obj.years)
-
-        # Both months should be in peak heating months
-        jan_is_peak = 1 in obj.peak_heating_months
-        feb_is_peak = 2 in obj.peak_heating_months
+        # Both months should be in peak heating months (0-indexed: Jan=0, Feb=1)
+        jan_is_peak = 0 in obj.peak_heating_months
+        feb_is_peak = 1 in obj.peak_heating_months
 
         if jan_is_peak and feb_is_peak:
-            # d_jan = obj.monthly_peak_hl_duration[1]
-            # d_feb = obj.monthly_peak_hl_duration[2]
-
-            # If both durations are large enough, the January peak's end
-            # could overlap with February peak's start
             # Check that the hour array remains strictly monotonic
             for i in range(1, len(obj.hour)):
                 self.assertGreater(
@@ -701,13 +691,13 @@ class TestEdgeCase3TwoPeaksCollideInMonth(unittest.TestCase):
 
         obj = _make_full_v2(loads)
 
-        # July should appear in both peak lists
-        self.assertIn(7, obj.peak_cooling_months, f"July not in cooling peaks: {obj.peak_cooling_months}")
-        self.assertIn(7, obj.peak_heating_months, f"July not in heating peaks: {obj.peak_heating_months}")
+        # July (index 6) should appear in both peak lists
+        self.assertIn(6, obj.peak_cooling_months, f"July not in cooling peaks: {obj.peak_cooling_months}")
+        self.assertIn(6, obj.peak_heating_months, f"July not in heating peaks: {obj.peak_heating_months}")
 
         # Both durations should be positive
-        self.assertGreater(obj.monthly_peak_cl_duration[7], 0.0)
-        self.assertGreater(obj.monthly_peak_hl_duration[7], 0.0)
+        self.assertGreater(obj.monthly_peak_cl_duration[6], 0.0)
+        self.assertGreater(obj.monthly_peak_hl_duration[6], 0.0)
 
         # Hour array must be strictly monotonic (the main thing overlap breaks)
         for i in range(2, len(obj.hour)):
@@ -718,6 +708,7 @@ class TestEdgeCase3TwoPeaksCollideInMonth(unittest.TestCase):
             )
 
         # Both a cooling and heating peak load should appear in July
+        # (first_month_hour/last_month_hour use 1-indexed months)
         fmh = first_month_hour(7, obj.years)
         lmh = last_month_hour(7, obj.years)
 
@@ -798,12 +789,7 @@ class TestMultiYearSimulation(unittest.TestCase):
         self.assertEqual(obj.years[2], 2028)
         self.assertEqual(monthrange(2028, 2)[1], 29)
 
-        # Find the hour span for month 26 (Feb of year 3)
-        # by looking at the hour array boundaries.
-        # The total hours in the first 25 months should differ from the
-        # total hours in the first 26 months by 29*24 = 696.
-        # We verify this indirectly: the total simulation hours for 4 years
-        # should include one leap year (2028).
+        # Verify total simulation hours for 4 years includes one leap year (2028).
         expected_hours = 0
         for y in range(4):
             year = 2026 + y
@@ -819,9 +805,7 @@ class TestMultiYearSimulation(unittest.TestCase):
         # 2 years starting 2026: 2026 (non-leap) + 2027 (non-leap)
         obj_no_leap = _make_full_v2(loads, start_month=1, end_month=24)
 
-        # 2 years starting 2027: 2027 (non-leap) + 2028 (leap)
-        # We can't change the base year directly, but we can check 3 years
-        # and verify the 3rd year adds 8784 hours instead of 8760.
+        # 3 years: 2026 + 2027 + 2028 (leap)
         obj_with_leap = _make_full_v2(loads, start_month=1, end_month=36)
 
         # Years 1-2 (2026-2027): no leap years, ~17520 hours
@@ -877,7 +861,6 @@ class TestMultiYearSimulation(unittest.TestCase):
 
         # Final hour should account for leap year 2028
         # 2026: 8760, 2027: 8760, 2028: 8784, 2029: 8760 = 35064 total
-
         expected_hours = 0
         for year in obj.years:
             for m in range(1, 13):
