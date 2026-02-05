@@ -321,7 +321,7 @@ class HybridLoadV2:
 
             self.monthly_peak_cl_duration[m] = self._iterate_duration(
                 peak_month=m,
-                peak_hour=peak_hour,
+                peak_temp_hour=peak_hour,
                 target_dt=target_dt,
                 q_peak=q_peak,
                 monthly_net_avg_sim=monthly_net_avg_sim,
@@ -346,7 +346,7 @@ class HybridLoadV2:
 
             self.monthly_peak_hl_duration[m] = self._iterate_duration(
                 peak_month=m,
-                peak_hour=peak_hour,
+                peak_temp_hour=peak_hour,
                 target_dt=target_dt,
                 q_peak=q_peak,
                 monthly_net_avg_sim=monthly_net_avg_sim,
@@ -362,7 +362,7 @@ class HybridLoadV2:
     def _iterate_duration(
         self,
         peak_month: int,
-        peak_hour: int,
+        peak_temp_hour: int,
         target_dt: float,
         q_peak: float,
         monthly_net_avg_sim: list,
@@ -381,27 +381,27 @@ class HybridLoadV2:
         - Previous months at their net average load
         - Peak month split into non-peak (adjusted avg) + peak load
 
-        Increases duration by 1 hour each iteration until the hybrid
+        Extends duration of peak back in time by 1 hour each iteration until the hybrid
         simulation's peak temperature matches or exceeds the hourly
         simulation's target. Then interpolates for fractional duration.
 
         Per Eq. 3-4 of Spitler (2024), the non-peak load is adjusted so
-        total energy from month start to peak hour is conserved.
+        total energy from month start to peak end is conserved.
 
         :param peak_month: 0-indexed month (0=Jan, 11=Dec)
         :return: Peak duration in hours (may be fractional)
         """
         m_start_offset = month_hour_offset[peak_month]
-        # peak_hour is 1-indexed hour-of-year; convert to 0-indexed offset
+        # peak_temp_hour is 1-indexed hour-of-year the peak dt occurs; convert to 0-indexed offset
         # into the loads array for energy summation
-        peak_hour_0idx = peak_hour - 1  # 0-indexed into sim_loads
+        peak_hour_0idx = peak_temp_hour - 1  # 0-indexed into sim_loads
         peak_hour_in_month = peak_hour_0idx - m_start_offset + 1  # count of hours from month start to peak
 
         # Sum of hourly sim-convention loads from month start to peak hour (inclusive)
         hourly_sum_to_peak = float(np.sum(sim_loads[m_start_offset : peak_hour_0idx + 1]))
 
         prev_predicted_dt = None
-        prev_d = 0
+        prev_d = 0 #previous duration of peak
         max_d = peak_hour_in_month  # can't extend peak before the month starts
 
         for d in range(1, max_d + 1):
@@ -422,12 +422,12 @@ class HybridLoadV2:
                 loads_list.append(monthly_net_avg_sim[pm])
 
             # Peak month: non-peak period then peak period
-            peak_start_hour = peak_hour - d  # hour when peak period starts
+            peak_start_hour = peak_temp_hour - d  # hour when peak period starts
             if non_peak_hours > 0:
                 hours_list.append(float(peak_start_hour))
                 loads_list.append(q_non_peak)
 
-            hours_list.append(float(peak_hour))
+            hours_list.append(float(peak_temp_hour))
             loads_list.append(q_peak)
 
             # Simulate this hybrid sequence

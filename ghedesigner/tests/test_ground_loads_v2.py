@@ -452,6 +452,38 @@ class TestIntegrationWithAtlantaLoads(unittest.TestCase):
         self.assertEqual(len(obj.peak_cooling_months), HybridLoadV2.NUM_PEAK_MONTHS)
         self.assertEqual(len(obj.peak_heating_months), HybridLoadV2.NUM_PEAK_MONTHS)
 
+        # --- Temporary debug output for manual verification ---
+        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        print("\n===== Atlanta Loads: Peak Temperature & Load Summary =====")
+        print(f"{'Month':<6} {'Max dT':>8} {'Hour':>6} {'Peak CL (kW)':>13} "
+              f"{'Min dT':>8} {'Hour':>6} {'Peak HL (kW)':>13}")
+        print("-" * 68)
+        for m in range(MONTHS_IN_YEAR):
+            print(f"{month_names[m]:<6} {obj.monthly_max_dt[m]:>8.3f} {obj.monthly_max_dt_hour[m]:>6d} "
+                  f"{obj.monthly_peak_cl[m]:>13.3f} {obj.monthly_min_dt[m]:>8.3f} "
+                  f"{obj.monthly_min_dt_hour[m]:>6d} {obj.monthly_peak_hl[m]:>13.3f}")
+        print(f"\nPeak cooling months: {[month_names[m] for m in obj.peak_cooling_months]}")
+        print(f"Peak heating months: {[month_names[m] for m in obj.peak_heating_months]}")
+        print(f"\nPeak durations (hours):")
+        for m in obj.peak_cooling_months:
+            print(f"  {month_names[m]} cooling: {obj.monthly_peak_cl_duration[m]:.2f}")
+        for m in obj.peak_heating_months:
+            print(f"  {month_names[m]} heating: {obj.monthly_peak_hl_duration[m]:.2f}")
+        print("=" * 68)
+
+        # --- Full hybrid load profile for the year ---
+        print("\n===== Hybrid Load Profile (All Steps) =====")
+        print(f"{'Step':>4}  {'Start Hr':>10}  {'End Hr':>10}  {'Duration':>10}  {'Load (kW)':>10}")
+        print("-" * 52)
+        for i in range(1, len(obj.hour)):
+            h_start = obj.hour[i - 1]
+            h_end = obj.hour[i]
+            duration = h_end - h_start
+            load = obj.load[i]
+            print(f"{i:>4}  {h_start:>10.1f}  {h_end:>10.1f}  {duration:>10.1f}  {load:>10.3f}")
+        print("=" * 52)
+
     def test_peak_durations_positive(self):
         """All peak durations should be positive for real building loads."""
         if self.atlanta_loads is None:
