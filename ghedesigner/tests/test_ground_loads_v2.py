@@ -130,7 +130,7 @@ class TestSimulateHourly(unittest.TestCase):
         q = np.zeros(25)
         # Simple g-function: g(x) = 1.0 for all x
         g_sts = interp1d([-50, 50], [1.0, 1.0], fill_value=1.0, bounds_error=False)
-        dt = HybridLoadV2.simulate_hourly(hour_time, q, g_sts, resist_bh=0.1, two_pi_k=12.0, ts=1e10)
+        dt = HybridLoadV2.simulate_hourly(hour_time, q, g_sts, resist_bh=0.1, two_pi_k=12.0, ts=1e10, h=100.0)
         self.assertEqual(len(dt), 25)
         for val in dt:
             self.assertAlmostEqual(val, 0.0)
@@ -140,7 +140,7 @@ class TestSimulateHourly(unittest.TestCase):
         hour_time = np.arange(51)  # 0..50
         q = np.hstack((0.0, np.ones(50) * 1000.0))
         g_sts = interp1d([-100, 100], [0.0, 10.0], fill_value=(0.0, 10.0), bounds_error=False)
-        dt = HybridLoadV2.simulate_hourly(hour_time, q, g_sts, resist_bh=0.1, two_pi_k=12.0, ts=1e10)
+        dt = HybridLoadV2.simulate_hourly(hour_time, q, g_sts, resist_bh=0.1, two_pi_k=12.0, ts=1e10, h=100.0)
         # delta_T should be non-negative and generally increasing
         for i in range(2, len(dt)):
             self.assertGreaterEqual(dt[i], dt[i - 1] - 1e-10)
@@ -151,7 +151,7 @@ class TestSimulateHourly(unittest.TestCase):
         hour_time = np.arange(n + 1)
         q = np.hstack((0.0, np.ones(n) * 500.0))
         g_sts = interp1d([-50, 50], [1.0, 1.0], fill_value=1.0, bounds_error=False)
-        dt = HybridLoadV2.simulate_hourly(hour_time, q, g_sts, resist_bh=0.1, two_pi_k=12.0, ts=1e10)
+        dt = HybridLoadV2.simulate_hourly(hour_time, q, g_sts, resist_bh=0.1, two_pi_k=12.0, ts=1e10, h=100.0)
         self.assertEqual(len(dt), n + 1)
 
     def test_first_element_is_zero(self):
@@ -159,7 +159,7 @@ class TestSimulateHourly(unittest.TestCase):
         hour_time = np.arange(11)
         q = np.hstack((0.0, np.ones(10) * 2000.0))
         g_sts = interp1d([-50, 50], [1.0, 1.0], fill_value=1.0, bounds_error=False)
-        dt = HybridLoadV2.simulate_hourly(hour_time, q, g_sts, resist_bh=0.1, two_pi_k=12.0, ts=1e10)
+        dt = HybridLoadV2.simulate_hourly(hour_time, q, g_sts, resist_bh=0.1, two_pi_k=12.0, ts=1e10, h=100.0)
         self.assertAlmostEqual(dt[0], 0.0)
 
 

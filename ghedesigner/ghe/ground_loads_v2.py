@@ -23,6 +23,7 @@ class HybridLoadV2:
 
     # Normalization target: 40 W/m * 100 m = 4000 W
     NORM_LOAD_W = 40.0 * 100.0  # 4000 W
+    NORM_BOREHOLE_H = 100.0  # meters - borehole length for normalized simulation
     NUM_PEAK_MONTHS = 4  # top N months for heating and cooling peaks
 
     def __init__(
@@ -153,18 +154,19 @@ class HybridLoadV2:
     # Hourly simulation utility
     # -----------------------------------------------------------------
     @staticmethod
-    def simulate_hourly(hour_time, q, g_sts, resist_bh, two_pi_k, ts):
+    def simulate_hourly(hour_time, q, g_sts, resist_bh, two_pi_k, ts, h):
         """Hourly fluid temperature simulation using g-function superposition.
 
         Based on Chapter 2 of Advances in Ground Source Heat Pumps.
         Sign convention: positive q = heat rejection into ground → positive delta_T.
 
         :param hour_time: array of time values (hours)
-        :param q: array of loads at each time step, q[0]=0
+        :param q: array of loads at each time step (W), q[0]=0
         :param g_sts: scipy interp1d for short-time-step g-function
         :param resist_bh: effective borehole resistance (m.K/W)
         :param two_pi_k: 2*pi*k_soil (W/m.K)
         :param ts: characteristic time for STS g-function (s)
+        :param h: borehole length (m) - loads are divided by this to get W/m
         :return: list of delta fluid temperatures for each time step
         """
         q_dt = np.hstack(q[1:] - q[:-1])
@@ -172,8 +174,10 @@ class HybridLoadV2:
         for n in range(1, len(hour_time)):
             _time = hour_time[n] - hour_time[0:n]
             g_values = g_sts(np.log((_time * SEC_IN_HR) / ts))
-            delta_tb_i = (q_dt[0:n] / two_pi_k).dot(g_values)
-            tf_mean = delta_tb_i + q[n] * resist_bh
+            # Eq 2.12: delta_Tb = (q'/2πk) * g, where q' = q/H (W/m)
+            delta_tb_i = (q_dt[0:n] / h / two_pi_k).dot(g_values)
+            # Eq 2.13: Tf = Tb + q' * Rb
+            tf_mean = delta_tb_i + q[n] / h * resist_bh
             delta_t_fluid.append(tf_mean)
         return delta_t_fluid
 
@@ -202,7 +206,9 @@ class HybridLoadV2:
         # expects positive=rejection (heat into ground -> positive delta_T)
         q = np.hstack((0.0, -self.normalized_loads))
 
-        return self.simulate_hourly(hour_time, q, g_sts, resist_bh, two_pi_k, ts)
+        return self.simulate_hourly(
+            hour_time, q, g_sts, resist_bh, two_pi_k, ts, self.NORM_BOREHOLE_H
+        )
 
     # -----------------------------------------------------------------
     # Step 4: Find monthly peak temperatures and their hours
@@ -433,7 +439,9 @@ class HybridLoadV2:
             # Simulate this hybrid sequence
             hour_arr = np.array(hours_list)
             load_arr = np.array(loads_list)
-            delta_t = self.simulate_hourly(hour_arr, load_arr, g_sts, resist_bh, two_pi_k, ts)
+            delta_t = self.simulate_hourly(
+                hour_arr, load_arr, g_sts, resist_bh, two_pi_k, ts, self.NORM_BOREHOLE_H
+            )
             predicted_dt = delta_t[-1]
 
             # Check if predicted peak temp has reached/exceeded the target
