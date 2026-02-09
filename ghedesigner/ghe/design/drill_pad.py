@@ -15,13 +15,14 @@ class GeometricConstraintsDrillPad(GeometricConstraints):
     """
     Geometric constraints for drill pad design algorithm
     """
+
     nbh: int
     radius: float
     tilt: float
     ndp_min: int
     ndp_max: int
-#    pad_centers: list[tuple[float, float]]
-#    property_boundary: list[tuple[float, float]] | None = None  # NEW
+    #    pad_centers: list[tuple[float, float]]
+    #    property_boundary: list[tuple[float, float]] | None = None  # NEW
     type: DesignGeomType = field(default=DesignGeomType.DRILLPAD, init=False, repr=False)
 
     def to_input(self) -> dict:
@@ -80,7 +81,7 @@ class DesignDrillPad(DesignBase):
         self.max_eft = max_eft
         self.ndp_min = geometric_constraints.ndp_min
         self.ndp_max = geometric_constraints.ndp_max
-        #self.property_boundary = gc.property_boundary
+        # self.property_boundary = gc.property_boundary
 
         self.coordinates_domain, self.fieldDescriptors = drill_pad(
             nbh=gc.nbh,
@@ -88,7 +89,7 @@ class DesignDrillPad(DesignBase):
             radius=gc.radius,
             ndp_min=gc.ndp_min,
             ndp_max=gc.ndp_max,
-            #pad_centers=gc.pad_centers,
+            # pad_centers=gc.pad_centers,
         )
 
     def find_design(self, disp=False) -> Bisection1DTiltDrillPad:
@@ -121,6 +122,6 @@ class DesignDrillPad(DesignBase):
             disp=disp,
             field_type="Drill Pad",
             load_years=self.load_years,
-            #property_boundary=self.property_boundary,
-            #check_constructability=check_drillpad_constructability,
+            # property_boundary=self.property_boundary,
+            # check_constructability=check_drillpad_constructability,
         )

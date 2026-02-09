@@ -8,7 +8,7 @@ from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
-from ghedesigner.utilities import borehole_spacing, check_bracket, eskilson_log_times, sign
+from ghedesigner.utilities import borehole_spacing, eskilson_log_times, sign
 
 
 class Bisection1DTiltDrillPad:
@@ -134,7 +134,6 @@ class Bisection1DTiltDrillPad:
         return v_flow_system, m_flow_borehole
 
     def initialize_g_function(self, coords, h, tilts, orientations):
-
         self.ghe.bhe.b.H = h
         borehole = self.ghe.bhe.b
         fluid = self.ghe.bhe.fluid
@@ -207,20 +206,14 @@ class Bisection1DTiltDrillPad:
         x_r = self.ndp_max
 
         base_loads = np.array(self.hourly_extraction_ground_loads, dtype=float)
-        
+
         # evaluate at smallest pad count with scaled loads
         scaled_loads_l = (1 / x_l) * base_loads
         self.initialize_g_function(
-            self.coordinates_domain[0][0], 
-            self.max_height, 
-            self.coordinates_domain[0][1], 
-            self.coordinates_domain[0][2]
+            self.coordinates_domain[0][0], self.max_height, self.coordinates_domain[0][1], self.coordinates_domain[0][2]
         )
         t_l = self.calculate_excess(
-            self.coordinates_domain[0][0], 
-            self.max_height, 
-            self.fieldDescriptors[x_l - 1], 
-            scaled_loads_l
+            self.coordinates_domain[0][0], self.max_height, self.fieldDescriptors[x_l - 1], scaled_loads_l
         )
         self.calculated_temperatures[x_l] = t_l
 
@@ -231,10 +224,7 @@ class Bisection1DTiltDrillPad:
         # evaluate at maximum pad count with scaled loads
         scaled_loads_r = (1 / x_r) * base_loads
         t_r = self.calculate_excess(
-            self.coordinates_domain[0][0], 
-            self.max_height, 
-            self.fieldDescriptors[x_r - 1], 
-            scaled_loads_r
+            self.coordinates_domain[0][0], self.max_height, self.fieldDescriptors[x_r - 1], scaled_loads_r
         )
         self.calculated_temperatures[x_r] = t_r
 
@@ -246,54 +236,51 @@ class Bisection1DTiltDrillPad:
 
         # Bisection search to find the lowest valid pad count
         x_l_sign = sign(t_l)
-        
+
         i = 0
         while i < self.max_iter:
             x_c = ceil((x_l + x_r) / 2)
-            
+
             # If no progress can be made, break
             if x_c in (x_l, x_r):
                 break
-            
+
             # Evaluate at center point with scaled loads
             scaled_loads_c = (1 / x_c) * base_loads
             t_c = self.calculate_excess(
-                self.coordinates_domain[0][0], 
-                self.max_height, 
-                self.fieldDescriptors[x_c - 1], 
-                scaled_loads_c
+                self.coordinates_domain[0][0], self.max_height, self.fieldDescriptors[x_c - 1], scaled_loads_c
             )
             self.calculated_temperatures[x_c] = t_c
             c_sign = sign(t_c)
-            
+
             # Update brackets based on sign
             if c_sign == x_l_sign:
                 x_l = x_c
             else:
                 x_r = x_c
-            
+
             i += 1
 
         # Find the smallest pad count with negative excess temperature
         keys = list(self.calculated_temperatures.keys())
         values = list(self.calculated_temperatures.values())
-        
+
         # Get all negative (valid) excess temperatures
         negative_excess_values = [v for v in values if v <= 0.0]
-        
+
         if not negative_excess_values:
             # Should not happen after checks above, but handle gracefully
             if self.continue_if_design_unmet:
                 return x_r, self.coordinates_domain[0]
             raise ValueError("No valid design found")
-        
+
         # Find the maximum of negative values (closest to zero, still valid)
         excess_of_interest = max(negative_excess_values)
-        
+
         # Get pad counts sorted by size
-        pad_counts = [k for k in keys]
+        pad_counts = list(keys)
         sorted_pad_counts, sorted_values = (list(t) for t in zip(*sorted(zip(pad_counts, values))))
-        
+
         # Pick the smallest pad count with negative excess temperature
         for pad_count, val in zip(sorted_pad_counts, sorted_values):
             if val <= 0:
@@ -305,18 +292,15 @@ class Bisection1DTiltDrillPad:
                     )
                 excess_of_interest = val
                 break
-        
+
         # Get the pad count corresponding to the selected excess temperature
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
-        
+
         # Reinitialize GHE with the selected configuration
         scaled_loads_final = (1 / selection_key) * base_loads
         self.initialize_ghe(
-            self.coordinates_domain[0][0], 
-            self.max_height, 
-            self.fieldDescriptors[selection_key - 1],
-            scaled_loads_final
+            self.coordinates_domain[0][0], self.max_height, self.fieldDescriptors[selection_key - 1], scaled_loads_final
         )
-        
+
         return selection_key, self.coordinates_domain[0]

@@ -174,7 +174,7 @@ def staggered_line(n: int, b: float, tilt: float, borehole_height: float) -> lis
     return line_object
 
 
-#def tilted_drill_pad(n: int, radius: float, tilt: float, center_x: float = 0.0, center_y: float = 0.0):
+# def tilted_drill_pad(n: int, radius: float, tilt: float, center_x: float = 0.0, center_y: float = 0.0):
 #    coords: list[tuple[float, float]] = []
 #    tilts: list[float] = []
 #    orients: list[float] = []
@@ -188,6 +188,7 @@ def staggered_line(n: int, b: float, tilt: float, borehole_height: float) -> lis
 #        orients.append(angle)
 #
 #    return coords, tilts, orients
+
 
 def tilted_drill_pad(
     n: int,
@@ -210,6 +211,7 @@ def tilted_drill_pad(
 
     return coords, tilts, orients
 
+
 def borehole_prism(
     x: float,
     y: float,
@@ -218,7 +220,6 @@ def borehole_prism(
     orientation: float,
     clearance: float,
 ) -> list[tuple[float, float]]:
-
     horiz = max_height * sin(tilt)
     dx = horiz * cos(orientation)
     dy = horiz * sin(orientation)
@@ -233,6 +234,7 @@ def borehole_prism(
     p3 = (x1 - clearance * nx, y1 - clearance * ny)
     p4 = (x1 + clearance * nx, y1 + clearance * ny)
     return [p1, p2, p3, p4, p1]
+
 
 # def circle_of_points(n_points: int, radius: float, center_x: float = 0.0, center_y: float = 0.0) -> \
 #        list[tuple[float, float]]:

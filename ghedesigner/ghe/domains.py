@@ -1,4 +1,4 @@
-from math import ceil, floor, inf, pi
+from math import ceil, floor, inf
 from typing import cast
 
 from ghedesigner.ghe.coordinates import (
@@ -265,7 +265,7 @@ def straight_line(lower: int, upper: int, b: float, tilt: float, borehole_height
     return coordinates_domain, field_descriptors, staggered_coordinates_domain, staggered_field_descriptors
 
 
-#def drill_pad(nbh: int, tilt: float, radius: float, pad_centers: list[tuple[float, float]]):
+# def drill_pad(nbh: int, tilt: float, radius: float, pad_centers: list[tuple[float, float]]):
 #    all_coordinates = []
 #    all_tilts = []
 #    all_orientations = []
@@ -287,6 +287,7 @@ def straight_line(lower: int, upper: int, b: float, tilt: float, borehole_height
 #
 #    return coordinates_domain, field_descriptors
 
+
 def drill_pad(nbh: int, tilt: float, radius: float, ndp_min: int, ndp_max: int):
     coordinates_domain = []
     field_descriptors = []
@@ -297,6 +298,7 @@ def drill_pad(nbh: int, tilt: float, radius: float, ndp_min: int, ndp_max: int):
         field_descriptors.append(f"{npads}X_Drill_Pads_{nbh}X_R{radius:.2f}_T{tilt:.2f}")
 
     return coordinates_domain, field_descriptors
+
 
 def zoned_rectangle_domain(length_x, length_y, n_x, n_y, transpose=False):
     # Make this work for the transpose
@@ -525,4 +527,3 @@ def reorder_domain(domain, descriptors):
     """
 
     return zip(*sorted(zip(domain, descriptors), key=lambda x: len(x[0])))
-

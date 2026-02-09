@@ -32,14 +32,14 @@ class Bisection1DTilt:
         max_eft: float,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
+        staggered_coordinates_domain: list,
+        staggered_field_descriptors: list,
         flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         max_iter=15,
         disp=False,
         search=True,
         field_type="N/A",
         load_years=None,
-        staggered_coordinates_domain: list = None,
-        staggered_field_descriptors: list = None,
     ) -> None:
         # Take the lowest part of the coordinates domain to be used for the
         # initial setup
@@ -47,8 +47,14 @@ class Bisection1DTilt:
             load_years = [2019]
         self.load_years = load_years
         self.searchTracker: list[list] = []
-        coordinates = staggered_coordinates_domain[0]
-        current_field = staggered_field_descriptors[0]
+        if len(staggered_field_descriptors) == 0 or len(staggered_coordinates_domain) == 0:
+            raise ValueError(
+                '"bisection_1d_tilt_search.py" requires a non-empty "staggered_coordinates_domain"'
+                ' and "staggered_field_descriptors" lists'
+            )
+        else:
+            coordinates = staggered_coordinates_domain[0]
+            current_field = staggered_field_descriptors[0]
         self.field_type = field_type
         # Flow rate tracking
         self.v_flow = v_flow
@@ -69,7 +75,7 @@ class Bisection1DTilt:
         self.coordinates_domain = coordinates_domain
         self.fieldDescriptors = field_descriptors
         self.staggered_coordinates_domain = staggered_coordinates_domain
-        self. staggered_fieldDescriptors = staggered_field_descriptors
+        self.staggered_fieldDescriptors = staggered_field_descriptors
         self.max_iter = max_iter
         self.disp = disp
 
@@ -90,7 +96,7 @@ class Bisection1DTilt:
             pipe,
             grout,
             soil,
-            solver='equivalent'
+            solver="equivalent",
         )
 
         # Initialize the GHE object
@@ -141,9 +147,9 @@ class Bisection1DTilt:
 
         b = borehole_spacing(borehole, coordinates)
 
-        selected_solver = 'equivalent'
+        selected_solver = "equivalent"
         if tilts is not None and orientations is not None:
-            selected_solver = 'similarities'
+            selected_solver = "similarities"
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
@@ -336,12 +342,13 @@ class Bisection1DTilt:
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
         self.initialize_ghe(
-            self.staggered_coordinates_domain[selection_key], self.max_height, self.staggered_fieldDescriptors[selection_key]
+            self.staggered_coordinates_domain[selection_key],
+            self.max_height,
+            self.staggered_fieldDescriptors[selection_key],
         )
         return selection_key, self.staggered_coordinates_domain[selection_key]
 
     def search(self):
-
         staggered_selection_key, staggered_coords = self.staggered_search()
 
         return staggered_selection_key, self.coordinates_domain[staggered_selection_key]
