@@ -10,6 +10,8 @@ from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import GHEFluid, Grout, Soil
 from ghedesigner.utilities import borehole_spacing, check_bracket, eskilson_log_times, sign
 
+from ghedesigner.ghe.shape import point_polygon_check
+
 
 class Bisection1DTilt:
     def __init__(
@@ -69,7 +71,7 @@ class Bisection1DTilt:
         self.coordinates_domain = coordinates_domain
         self.fieldDescriptors = field_descriptors
         self.staggered_coordinates_domain = staggered_coordinates_domain
-        self. staggered_fieldDescriptors = staggered_field_descriptors
+        self.staggered_fieldDescriptors = staggered_field_descriptors
         self.max_iter = max_iter
         self.disp = disp
 
@@ -90,8 +92,9 @@ class Bisection1DTilt:
             pipe,
             grout,
             soil,
-            solver='equivalent'
+            solver="equivalent",
         )
+        self.last_g_function = g_function
 
         # Initialize the GHE object
         self.ghe = GHE(
@@ -111,6 +114,7 @@ class Bisection1DTilt:
             field_type=field_type,
         )
 
+        self.ghe.bisection = self
         self.calculated_temperatures: dict[int, np.float64] = {}
 
         if search:
@@ -141,9 +145,9 @@ class Bisection1DTilt:
 
         b = borehole_spacing(borehole, coordinates)
 
-        selected_solver = 'equivalent'
+        selected_solver = "equivalent"
         if tilts is not None and orientations is not None:
-            selected_solver = 'similarities'
+            selected_solver = "similarities"
 
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
@@ -164,7 +168,7 @@ class Bisection1DTilt:
             orientations=orientations,
             solver=selected_solver,
         )
-
+        self.last_g_function = g_function
         # Initialize the GHE object
         self.ghe = GHE(
             v_flow_system,
@@ -182,6 +186,7 @@ class Bisection1DTilt:
             field_type=self.field_type,
             field_specifier=field_specifier,
         )
+        self.ghe.bisection = self
 
     def calculate_excess(self, coordinates, h, field_specifier="N/A", tilts=None, orientations=None):
         self.initialize_ghe(coordinates, h, field_specifier=field_specifier, tilts=tilts, orientations=orientations)
@@ -317,7 +322,7 @@ class Bisection1DTilt:
         negative_excess_values = [v for v in values if v <= 0.0]
         excess_of_interest = max(negative_excess_values)
 
-        # but some conditions don't yield this result
+        # but some conditions don't yield this result,
         # adding a check here to ensure we pick the smallest field with
         # negative excess temperature
         num_bh = [len(self.staggered_coordinates_domain[x]) for x in keys]
@@ -336,12 +341,60 @@ class Bisection1DTilt:
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
         self.initialize_ghe(
-            self.staggered_coordinates_domain[selection_key], self.max_height, self.staggered_fieldDescriptors[selection_key]
+            self.staggered_coordinates_domain[selection_key],
+            self.max_height,
+            self.staggered_fieldDescriptors[selection_key],
         )
         return selection_key, self.staggered_coordinates_domain[selection_key]
 
     def search(self):
-
+        # Hybrid Search
+        # Perform search with staggered vertical boreholes to get an approximate answer
         staggered_selection_key, staggered_coords = self.staggered_search()
 
-        return staggered_selection_key, self.coordinates_domain[staggered_selection_key]
+        # Determine whether approximate was too small or large
+        staggered_excess = self.calculate_excess(
+            self.coordinates_domain[staggered_selection_key][0],
+            self.max_height,
+            self.fieldDescriptors[staggered_selection_key],
+            tilts=self.coordinates_domain[staggered_selection_key][1],
+            orientations=self.coordinates_domain[staggered_selection_key][2],
+        )
+
+        if staggered_excess == 0:
+            return staggered_selection_key, self.coordinates_domain[staggered_selection_key][0]
+        elif staggered_excess > 0:
+            search_direction = 1
+        else:
+            search_direction = -1
+
+        # Refine approximate answer
+        selection_key = staggered_selection_key
+        i = 0
+
+        while i < self.max_iter:
+            selection_key += search_direction
+
+            new_excess = self.calculate_excess(
+                self.coordinates_domain[selection_key][0],
+                self.max_height,
+                self.fieldDescriptors[selection_key],
+                tilts=self.coordinates_domain[selection_key][1],
+                orientations=self.coordinates_domain[selection_key][2],
+            )
+            if search_direction == 1 and new_excess <= 0:
+                break
+            elif search_direction == -1 and new_excess > 0:
+                selection_key -= search_direction
+                break
+            i += 1
+
+        self.initialize_ghe(
+            self.coordinates_domain[selection_key][0],
+            self.max_height,
+            self.fieldDescriptors[selection_key],
+            tilts=self.coordinates_domain[selection_key][1],
+            orientations=self.coordinates_domain[selection_key][2],
+        )
+        self.ghe.gFunction = self.last_g_function
+        return selection_key, self.coordinates_domain[selection_key]

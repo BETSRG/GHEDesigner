@@ -395,8 +395,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         search_time = time() - start_time
         found_ghe = cast(GHE, search.ghe)
         if geom_type == DesignGeomType.TILTEDLINE:
-            found_ghe.compute_and_merge_g_functions(h_values=[max_height * 0.9])
-            found_ghe.size(TimestepType.HYBRID, max_height, max_height * 0.9, max_eft, min_eft)
+            found_ghe.compute_and_merge_g_functions(h_values=[max_height * 0.5])
+            found_ghe.size(TimestepType.HYBRID, max_height, max_height * 0.5, max_eft, min_eft)
         else:
             found_ghe.compute_and_merge_g_functions(h_values=[min_height])
             found_ghe.size(TimestepType.HYBRID, max_height, min_height, max_eft, min_eft)

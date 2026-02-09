@@ -1,6 +1,18 @@
 {
   "$schema": "http://json-schema.org/draft-08/schema#",
   "$defs": {
+    "pad_centers": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "format": "Meters",
+      "description": "Array of x, y coordinate pairs defining the center of each drill pad."
+    },
     "ndp_min": {
       "type": "integer",
       "minimum": 1,
@@ -816,9 +828,7 @@
                   "method",
                   "nbh",
                   "radius",
-                  "tilt",
-                  "ndp_min",
-                  "ndp_max"
+                  "tilt"
                 ],
                 "additionalProperties": false
               }

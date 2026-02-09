@@ -192,34 +192,40 @@ class Bisection1DTilt:
 
         return t_excess
 
-    def staggered_search(self):
+    def search(self):
         x_l_idx = 0
 
         # find upper bound that respects max_boreholes
         if self.max_boreholes is not None:
-            num_coordinates_in_each = [len(x) for x in self.staggered_coordinates_domain]
+            num_coordinates_in_each = [len(x[0]) for x in self.coordinates_domain]
             x_r_idx = [idx for idx, x in enumerate(num_coordinates_in_each) if x < self.max_boreholes][-1]
         else:
-            x_r_idx = len(self.staggered_coordinates_domain) - 1
+            x_r_idx = len(self.coordinates_domain) - 1
 
         if self.disp:
             print("Do some initial checks before searching.")
         # Get the lowest possible excess temperature from minimum height at the
         # smallest location in the domain
         t_0_lower = self.calculate_excess(
-            self.staggered_coordinates_domain[x_l_idx],
+            self.coordinates_domain[x_l_idx][0],
             self.min_height,
-            field_specifier=self.staggered_fieldDescriptors[x_l_idx],
+            field_specifier=self.fieldDescriptors[x_l_idx],
+            tilts=self.coordinates_domain[x_l_idx][1],
+            orientations=self.coordinates_domain[x_l_idx][2]
         )
         t_0_upper = self.calculate_excess(
-            self.staggered_coordinates_domain[x_l_idx],
+            self.coordinates_domain[x_l_idx][0],
             self.max_height,
-            field_specifier=self.staggered_fieldDescriptors[x_l_idx],
+            field_specifier=self.fieldDescriptors[x_l_idx],
+            tilts=self.coordinates_domain[x_l_idx][1],
+            orientations=self.coordinates_domain[x_l_idx][2]
         )
         t_m1 = self.calculate_excess(
-            self.staggered_coordinates_domain[x_r_idx],
+            self.coordinates_domain[x_r_idx][0],
             self.max_height,
-            field_specifier=self.staggered_fieldDescriptors[x_r_idx],
+            field_specifier=self.fieldDescriptors[x_r_idx],
+            tilts=self.coordinates_domain[x_r_idx][1],
+            orientations=self.coordinates_domain[x_r_idx][2]
         )
 
         self.calculated_temperatures[x_l_idx] = t_0_upper
@@ -228,8 +234,11 @@ class Bisection1DTilt:
         if check_bracket(sign(t_0_lower), sign(t_0_upper)):
             if self.disp:
                 print("Size between min and max of lower bound in domain.")
-            self.initialize_ghe(self.staggered_coordinates_domain[x_l_idx], self.max_height)
-            return x_l_idx, self.staggered_coordinates_domain[x_l_idx]
+            self.initialize_ghe(self.coordinates_domain[x_l_idx][0], self.max_height,
+                                tilts=self.coordinates_domain[x_l_idx][1],
+                                orientations=self.coordinates_domain[x_l_idx][2]
+                                )
+            return x_l_idx, self.coordinates_domain[x_l_idx]
         elif check_bracket(sign(t_0_upper), sign(t_m1)):
             if self.disp:
                 print("Perform the integer bisection search routine.")
@@ -243,11 +252,13 @@ class Bisection1DTilt:
                 print("Smallest available configuration selected.")
                 selection_key = x_l_idx
                 self.initialize_ghe(
-                    self.staggered_coordinates_domain[selection_key],
+                    self.coordinates_domain[selection_key][0],
                     self.min_height,
-                    self.staggered_fieldDescriptors[selection_key],
+                    self.fieldDescriptors[selection_key],
+                    tilts=self.coordinates_domain[selection_key][1],
+                    orientations=self.coordinates_domain[selection_key][2]
                 )
-                return selection_key, self.staggered_coordinates_domain[selection_key]
+                return selection_key, self.coordinates_domain[selection_key]
             else:
                 raise ValueError("Search failed.")
         elif t_m1 > 0.0:
@@ -263,11 +274,13 @@ class Bisection1DTilt:
                 print("Largest available configuration selected.")
                 selection_key = x_r_idx
                 self.initialize_ghe(
-                    self.staggered_coordinates_domain[selection_key],
+                    self.coordinates_domain[selection_key][0],
                     self.max_height,
-                    self.staggered_fieldDescriptors[selection_key],
+                    self.fieldDescriptors[selection_key],
+                    tilts=self.coordinates_domain[selection_key][1],
+                    orientations=self.coordinates_domain[selection_key][2]
                 )
-                return selection_key, self.staggered_coordinates_domain[selection_key]
+                return selection_key, self.coordinates_domain[selection_key]
             else:
                 raise ValueError("Search failed.")
         else:
@@ -289,9 +302,11 @@ class Bisection1DTilt:
                 break
 
             c_t_excess = self.calculate_excess(
-                self.staggered_coordinates_domain[c_idx],
+                self.coordinates_domain[c_idx][0],
                 self.max_height,
-                field_specifier=self.staggered_fieldDescriptors[c_idx],
+                field_specifier=self.fieldDescriptors[c_idx],
+                tilts=self.coordinates_domain[c_idx][1],
+                orientations=self.coordinates_domain[c_idx][2]
             )
 
             self.calculated_temperatures[c_idx] = c_t_excess
@@ -304,9 +319,11 @@ class Bisection1DTilt:
 
             i += 1
 
-        coordinates = self.staggered_coordinates_domain[i]
+        i = x_r_idx
+        coordinates = self.coordinates_domain[i]
 
-        self.calculate_excess(coordinates, self.max_height, self.staggered_fieldDescriptors[i])
+        self.calculate_excess(coordinates[0], self.max_height, self.fieldDescriptors[i],
+                              tilts=coordinates[1], orientations=coordinates[2])
         # Make sure the field being returned pertains to the index which is the
         # closest to 0 but also negative (the maximum of all 0 or negative
         # excess temperatures)
@@ -320,7 +337,7 @@ class Bisection1DTilt:
         # but some conditions don't yield this result
         # adding a check here to ensure we pick the smallest field with
         # negative excess temperature
-        num_bh = [len(self.staggered_coordinates_domain[x]) for x in keys]
+        num_bh = [len(self.coordinates_domain[x][0]) for x in keys]
         sorted_num_bh, sorted_values = (list(t) for t in zip(*sorted(zip(num_bh, values))))
         for _, val in zip(sorted_num_bh, sorted_values):
             if val < 0:
@@ -336,12 +353,11 @@ class Bisection1DTilt:
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
         self.initialize_ghe(
-            self.staggered_coordinates_domain[selection_key], self.max_height, self.staggered_fieldDescriptors[selection_key]
+            self.coordinates_domain[selection_key][0], self.max_height,
+            self.fieldDescriptors[selection_key],
+            tilts=self.coordinates_domain[selection_key][1],
+            orientations=self.coordinates_domain[selection_key][2]
         )
-        return selection_key, self.staggered_coordinates_domain[selection_key]
+        return selection_key, self.coordinates_domain[selection_key]
 
-    def search(self):
 
-        staggered_selection_key, staggered_coords = self.staggered_search()
-
-        return staggered_selection_key, self.coordinates_domain[staggered_selection_key]

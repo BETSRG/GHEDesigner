@@ -174,18 +174,39 @@ def staggered_line(n: int, b: float, tilt: float, borehole_height: float) -> lis
     return line_object
 
 
-def tilted_drill_pad(n: int, radius: float, tilt: float, center_x: float = 0.0, center_y: float = 0.0):
+#def tilted_drill_pad(n: int, radius: float, tilt: float, center_x: float = 0.0, center_y: float = 0.0):
+#    coords: list[tuple[float, float]] = []
+#    tilts: list[float] = []
+#    orients: list[float] = []
+#
+#    for i in range(n):
+#        angle = 2 * pi * i / n
+#        x_top = center_x + radius * cos(angle)
+#        y_top = center_y + radius * sin(angle)
+#        coords.append((x_top, y_top))
+#        tilts.append(tilt)
+#        orients.append(angle)
+#
+#    return coords, tilts, orients
+
+def tilted_drill_pad(
+    n: int,
+    radius: float,
+    tilt: float,
+    center_x: float = 0.0,
+    center_y: float = 0.0,
+) -> tuple[list[tuple[float, float]], list[float], list[float]]:
     coords: list[tuple[float, float]] = []
     tilts: list[float] = []
     orients: list[float] = []
 
     for i in range(n):
         angle = 2 * pi * i / n
-        x_top = center_x + radius * cos(angle)
-        y_top = center_y + radius * sin(angle)
-        coords.append((x_top, y_top))
+        x = center_x + radius * cos(angle)
+        y = center_y + radius * sin(angle)
+        coords.append((x, y))
         tilts.append(tilt)
-        orients.append(angle)
+        orients.append(angle + pi / 2)
 
     return coords, tilts, orients
 
