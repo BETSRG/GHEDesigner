@@ -165,42 +165,6 @@ def calc_g_func_for_multiple_lengths(
     )
 
 
-def merge_g_functions(g_func_mid, g_func_max):
-    if g_func_mid.bore_locations != g_func_max.bore_locations:
-        raise ValueError("Borehole coordinates do not match, unable to merge")
-    if g_func_mid.bore_tilts != g_func_max.bore_tilts:
-        raise ValueError("Borehole tilts do not match, unable to merge")
-    if g_func_mid.bore_orientations != g_func_max.bore_orientations:
-        raise ValueError("Borehole orientations do not match, unable to merge")
-    if g_func_mid.B != g_func_max.B:
-        raise ValueError("Borehole spacings do not match, unable to merge")
-    if g_func_mid.d != g_func_max.d:
-        raise ValueError("Borehole depths do not match, unable to merge")
-    if g_func_mid.log_time != g_func_max.log_time:
-        raise ValueError("Borehole log times do not match, unable to merge")
-
-    new_r_b_values = deepcopy(g_func_mid.r_b_values)
-    new_g_lts = deepcopy(g_func_mid.g_lts)
-
-    for h, rb in g_func_max.r_b_values.items():
-        if h not in new_r_b_values:
-            new_r_b_values[h] = rb
-    for h, lts in g_func_max.g_lts.items():
-        if h not in new_g_lts:
-            new_g_lts[h] = lts
-
-    return GFunction(
-        b=g_func_mid.B,
-        r_b_values=new_r_b_values,
-        d=g_func_mid.d,
-        g_lts=new_g_lts,
-        log_time=g_func_mid.log_time,
-        bore_locations=g_func_mid.bore_locations,
-        bore_tilts=g_func_mid.bore_tilts,
-        bore_orientations=g_func_mid.bore_orientations,
-    )
-
-
 class GFunction:
     def __init__(
         self,
@@ -346,3 +310,43 @@ class GFunction:
         """
         g_function_corrected = [g - log(rb_star / rb) for g in g_function]
         return g_function_corrected
+
+
+def merge_g_functions(g_func_mid: GFunction, g_func_max: GFunction):
+    # These checks are being removed for now to better allow for the current behavior of the GFunction
+    # object which is somewhat type agnostic regarding NumPy arrays/lists in its current usage.
+    # A slower check that works on NumPy arrays and lists could be implemented here, but it does not seem worth
+    # it at the moment.
+    # if g_func_mid.bore_locations != g_func_max.bore_locations:
+    #     raise ValueError("Borehole coordinates do not match, unable to merge")
+    # if g_func_mid.bore_tilts != g_func_max.bore_tilts:
+    #     raise ValueError("Borehole tilts do not match, unable to merge")
+    # if g_func_mid.bore_orientations != g_func_max.bore_orientations:
+    #     raise ValueError("Borehole orientations do not match, unable to merge")
+    if g_func_mid.B != g_func_max.B:
+        raise ValueError("Borehole spacings do not match, unable to merge")
+    if g_func_mid.d != g_func_max.d:
+        raise ValueError("Borehole depths do not match, unable to merge")
+    # if g_func_mid.log_time != g_func_max.log_time:
+    #     raise ValueError("Borehole log times do not match, unable to merge")
+
+    new_r_b_values = deepcopy(g_func_mid.r_b_values)
+    new_g_lts = deepcopy(g_func_mid.g_lts)
+
+    for h, rb in g_func_max.r_b_values.items():
+        if h not in new_r_b_values:
+            new_r_b_values[h] = rb
+    for h, lts in g_func_max.g_lts.items():
+        if h not in new_g_lts:
+            new_g_lts[h] = lts
+
+    return GFunction(
+        b=g_func_mid.B,
+        r_b_values=new_r_b_values,
+        d=g_func_mid.d,
+        g_lts=new_g_lts,
+        log_time=g_func_mid.log_time,
+        bore_locations=g_func_mid.bore_locations,
+        bore_tilts=g_func_mid.bore_tilts,
+        bore_orientations=g_func_mid.bore_orientations,
+    )

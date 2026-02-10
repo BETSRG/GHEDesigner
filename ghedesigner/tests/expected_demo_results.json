@@ -58,5 +58,13 @@
   "run_simulation_presized": {
     "active_borehole_length": 1,
     "number_of_boreholes": 1
+  },
+  "find_design_drill_pad_u_tube_GA_Atlanta_small_hotel.json": {
+    "active_borehole_length": 126.8,
+    "number_of_boreholes": 1
+  },
+  "find_design_tilted_line_u_tube.json": {
+    "active_borehole_length": 126.8,
+    "number_of_boreholes": 1
   }
 }

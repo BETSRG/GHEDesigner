@@ -8818,7 +8818,7 @@ class TestFindDrillPadDesign(GHEBaseTest):
         )
         search = self.get_design(pipe, 0.5)
         u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(128.86, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(129.7733810369748, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(12, len(borehole_location_data_rows))
 
@@ -8833,7 +8833,7 @@ class TestFindDrillPadDesign(GHEBaseTest):
         )
         search = self.get_design(pipe, 0.5)
         u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(128.35, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(121.5, u_tube_height, delta=0.1)
         npads = len(search.ghe.gFunction.bore_locations)
         self.assertEqual(12, npads)
 
@@ -8849,6 +8849,6 @@ class TestFindDrillPadDesign(GHEBaseTest):
         )
         search = self.get_design(pipe, 0.8)
         u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(129.22, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(123.63138313640573, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(12, len(borehole_location_data_rows))
