@@ -116,8 +116,8 @@ def _analyze_and_export(
                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
     print(f"\n===== {file_prefix}: Peak Temperature & Load Summary =====")
-    print(f"{'Month':<6} {'Max dT':>8} {'Hour':>6} {'Peak CL (kW)':>13} "
-          f"{'Min dT':>8} {'Hour':>6} {'Peak HL (kW)':>13}")
+    print(f"{'Month':<6} {'Max dT':>8} {'Hour':>6} {'Peak CL (W)':>13} "
+          f"{'Min dT':>8} {'Hour':>6} {'Peak HL (W)':>13}")
     print("-" * 68)
     for m in range(MONTHS_IN_YEAR):
         print(f"{month_names[m]:<6} {obj.monthly_max_dt[m]:>8.3f} {obj.monthly_max_dt_hour[m]:>6d} "
@@ -133,7 +133,7 @@ def _analyze_and_export(
     print("=" * 68)
 
     print(f"\n===== {file_prefix}: Hybrid Load Profile (All Steps) =====")
-    print(f"{'Step':>4}  {'Start Hr':>10}  {'End Hr':>10}  {'Duration':>10}  {'Load (kW)':>10}")
+    print(f"{'Step':>4}  {'Start Hr':>10}  {'End Hr':>10}  {'Duration':>10}  {'Load (W)':>10}")
     print("-" * 52)
     for i in range(1, len(obj.hour)):
         h_start = obj.hour[i - 1]
@@ -141,36 +141,37 @@ def _analyze_and_export(
         print(f"{i:>4}  {h_start:>10.1f}  {h_end:>10.1f}  {h_end - h_start:>10.1f}  {obj.load[i]:>10.3f}")
     print("=" * 52)
 
-    # Hourly results: delta_t, tf_ave, eft, exft
+    # Hourly results: delta_t, exft, tf_ave, eft
     # q is aligned to hourly_delta_t indexing (8761 entries, index 0 = 0)
-    q = np.hstack((0.0, obj.normalized_loads))
+    q_norm = np.hstack((0.0, obj.normalized_loads))
     tf_ave = np.array(obj.hourly_delta_t) + undisturbed_ground_t
-    eft = tf_ave + q / (m_dot * cp)
-    exft = tf_ave - q / (m_dot * cp)
+    eft = tf_ave + q_norm / (m_dot * cp)
+    exft = tf_ave - q_norm / (m_dot * cp)
 
     hourly_path = output_dir / f"{file_prefix}_hrly_results.csv"
     with open(hourly_path, "w") as f:
-        f.write("hour,load_w,delta_t,tf_ave,eft,exft\n")
-        for hour_idx, (load_val, dt, tf_ave_val, eft_val, exft_val) in enumerate(
-            zip(q, obj.hourly_delta_t, tf_ave, eft, exft)
+        f.write("hour,norm_load_w,tfave-tg,exft,tf_ave,eft\n")
+        for hour_idx, (nq, dt, exft_val, tf_ave_val, eft_val) in enumerate(
+            zip(q_norm, obj.hourly_delta_t, exft, tf_ave, eft)
         ):
-            f.write(f"{hour_idx},{load_val:.6f},{dt:.6f},{tf_ave_val:.6f},{eft_val:.6f},{exft_val:.6f}\n")
+            f.write(f"{hour_idx},{nq:.6f},{dt:.6f},{exft_val:.6f},{tf_ave_val:.6f},{eft_val:.6f}\n")
     print(f"\nExported hourly results to {hourly_path}")
     print(f"  entries={len(obj.hourly_delta_t)}, "
           f"delta_T=[{min(obj.hourly_delta_t):.4f}, {max(obj.hourly_delta_t):.4f}], "
           f"EFT=[{min(eft):.4f}, {max(eft):.4f}] °C")
 
-    # Hybrid results: run simulate_hourly on hybrid sequence, export step-function format
+    # Hybrid results: export step-function format with normalized loads
     hybrid_delta_t = obj.hybrid_dt
+    norm_hybrid_q = obj.hybrid_q_norm_w
 
     hybrid_path = output_dir / f"{file_prefix}_hybrid_results.csv"
     with open(hybrid_path, "w") as f:
-        f.write("hour,load_kw,predicted_delta_t\n")
+        f.write("hour,load_w,norm_load_w,predicted_delta_t\n")
         for i in range(len(obj.hour)):
-            f.write(f"{obj.hour[i]:.4f},{obj.load[i]:.6f},{hybrid_delta_t[i]:.6f}\n")
+            f.write(f"{obj.hour[i]:.4f},{obj.load[i]:.6f},{norm_hybrid_q[i]:.6f},{hybrid_delta_t[i]:.6f}\n")
             # Duplicate timestep at load transitions to create vertical step edges for plotting
             if i < len(obj.hour) - 1 and obj.load[i] != obj.load[i + 1]:
-                f.write(f"{obj.hour[i]:.4f},{obj.load[i + 1]:.6f},{hybrid_delta_t[i]:.6f}\n")
+                f.write(f"{obj.hour[i]:.4f},{obj.load[i + 1]:.6f},{norm_hybrid_q[i + 1]:.6f},{hybrid_delta_t[i]:.6f}\n")
     print(f"Exported hybrid results to {hybrid_path}")
 
 
@@ -284,10 +285,10 @@ class TestSplitLoadsByMonth(unittest.TestCase):
         loads[800] = -3000.0  # peak rejection in February
 
         obj = _make_v2_with_loads(loads)
-        # January (index 0) peak extraction = 2000 W = 2.0 kW
-        self.assertAlmostEqual(obj.monthly_peak_hl[0], 2.0)
-        # February (index 1) peak rejection = 3000 W = 3.0 kW
-        self.assertAlmostEqual(obj.monthly_peak_cl[1], 3.0)
+        # January (index 0) peak extraction = 2000 W
+        self.assertAlmostEqual(obj.monthly_peak_hl[0], 2000.0)
+        # February (index 1) peak rejection = 3000 W
+        self.assertAlmostEqual(obj.monthly_peak_cl[1], 3000.0)
 
     def test_total_hours_match_8760(self):
         """Sum of hours across all months should be 8760 for non-leap year."""

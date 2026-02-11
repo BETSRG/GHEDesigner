@@ -120,18 +120,18 @@ class HybridLoadV2:
     def split_loads_by_month(self) -> None:
         """Compute monthly totals, peaks, averages from original loads.
 
-        These are computed on the original (non-normalized) loads in kW,
+        These are computed on the original (non-normalized) loads in W,
         and will be used later when constructing the final hybrid time
         step arrays with actual load magnitudes.
         """
         n = MONTHS_IN_YEAR
 
-        self.monthly_cl = [0.0] * n  # total cooling (rejection) kWh
-        self.monthly_hl = [0.0] * n  # total heating (extraction) kWh
-        self.monthly_peak_cl = [0.0] * n  # peak cooling kW
-        self.monthly_peak_hl = [0.0] * n  # peak heating kW
-        self.monthly_avg_cl = [0.0] * n  # average cooling kW
-        self.monthly_avg_hl = [0.0] * n  # average heating kW
+        self.monthly_cl = [0.0] * n  # total cooling (rejection) Wh
+        self.monthly_hl = [0.0] * n  # total heating (extraction) Wh
+        self.monthly_peak_cl = [0.0] * n  # peak cooling W
+        self.monthly_peak_hl = [0.0] * n  # peak heating W
+        self.monthly_avg_cl = [0.0] * n  # average cooling W
+        self.monthly_avg_hl = [0.0] * n  # average heating W
 
         hours_in_previous_months = 0
         for m in range(n):
@@ -139,8 +139,8 @@ class HybridLoadV2:
             month_loads = self.raw_loads[hours_in_previous_months : hours_in_previous_months + hours_in_month]
 
             # Split into rejection (negative raw = cooling) and extraction (positive raw = heating)
-            month_rejection = [abs(x) / 1000.0 if x < 0 else 0.0 for x in month_loads]
-            month_extraction = [x / 1000.0 if x >= 0 else 0.0 for x in month_loads]
+            month_rejection = [abs(x) if x < 0 else 0.0 for x in month_loads]
+            month_extraction = [x if x >= 0 else 0.0 for x in month_loads]
 
             self.monthly_cl[m] = sum(month_rejection)
             self.monthly_hl[m] = sum(month_extraction)
@@ -469,7 +469,7 @@ class HybridLoadV2:
         """Build the load, hour, and step_func_load arrays for simulation.
 
         Output format matches HybridLoad so GHE.simulate() works unchanged:
-        - self.load: load values in kW (rejection positive, extraction negative)
+        - self.load: load values in W (rejection positive, extraction negative)
         - self.hour: cumulative hours from start of simulation
         - self.step_func_load: load step changes (load[i] - load[i-1])
 
@@ -483,9 +483,9 @@ class HybridLoadV2:
         precomputing month boundaries using the actual calendar year
         for each simulated month.
         """
-        # Hourly loads in output convention (kW, rejection positive, extraction negative).
+        # Hourly loads in output convention (W, rejection positive, extraction negative).
         # Used for energy conservation in pre-peak load computation.
-        net_loads_kw = -np.array(self.raw_loads, dtype=float) / 1000.0
+        net_loads_w = -np.array(self.raw_loads, dtype=float)
 
         # Cumulative hour offsets for the base year (used to compute
         # peak hour positions within each calendar month).
@@ -614,7 +614,7 @@ class HybridLoadV2:
                     # Sum hourly loads (kW) from cursor to peak_last_hour
                     cursor_offset = int(cursor - fmh)
                     peak_end_offset = int(peak_last_hour - fmh)
-                    energy_to_peak_end = float(np.sum(net_loads_kw[base + cursor_offset : base + peak_end_offset]))
+                    energy_to_peak_end = float(np.sum(net_loads_w[base + cursor_offset : base + peak_end_offset]))
 
                     pre_peak_hours = peak_first_hour - cursor
                     actual_duration = peak_last_hour - peak_first_hour
@@ -646,12 +646,15 @@ class HybridLoadV2:
             step_load = self.load[i] - self.load[i - 1]
             self.step_func_load = np.append(self.step_func_load, step_load)
 
-        # Compute predicted delta_T at each hybrid time step
+        # Compute predicted delta_T at each hybrid time step using normalized loads
+        # self.load is in W; scale to normalized W (peak=4000W) so that
+        # hybrid_dt is comparable to hourly_delta_t from _run_hourly_simulation.
         ts = self.radial_numerical.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
         resist_bh = self.bhe.calc_effective_borehole_resistance()
         g_sts = self.radial_numerical.g_sts
-        hybrid_q_w = self.load * 1000.0  # kW -> W
+        norm_scale = self.NORM_LOAD_W / np.max(np.abs(self.raw_loads))
+        self.hybrid_q_norm_w = self.load * norm_scale  # W -> normalized W
         self.hybrid_dt = np.array(
-            self.simulate_hourly(self.hour, hybrid_q_w, g_sts, resist_bh, two_pi_k, ts, self.NORM_BOREHOLE_H)
+            self.simulate_hourly(self.hour, self.hybrid_q_norm_w, g_sts, resist_bh, two_pi_k, ts, self.NORM_BOREHOLE_H)
         )
