@@ -159,7 +159,8 @@ class HybridLoadV2:
         """Hourly fluid temperature simulation using g-function superposition.
 
         Based on Chapter 2 of Advances in Ground Source Heat Pumps.
-        Sign convention: positive q = heat rejection into ground → positive delta_T.
+        Sign convention: positive q = heat extraction from ground
+        → negative (Tf_ave - Tg0), i.e. fluid colder than ground.
 
         :param hour_time: array of time values (hours)
         :param q: array of loads at each time step (W), q[0]=0
@@ -168,7 +169,7 @@ class HybridLoadV2:
         :param two_pi_k: 2*pi*k_soil (W/m.K)
         :param ts: characteristic time for STS g-function (s)
         :param h: borehole length (m) - loads are divided by this to get W/m
-        :return: list of delta fluid temperatures for each time step
+        :return: list of (Tf_ave - Tg0) for each time step
         """
         q_dt = np.hstack(q[1:] - q[:-1])
         delta_t_fluid = [0.0]
@@ -176,10 +177,12 @@ class HybridLoadV2:
             _time = hour_time[n] - hour_time[0:n]
             g_values = g_sts(np.log((_time * SEC_IN_HR) / ts))
             # Eq 2.12: delta_Tb = (q'/2πk) * g, where q' = q/H (W/m)
-            delta_tb_i = (q_dt[0:n] / h / two_pi_k).dot(g_values)
+            delta_tg0_tb_i = (q_dt[0:n] / h / two_pi_k).dot(g_values)
+            delta_tb_tf = q[n] / h * resist_bh
             # Eq 2.13: Tf = Tb + q' * Rb
-            tf_mean = delta_tb_i + q[n] / h * resist_bh
-            delta_t_fluid.append(tf_mean)
+            delta_tf_tg0 = - delta_tg0_tb_i - delta_tb_tf
+
+            delta_t_fluid.append(delta_tf_tg0)
         return delta_t_fluid
 
     # -----------------------------------------------------------------
@@ -188,11 +191,11 @@ class HybridLoadV2:
     def _run_hourly_simulation(self) -> list:
         """Run a full-year hourly simulation using normalized loads.
 
-        Uses the single-borehole STS g-function to compute delta_T_fluid
+        Uses the single-borehole STS g-function to compute (Tf_ave - Tg0)
         at each hour. The normalized loads ensure results are independent
         of borefield size/configuration.
 
-        :return: List of 8761 delta_T values (index 0 = hour 0 = 0.0)
+        :return: List of 8761 (Tf_ave - Tg0) values (index 0 = hour 0 = 0.0)
         """
         ts = self.radial_numerical.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
@@ -203,9 +206,8 @@ class HybridLoadV2:
         hour_time = np.arange(n_hours + 1)  # 0, 1, 2, ..., 8760
 
         # Prepend 0 load at hour 0
-        # Negate: raw convention is positive=extraction, but simulate_hourly
-        # expects positive=rejection (heat into ground -> positive delta_T)
-        q = np.hstack((0.0, -self.normalized_loads))
+        # positive = extraction → negative (Tf_ave - Tg0)
+        q = np.hstack((0.0, self.normalized_loads))
 
         return self.simulate_hourly(
             hour_time, q, g_sts, resist_bh, two_pi_k, ts, self.NORM_BOREHOLE_H
@@ -215,11 +217,11 @@ class HybridLoadV2:
     # Step 4: Find monthly peak temperatures and their hours
     # -----------------------------------------------------------------
     def _find_monthly_peak_temperatures(self) -> None:
-        """For each month, find the max and min delta_T_fluid and the
+        """For each month, find the max and min (Tf_ave - Tg0) and the
         hour-of-year at which each occurs.
 
-        Max delta_T corresponds to peak cooling/rejection (hottest fluid).
-        Min delta_T corresponds to peak heating/extraction (coldest fluid).
+        Max (Tf_ave - Tg0) corresponds to peak cooling/rejection (hottest fluid).
+        Min (Tf_ave - Tg0) corresponds to peak heating/extraction (coldest fluid).
         """
         hours_in_previous_months = 0
         for m in range(MONTHS_IN_YEAR):
@@ -234,17 +236,17 @@ class HybridLoadV2:
                 hours_in_previous_months += hours_in_month
                 continue
 
-            # Max delta_T (peak rejection/cooling temperature)
-            # Only record if positive -- a negative max means this month
-            # has no cooling/rejection activity worth peaking.
+            # Max (Tf_ave - Tg0): peak rejection/cooling temperature
+            # Only record if positive -- fluid warmer than ground means
+            # actual rejection activity in this month.
             max_idx = int(np.argmax(month_dt))
             if month_dt[max_idx] > 0.0:
                 self.monthly_max_dt[m] = month_dt[max_idx]
                 self.monthly_max_dt_hour[m] = hours_in_previous_months + max_idx + 1
 
-            # Min delta_T (peak extraction/heating temperature)
-            # Only record if negative -- a positive min means this month
-            # has no heating/extraction activity worth peaking.
+            # Min (Tf_ave - Tg0): peak extraction/heating temperature
+            # Only record if negative -- fluid colder than ground means
+            # actual extraction activity in this month.
             min_idx = int(np.argmin(month_dt))
             if month_dt[min_idx] < 0.0:
                 self.monthly_min_dt[m] = month_dt[min_idx]
@@ -256,11 +258,11 @@ class HybridLoadV2:
     # Step 5: Select top N peak months for cooling and heating
     # -----------------------------------------------------------------
     def _select_peak_months(self) -> None:
-        """Identify the top NUM_PEAK_MONTHS months with highest max delta_T
-        (cooling peaks) and lowest min delta_T (heating peaks).
+        """Identify the top NUM_PEAK_MONTHS months with most extreme
+        (Tf_ave - Tg0): most positive for cooling, most negative for heating.
 
-        Only months with a positive max delta_T qualify as cooling peaks,
-        and only months with a negative min delta_T qualify as heating peaks.
+        Only months with a positive max (Tf_ave - Tg0) qualify as cooling
+        peaks, and only months with a negative min qualify as heating peaks.
         This means fewer than NUM_PEAK_MONTHS may be selected when the load
         profile is predominantly one-sided.
 
@@ -269,12 +271,12 @@ class HybridLoadV2:
         """
         n = self.NUM_PEAK_MONTHS
 
-        # Cooling peaks: only months where max delta_T > 0 (actual rejection)
+        # Cooling peaks: months with most positive max (Tf_ave - Tg0) = most rejection
         month_max_pairs = [(m, self.monthly_max_dt[m]) for m in range(MONTHS_IN_YEAR) if self.monthly_max_dt[m] > 0.0]
         month_max_pairs.sort(key=lambda x: x[1], reverse=True)
         self.peak_cooling_months = [m for m, _ in month_max_pairs[:n]]
 
-        # Heating peaks: only months where min delta_T < 0 (actual extraction)
+        # Heating peaks: months with most negative min (Tf_ave - Tg0) = most extraction
         month_min_pairs = [(m, self.monthly_min_dt[m]) for m in range(MONTHS_IN_YEAR) if self.monthly_min_dt[m] < 0.0]
         month_min_pairs.sort(key=lambda x: x[1])
         self.peak_heating_months = [m for m, _ in month_min_pairs[:n]]
@@ -286,14 +288,14 @@ class HybridLoadV2:
         """Find peak durations for all peak months by iterative matching.
 
         For each peak month, iteratively increases the peak duration from
-        1 hour until the hybrid simulation's peak temperature matches the
-        hourly simulation's peak temperature. Then interpolates to get the
+        1 hour until the hybrid simulation's peak (Tf_ave - Tg0) matches the
+        hourly simulation's target. Then interpolates to get the
         fractional duration.
 
-        Uses normalized loads in simulation convention (positive = rejection).
+        Uses normalized loads (positive = extraction).
         """
-        # Convert normalized loads to sim convention (positive = rejection)
-        sim_loads = -np.array(self.normalized_loads)
+        # Normalized loads: positive = extraction
+        sim_loads = np.array(self.normalized_loads)
 
         # Cumulative hour offsets for month boundaries (0-indexed months).
         # month_hour_offset[m] = total hours before month m starts (0-based into loads array)
@@ -302,7 +304,7 @@ class HybridLoadV2:
         for m in range(MONTHS_IN_YEAR):
             month_hour_offset[m + 1] = month_hour_offset[m] + HRS_IN_DAY * self.days_in_month[m]
 
-        # Monthly net average loads (sim convention, positive = rejection)
+        # Monthly net average loads (positive = extraction)
         monthly_net_avg_sim = [0.0] * MONTHS_IN_YEAR
         for m in range(MONTHS_IN_YEAR):
             m_start = month_hour_offset[m]
@@ -316,15 +318,15 @@ class HybridLoadV2:
         resist_bh = self.bhe.calc_effective_borehole_resistance()
         g_sts = self.radial_numerical.g_sts
 
-        # Process cooling peaks (months with highest max delta_T)
+        # Process cooling peaks (months with most positive max Tf_ave - Tg0)
         for m in self.peak_cooling_months:
             peak_hour = self.monthly_max_dt_hour[m]  # hour-of-year (1-indexed)
             target_dt = self.monthly_max_dt[m]
 
-            # Peak rejection load for this month (positive, sim convention)
+            # Peak rejection load for this month (negative = rejection)
             m_start = month_hour_offset[m]
             m_end = month_hour_offset[m + 1]
-            q_peak = float(np.max(sim_loads[m_start:m_end]))
+            q_peak = float(np.min(sim_loads[m_start:m_end]))
 
             self.monthly_peak_cl_duration[m] = self._iterate_duration(
                 peak_month=m,
@@ -341,15 +343,15 @@ class HybridLoadV2:
                 is_cooling=True,
             )
 
-        # Process heating peaks (months with lowest min delta_T)
+        # Process heating peaks (months with most negative min Tf_ave - Tg0)
         for m in self.peak_heating_months:
             peak_hour = self.monthly_min_dt_hour[m]  # hour-of-year (1-indexed)
             target_dt = self.monthly_min_dt[m]
 
-            # Peak extraction load for this month (negative, sim convention)
+            # Peak extraction load for this month (positive = extraction)
             m_start = month_hour_offset[m]
             m_end = month_hour_offset[m + 1]
-            q_peak = float(np.min(sim_loads[m_start:m_end]))
+            q_peak = float(np.max(sim_loads[m_start:m_end]))
 
             self.monthly_peak_hl_duration[m] = self._iterate_duration(
                 peak_month=m,
@@ -445,7 +447,9 @@ class HybridLoadV2:
             )
             predicted_dt = delta_t[-1]
 
-            # Check if predicted peak temp has reached/exceeded the target
+            # Check if predicted (Tf_ave - Tg0) has reached/exceeded the target
+            # Cooling: target is positive, predicted grows more positive → exceeded when >=
+            # Heating: target is negative, predicted grows more negative → exceeded when <=
             exceeded = predicted_dt >= target_dt if is_cooling else predicted_dt <= target_dt
 
             if exceeded:
@@ -469,7 +473,7 @@ class HybridLoadV2:
         """Build the load, hour, and step_func_load arrays for simulation.
 
         Output format matches HybridLoad so GHE.simulate() works unchanged:
-        - self.load: load values in W (rejection positive, extraction negative)
+        - self.load: load values in W (extraction positive, rejection negative)
         - self.hour: cumulative hours from start of simulation
         - self.step_func_load: load step changes (load[i] - load[i-1])
 
@@ -483,9 +487,9 @@ class HybridLoadV2:
         precomputing month boundaries using the actual calendar year
         for each simulated month.
         """
-        # Hourly loads in output convention (W, rejection positive, extraction negative).
+        # Hourly loads (W, extraction positive, rejection negative).
         # Used for energy conservation in pre-peak load computation.
-        net_loads_w = -np.array(self.raw_loads, dtype=float)
+        net_loads_w = np.array(self.raw_loads, dtype=float)
 
         # Cumulative hour offsets for the base year (used to compute
         # peak hour positions within each calendar month).
@@ -560,8 +564,8 @@ class HybridLoadV2:
             has_heating_peak = mi in heating_peak_set
 
             if not has_cooling_peak and not has_heating_peak:
-                # Non-peak month: single time step at net average
-                month_rate = (self.monthly_cl[i] - self.monthly_hl[i]) / month_hours if month_hours > 0 else 0.0
+                # Non-peak month: single time step at net average (extraction positive)
+                month_rate = (self.monthly_hl[i] - self.monthly_cl[i]) / month_hours if month_hours > 0 else 0.0
                 self.load = np.append(self.load, month_rate)
                 self.hour = np.append(self.hour, lmh)
             else:
@@ -569,16 +573,17 @@ class HybridLoadV2:
                 d_cl = self.monthly_peak_cl_duration[i] if has_cooling_peak else 0.0
                 d_hl = self.monthly_peak_hl_duration[i] if has_heating_peak else 0.0
 
-                month_net_energy = self.monthly_cl[i] - self.monthly_hl[i]
+                month_net_energy = self.monthly_hl[i] - self.monthly_cl[i]
 
                 # Build peak events: (peak_temp_hour_in_month, type, load, duration)
+                # Extraction positive: cooling/rejection is negative, heating/extraction is positive
                 events = []
                 if has_cooling_peak:
                     peak_hr = peak_cl_hour_in_month[mi]
-                    events.append((peak_hr, "cl", self.monthly_peak_cl[i], d_cl))
+                    events.append((peak_hr, "cl", -self.monthly_peak_cl[i], d_cl))
                 if has_heating_peak:
                     peak_hr = peak_hl_hour_in_month[mi]
-                    events.append((peak_hr, "hl", -self.monthly_peak_hl[i], d_hl))
+                    events.append((peak_hr, "hl", self.monthly_peak_hl[i], d_hl))
 
                 # Sort by peak temperature hour so peaks are placed chronologically
                 events.sort(key=lambda x: x[0])
@@ -611,7 +616,7 @@ class HybridLoadV2:
                         peak_last_hour = min(peak_last_hour, lmh)
 
                     # Pre-peak load: conserve energy from cursor to peak end
-                    # Sum hourly loads (kW) from cursor to peak_last_hour
+                    # Sum hourly loads (W) from cursor to peak_last_hour
                     cursor_offset = int(cursor - fmh)
                     peak_end_offset = int(peak_last_hour - fmh)
                     energy_to_peak_end = float(np.sum(net_loads_w[base + cursor_offset : base + peak_end_offset]))

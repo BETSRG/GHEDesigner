@@ -13,6 +13,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
+import pytest
 from scipy.interpolate import interp1d
 
 from ghedesigner.constants import HOURS_IN_YEAR, HRS_IN_DAY, MONTHS_IN_YEAR
@@ -141,16 +142,16 @@ def _analyze_and_export(
         print(f"{i:>4}  {h_start:>10.1f}  {h_end:>10.1f}  {h_end - h_start:>10.1f}  {obj.load[i]:>10.3f}")
     print("=" * 52)
 
-    # Hourly results: delta_t, exft, tf_ave, eft
+    # Hourly results: delta_t (Tf_ave-Tg0), tf_ave, eft, exft
     # q is aligned to hourly_delta_t indexing (8761 entries, index 0 = 0)
     q_norm = np.hstack((0.0, obj.normalized_loads))
-    tf_ave = np.array(obj.hourly_delta_t) + undisturbed_ground_t
+    tf_ave = undisturbed_ground_t + np.array(obj.hourly_delta_t)
     eft = tf_ave + q_norm / (m_dot * cp)
     exft = tf_ave - q_norm / (m_dot * cp)
 
     hourly_path = output_dir / f"{file_prefix}_hrly_results.csv"
     with open(hourly_path, "w") as f:
-        f.write("hour,norm_load_w,tfave-tg,exft,tf_ave,eft\n")
+        f.write("hour,norm_load_w,tfave-tg0,exft,tf_ave,eft\n")
         for hour_idx, (nq, dt, exft_val, tf_ave_val, eft_val) in enumerate(
             zip(q_norm, obj.hourly_delta_t, exft, tf_ave, eft)
         ):
@@ -174,6 +175,29 @@ def _analyze_and_export(
                 f.write(f"{obj.hour[i]:.4f},{obj.load[i + 1]:.6f},{norm_hybrid_q[i + 1]:.6f},{hybrid_delta_t[i]:.6f}\n")
     print(f"Exported hybrid results to {hybrid_path}")
 
+def test_export_constant_cooling_analysis():
+    """Export hourly and hybrid results CSVs for the constant cooling load profile."""
+    csv_path = Path(__file__).parent / "test_data" / "constant_1000w_cooling.csv"
+    if not csv_path.exists():
+        pytest.skip("constant cooling CSV not found")
+
+    raw_lines = csv_path.read_text().split("\n")
+    loads = [float(x) for x in raw_lines[1:] if x.strip() != ""]
+
+    output_dir = Path(__file__).parent / "output"
+    _analyze_and_export(loads, output_dir, "CC", 15)
+
+def test_export_constant_cooling_analysis():
+    """Export hourly and hybrid results CSVs for the ramp load profile."""
+    csv_path = Path(__file__).parent / "test_data" / "balanced_ramp.csv"
+    if not csv_path.exists():
+        pytest.skip("balanced_ramp CSV not found")
+
+    raw_lines = csv_path.read_text().split("\n")
+    loads = [float(x) for x in raw_lines[1:] if x.strip() != ""]
+
+    output_dir = Path(__file__).parent / "output"
+    _analyze_and_export(loads, output_dir, "BR", 10)
 
 class TestNormalizeLoads(unittest.TestCase):
     """Step 1: normalize_loads static method."""
@@ -224,14 +248,14 @@ class TestSimulateHourly(unittest.TestCase):
             self.assertAlmostEqual(val, 0.0)
 
     def test_constant_load_monotonic(self):
-        """Constant positive rejection should give monotonically increasing delta_T."""
+        """Constant positive extraction should give monotonically decreasing (Tf_ave - Tg0)."""
         hour_time = np.arange(51)  # 0..50
         q = np.hstack((0.0, np.ones(50) * 1000.0))
         g_sts = interp1d([-100, 100], [0.0, 10.0], fill_value=(0.0, 10.0), bounds_error=False)
         dt = HybridLoadV2.simulate_hourly(hour_time, q, g_sts, resist_bh=0.1, two_pi_k=12.0, ts=1e10, h=100.0)
-        # delta_T should be non-negative and generally increasing
+        # (Tf_ave - Tg0) should be non-positive and generally decreasing for extraction
         for i in range(2, len(dt)):
-            self.assertGreaterEqual(dt[i], dt[i - 1] - 1e-10)
+            self.assertLessEqual(dt[i], dt[i - 1] + 1e-10)
 
     def test_output_length(self):
         """Output length should match hour_time length."""
@@ -477,13 +501,13 @@ class TestProcessMonthLoads(unittest.TestCase):
         found_heating_peak = False
         for i in range(1, len(obj.hour)):
             if fmh <= obj.hour[i] <= lmh:
-                if obj.load[i] > 0.5:
+                if obj.load[i] < -0.5:
                     found_cooling_peak = True
-                elif obj.load[i] < -0.5:
+                elif obj.load[i] > 0.5:
                     found_heating_peak = True
 
-        self.assertTrue(found_cooling_peak, "No positive (cooling) peak load found in July's hybrid steps")
-        self.assertTrue(found_heating_peak, "No negative (heating) peak load found in July's hybrid steps")
+        self.assertTrue(found_cooling_peak, "No negative (cooling/rejection) peak load found in July's hybrid steps")
+        self.assertTrue(found_heating_peak, "No positive (heating/extraction) peak load found in July's hybrid steps")
 
         # Arrays should still be well-formed
         self.assertEqual(len(obj.load), len(obj.hour))
@@ -502,7 +526,7 @@ class TestProcessMonthLoads(unittest.TestCase):
             duration = step_end - step_start
             hybrid_energy += obj.load[i] * duration
 
-        original_energy = obj.monthly_cl[6] - obj.monthly_hl[6]
+        original_energy = obj.monthly_hl[6] - obj.monthly_cl[6]
         if abs(original_energy) > 1.0:
             rel_error = abs(hybrid_energy - original_energy) / abs(original_energy)
             self.assertLess(
@@ -596,8 +620,8 @@ class TestIntegrationWithAtlantaLoads(unittest.TestCase):
                 duration = step_end - step_start
                 hybrid_energy += obj.load[i] * duration
 
-            # Original monthly net energy (kWh): rejection - extraction
-            original_energy = obj.monthly_cl[m] - obj.monthly_hl[m]
+            # Original monthly net energy (Wh): extraction - rejection
+            original_energy = obj.monthly_hl[m] - obj.monthly_cl[m]
 
             # Allow some tolerance since the hybrid scheme approximates
             if abs(original_energy) > 1.0:  # skip months with negligible energy
@@ -655,7 +679,7 @@ class TestEdgeCase1PeakAtMonthStart(unittest.TestCase):
         # Find the heating peak step in the load array
         peak_found = False
         for i in range(1, len(obj.hour)):
-            if obj.load[i] < -0.5:  # negative = extraction in output convention
+            if obj.load[i] > 0.5:  # positive = extraction in output convention
                 peak_start = obj.hour[i - 1]
                 peak_end = obj.hour[i]
                 actual_duration = peak_end - peak_start
