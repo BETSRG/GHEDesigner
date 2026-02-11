@@ -87,6 +87,93 @@ def _make_v2_with_synthetic_dt(hourly_delta_t, loads=None):
     return obj
 
 
+def _analyze_and_export(
+    loads: list,
+    output_dir: Path,
+    file_prefix: str,
+    undisturbed_ground_t: float = 20.0,
+    m_dot: float = 0.1,
+    cp: float = 4186.0,
+) -> None:
+    """Build HybridLoadV2 from any hourly load profile and export analysis CSVs.
+
+    Exports two files to output_dir:
+      - {file_prefix}_hourly_results.csv  : per-hour load, delta_t, tf_ave, eft, exft
+      - {file_prefix}_hybrid_results.csv  : hybrid time steps in step-function format
+                                            with predicted delta_T
+
+    :param loads: 8760 hourly loads in Watts
+    :param output_dir: directory to write CSV files
+    :param file_prefix: prefix for output file names
+    :param undisturbed_ground_t: undisturbed ground temperature in °C
+    :param m_dot: fluid mass flow rate in kg/s
+    :param cp: fluid specific heat in J/(kg·K)
+    """
+    bhe = _make_mock_bhe()
+    obj = HybridLoadV2(loads, bhe, bhe, 1, 12)
+
+    month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+    print(f"\n===== {file_prefix}: Peak Temperature & Load Summary =====")
+    print(f"{'Month':<6} {'Max dT':>8} {'Hour':>6} {'Peak CL (kW)':>13} "
+          f"{'Min dT':>8} {'Hour':>6} {'Peak HL (kW)':>13}")
+    print("-" * 68)
+    for m in range(MONTHS_IN_YEAR):
+        print(f"{month_names[m]:<6} {obj.monthly_max_dt[m]:>8.3f} {obj.monthly_max_dt_hour[m]:>6d} "
+              f"{obj.monthly_peak_cl[m]:>13.3f} {obj.monthly_min_dt[m]:>8.3f} "
+              f"{obj.monthly_min_dt_hour[m]:>6d} {obj.monthly_peak_hl[m]:>13.3f}")
+    print(f"\nPeak cooling months: {[month_names[m] for m in obj.peak_cooling_months]}")
+    print(f"Peak heating months: {[month_names[m] for m in obj.peak_heating_months]}")
+    print("\nPeak durations (hours):")
+    for m in obj.peak_cooling_months:
+        print(f"  {month_names[m]} cooling: {obj.monthly_peak_cl_duration[m]:.2f}")
+    for m in obj.peak_heating_months:
+        print(f"  {month_names[m]} heating: {obj.monthly_peak_hl_duration[m]:.2f}")
+    print("=" * 68)
+
+    print(f"\n===== {file_prefix}: Hybrid Load Profile (All Steps) =====")
+    print(f"{'Step':>4}  {'Start Hr':>10}  {'End Hr':>10}  {'Duration':>10}  {'Load (kW)':>10}")
+    print("-" * 52)
+    for i in range(1, len(obj.hour)):
+        h_start = obj.hour[i - 1]
+        h_end = obj.hour[i]
+        print(f"{i:>4}  {h_start:>10.1f}  {h_end:>10.1f}  {h_end - h_start:>10.1f}  {obj.load[i]:>10.3f}")
+    print("=" * 52)
+
+    # Hourly results: delta_t, tf_ave, eft, exft
+    # q is aligned to hourly_delta_t indexing (8761 entries, index 0 = 0)
+    q = np.hstack((0.0, obj.normalized_loads))
+    tf_ave = np.array(obj.hourly_delta_t) + undisturbed_ground_t
+    eft = tf_ave + q / (m_dot * cp)
+    exft = tf_ave - q / (m_dot * cp)
+
+    hourly_path = output_dir / f"{file_prefix}_hrly_results.csv"
+    with open(hourly_path, "w") as f:
+        f.write("hour,load_w,delta_t,tf_ave,eft,exft\n")
+        for hour_idx, (load_val, dt, tf_ave_val, eft_val, exft_val) in enumerate(
+            zip(q, obj.hourly_delta_t, tf_ave, eft, exft)
+        ):
+            f.write(f"{hour_idx},{load_val:.6f},{dt:.6f},{tf_ave_val:.6f},{eft_val:.6f},{exft_val:.6f}\n")
+    print(f"\nExported hourly results to {hourly_path}")
+    print(f"  entries={len(obj.hourly_delta_t)}, "
+          f"delta_T=[{min(obj.hourly_delta_t):.4f}, {max(obj.hourly_delta_t):.4f}], "
+          f"EFT=[{min(eft):.4f}, {max(eft):.4f}] °C")
+
+    # Hybrid results: run simulate_hourly on hybrid sequence, export step-function format
+    hybrid_delta_t = obj.hybrid_dt
+
+    hybrid_path = output_dir / f"{file_prefix}_hybrid_results.csv"
+    with open(hybrid_path, "w") as f:
+        f.write("hour,load_kw,predicted_delta_t\n")
+        for i in range(len(obj.hour)):
+            f.write(f"{obj.hour[i]:.4f},{obj.load[i]:.6f},{hybrid_delta_t[i]:.6f}\n")
+            # Duplicate timestep at load transitions to create vertical step edges for plotting
+            if i < len(obj.hour) - 1 and obj.load[i] != obj.load[i + 1]:
+                f.write(f"{obj.hour[i]:.4f},{obj.load[i + 1]:.6f},{hybrid_delta_t[i]:.6f}\n")
+    print(f"Exported hybrid results to {hybrid_path}")
+
+
 class TestNormalizeLoads(unittest.TestCase):
     """Step 1: normalize_loads static method."""
 
@@ -444,45 +531,18 @@ class TestIntegrationWithAtlantaLoads(unittest.TestCase):
         if self.atlanta_loads is None:
             self.skipTest("Atlanta loads CSV not found")
         bhe = _make_mock_bhe()
-        # This exercises the full pipeline: normalize, split, simulate, find peaks, durations, process
         obj = HybridLoadV2(self.atlanta_loads, bhe, bhe, 1, 12)
-        # Basic sanity checks
         self.assertGreater(len(obj.load), 0)
         self.assertGreater(len(obj.hour), 0)
         self.assertEqual(len(obj.peak_cooling_months), HybridLoadV2.NUM_PEAK_MONTHS)
         self.assertEqual(len(obj.peak_heating_months), HybridLoadV2.NUM_PEAK_MONTHS)
 
-        # --- Temporary debug output for manual verification ---
-        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-        print("\n===== Atlanta Loads: Peak Temperature & Load Summary =====")
-        print(f"{'Month':<6} {'Max dT':>8} {'Hour':>6} {'Peak CL (kW)':>13} "
-              f"{'Min dT':>8} {'Hour':>6} {'Peak HL (kW)':>13}")
-        print("-" * 68)
-        for m in range(MONTHS_IN_YEAR):
-            print(f"{month_names[m]:<6} {obj.monthly_max_dt[m]:>8.3f} {obj.monthly_max_dt_hour[m]:>6d} "
-                  f"{obj.monthly_peak_cl[m]:>13.3f} {obj.monthly_min_dt[m]:>8.3f} "
-                  f"{obj.monthly_min_dt_hour[m]:>6d} {obj.monthly_peak_hl[m]:>13.3f}")
-        print(f"\nPeak cooling months: {[month_names[m] for m in obj.peak_cooling_months]}")
-        print(f"Peak heating months: {[month_names[m] for m in obj.peak_heating_months]}")
-        print(f"\nPeak durations (hours):")
-        for m in obj.peak_cooling_months:
-            print(f"  {month_names[m]} cooling: {obj.monthly_peak_cl_duration[m]:.2f}")
-        for m in obj.peak_heating_months:
-            print(f"  {month_names[m]} heating: {obj.monthly_peak_hl_duration[m]:.2f}")
-        print("=" * 68)
-
-        # --- Full hybrid load profile for the year ---
-        print("\n===== Hybrid Load Profile (All Steps) =====")
-        print(f"{'Step':>4}  {'Start Hr':>10}  {'End Hr':>10}  {'Duration':>10}  {'Load (kW)':>10}")
-        print("-" * 52)
-        for i in range(1, len(obj.hour)):
-            h_start = obj.hour[i - 1]
-            h_end = obj.hour[i]
-            duration = h_end - h_start
-            load = obj.load[i]
-            print(f"{i:>4}  {h_start:>10.1f}  {h_end:>10.1f}  {duration:>10.1f}  {load:>10.3f}")
-        print("=" * 52)
+    def test_export_atlanta_analysis(self):
+        """Export hourly and hybrid results CSVs for the Atlanta load profile."""
+        if self.atlanta_loads is None:
+            self.skipTest("Atlanta loads CSV not found")
+        output_dir = Path(__file__).parent / "output"
+        _analyze_and_export(self.atlanta_loads, output_dir, "ATL")
 
     def test_peak_durations_positive(self):
         """All peak durations should be positive for real building loads."""

@@ -89,6 +89,7 @@ class HybridLoadV2:
         self.load = np.array(0)
         self.hour = np.array(0)
         self.step_func_load = np.array(0)
+        self.hybrid_dt: np.ndarray  # predicted delta_T at each hybrid time step
         self._process_month_loads()
 
     # -----------------------------------------------------------------
@@ -422,7 +423,7 @@ class HybridLoadV2:
             hours_list = [0.0]
             loads_list = [0.0]
 
-            # Previous months: one time step each at net average
+            # Previous months: one time step each at net average TODO check this
             for pm in range(peak_month):
                 hours_list.append(float(month_hour_offset[pm + 1]))
                 loads_list.append(monthly_net_avg_sim[pm])
@@ -644,3 +645,13 @@ class HybridLoadV2:
         for i in range(1, n):
             step_load = self.load[i] - self.load[i - 1]
             self.step_func_load = np.append(self.step_func_load, step_load)
+
+        # Compute predicted delta_T at each hybrid time step
+        ts = self.radial_numerical.t_s
+        two_pi_k = TWO_PI * self.bhe.soil.k
+        resist_bh = self.bhe.calc_effective_borehole_resistance()
+        g_sts = self.radial_numerical.g_sts
+        hybrid_q_w = self.load * 1000.0  # kW -> W
+        self.hybrid_dt = np.array(
+            self.simulate_hourly(self.hour, hybrid_q_w, g_sts, resist_bh, two_pi_k, ts, self.NORM_BOREHOLE_H)
+        )
