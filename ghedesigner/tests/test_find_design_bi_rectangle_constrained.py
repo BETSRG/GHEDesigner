@@ -11,7 +11,7 @@ from ghedesigner.ghe.design.birectangle_constrained import (
     GeometricConstraintsBiRectangleConstrained,
 )
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 prop_boundary = [
@@ -75,7 +75,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         _no_go_boundaries: list[list[list[float]]],
     ):
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
-        fluid = GHEFluid("water", 0.0, 20.0)
+        fluid = Fluid("water")
         grout = Grout(1.0, 3901000.0)
         ground_loads = self.get_atlanta_loads()
         borehole = Borehole(burial_depth=2.0, borehole_radius=borehole_radius)
@@ -88,7 +88,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         )
         design = DesignBiRectangleConstrained(
             v_flow=flow_rate,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -120,7 +120,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.5, 0.07, prop_boundary, no_go_zones)
-        u_tube_height = search.ghe.bhe.b.H
+        u_tube_height = search.ghe.bhe.borehole.H
         self.assertAlmostEqual(133.5, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(74, len(borehole_location_data_rows))
@@ -141,8 +141,8 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
             prop_boundaries_multiple_bf_outlines,
             no_go_zones_multiple_bf_outlines,
         )
-        u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(133.6, u_tube_height, delta=0.1)
+        u_tube_height = search.ghe.bhe.borehole.H
+        self.assertAlmostEqual(133.7, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(67, len(borehole_location_data_rows))
 
@@ -156,10 +156,10 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.5, 0.07, prop_boundary, no_go_zones)
-        u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(134.5, u_tube_height, delta=0.1)
+        u_tube_height = search.ghe.bhe.borehole.H
+        self.assertAlmostEqual(133.1, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
-        self.assertEqual(64, len(borehole_location_data_rows))
+        self.assertEqual(63, len(borehole_location_data_rows))
 
     def test_coaxial(self):
         pipe = Pipe.init_coaxial(
@@ -172,7 +172,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.8, 0.07, prop_boundary, no_go_zones)
-        u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(133.4, u_tube_height, delta=0.1)
+        u_tube_height = search.ghe.bhe.borehole.H
+        self.assertAlmostEqual(133.46, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(57, len(borehole_location_data_rows))

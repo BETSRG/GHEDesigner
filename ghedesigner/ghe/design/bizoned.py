@@ -8,7 +8,7 @@ from ghedesigner.ghe.design.birectangle import GeometricConstraintsBiRectangle
 from ghedesigner.ghe.domains import bi_rectangle_zoned_nested
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_zd import BisectionZD
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 
 
 @dataclass
@@ -35,8 +35,8 @@ class DesignBiZoned(DesignBase):
     def __init__(
         self,
         v_flow: float,
-        _borehole: Borehole,
-        fluid: GHEFluid,
+        borehole: Borehole,
+        fluid: Fluid,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
@@ -56,7 +56,7 @@ class DesignBiZoned(DesignBase):
     ) -> None:
         super().__init__(
             v_flow,
-            _borehole,
+            borehole,
             fluid,
             pipe,
             grout,

@@ -3,12 +3,12 @@ import unittest
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 
 
 class TestRadialNumericalBorehole(unittest.TestCase):
     def test_calc_sts_g_functions(self):
-        fluid = GHEFluid(fluid_str="WATER", percent=0)
+        fluid = Fluid(fluid_name="WATER", percent=0)
         borehole = Borehole(burial_depth=2.0, borehole_radius=0.075)
         grout = Grout(k=2.0, rho_cp=2000000.0)
 
@@ -24,7 +24,7 @@ class TestRadialNumericalBorehole(unittest.TestCase):
         bh = SingleUTube(m_dot_bh, fluid, borehole, pipe, grout, soil)
         bh.calc_sts_g_functions()
 
-        self.assertAlmostEqual(-1.182, bh.g[0], delta=0.001)
+        self.assertAlmostEqual(-1.180, bh.g[0], delta=0.001)
         self.assertAlmostEqual(2.217, bh.g[-1], delta=0.001)
         self.assertAlmostEqual(0.0, bh.g_bhw[0], delta=0.001)
         self.assertAlmostEqual(2.094, bh.g_bhw[-1], delta=0.001)

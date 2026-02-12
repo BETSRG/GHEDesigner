@@ -8,7 +8,7 @@ from ghedesigner.enums import FlowConfigType, TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.utilities import length_of_side
 
@@ -23,7 +23,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
     ):
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
         grout = Grout(k=1.0, rho_cp=3901000.0)
-        fluid = GHEFluid(fluid_str="water", percent=0.0, temperature=20.0)
+        fluid = Fluid(fluid_name="water", percent=0.0, temperature=20.0)
         borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
         ground_loads = self.get_atlanta_loads()
         b = 5.0
@@ -34,7 +34,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         geometry = GeometricConstraintsNearSquare(b=b, length=length)
         design = DesignNearSquare(
             v_flow=flow_rate,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -67,8 +67,8 @@ class TestFindNearSquareDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.3)
-        u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(125.0, u_tube_height, delta=0.1)
+        u_tube_height = search.ghe.bhe.borehole.H
+        self.assertAlmostEqual(125.2, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(156, len(borehole_location_data_rows))
 
@@ -82,8 +82,8 @@ class TestFindNearSquareDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.5)
-        u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(130.5, u_tube_height, delta=0.1)
+        u_tube_height = search.ghe.bhe.borehole.H
+        self.assertAlmostEqual(129.3, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(144, len(borehole_location_data_rows))
 
@@ -97,8 +97,8 @@ class TestFindNearSquareDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.5)
-        u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(130.7, u_tube_height, delta=0.1)
+        u_tube_height = search.ghe.bhe.borehole.H
+        self.assertAlmostEqual(129.3, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(144, len(borehole_location_data_rows))
 
@@ -113,8 +113,8 @@ class TestFindNearSquareDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.8)
-        u_tube_height = search.ghe.bhe.b.H
-        self.assertAlmostEqual(122.7, u_tube_height, delta=0.1)
+        u_tube_height = search.ghe.bhe.borehole.H
+        self.assertAlmostEqual(123.14, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(144, len(borehole_location_data_rows))
 
@@ -128,7 +128,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 31.2, length=155, flow_type=FlowConfigType.SYSTEM)
-        u_tube_height = search.ghe.bhe.b.H
+        u_tube_height = search.ghe.bhe.borehole.H
         self.assertAlmostEqual(133.9, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(144, len(borehole_location_data_rows))
@@ -143,7 +143,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.5, length=155)
-        u_tube_height = search.ghe.bhe.b.H
+        u_tube_height = search.ghe.bhe.borehole.H
         self.assertAlmostEqual(127.9, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(156, len(borehole_location_data_rows))

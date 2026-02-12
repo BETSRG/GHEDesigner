@@ -8,7 +8,7 @@ from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.drill_pad import DesignDrillPad, GeometricConstraintsDrillPad
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
@@ -8777,7 +8777,7 @@ class TestFindDrillPadDesign(GHEBaseTest):
             214028.6,
             228950.4,
         ]
-        fluid = GHEFluid("water", 0.0, 20.0)
+        fluid = Fluid("water", 0.0, 20.0)
         grout = Grout(1.0, 3901000.0)
         borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
         geometry = GeometricConstraintsDrillPad(nbh=12, radius=8, tilt=0.261799387799, ndp_min=1, ndp_max=50)

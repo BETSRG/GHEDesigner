@@ -7,7 +7,7 @@ from ghedesigner.enums import FlowConfigType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.utilities import borehole_spacing, check_bracket, eskilson_log_times, sign
 
 
@@ -18,7 +18,7 @@ class Bisection1DTilt:
         field_descriptors: list,
         v_flow: float,
         borehole: Borehole,
-        fluid: GHEFluid,
+        fluid: Fluid,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
@@ -147,10 +147,6 @@ class Bisection1DTilt:
 
         b = borehole_spacing(borehole, coordinates)
 
-        selected_solver = "equivalent"
-        if tilts is not None and orientations is not None:
-            selected_solver = "similarities"
-
         # Calculate a g-function for uniform inlet fluid temperature with
         # 8 unequal segments using the equivalent solver
         g_function = calc_g_func_for_multiple_lengths(
@@ -168,7 +164,6 @@ class Bisection1DTilt:
             soil,
             tilts=tilts,
             orientations=orientations,
-            solver=selected_solver,
         )
 
         # Initialize the GHE object
@@ -349,6 +344,6 @@ class Bisection1DTilt:
         return selection_key, self.staggered_coordinates_domain[selection_key]
 
     def search(self):
-        staggered_selection_key, staggered_coords = self.staggered_search()
+        staggered_selection_key, _staggered_coords = self.staggered_search()
 
         return staggered_selection_key, self.coordinates_domain[staggered_selection_key]

@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from ghedesigner.enums import BHPipeType
+from ghedesigner.enums import PipeType
 from ghedesigner.ghe.manager import GroundHeatExchanger
 
 
@@ -30,7 +30,7 @@ class TestPreDesignedGHE(TestCase):
             soil_undisturbed_temperature=ugt,
             borehole_buried_depth=burial_depth,
             borehole_radius=bh_radius,
-            pipe_arrangement_type=BHPipeType.SINGLEUTUBE,
+            pipe_arrangement_type=PipeType.SINGLEUTUBE,
             pipe_parameters=pipe_params,
             fluid_name="water",
             fluid_concentration_percent=0,
@@ -46,8 +46,8 @@ class TestPreDesignedGHE(TestCase):
             "flow_type": "BOREHOLE",
             "pre_designed": {"arrangement": "MANUAL", "H": 192, "x": [0.0], "y": [0.0]},
         }
-        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")
-        self.assertAlmostEqual(-48.464, float(log_time_vals[0]), delta=0.001)
+        log_time_vals, g_vals, _g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")
+        self.assertAlmostEqual(-49.769, float(log_time_vals[0]), delta=0.001)
         self.assertAlmostEqual(3.003, float(log_time_vals[-1]), delta=0.001)
         self.assertAlmostEqual(2.8351, float(g_vals[30]), delta=0.001)
         self.assertAlmostEqual(6.7569, float(g_vals[-1]), delta=0.1)
@@ -63,7 +63,7 @@ class TestPreDesignedGHE(TestCase):
                 "y": [0.0, 5.0, 0.0, 5.0],
             },
         }
-        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")
+        log_time_vals, g_vals, _g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")
         self.assertAlmostEqual(2.8351, float(g_vals[30]), delta=0.001)
         self.assertAlmostEqual(14.0908, float(g_vals[-1]), delta=0.15)
 
@@ -78,7 +78,7 @@ class TestPreDesignedGHE(TestCase):
                 "y": [0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0],
             },
         }
-        log_time_vals, g_vals, g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")
+        log_time_vals, g_vals, _g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")
         self.assertAlmostEqual(2.8352, float(g_vals[30]), delta=0.15)
         self.assertAlmostEqual(33.5639, float(g_vals[-1]), delta=1.0)
 

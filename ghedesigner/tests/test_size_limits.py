@@ -2,7 +2,7 @@ from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
@@ -21,7 +21,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
 
     def test_small_loads(self):
         pipe = self.get_pipe()
-        fluid = GHEFluid("water", 0.0, 20.0)
+        fluid = Fluid("water")
         grout = Grout(1.0, 3901000.0)
         soil = Soil(3.493, 2.5797e06, 10.0)
         ground_loads = [1.0e2] * 8760
@@ -29,7 +29,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         geometry = GeometricConstraintsNearSquare(b=6.096, length=20)
         design = DesignNearSquare(
             v_flow=1.0,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -47,14 +47,14 @@ class TestFindNearSquareDesign(GHEBaseTest):
             method=TimestepType.HYBRID,
         )
         search = design.find_design()
-        u_tube_height = search.ghe.bhe.b.H
+        u_tube_height = search.ghe.bhe.borehole.H
         self.assertAlmostEqual(60, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(1, len(borehole_location_data_rows))
 
     def test_big_loads(self):
         pipe = self.get_pipe()
-        fluid = GHEFluid("water", 0.0, 20.0)
+        fluid = Fluid("water")
         grout = Grout(1.0, 3901000.0)
         soil = Soil(3.493, 2.5797e06, 10.0)
         ground_loads = [1.0e6] * 8760
@@ -62,7 +62,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         geometry = GeometricConstraintsNearSquare(b=6.096, length=20)
         design = DesignNearSquare(
             v_flow=1.0,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -80,14 +80,14 @@ class TestFindNearSquareDesign(GHEBaseTest):
             method=TimestepType.HYBRID,
         )
         search = design.find_design()
-        u_tube_height = search.ghe.bhe.b.H
+        u_tube_height = search.ghe.bhe.borehole.H
         self.assertAlmostEqual(213, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(20, len(borehole_location_data_rows))
 
     def test_big_loads_with_max_boreholes(self):
         pipe = self.get_pipe()
-        fluid = GHEFluid("water", 0.0, 20.0)
+        fluid = Fluid("water")
         grout = Grout(1.0, 3901000.0)
         soil = Soil(3.493, 2.5797e06, 10.0)
         ground_loads = [1.0e6] * 8760
@@ -95,7 +95,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
         geometry = GeometricConstraintsNearSquare(b=6.096, length=100)
         design = DesignNearSquare(
             v_flow=1.0,
-            _borehole=borehole,
+            borehole=borehole,
             fluid=fluid,
             pipe=pipe,
             grout=grout,
@@ -113,7 +113,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
             method=TimestepType.HYBRID,
         )
         search = design.find_design()
-        u_tube_height = search.ghe.bhe.b.H
+        u_tube_height = search.ghe.bhe.borehole.H
         self.assertAlmostEqual(213, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(90, len(borehole_location_data_rows))

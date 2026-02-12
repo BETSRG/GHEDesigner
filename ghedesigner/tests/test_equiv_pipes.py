@@ -2,7 +2,7 @@ from ghedesigner.ghe.boreholes.coaxial_borehole import CoaxialPipe
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.multi_u_borehole import MultipleUTube
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
@@ -39,7 +39,7 @@ class TestEquivalentPipes(GHEBaseTest):
         grout = Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = Fluid(fluid_name="Water", percent=0.0)
         v_flow_borehole = 0.8  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
@@ -56,11 +56,9 @@ class TestEquivalentPipes(GHEBaseTest):
         var = "Intermediate variables"
         self.log(var)
         self.log(len(var) * "-")
-        v_fluid, v_pipe, r_conv, r_pipe = coaxial.concentric_tube_volumes()
+        v_fluid, v_pipe = coaxial.concentric_tube_volumes()
         self.log(f"Fluid volume per meter (m^2): {v_fluid:0.8f}")
         self.log(f"Pipe volume per meter (m^2): {v_pipe:0.8f}")
-        self.log(f"Total Convective Resistance (K/(W/m)): {r_conv:0.8f}")
-        self.log(f"Total Pipe Resistance (K/(W/m)): {r_pipe:0.8f}")
         self.log("\n")
 
         single_u_tube = coaxial.to_single()
@@ -70,10 +68,8 @@ class TestEquivalentPipes(GHEBaseTest):
         self.log(
             f"Fluid volumetric flow rate (L/s): {single_u_tube.m_flow_borehole * 1000.0 / single_u_tube.fluid.rho:0.8f}"
         )
-        self.log(f"Diameter of inner pipe (m): {single_u_tube.r_in * 2.0:0.8f}")
-        self.log(f"Diameter of outer pipe (m): {single_u_tube.r_out * 2.0:0.8f}")
+
         self.log(f"Shank spacing (m): {single_u_tube.pipe.s:0.8f}")
-        self.log(f"Convection coefficient (): {single_u_tube.h_f:08f}")
         self.log(f"Pipe thermal conductivity (W/m.K): {single_u_tube.pipe.k:0.8f}")
         self.log(f"Grout thermal conductivity (W/m.K): {single_u_tube.grout.k:0.8f}")
 
@@ -117,7 +113,7 @@ class TestEquivalentPipes(GHEBaseTest):
         grout = Grout(k_g, rho_cp_g)
 
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = Fluid(fluid_name="Water", percent=0.0)
         v_flow_borehole = 0.5  # Volumetric flow rate per borehole (L/s)
         # Total fluid mass flow rate per borehole (kg/s)
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
@@ -131,11 +127,9 @@ class TestEquivalentPipes(GHEBaseTest):
         val = "Intermediate variables"
         self.log(val + "\n" + len(val) * "-")
         # Intermediate variables
-        v_fluid, v_pipe, r_conv, r_pipe = double_u_tube.u_tube_volumes()
+        v_fluid, v_pipe = double_u_tube.u_tube_volumes()
         self.log(f"Fluid volume per meter (m^2): {v_fluid:0.8f}")
         self.log(f"Pipe volume per meter (m^2): {v_pipe:0.8f}")
-        self.log(f"Total Convective Resistance (K/(W/m)): {r_conv:0.8f}")
-        self.log(f"Total Pipe Resistance (K/(W/m)): {r_pipe:0.8f}")
 
         single_u_tube = double_u_tube.to_single()
         val = "Single U-tube equivalent parameters"
@@ -143,10 +137,8 @@ class TestEquivalentPipes(GHEBaseTest):
         self.log(
             f"Fluid volumetric flow rate (L/s): {single_u_tube.m_flow_borehole * 1000.0 / single_u_tube.fluid.rho:0.8f}"
         )
-        self.log(f"Diameter of inner pipe (m): {single_u_tube.r_in * 2.0:0.8f}")
-        self.log(f"Diameter of outer pipe (m): {single_u_tube.r_out * 2.0:0.8f}")
+
         self.log(f"Shank spacing (m): {single_u_tube.pipe.s:0.8f}")
-        self.log(f"Convection coefficient (-): {single_u_tube.h_f:0.8f}")
         self.log(f"Pipe thermal conductivity (W/m.K): {single_u_tube.pipe.k:0.8f}")
         self.log(f"Grout thermal conductivity (W/m.K): {single_u_tube.grout.k:0.8f}")
 

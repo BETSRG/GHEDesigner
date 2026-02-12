@@ -7,7 +7,7 @@ from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.rowwise import RowWiseModifiedBisectionSearch
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 
 
 @dataclass
@@ -19,12 +19,12 @@ class GeometricConstraintsRowWise(GeometricConstraints):
     perimeter_spacing_ratio: float | None
     min_spacing: float
     max_spacing: float
-    spacing_step: float
+    spacing_step: float | None
     min_rotation: float
     max_rotation: float
     rotate_step: float
     property_boundary: list[list[float]]
-    no_go_boundaries: list[list[list[float]]]
+    no_go_boundaries: list[list[list[float]]] | None
     type: DesignGeomType = field(default=DesignGeomType.ROWWISE, init=False, repr=False)
 
     def to_input(self) -> dict:
@@ -40,8 +40,8 @@ class DesignRowWise(DesignBase):
     def __init__(
         self,
         v_flow: float,
-        _borehole: Borehole,
-        fluid: GHEFluid,
+        borehole: Borehole,
+        fluid: Fluid,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
@@ -61,7 +61,7 @@ class DesignRowWise(DesignBase):
     ) -> None:
         super().__init__(
             v_flow,
-            _borehole,
+            borehole,
             fluid,
             pipe,
             grout,

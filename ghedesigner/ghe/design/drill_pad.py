@@ -7,7 +7,7 @@ from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
 from ghedesigner.ghe.domains import drill_pad
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_1d_tilt_drill_pad_search import Bisection1DTiltDrillPad
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 
 
 @dataclass
@@ -37,7 +37,7 @@ class DesignDrillPad(DesignBase):
         self,
         v_flow: float,
         _borehole: Borehole,
-        fluid: GHEFluid,
+        fluid: Fluid,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,

@@ -127,7 +127,7 @@ class TestRowWise(GHEBaseTest):
         target_spacing = (self.target_spacing_start + self.target_spacing_stop) / 2
         rotations = np.linspace(self.rotation_start, self.rotation_stop, num=self.number_of_rotations)
         num_bhs = [
-            len(
+            (
                 gen_borehole_config(
                     self.property,
                     target_spacing,
@@ -135,7 +135,7 @@ class TestRowWise(GHEBaseTest):
                     no_go=self.buildings,
                     rotate=rotation,
                 )
-            )
+            ).size()
             for rotation in rotations
         ]
         reference_values = self.reference_values["test_borehole_config_lengths"].to_list()

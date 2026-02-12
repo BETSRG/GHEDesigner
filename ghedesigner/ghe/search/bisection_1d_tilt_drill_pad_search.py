@@ -7,7 +7,7 @@ from ghedesigner.enums import FlowConfigType, TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.utilities import borehole_spacing, eskilson_log_times, sign
 
 
@@ -18,7 +18,7 @@ class Bisection1DTiltDrillPad:
         field_descriptors: list[str],
         v_flow: float,
         borehole: Borehole,
-        fluid: GHEFluid,
+        fluid: Fluid,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
@@ -141,9 +141,8 @@ class Bisection1DTiltDrillPad:
         grout = self.ghe.bhe.grout
         soil = self.ghe.bhe.soil
 
-        v_flow_system, m_flow_borehole = self.retrieve_flow(coords, fluid.rho)
+        _v_flow_system, m_flow_borehole = self.retrieve_flow(coords, fluid.rho)
         b = borehole_spacing(borehole, coords)
-        solver = "similarities" if (tilts and orientations) else "equivalent"
 
         g_function = calc_g_func_for_multiple_lengths(
             b,
@@ -160,7 +159,6 @@ class Bisection1DTiltDrillPad:
             soil,
             tilts=tilts,
             orientations=orientations,
-            solver=solver,
         )
 
         self.g_function = g_function
@@ -173,7 +171,7 @@ class Bisection1DTiltDrillPad:
         pipe = self.ghe.bhe.pipe
         grout = self.ghe.bhe.grout
         soil = self.ghe.bhe.soil
-        v_flow_system, m_flow_borehole = self.retrieve_flow(coords, fluid.rho)
+        v_flow_system, _m_flow_borehole = self.retrieve_flow(coords, fluid.rho)
         b = borehole_spacing(borehole, coords)
         # re-initialize GHE
         self.ghe = GHE(

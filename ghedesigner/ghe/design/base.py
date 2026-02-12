@@ -11,7 +11,7 @@ from ghedesigner.ghe.search.bisection_1d_tilt_search import Bisection1DTilt
 from ghedesigner.ghe.search.bisection_2d import Bisection2D
 from ghedesigner.ghe.search.bisection_zd import BisectionZD
 from ghedesigner.ghe.search.rowwise import RowWiseModifiedBisectionSearch
-from ghedesigner.media import GHEFluid, Grout, Soil
+from ghedesigner.media import Fluid, Grout, Soil
 
 AnyBisectionType = (
     Bisection1D | Bisection2D | BisectionZD | RowWiseModifiedBisectionSearch | Bisection1DTilt | Bisection1DTiltDrillPad
@@ -32,8 +32,8 @@ class DesignBase:
     def __init__(
         self,
         v_flow: float,
-        _borehole: Borehole,
-        fluid: GHEFluid,
+        borehole: Borehole,
+        fluid: Fluid,
         pipe: Pipe,
         grout: Grout,
         soil: Soil,
@@ -55,7 +55,7 @@ class DesignBase:
             load_years = [2019]
         self.load_years = load_years
         self.v_flow = v_flow  # volumetric flow rate, m3/s
-        self.borehole = _borehole
+        self.borehole = borehole
         self.fluid = fluid  # a fluid object
         self.pipe = pipe
         self.grout = grout

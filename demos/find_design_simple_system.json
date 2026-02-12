@@ -2,7 +2,7 @@
   "version": 2,
   "topology": [
     { "type": "building", "name": "building1" },
-    { "type": "ground-heat-exchanger", "name": "ghe1" }
+    { "type": "ground_heat_exchanger", "name": "ghe1" }
   ],
   "fluid": {
     "fluid_name": "WATER",
@@ -17,7 +17,7 @@
       "capacity": "AUTOSIZE"
     }
   },
-  "ground-heat-exchanger": {
+  "ground_heat_exchanger": {
     "ghe1": {
       "flow_rate": 0.5,
       "flow_type": "BOREHOLE",
@@ -59,13 +59,9 @@
       }
     }
   },
-  "pump": {},
-  "towers": {},
-  "generic-loads": {},
-  "simulation-control": {
-    "thermal-sizing-run": true,
-    "hourly-run": true,
-    "hydraulic-run": true,
-    "simulation-months": 240
+  "simulation_control": {
+    "sizing_run": true,
+    "hourly_run": true,
+    "sizing_months": 240
   }
 }
