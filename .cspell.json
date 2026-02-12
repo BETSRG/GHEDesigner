@@ -1,0 +1,13 @@
+{
+  "version": "0.2",
+  "dictionaryDefinitions": [
+    {
+      "name": "workspace",
+      "path": "./.spelling.dic",
+      "addWords": true
+    }
+  ],
+  "dictionaries": ["workspace"],
+  "ignorePaths": ["/ghedesigner/tests/test_logs/"],
+  "useGitignore": true
+}

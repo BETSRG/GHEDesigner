@@ -1,0 +1,22 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Ruff" type="UvRunConfigurationType" factoryName="UvRunConfigurationType">
+    <option name="args">
+      <list>
+        <option value="run" />
+        <option value="ruff-check" />
+        <option value="-a" />
+      </list>
+    </option>
+    <option name="checkSync" value="true" />
+    <option name="env">
+      <map />
+    </option>
+    <option name="runType" value="MODULE" />
+    <option name="scriptOrModule" value="pre_commit" />
+    <option name="uvArgs">
+      <list />
+    </option>
+    <option name="uvSdkKey" value="uv (GHEDesigner)" />
+    <method v="2" />
+  </configuration>
+</component>

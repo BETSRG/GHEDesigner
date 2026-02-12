@@ -1,0 +1,882 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$defs": {
+    "b_max": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Maximum borehole-to-borehole spacing."
+    },
+    "b_max_x": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Maximum borehole-to-borehole spacing in x-direction."
+    },
+    "b_max_y": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Maximum borehole-to-borehole spacing in y-direction."
+    },
+    "b_min": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Minimum borehole-to-borehole spacing."
+    },
+    "column": {
+      "type": ["string", "integer"]
+    },
+    "conductivity": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Watts/Meter-Kelvin",
+      "description": "Thermal conductivity."
+    },
+    "file_path": {
+      "type": "string"
+    },
+    "H": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Length of each borehole"
+    },
+    "inner_diameter": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Inner diameter of pipe."
+    },
+    "length": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Horizontal length of property boundary defining surface area available for ground heat exchanger."
+    },
+    "load_values": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "format": "Watts",
+      "minItems": 8760,
+      "maxItems": 8760,
+      "description": "Annual, hourly loads of the object. Positive value indicate heating/heat extraction, negative values indicate cooling/heat rejection."
+    },
+    "loads": {
+      "type": "object",
+      "properties": {
+        "column": {
+          "$ref": "#/$defs/column"
+        },
+        "file_path": {
+          "$ref": "#/$defs/file_path"
+        },
+        "load_values": {
+          "$ref": "#/$defs/load_values"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "load_values": {
+              "$ref": "#/$defs/load_values"
+            }
+          },
+          "required": ["load_values"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "column": {
+              "$ref": "#/$defs/column"
+            },
+            "file_path": {
+              "$ref": "#/$defs/file_path"
+            }
+          },
+          "required": ["file_path", "column"],
+          "additionalProperties": false
+        }
+      ],
+      "additionalProperties": false
+    },
+    "no_go_boundaries": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "format": "Meters",
+      "description": "(x, y) coordinate points of closed polygon defining go/no-go boundaries. Go/no-go zones must lie within the area defined in 'property_boundary'. Points should be entered in a counter-clockwise fashion."
+    },
+    "outer_diameter": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Outer diameter of pipe."
+    },
+    "property_boundary": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "format": "Meters",
+      "description": "(x, y) coordinate points of closed polygon defining property boundary. Points should be entered in a counter-clockwise fashion."
+    },
+    "rho_cp": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Joules/Meter^3-Kelvin",
+      "description": "Volumetric heat capacity."
+    },
+    "roughness": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Surface roughness of pipe."
+    },
+    "shank_spacing": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Spacing between up/down legs of u-tube pipe, as measured from nearest outer surfaces of each pipe (o<-- s -->o)."
+    },
+    "width": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Horizontal width of property boundary defining surface area available for ground heat exchanger."
+    }
+  },
+  "type": "object",
+  "properties": {
+    "topology": {
+      "type": "array",
+      "description": "A list of name/type map objects that define the system topology.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["name", "type"],
+        "additionalProperties": false
+      }
+    },
+    "fluid": {
+      "type": "object",
+      "description": "A fluid definition object.",
+      "properties": {
+        "fluid_name": {
+          "type": "string",
+          "enum": [
+            "WATER",
+            "ETHYLALCOHOL",
+            "ETHYLENEGLYCOL",
+            "METHYLALCOHOL",
+            "PROPYLENEGLYCOL"
+          ],
+          "description": "Circulation fluid type."
+        },
+        "concentration_percent": {
+          "type": "number",
+          "maximum": 60,
+          "minimum": 0,
+          "format": "Percent",
+          "description": "Mass fraction concentration percent of circulation fluid. e.g.: '0' indicates pure water; '20' indicates 20% antifreeze, 80% pure water."
+        },
+        "temperature": {
+          "type": "number",
+          "format": "Centigrade",
+          "description": "Average design fluid temperature at peak conditions."
+        }
+      },
+      "required": ["fluid_name", "concentration_percent", "temperature"],
+      "additionalProperties": false
+    },
+    "building": {
+      "type": "object",
+      "description": "A map of available building definition objects.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "loads": {
+            "type": "string"
+          },
+          "cop": {
+            "type": "number"
+          },
+          "capacity": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "loads", "cop", "capacity"],
+        "additionalProperties": false
+      }
+    },
+    "ground_heat_exchanger": {
+      "type": "object",
+      "description": "A collection of objects that define a ground heat exchanger system.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "flow_rate": {
+            "type": "number",
+            "minimum": 0,
+            "format": "Liters/Second",
+            "description": "Volumetric design flow rate. Value specified will be either the system or per-borehole flow rate depending on the 'flow_type' set."
+          },
+          "flow_type": {
+            "type": "string",
+            "enum": ["BOREHOLE", "SYSTEM"],
+            "description": "Indicates whether the design volumetric flow rate set on on a per-borehole or system basis."
+          },
+          "grout": {
+            "type": "object",
+            "properties": {
+              "conductivity": {
+                "$ref": "#/$defs/conductivity"
+              },
+              "rho_cp": {
+                "$ref": "#/$defs/rho_cp"
+              }
+            },
+            "required": ["conductivity", "rho_cp"],
+            "additionalProperties": false
+          },
+          "soil": {
+            "type": "object",
+            "properties": {
+              "conductivity": {
+                "$ref": "#/$defs/conductivity"
+              },
+              "rho_cp": {
+                "$ref": "#/$defs/rho_cp"
+              },
+              "undisturbed_temp": {
+                "type": "number",
+                "format": "Centigrade",
+                "description": "Undisturbed, far-field soil temperature."
+              }
+            },
+            "required": ["conductivity", "rho_cp", "undisturbed_temp"],
+            "additionalProperties": false
+          },
+          "pipe": {
+            "type": "object",
+            "properties": {
+              "arrangement": {
+                "type": "string",
+                "enum": [
+                  "SINGLEUTUBE",
+                  "DOUBLEUTUBESERIES",
+                  "DOUBLEUTUBEPARALLEL",
+                  "COAXIAL"
+                ],
+                "description": "Pipe arrangement specified."
+              }
+            },
+            "oneOf": [
+              {
+                "properties": {
+                  "arrangement": {
+                    "const": "SINGLEUTUBE"
+                  },
+                  "inner_diameter": {
+                    "$ref": "#/$defs/inner_diameter"
+                  },
+                  "outer_diameter": {
+                    "$ref": "#/$defs/outer_diameter"
+                  },
+                  "shank_spacing": {
+                    "$ref": "#/$defs/shank_spacing"
+                  },
+                  "roughness": {
+                    "$ref": "#/$defs/roughness"
+                  },
+                  "conductivity": {
+                    "$ref": "#/$defs/conductivity"
+                  },
+                  "rho_cp": {
+                    "$ref": "#/$defs/rho_cp"
+                  },
+                  "num_pipes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "Number of single U-tube pipes in the borehole. Default is 1."
+                  }
+                },
+                "required": [
+                  "inner_diameter",
+                  "outer_diameter",
+                  "shank_spacing",
+                  "roughness",
+                  "conductivity",
+                  "rho_cp",
+                  "arrangement"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "arrangement": {
+                    "const": "DOUBLEUTUBESERIES"
+                  },
+                  "inner_diameter": {
+                    "$ref": "#/$defs/inner_diameter"
+                  },
+                  "outer_diameter": {
+                    "$ref": "#/$defs/outer_diameter"
+                  },
+                  "shank_spacing": {
+                    "$ref": "#/$defs/shank_spacing"
+                  },
+                  "roughness": {
+                    "$ref": "#/$defs/roughness"
+                  },
+                  "conductivity": {
+                    "$ref": "#/$defs/conductivity"
+                  },
+                  "rho_cp": {
+                    "$ref": "#/$defs/rho_cp"
+                  }
+                },
+                "required": [
+                  "inner_diameter",
+                  "outer_diameter",
+                  "shank_spacing",
+                  "roughness",
+                  "conductivity",
+                  "rho_cp",
+                  "arrangement"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "arrangement": {
+                    "const": "DOUBLEUTUBEPARALLEL"
+                  },
+                  "inner_diameter": {
+                    "$ref": "#/$defs/inner_diameter"
+                  },
+                  "outer_diameter": {
+                    "$ref": "#/$defs/outer_diameter"
+                  },
+                  "shank_spacing": {
+                    "$ref": "#/$defs/shank_spacing"
+                  },
+                  "roughness": {
+                    "$ref": "#/$defs/roughness"
+                  },
+                  "conductivity": {
+                    "$ref": "#/$defs/conductivity"
+                  },
+                  "rho_cp": {
+                    "$ref": "#/$defs/rho_cp"
+                  }
+                },
+                "required": [
+                  "inner_diameter",
+                  "outer_diameter",
+                  "shank_spacing",
+                  "roughness",
+                  "conductivity",
+                  "rho_cp",
+                  "arrangement"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "arrangement": {
+                    "const": "COAXIAL"
+                  },
+                  "inner_pipe_d_in": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Inner pipe inner diameter."
+                  },
+                  "inner_pipe_d_out": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Inner pipe outer diameter."
+                  },
+                  "outer_pipe_d_in": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Outer pipe inner diameter."
+                  },
+                  "outer_pipe_d_out": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Outer pipe outer diameter."
+                  },
+                  "roughness": {
+                    "$ref": "#/$defs/roughness"
+                  },
+                  "conductivity_inner": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Watts/Meters-Kelvin",
+                    "description": "Thermal conductivity of inner pipe."
+                  },
+                  "conductivity_outer": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Watts/Meter-Kelvin",
+                    "description": "Thermal conductivity of outer pipe."
+                  },
+                  "rho_cp": {
+                    "$ref": "#/$defs/rho_cp"
+                  }
+                },
+                "required": [
+                  "inner_pipe_d_in",
+                  "inner_pipe_d_out",
+                  "outer_pipe_d_in",
+                  "outer_pipe_d_out",
+                  "roughness",
+                  "conductivity_inner",
+                  "conductivity_outer",
+                  "rho_cp",
+                  "arrangement"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "borehole": {
+            "type": "object",
+            "properties": {
+              "buried_depth": {
+                "type": "number",
+                "minimum": 0,
+                "format": "Meters",
+                "description": "Depth of top of borehole below the ground surface."
+              },
+              "diameter": {
+                "type": "number",
+                "format": "Meters",
+                "description": "Diameter of borehole."
+              }
+            },
+            "required": ["buried_depth", "diameter"],
+            "additionalProperties": false
+          },
+          "pre_designed": {
+            "type": "object",
+            "description": "Data related to a pre-designed borehole field, used in cases where the field arrangement is known ahead of time. GHEDesigner will provide a g-function calculation for the specified field.",
+            "properties": {
+              "arrangement": {
+                "type": "string",
+                "enum": ["MANUAL", "RECTANGLE"],
+                "description": "Pipe arrangement specified."
+              }
+            },
+            "oneOf": [
+              {
+                "properties": {
+                  "arrangement": {
+                    "const": "MANUAL"
+                  },
+                  "H": {
+                    "$ref": "#/$defs/H"
+                  },
+                  "x": {
+                    "type": "array",
+                    "description": "For MANUAL arrangement, this provides an array of x coordinate positions, one for each borehole in the field",
+                    "items": {
+                      "type": "number"
+                    }
+                  },
+                  "y": {
+                    "type": "array",
+                    "description": "For MANUAL arrangement, this provides an array of y coordinate positions, one for each borehole in the field",
+                    "items": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "required": ["arrangement", "H", "x", "y"],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "arrangement": {
+                    "const": "RECTANGLE"
+                  },
+                  "H": {
+                    "$ref": "#/$defs/H"
+                  },
+                  "boreholes_in_x_dimension": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of boreholes in the x direction of the field, dimensionless"
+                  },
+                  "boreholes_in_y_dimension": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of boreholes in the y direction of the field, dimensionless"
+                  },
+                  "spacing_in_x_dimension": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Borehole spacing in the x direction of the field, in meters (ignored if boreholes_in_x_dimension = 1)"
+                  },
+                  "spacing_in_y_dimension": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Borehole spacing in the y direction of the field, in meters (ignored if boreholes_in_y_dimension = 1)"
+                  }
+                },
+                "required": [
+                  "arrangement",
+                  "H",
+                  "boreholes_in_x_dimension",
+                  "boreholes_in_y_dimension",
+                  "spacing_in_x_dimension",
+                  "spacing_in_y_dimension"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "geometric_constraints": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "BIRECTANGLE",
+                  "BIRECTANGLECONSTRAINED",
+                  "BIZONEDRECTANGLE",
+                  "NEARSQUARE",
+                  "RECTANGLE",
+                  "ROWWISE"
+                ],
+                "description": "Design algorithm specified."
+              }
+            },
+            "oneOf": [
+              {
+                "properties": {
+                  "method": {
+                    "const": "BIRECTANGLE"
+                  },
+                  "length": {
+                    "$ref": "#/$defs/length"
+                  },
+                  "width": {
+                    "$ref": "#/$defs/width"
+                  },
+                  "b_min": {
+                    "$ref": "#/$defs/b_min"
+                  },
+                  "b_max_x": {
+                    "$ref": "#/$defs/b_max_x"
+                  },
+                  "b_max_y": {
+                    "$ref": "#/$defs/b_max_y"
+                  }
+                },
+                "required": [
+                  "length",
+                  "width",
+                  "b_min",
+                  "b_max_x",
+                  "b_max_y",
+                  "method"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "method": {
+                    "const": "BIRECTANGLECONSTRAINED"
+                  },
+                  "b_min": {
+                    "$ref": "#/$defs/b_min"
+                  },
+                  "b_max_x": {
+                    "$ref": "#/$defs/b_max_x"
+                  },
+                  "b_max_y": {
+                    "$ref": "#/$defs/b_max_y"
+                  },
+                  "property_boundary": {
+                    "$ref": "#/$defs/property_boundary"
+                  },
+                  "no_go_boundaries": {
+                    "$ref": "#/$defs/no_go_boundaries"
+                  }
+                },
+                "required": [
+                  "b_min",
+                  "b_max_x",
+                  "b_max_y",
+                  "property_boundary",
+                  "method"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "method": {
+                    "const": "BIZONEDRECTANGLE"
+                  },
+                  "length": {
+                    "$ref": "#/$defs/length"
+                  },
+                  "width": {
+                    "$ref": "#/$defs/width"
+                  },
+                  "b_min": {
+                    "$ref": "#/$defs/b_min"
+                  },
+                  "b_max_x": {
+                    "$ref": "#/$defs/b_max_x"
+                  },
+                  "b_max_y": {
+                    "$ref": "#/$defs/b_max_y"
+                  }
+                },
+                "required": [
+                  "length",
+                  "width",
+                  "b_min",
+                  "b_max_x",
+                  "b_max_y",
+                  "method"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "method": {
+                    "const": "NEARSQUARE"
+                  },
+                  "length": {
+                    "$ref": "#/$defs/length"
+                  },
+                  "b": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "Borehole-to-borehole spacing."
+                  }
+                },
+                "required": ["length", "b", "method"],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "method": {
+                    "const": "RECTANGLE"
+                  },
+                  "length": {
+                    "$ref": "#/$defs/length"
+                  },
+                  "width": {
+                    "$ref": "#/$defs/width"
+                  },
+                  "b_min": {
+                    "$ref": "#/$defs/b_min"
+                  },
+                  "b_max": {
+                    "$ref": "#/$defs/b_max"
+                  }
+                },
+                "required": ["length", "width", "b_min", "b_max", "method"],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "method": {
+                    "const": "ROWWISE"
+                  },
+                  "min_spacing": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "The smallest minimum spacing that will be used to generate a RowWise field."
+                  },
+                  "max_spacing": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "The largest minimum spacing that will be used to generate a RowWise field."
+                  },
+                  "spacing_step": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Meters",
+                    "description": "The distance in spacing from the design found in the first part of first search to exhaustively check in the second part."
+                  },
+                  "min_rotation": {
+                    "type": "number",
+                    "format": "Degrees",
+                    "maximum": 90,
+                    "minimum": -90,
+                    "description": "The minimum rotation of the rows of each field relative to horizontal that will be used in the search."
+                  },
+                  "max_rotation": {
+                    "type": "number",
+                    "format": "Degrees",
+                    "maximum": 90,
+                    "minimum": -90,
+                    "description": "The maximum rotation of the rows of each field relative to horizontal that will be used in the search."
+                  },
+                  "rotate_step": {
+                    "type": "number",
+                    "format": "Degrees",
+                    "description": "Step size for field rotation search."
+                  },
+                  "property_boundary": {
+                    "$ref": "#/$defs/property_boundary"
+                  },
+                  "no_go_boundaries": {
+                    "$ref": "#/$defs/no_go_boundaries"
+                  },
+                  "perimeter_spacing_ratio": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "fraction",
+                    "description": "The ratio between the minimum spacing between boreholes placed along the property and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes."
+                  }
+                },
+                "required": [
+                  "min_spacing",
+                  "max_spacing",
+                  "min_rotation",
+                  "max_rotation",
+                  "rotate_step",
+                  "property_boundary",
+                  "method"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "design": {
+            "type": "object",
+            "properties": {
+              "max_eft": {
+                "type": "number",
+                "format": "Centigrade",
+                "description": "Maximum heat pump entering fluid temperature."
+              },
+              "min_eft": {
+                "type": "number",
+                "format": "Centigrade",
+                "description": "Minimum heat pump entering fluid temperature."
+              },
+              "max_boreholes": {
+                "type": "number",
+                "description": "Maximum number of boreholes in search. Optional. Applies to rectangular and near-square design algorithms. If unspecified, the search space will be bounded by the size of the GHE boundary."
+              },
+              "continue_if_design_unmet": {
+                "type": "boolean",
+                "default": false,
+                "description": "Causes to return the best available borehole field configuration rather than fail if design conditions are unmet. Optional. Default False."
+              },
+              "max_height": {
+                "type": "number",
+                "minimum": 0,
+                "format": "Meters",
+                "description": "Maximum height, or active length, of each borehole heat exchanger."
+              },
+              "min_height": {
+                "type": "number",
+                "minimum": 0,
+                "format": "Meters",
+                "description": "Minimum height, or active length, of each borehole heat exchanger."
+              }
+            },
+            "required": ["max_eft", "min_eft", "max_height", "min_height"],
+            "additionalProperties": false
+          },
+          "loads": {
+            "$ref": "#/$defs/loads"
+          }
+        },
+        "required": [
+          "soil",
+          "grout",
+          "pipe",
+          "borehole",
+          "flow_rate",
+          "flow_type"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "simulation_control": {
+      "type": "object",
+      "description": "",
+      "properties": {
+        "sizing_run": {
+          "type": "boolean",
+          "description": "Field enables or disables running sizing calculations."
+        },
+        "hourly_run": {
+          "type": "boolean",
+          "description": "Field enables running hour simulation."
+        },
+        "sizing_months": {
+          "type": "number",
+          "minimum": 1,
+          "format": "Months",
+          "description": "Number of months used in ground heat exchanger sizing."
+        },
+        "timestep": {
+          "type": "string",
+          "enum": ["HYBRID", "HOURLY"],
+          "default": "HYBRID",
+          "description": "This field is currently unused. Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently available."
+        }
+      },
+      "required": ["sizing_months"],
+      "additionalProperties": false
+    },
+    "version": {
+      "type": "integer",
+      "description": "An integer version ID for this input structure, for future-proofing."
+    }
+  },
+  "required": ["topology", "fluid", "ground_heat_exchanger", "version"],
+  "additionalProperties": false
+}

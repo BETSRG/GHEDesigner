@@ -1,11 +1,11 @@
-from ghedesigner.borehole import GHEBorehole
-from ghedesigner.coordinates import rectangle
-from ghedesigner.enums import BHPipeType, TimestepType
-from ghedesigner.gfunction import calc_g_func_for_multiple_lengths
-from ghedesigner.ground_heat_exchangers import GHE
-from ghedesigner.media import Pipe, Soil, Grout, GHEFluid
-from ghedesigner.simulation import SimulationParameters
-from ghedesigner.tests.ghe_base_case import GHEBaseTest
+from ghedesigner.enums import PipeType, TimestepType
+from ghedesigner.ghe.boreholes.core import Borehole
+from ghedesigner.ghe.coordinates import rectangle
+from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
+from ghedesigner.ghe.ground_heat_exchangers import GHE
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import Fluid, Grout, Soil
+from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.utilities import eskilson_log_times
 
 
@@ -22,15 +22,12 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # ---------------
         d_out = 0.04216  # Pipe outer diameter (m)
         d_in = 0.03404  # Pipe inner diameter (m)
-        r_out = d_out / 2.0
-        r_in = d_in / 2.0
         s = 0.01856  # Inner-tube to inner-tube Shank spacing (m)
         epsilon = 1.0e-6  # Pipe roughness (m)
 
         # Pipe positions
         # --------------
         # Single U-tube [(x_in, y_in), (x_out, y_out)]
-        pos = Pipe.place_pipes(s, r_out, 1)
 
         # Thermal conductivities
         # ----------------------
@@ -47,7 +44,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # Thermal properties
         # ------------------
         # Pipe
-        pipe = Pipe(pos, r_in, r_out, s, epsilon, k_p, rho_cp_p)
+        pipe = Pipe.init_single_u_tube(k_p, rho_cp_p, d_in, d_out, s, epsilon, 1)
         # Soil
         ugt = 18.3  # Undisturbed ground temperature (degrees Celsius)
         soil = Soil(k_s, rho_cp_s, ugt)
@@ -60,7 +57,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         # Inputs related to fluid
         # -----------------------
         # Fluid properties
-        fluid = GHEFluid(fluid_str="Water", percent=0.0)
+        fluid = Fluid(fluid_name="Water", percent=0.0)
 
         # Coordinates
         nx = 12
@@ -75,28 +72,14 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         m_flow_borehole = v_flow_borehole / 1000.0 * fluid.rho
 
         # Define a borehole
-        borehole = GHEBorehole(h, d, dia / 2.0, x=0.0, y=0.0)
+        borehole = Borehole(borehole_height=h, burial_depth=d, borehole_radius=dia / 2.0)
 
         # Simulation start month and end month
         # --------------------------------
         # Simulation start month and end month
-        start_month = 1
+        # start_month = 1
         n_years = 20
-        end_month = n_years * 12
-        # Maximum and minimum allowable fluid temperatures
-        max_eft_allowable = 35  # degrees Celsius
-        min_eft_allowable = 5  # degrees Celsius
-        # Maximum and minimum allowable heights
-        max_height = 150  # in meters
-        min_height = 60  # in meters
-        sim_params = SimulationParameters(
-            start_month,
-            end_month,
-            max_eft_allowable,
-            min_eft_allowable,
-            max_height,
-            min_height,
-        )
+        num_months = n_years * 12
 
         # Process loads from file
         hourly_extraction_ground_loads = self.get_atlanta_loads()
@@ -108,7 +91,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             dia / 2.0,
             d,
             m_flow_borehole,
-            BHPipeType.SINGLEUTUBE,
+            PipeType.SINGLEUTUBE,
             log_time,
             coordinates,
             fluid,
@@ -123,21 +106,22 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         ghe = GHE(
             v_flow_system,
             b,
-            BHPipeType.SINGLEUTUBE,
+            PipeType.SINGLEUTUBE,
             fluid,
             borehole,
             pipe,
             grout,
             soil,
             g_function,
-            sim_params,
+            1,
+            num_months,
             hourly_extraction_ground_loads,
         )
 
         # Simulate after computing just one g-function
         max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HYBRID)
 
-        self.log("Min EFT: {0:0.3f}\nMax EFT: {1:0.3f}".format(min_hp_eft, max_hp_eft))
+        self.log(f"Min EFT: {min_hp_eft:0.3f}\nMax EFT: {max_hp_eft:0.3f}")
 
         # Compute a range of g-functions for interpolation
         h_values = [24.0, 48.0, 96.0, 192.0, 384.0]
@@ -149,7 +133,7 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
             dia / 2.0,
             bh_depth,
             m_flow_borehole,
-            BHPipeType.SINGLEUTUBE,
+            PipeType.SINGLEUTUBE,
             log_time,
             coordinates,
             fluid,
@@ -162,17 +146,18 @@ class TestLiveGFunctionSimAndSize(GHEBaseTest):
         ghe = GHE(
             v_flow_system,
             b,
-            BHPipeType.SINGLEUTUBE,
+            PipeType.SINGLEUTUBE,
             fluid,
             borehole,
             pipe,
             grout,
             soil,
             g_function,
-            sim_params,
+            1,
+            num_months,
             hourly_extraction_ground_loads,
         )
 
-        ghe.size(method=TimestepType.HYBRID)
+        ghe.size(method=TimestepType.HYBRID, max_height=384, min_height=24, design_max_eft=35, design_min_eft=5)
 
-        self.log(f"Height of boreholes: {ghe.bhe.b.H:0.4f}")
+        self.log(f"Height of boreholes: {ghe.bhe.borehole.H:0.4f}")

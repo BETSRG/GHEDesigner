@@ -1,0 +1,65 @@
+[build-system]
+requires = ["uv_build>=0.9.22,<0.10.0"]
+build-backend = "uv_build"
+
+[project]
+name = "ghedesigner"
+version = "2.1.0"
+description = "A ground heat exchanger design tool with the capability to select and size flexibly configured borehole fields that are customized for specific building and property constraints."
+readme = "README.md"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [{ name = "Jeffrey D. Spitler", email = "spitler@okstate.edu" }]
+requires-python = ">=3.10"
+dependencies = [
+    "bhresist>=0.3",
+    "click>=8.3.1",
+    "jsonschema>=4.26.0",
+    "numpy>=2.2.6",
+    "pygfunction>=2.3.1",
+    "scipy>=1.15.3",
+    "secondarycoolantprops>=1.4",
+]
+repository = "https://github.com/BETSRG/GHEDesigner"
+documentation = "https://betsrg.github.io/GHEDesigner/"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
+]
+
+[project.scripts]
+ghedesigner = "ghedesigner.main:run_manager_from_cli"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "pytest-xdist>=3.8.0",
+    "recursive-diff>=1.3.0",
+]
+docs = [
+    "mkdocs-material>=9.7.1",
+    "mkdocs-schema-reader>=0.11.1",
+    "mkdocstrings-python>=2.0.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = "ghedesigner/tests"
+addopts = ["--cov=ghedesigner", "--cov-report=html"]
+
+[tool.uv]
+default-groups = ["dev", "docs"]
+
+[tool.uv.build-backend]
+module-root = ""
+source-exclude = ["ghedesigner/gui", "ghedesigner/tests"]

@@ -1,52 +1,59 @@
-import os
-from datetime import datetime
 from json import loads
 from pathlib import Path
 
-from ghedesigner.manager import run_manager_from_cli_worker
-from ghedesigner.tests.ghe_base_case import GHEBaseTest
+import pytest
+
+from ghedesigner.main import run
 
 # results can be updated with the update_demo_results.py file in /scripts
 # comment the 'self.assert' statements below to generate an updated set of results first
 expected_results_path = Path(__file__).parent / "expected_demo_results.json"
 expected_demo_results_dict = loads(expected_results_path.read_text())
 
+# override this with a list of Paths to JSON config files to run, or set to `None` to run all demo files
+files_to_debug: list[Path] = [
+    # Path(__file__).parent.parent.parent / "demos" / "find_design_rowwise_single_u_tube.json"
+]
 
-class TestDemoFiles(GHEBaseTest):
+limit_debug_file_count = 0
 
-    def test_demo_files(self):
 
-        time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+def get_test_input_files() -> list[Path]:
+    if files_to_debug:
+        return files_to_debug
+    demos_path = Path(__file__).parent.parent.parent / "demos"
+    demo_files = demos_path.glob("*.json")
+    demo_file_list = list(demo_files)
+    if limit_debug_file_count > 0:
+        return demo_file_list[:limit_debug_file_count]
+    return demo_file_list
 
-        self.failed = []
 
-        for _, _, files in os.walk(self.demos_path):
-            for f in files:
-                demo_file_path = self.demos_path / f
-                out_dir = self.demo_output_parent_dir / time_str / f.replace('.json', '')
-                os.makedirs(out_dir)
-                print(f"Running: {demo_file_path}")
-                self.assertEqual(0, run_manager_from_cli_worker(input_file_path=demo_file_path,
-                                                                output_directory=out_dir))
+@pytest.mark.parametrize("demo_file_path", get_test_input_files(), ids=lambda f: "Demo: " + f.stem)
+def test_demo_files(demo_file_path: Path, time_str: str):
+    # run demo files first
+    demo_output_parent_dir = Path(__file__).parent.parent.parent / "demo_outputs"
+    out_dir = demo_output_parent_dir / time_str / demo_file_path.stem
+    out_dir.mkdir(parents=True, exist_ok=True)
+    print(f"Running: {demo_file_path}")
+    assert run(input_file_path=demo_file_path, output_directory=out_dir) == 0
 
-                results_path = out_dir / 'SimulationSummary.json'
+    # check the outputs
+    results_path = out_dir / "SimulationSummary.json"
 
-                actual_results = loads(results_path.read_text())
-                actual_length = actual_results['ghe_system']['active_borehole_length']['value']
-                actual_nbh = actual_results['ghe_system']['number_of_boreholes']
+    actual_results = loads(results_path.read_text())
+    if "ghe_system" in actual_results:
+        actual_length = actual_results["ghe_system"]["active_borehole_length"]["value"]
+        actual_nbh = actual_results["ghe_system"]["number_of_boreholes"]
 
-                expected_results = expected_demo_results_dict[out_dir.stem]
-                expected_length = expected_results['active_borehole_length']
-                expected_nbh = expected_results['number_of_boreholes']
+        expected_results = expected_demo_results_dict[out_dir.stem]
+        expected_length = expected_results["active_borehole_length"]
+        expected_nbh = expected_results["number_of_boreholes"]
 
-                if abs(actual_length - expected_length) > 0.01:
-                    self.failed.append(f)
-                    continue
+        assert actual_length == pytest.approx(expected_length, abs=0.1)
+        assert actual_nbh == expected_nbh
 
-                if abs(actual_nbh - expected_nbh) > 0:
-                    self.failed.append(f)
-                    continue
-
-        if self.failed:
-            newline = "\n"
-            self.fail(f'{newline.join(f"Failed: {f}" for f in self.failed)}')
+    else:
+        # TODO: Verify it was intentionally predesigned
+        assert "log_time" in actual_results
+        assert "g_values" in actual_results

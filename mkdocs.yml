@@ -1,0 +1,31 @@
+# https://www.mkdocs.org/user-guide/configuration/
+# https://squidfunk.github.io/mkdocs-material/creating-your-site/#advanced-configuration
+
+site_name: GHEDesigner
+repo_url: https://github.com/BETSRG/GHEDesigner
+
+theme:
+  name: material
+
+plugins:
+  - search
+  - schema_reader:
+      include:
+        - "ghedesigner/schemas/"
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            # https://mkdocstrings.github.io/griffe/reference/docstrings/
+            docstring_style: sphinx
+
+nav:
+  - Home: index.md
+  - Using the CLI: cli.md
+  - Examples: examples.md
+  - Design Manager: manager.md
+
+# Add these dirs/files to live updating during development (in addition to docs & this file)
+# https://www.mkdocs.org/user-guide/configuration/#watch
+watch:
+  - ghedesigner/
