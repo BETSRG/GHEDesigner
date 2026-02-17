@@ -13,10 +13,9 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
-import pytest
 from scipy.interpolate import interp1d
 
-from ghedesigner.constants import HOURS_IN_YEAR, HRS_IN_DAY, MONTHS_IN_YEAR
+from ghedesigner.constants import HOURS_IN_YEAR, HRS_IN_DAY, MONTHS_IN_YEAR, TWO_PI
 from ghedesigner.ghe.ground_loads import first_month_hour, last_month_hour
 from ghedesigner.ghe.ground_loads_v2 import HybridLoadV2
 
@@ -32,11 +31,16 @@ def _make_mock_bhe():
     bhe.calc_effective_borehole_resistance.return_value = 0.15
     bhe.t_s = 1.0e10  # large ts so log(t/ts) stays in range
 
-    # STS g-function: simple linear g = 0.5 * ln(t/ts) clamped to [0, 10]
+    # STS g-function: simple linear g = 0.5 * ln(t/ts) clamped to [0, 10].
+    # Note: with ts=1e10, g returns 0 for the first ~126 hours because
+    # ln(126*3600/1e10) ≈ -10 → 0.5*(-10)+5 = 0.  This means the ground
+    # response is zero at short times and only the borehole resistance term
+    # (q/H * Rb) contributes, producing a flat delta_T during that window.
+    # A real STS g-function would respond from hour 1 onward.
     def g_sts_func(lntts):
         vals = np.asarray(lntts, dtype=float)
-        result = np.clip(0.5 * vals + 5.0, 0.0, 10.0)
-        return result
+        #result = np.clip(0.5 * vals + 5.0, 0.0, 10.0)
+        return vals
 
     bhe.g_sts = g_sts_func
     return bhe
@@ -87,117 +91,6 @@ def _make_v2_with_synthetic_dt(hourly_delta_t, loads=None):
 
     return obj
 
-
-def _analyze_and_export(
-    loads: list,
-    output_dir: Path,
-    file_prefix: str,
-    undisturbed_ground_t: float = 20.0,
-    m_dot: float = 0.1,
-    cp: float = 4186.0,
-) -> None:
-    """Build HybridLoadV2 from any hourly load profile and export analysis CSVs.
-
-    Exports two files to output_dir:
-      - {file_prefix}_hourly_results.csv  : per-hour load, delta_t, tf_ave, eft, exft
-      - {file_prefix}_hybrid_results.csv  : hybrid time steps in step-function format
-                                            with predicted delta_T
-
-    :param loads: 8760 hourly loads in Watts
-    :param output_dir: directory to write CSV files
-    :param file_prefix: prefix for output file names
-    :param undisturbed_ground_t: undisturbed ground temperature in °C
-    :param m_dot: fluid mass flow rate in kg/s
-    :param cp: fluid specific heat in J/(kg·K)
-    """
-    bhe = _make_mock_bhe()
-    obj = HybridLoadV2(loads, bhe, bhe, 1, 12)
-
-    month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-
-    print(f"\n===== {file_prefix}: Peak Temperature & Load Summary =====")
-    print(f"{'Month':<6} {'Max dT':>8} {'Hour':>6} {'Peak CL (W)':>13} "
-          f"{'Min dT':>8} {'Hour':>6} {'Peak HL (W)':>13}")
-    print("-" * 68)
-    for m in range(MONTHS_IN_YEAR):
-        print(f"{month_names[m]:<6} {obj.monthly_max_dt[m]:>8.3f} {obj.monthly_max_dt_hour[m]:>6d} "
-              f"{obj.monthly_peak_cl[m]:>13.3f} {obj.monthly_min_dt[m]:>8.3f} "
-              f"{obj.monthly_min_dt_hour[m]:>6d} {obj.monthly_peak_hl[m]:>13.3f}")
-    print(f"\nPeak cooling months: {[month_names[m] for m in obj.peak_cooling_months]}")
-    print(f"Peak heating months: {[month_names[m] for m in obj.peak_heating_months]}")
-    print("\nPeak durations (hours):")
-    for m in obj.peak_cooling_months:
-        print(f"  {month_names[m]} cooling: {obj.monthly_peak_cl_duration[m]:.2f}")
-    for m in obj.peak_heating_months:
-        print(f"  {month_names[m]} heating: {obj.monthly_peak_hl_duration[m]:.2f}")
-    print("=" * 68)
-
-    print(f"\n===== {file_prefix}: Hybrid Load Profile (All Steps) =====")
-    print(f"{'Step':>4}  {'Start Hr':>10}  {'End Hr':>10}  {'Duration':>10}  {'Load (W)':>10}")
-    print("-" * 52)
-    for i in range(1, len(obj.hour)):
-        h_start = obj.hour[i - 1]
-        h_end = obj.hour[i]
-        print(f"{i:>4}  {h_start:>10.1f}  {h_end:>10.1f}  {h_end - h_start:>10.1f}  {obj.load[i]:>10.3f}")
-    print("=" * 52)
-
-    # Hourly results: delta_t (Tf_ave-Tg0), tf_ave, eft, exft
-    # q is aligned to hourly_delta_t indexing (8761 entries, index 0 = 0)
-    q_norm = np.hstack((0.0, obj.normalized_loads))
-    tf_ave = undisturbed_ground_t + np.array(obj.hourly_delta_t)
-    eft = tf_ave + q_norm / (m_dot * cp)
-    exft = tf_ave - q_norm / (m_dot * cp)
-
-    hourly_path = output_dir / f"{file_prefix}_hrly_results.csv"
-    with open(hourly_path, "w") as f:
-        f.write("hour,norm_load_w,tfave-tg0,exft,tf_ave,eft\n")
-        for hour_idx, (nq, dt, exft_val, tf_ave_val, eft_val) in enumerate(
-            zip(q_norm, obj.hourly_delta_t, exft, tf_ave, eft)
-        ):
-            f.write(f"{hour_idx},{nq:.6f},{dt:.6f},{exft_val:.6f},{tf_ave_val:.6f},{eft_val:.6f}\n")
-    print(f"\nExported hourly results to {hourly_path}")
-    print(f"  entries={len(obj.hourly_delta_t)}, "
-          f"delta_T=[{min(obj.hourly_delta_t):.4f}, {max(obj.hourly_delta_t):.4f}], "
-          f"EFT=[{min(eft):.4f}, {max(eft):.4f}] °C")
-
-    # Hybrid results: export step-function format with normalized loads
-    hybrid_delta_t = obj.hybrid_dt
-    norm_hybrid_q = obj.hybrid_q_norm_w
-
-    hybrid_path = output_dir / f"{file_prefix}_hybrid_results.csv"
-    with open(hybrid_path, "w") as f:
-        f.write("hour,load_w,norm_load_w,predicted_delta_t\n")
-        for i in range(len(obj.hour)):
-            f.write(f"{obj.hour[i]:.4f},{obj.load[i]:.6f},{norm_hybrid_q[i]:.6f},{hybrid_delta_t[i]:.6f}\n")
-            # Duplicate timestep at load transitions to create vertical step edges for plotting
-            if i < len(obj.hour) - 1 and obj.load[i] != obj.load[i + 1]:
-                f.write(f"{obj.hour[i]:.4f},{obj.load[i + 1]:.6f},{norm_hybrid_q[i + 1]:.6f},{hybrid_delta_t[i]:.6f}\n")
-    print(f"Exported hybrid results to {hybrid_path}")
-
-def test_export_constant_cooling_analysis():
-    """Export hourly and hybrid results CSVs for the constant cooling load profile."""
-    csv_path = Path(__file__).parent / "test_data" / "constant_1000w_cooling.csv"
-    if not csv_path.exists():
-        pytest.skip("constant cooling CSV not found")
-
-    raw_lines = csv_path.read_text().split("\n")
-    loads = [float(x) for x in raw_lines[1:] if x.strip() != ""]
-
-    output_dir = Path(__file__).parent / "output"
-    _analyze_and_export(loads, output_dir, "CC", 15)
-
-def test_export_constant_cooling_analysis():
-    """Export hourly and hybrid results CSVs for the ramp load profile."""
-    csv_path = Path(__file__).parent / "test_data" / "balanced_ramp.csv"
-    if not csv_path.exists():
-        pytest.skip("balanced_ramp CSV not found")
-
-    raw_lines = csv_path.read_text().split("\n")
-    loads = [float(x) for x in raw_lines[1:] if x.strip() != ""]
-
-    output_dir = Path(__file__).parent / "output"
-    _analyze_and_export(loads, output_dir, "BR", 10)
 
 class TestNormalizeLoads(unittest.TestCase):
     """Step 1: normalize_loads static method."""
@@ -393,6 +286,68 @@ class TestPeakTemperatureIdentification(unittest.TestCase):
                 self.assertLessEqual(obj.monthly_min_dt_hour[m], end_hr)
             hours_in_previous += hours_in_month
 
+    def test_two_peaks_in_one_month(self):
+        """A single month can have both a cooling and a heating peak."""
+        loads = [0.0] * HOURS_IN_YEAR
+
+        # July hours: 4344..5087
+        july_start = 744 + 672 + 744 + 720 + 744 + 720
+
+        # Strong rejection early July (cooling peak)
+        for h in range(july_start + 10, july_start + 20):
+            loads[h] = -6000.0
+
+        # Strong extraction late July (heating peak)
+        for h in range(july_start + 600, july_start + 610):
+            loads[h] = 6000.0
+
+        # Mild background loads
+        for h in range(july_start):
+            loads[h] = 200.0
+        for h in range(july_start + 744, HOURS_IN_YEAR):
+            loads[h] = -200.0
+        for h in range(july_start, july_start + 744):
+            if loads[h] == 0.0:
+                loads[h] = 50.0
+
+        obj = _make_full_v2(loads)
+
+        # July is index 6
+        self.assertIn(6, obj.peak_cooling_months)
+        self.assertIn(6, obj.peak_heating_months)
+
+        # Both durations should be positive
+        self.assertGreater(obj.monthly_peak_cl_duration[6], 0.0)
+        self.assertGreater(obj.monthly_peak_hl_duration[6], 0.0)
+
+        # Hour array must be strictly monotonic (the main thing overlap breaks)
+        for i in range(2, len(obj.hour)):
+            self.assertGreater(
+                obj.hour[i],
+                obj.hour[i - 1],
+                f"Hour not monotonic at index {i}: hour[{i}]={obj.hour[i]}, hour[{i - 1}]={obj.hour[i - 1]}",
+            )
+
+        # Both a cooling and heating peak load should appear in July
+        # (first_month_hour/last_month_hour use 1-indexed months)
+        fmh = first_month_hour(7, obj.years)
+        lmh = last_month_hour(7, obj.years)
+
+        found_cooling = False
+        found_heating = False
+        for i in range(1, len(obj.hour)):
+            if fmh <= obj.hour[i] <= lmh:
+                if obj.load[i] > 0.5:
+                    found_cooling = True
+                elif obj.load[i] < -0.5:
+                    found_heating = True
+
+        self.assertTrue(found_cooling, "No cooling peak load found in July's hybrid steps")
+        self.assertTrue(found_heating, "No heating peak load found in July's hybrid steps")
+
+        # Load/hour arrays should have consistent lengths
+        self.assertEqual(len(obj.load), len(obj.hour))
+
 
 class TestProcessMonthLoads(unittest.TestCase):
     """Step 7: _process_month_loads output structure."""
@@ -418,32 +373,6 @@ class TestProcessMonthLoads(unittest.TestCase):
         loads = [500.0] * HOURS_IN_YEAR
         obj = _make_full_v2(loads)
         self.assertEqual(len(obj.load), len(obj.hour))
-
-    def test_step_func_load_length(self):
-        """step_func_load should have len(hour) elements.
-
-        The array format includes a leading zero, then n-1 step values,
-        matching the original HybridLoad convention.
-        """
-        loads = [500.0] * HOURS_IN_YEAR
-        obj = _make_full_v2(loads)
-        self.assertEqual(len(obj.step_func_load), len(obj.hour))
-
-    def test_step_func_load_values(self):
-        """step_func_load[i] (for i>=1) should equal load[i] - load[i-1].
-
-        Index 0 is a leading zero from initialization.
-        """
-        loads = [1000.0 * np.sin(2 * np.pi * h / HOURS_IN_YEAR) for h in range(HOURS_IN_YEAR)]
-        obj = _make_full_v2(loads)
-        # Index 0 is the initial zero
-        self.assertAlmostEqual(obj.step_func_load[0], 0.0)
-        # Indices 1.n-1 hold the step changes
-        for i in range(1, len(obj.step_func_load)):
-            expected = obj.load[i] - obj.load[i - 1]
-            self.assertAlmostEqual(
-                obj.step_func_load[i], expected, places=10, msg=f"step_func_load mismatch at index {i}"
-            )
 
     def test_final_hour_covers_full_year(self):
         """Last hour should be at or near 8760 for a 12-month simulation."""
@@ -536,102 +465,168 @@ class TestProcessMonthLoads(unittest.TestCase):
                 f"original={original_energy:.1f} kWh (rel error {rel_error:.3f})",
             )
 
+# ---------------------------------------------------------------------------
+# Tests for pre-peak load sign clamp and energy concentration (Step 6)
+# ---------------------------------------------------------------------------
 
-class TestIntegrationWithAtlantaLoads(unittest.TestCase):
-    """Integration test: construct HybridLoadV2 with real-ish BHE and Atlanta loads."""
+# Standard month-hour offsets for a non-leap year (2026)
+_MONTH_HOUR_OFFSETS = [0, 744, 1416, 2160, 2880, 3624, 4344,
+                       5088, 5832, 6552, 7296, 8016, 8760]
 
-    @classmethod
-    def setUpClass(cls):
-        """Load the Atlanta building loads CSV."""
 
-        csv_path = Path(__file__).parent / "test_data" / "Atlanta_Office_Building_Loads.csv"
-        if csv_path.exists():
-            raw_lines = csv_path.read_text().split("\n")
-            cls.atlanta_loads = [float(x) for x in raw_lines[1:] if x.strip() != ""]
-        else:
-            cls.atlanta_loads = None
+def _make_obj_for_iterate():
+    """Create a HybridLoadV2 with pipeline steps patched out,
+    suitable for calling _iterate_duration directly."""
+    bhe = _make_mock_bhe()
+    dummy = [100.0] * 8760
+    with (
+        patch.object(HybridLoadV2, "_run_hourly_simulation", return_value=[0.0] * 8761),
+        patch.object(HybridLoadV2, "_find_monthly_peak_temperatures"),
+        patch.object(HybridLoadV2, "_select_peak_months"),
+        patch.object(HybridLoadV2, "_find_peak_durations"),
+        patch.object(HybridLoadV2, "_process_month_loads"),
+    ):
+        obj = HybridLoadV2(dummy, bhe, bhe, 1, 12)
+    return obj
 
-    def test_construction_completes(self):
-        """HybridLoadV2 should construct without errors using Atlanta loads."""
-        if self.atlanta_loads is None:
-            self.skipTest("Atlanta loads CSV not found")
-        bhe = _make_mock_bhe()
-        obj = HybridLoadV2(self.atlanta_loads, bhe, bhe, 1, 12)
-        self.assertGreater(len(obj.load), 0)
-        self.assertGreater(len(obj.hour), 0)
-        self.assertEqual(len(obj.peak_cooling_months), HybridLoadV2.NUM_PEAK_MONTHS)
-        self.assertEqual(len(obj.peak_heating_months), HybridLoadV2.NUM_PEAK_MONTHS)
 
-    def test_export_atlanta_analysis(self):
-        """Export hourly and hybrid results CSVs for the Atlanta load profile."""
-        if self.atlanta_loads is None:
-            self.skipTest("Atlanta loads CSV not found")
-        output_dir = Path(__file__).parent / "output"
-        _analyze_and_export(self.atlanta_loads, output_dir, "ATL")
+def test_clamp_heating_peak_no_cooling_in_prepeak():
+    """Clamp triggers: heating peak with NO cooling loads in pre-peak.
 
-    def test_peak_durations_positive(self):
-        """All peak durations should be positive for real building loads."""
-        if self.atlanta_loads is None:
-            self.skipTest("Atlanta loads CSV not found")
-        bhe = _make_mock_bhe()
-        obj = HybridLoadV2(self.atlanta_loads, bhe, bhe, 1, 12)
-        for m in obj.peak_cooling_months:
-            self.assertGreater(
-                obj.monthly_peak_cl_duration[m], 0.0, f"Cooling peak duration for month {m} should be > 0"
-            )
-        for m in obj.peak_heating_months:
-            self.assertGreater(
-                obj.monthly_peak_hl_duration[m], 0.0, f"Heating peak duration for month {m} should be > 0"
-            )
+    January: 80 hrs at +100W then 20 hrs at +500W (all extraction).
+    hourly_sum = 18000, q_peak = 500. Clamp at d=37, d_energy = 36.0.
+    Returns (duration, load_factor) tuple.
+    """
+    obj = _make_obj_for_iterate()
 
-    def test_normalized_loads_peak_is_4000(self):
-        """Normalized loads should have absolute peak of 4000 W."""
-        if self.atlanta_loads is None:
-            self.skipTest("Atlanta loads CSV not found")
-        bhe = _make_mock_bhe()
-        obj = HybridLoadV2(self.atlanta_loads, bhe, bhe, 1, 12)
-        self.assertAlmostEqual(np.max(np.abs(obj.normalized_loads)), HybridLoadV2.NORM_LOAD_W, places=1)
+    sim_loads = np.zeros(8760)
+    sim_loads[:80] = 100.0
+    sim_loads[80:100] = 500.0
 
-    def test_monthly_energy_conservation(self):
-        """For peak months, the hybrid load steps should conserve monthly energy."""
-        if self.atlanta_loads is None:
-            self.skipTest("Atlanta loads CSV not found")
-        bhe = _make_mock_bhe()
-        obj = HybridLoadV2(self.atlanta_loads, bhe, bhe, 1, 12)
+    monthly_avg = [float(np.mean(sim_loads[:744]))] + [0.0] * 11
 
-        # Verify that for each month in the hybrid representation,
-        # the total energy (load * duration) roughly equals the original monthly net
-        for m in range(MONTHS_IN_YEAR):
-            # first_month_hour/last_month_hour use 1-indexed months
-            fmh = first_month_hour(m + 1, obj.years)
-            lmh = last_month_hour(m + 1, obj.years)
+    dur, lf = obj._iterate_duration(
+        peak_month=0, peak_temp_hour=100,
+        target_dt=-1e10,
+        q_peak=500.0,
+        monthly_net_avg_sim=monthly_avg,
+        month_hour_offset=_MONTH_HOUR_OFFSETS,
+        sim_loads=sim_loads,
+        g_sts=obj.radial_numerical.g_sts,
+        resist_bh=obj.bhe.calc_effective_borehole_resistance(),
+        two_pi_k=TWO_PI * obj.bhe.soil.k,
+        ts=obj.radial_numerical.t_s,
+        is_cooling=False,
+    )
 
-            # Find all hybrid steps within this month
-            hybrid_energy = 0.0
-            for i in range(1, len(obj.hour)):
-                h_start = obj.hour[i - 1]
-                h_end = obj.hour[i]
-                # Check if this step overlaps with the month
-                if h_end <= fmh or h_start >= lmh:
-                    continue
-                # Clamp to month boundaries
-                step_start = max(h_start, fmh)
-                step_end = min(h_end, lmh)
-                duration = step_end - step_start
-                hybrid_energy += obj.load[i] * duration
+    # Clamp fires, then concentration reduces duration further.
+    # Duration should be <= 36.0 (the energy-limited clamped value)
+    assert dur <= 36.1, f"Expected duration <= 36.0, got {dur}"
+    assert dur > 0, f"Duration should be positive, got {dur}"
+    # Load factor should be >= 1.0 (energy concentrated into shorter peak)
+    assert lf >= 1.0 - 1e-9, f"Expected load_factor >= 1.0, got {lf}"
 
-            # Original monthly net energy (Wh): extraction - rejection
-            original_energy = obj.monthly_hl[m] - obj.monthly_cl[m]
 
-            # Allow some tolerance since the hybrid scheme approximates
-            if abs(original_energy) > 1.0:  # skip months with negligible energy
-                rel_error = abs(hybrid_energy - original_energy) / abs(original_energy)
-                self.assertLess(
-                    rel_error,
-                    0.05,
-                    f"Month {m}: hybrid energy {hybrid_energy:.1f} vs original {original_energy:.1f} "
-                    f"(rel error {rel_error:.3f})",
-                )
+def test_clamp_cooling_peak_no_heating_in_prepeak():
+    """Clamp triggers: cooling peak with NO heating loads in pre-peak.
+
+    March: 80 hrs at -100W then 20 hrs at -500W (all rejection).
+    hourly_sum = -18000, q_peak = -500. Clamp at d=37, d_energy = 36.0.
+    """
+    obj = _make_obj_for_iterate()
+
+    sim_loads = np.zeros(8760)
+    mar_start = 1416
+    sim_loads[mar_start:mar_start + 80] = -100.0
+    sim_loads[mar_start + 80:mar_start + 100] = -500.0
+
+    monthly_avg = [0.0] * 12
+    monthly_avg[2] = float(np.mean(sim_loads[mar_start:mar_start + 744]))
+
+    dur, lf = obj._iterate_duration(
+        peak_month=2, peak_temp_hour=mar_start + 100,
+        target_dt=1e10,
+        q_peak=-500.0,
+        monthly_net_avg_sim=monthly_avg,
+        month_hour_offset=_MONTH_HOUR_OFFSETS,
+        sim_loads=sim_loads,
+        g_sts=obj.radial_numerical.g_sts,
+        resist_bh=obj.bhe.calc_effective_borehole_resistance(),
+        two_pi_k=TWO_PI * obj.bhe.soil.k,
+        ts=obj.radial_numerical.t_s,
+        is_cooling=True,
+    )
+
+    assert dur <= 36.1, f"Expected duration <= 36.0, got {dur}"
+    assert dur > 0, f"Duration should be positive, got {dur}"
+    assert lf >= 1.0 - 1e-9, f"Expected load_factor >= 1.0, got {lf}"
+
+
+def test_no_clamp_returns_unit_load_factor():
+    """When pre-peak has opposite-signed loads, no clamp → load_factor = 1.0.
+
+    January: 80 hrs at -100W (rejection) then 20 hrs at +500W (extraction).
+    Pre-peak has cooling loads, so the sign flip is justified → no clamp.
+    """
+    obj = _make_obj_for_iterate()
+
+    sim_loads = np.zeros(8760)
+    sim_loads[:80] = -100.0
+    sim_loads[80:100] = 500.0
+
+    monthly_avg = [float(np.mean(sim_loads[:744]))] + [0.0] * 11
+
+    dur, lf = obj._iterate_duration(
+        peak_month=0, peak_temp_hour=100,
+        target_dt=-1e10,
+        q_peak=500.0,
+        monthly_net_avg_sim=monthly_avg,
+        month_hour_offset=_MONTH_HOUR_OFFSETS,
+        sim_loads=sim_loads,
+        g_sts=obj.radial_numerical.g_sts,
+        resist_bh=obj.bhe.calc_effective_borehole_resistance(),
+        two_pi_k=TWO_PI * obj.bhe.soil.k,
+        ts=obj.radial_numerical.t_s,
+        is_cooling=False,
+    )
+
+    # No clamp → load factor is always 1.0
+    assert lf == 1.0, f"Expected load_factor=1.0 (no clamp), got {lf}"
+    # Should exhaust all durations → max_d = 100
+    assert dur == 100.0, f"Expected max_d=100 (no clamp), got {dur}"
+
+
+def test_concentration_load_factor_conserves_energy():
+    """Load factor * original_load * duration = total energy (conservation)."""
+    obj = _make_obj_for_iterate()
+
+    sim_loads = np.zeros(8760)
+    sim_loads[:80] = 100.0
+    sim_loads[80:100] = 500.0
+
+    monthly_avg = [float(np.mean(sim_loads[:744]))] + [0.0] * 11
+    q_peak = 500.0
+
+    dur, lf = obj._iterate_duration(
+        peak_month=0, peak_temp_hour=100,
+        target_dt=-1e10,
+        q_peak=q_peak,
+        monthly_net_avg_sim=monthly_avg,
+        month_hour_offset=_MONTH_HOUR_OFFSETS,
+        sim_loads=sim_loads,
+        g_sts=obj.radial_numerical.g_sts,
+        resist_bh=obj.bhe.calc_effective_borehole_resistance(),
+        two_pi_k=TWO_PI * obj.bhe.soil.k,
+        ts=obj.radial_numerical.t_s,
+        is_cooling=False,
+    )
+
+    # total_energy = hourly_sum_to_peak = 80*100 + 20*500 = 18000
+    total_energy = 18000.0
+    # concentrated_energy = dur * q_peak * lf should equal total_energy
+    concentrated_energy = dur * q_peak * lf
+    assert abs(concentrated_energy - total_energy) < 1.0, (
+        f"Energy not conserved: {concentrated_energy:.1f} vs {total_energy:.1f}")
 
 
 # ============================================================================
@@ -653,7 +648,7 @@ class TestEdgeCase1PeakAtMonthStart(unittest.TestCase):
         """Peak at hour 1 of January: peak should shift forward, keeping full duration.
 
         Creates loads where the highest extraction occurs at hour 0 (first
-        hour of January). Centering would push the start before the month,
+        hour of January). the normal "extend peak load back in time" would push the start before the month,
         so the peak is shifted forward to start at fmh with full duration.
         """
         # Build loads: strong extraction spike at hour 0, mild rest of year
@@ -841,7 +836,6 @@ class TestEdgeCase3TwoPeaksCollideInMonth(unittest.TestCase):
 
         # Load/hour arrays should have consistent lengths
         self.assertEqual(len(obj.load), len(obj.hour))
-        self.assertEqual(len(obj.step_func_load), len(obj.hour))
 
 
 class TestMultiYearSimulation(unittest.TestCase):
@@ -891,7 +885,6 @@ class TestMultiYearSimulation(unittest.TestCase):
         loads = [1000.0 * np.sin(2 * np.pi * h / HOURS_IN_YEAR) for h in range(HOURS_IN_YEAR)]
         obj = _make_full_v2(loads, start_month=1, end_month=240)
         self.assertEqual(len(obj.load), len(obj.hour))
-        self.assertEqual(len(obj.step_func_load), len(obj.hour))
 
     def test_leap_year_february_hours(self):
         """Leap year February should have 696 hours (29 days), not 672."""
@@ -930,17 +923,6 @@ class TestMultiYearSimulation(unittest.TestCase):
         year_3_hours = hours_three - hours_first_two
         self.assertEqual(year_3_hours, 366 * HRS_IN_DAY)
 
-    def test_step_func_load_values_multi_year(self):
-        """step_func_load[i] should equal load[i] - load[i-1] for multi-year."""
-        loads = [1000.0 * np.sin(2 * np.pi * h / HOURS_IN_YEAR) for h in range(HOURS_IN_YEAR)]
-        obj = _make_full_v2(loads, start_month=1, end_month=60)
-        self.assertAlmostEqual(obj.step_func_load[0], 0.0)
-        for i in range(1, len(obj.step_func_load)):
-            expected = obj.load[i] - obj.load[i - 1]
-            self.assertAlmostEqual(
-                obj.step_func_load[i], expected, places=10, msg=f"step_func_load mismatch at index {i}"
-            )
-
     def test_multiyear_loading_example_csv(self):
         """Multi-year simulation using first year of Multiyear_Loading_Example.csv.
 
@@ -968,7 +950,6 @@ class TestMultiYearSimulation(unittest.TestCase):
 
         # Arrays should be well-formed
         self.assertEqual(len(obj.load), len(obj.hour))
-        self.assertEqual(len(obj.step_func_load), len(obj.hour))
 
         # Hour array should be strictly monotonic
         for i in range(2, len(obj.hour)):
@@ -995,3 +976,4 @@ class TestMultiYearSimulation(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

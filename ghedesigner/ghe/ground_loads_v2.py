@@ -83,12 +83,14 @@ class HybridLoadV2:
         # --- Step 6: Find peak durations ---
         self.monthly_peak_cl_duration = [0.0] * MONTHS_IN_YEAR
         self.monthly_peak_hl_duration = [0.0] * MONTHS_IN_YEAR
+        self.monthly_peak_cl_load_factor = [1.0] * MONTHS_IN_YEAR
+        self.monthly_peak_hl_load_factor = [1.0] * MONTHS_IN_YEAR
         self._find_peak_durations()
 
         # --- Step 7: Construct hybrid time step arrays ---
         self.load = np.array(0)
         self.hour = np.array(0)
-        self.step_func_load = np.array(0)
+        self.step_label: list[str] = [""]  # label for each time step (e.g. "CL_Jul", "HL_Jan")
         self.hybrid_dt: np.ndarray  # predicted delta_T at each hybrid time step
         self._process_month_loads()
 
@@ -175,10 +177,17 @@ class HybridLoadV2:
         delta_t_fluid = [0.0]
         for n in range(1, len(hour_time)):
             _time = hour_time[n] - hour_time[0:n]
-            g_values = g_sts(np.log((_time * SEC_IN_HR) / ts))
-            # Eq 2.12: delta_Tb = (q'/2πk) * g, where q' = q/H (W/m)
-            delta_tg0_tb_i = (q_dt[0:n] / h / two_pi_k).dot(g_values)
+            # Mask out zero-time entries to avoid log(0) = -inf.
+            # Their q_dt is always 0, so they contribute nothing.
+            nonzero = _time > 0
+            if np.any(nonzero):
+                g_values = np.zeros(n)
+                g_values[nonzero] = g_sts(np.log((_time[nonzero] * SEC_IN_HR) / ts))
+                delta_tg0_tb_i = (q_dt[0:n] / h / two_pi_k).dot(g_values)
+            else:
+                delta_tg0_tb_i = 0.0
             delta_tb_tf = q[n] / h * resist_bh
+            # Eq 2.12: delta_Tb = (q'/2πk) * g, where q' = q/H (W/m)
             # Eq 2.13: Tf = Tb + q' * Rb
             delta_tf_tg0 = - delta_tg0_tb_i - delta_tb_tf
 
@@ -328,7 +337,7 @@ class HybridLoadV2:
             m_end = month_hour_offset[m + 1]
             q_peak = float(np.min(sim_loads[m_start:m_end]))
 
-            self.monthly_peak_cl_duration[m] = self._iterate_duration(
+            dur, lf = self._iterate_duration(
                 peak_month=m,
                 peak_temp_hour=peak_hour,
                 target_dt=target_dt,
@@ -342,6 +351,8 @@ class HybridLoadV2:
                 ts=ts,
                 is_cooling=True,
             )
+            self.monthly_peak_cl_duration[m] = dur
+            self.monthly_peak_cl_load_factor[m] = lf
 
         # Process heating peaks (months with most negative min Tf_ave - Tg0)
         for m in self.peak_heating_months:
@@ -353,7 +364,7 @@ class HybridLoadV2:
             m_end = month_hour_offset[m + 1]
             q_peak = float(np.max(sim_loads[m_start:m_end]))
 
-            self.monthly_peak_hl_duration[m] = self._iterate_duration(
+            dur, lf = self._iterate_duration(
                 peak_month=m,
                 peak_temp_hour=peak_hour,
                 target_dt=target_dt,
@@ -367,6 +378,8 @@ class HybridLoadV2:
                 ts=ts,
                 is_cooling=False,
             )
+            self.monthly_peak_hl_duration[m] = dur
+            self.monthly_peak_hl_load_factor[m] = lf
 
     def _iterate_duration(
         self,
@@ -382,7 +395,7 @@ class HybridLoadV2:
         two_pi_k: float,
         ts: float,
         is_cooling: bool,
-    ) -> float:
+    ) -> tuple[float, float]:
         """Iteratively find peak duration for one peak month.
 
         Builds a hybrid load sequence from the start of the year to the
@@ -397,8 +410,14 @@ class HybridLoadV2:
         Per Eq. 3-4 of Spitler (2024), the non-peak load is adjusted so
         total energy from month start to peak end is conserved.
 
+        If the pre-peak clamp engages and the target temperature still
+        isn't reached, a second stage concentrates the same total energy
+        into progressively shorter durations (higher peak load) until the
+        target is matched.
+
         :param peak_month: 0-indexed month (0=Jan, 11=Dec)
-        :return: Peak duration in hours (may be fractional)
+        :return: (duration, load_factor) where load_factor is the ratio
+                 of adjusted peak load to original peak load (1.0 = unchanged)
         """
         m_start_offset = month_hour_offset[peak_month]
         # peak_temp_hour is 1-indexed hour-of-year the peak dt occurs; convert to 0-indexed offset
@@ -420,6 +439,32 @@ class HybridLoadV2:
             peak_energy = d * q_peak
             q_non_peak = (hourly_sum_to_peak - peak_energy) / non_peak_hours if non_peak_hours > 0 else 0.0
 
+            # Clamp: don't let the pre-peak load switch sign from the peak load
+            # UNLESS the hourly data in the pre-peak window actually contains
+            # opposite-signed loads that justify the flip.
+            # - Heating peak (q_peak > 0): flip is valid if pre-peak has cooling loads
+            # - Cooling peak (q_peak < 0): flip is valid if pre-peak has heating loads
+            #
+            # When clamped, set pre-peak to zero and solve for the fractional
+            # peak duration that conserves energy: d_energy = hourly_sum / q_peak.
+            # Since the sign flip first occurs at iteration d (and was fine at
+            # d-1), d_energy always falls between d-1 and d.
+            clamped = False
+            effective_d = float(d)
+            if q_peak != 0.0 and q_non_peak * q_peak < 0.0:
+                pre_peak_slice = sim_loads[m_start_offset : m_start_offset + non_peak_hours]
+                if is_cooling:
+                    has_opposite = bool(np.any(pre_peak_slice > 0)) if len(pre_peak_slice) > 0 else False
+                else:
+                    has_opposite = bool(np.any(pre_peak_slice < 0)) if len(pre_peak_slice) > 0 else False
+
+                if not has_opposite:
+                    q_non_peak = 0.0
+                    effective_d = hourly_sum_to_peak / q_peak
+                    effective_d = max(0.0, min(effective_d, float(peak_hour_in_month)))
+                    non_peak_hours = peak_hour_in_month - effective_d
+                    clamped = True
+
             # Build hybrid load sequence: [0, prev_months..., non_peak, peak]
             # Times are in hours (matching the hourly simulation's time axis)
             hours_list = [0.0]
@@ -431,7 +476,7 @@ class HybridLoadV2:
                 loads_list.append(monthly_net_avg_sim[pm])
 
             # Peak month: non-peak period then peak period
-            peak_start_hour = peak_temp_hour - d  # hour when peak period starts
+            peak_start_hour = peak_temp_hour - effective_d
             if non_peak_hours > 0:
                 hours_list.append(float(peak_start_hour))
                 loads_list.append(q_non_peak)
@@ -456,26 +501,126 @@ class HybridLoadV2:
                 # Interpolate between previous and current duration
                 if prev_predicted_dt is not None and prev_d > 0:
                     frac = (target_dt - prev_predicted_dt) / (predicted_dt - prev_predicted_dt)
-                    return prev_d + frac
+                    return prev_d + frac * (effective_d - prev_d), 1.0
                 else:
-                    return float(d)
+                    return effective_d, 1.0
+
+            # If clamped, try concentrating energy into shorter duration
+            if clamped:
+                result = self._concentrate_energy(
+                    peak_month=peak_month,
+                    peak_temp_hour=peak_temp_hour,
+                    peak_hour_in_month=peak_hour_in_month,
+                    target_dt=target_dt,
+                    total_energy=hourly_sum_to_peak,
+                    q_peak=q_peak,
+                    start_d=effective_d,
+                    start_predicted_dt=predicted_dt,
+                    monthly_net_avg_sim=monthly_net_avg_sim,
+                    month_hour_offset=month_hour_offset,
+                    g_sts=g_sts,
+                    resist_bh=resist_bh,
+                    two_pi_k=two_pi_k,
+                    ts=ts,
+                    is_cooling=is_cooling,
+                )
+                return result
 
             prev_predicted_dt = predicted_dt
-            prev_d = d
+            prev_d = effective_d
 
         # If we exhausted all durations without exceeding, return max tried
-        return float(max_d)
+        return float(max_d), 1.0
+
+    def _concentrate_energy(
+        self,
+        peak_month: int,
+        peak_temp_hour: int,
+        peak_hour_in_month: int,
+        target_dt: float,
+        total_energy: float,
+        q_peak: float,
+        start_d: float,
+        start_predicted_dt: float,
+        monthly_net_avg_sim: list,
+        month_hour_offset: list,
+        g_sts,
+        resist_bh: float,
+        two_pi_k: float,
+        ts: float,
+        is_cooling: bool,
+    ) -> tuple[float, float]:
+        """Concentrate energy into shorter peak to hit target temperature.
+
+        Called when the pre-peak clamp has engaged and the target temperature
+        wasn't reached. Iteratively reduces peak duration by 1 hour while
+        increasing the peak load to conserve total energy:
+            concentrated_q = total_energy / reduced_d
+
+        The sharper pulse drives the temperature harder, potentially reaching
+        the target that the original peak load couldn't.
+
+        :param total_energy: energy to conserve (hourly_sum_to_peak)
+        :param q_peak: original peak load (for computing load_factor)
+        :param start_d: clamped duration where concentration begins
+        :param start_predicted_dt: delta_T at start_d
+        :return: (duration, load_factor) where load_factor = concentrated_q / q_peak
+        """
+        prev_dt = start_predicted_dt
+        prev_d = start_d
+
+        for rd in range(int(start_d) - 1, 0, -1):
+            concentrated_q = total_energy / rd
+            non_peak_hours = peak_hour_in_month - rd
+
+            # Build hybrid sequence: [0, prev_months..., zero_pre_peak, concentrated_peak]
+            hours_list = [0.0]
+            loads_list = [0.0]
+
+            for pm in range(peak_month):
+                hours_list.append(float(month_hour_offset[pm + 1]))
+                loads_list.append(monthly_net_avg_sim[pm])
+
+            peak_start_hour = peak_temp_hour - rd
+            if non_peak_hours > 0:
+                hours_list.append(float(peak_start_hour))
+                loads_list.append(0.0)  # pre-peak stays at zero
+
+            hours_list.append(float(peak_temp_hour))
+            loads_list.append(concentrated_q)
+
+            hour_arr = np.array(hours_list)
+            load_arr = np.array(loads_list)
+            delta_t = self.simulate_hourly(
+                hour_arr, load_arr, g_sts, resist_bh, two_pi_k, ts, self.NORM_BOREHOLE_H
+            )
+            predicted_dt = delta_t[-1]
+
+            exceeded = predicted_dt >= target_dt if is_cooling else predicted_dt <= target_dt
+
+            if exceeded:
+                # Interpolate between previous and current duration
+                frac = (target_dt - prev_dt) / (predicted_dt - prev_dt)
+                final_d = prev_d + frac * (rd - prev_d)
+                final_d = max(final_d, 0.1)  # avoid division by zero
+                load_factor = (total_energy / final_d) / q_peak
+                return final_d, load_factor
+
+            prev_dt = predicted_dt
+            prev_d = float(rd)
+
+        # Exhausted all reductions — return best effort at shortest duration
+        return max(start_d, 1.0), total_energy / (max(start_d, 1.0) * q_peak) if q_peak != 0 else 1.0
 
     # -----------------------------------------------------------------
     # Step 7: Construct hybrid time step load/hour arrays
     # -----------------------------------------------------------------
     def _process_month_loads(self) -> None:
-        """Build the load, hour, and step_func_load arrays for simulation.
+        """Build the load and hour arrays for simulation.
 
         Output format matches HybridLoad so GHE.simulate() works unchanged:
         - self.load: load values in W (extraction positive, rejection negative)
         - self.hour: cumulative hours from start of simulation
-        - self.step_func_load: load step changes (load[i] - load[i-1])
 
         Non-peak months get a single time step at the net average load.
         Peak months have three regions:
@@ -524,6 +669,8 @@ class HybridLoadV2:
             self.monthly_peak_hl.append(self.monthly_peak_hl[mi])
             self.monthly_peak_cl_duration.append(self.monthly_peak_cl_duration[mi])
             self.monthly_peak_hl_duration.append(self.monthly_peak_hl_duration[mi])
+            self.monthly_peak_cl_load_factor.append(self.monthly_peak_cl_load_factor[mi])
+            self.monthly_peak_hl_load_factor.append(self.monthly_peak_hl_load_factor[mi])
 
         # Precompute month boundaries for all simulated months,
         # using the actual calendar year for leap year correctness.
@@ -545,12 +692,16 @@ class HybridLoadV2:
             cumulative += month_num_hours[i]
             lmh_arr[i] = cumulative
 
+        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
         # Start arrays with zero load before simulation
         # start_month is 1-indexed, convert to 0-indexed for array access
         start_idx = self.start_month - 1
         self.load = np.append(self.load, 0)
         last_zero_hour = fmh_arr[start_idx] - 1
         self.hour = np.append(self.hour, last_zero_hour)
+        self.step_label.append("")
 
         for i in range(start_idx, self.end_month):
             # Calendar month index (0-indexed) for peak type lookup
@@ -568,6 +719,7 @@ class HybridLoadV2:
                 month_rate = (self.monthly_hl[i] - self.monthly_cl[i]) / month_hours if month_hours > 0 else 0.0
                 self.load = np.append(self.load, month_rate)
                 self.hour = np.append(self.hour, lmh)
+                self.step_label.append("")
             else:
                 # Peak month: build time steps around peak(s)
                 d_cl = self.monthly_peak_cl_duration[i] if has_cooling_peak else 0.0
@@ -580,10 +732,12 @@ class HybridLoadV2:
                 events = []
                 if has_cooling_peak:
                     peak_hr = peak_cl_hour_in_month[mi]
-                    events.append((peak_hr, "cl", -self.monthly_peak_cl[i], d_cl))
+                    cl_load = -self.monthly_peak_cl[i] * self.monthly_peak_cl_load_factor[i]
+                    events.append((peak_hr, "cl", cl_load, d_cl))
                 if has_heating_peak:
                     peak_hr = peak_hl_hour_in_month[mi]
-                    events.append((peak_hr, "hl", self.monthly_peak_hl[i], d_hl))
+                    hl_load = self.monthly_peak_hl[i] * self.monthly_peak_hl_load_factor[i]
+                    events.append((peak_hr, "hl", hl_load, d_hl))
 
                 # Sort by peak temperature hour so peaks are placed chronologically
                 events.sort(key=lambda x: x[0])
@@ -629,11 +783,14 @@ class HybridLoadV2:
                         q_pre = (energy_to_peak_end - peak_energy) / pre_peak_hours
                         self.load = np.append(self.load, q_pre)
                         self.hour = np.append(self.hour, peak_first_hour)
+                        self.step_label.append("")
                         consumed_energy += q_pre * pre_peak_hours
 
                     # Peak period
+                    peak_label = ("CL_" if _peak_type == "cl" else "HL_") + month_names[mi]
                     self.load = np.append(self.load, peak_load)
                     self.hour = np.append(self.hour, peak_last_hour)
+                    self.step_label.append(peak_label)
                     consumed_energy += peak_energy
 
                     cursor = peak_last_hour
@@ -644,12 +801,7 @@ class HybridLoadV2:
                     q_post = (month_net_energy - consumed_energy) / post_peak_hours if post_peak_hours > 0 else 0.0
                     self.load = np.append(self.load, q_post)
                     self.hour = np.append(self.hour, lmh)
-
-        # Build step function loads
-        n = self.hour.size
-        for i in range(1, n):
-            step_load = self.load[i] - self.load[i - 1]
-            self.step_func_load = np.append(self.step_func_load, step_load)
+                    self.step_label.append("")
 
         # Compute predicted delta_T at each hybrid time step using normalized loads
         # self.load is in W; scale to normalized W (peak=4000W) so that
