@@ -97,7 +97,6 @@ class Bisection1DTiltDrillPad:
             soil,
             tilts=tilts,
             orientations=orients,
-            solver="similarities",
         )
 
         # initialize GHE
@@ -134,8 +133,8 @@ class Bisection1DTiltDrillPad:
         return v_flow_system, m_flow_borehole
 
     def initialize_g_function(self, coords, h, tilts, orientations):
-        self.ghe.bhe.b.H = h
-        borehole = self.ghe.bhe.b
+        self.ghe.bhe.borehole.H = h
+        borehole = self.ghe.bhe.borehole
         fluid = self.ghe.bhe.fluid
         pipe = self.ghe.bhe.pipe
         grout = self.ghe.bhe.grout
@@ -165,8 +164,8 @@ class Bisection1DTiltDrillPad:
 
     def initialize_ghe(self, coords, h, field_specifier, scaled_loads):
         # update borehole depth
-        self.ghe.bhe.b.H = h
-        borehole = self.ghe.bhe.b
+        self.ghe.bhe.borehole.H = h
+        borehole = self.ghe.bhe.borehole
         fluid = self.ghe.bhe.fluid
         pipe = self.ghe.bhe.pipe
         grout = self.ghe.bhe.grout

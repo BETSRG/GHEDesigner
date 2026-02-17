@@ -265,29 +265,6 @@ def straight_line(lower: int, upper: int, b: float, tilt: float, borehole_height
     return coordinates_domain, field_descriptors, staggered_coordinates_domain, staggered_field_descriptors
 
 
-# def drill_pad(nbh: int, tilt: float, radius: float, pad_centers: list[tuple[float, float]]):
-#    all_coordinates = []
-#    all_tilts = []
-#    all_orientations = []
-#
-#    for (cx, cy) in pad_centers:
-#        coords, tilts, orients = tilted_drill_pad(
-#            n=nbh,
-#            tilt=tilt,
-#            radius=radius,
-#            center_x=cx,
-#            center_y=cy
-#        )
-#        all_coordinates.extend(coords)
-#        all_tilts.extend(tilts)
-#        all_orientations.extend(orients)
-#
-#    coordinates_domain = [(all_coordinates, all_tilts, all_orientations)]
-#    field_descriptors = [f"{len(pad_centers)}Pads_X{nbh}_R:{radius:.2f}_T:{tilt*180/pi:.2f}°"]
-#
-#    return coordinates_domain, field_descriptors
-
-
 def drill_pad(nbh: int, tilt: float, radius: float, ndp_min: int, ndp_max: int):
     coordinates_domain = []
     field_descriptors = []

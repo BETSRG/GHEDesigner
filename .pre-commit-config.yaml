@@ -41,7 +41,6 @@ repos:
     rev: v1.19.1
     hooks:
       - id: mypy
-        args: [--explicit-package-bases]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.11
     hooks:

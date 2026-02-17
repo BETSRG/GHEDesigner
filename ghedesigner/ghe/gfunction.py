@@ -52,11 +52,11 @@ def calculate_g_function(
     # setup options
     # none of these were ever used or even exposed for users to access them. hardcoding them here until needed.
     if tilts is None or orientations is None:
-        solver = "similarities"
-    else:
         solver = "equivalent"
         tilts = 0.0
         orientations = 0.0
+    else:
+        solver = "similarities"
     disp = False
     n_segments = 8
     end_length_ratio = 0.02
@@ -313,6 +313,8 @@ def merge_g_functions(g_func_mid: GFunction, g_func_max: GFunction):
     # if g_func_mid.bore_orientations != g_func_max.bore_orientations:
     #     raise ValueError("Borehole orientations do not match, unable to merge")
     if g_func_mid.B != g_func_max.B:
+        print("MID: ", g_func_mid.B)
+        print("Max: ", g_func_max.B)
         raise ValueError("Borehole spacings do not match, unable to merge")
     if g_func_mid.d != g_func_max.d:
         raise ValueError("Borehole depths do not match, unable to merge")

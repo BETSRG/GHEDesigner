@@ -79,6 +79,12 @@ class GHEBaseTest(TestCase):
         raw_lines = glhe_json_data.read_text().split("\n")
         return [float(x) for x in raw_lines[1:] if x.strip() != ""]
 
+    def get_tilted_loads(self) -> list[float]:
+        # read in the csv file and convert the loads to a list of length 8760
+        glhe_json_data = self.test_data_directory / "tilted_test_loads.csv"
+        raw_lines = glhe_json_data.read_text().split("\n")
+        return [float(x) for x in raw_lines[1:] if x.strip() != ""]
+
     @staticmethod
     def rel_error_within_tol(test: float, base: float, tol: float) -> bool:
         return abs((test - base) / base) <= tol

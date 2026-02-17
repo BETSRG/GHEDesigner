@@ -96,8 +96,8 @@ class Bisection1DTilt:
             pipe,
             grout,
             soil,
-            solver="equivalent",
         )
+        self.last_g_function = g_function
 
         # Initialize the GHE object
         self.ghe = GHE(
@@ -135,11 +135,13 @@ class Bisection1DTilt:
             raise ValueError("The flow argument should be either `borehole` or `system`.")
         return v_flow_system, m_flow_borehole
 
-    def initialize_ghe(self, coordinates, h, field_specifier="N/A", tilts=None, orientations=None):
+    def initialize_ghe(
+        self, coordinates, h, field_specifier="N/A", tilts=None, orientations=None, g_function_provided=None
+    ):
         v_flow_system, m_flow_borehole = self.retrieve_flow(coordinates, self.ghe.bhe.fluid.rho)
 
-        self.ghe.bhe.b.H = h
-        borehole = self.ghe.bhe.b
+        self.ghe.bhe.borehole.H = h
+        borehole = self.ghe.bhe.borehole
         fluid = self.ghe.bhe.fluid
         pipe = self.ghe.bhe.pipe
         grout = self.ghe.bhe.grout
@@ -148,24 +150,26 @@ class Bisection1DTilt:
         b = borehole_spacing(borehole, coordinates)
 
         # Calculate a g-function for uniform inlet fluid temperature with
-        # 8 unequal segments using the equivalent solver
-        g_function = calc_g_func_for_multiple_lengths(
-            b,
-            [borehole.H],
-            borehole.r_b,
-            borehole.D,
-            m_flow_borehole,
-            self.bhe_type,
-            self.log_time,
-            coordinates,
-            fluid,
-            pipe,
-            grout,
-            soil,
-            tilts=tilts,
-            orientations=orientations,
-        )
-
+        # 8 unequal segments using the equivalent solver (or similarities solver for tilted boreholes).
+        if g_function_provided is None:
+            g_function = calc_g_func_for_multiple_lengths(
+                b,
+                [borehole.H],
+                borehole.r_b,
+                borehole.D,
+                m_flow_borehole,
+                self.bhe_type,
+                self.log_time,
+                coordinates,
+                fluid,
+                pipe,
+                grout,
+                soil,
+                tilts=tilts,
+                orientations=orientations,
+            )
+        else:
+            g_function = g_function_provided
         # Initialize the GHE object
         self.ghe = GHE(
             v_flow_system,
@@ -344,6 +348,57 @@ class Bisection1DTilt:
         return selection_key, self.staggered_coordinates_domain[selection_key]
 
     def search(self):
+        # Hybrid Search
+        # Perform search with staggered vertical boreholes to get an approximate answer
         staggered_selection_key, _staggered_coords = self.staggered_search()
 
-        return staggered_selection_key, self.coordinates_domain[staggered_selection_key]
+        # Determine whether approximate was too small or large
+        staggered_excess = self.calculate_excess(
+            self.coordinates_domain[staggered_selection_key][0],
+            self.max_height,
+            self.fieldDescriptors[staggered_selection_key],
+            tilts=self.coordinates_domain[staggered_selection_key][1],
+            orientations=self.coordinates_domain[staggered_selection_key][2],
+        )
+        self.last_g_function = self.ghe.gFunction
+
+        if staggered_excess == 0:
+            return staggered_selection_key, self.coordinates_domain[staggered_selection_key][0]
+        elif staggered_excess > 0:
+            search_direction = 1
+        else:
+            search_direction = -1
+
+        # Refine approximate answer
+        selection_key = staggered_selection_key
+        i = 0
+
+        while i < self.max_iter:
+            selection_key += search_direction
+
+            new_excess = self.calculate_excess(
+                self.coordinates_domain[selection_key][0],
+                self.max_height,
+                self.fieldDescriptors[selection_key],
+                tilts=self.coordinates_domain[selection_key][1],
+                orientations=self.coordinates_domain[selection_key][2],
+            )
+            if search_direction == 1 and new_excess <= 0:
+                self.last_g_function = self.ghe.gFunction
+                break
+            elif search_direction == -1 and new_excess > 0:
+                selection_key -= search_direction
+                break
+                self.last_g_function = self.ghe.gFunction
+            i += 1
+
+        self.initialize_ghe(
+            self.coordinates_domain[selection_key][0],
+            self.max_height,
+            self.fieldDescriptors[selection_key],
+            tilts=self.coordinates_domain[selection_key][1],
+            orientations=self.coordinates_domain[selection_key][2],
+            g_function_provided=self.last_g_function,
+        )
+
+        return selection_key, self.coordinates_domain[selection_key]

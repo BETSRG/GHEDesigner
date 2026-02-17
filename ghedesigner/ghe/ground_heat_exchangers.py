@@ -169,11 +169,6 @@ class GHE:
         return hp_eft, delta_tb
 
     def compute_g_functions(self, h_min: float, h_max: float):
-        # Choosing Solver Method
-        selected_solver = "equivalent"
-        if self.gFunction.bore_tilts is not None and self.gFunction.bore_orientations is not None:
-            selected_solver = "similarities"
-
         # Compute g-functions for a bracketed solution, based on min and max height
         self.gFunction = calc_g_func_for_multiple_lengths(
             self.b_spacing,
@@ -190,19 +185,14 @@ class GHE:
             self.bhe.soil,
             tilts=self.gFunction.bore_tilts,
             orientations=self.gFunction.bore_orientations,
-            solver=selected_solver,
         )
 
     def compute_and_merge_g_functions(self, h_values: list):
-        selected_solver = "equivalent"
-        if self.gFunction.bore_tilts is not None and self.gFunction.bore_orientations is not None:
-            selected_solver = "similarities"
-
         g_func_mid = calc_g_func_for_multiple_lengths(
             self.b_spacing,
             h_values,
-            self.bhe.b.r_b,
-            self.bhe.b.D,
+            self.bhe.borehole.r_b,
+            self.bhe.borehole.D,
             self.bhe.m_flow_borehole,
             self.bhe_type,
             self.gFunction.log_time,
@@ -213,7 +203,6 @@ class GHE:
             self.bhe.soil,
             tilts=self.gFunction.bore_tilts,
             orientations=self.gFunction.bore_orientations,
-            solver=selected_solver,
         )
         g_func_max = self.gFunction
 
