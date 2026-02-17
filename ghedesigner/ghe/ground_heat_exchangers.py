@@ -67,8 +67,12 @@ class GHE:
         self.hybrid_load: HybridLoad | HybridLoadV2
 
         if use_v2_hybrid:
+            # Build combined STS+LTS g-function for full-year hourly simulation
+            b_over_h = self.b_spacing / self.bhe.borehole.H
+            g_combined, _ = self.grab_g_function(b_over_h)
             self.hybrid_load = HybridLoadV2(
-                self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
+                self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month,
+                g_func=g_combined,
             )
         else:
             self.hybrid_load = HybridLoad(

@@ -33,12 +33,16 @@ class HybridLoadV2:
         radial_numerical: SingleUTube,
         start_month: int,
         end_month: int,
+        g_func=None,
     ) -> None:
         self.raw_loads = raw_loads  # 8760 hourly loads in Watts (positive=extraction, negative=rejection)
         self.bhe = bhe
         self.radial_numerical = radial_numerical
         self.start_month = start_month
         self.end_month = end_month
+        # Combined STS+LTS g-function for full-year simulation.
+        # Falls back to STS-only g-function when not provided (e.g. in unit tests).
+        self.g_func = g_func if g_func is not None else radial_numerical.g_sts
 
         # Compute years for multi-year simulation and leap year support
         num_years = max(1, (end_month + 11) // MONTHS_IN_YEAR)
@@ -209,7 +213,7 @@ class HybridLoadV2:
         ts = self.radial_numerical.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
         resist_bh = self.bhe.calc_effective_borehole_resistance()
-        g_sts = self.radial_numerical.g_sts
+        g_sts = self.g_func
 
         n_hours = len(self.normalized_loads)
         hour_time = np.arange(n_hours + 1)  # 0, 1, 2, ..., 8760
@@ -325,7 +329,7 @@ class HybridLoadV2:
         ts = self.radial_numerical.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
         resist_bh = self.bhe.calc_effective_borehole_resistance()
-        g_sts = self.radial_numerical.g_sts
+        g_sts = self.g_func
 
         # Process cooling peaks (months with most positive max Tf_ave - Tg0)
         for m in self.peak_cooling_months:
@@ -809,7 +813,7 @@ class HybridLoadV2:
         ts = self.radial_numerical.t_s
         two_pi_k = TWO_PI * self.bhe.soil.k
         resist_bh = self.bhe.calc_effective_borehole_resistance()
-        g_sts = self.radial_numerical.g_sts
+        g_sts = self.g_func
         norm_scale = self.NORM_LOAD_W / np.max(np.abs(self.raw_loads))
         self.hybrid_q_norm_w = self.load * norm_scale  # W -> normalized W
         self.hybrid_dt = np.array(

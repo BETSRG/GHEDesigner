@@ -168,6 +168,7 @@ cython_debug/
 ghedesigner/tests/test_outputs
 ghedesigner/tests/test_logs
 ghedesigner/tests/output
+ghedesigner/tests/test_output_hybridv2_viz
 DesignExampleOutput/
 tmp/
 examples/

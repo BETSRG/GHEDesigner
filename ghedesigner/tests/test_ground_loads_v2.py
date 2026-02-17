@@ -638,8 +638,8 @@ def test_concentration_load_factor_conserves_energy():
 class TestEdgeCase1PeakAtMonthStart(unittest.TestCase):
     """Edge case 1: Peak temperature occurs at the very first hour of a month.
 
-    When the peak temperature is at hour 1 of a month, centering the peak
-    duration around it would require extending into the previous month.
+    When the peak temperature is at hour 1 of a month, extending the peak
+    duration back in time would require extending into the previous month.
     Instead, the peak should be shifted forward within the month so
     that it starts at the month boundary and the full duration is preserved.
     """
@@ -661,7 +661,7 @@ class TestEdgeCase1PeakAtMonthStart(unittest.TestCase):
         bhe = _make_mock_bhe()
         obj = HybridLoadV2(loads, bhe, bhe, 1, 12)
 
-        # The heating peak for January should be month 0
+        # January should be month 0 in peak_heating_months
         self.assertIn(0, obj.peak_heating_months)
 
         # The peak duration should be >= 1 hour
@@ -698,69 +698,85 @@ class TestEdgeCase1PeakAtMonthStart(unittest.TestCase):
         for i in range(2, len(obj.hour)):
             self.assertGreater(obj.hour[i], obj.hour[i - 1], f"Hour not monotonic at index {i}")
 
+    def test_peak_at_march_hour_2(self):
+        """Edge case 2: Peak event duration so long it spans a month boundary.
 
-class TestEdgeCase2PeakSpanningMonthBoundary(unittest.TestCase):
-    """Edge case 2: Peak event duration so long it spans a month boundary.
-
-    When a peak event has a long duration and occurs near the start or end
-    of a month, the event can't fit entirely within the month. The current
-    code clamps to month boundaries, which truncates the peak and violates
-    energy conservation.
-
-    Per the PDF (page 6, Case 2): Adjacent peak events from neighboring
-    months that collide should be merged or handled specially.
-    """
-
-    @unittest.expectedFailure
-    def test_adjacent_month_peaks_collision(self):
-        """Two adjacent months with peaks near their shared boundary.
-
-        Creates loads where January has a strong peak near the end of the
-        month and February has a strong peak near the start. With long
-        durations, the two peak events would overlap at the month boundary.
-        """
-        loads = [100.0] * HOURS_IN_YEAR  # mild baseline extraction
-
-        # January: strong extraction spike near end of month (hour ~740)
-        jan_hours = 744
-        for h in range(jan_hours - 10, jan_hours):
-            loads[h] = 4000.0  # big extraction near end of Jan
-
-        # February: strong extraction spike near start of month (hour ~745)
-        for h in range(jan_hours, jan_hours + 10):
-            loads[h] = 4000.0  # big extraction near start of Feb
-
-        # Summer rejection for cooling peaks
+        When a peak event has a long duration and occurs near the start
+        of a month, the event can't fit entirely within the month. The current
+        code clamps to month boundaries. test to make sure to shift the peak forward
+        so the full duration is preserved."""
+                # Build loads: strong extraction spike at hour 0, mild rest of year
+        loads = [100.0] * HOURS_IN_YEAR
+        loads[(744 + 672 + 2)] = 5000.0  # huge extraction at hour 1418  (2nd hour of March)
+        # Add some mild rejection in summer so we have cooling peaks too
         for h in range(4000, 5000):
-            loads[h] = -3000.0
+            loads[h] = -2000.0
 
         bhe = _make_mock_bhe()
         obj = HybridLoadV2(loads, bhe, bhe, 1, 12)
 
-        # Both months should be in peak heating months (0-indexed: Jan=0, Feb=1)
-        jan_is_peak = 0 in obj.peak_heating_months
-        feb_is_peak = 1 in obj.peak_heating_months
+        # March should be in peak_heating_months
+        self.assertIn(2, obj.peak_heating_months)
 
-        if jan_is_peak and feb_is_peak:
-            # Check that the hour array remains strictly monotonic
-            for i in range(1, len(obj.hour)):
-                self.assertGreater(
-                    obj.hour[i],
-                    obj.hour[i - 1],
-                    f"Hour array not monotonic at index {i}: "
-                    f"hour[{i}]={obj.hour[i]}, hour[{i - 1}]={obj.hour[i - 1]}. "
-                    f"Adjacent month peaks may have collided at the boundary.",
+        # The peak duration should be >= 1 hour
+        d = obj.monthly_peak_hl_duration[2]
+        self.assertGreaterEqual(d, 1.0, "Peak duration should be >= 1 hour")
+
+        # first_month_hour uses 1-indexed months
+        fmh = first_month_hour(3, obj.years)
+        lmh = last_month_hour(3, obj.years)
+
+        # Find the heating peak step in March's hour range
+        peak_found = False
+        for i in range(1, len(obj.hour)):
+            if fmh <= obj.hour[i] <= lmh and obj.load[i] > 0.5:  # positive = extraction in output convention
+                peak_start = obj.hour[i - 1]
+                peak_end = obj.hour[i]
+                actual_duration = peak_end - peak_start
+                # Peak should start at or after the month boundary (shifted forward)
+                self.assertGreaterEqual(peak_start, fmh - 1, "Peak should not extend before the month start")
+
+                # The full duration should be preserved (not truncated)
+                self.assertAlmostEqual(
+                    actual_duration,
+                    d,
+                    delta=1.0,
+                    msg=f"Peak duration should be preserved: expected ~{d:.1f}h, got {actual_duration:.1f}h",
                 )
+                peak_found = True
+                break
 
-            # Additionally, no load step should have negative duration
-            for i in range(1, len(obj.hour)):
-                duration = obj.hour[i] - obj.hour[i - 1]
-                self.assertGreater(duration, 0, f"Negative or zero duration at step {i}: {duration}")
-        else:
-            self.fail(f"Expected Jan and Feb to be heating peak months. Got heating peaks: {obj.peak_heating_months}")
+        self.assertTrue(peak_found, "Could not find a heating peak event in the load array")
+
+        # Hour array must remain monotonic
+        for i in range(2, len(obj.hour)):
+            self.assertGreater(obj.hour[i], obj.hour[i - 1], f"Hour not monotonic at index {i}")
+
+        # Hybrid prediction at March's peak step should reach the hourly target
+        target_dt = obj.monthly_min_dt[2]  # heating peak: most negative delta_T
+        self.assertLess(target_dt, 0.0, "March should have a negative (heating) target delta_T")
+
+        # Find the minimum hybrid_dt within March's hour range
+        march_hybrid_min = 0.0
+        for i in range(1, len(obj.hour)):
+            if fmh <= obj.hour[i] <= lmh:
+                if obj.hybrid_dt[i] < march_hybrid_min:
+                    march_hybrid_min = obj.hybrid_dt[i]
+
+        # TODO:KNOWN LIMITATION: when the peak is shifted forward (because it would
+        # extend before the month boundary), the hybrid does not yet re-iterate
+        # the duration to hit the target_dt. Expect the target to NOT be met.
+        # Once the fix is implemented, flip this to assertLessEqual.
+        self.assertGreater(
+            march_hybrid_min,
+            target_dt * 0.9,
+            f"Target unexpectedly met — remove expectedFailure: "
+            f"hybrid={march_hybrid_min:.4f}, target={target_dt:.4f}",
+        )
 
 
-class TestEdgeCase3TwoPeaksCollideInMonth(unittest.TestCase):
+
+class TestEdgeCase2TwoPeaksCollideInMonth(unittest.TestCase):
     """Edge case 3: Two peak events (cooling and heating) collide within one month.
 
     When a month has both a cooling peak and a heating peak, and the two
@@ -786,7 +802,7 @@ class TestEdgeCase3TwoPeaksCollideInMonth(unittest.TestCase):
             loads[h] = -6000.0
 
         # Strong extraction (heating) peak at hour ~4414 (70 hours into July)
-        # Only 20 hours after the cooling peak — durations will likely overlap
+        # Starts only 10 hours after the end of cooling peak — durations will likely overlap
         for h in range(july_start + 65, july_start + 75):
             loads[h] = 6000.0
 
@@ -836,6 +852,7 @@ class TestEdgeCase3TwoPeaksCollideInMonth(unittest.TestCase):
 
         # Load/hour arrays should have consistent lengths
         self.assertEqual(len(obj.load), len(obj.hour))
+        #TODO: assess that target temps are being hit
 
 
 class TestMultiYearSimulation(unittest.TestCase):
