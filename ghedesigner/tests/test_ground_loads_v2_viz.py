@@ -71,6 +71,8 @@ def _analyze_and_export(
     :param cp: fluid specific heat in J/(kg·K)
     :param bhe: optional BHE object; defaults to _make_mock_bhe()
     """
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     if bhe is None:
         bhe = _make_mock_bhe()
     obj = HybridLoadV2(loads, bhe, bhe, 1, 12)
@@ -251,7 +253,7 @@ def test_export_constant_cooling_analysis():
     raw_lines = csv_path.read_text().split("\n")
     loads = [float(x) for x in raw_lines[1:] if x.strip() != ""]
 
-    output_dir = Path(__file__).parent / "output"
+    output_dir = Path(__file__).parent / "test_output_hybridv2_viz"
     _analyze_and_export(loads, output_dir, "CC", 15)
 
 def test_export_balanced_ramp_analysis():
@@ -263,7 +265,7 @@ def test_export_balanced_ramp_analysis():
     raw_lines = csv_path.read_text().split("\n")
     loads = [float(x) for x in raw_lines[1:] if x.strip() != ""]
 
-    output_dir = Path(__file__).parent / "output"
+    output_dir = Path(__file__).parent / "test_output_hybridv2_viz"
     _analyze_and_export(loads, output_dir, "BR", 10)
 
 
@@ -276,7 +278,7 @@ def test_export_atlanta_analysis():
     raw_lines = csv_path.read_text().split("\n")
     loads = [float(x) for x in raw_lines[1:] if x.strip() != ""]
 
-    output_dir = Path(__file__).parent / "output"
+    output_dir = Path(__file__).parent / "test_output_hybridv2_viz"
     _analyze_and_export(loads, output_dir, "ATL")
 
 
