@@ -47,10 +47,10 @@ def run(input_file_path: Path, output_directory: Path) -> int:
     # any GHE instances found with pre_designed will just be ignored since they don't need anything added
     unsized_ghe_contains_loads = []
     for _, ghe_dict in full_inputs["ground_heat_exchanger"].items():
-        if "pre_designed" in ghe_dict:
-            continue  # no need for loads checks here, don't even add them to the contains_loads list
         if "loads" in ghe_dict:
             unsized_ghe_contains_loads.append(True)
+        else:
+            unsized_ghe_contains_loads.append(False)
     all_ghe_has_loads = all(unsized_ghe_contains_loads)
     no_ghe_has_loads = not any(unsized_ghe_contains_loads)
     building_input = "building" in full_inputs
@@ -94,7 +94,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
                 # TODO: Assert that "design" data is in the ghe object
                 ghe_dict["name"] = ghe_name
                 end_month = full_inputs["simulation_control"]["sizing_years"] * MONTHS_IN_YEAR
-                search, search_time, _ = ghe.design_and_size_ghe(ghe_dict, end_month)
+                search, search_time, _ = ghe.design_and_size_ghe(end_month, ghe_dict=ghe_dict)
                 results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
                 results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
                 results.write_all_output_files(output_directory=output_directory, file_suffix="")
@@ -111,12 +111,13 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             print(g_values, g_bhw_values)
         else:
             end_month = full_inputs["simulation_control"]["sizing_years"] * MONTHS_IN_YEAR
-            search, search_time, _ = ghe.design_and_size_ghe(ghe_dict, end_month, loads_override=ghe_loads)
+            search, search_time, _ = ghe.design_and_size_ghe(end_month, loads_override=ghe_loads, ghe_dict=ghe_dict)
             results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
             results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
             results.write_all_output_files(output_directory=output_directory, file_suffix="")
     elif central_loop:
         system = GHEHPSystem(input_file_path)
+        system.size_and_simulate()
         system.create_output(output_directory / f"{input_file_path.stem}.csv")
     else:
         print("Bad input file, for now only the following configurations are available:")

@@ -672,6 +672,9 @@ class GHEHPSystem:
         # set the last component to loops back to the start
         self.components[-1].downstream_index = 0
 
+    def size_and_simulate(self):
+        self.solve_system()
+
     def solve_system(self):
         for idx_timestep in range(1, self.num_timesteps):  # loop over all timestep
             matrix_rows = []

@@ -797,6 +797,12 @@
                   "arrangement": {
                     "const": "MANUAL"
                   },
+                  "area": {
+                    "type": "number",
+                    "minimum": 0,
+                    "format": "Square Meters",
+                    "description": "The top-down area that can be associated with this manual placement of boreholes. This will be used for load splitting (between GHEs) during system simulations."
+                  },
                   "H": {
                     "$ref": "#/$defs/H"
                   },
