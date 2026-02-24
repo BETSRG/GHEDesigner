@@ -212,8 +212,10 @@ class GHE:
             self.loading = q_dot
 
             hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
+        elif method == TimestepType.HOURLYWITHLOADAGG:
+            pass
         else:
-            raise ValueError("Only hybrid or hourly methods available.")
+            raise ValueError("Only hybrid, hourly, or dynamic aggrigation methods available.")
 
         self.hp_eft = hp_eft
         self.dTb = d_tb

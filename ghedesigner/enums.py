@@ -16,6 +16,7 @@ class DoubleUTubeConnType(Enum):
 class TimestepType(Enum):
     HOURLY = auto()
     HYBRID = auto()
+    HOURLYWITHLOADAGG = auto()
 
 
 class DesignGeomType(Enum):
