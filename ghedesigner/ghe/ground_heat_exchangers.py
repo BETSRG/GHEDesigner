@@ -158,6 +158,27 @@ class GHE:
 
         return hp_eft, delta_tb
     def _simulate_detailed_aggregated(self, q_dot: np.ndarray, time_values: np.ndarray, g: interp1d):
+        """ Perform a detailed simulation based on aggregated loads array
+        source:
+
+        arg: q_dot array of simulation rejection positive loads (Watts)
+        arg: time_values array of simulation time steps (hours)
+        arg: g = g-function (dimensionless)
+
+        return: hp_eft - heat pump entering fluid temperature (nparray)
+        return: delta_tb - change in temperature at the borehole wall between each time step (nparray)
+        """
+        #initalize dynamic method
+
+        #aggregate loads
+
+        #calculate temporal superposition
+
+        #get g value
+
+        #get gb value
+
+        #get q prev
 
         pass
 
