@@ -1,4 +1,4 @@
-from math import ceil
+from math import ceil, log
 
 import numpy as np
 from pygfunction.boreholes import Borehole
@@ -12,7 +12,6 @@ from ghedesigner.ghe.ground_loads import HybridLoad
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Grout, Soil
 from ghedesigner.utilities import combine_sts_lts, solve_root
-
 
 class GHE:
     def __init__(
@@ -158,30 +157,104 @@ class GHE:
 
         return hp_eft, delta_tb
     def _simulate_detailed_aggregated(self, q_dot: np.ndarray, time_values: np.ndarray, g: interp1d):
-        """ Perform a detailed simulation based on aggregated loads array
-        source:
+        """Perform a detailed simulation using dynamic load aggregation.
 
-        arg: q_dot array of simulation rejection positive loads (Watts)
-        arg: time_values array of simulation time steps (hours)
-        arg: g = g-function (dimensionless)
+        Reduces temporal superposition by aggregating historical loads into
+        exponentially-expanding time bins.
 
-        return: hp_eft - heat pump entering fluid temperature (nparray)
-        return: delta_tb - change in temperature at the borehole wall between each time step (nparray)
+        Source: Claesson & Javed (2012), Mitchell OSU (2019).
+
+        arg: q_dot       - array of heat rejection rates for the field (np.ndarray) [W]
+        arg: time_values - array of simulation time steps (np.ndarray) [hours]
+        arg: g           - combined STS/LTS g-function interpolator (interp1d)
+
+        return: hp_eft   - heat pump entering fluid temperature at each time step (list[float]) [C]
+        return: delta_tb - borehole wall temperature change at each time step (list[float]) [C]
         """
-        #initalize dynamic method
+        n = q_dot.size
+        ts = self.bhe_eq.t_s          # characteristic time (s)
+        two_pi_k = TWO_PI * self.bhe.soil.k  # (W/m.K)
+        h = self.bhe.borehole.H       # (m)
+        tg = self.bhe.soil.ugt        # undisturbed ground temp (C)
+        rb = self.bhe.calc_effective_borehole_resistance()  # borehole resistance (m.K/W)
+        m_dot = self.bhe.m_flow_borehole  # mass flow rate of fluid (kg/s)
+        cp = self.bhe.fluid.cp        # specific heat capacity of fluid (J/kg.K)
 
-        #aggregate loads
+        # Initialize aggregation bins (energy_bins[0]=newest 1-hr bin, energy_bins[-1]=oldest)
+        energy_bins, dts = self._init_agg_bins(time_values)
 
-        #calculate temporal superposition
+        hp_eft: list[float] = []
+        delta_tb: list[float] = []
 
-        #get g value
+        for i in range(n): #from(0 to n-1)
+            q_i = q_dot[i]  # total field load this hour (W)
 
-        #get gb value
+            # Calculate how much energy is shifting from bin to bin in this time step
+            frac_shift = SEC_IN_HR / dts
+            frac_shift[-1] = 0  # nothing exits the oldest bin
+            delta = energy_bins * frac_shift #starts as all zeros
 
-        #get q prev
+            # update energy to subtract delta moving out of bin[k] to bin [k+1] and
+            # add delta moving into bin[k] from bin [k-1]
+            energy_bins = energy_bins - delta + np.roll(delta, 1)
 
-        pass
+            # Add current hour's energy to the newest bin
+            energy_bins[0] += q_i * SEC_IN_HR #[Joules]
 
+            # Temporal superposition over aggregated bins
+            q_b = energy_bins / dts / self.nbh    # average W per bin per borehole
+            dq_b = np.diff(q_b, prepend=0)  # step changes in load
+
+            # Elapsed age of each bin: cumulative from current step backward.
+            # dts_all[0] = current step; dts_all[1:] = existing bins (newest-> oldest)
+            dts_all = np.insert(dts, 0, SEC_IN_HR)
+            bin_ages = np.cumsum(dts_all)[:-1] #length of time since energy was first deposited in bin (sec)
+            lntts = np.log(bin_ages / ts)
+            g_values = g(lntts)
+
+            # Tb = Tg + (dq * g)  (Equation 2.12)
+            delta_tb_i = float(np.dot(dq_b / h / two_pi_k, g_values))
+            # Tf = Tb + q_i * R_b^*  (Equation 2.13)
+            q_b_i = q_i / self.nbh
+            tb = tg + delta_tb_i
+            # Bulk fluid temperature
+            tf_bulk = tb + q_b_i / h * rb
+            # T_out = T_f - Q / (2 * m_dot * cp)  (Equation 2.14)
+            tf_out = tf_bulk - q_b_i / (2 * m_dot * cp)
+            hp_eft.append(tf_out)
+            delta_tb.append(delta_tb_i)
+
+        return hp_eft, delta_tb
+
+    def _init_agg_bins(self, time_values: np.ndarray):
+        """Initialize aggregation bins covering the full simulation runtime.
+
+        Uses optimized expansion rate 1.62 and 9 bins per level.
+        Source: Mitchell, OSU 2019. / Claesson & Javed, 2012.
+
+        arg: time_values - array of simulation time steps (hours)
+
+        return: energy_bins - zero-initialized array of energy bins (np.ndarray) [J]
+                              energy_bins[0] = newest (smallest, 1-hr) bin
+                              energy_bins[-1] = oldest (largest) bin
+        return: dts - duration of each corresponding energy bin (np.ndarray) [s]
+        """
+        exp_rate = 1.62
+        bins_per_level = 9
+        dt = SEC_IN_HR
+        t = 0.0
+        energy_bins = np.array([])
+        dts = np.array([])
+        run_time_s = len(time_values) * SEC_IN_HR
+
+        while True:
+            for _ in range(bins_per_level):
+                t += dt
+                energy_bins = np.append(energy_bins, 0.0)
+                dts = np.append(dts, dt)
+                if t >= run_time_s:
+                    return energy_bins, dts
+            dt *= exp_rate
 
     def compute_g_functions(self, h_min: float, h_max: float):
         # Compute g-functions for a bracketed solution, based on min and max height
