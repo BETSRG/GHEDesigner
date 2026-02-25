@@ -136,7 +136,7 @@ class GHE:
         tg = self.bhe.soil.ugt  # (Celsius)
         rb = self.bhe.calc_effective_borehole_resistance()  # (m.K/W)
         m_dot = self.bhe.m_flow_borehole  # (kg/s)
-        cp = self.bhe.fluid.cp  # (J/kg.s)
+        cp = self.bhe.fluid.cp  # (J/kg.K)
 
         hp_eft: list[float] = []
         delta_tb: list[float] = []
@@ -157,6 +157,10 @@ class GHE:
             delta_tb.append(delta_tb_i)
 
         return hp_eft, delta_tb
+    def _simulate_detailed_aggregated(self, q_dot: np.ndarray, time_values: np.ndarray, g: interp1d):
+
+        pass
+
 
     def compute_g_functions(self, h_min: float, h_max: float):
         # Compute g-functions for a bracketed solution, based on min and max height
@@ -212,8 +216,25 @@ class GHE:
             self.loading = q_dot
 
             hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
+
         elif method == TimestepType.HOURLYWITHLOADAGG:
-            pass
+            n_months = self.end_month - self.start_month + 1 #number of months in simulation
+            n_hours = int(n_months / 12.0 * 8760.0) #number of hours in simulation
+            q_dot = self.hourly_extraction_ground_loads
+            # How many times does q need to be repeated?
+            n_years = ceil(n_hours / 8760)
+            if len(q_dot) // 8760 < n_years:
+                q_dot = q_dot * n_years
+            else:
+                n_hours = len(q_dot)
+            q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection positive
+            # print("Times:",self.times)
+            if len(self.times) == 0:
+                self.times = np.arange(1, n_hours + 1, 1)
+            t = self.times
+            self.loading = q_dot
+
+            hp_eft, d_tb = self._simulate_detailed_aggregated(q_dot, t, g)
         else:
             raise ValueError("Only hybrid, hourly, or dynamic aggrigation methods available.")
 
