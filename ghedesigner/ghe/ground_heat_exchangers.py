@@ -203,12 +203,11 @@ class GHE:
 
             # Temporal superposition over aggregated bins
             q_b = energy_bins / dts / self.nbh    # average W per bin per borehole
-            dq_b = np.diff(q_b, prepend=0)  # step changes in load
+            # dq_b[k] = q_b[k] - q_b[k+1]: step change from older bin to newer bin k
+            dq_b = -np.diff(q_b, append=0.0)
 
-            # Elapsed age of each bin: cumulative from current step backward.
-            # dts_all[0] = current step; dts_all[1:] = existing bins (newest-> oldest)
-            dts_all = np.insert(dts, 0, SEC_IN_HR)
-            bin_ages = np.cumsum(dts_all)[:-1] #length of time since energy was first deposited in bin (sec)
+            # bin_ages[k] = elapsed time since the load step at the start of bin k (sec)
+            bin_ages = np.cumsum(dts)
             lntts = np.log(bin_ages / ts)
             g_values = g(lntts)
 
