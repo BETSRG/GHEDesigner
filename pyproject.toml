@@ -10,7 +10,7 @@ readme = "README.md"
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
 authors = [{ name = "Jeffrey D. Spitler", email = "spitler@okstate.edu" }]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "bhresist>=0.3",
     "click>=8.3.1",
@@ -19,6 +19,7 @@ dependencies = [
     "pygfunction>=2.3.1",
     "scipy>=1.15.3",
     "secondarycoolantprops>=1.4",
+    "lcoe-ten>=0.1.0"
 ]
 repository = "https://github.com/BETSRG/GHEDesigner"
 documentation = "https://betsrg.github.io/GHEDesigner/"
@@ -68,3 +69,6 @@ default-groups = ["app", "dev", "docs"]
 [tool.uv.build-backend]
 module-root = ""
 source-exclude = ["ghedesigner/gui", "ghedesigner/tests"]
+
+[tool.uv.sources]
+lcoe-ten = { path = "C:\\Users\\sadams2\\Documents\\GitHub\\lcoe-ten" }
