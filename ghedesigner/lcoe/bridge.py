@@ -76,18 +76,18 @@ def run_lcoe(
     years: int = cost_data["years"]
     steps_per_year: int = cost_data["steps_per_year"]
     T: int = years * steps_per_year
+    rate: float = cost_data["real_discount_rate"]
 
     q = extract_quantities(ghe_objects, hp_objects)
 
-    # --- GHE system ---
     ghe_inputs = _build_evaluate_inputs(cost_data, q, years, steps_per_year, T)
     ghe_result = evaluate_project_ts(**ghe_inputs)
 
-    # --- Optional baseline ---
     baseline_result: dict[str, Any] | None = None
     if "baseline" in cost_data:
         baseline_inputs = _build_baseline_inputs(
-            cost_data["baseline"], q, years, steps_per_year, T
+            cost_data["baseline"], q, years, steps_per_year, T,
+            real_discount_rate=rate,
         )
         baseline_result = evaluate_project_ts(**baseline_inputs)
 
@@ -107,8 +107,8 @@ def run_lcoe(
 
 def _build_capex(cost_data: dict, q: GHEQuantities) -> list[CapexScheduleTS]:
     """
-    Combine unit-rate CAPEX (multiplied by GHEDesigner quantities) with
-    fully-specified fixed_capex items from the cost JSON.
+    Combine unit-rate CAPEX (rate × GHEDesigner quantity) with fully-specified
+    fixed_capex items from the cost JSON.
     """
     items: list[CapexScheduleTS] = []
     ur: dict = cost_data.get("unit_rate_capex", {})
@@ -191,37 +191,26 @@ def _build_debt(
 # ---------------------------------------------------------------------------
 
 
-def _build_loads(
-    cost_data: dict,
-    q: GHEQuantities,
-    T: int,
-) -> LoadTS:
+def _build_loads(cost_data: dict, q: GHEQuantities, T: int) -> LoadTS:
     """
-    Build LoadTS from GHE-derived annual energy totals.
+    Build LoadTS from GHE-derived year-1 annual energy totals.
 
-    Year-1 values are divided equally across steps within the year and then
-    repeated for every year in the project horizon (V1: flat profile).
+    Values are divided evenly across steps within the year, then repeated for
+    every year in the project horizon (V1: flat year-1 profile).
     """
     years: int = cost_data["years"]
     steps_per_year: int = cost_data["steps_per_year"]
     aux_kw: float = cost_data.get("aux_electric_kw", 0.0)
-
     hours_per_step = 8760.0 / steps_per_year
-
-    heat_per_step = q.heat_MWh_yr1 / steps_per_year
-    cool_per_step = q.cool_MWh_yr1 / steps_per_year
-    elec_heat_per_step = q.elec_heat_MWh_yr1 / steps_per_year
-    elec_cool_per_step = q.elec_cool_MWh_yr1 / steps_per_year
-    elec_aux_per_step = aux_kw * hours_per_step / 1000.0   # kW × h → MWh
 
     return LoadTS(
         years=years,
         steps_per_year=steps_per_year,
-        heat_MWh_ts=[heat_per_step] * T,
-        cool_MWh_ts=[cool_per_step] * T,
-        elec_heat_MWh_ts=[elec_heat_per_step] * T,
-        elec_cool_MWh_ts=[elec_cool_per_step] * T,
-        elec_aux_MWh_ts=[elec_aux_per_step] * T,
+        heat_MWh_ts=[q.heat_MWh_yr1 / steps_per_year] * T,
+        cool_MWh_ts=[q.cool_MWh_yr1 / steps_per_year] * T,
+        elec_heat_MWh_ts=[q.elec_heat_MWh_yr1 / steps_per_year] * T,
+        elec_cool_MWh_ts=[q.elec_cool_MWh_yr1 / steps_per_year] * T,
+        elec_aux_MWh_ts=[aux_kw * hours_per_step / 1000.0] * T,
     )
 
 
@@ -257,7 +246,6 @@ def _build_evaluate_inputs(
         OpexFixedTS(name=item["name"], series=item["series"])
         for item in cost_data.get("opex_fixed", [])
     ]
-
     opex_variable_ts = [
         OpexVariableTS(name=item["name"], unit=item["unit"], rates_ts=item["rates_ts"])
         for item in cost_data.get("opex_variable", [])
@@ -282,18 +270,21 @@ def _build_baseline_inputs(
     years: int,
     steps_per_year: int,
     T: int,
+    *,
+    real_discount_rate: float,
 ) -> dict:
     """
-    Baseline uses the same thermal loads as the GHE system (same denominator
-    for LCOx) but entirely its own cost structure.  No unit_rate_capex here —
-    the baseline does not depend on GHEDesigner sizing outputs.
+    Baseline uses the same thermal loads as the GHE system (equal LCOx
+    denominator for fair comparison) but its own cost structure.
+
+    No unit_rate_capex section — the baseline does not depend on GHEDesigner
+    sizing outputs.  Electricity for the baseline HP is zero; any baseline
+    electricity should be modelled via opex_variable (unit=MWh_heat/cool) or
+    aux_electric_kw.
     """
     aux_kw: float = baseline.get("aux_electric_kw", 0.0)
     hours_per_step = 8760.0 / steps_per_year
-    elec_aux_per_step = aux_kw * hours_per_step / 1000.0
 
-    # Baseline HP electricity is zero by default (e.g. gas boiler has no HP).
-    # Any baseline electricity is covered via aux_electric_kw or opex_variable.
     loads_ts = LoadTS(
         years=years,
         steps_per_year=steps_per_year,
@@ -301,7 +292,7 @@ def _build_baseline_inputs(
         cool_MWh_ts=[q.cool_MWh_yr1 / steps_per_year] * T,
         elec_heat_MWh_ts=[0.0] * T,
         elec_cool_MWh_ts=[0.0] * T,
-        elec_aux_MWh_ts=[elec_aux_per_step] * T,
+        elec_aux_MWh_ts=[aux_kw * hours_per_step / 1000.0] * T,
     )
 
     capex_ts = [
@@ -320,7 +311,6 @@ def _build_baseline_inputs(
         OpexFixedTS(name=item["name"], series=item["series"])
         for item in baseline.get("opex_fixed", [])
     ]
-
     opex_variable_ts = [
         OpexVariableTS(name=item["name"], unit=item["unit"], rates_ts=item["rates_ts"])
         for item in baseline.get("opex_variable", [])
@@ -329,9 +319,7 @@ def _build_baseline_inputs(
     return {
         "years": years,
         "steps_per_year": steps_per_year,
-        "real_discount_rate": cost_data["real_discount_rate"]
-        if isinstance(cost_data := baseline, dict) and False
-        else baseline.get("real_discount_rate", 0.05),
+        "real_discount_rate": real_discount_rate,
         "capex_ts": capex_ts,
         "opex_fixed_ts": opex_fixed_ts,
         "opex_variable_ts": opex_variable_ts,
@@ -358,42 +346,37 @@ def _build_output(
 ) -> dict[str, Any]:
     currency = cost_data.get("currency", "currency")
 
-    ghe_section: dict[str, Any] = {
-        "LCOH": _fmt(ghe_result["LCOH_(currency_per_MWh_heat)"], f"{currency}/MWh_heat"),
-        "LCOC": _fmt(ghe_result["LCOC_(currency_per_MWh_cool)"], f"{currency}/MWh_cool"),
-        "LCOx_total": _fmt(
-            ghe_result["LCOx_total_(currency_per_MWh_service)"],
-            f"{currency}/MWh_service",
-        ),
-        "NPV_total_cost": _fmt(ghe_result["NPV_total_cost"], currency),
-        "NPV_capex": _fmt(ghe_result["NPV_capex"], currency),
-        "NPV_opex": _fmt(ghe_result["NPV_opex"], currency),
-        "NPV_financing": _fmt(ghe_result["NPV_financing"], currency),
-        "PV_heat_MWh": _fmt(ghe_result["PV_heat_MWh"], "MWh"),
-        "PV_cool_MWh": _fmt(ghe_result["PV_cool_MWh"], "MWh"),
-        "PV_service_MWh": _fmt(ghe_result["PV_service_MWh"], "MWh"),
-    }
-
-    ghe_quantities: dict[str, Any] = {
-        "total_drilling_m": _fmt(q.total_drilling_m, "m"),
-        "n_boreholes": q.n_boreholes,
-        "vertical_pipe_m": _fmt(q.vertical_pipe_m, "m"),
-        "grout_volume_m3": _fmt(q.grout_volume_m3, "m3"),
-        "n_heat_pumps": q.n_heat_pumps,
-        "heat_MWh_yr1": _fmt(q.heat_MWh_yr1, "MWh"),
-        "cool_MWh_yr1": _fmt(q.cool_MWh_yr1, "MWh"),
-        "elec_heat_MWh_yr1": _fmt(q.elec_heat_MWh_yr1, "MWh"),
-        "elec_cool_MWh_yr1": _fmt(q.elec_cool_MWh_yr1, "MWh"),
-    }
-
     output: dict[str, Any] = {
         "currency": currency,
-        "ghe_quantities": ghe_quantities,
-        "ghe_system": ghe_section,
+        "ghe_quantities": {
+            "total_drilling_m": _fmt(q.total_drilling_m, "m"),
+            "n_boreholes": q.n_boreholes,
+            "vertical_pipe_m": _fmt(q.vertical_pipe_m, "m"),
+            "grout_volume_m3": _fmt(q.grout_volume_m3, "m3"),
+            "n_heat_pumps": q.n_heat_pumps,
+            "heat_MWh_yr1": _fmt(q.heat_MWh_yr1, "MWh"),
+            "cool_MWh_yr1": _fmt(q.cool_MWh_yr1, "MWh"),
+            "elec_heat_MWh_yr1": _fmt(q.elec_heat_MWh_yr1, "MWh"),
+            "elec_cool_MWh_yr1": _fmt(q.elec_cool_MWh_yr1, "MWh"),
+        },
+        "ghe_system": {
+            "LCOH": _fmt(ghe_result["LCOH_(currency_per_MWh_heat)"], f"{currency}/MWh_heat"),
+            "LCOC": _fmt(ghe_result["LCOC_(currency_per_MWh_cool)"], f"{currency}/MWh_cool"),
+            "LCOx_total": _fmt(
+                ghe_result["LCOx_total_(currency_per_MWh_service)"], f"{currency}/MWh_service"
+            ),
+            "NPV_total_cost": _fmt(ghe_result["NPV_total_cost"], currency),
+            "NPV_capex": _fmt(ghe_result["NPV_capex"], currency),
+            "NPV_opex": _fmt(ghe_result["NPV_opex"], currency),
+            "NPV_financing": _fmt(ghe_result["NPV_financing"], currency),
+            "PV_heat_MWh": _fmt(ghe_result["PV_heat_MWh"], "MWh"),
+            "PV_cool_MWh": _fmt(ghe_result["PV_cool_MWh"], "MWh"),
+            "PV_service_MWh": _fmt(ghe_result["PV_service_MWh"], "MWh"),
+        },
     }
 
     if baseline_result is not None:
-        baseline_section: dict[str, Any] = {
+        output["baseline_system"] = {
             "LCOH": _fmt(
                 baseline_result["LCOH_(currency_per_MWh_heat)"], f"{currency}/MWh_heat"
             ),
@@ -406,7 +389,6 @@ def _build_output(
             ),
             "NPV_total_cost": _fmt(baseline_result["NPV_total_cost"], currency),
         }
-
         delta_lcoh = (
             ghe_result["LCOH_(currency_per_MWh_heat)"]
             - baseline_result["LCOH_(currency_per_MWh_heat)"]
@@ -415,8 +397,6 @@ def _build_output(
             ghe_result["LCOx_total_(currency_per_MWh_service)"]
             - baseline_result["LCOx_total_(currency_per_MWh_service)"]
         )
-
-        output["baseline_system"] = baseline_section
         output["comparison"] = {
             "delta_LCOH": _fmt(delta_lcoh, f"{currency}/MWh_heat"),
             "delta_LCOx": _fmt(delta_lcox, f"{currency}/MWh_service"),
@@ -424,81 +404,3 @@ def _build_output(
         }
 
     return output
-
-
-# ---------------------------------------------------------------------------
-# Workaround: _build_baseline_inputs closure fix
-# ---------------------------------------------------------------------------
-# The walrus-operator trick above was a mistake; patch it properly:
-
-def _build_baseline_inputs(  # noqa: F811
-    baseline: dict,
-    q: GHEQuantities,
-    years: int,
-    steps_per_year: int,
-    T: int,
-    *,
-    real_discount_rate: float,
-) -> dict:
-    """
-    Baseline uses the same thermal loads as the GHE system (same LCOx
-    denominator) but its own cost structure.  No unit_rate_capex section —
-    the baseline does not depend on GHEDesigner sizing outputs.
-
-    Parameters
-    ----------
-    baseline:
-        The ``"baseline"`` sub-dict from the cost JSON.
-    q:
-        GHE quantities (used only for thermal load timeseries).
-    real_discount_rate:
-        Taken from the top-level cost JSON so both systems are discounted
-        at the same rate.
-    """
-    aux_kw: float = baseline.get("aux_electric_kw", 0.0)
-    hours_per_step = 8760.0 / steps_per_year
-    elec_aux_per_step = aux_kw * hours_per_step / 1000.0
-
-    loads_ts = LoadTS(
-        years=years,
-        steps_per_year=steps_per_year,
-        heat_MWh_ts=[q.heat_MWh_yr1 / steps_per_year] * T,
-        cool_MWh_ts=[q.cool_MWh_yr1 / steps_per_year] * T,
-        elec_heat_MWh_ts=[0.0] * T,
-        elec_cool_MWh_ts=[0.0] * T,
-        elec_aux_MWh_ts=[elec_aux_per_step] * T,
-    )
-
-    capex_ts = [
-        CapexScheduleTS(
-            name=item["name"],
-            cashflow_t0=item.get("cashflow_t0", 0.0),
-            cashflow_ts=item.get("cashflow_ts", []),
-            residual_at_end=item.get("residual_at_end", 0.0),
-        )
-        for item in baseline.get("fixed_capex", [])
-    ]
-    net = _net_capex_t0(capex_ts)
-    debt_ts = _build_debt(baseline, net, years, steps_per_year)
-
-    opex_fixed_ts = [
-        OpexFixedTS(name=item["name"], series=item["series"])
-        for item in baseline.get("opex_fixed", [])
-    ]
-
-    opex_variable_ts = [
-        OpexVariableTS(name=item["name"], unit=item["unit"], rates_ts=item["rates_ts"])
-        for item in baseline.get("opex_variable", [])
-    ]
-
-    return {
-        "years": years,
-        "steps_per_year": steps_per_year,
-        "real_discount_rate": real_discount_rate,
-        "capex_ts": capex_ts,
-        "opex_fixed_ts": opex_fixed_ts,
-        "opex_variable_ts": opex_variable_ts,
-        "price_paths_ts": _price_paths(baseline),
-        "loads_ts": loads_ts,
-        "debt_ts": debt_ts or None,
-    }

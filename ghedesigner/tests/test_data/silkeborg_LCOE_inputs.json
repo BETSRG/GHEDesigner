@@ -1,0 +1,107 @@
+{
+  "currency": "DKK",
+  "years": 20,
+  "steps_per_year": 1,
+  "real_discount_rate": 0.03,
+
+  "unit_rate_capex": {
+    "drilling_per_meter": 797.46,
+    "vertical_pipe_per_meter": 120.0,
+    "horizontal_pipe_length_m": 150.0,
+    "horizontal_pipe_per_meter": 981.25,
+    "grout_per_m3": 2500.0,
+    "heat_pump_per_unit": 58867.0
+  },
+
+  "fixed_capex": [
+    { "name": "Earthworks - main pipeline network",                     "cashflow_t0":  136693.0 },
+    { "name": "Electricity supply to HP",                               "cashflow_t0":  123300.0 },
+    { "name": "Energy meters (15 x 3,120 DKK/unit)",                   "cashflow_t0":   46800.0 },
+    { "name": "Excavation work - service lines (15 x 6,600 DKK)",      "cashflow_t0":   99000.0 },
+    { "name": "Investment contribution (15 x -7,380 DKK)",             "cashflow_t0": -110700.0 },
+    { "name": "Increased investment contribution (15 x -29,000 DKK)",  "cashflow_t0": -435000.0 },
+    { "name": "Service line contribution (15 x -18,800 DKK)",          "cashflow_t0": -282000.0 },
+    { "name": "Construction preparation contribution",                  "cashflow_t0": -275360.0 }
+  ],
+
+  "opex_fixed": [
+    {
+      "name": "O&M contract",
+      "series": [
+        37320.0, 37320.0, 37320.0, 37320.0, 37320.0,
+        37320.0, 37320.0, 37320.0, 37320.0, 37320.0,
+        37320.0, 37320.0, 37320.0, 37320.0, 37320.0,
+        37320.0, 37320.0, 37320.0, 37320.0, 37320.0
+      ]
+    }
+  ],
+
+  "opex_variable": [],
+
+  "electricity_price": {
+    "name": "electricity_heat",
+    "values_ts": [
+      1004.46, 1004.46, 936.46, 856.46,
+      844.46, 844.46, 844.46, 844.46, 844.46, 844.46,
+      844.46, 844.46, 844.46, 844.46, 844.46, 844.46,
+      844.46, 844.46, 844.46, 844.46
+    ]
+  },
+
+  "aux_electric_kw": 0.0,
+
+  "debt": [
+    {
+      "name": "Fixed-rate construction loan",
+      "principal": null,
+      "nominal_rate_ann": 0.026,
+      "years": 20,
+      "steps_per_year": 1,
+      "grace_steps": 0,
+      "fees_t0": 0.0,
+      "inflation_ann": 0.0
+    }
+  ],
+
+  "baseline": {
+    "fixed_capex": [
+      { "name": "Gas boilers (15 x 45,000 DKK)",       "cashflow_t0": 675000.0 },
+      { "name": "Air-cooled chillers (15 x 30,000 DKK)", "cashflow_t0": 450000.0 }
+    ],
+    "opex_fixed": [
+      {
+        "name": "Boiler & chiller maintenance",
+        "series": [
+          25000.0, 25000.0, 25000.0, 25000.0, 25000.0,
+          25000.0, 25000.0, 25000.0, 25000.0, 25000.0,
+          25000.0, 25000.0, 25000.0, 25000.0, 25000.0,
+          25000.0, 25000.0, 25000.0, 25000.0, 25000.0
+        ]
+      }
+    ],
+    "opex_variable": [
+      {
+        "name": "Natural gas (heating)",
+        "unit": "MWh_heat",
+        "rates_ts": [
+          620.0, 620.0, 635.0, 635.0, 650.0,
+          650.0, 650.0, 665.0, 665.0, 665.0,
+          680.0, 680.0, 680.0, 695.0, 695.0,
+          695.0, 710.0, 710.0, 710.0, 725.0
+        ]
+      },
+      {
+        "name": "Electricity (chiller cooling)",
+        "unit": "MWh_cool",
+        "rates_ts": [
+          1004.46, 1004.46, 936.46, 856.46,
+          844.46, 844.46, 844.46, 844.46, 844.46, 844.46,
+          844.46, 844.46, 844.46, 844.46, 844.46, 844.46,
+          844.46, 844.46, 844.46, 844.46
+        ]
+      }
+    ],
+    "aux_electric_kw": 2.0,
+    "debt": []
+  }
+}
