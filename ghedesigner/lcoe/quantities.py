@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from math import pi
 from typing import TYPE_CHECKING
 
+from ghedesigner.enums import BHType
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -22,7 +24,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class GHEQuantities:
-    """All scalar and per-step energy quantities needed by the bridge."""
+    """All scalar and per-step energy quantities needed by the lCOE bridge file."""
 
     # --- GHE field geometry (aggregated across all GHEs) ---
     total_drilling_m: float       # total active borehole length  [m]
@@ -44,22 +46,19 @@ def _grout_volume_for_ghe(ghe: GHE) -> float:
     Compute grout fill volume [m³] for a single GHE.
 
     Uses the borehole cross-section minus the pipe cross-section(s).
-    Supports single U-tube (r_out is a float) and coaxial (r_out is a
-    sequence); double U-tube is treated the same as single U-tube with
-    a TODO note.
     """
     r_b = ghe.bhe.borehole.r_b        # borehole radius [m]
     r_out = ghe.bhe.pipe.r_out
 
     bh_area = pi * r_b**2
 
-    if isinstance(r_out, float):
-        # Single U-tube: two pipes of radius r_out each
-        pipe_area = 2.0 * pi * r_out**2
-    else:
-        # Coaxial: use the outermost pipe's outer radius
-        # TODO: add proper double-U-tube support when BHType is available
-        pipe_area = pi * max(r_out) ** 2
+    match ghe.bhe_type:
+        case BHType.SINGLEUTUBE:
+            pipe_area = 2.0 * pi * r_out**2
+        case BHType.DOUBLEUTUBEPARALLEL | BHType.DOUBLEUTUBESERIES:
+            pipe_area = 4.0 * pi * r_out**2
+        case _:  # coaxial
+            pipe_area = pi * max(r_out) ** 2
 
     annulus_area = max(bh_area - pipe_area, 0.0)
     return annulus_area * ghe.bhe.borehole.H * ghe.nbh
@@ -67,11 +66,11 @@ def _grout_volume_for_ghe(ghe: GHE) -> float:
 
 def _pipe_legs_per_borehole(ghe: GHE) -> int:
     """Return the number of pipe legs (flow paths) per borehole."""
-    r_out = ghe.bhe.pipe.r_out
-    if isinstance(r_out, float):
-        return 2  # single U-tube: two legs
-    # Coaxial has one annular path and one inner path — treat as 2 for length
-    return 2
+    match ghe.bhe_type:
+        case BHType.DOUBLEUTUBEPARALLEL | BHType.DOUBLEUTUBESERIES:
+            return 4
+        case _:
+            return 2  # single U-tube or coaxial
 
 
 def extract_quantities(
