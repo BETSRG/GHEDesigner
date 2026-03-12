@@ -174,7 +174,8 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert, l
 
     output_path = Path(output_directory).resolve()
 
-    return_code = run(input_path, output_path)
+    lcoe_path = Path(lcoe_input).resolve() if lcoe_input else None
+    return_code = run(input_path, output_path, lcoe_input_path=lcoe_path)
     sys.exit(return_code)
 
 
