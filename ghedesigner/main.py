@@ -98,6 +98,9 @@ def run(input_file_path: Path, output_directory: Path, lcoe_input_path: Path | N
                 results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
                 results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
                 results.write_all_output_files(output_directory=output_directory, file_suffix="")
+                if lcoe_input_path:
+                    from ghedesigner.lcoe.bridge import run_lcoe
+                    run_lcoe([search.ghe], [], lcoe_input_path, output_directory)
     elif len(ghe_names) == 1 and len(building_names) == 1 and not central_loop:
         # we have a GHE and a building, grab both
         ghe_dict = full_inputs["ground_heat_exchanger"][ghe_names[0]]
@@ -115,6 +118,9 @@ def run(input_file_path: Path, output_directory: Path, lcoe_input_path: Path | N
             results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
             results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
             results.write_all_output_files(output_directory=output_directory, file_suffix="")
+            if lcoe_input_path:
+                from ghedesigner.lcoe.bridge import run_lcoe
+                run_lcoe([search.ghe], [heat_pump], lcoe_input_path, output_directory)
     elif central_loop:
         system = GHEHPSystem(input_file_path)
         system.create_output(output_directory / f"{input_file_path.stem}.csv")
@@ -131,7 +137,9 @@ def run(input_file_path: Path, output_directory: Path, lcoe_input_path: Path | N
 @click.version_option(VERSION)
 @click.option("--validate-only", default=False, is_flag=True, show_default=False, help="Validate input file and exit.")
 @click.option("-c", "--convert", help="Convert output to specified format. Options supported: 'IDF'.")
-def run_manager_from_cli(input_path, output_directory, validate_only, convert):
+@click.option("--lcoe-input", type=click.Path(exists=True), default=None,
+              help="Path to LCOE cost JSON. If provided, runs LCOE analysis after sizing and writes LCOESummary.json.")
+def run_manager_from_cli(input_path, output_directory, validate_only, convert, lcoe_input):
     # Note that since this is wrapped in click, it should use the exit(code) instead of return.
     # Click will absorb the return code and not return it.
     # If we use exit(code), it will return the code properly.
