@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
 logger = logging.getLogger(__name__)
 
 
-def run(input_file_path: Path, output_directory: Path) -> int:
+def run(input_file_path: Path, output_directory: Path, lcoe_input_path: Path | None = None) -> int:
     """
     Worker function to run simulation.
 
