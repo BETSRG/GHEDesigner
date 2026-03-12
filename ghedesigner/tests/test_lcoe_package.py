@@ -1,11 +1,15 @@
 """
 Tests that lcoe-ten integrates correctly with GHEDesigner by recreating the
-Silkeborg LCOH-with-financing example in code.
+Silkeborg LCOH-with-financing example in code. This test does not rely on any
+inputs from GHEdesigner,it simply creates inputs and sends them to the
+lcoe_ten package (installed as a dependancy) and checks the correct results
+are returned.
 
-The reference inputs come from Silkeborg_LCOH_with_financing.yaml:
+The reference inputs come from Silkeborg_LCOH_with_financing.yaml
+at https://github.com/mitchute/lcoe-ten/examples:
   - 15 buildings, 6 boreholes, 20-year project horizon
   - Currency: DKK, real discount rate: 3 %
-  - A fixed-rate loan at 2.6 % nominal covers the net CAPEX at t0
+  - A fixed-rate loan at 2.6 % nominal pays for the net CAPEX at t0
 """
 
 from unittest import TestCase
@@ -33,7 +37,7 @@ _CAPEX_ITEMS = [
     ("Investment contribution (15 x -7,380 DKK)", -110700.0),
     ("Increased investment contribution (15 x -29,000 DKK)", -435000.0),
     ("Service line contribution (15 x -18,800 DKK)", -282000.0),
-    ("Construction preparation contribution (15 x -10,590.77 DKK)", -275360.0),
+    ("Construction preparation contribution (15 x -18,357.33 DKK)", -275360.0),
     ("Heat pumps (15 x 58,867 DKK)", 883005.0),
     ("Drilling (6 x 79,746 DKK)", 478476.0),
 ]
