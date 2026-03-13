@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from math import ceil
+from typing import TYPE_CHECKING
 
 import numpy as np
 from pygfunction.boreholes import Borehole
@@ -7,11 +10,14 @@ from scipy.interpolate import interp1d
 from ghedesigner.constants import SEC_IN_HR, TWO_PI, VERSION
 from ghedesigner.enums import PipeType, TimestepType
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
-from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
+from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths, merge_g_functions
 from ghedesigner.ghe.ground_loads import HybridLoad
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Grout, Soil
 from ghedesigner.utilities import combine_sts_lts, solve_root
+
+if TYPE_CHECKING:
+    from ghedesigner.ghe.search.bisection_1d_tilt_search import Bisection1DTilt
 
 
 class GHE:
@@ -41,6 +47,9 @@ class GHE:
         m_flow_borehole = self.v_flow_borehole / 1000.0 * fluid.rho
         self.m_flow_borehole = m_flow_borehole
 
+        # Cached g-function from bisection search
+        self.bisection: Bisection1DTilt | None = None
+
         # Borehole Heat Exchanger
         self.bhe_type = bhe_type
         self.bhe = get_bhe_object(bhe_type, m_flow_borehole, fluid, borehole, pipe, grout, soil)
@@ -53,6 +62,7 @@ class GHE:
 
         # gFunction object
         self.gFunction = g_function
+
         # Additional simulation parameters
         self.start_month = start_month
         self.end_month = end_month
@@ -158,6 +168,38 @@ class GHE:
 
         return hp_eft, delta_tb
 
+    def _simulate_detailed_fft(self, q_dot: np.ndarray, time_values: np.ndarray, g: interp1d):
+        # Perform a detailed simulation based on a numpy array of heat rejection
+        # rates, Q_dot (Watts) where each load is applied at the time_value
+        # (seconds). The g-function can interpolate.
+        # Source: Chapter 2 of Advances in Ground Source Heat Pumps
+
+        n = q_dot.size
+
+        ts = self.bhe_eq.t_s  # (-)
+        two_pi_k = TWO_PI * self.bhe.soil.k  # (W/m.K)
+        h = self.bhe.borehole.H  # (meters)
+        tg = self.bhe.soil.ugt  # (Celsius)
+        rb = self.bhe.calc_effective_borehole_resistance()  # (m.K/W)
+        m_dot = self.bhe.m_flow_borehole  # (kg/s)
+        cp = self.bhe.fluid.cp  # (J/kg.s)
+
+        q_dot_b = q_dot / (float(self.nbh) * h)
+        q_dot_b_dt = np.zeros(n, dtype=float)
+        q_dot_b_dt[0] = q_dot_b[0]
+        q_dot_b_dt[1:] = q_dot_b[1:] - q_dot_b[:-1]
+        g_values = g(np.log((time_values * SEC_IN_HR) / ts))
+        convolution_length = 2 * n - 1
+        delta_tb = np.fft.irfft(
+            np.fft.rfft(q_dot_b_dt / two_pi_k, n=convolution_length) * np.fft.rfft(g_values, n=convolution_length),
+            n=convolution_length,
+        )[:n]
+        tb = tg + delta_tb
+        tf_bulk = tb + q_dot_b * rb
+        hp_eft = tf_bulk - q_dot_b * h / (2 * m_dot * cp)
+
+        return hp_eft.tolist(), delta_tb.tolist()
+
     def compute_g_functions(self, h_min: float, h_max: float):
         # Compute g-functions for a bracketed solution, based on min and max height
         self.gFunction = calc_g_func_for_multiple_lengths(
@@ -173,7 +215,30 @@ class GHE:
             self.bhe.pipe,
             self.bhe.grout,
             self.bhe.soil,
+            tilts=self.gFunction.bore_tilts,
+            orientations=self.gFunction.bore_orientations,
         )
+
+    def compute_and_merge_g_functions(self, h_values: list):
+        g_func_mid = calc_g_func_for_multiple_lengths(
+            self.b_spacing,
+            h_values,
+            self.bhe.borehole.r_b,
+            self.bhe.borehole.D,
+            self.bhe.m_flow_borehole,
+            self.bhe_type,
+            self.gFunction.log_time,
+            self.gFunction.bore_locations,
+            self.bhe.fluid,
+            self.bhe.pipe,
+            self.bhe.grout,
+            self.bhe.soil,
+            tilts=self.gFunction.bore_tilts,
+            orientations=self.gFunction.bore_orientations,
+        )
+        g_func_max = self.gFunction
+
+        self.gFunction = merge_g_functions(g_func_mid=g_func_mid, g_func_max=g_func_max)
 
     def simulate(self, method: TimestepType):
         b = self.b_spacing
@@ -212,6 +277,24 @@ class GHE:
             self.loading = q_dot
 
             hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
+        elif method == TimestepType.HOURLY_FFT:
+            n_months = self.end_month - self.start_month + 1
+            n_hours = int(n_months / 12.0 * 8760.0)
+            q_dot = self.hourly_extraction_ground_loads
+            # How many times does q need to be repeated?
+            n_years = ceil(n_hours / 8760)
+            if len(q_dot) // 8760 < n_years:
+                q_dot = q_dot * n_years
+            else:
+                n_hours = len(q_dot)
+            q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
+            # print("Times:",self.times)
+            if len(self.times) == 0:
+                self.times = np.arange(1, n_hours + 1, 1)
+            t = self.times
+            self.loading = q_dot
+
+            hp_eft, d_tb = self._simulate_detailed_fft(q_dot, t, g)
         else:
             raise ValueError("Only hybrid or hourly methods available.")
 
@@ -221,7 +304,12 @@ class GHE:
         return max(hp_eft), min(hp_eft)
 
     def size(
-        self, method: TimestepType, max_height: float, min_height: float, design_max_eft: float, design_min_eft: float
+        self,
+        method: TimestepType,
+        max_height: float,
+        min_height: float,
+        design_max_eft: float,
+        design_min_eft: float,
     ) -> None:
         # Size the ground heat exchanger
         def local_objective(h: float):

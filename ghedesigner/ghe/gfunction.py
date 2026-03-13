@@ -1,5 +1,6 @@
 import logging
 import warnings
+from copy import deepcopy
 from math import log
 
 import numpy as np
@@ -32,6 +33,8 @@ def calculate_g_function(
     pipe,
     grout,
     soil,
+    tilts=None,
+    orientations=None,
     boundary_condition="MIFT",
 ):
     match bhe_type:
@@ -48,7 +51,12 @@ def calculate_g_function(
 
     # setup options
     # none of these were ever used or even exposed for users to access them. hardcoding them here until needed.
-    solver = "equivalent"
+    if tilts is None or orientations is None:
+        solver = "equivalent"
+        tilts = 0.0
+        orientations = 0.0
+    else:
+        solver = "similarities"
     disp = False
     n_segments = 8
     end_length_ratio = 0.02
@@ -83,6 +91,8 @@ def calculate_g_function(
         r_out=r_outer,
         pipe_type_str=PyPipeType[pyg_pipe_type_map[bhe_type.name]].name,
         m_flow_network=m_flow_network,
+        tilt=tilts,
+        orientation=orientations,
     )
 
     g_func_vals = g_func.evaluate_g_function(time_values)
@@ -103,6 +113,8 @@ def calc_g_func_for_multiple_lengths(
     pipe,
     grout,
     soil,
+    tilts=None,
+    orientations=None,
 ):
     r_b_values = dict.fromkeys(h_values, r_b)
     g_lts_values = {}
@@ -125,11 +137,20 @@ def calc_g_func_for_multiple_lengths(
             pipe,
             grout,
             soil,
+            tilts=tilts,
+            orientations=orientations,
         ).tolist()
 
     # Initialize the gFunction object
     return GFunction(
-        b=b, r_b_values=r_b_values, d=depth, g_lts=g_lts_values, log_time=log_time, bore_locations=coordinates
+        b=b,
+        r_b_values=r_b_values,
+        d=depth,
+        g_lts=g_lts_values,
+        log_time=log_time,
+        bore_locations=coordinates,
+        bore_tilts=tilts,
+        bore_orientations=orientations,
     )
 
 
@@ -142,6 +163,8 @@ class GFunction:
         g_lts: dict,
         log_time: list,
         bore_locations: list,
+        bore_tilts: list,
+        bore_orientations: list,
     ) -> None:
         self.B: float = b  # a B spacing in the borefield
         # r_b (borehole radius) value keyed by height
@@ -152,6 +175,8 @@ class GFunction:
         self.log_time: list = log_time
         # (x, y) coordinates of boreholes
         self.bore_locations: list = bore_locations
+        self.bore_tilts = bore_tilts
+        self.bore_orientations = bore_orientations
         # self.time: dict = {}  # the time values in years
 
         # an interpolation table for B/H ratios, D, r_b (used in the method
@@ -274,3 +299,45 @@ class GFunction:
         """
         g_function_corrected = [g - log(rb_star / rb) for g in g_function]
         return g_function_corrected
+
+
+def merge_g_functions(g_func_mid: GFunction, g_func_max: GFunction):
+    # These checks are being removed for now to better allow for the current behavior of the GFunction
+    # object which is somewhat type agnostic regarding NumPy arrays/lists in its current usage.
+    # A slower check that works on NumPy arrays and lists could be implemented here, but it does not seem worth
+    # it at the moment.
+    # if g_func_mid.bore_locations != g_func_max.bore_locations:
+    #     raise ValueError("Borehole coordinates do not match, unable to merge")
+    # if g_func_mid.bore_tilts != g_func_max.bore_tilts:
+    #     raise ValueError("Borehole tilts do not match, unable to merge")
+    # if g_func_mid.bore_orientations != g_func_max.bore_orientations:
+    #     raise ValueError("Borehole orientations do not match, unable to merge")
+    if g_func_mid.B != g_func_max.B:
+        print("MID: ", g_func_mid.B)
+        print("Max: ", g_func_max.B)
+        raise ValueError("Borehole spacings do not match, unable to merge")
+    if g_func_mid.d != g_func_max.d:
+        raise ValueError("Borehole depths do not match, unable to merge")
+    # if g_func_mid.log_time != g_func_max.log_time:
+    #     raise ValueError("Borehole log times do not match, unable to merge")
+
+    new_r_b_values = deepcopy(g_func_mid.r_b_values)
+    new_g_lts = deepcopy(g_func_mid.g_lts)
+
+    for h, rb in g_func_max.r_b_values.items():
+        if h not in new_r_b_values:
+            new_r_b_values[h] = rb
+    for h, lts in g_func_max.g_lts.items():
+        if h not in new_g_lts:
+            new_g_lts[h] = lts
+
+    return GFunction(
+        b=g_func_mid.B,
+        r_b_values=new_r_b_values,
+        d=g_func_mid.d,
+        g_lts=new_g_lts,
+        log_time=g_func_mid.log_time,
+        bore_locations=g_func_mid.bore_locations,
+        bore_tilts=g_func_mid.bore_tilts,
+        bore_orientations=g_func_mid.bore_orientations,
+    )

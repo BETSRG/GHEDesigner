@@ -16,9 +16,11 @@ from ghedesigner.ghe.design.birectangle_constrained import (
     GeometricConstraintsBiRectangleConstrained,
 )
 from ghedesigner.ghe.design.bizoned import DesignBiZoned, GeometricConstraintsBiZoned
+from ghedesigner.ghe.design.drill_pad import DesignDrillPad, GeometricConstraintsDrillPad
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.design.rectangle import DesignRectangle, GeometricConstraintsRectangle
 from ghedesigner.ghe.design.rowwise import DesignRowWise, GeometricConstraintsRowWise
+from ghedesigner.ghe.design.titled_line import DesignTiltedLine, GeometricConstraintsTiltedLine
 from ghedesigner.ghe.gfunction import calculate_g_function
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
@@ -337,6 +339,58 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     flow_type=flow_type,
                     method=TimestepType.HYBRID,
                 )
+            case DesignGeomType.DRILLPAD:
+                drill_pad_geometry: GeometricConstraintsDrillPad = GeometricConstraintsDrillPad(
+                    nbh=geom["nbh"],
+                    radius=geom["radius"],
+                    tilt=geom["tilt"],
+                    ndp_min=geom["ndp_min"],
+                    ndp_max=geom["ndp_max"],
+                )
+                design = DesignDrillPad(
+                    flow_rate,
+                    self.pygfunction_borehole,
+                    self.fluid,
+                    self.pipe,
+                    self.grout,
+                    self.soil,
+                    1,
+                    end_month,
+                    max_eft,
+                    min_eft,
+                    max_height,
+                    min_height,
+                    continue_if_design_unmet,
+                    max_boreholes,
+                    drill_pad_geometry,
+                    ghe_loads,
+                    flow_type=flow_type,
+                    method=TimestepType.HYBRID,
+                )
+            case DesignGeomType.TILTEDLINE:
+                tilted_line_geometry: GeometricConstraintsTiltedLine = GeometricConstraintsTiltedLine(
+                    b=geom["b"], length=geom["length"], tilt=geom["tilt"]
+                )
+                design = DesignTiltedLine(
+                    flow_rate,
+                    self.pygfunction_borehole,
+                    self.fluid,
+                    self.pipe,
+                    self.grout,
+                    self.soil,
+                    1,
+                    end_month,
+                    max_eft,
+                    min_eft,
+                    max_height,
+                    min_height,
+                    continue_if_design_unmet,
+                    max_boreholes,
+                    tilted_line_geometry,
+                    ghe_loads,
+                    flow_type=flow_type,
+                    method=TimestepType.HYBRID,
+                )
             case _:
                 raise ValueError(f'DesignGeomType "{geom_type}" not supported')
 
@@ -344,8 +398,12 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         search = design.find_design()  # TODO: I wonder if it would simplify things to just return the GHE object
         search_time = time() - start_time
         found_ghe = cast(GHE, search.ghe)
-        found_ghe.compute_g_functions(min_height, max_height)
-        found_ghe.size(TimestepType.HYBRID, max_height, min_height, max_eft, min_eft)
+        if geom_type == DesignGeomType.TILTEDLINE:
+            found_ghe.compute_and_merge_g_functions(h_values=[max_height * 0.5])
+            found_ghe.size(TimestepType.HYBRID, max_height, max_height * 0.5, max_eft, min_eft)
+        else:
+            found_ghe.compute_and_merge_g_functions(h_values=[min_height])
+            found_ghe.size(TimestepType.HYBRID, max_height, min_height, max_eft, min_eft)
         return search, search_time, found_ghe
 
     def get_g_function(self, ghe_dict: dict, boundary_condition="MIFT") -> tuple[ndarray, ndarray, ndarray]:

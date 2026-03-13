@@ -1,6 +1,42 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-08/schema#",
   "$defs": {
+    "pad_centers": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "format": "Meters",
+      "description": "Array of x, y coordinate pairs defining the center of each drill pad."
+    },
+    "ndp_min": {
+      "type": "integer",
+      "minimum": 1,
+      "format": "-",
+      "description": "minimum number of drill pads"
+    },
+    "ndp_max": {
+      "type": "integer",
+      "minimum": 1,
+      "format": "-",
+      "description": "maximum number of drill pads"
+    },
+    "b": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Borehole-to-borehole spacing."
+    },
+    "nbh": {
+      "type": "number",
+      "minimum": 1,
+      "format": "Meters",
+      "description": "Number of boreholes per drill pad"
+    },
     "b_max": {
       "type": "number",
       "minimum": 0,
@@ -157,6 +193,18 @@
       "minimum": 0,
       "format": "Meters",
       "description": "Spacing between up/down legs of u-tube pipe, as measured from nearest outer surfaces of each pipe (o<-- s -->o)."
+    },
+    "tilt": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Radians",
+      "description": "Tilt angle of borehole from vertical."
+    },
+    "radius": {
+      "type": "number",
+      "minimum": 0,
+      "format": "Meters",
+      "description": "Radius of each drill pad"
     },
     "width": {
       "type": "number",
@@ -586,7 +634,9 @@
                   "BIZONEDRECTANGLE",
                   "NEARSQUARE",
                   "RECTANGLE",
-                  "ROWWISE"
+                  "ROWWISE",
+                  "TILTEDLINE",
+                  "DRILLPAD"
                 ],
                 "description": "Design algorithm specified."
               }
@@ -693,10 +743,7 @@
                     "$ref": "#/$defs/length"
                   },
                   "b": {
-                    "type": "number",
-                    "minimum": 0,
-                    "format": "Meters",
-                    "description": "Borehole-to-borehole spacing."
+                    "$ref": "#/$defs/b"
                   }
                 },
                 "required": ["length", "b", "method"],
@@ -788,6 +835,48 @@
                   "method"
                 ],
                 "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "method": {
+                    "const": "TILTEDLINE"
+                  },
+                  "length": {
+                    "$ref": "#/$defs/length"
+                  },
+                  "b": {
+                    "$ref": "#/$defs/b"
+                  },
+                  "tilt": {
+                    "$ref": "#/$defs/tilt"
+                  }
+                },
+                "required": ["length", "b", "tilt", "method"],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "method": {
+                    "const": "DRILLPAD"
+                  },
+                  "radius": {
+                    "$ref": "#/$defs/radius"
+                  },
+                  "nbh": {
+                    "$ref": "#/$defs/nbh"
+                  },
+                  "tilt": {
+                    "$ref": "#/$defs/tilt"
+                  },
+                  "ndp_min": {
+                    "$ref": "#/$defs/ndp_min"
+                  },
+                  "ndp_max": {
+                    "$ref": "#/$defs/ndp_max"
+                  }
+                },
+                "required": ["method", "nbh", "radius", "tilt"],
+                "additionalProperties": false
               }
             ]
           },
@@ -864,7 +953,7 @@
         },
         "timestep": {
           "type": "string",
-          "enum": ["HYBRID", "HOURLY"],
+          "enum": ["HYBRID", "HOURLY", "Hourly_FFT"],
           "default": "HYBRID",
           "description": "This field is currently unused. Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently available."
         }
