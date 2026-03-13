@@ -168,6 +168,38 @@ class GHE:
 
         return hp_eft, delta_tb
 
+    def _simulate_detailed_fft(self, q_dot: np.ndarray, time_values: np.ndarray, g: interp1d):
+        # Perform a detailed simulation based on a numpy array of heat rejection
+        # rates, Q_dot (Watts) where each load is applied at the time_value
+        # (seconds). The g-function can interpolate.
+        # Source: Chapter 2 of Advances in Ground Source Heat Pumps
+
+        n = q_dot.size
+
+        ts = self.bhe_eq.t_s  # (-)
+        two_pi_k = TWO_PI * self.bhe.soil.k  # (W/m.K)
+        h = self.bhe.borehole.H  # (meters)
+        tg = self.bhe.soil.ugt  # (Celsius)
+        rb = self.bhe.calc_effective_borehole_resistance()  # (m.K/W)
+        m_dot = self.bhe.m_flow_borehole  # (kg/s)
+        cp = self.bhe.fluid.cp  # (J/kg.s)
+
+        q_dot_b = q_dot / (float(self.nbh) * h)
+        q_dot_b_dt = np.zeros(n, dtype=float)
+        q_dot_b_dt[0] = q_dot_b[0]
+        q_dot_b_dt[1:] = q_dot_b[1:] - q_dot_b[:-1]
+        g_values = g(np.log((time_values * SEC_IN_HR) / ts))
+        convolution_length = 2 * n - 1
+        delta_tb = np.fft.irfft(
+            np.fft.rfft(q_dot_b_dt / two_pi_k, n=convolution_length) * np.fft.rfft(g_values, n=convolution_length),
+            n=convolution_length,
+        )[:n]
+        tb = tg + delta_tb
+        tf_bulk = tb + q_dot_b * rb
+        hp_eft = tf_bulk - q_dot_b * h / (2 * m_dot * cp)
+
+        return hp_eft.tolist(), delta_tb.tolist()
+
     def compute_g_functions(self, h_min: float, h_max: float):
         # Compute g-functions for a bracketed solution, based on min and max height
         self.gFunction = calc_g_func_for_multiple_lengths(
@@ -245,6 +277,24 @@ class GHE:
             self.loading = q_dot
 
             hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
+        elif method == TimestepType.HOURLY_FFT:
+            n_months = self.end_month - self.start_month + 1
+            n_hours = int(n_months / 12.0 * 8760.0)
+            q_dot = self.hourly_extraction_ground_loads
+            # How many times does q need to be repeated?
+            n_years = ceil(n_hours / 8760)
+            if len(q_dot) // 8760 < n_years:
+                q_dot = q_dot * n_years
+            else:
+                n_hours = len(q_dot)
+            q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
+            # print("Times:",self.times)
+            if len(self.times) == 0:
+                self.times = np.arange(1, n_hours + 1, 1)
+            t = self.times
+            self.loading = q_dot
+
+            hp_eft, d_tb = self._simulate_detailed_fft(q_dot, t, g)
         else:
             raise ValueError("Only hybrid or hourly methods available.")
 

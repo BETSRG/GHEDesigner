@@ -953,7 +953,7 @@
         },
         "timestep": {
           "type": "string",
-          "enum": ["HYBRID", "HOURLY"],
+          "enum": ["HYBRID", "HOURLY", "Hourly_FFT"],
           "default": "HYBRID",
           "description": "This field is currently unused. Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently available."
         }
