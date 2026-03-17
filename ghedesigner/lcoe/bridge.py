@@ -107,7 +107,7 @@ def run_lcoe(
 
 def _build_capex(cost_data: dict, q: GHEQuantities) -> list[CapexScheduleTS]:
     """
-    Combine unit-rate CAPEX (rate × GHEDesigner quantity) with fully-specified
+    Combine unit-rate CAPEX (rate * GHEDesigner quantity) with fully-specified
     fixed_capex items from the cost JSON.
     """
     items: list[CapexScheduleTS] = []
@@ -119,23 +119,17 @@ def _build_capex(cost_data: dict, q: GHEQuantities) -> list[CapexScheduleTS]:
             cashflow_t0=ur["drilling_currency_per_meter"] * q.total_drilling_m,
         ))
 
-    # TODO Currently, user must supply central loop and header pipe lengths - to be automatic with a future update
+    # TODO Currently, user must supply central loop length - to be taken from GHED sizing output in a future update
     if "central_loop_pipe_currency_per_meter" in ur and "central_loop_pipe_length_m" in ur:
         items.append(CapexScheduleTS(
             name="Central loop piping",
             cashflow_t0=ur["central_loop_pipe_currency_per_meter"] * ur["central_loop_pipe_length_m"],
         ))
-
+    # TODO Currently, user must supply header pipe length - to be taken from GHED sizing output in a future update
     if "ghe_header_pipe_currency_per_meter" in ur and "ghe_header_pipe_length_m" in ur:
         items.append(CapexScheduleTS(
             name="GHE header piping",
             cashflow_t0=ur["ghe_header_pipe_currency_per_meter"] * ur["ghe_header_pipe_length_m"],
-        ))
-
-    if "heat_pump_currency_per_unit" in ur:
-        items.append(CapexScheduleTS(
-            name="Heat pumps",
-            cashflow_t0=ur["heat_pump_currency_per_unit"] * q.n_heat_pumps,
         ))
 
     for item in cost_data.get("fixed_capex", []):

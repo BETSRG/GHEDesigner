@@ -9,19 +9,19 @@
     "central_loop_pipe_length_m": 150.0,
     "central_loop_pipe_currency_per_meter": 981.25,
     "ghe_header_pipe_length_m": 1,
-    "ghe_header_pipe_currency_per_meter": 1,
-    "heat_pump_currency_per_unit": 58867.0
+    "ghe_header_pipe_currency_per_meter": 1
   },
 
   "fixed_capex": [
-    { "name": "Earthworks - main pipeline network",                     "cashflow_t0":  136693.0 },
-    { "name": "Electricity supply to HP",                               "cashflow_t0":  123300.0 },
+    { "name": "Earthworks - main pipeline network",                    "cashflow_t0":  136693.0 },
+    { "name": "Electricity supply to HP",                              "cashflow_t0":  123300.0 },
+    { "name": "Heat Pumps (15 x 58,867 DKK",                            "cashflow_t0": 883005.0 },
     { "name": "Energy meters (15 x 3,120 DKK/unit)",                   "cashflow_t0":   46800.0 },
     { "name": "Excavation work - service lines (15 x 6,600 DKK)",      "cashflow_t0":   99000.0 },
     { "name": "Investment contribution (15 x -7,380 DKK)",             "cashflow_t0": -110700.0 },
     { "name": "Increased investment contribution (15 x -29,000 DKK)",  "cashflow_t0": -435000.0 },
     { "name": "Service line contribution (15 x -18,800 DKK)",          "cashflow_t0": -282000.0 },
-    { "name": "Construction preparation contribution",                  "cashflow_t0": -275360.0 }
+    { "name": "Construction preparation contribution",                 "cashflow_t0": -275360.0 }
   ],
 
   "opex_fixed": [
