@@ -6,14 +6,17 @@ Entry point
 -----------
     run_lcoe(ghe_objects, hp_objects, lcoe_json_path, output_directory)
 
-Output
-------
-    <output_directory>/LCOESummary.json
+Outputs
+-------
+    <output_directory>/SimulationSummary.txt  — LCOE section appended
+    <output_directory>/LCOESummary.csv        — full breakdown + amortization
 """
 
 from __future__ import annotations
 
+import csv
 import json
+import math
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -49,7 +52,8 @@ def run_lcoe(
     output_directory: Path,
 ) -> dict[str, Any]:
     """
-    Run LCOE analysis and write LCOESummary.json to output_directory.
+    Run LCOE analysis and append results to SimulationSummary.txt and write
+    LCOESummary.csv in output_directory.
 
     Parameters
     ----------
@@ -61,12 +65,13 @@ def run_lcoe(
     lcoe_json_path:
         Path to the user's LCOE cost JSON file.
     output_directory:
-        Directory where LCOESummary.json will be written (created if absent).
+        Directory where outputs will be written (created if absent).
 
     Returns
     -------
     dict
-        The full output object that was written to LCOESummary.json.
+        The result dict from evaluate_project_ts for the GHE system, plus an
+        optional "baseline" key if a baseline section was present.
     """
     with open(lcoe_json_path) as fh:
         cost_data: dict[str, Any] = json.load(fh)
@@ -77,27 +82,51 @@ def run_lcoe(
     steps_per_year: int = cost_data["steps_per_year"]
     T: int = years * steps_per_year
     rate: float = cost_data["real_discount_rate"]
+    currency: str = cost_data.get("currency", "currency")
 
     q = extract_quantities(ghe_objects, hp_objects)
 
-    ghe_inputs = _build_evaluate_inputs(cost_data, q, years, steps_per_year, T)
+    # Build GHE capex/debt separately so we hold references for amortization
+    ghe_capex = _build_capex(cost_data, q)
+    ghe_net = _net_capex_t0(ghe_capex)
+    ghe_debt = _build_debt(cost_data, ghe_net, years, steps_per_year)
+
+    ghe_inputs = _build_evaluate_inputs(
+        cost_data, q, ghe_capex, ghe_debt, years, steps_per_year, T
+    )
     ghe_result = evaluate_project_ts(**ghe_inputs)
+    # After evaluate_project_ts, ghe_debt[i].annuity is populated
 
     baseline_result: dict[str, Any] | None = None
+    baseline_debt: list[DebtScheduleTS] = []
     if "baseline" in cost_data:
-        baseline_inputs = _build_baseline_inputs(
+        _, baseline_debt, baseline_inputs = _build_baseline_inputs(
             cost_data["baseline"], q, years, steps_per_year, T,
             real_discount_rate=rate,
         )
         baseline_result = evaluate_project_ts(**baseline_inputs)
 
-    output = _build_output(cost_data, q, ghe_result, baseline_result)
-
     output_directory.mkdir(parents=True, exist_ok=True)
-    with open(output_directory / "LCOESummary.json", "w") as fh:
-        json.dump(output, fh, indent=2)
 
-    return output
+    # Append LCOE section to SimulationSummary.txt
+    txt_path = output_directory / "SimulationSummary.txt"
+    lcoe_text = _format_lcoe_text(
+        cost_data, q, ghe_result, ghe_debt, baseline_result, baseline_debt, currency
+    )
+    with open(txt_path, "a") as fh:
+        fh.write(lcoe_text)
+
+    # Write LCOESummary.csv
+    csv_rows = _lcoe_csv_rows(
+        cost_data, q, ghe_result, ghe_debt, baseline_result, baseline_debt, currency
+    )
+    with open(output_directory / "LCOESummary.csv", "w", newline="") as fh:
+        csv.writer(fh).writerows(csv_rows)
+
+    result: dict[str, Any] = {"ghe_system": ghe_result}
+    if baseline_result is not None:
+        result["baseline_system"] = baseline_result
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -223,14 +252,12 @@ def _price_paths(section: dict) -> dict:
 def _build_evaluate_inputs(
     cost_data: dict,
     q: GHEQuantities,
+    capex_ts: list[CapexScheduleTS],
+    debt_ts: list[DebtScheduleTS],
     years: int,
     steps_per_year: int,
     T: int,
 ) -> dict:
-    capex_ts = _build_capex(cost_data, q)
-    net = _net_capex_t0(capex_ts)
-    debt_ts = _build_debt(cost_data, net, years, steps_per_year)
-
     opex_fixed_ts = [
         OpexFixedTS(name=item["name"], series=item["series"])
         for item in cost_data.get("opex_fixed", [])
@@ -261,15 +288,13 @@ def _build_baseline_inputs(
     T: int,
     *,
     real_discount_rate: float,
-) -> dict:
+) -> tuple[list[CapexScheduleTS], list[DebtScheduleTS], dict]:
     """
     Baseline uses the same thermal loads as the GHE system (equal LCOx
     denominator for fair comparison) but its own cost structure.
 
-    No unit_rate_capex section — the baseline does not depend on GHEDesigner
-    sizing outputs.  Electricity for the baseline HP is zero; any baseline
-    electricity should be modelled via opex_variable (unit=MWh_heat/cool) or
-    aux_electric_kw.
+    Returns (capex_ts, debt_ts, evaluate_project_ts kwargs dict) so the caller
+    can hold references to the debt objects for amortization reporting.
     """
     aux_kw: float = baseline.get("aux_electric_kw", 0.0)
     hours_per_step = 8760.0 / steps_per_year
@@ -305,7 +330,7 @@ def _build_baseline_inputs(
         for item in baseline.get("opex_variable", [])
     ]
 
-    return {
+    inputs = {
         "years": years,
         "steps_per_year": steps_per_year,
         "real_discount_rate": real_discount_rate,
@@ -316,66 +341,173 @@ def _build_baseline_inputs(
         "loads_ts": loads_ts,
         "debt_ts": debt_ts or None,
     }
+    return capex_ts, debt_ts, inputs
 
 
 # ---------------------------------------------------------------------------
-# Output object builder
+# Amortization helper
 # ---------------------------------------------------------------------------
 
 
-def _fmt(value: float, units: str) -> dict[str, Any]:
-    return {"value": round(value, 4), "units": units}
+def _amortization_rows(
+    debt: DebtScheduleTS,
+) -> list[tuple[int, float, float, float, float]]:
+    """
+    Reconstruct the amortization schedule for a single loan.
+
+    Returns a list of (step, payment, interest, principal_paid, balance_end).
+    Relies on debt.annuity already being set (populated by build_cashflows
+    inside evaluate_project_ts).
+    """
+    r = debt.real_rate_step()
+    N = debt.years * debt.steps_per_year
+    repay_steps = max(N - debt.grace_steps, 0)
+
+    annuity = debt.annuity
+    if annuity is None and repay_steps > 0:
+        annuity = (
+            debt.principal * r / (1 - (1 + r) ** (-repay_steps))
+            if r != 0
+            else debt.principal / repay_steps
+        )
+
+    balance = debt.principal
+    rows: list[tuple[int, float, float, float, float]] = []
+
+    for t in range(N):
+        if t < debt.grace_steps:
+            interest = balance * r
+            principal_paid = 0.0
+            payment = interest
+        else:
+            loan_t = t - debt.grace_steps
+            if loan_t >= repay_steps:
+                break
+            interest = balance * r
+            if loan_t == repay_steps - 1:
+                principal_paid = balance
+                payment = interest + principal_paid
+            else:
+                payment = annuity  # type: ignore[assignment]
+                principal_paid = payment - interest
+            balance -= principal_paid
+
+        rows.append((t + 1, payment, interest, principal_paid, balance))
+
+    return rows
 
 
-def _build_output(
+# ---------------------------------------------------------------------------
+# Text output formatters
+# ---------------------------------------------------------------------------
+
+_SEP80 = "-" * 80
+
+
+def _amortization_text(debt: DebtScheduleTS) -> str:
+    rows = _amortization_rows(debt)
+    col_sep = "-" * 66
+    lines = [
+        f"Loan: {debt.name}",
+        f"  {'Year':>4} | {'Payment':>12} | {'Interest':>12} | {'Principal':>12} | {'Balance end':>13}",
+        f"  {col_sep}",
+    ]
+    for step, payment, interest, principal, balance in rows:
+        lines.append(
+            f"  {step:>4} | {payment:>12,.2f} | {interest:>12,.2f}"
+            f" | {principal:>12,.2f} | {balance:>13,.2f}"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _breakdown_text(label: str, result: dict, currency: str) -> str:
+    pv_service = result["PV_service_MWh"]
+    total = result["NPV_total_cost"]
+
+    def unit(npv: float) -> float:
+        return npv / pv_service if pv_service else math.nan
+
+    def share(npv: float) -> float:
+        return 100.0 * npv / total if total else math.nan
+
+    components = [
+        ("CAPEX",               result["NPV_capex"]),
+        ("OPEX fixed",          result["NPV_opex_fixed"]),
+        ("Electricity (total)", result["NPV_elec_total"]),
+        ("Other variable OPEX", result["NPV_opex_variable_other"]),
+        ("Financing",           result["NPV_financing"]),
+    ]
+
+    hdr = (
+        f"{'Component':<28} {'NPV [' + currency + ']':>15}"
+        f" {'[' + currency + '/MWh service]':>20} {'Share':>7}"
+    )
+    lines = [
+        f"=== {label}: LCOE breakdown (NPV basis) ===",
+        hdr,
+        _SEP80,
+    ]
+    for name, npv in components:
+        lines.append(
+            f"{name:<28} {npv:>15,.2f} {unit(npv):>20,.2f} {share(npv):>6.1f}%"
+        )
+    lines.append(_SEP80)
+    lines.append(
+        f"{'TOTAL (LCOE)':<28} {total:>15,.2f} {unit(total):>20,.2f} {'100.0%':>7}"
+    )
+    lines += [
+        "",
+        f"  LCOH:  {result['LCOH_(currency_per_MWh_heat)']:>12,.2f} {currency}/MWh_heat",
+        f"  LCOC:  {result['LCOC_(currency_per_MWh_cool)']:>12,.2f} {currency}/MWh_cool",
+        f"  LCOx:  {result['LCOx_total_(currency_per_MWh_service)']:>12,.2f} {currency}/MWh_service",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def _format_lcoe_text(
     cost_data: dict,
     q: GHEQuantities,
     ghe_result: dict,
+    ghe_debt: list[DebtScheduleTS],
     baseline_result: dict | None,
-) -> dict[str, Any]:
-    currency = cost_data.get("currency", "currency")
+    baseline_debt: list[DebtScheduleTS],
+    currency: str,
+) -> str:
+    lines = [
+        "",
+        "=" * 80,
+        "LCOE Analysis",
+        "=" * 80,
+        "",
+        "=== LCOE Parameters ===",
+        f"  Currency:            {currency}",
+        f"  Years:               {cost_data['years']}",
+        f"  Discount rate:       {cost_data['real_discount_rate'] * 100:.1f}%",
+        f"  Steps per year:      {cost_data['steps_per_year']}",
+        "",
+        "=== GHE Sizing Quantities ===",
+        f"  Total drilling:      {q.total_drilling_m:>12,.1f} m",
+        f"  Boreholes:           {q.n_boreholes:>12}",
+        f"  Heat pumps:          {q.n_heat_pumps:>12}",
+        f"  Heating (year 1):    {q.heat_MWh_yr1:>12,.1f} MWh",
+        f"  Cooling (year 1):    {q.cool_MWh_yr1:>12,.1f} MWh",
+        f"  HP elec heat (yr1):  {q.elec_heat_MWh_yr1:>12,.1f} MWh",
+        f"  HP elec cool (yr1):  {q.elec_cool_MWh_yr1:>12,.1f} MWh",
+        "",
+    ]
 
-    output: dict[str, Any] = {
-        "currency": currency,
-        "ghe_quantities": {
-            "total_drilling_m": _fmt(q.total_drilling_m, "m"),
-            "n_boreholes": q.n_boreholes,
-            "n_heat_pumps": q.n_heat_pumps,
-            "heat_MWh_yr1": _fmt(q.heat_MWh_yr1, "MWh"),
-            "cool_MWh_yr1": _fmt(q.cool_MWh_yr1, "MWh"),
-            "elec_heat_MWh_yr1": _fmt(q.elec_heat_MWh_yr1, "MWh"),
-            "elec_cool_MWh_yr1": _fmt(q.elec_cool_MWh_yr1, "MWh"),
-        },
-        "ghe_system": {
-            "LCOH": _fmt(ghe_result["LCOH_(currency_per_MWh_heat)"], f"{currency}/MWh_heat"),
-            "LCOC": _fmt(ghe_result["LCOC_(currency_per_MWh_cool)"], f"{currency}/MWh_cool"),
-            "LCOx_total": _fmt(
-                ghe_result["LCOx_total_(currency_per_MWh_service)"], f"{currency}/MWh_service"
-            ),
-            "NPV_total_cost": _fmt(ghe_result["NPV_total_cost"], currency),
-            "NPV_capex": _fmt(ghe_result["NPV_capex"], currency),
-            "NPV_opex": _fmt(ghe_result["NPV_opex"], currency),
-            "NPV_financing": _fmt(ghe_result["NPV_financing"], currency),
-            "PV_heat_MWh": _fmt(ghe_result["PV_heat_MWh"], "MWh"),
-            "PV_cool_MWh": _fmt(ghe_result["PV_cool_MWh"], "MWh"),
-            "PV_service_MWh": _fmt(ghe_result["PV_service_MWh"], "MWh"),
-        },
-    }
+    all_debt = [("GHE", d) for d in ghe_debt] + [("Baseline", d) for d in baseline_debt]
+    if all_debt:
+        lines.append("=== Amortization ===")
+        lines.append("")
+        for _, debt in all_debt:
+            lines.append(_amortization_text(debt))
+
+    lines.append(_breakdown_text("GHE System", ghe_result, currency))
 
     if baseline_result is not None:
-        output["baseline_system"] = {
-            "LCOH": _fmt(
-                baseline_result["LCOH_(currency_per_MWh_heat)"], f"{currency}/MWh_heat"
-            ),
-            "LCOC": _fmt(
-                baseline_result["LCOC_(currency_per_MWh_cool)"], f"{currency}/MWh_cool"
-            ),
-            "LCOx_total": _fmt(
-                baseline_result["LCOx_total_(currency_per_MWh_service)"],
-                f"{currency}/MWh_service",
-            ),
-            "NPV_total_cost": _fmt(baseline_result["NPV_total_cost"], currency),
-        }
+        lines.append(_breakdown_text("Baseline System", baseline_result, currency))
+
         delta_lcoh = (
             ghe_result["LCOH_(currency_per_MWh_heat)"]
             - baseline_result["LCOH_(currency_per_MWh_heat)"]
@@ -384,10 +516,110 @@ def _build_output(
             ghe_result["LCOx_total_(currency_per_MWh_service)"]
             - baseline_result["LCOx_total_(currency_per_MWh_service)"]
         )
-        output["comparison"] = {
-            "delta_LCOH": _fmt(delta_lcoh, f"{currency}/MWh_heat"),
-            "delta_LCOx": _fmt(delta_lcox, f"{currency}/MWh_service"),
-            "ghe_cheaper_than_baseline": delta_lcoh < 0.0,
-        }
+        cheaper = delta_lcoh < 0.0
+        lines += [
+            "=== Comparison ===",
+            f"  delta_LCOH (GHE - baseline):  {delta_lcoh:>+12,.2f} {currency}/MWh_heat",
+            f"  delta_LCOx (GHE - baseline):  {delta_lcox:>+12,.2f} {currency}/MWh_service",
+            "",
+        ]
 
-    return output
+    return "\n".join(lines) + "\n"
+
+
+# ---------------------------------------------------------------------------
+# CSV output
+# ---------------------------------------------------------------------------
+
+
+def _breakdown_csv_rows(
+    label: str,
+    result: dict,
+    debt: list[DebtScheduleTS],
+    currency: str,
+) -> list[list]:
+    rows: list[list] = []
+
+    # Amortization tables
+    for d in debt:
+        rows.append([f"Amortization: {d.name}"])
+        rows.append(["Year", "Payment", "Interest", "Principal", "Balance end"])
+        for step, payment, interest, principal, balance in _amortization_rows(d):
+            rows.append([step, f"{payment:.2f}", f"{interest:.2f}", f"{principal:.2f}", f"{balance:.2f}"])
+        rows.append([])
+
+    pv_service = result["PV_service_MWh"]
+    total = result["NPV_total_cost"]
+
+    rows.append([f"{label} LCOE Breakdown (NPV basis)"])
+    rows.append(["Component", f"NPV [{currency}]", f"Unit cost [{currency}/MWh service]", "Share [%]"])
+
+    components = [
+        ("CAPEX",               result["NPV_capex"]),
+        ("OPEX fixed",          result["NPV_opex_fixed"]),
+        ("Electricity (total)", result["NPV_elec_total"]),
+        ("Other variable OPEX", result["NPV_opex_variable_other"]),
+        ("Financing",           result["NPV_financing"]),
+    ]
+    for name, npv in components:
+        uc = npv / pv_service if pv_service else math.nan
+        sh = 100.0 * npv / total if total else math.nan
+        rows.append([name, f"{npv:.2f}", f"{uc:.2f}", f"{sh:.1f}"])
+
+    unit_total = total / pv_service if pv_service else math.nan
+    rows.append(["TOTAL", f"{total:.2f}", f"{unit_total:.2f}", "100.0"])
+    rows.append(["LCOH", f"{result['LCOH_(currency_per_MWh_heat)']:.2f}", f"{currency}/MWh_heat", ""])
+    rows.append(["LCOC", f"{result['LCOC_(currency_per_MWh_cool)']:.2f}", f"{currency}/MWh_cool", ""])
+    rows.append(["LCOx", f"{result['LCOx_total_(currency_per_MWh_service)']:.2f}", f"{currency}/MWh_service", ""])
+    rows.append([])
+    return rows
+
+
+def _lcoe_csv_rows(
+    cost_data: dict,
+    q: GHEQuantities,
+    ghe_result: dict,
+    ghe_debt: list[DebtScheduleTS],
+    baseline_result: dict | None,
+    baseline_debt: list[DebtScheduleTS],
+    currency: str,
+) -> list[list]:
+    rows: list[list] = []
+
+    # Parameters
+    rows.append(["Parameter", "Value"])
+    rows.append(["Currency", currency])
+    rows.append(["Years", cost_data["years"]])
+    rows.append(["Real discount rate", f"{cost_data['real_discount_rate'] * 100:.2f}%"])
+    rows.append(["Steps per year", cost_data["steps_per_year"]])
+    rows.append([])
+
+    # GHE quantities
+    rows.append(["GHE Sizing Quantities", ""])
+    rows.append(["Total drilling (m)", f"{q.total_drilling_m:.2f}"])
+    rows.append(["Boreholes", q.n_boreholes])
+    rows.append(["Heat pumps", q.n_heat_pumps])
+    rows.append(["Heating year 1 (MWh)", f"{q.heat_MWh_yr1:.2f}"])
+    rows.append(["Cooling year 1 (MWh)", f"{q.cool_MWh_yr1:.2f}"])
+    rows.append(["HP elec heat yr1 (MWh)", f"{q.elec_heat_MWh_yr1:.2f}"])
+    rows.append(["HP elec cool yr1 (MWh)", f"{q.elec_cool_MWh_yr1:.2f}"])
+    rows.append([])
+
+    rows += _breakdown_csv_rows("GHE System", ghe_result, ghe_debt, currency)
+
+    if baseline_result is not None:
+        rows += _breakdown_csv_rows("Baseline System", baseline_result, baseline_debt, currency)
+
+        delta_lcoh = (
+            ghe_result["LCOH_(currency_per_MWh_heat)"]
+            - baseline_result["LCOH_(currency_per_MWh_heat)"]
+        )
+        delta_lcox = (
+            ghe_result["LCOx_total_(currency_per_MWh_service)"]
+            - baseline_result["LCOx_total_(currency_per_MWh_service)"]
+        )
+        rows.append(["Comparison"])
+        rows.append(["delta_LCOH (GHE - baseline)", f"{delta_lcoh:+.2f}", f"{currency}/MWh_heat", ""])
+        rows.append(["delta_LCOx (GHE - baseline)", f"{delta_lcox:+.2f}", f"{currency}/MWh_service", ""])
+
+    return rows
