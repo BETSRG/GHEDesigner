@@ -6,12 +6,10 @@
 
   "unit_rate_capex": {
     "drilling_currency_per_meter": 797.46,
-    "borehole_pipe_currency_per_meter": 120.0,
     "central_loop_pipe_length_m": 150.0,
     "central_loop_pipe_currency_per_meter": 981.25,
     "ghe_header_pipe_length_m": 1,
     "ghe_header_pipe_currency_per_meter": 1,
-    "grout_currency_per_m3": 2500.0,
     "heat_pump_currency_per_unit": 58867.0
   },
 

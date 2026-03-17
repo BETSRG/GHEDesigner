@@ -119,11 +119,6 @@ def _build_capex(cost_data: dict, q: GHEQuantities) -> list[CapexScheduleTS]:
             cashflow_t0=ur["drilling_currency_per_meter"] * q.total_drilling_m,
         ))
 
-    if "borehole_pipe_currency_per_meter" in ur:
-        items.append(CapexScheduleTS(
-            name="Borehole piping",
-            cashflow_t0=ur["borehole_pipe_currency_per_meter"] * q.vertical_pipe_m,
-        ))
     # TODO Currently, user must supply central loop and header pipe lengths - to be automatic with a future update
     if "central_loop_pipe_currency_per_meter" in ur and "central_loop_pipe_length_m" in ur:
         items.append(CapexScheduleTS(
@@ -135,12 +130,6 @@ def _build_capex(cost_data: dict, q: GHEQuantities) -> list[CapexScheduleTS]:
         items.append(CapexScheduleTS(
             name="GHE header piping",
             cashflow_t0=ur["ghe_header_pipe_currency_per_meter"] * ur["ghe_header_pipe_length_m"],
-        ))
-
-    if "grout_currency_per_m3" in ur:
-        items.append(CapexScheduleTS(
-            name="Grouting",
-            cashflow_t0=ur["grout_currency_per_m3"] * q.grout_volume_m3,
         ))
 
     if "heat_pump_currency_per_unit" in ur:
@@ -357,8 +346,6 @@ def _build_output(
         "ghe_quantities": {
             "total_drilling_m": _fmt(q.total_drilling_m, "m"),
             "n_boreholes": q.n_boreholes,
-            "vertical_pipe_m": _fmt(q.vertical_pipe_m, "m"),
-            "grout_volume_m3": _fmt(q.grout_volume_m3, "m3"),
             "n_heat_pumps": q.n_heat_pumps,
             "heat_MWh_yr1": _fmt(q.heat_MWh_yr1, "MWh"),
             "cool_MWh_yr1": _fmt(q.cool_MWh_yr1, "MWh"),

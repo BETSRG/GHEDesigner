@@ -88,12 +88,11 @@ _UNIT_RATE_CAPEX = {
     "additionalProperties": False,
     "properties": {
         "drilling_currency_per_meter": {"type": "number", "minimum": 0.0},
-        "borehole_pipe_currency_per_meter": {"type": "number", "minimum": 0.0},
+        # User must supply pipe lengths (GHEDesigner does not compute network lengths)
         "central_loop_pipe_length_m": {"type": "number", "minimum": 0.0},
         "central_loop_pipe_currency_per_meter": {"type": "number", "minimum": 0.0},
         "ghe_header_pipe_length_m": {"type": "number", "minimum": 0.0},
         "ghe_header_pipe_currency_per_meter": {"type": "number", "minimum": 0.0},
-        "grout_currency_per_m3": {"type": "number", "minimum": 0.0},
         "heat_pump_currency_per_unit": {"type": "number", "minimum": 0.0},
     },
 }
