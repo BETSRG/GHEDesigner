@@ -5,12 +5,14 @@
   "real_discount_rate": 0.03,
 
   "unit_rate_capex": {
-    "drilling_per_meter": 797.46,
-    "vertical_pipe_per_meter": 120.0,
-    "horizontal_pipe_length_m": 150.0,
-    "horizontal_pipe_per_meter": 981.25,
-    "grout_per_m3": 2500.0,
-    "heat_pump_per_unit": 58867.0
+    "drilling_currency_per_meter": 797.46,
+    "borehole_pipe_currency_per_meter": 120.0,
+    "central_loop_pipe_length_m": 150.0,
+    "central_loop_pipe_currency_per_meter": 981.25,
+    "ghe_header_pipe_length_m": 1,
+    "ghe_header_pipe_currency_per_meter": 1,
+    "grout_currency_per_m3": 2500.0,
+    "heat_pump_currency_per_unit": 58867.0
   },
 
   "fixed_capex": [
@@ -53,7 +55,7 @@
   "debt": [
     {
       "name": "Fixed-rate construction loan",
-      "principal": null,
+      "principal": 811402,
       "nominal_rate_ann": 0.026,
       "years": 20,
       "steps_per_year": 1,
@@ -65,7 +67,7 @@
 
   "baseline": {
     "fixed_capex": [
-      { "name": "Gas boilers (15 x 45,000 DKK)",       "cashflow_t0": 675000.0 },
+      { "name": "Gas boilers (15 x 10,000 DKK)",       "cashflow_t0": 150000.0 },
       { "name": "Air-cooled chillers (15 x 30,000 DKK)", "cashflow_t0": 450000.0 }
     ],
     "opex_fixed": [
@@ -102,6 +104,16 @@
       }
     ],
     "aux_electric_kw": 2.0,
-    "debt": []
+    "debt": [
+    {
+      "name": "Fixed-rate construction loan",
+      "principal": 600000,
+      "nominal_rate_ann": 0.026,
+      "years": 20,
+      "steps_per_year": 1,
+      "grace_steps": 0,
+      "fees_t0": 0.0,
+      "inflation_ann": 0.0
+    }]
   }
 }

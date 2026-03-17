@@ -1,6 +1,6 @@
 """
 LCOE bridge: merges GHEDesigner sizing results with a user-supplied cost JSON
-and calls lcoe-ten's evaluate_project_ts to produce LCOH / LCOC / LCOx metrics.
+and calls lcoe-ten's evaluate_project_ts to produce LCOE metrics.
 
 Entry point
 -----------
@@ -113,34 +113,40 @@ def _build_capex(cost_data: dict, q: GHEQuantities) -> list[CapexScheduleTS]:
     items: list[CapexScheduleTS] = []
     ur: dict = cost_data.get("unit_rate_capex", {})
 
-    if "drilling_per_meter" in ur:
+    if "drilling_currency_per_meter" in ur:
         items.append(CapexScheduleTS(
             name="Drilling",
-            cashflow_t0=ur["drilling_per_meter"] * q.total_drilling_m,
+            cashflow_t0=ur["drilling_currency_per_meter"] * q.total_drilling_m,
         ))
 
-    if "vertical_pipe_per_meter" in ur:
+    if "borehole_pipe_currency_per_meter" in ur:
         items.append(CapexScheduleTS(
-            name="Vertical piping",
-            cashflow_t0=ur["vertical_pipe_per_meter"] * q.vertical_pipe_m,
+            name="Borehole piping",
+            cashflow_t0=ur["borehole_pipe_currency_per_meter"] * q.vertical_pipe_m,
         ))
-
-    if "horizontal_pipe_per_meter" in ur and "horizontal_pipe_length_m" in ur:
+    # TODO Currently, user must supply central loop and header pipe lengths - to be automatic with a future update
+    if "central_loop_pipe_currency_per_meter" in ur and "central_loop_pipe_length_m" in ur:
         items.append(CapexScheduleTS(
-            name="Horizontal piping",
-            cashflow_t0=ur["horizontal_pipe_per_meter"] * ur["horizontal_pipe_length_m"],
+            name="Central loop piping",
+            cashflow_t0=ur["central_loop_pipe_currency_per_meter"] * ur["central_loop_pipe_length_m"],
         ))
 
-    if "grout_per_m3" in ur:
+    if "ghe_header_pipe_currency_per_meter" in ur and "ghe_header_pipe_length_m" in ur:
+        items.append(CapexScheduleTS(
+            name="GHE header piping",
+            cashflow_t0=ur["ghe_header_pipe_currency_per_meter"] * ur["ghe_header_pipe_length_m"],
+        ))
+
+    if "grout_currency_per_m3" in ur:
         items.append(CapexScheduleTS(
             name="Grouting",
-            cashflow_t0=ur["grout_per_m3"] * q.grout_volume_m3,
+            cashflow_t0=ur["grout_currency_per_m3"] * q.grout_volume_m3,
         ))
 
-    if "heat_pump_per_unit" in ur:
+    if "heat_pump_currency_per_unit" in ur:
         items.append(CapexScheduleTS(
             name="Heat pumps",
-            cashflow_t0=ur["heat_pump_per_unit"] * q.n_heat_pumps,
+            cashflow_t0=ur["heat_pump_currency_per_unit"] * q.n_heat_pumps,
         ))
 
     for item in cost_data.get("fixed_capex", []):
