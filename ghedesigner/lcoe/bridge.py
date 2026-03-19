@@ -496,17 +496,22 @@ def _format_lcoe_text(
         "",
     ]
 
-    all_debt = [("GHE", d) for d in ghe_debt] + [("Baseline", d) for d in baseline_debt]
-    if all_debt:
-        lines.append("=== Amortization ===")
+    # GHE breakdown then GHE amortization
+    lines.append(_breakdown_text("GHE System", ghe_result, currency))
+    if ghe_debt:
+        lines.append("=== GHE System: Amortization ===")
         lines.append("")
-        for _, debt in all_debt:
+        for debt in ghe_debt:
             lines.append(_amortization_text(debt))
 
-    lines.append(_breakdown_text("GHE System", ghe_result, currency))
-
+    # Baseline breakdown then baseline amortization then comparison
     if baseline_result is not None:
         lines.append(_breakdown_text("Baseline System", baseline_result, currency))
+        if baseline_debt:
+            lines.append("=== Baseline System: Amortization ===")
+            lines.append("")
+            for debt in baseline_debt:
+                lines.append(_amortization_text(debt))
 
         delta_lcoh = (
             ghe_result["LCOH_(currency_per_MWh_heat)"]
@@ -516,7 +521,6 @@ def _format_lcoe_text(
             ghe_result["LCOx_total_(currency_per_MWh_service)"]
             - baseline_result["LCOx_total_(currency_per_MWh_service)"]
         )
-        cheaper = delta_lcoh < 0.0
         lines += [
             "=== Comparison ===",
             f"  delta_LCOH (GHE - baseline):  {delta_lcoh:>+12,.2f} {currency}/MWh_heat",
@@ -539,14 +543,6 @@ def _breakdown_csv_rows(
     currency: str,
 ) -> list[list]:
     rows: list[list] = []
-
-    # Amortization tables
-    for d in debt:
-        rows.append([f"Amortization: {d.name}"])
-        rows.append(["Year", "Payment", "Interest", "Principal", "Balance end"])
-        for step, payment, interest, principal, balance in _amortization_rows(d):
-            rows.append([step, f"{payment:.2f}", f"{interest:.2f}", f"{principal:.2f}", f"{balance:.2f}"])
-        rows.append([])
 
     pv_service = result["PV_service_MWh"]
     total = result["NPV_total_cost"]
@@ -572,6 +568,15 @@ def _breakdown_csv_rows(
     rows.append(["LCOC", f"{result['LCOC_(currency_per_MWh_cool)']:.2f}", f"{currency}/MWh_cool", ""])
     rows.append(["LCOx", f"{result['LCOx_total_(currency_per_MWh_service)']:.2f}", f"{currency}/MWh_service", ""])
     rows.append([])
+
+    # Amortization tables
+    for d in debt:
+        rows.append([f"Amortization: {d.name} for {label}"])
+        rows.append(["Year", "Payment", "Interest", "Principal", "Balance end"])
+        for step, payment, interest, principal, balance in _amortization_rows(d):
+            rows.append([step, f"{payment:.2f}", f"{interest:.2f}", f"{principal:.2f}", f"{balance:.2f}"])
+        rows.append([])
+
     return rows
 
 
