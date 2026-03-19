@@ -51,7 +51,7 @@ def run(input_file_path: Path, output_directory: Path, lcoe_input_path: Path | N
             continue  # no need for loads checks here, don't even add them to the contains_loads list
         if "loads" in ghe_dict:
             unsized_ghe_contains_loads.append(True)
-    all_ghe_has_loads = all(unsized_ghe_contains_loads)
+    all_ghe_has_loads = len(unsized_ghe_contains_loads) > 0 and all(unsized_ghe_contains_loads)
     no_ghe_has_loads = not any(unsized_ghe_contains_loads)
     building_input = "building" in full_inputs
     valid_load_source = all_ghe_has_loads ^ (building_input and no_ghe_has_loads)  # XOR because we don't want both
