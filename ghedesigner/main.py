@@ -43,18 +43,26 @@ def run(input_file_path: Path, output_directory: Path, lcoe_input_path: Path | N
         print("Bad input file version, right now we support these versions: 1")
         return 1
 
-    # Validate the load source, it should be a building object or a GHE with loads specified
-    # any GHE instances found with pre_designed will just be ignored since they don't need anything added
-    unsized_ghe_contains_loads = []
+    # Validate the load source. Valid scenarios:
+    #   1. All GHEs are pre_designed — no load source needed.
+    #   2. Every unsized GHE has its own "loads" key — building would be a duplicate source.
+    #   3. Building provides loads and no unsized GHE carries its own loads.
+    n_unsized = 0
+    n_unsized_with_loads = 0
     for _, ghe_dict in full_inputs["ground_heat_exchanger"].items():
-        if "pre_designed" in ghe_dict:
-            continue  # no need for loads checks here, don't even add them to the contains_loads list
-        if "loads" in ghe_dict:
-            unsized_ghe_contains_loads.append(True)
-    all_ghe_has_loads = all(unsized_ghe_contains_loads)
-    no_ghe_has_loads = not any(unsized_ghe_contains_loads)
+        if "pre_designed" not in ghe_dict:
+            n_unsized += 1
+            if "loads" in ghe_dict:
+                n_unsized_with_loads += 1
     building_input = "building" in full_inputs
-    valid_load_source = all_ghe_has_loads ^ (building_input and no_ghe_has_loads)  # XOR because we don't want both
+    if n_unsized == 0:
+        valid_load_source = True  # all pre_designed, no load source needed
+    elif n_unsized_with_loads == n_unsized:
+        valid_load_source = not building_input  # every GHE has loads; building would be a duplicate
+    elif n_unsized_with_loads == 0:
+        valid_load_source = building_input  # no GHE loads; building must provide them
+    else:
+        valid_load_source = False  # mixed: some unsized GHEs have loads, some don't
     if not valid_load_source:
         logger.warning("Bad load specified, need exactly one of: loads in each ghe, or building object")
 
