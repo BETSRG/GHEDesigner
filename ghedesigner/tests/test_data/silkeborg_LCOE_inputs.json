@@ -82,8 +82,8 @@
     "opex_variable": [
       {
         "name": "Natural gas (heating)",
-        "unit": "MWh_heat",
-        "rates_ts": [
+        "energy_unit": "MWh_heat",
+        "rates_per_unit_ts": [
           620.0, 620.0, 635.0, 635.0, 650.0,
           650.0, 650.0, 665.0, 665.0, 665.0,
           680.0, 680.0, 680.0, 695.0, 695.0,
@@ -92,8 +92,8 @@
       },
       {
         "name": "Electricity (chiller cooling)",
-        "unit": "MWh_cool",
-        "rates_ts": [
+        "energy_unit": "MWh_cool",
+        "rates_per_unit_ts": [
           1004.46, 1004.46, 936.46, 856.46,
           844.46, 844.46, 844.46, 844.46, 844.46, 844.46,
           844.46, 844.46, 844.46, 844.46, 844.46, 844.46,

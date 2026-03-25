@@ -47,12 +47,23 @@ _OPEX_FIXED_ITEM = {
 
 _OPEX_VARIABLE_ITEM = {
     "type": "object",
-    "required": ["name", "unit", "rates_ts"],
+    "required": ["name", "energy_unit", "rates_per_unit_ts"],
     "additionalProperties": False,
     "properties": {
         "name": {"type": "string"},
-        "unit": {"type": "string", "enum": ["MWh_heat", "MWh_cool", "MWh_elec"]},
-        "rates_ts": {"type": "array", "items": {"type": "number"}, "minItems": 1},
+        "energy_unit": {
+            "type": "string",
+            "enum": ["MWh_heat", "MWh_cool", "MWh_elec"],
+            "description": (
+                "Energy quantity that rates_per_unit_ts is multiplied against to compute cost. "
+                "Use 'MWh_elec' for electricity tariffs. "
+                "For fuel-based energy sources (natural gas, propane, district heat, etc.) "
+                "that are proportional to delivered heat or cooling, use 'MWh_heat' or "
+                "'MWh_cool' and set rates_per_unit_ts to the fuel price divided by the system's "
+                "thermal efficiency (e.g. gas_price / boiler_efficiency)."
+            ),
+        },
+        "rates_per_unit_ts": {"type": "array", "items": {"type": "number"}, "minItems": 1},
     },
 }
 
@@ -104,7 +115,17 @@ _BASELINE = {
     "properties": {
         "fixed_capex": {"type": "array", "items": _CAPEX_ITEM},
         "opex_fixed": {"type": "array", "items": _OPEX_FIXED_ITEM},
-        "opex_variable": {"type": "array", "items": _OPEX_VARIABLE_ITEM},
+        "opex_variable": {
+            "type": "array",
+            "items": _OPEX_VARIABLE_ITEM,
+            "description": (
+                "Variable operating costs scaled by an energy quantity. "
+                "This is the correct place to model fuel costs for baseline systems "
+                "(natural gas boiler, propane, district heating tariffs, etc.): "
+                "set unit to 'MWh_heat' and rates_per_unit_ts to the fuel price per MWh of "
+                "delivered heat, adjusted for the baseline system's thermal efficiency."
+            ),
+        },
         "electricity_price": _ELECTRICITY_PRICE,
         "aux_electric_kw": {"type": "number", "minimum": 0.0, "default": 0.0},
         "debt": {"type": "array", "items": _DEBT_ITEM},

@@ -257,7 +257,7 @@ def _assemble_input_data(
         for item in cost_data.get("opex_fixed", [])
     ]
     opex_variable_ts = [
-        OpexVariableTS(name=item["name"], unit=item["unit"], rates_ts=item["rates_ts"])
+        OpexVariableTS(name=item["name"], unit=item["energy_unit"], rates_ts=item["rates_per_unit_ts"])
         for item in cost_data.get("opex_variable", [])
     ]
 
@@ -320,7 +320,7 @@ def _build_baseline_inputs(
         for item in baseline.get("opex_fixed", [])
     ]
     opex_variable_ts = [
-        OpexVariableTS(name=item["name"], unit=item["unit"], rates_ts=item["rates_ts"])
+        OpexVariableTS(name=item["name"], unit=item["energy_unit"], rates_ts=item["rates_per_unit_ts"])
         for item in baseline.get("opex_variable", [])
     ]
 
