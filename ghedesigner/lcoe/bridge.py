@@ -8,7 +8,6 @@ Entry point
 
 Outputs
 -------
-    <output_directory>/SimulationSummary.txt  — LCOE section appended
     <output_directory>/LCOESummary.csv        — full breakdown + amortization
 """
 
@@ -52,8 +51,7 @@ def run_lcoe(
     output_directory: Path,
 ) -> dict[str, Any]:
     """
-    Run LCOE analysis and append results to SimulationSummary.txt and write
-    LCOESummary.csv in output_directory.
+    Run LCOE analysis and write LCOESummary.csv in output_directory.
 
     Parameters
     ----------
@@ -107,14 +105,6 @@ def run_lcoe(
         baseline_result = evaluate_project_ts(**baseline_inputs)
 
     output_directory.mkdir(parents=True, exist_ok=True)
-
-    # Append LCOE section to SimulationSummary.txt
-    txt_path = output_directory / "SimulationSummary.txt"
-    lcoe_text = _format_lcoe_text(
-        cost_data, q, ghe_result, ghe_debt, baseline_result, baseline_debt, currency
-    )
-    with open(txt_path, "a") as fh:
-        fh.write(lcoe_text)
 
     # Write LCOESummary.csv
     csv_rows = _lcoe_csv_rows(
@@ -462,74 +452,6 @@ def _breakdown_text(label: str, result: dict, currency: str) -> str:
         f"  LCOx:  {result['LCOx_total_(currency_per_MWh_service)']:>12,.2f} {currency}/MWh_service",
     ]
     return "\n".join(lines) + "\n"
-
-
-def _format_lcoe_text(
-    cost_data: dict,
-    q: GHEQuantities,
-    ghe_result: dict,
-    ghe_debt: list[DebtScheduleTS],
-    baseline_result: dict | None,
-    baseline_debt: list[DebtScheduleTS],
-    currency: str,
-) -> str:
-    lines = [
-        "",
-        "=" * 80,
-        "LCOE Analysis",
-        "=" * 80,
-        "",
-        "=== LCOE Parameters ===",
-        f"  Currency:            {currency}",
-        f"  Years:               {cost_data['years']}",
-        f"  Discount rate:       {cost_data['real_discount_rate'] * 100:.1f}%",
-        f"  Steps per year:      {cost_data['steps_per_year']}",
-        "",
-        "=== GHE Sizing Quantities ===",
-        f"  Total drilling:      {q.total_drilling_m:>12,.1f} m",
-        f"  Boreholes:           {q.n_boreholes:>12}",
-        f"  Heat pumps:          {q.n_heat_pumps:>12}",
-        f"  Heating (year 1):    {q.heat_MWh_yr1:>12,.1f} MWh",
-        f"  Cooling (year 1):    {q.cool_MWh_yr1:>12,.1f} MWh",
-        f"  HP elec heat (yr1):  {q.elec_heat_MWh_yr1:>12,.1f} MWh",
-        f"  HP elec cool (yr1):  {q.elec_cool_MWh_yr1:>12,.1f} MWh",
-        "",
-    ]
-
-    # GHE breakdown then GHE amortization
-    lines.append(_breakdown_text("GHE System", ghe_result, currency))
-    if ghe_debt:
-        lines.append("=== GHE System: Amortization ===")
-        lines.append("")
-        for debt in ghe_debt:
-            lines.append(_amortization_text(debt))
-
-    # Baseline breakdown then baseline amortization then comparison
-    if baseline_result is not None:
-        lines.append(_breakdown_text("Baseline System", baseline_result, currency))
-        if baseline_debt:
-            lines.append("=== Baseline System: Amortization ===")
-            lines.append("")
-            for debt in baseline_debt:
-                lines.append(_amortization_text(debt))
-
-        delta_lcoh = (
-            ghe_result["LCOH_(currency_per_MWh_heat)"]
-            - baseline_result["LCOH_(currency_per_MWh_heat)"]
-        )
-        delta_lcox = (
-            ghe_result["LCOx_total_(currency_per_MWh_service)"]
-            - baseline_result["LCOx_total_(currency_per_MWh_service)"]
-        )
-        lines += [
-            "=== Comparison ===",
-            f"  delta_LCOH (GHE - baseline):  {delta_lcoh:>+12,.2f} {currency}/MWh_heat",
-            f"  delta_LCOx (GHE - baseline):  {delta_lcox:>+12,.2f} {currency}/MWh_service",
-            "",
-        ]
-
-    return "\n".join(lines) + "\n"
-
 
 # ---------------------------------------------------------------------------
 # CSV output
