@@ -93,10 +93,10 @@ def run_lcoe(
     ghe_capex = _build_capex(cost_data, q) #creates a capex list by combining LCOEjson inputs and GHEdesigner sizing run inputs
     ghe_capex_t0_total = sum(c.cashflow_t0 for c in ghe_capex) #sum of t0 capex cashflows
 
-    #Build GHE debt
+    #Build GHE debt. returns debt schedule in a list format for input into LCOE-ten package
     ghe_debt = _build_debt(cost_data, ghe_capex_t0_total, years, steps_per_year)
 
-    ghe_inputs = _build_evaluate_inputs(
+    ghe_inputs = _assemble_input_data(
         cost_data, q, ghe_capex, ghe_debt, years, steps_per_year, T
     )
     ghe_result = evaluate_project_ts(**ghe_inputs)
@@ -243,7 +243,7 @@ def _price_paths(section: dict) -> dict:
     }
 
 
-def _build_evaluate_inputs(
+def _assemble_input_data(
     cost_data: dict,
     q: GHEQuantities,
     capex_ts: list[CapexScheduleTS],
@@ -336,57 +336,6 @@ def _build_baseline_inputs(
         "debt_ts": debt_ts or None,
     }
     return capex_ts, debt_ts, inputs
-
-
-# ---------------------------------------------------------------------------
-# Text output formatters
-# ---------------------------------------------------------------------------
-
-_SEP80 = "-" * 80
-
-
-def _breakdown_text(label: str, result: dict, currency: str) -> str:
-    pv_service = result["PV_service_MWh"]
-    total = result["NPV_total_cost"]
-
-    def unit(npv: float) -> float:
-        return npv / pv_service if pv_service else math.nan
-
-    def share(npv: float) -> float:
-        return 100.0 * npv / total if total else math.nan
-
-    components = [
-        ("CAPEX",               result["NPV_capex"]),
-        ("OPEX fixed",          result["NPV_opex_fixed"]),
-        ("Electricity (total)", result["NPV_elec_total"]),
-        ("Other variable OPEX", result["NPV_opex_variable_other"]),
-        ("Financing",           result["NPV_financing"]),
-    ]
-
-    hdr = (
-        f"{'Component':<28} {'NPV [' + currency + ']':>15}"
-        f" {'[' + currency + '/MWh service]':>20} {'Share':>7}"
-    )
-    lines = [
-        f"=== {label}: LCOE breakdown (NPV basis) ===",
-        hdr,
-        _SEP80,
-    ]
-    for name, npv in components:
-        lines.append(
-            f"{name:<28} {npv:>15,.2f} {unit(npv):>20,.2f} {share(npv):>6.1f}%"
-        )
-    lines.append(_SEP80)
-    lines.append(
-        f"{'TOTAL (LCOE)':<28} {total:>15,.2f} {unit(total):>20,.2f} {'100.0%':>7}"
-    )
-    lines += [
-        "",
-        f"  LCOH:  {result['LCOH_(currency_per_MWh_heat)']:>12,.2f} {currency}/MWh_heat",
-        f"  LCOC:  {result['LCOC_(currency_per_MWh_cool)']:>12,.2f} {currency}/MWh_cool",
-        f"  LCOx:  {result['LCOx_total_(currency_per_MWh_service)']:>12,.2f} {currency}/MWh_service",
-    ]
-    return "\n".join(lines) + "\n"
 
 # ---------------------------------------------------------------------------
 # CSV output
