@@ -71,23 +71,29 @@ def run_lcoe(
         The result dict from evaluate_project_ts for the GHE system, plus an
         optional "baseline" key if a baseline section was present.
     """
+    #open JSON containing LCOE information and load it in to cost_data dictionary
     with open(lcoe_json_path) as fh:
         cost_data: dict[str, Any] = json.load(fh)
 
+    #validate that the data types are correct
     validate_lcoe_input(cost_data)
 
+    #pull out the high level system properties from cost_data dictionary and assign to named variables
     years: int = cost_data["years"]
     steps_per_year: int = cost_data["steps_per_year"]
     T: int = years * steps_per_year
     rate: float = cost_data["real_discount_rate"]
     currency: str = cost_data.get("currency", "currency")
 
+    #pull in quantities of objects from GHEdesigner sizing run
     q = extract_quantities(ghe_objects, hp_objects)
 
-    # Build GHE capex/debt separately so we hold references for amortization
-    ghe_capex = _build_capex(cost_data, q)
-    ghe_net = _net_capex_t0(ghe_capex)
-    ghe_debt = _build_debt(cost_data, ghe_net, years, steps_per_year)
+    # Build GHE capex list and t0 cashflow
+    ghe_capex = _build_capex(cost_data, q) #creates a capex list by combining LCOEjson inputs and GHEdesigner sizing run inputs
+    ghe_capex_t0_total = sum(c.cashflow_t0 for c in ghe_capex) #sum of t0 capex cashflows
+
+    #Build GHE debt
+    ghe_debt = _build_debt(cost_data, ghe_capex_t0_total, years, steps_per_year)
 
     ghe_inputs = _build_evaluate_inputs(
         cost_data, q, ghe_capex, ghe_debt, years, steps_per_year, T
@@ -95,6 +101,7 @@ def run_lcoe(
     ghe_result = evaluate_project_ts(**ghe_inputs)
     # After evaluate_project_ts, ghe_debt[i].annuity is populated
 
+    #if a baseline is provided construct it for input to evaluate_project_ts
     baseline_result: dict[str, Any] | None = None
     baseline_debt: list[DebtScheduleTS] = []
     if "baseline" in cost_data:
@@ -162,11 +169,6 @@ def _build_capex(cost_data: dict, q: GHEQuantities) -> list[CapexScheduleTS]:
     return items
 
 
-def _net_capex_t0(capex_ts: list[CapexScheduleTS]) -> float:
-    """Sum of all t0 cash flows — used to fill null debt principals."""
-    return sum(c.cashflow_t0 for c in capex_ts)
-
-
 # ---------------------------------------------------------------------------
 # Debt helpers
 # ---------------------------------------------------------------------------
@@ -180,6 +182,7 @@ def _build_debt(
 ) -> list[DebtScheduleTS]:
     items: list[DebtScheduleTS] = []
     for d in section.get("debt", []):
+        #if no principle explicity provided, make principle equal to total capex at t0
         principal = net_capex if d.get("principal") is None else float(d["principal"])
         items.append(DebtScheduleTS(
             name=d["name"],
@@ -308,7 +311,7 @@ def _build_baseline_inputs(
         )
         for item in baseline.get("fixed_capex", [])
     ]
-    net = _net_capex_t0(capex_ts)
+    net = sum(c.cashflow_t0 for c in capex_ts)
     debt_ts = _build_debt(baseline, net, years, steps_per_year)
 
     opex_fixed_ts = [
