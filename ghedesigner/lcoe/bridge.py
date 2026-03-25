@@ -27,6 +27,7 @@ from lcoe_ten.cost_items import (
     OpexFixedTS,
     OpexVariableTS,
 )
+from lcoe_ten.helpers_debt import amortization_schedule
 from lcoe_ten.system_model import evaluate_project_ts
 
 from ghedesigner.lcoe.quantities import GHEQuantities, extract_quantities
@@ -338,79 +339,10 @@ def _build_baseline_inputs(
 
 
 # ---------------------------------------------------------------------------
-# Amortization helper
-# ---------------------------------------------------------------------------
-
-
-def _amortization_rows(
-    debt: DebtScheduleTS,
-) -> list[tuple[int, float, float, float, float]]:
-    """
-    Reconstruct the amortization schedule for a single loan.
-
-    Returns a list of (step, payment, interest, principal_paid, balance_end).
-    Relies on debt.annuity already being set (populated by build_cashflows
-    inside evaluate_project_ts).
-    """
-    r = debt.real_rate_step()
-    N = debt.years * debt.steps_per_year
-    repay_steps = max(N - debt.grace_steps, 0)
-
-    annuity = debt.annuity
-    if annuity is None and repay_steps > 0:
-        annuity = (
-            debt.principal * r / (1 - (1 + r) ** (-repay_steps))
-            if r != 0
-            else debt.principal / repay_steps
-        )
-
-    balance = debt.principal
-    rows: list[tuple[int, float, float, float, float]] = []
-
-    for t in range(N):
-        if t < debt.grace_steps:
-            interest = balance * r
-            principal_paid = 0.0
-            payment = interest
-        else:
-            loan_t = t - debt.grace_steps
-            if loan_t >= repay_steps:
-                break
-            interest = balance * r
-            if loan_t == repay_steps - 1:
-                principal_paid = balance
-                payment = interest + principal_paid
-            else:
-                payment = annuity  # type: ignore[assignment]
-                principal_paid = payment - interest
-            balance -= principal_paid
-
-        rows.append((t + 1, payment, interest, principal_paid, balance))
-
-    return rows
-
-
-# ---------------------------------------------------------------------------
 # Text output formatters
 # ---------------------------------------------------------------------------
 
 _SEP80 = "-" * 80
-
-
-def _amortization_text(debt: DebtScheduleTS) -> str:
-    rows = _amortization_rows(debt)
-    col_sep = "-" * 66
-    lines = [
-        f"Loan: {debt.name}",
-        f"  {'Year':>4} | {'Payment':>12} | {'Interest':>12} | {'Principal':>12} | {'Balance end':>13}",
-        f"  {col_sep}",
-    ]
-    for step, payment, interest, principal, balance in rows:
-        lines.append(
-            f"  {step:>4} | {payment:>12,.2f} | {interest:>12,.2f}"
-            f" | {principal:>12,.2f} | {balance:>13,.2f}"
-        )
-    return "\n".join(lines) + "\n"
 
 
 def _breakdown_text(label: str, result: dict, currency: str) -> str:
@@ -498,8 +430,15 @@ def _breakdown_csv_rows(
     for d in debt:
         rows.append([f"Amortization: {d.name} for {label}"])
         rows.append(["Year", "Payment", "Interest", "Principal", "Balance end"])
-        for step, payment, interest, principal, balance in _amortization_rows(d):
-            rows.append([step, f"{payment:.2f}", f"{interest:.2f}", f"{principal:.2f}", f"{balance:.2f}"])
+        for row in amortization_schedule(
+            principal=d.principal,
+            nominal_rate_ann=d.nominal_rate_ann,
+            years=d.years,
+            steps_per_year=d.steps_per_year,
+            inflation_ann=d.inflation_ann,
+            grace_steps=d.grace_steps,
+        ):
+            rows.append([row["year"], f"{row['payment']:.2f}", f"{row['interest']:.2f}", f"{row['principal']:.2f}", f"{row['balance_end']:.2f}"])
         rows.append([])
 
     return rows
