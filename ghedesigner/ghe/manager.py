@@ -134,7 +134,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         )
         return ghe
 
-    def design_and_size_ghe(self, ghe_dict: dict, end_month: int, loads_override: list[float] | None = None):
+    def design_and_size_ghe(self, ghe_dict: dict, end_month: int, timestep: str = "HYBRID", loads_override: list[float] | None = None):
         ghe_loads = loads_override if loads_override else get_loads(ghe_dict["loads"])
 
         if (end_month % MONTHS_IN_YEAR) > 0:
@@ -159,6 +159,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         geometry_map = {geom.name: geom for geom in DesignGeomType}
         geom_type = geometry_map.get(geom["method"].upper())
         design: DesignBase
+        timestep_method = getattr(TimestepType, timestep.upper())
 
         match geom_type:
             case DesignGeomType.RECTANGLE:
@@ -187,7 +188,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     rect_geometry,
                     ghe_loads,
                     flow_type=flow_type,
-                    method=TimestepType.HYBRID,
+                    method= timestep_method,
                 )
             case DesignGeomType.NEARSQUARE:
                 near_sq_geometry: GeometricConstraintsNearSquare = GeometricConstraintsNearSquare(
