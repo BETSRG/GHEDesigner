@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "properties": {
+    "start_month": {
+      "type": "string",
+      "enum": [
+        "JANUARY",
+        "FEBRUARY",
+        "MARCH",
+        "APRIL",
+        "MAY",
+        "JUNE",
+        "JULY",
+        "AUGUST",
+        "SEPTEMBER",
+        "OCTOBER",
+        "NOVEMBER",
+        "DECEMBER"
+      ],
+      "default": "JANUARY",
+      "description": "This field is currently unused."
+    },
+    "num_months": {
+      "type": "number",
+      "minimum": 1,
+      "units": "months",
+      "description": "Number of months used in ground heat exchanger sizing."
+    },
+    "timestep": {
+      "type": "string",
+      "enum": [
+        "HYBRID",
+        "HOURLY",
+        "HOURLYNOLOADAGG"
+      ],
+      "default": "HYBRID",
+      "description": "Simulation timestep used in ground heat exchanger sizing.\n\nOptions include 'HYBRID', 'HOURLY', 'HOURLYNOLOADAGG'.\n\n'HYBRID' is the default choice due to its faster processing. \n\n However, the option 'HOURLY' enables hourly simulation with load aggregation algorithm\n\nwhen more accuracy in simulation is required."
+    }
+  },
+  "required": [
+    "num_months"
+  ]
+}
