@@ -16,21 +16,21 @@ from ghedesigner.utilities import combine_sts_lts, solve_root
 
 class GHE:
     def __init__(
-        self,
-        v_flow_system: float,
-        b_spacing: float,
-        bhe_type: PipeType,
-        fluid,
-        borehole: Borehole,
-        pipe: Pipe,
-        grout: Grout,
-        soil: Soil,
-        g_function: GFunction,
-        start_month: int,
-        end_month: int,
-        hourly_extraction_ground_loads: list,
-        field_type="N/A",
-        field_specifier="N/A",
+            self,
+            v_flow_system: float,
+            b_spacing: float,
+            bhe_type: PipeType,
+            fluid,
+            borehole: Borehole,
+            pipe: Pipe,
+            grout: Grout,
+            soil: Soil,
+            g_function: GFunction,
+            start_month: int,
+            end_month: int,
+            hourly_extraction_ground_loads: list,
+            field_type="N/A",
+            field_specifier="N/A",
     ) -> None:
         self.field_type = field_type
         self.fieldSpecifier = field_specifier
@@ -158,7 +158,6 @@ class GHE:
 
         return hp_eft, delta_tb
 
-
     # Source:
     # 1. Claesson, J., & Javed, S. (2012). A load-aggregation method to calculate extraction temperatures of
     # borehole heat exchangers. ASHRAE Transactions, 118(1), 530-540.
@@ -166,7 +165,7 @@ class GHE:
     # "methods for ground heat exchanger response-factor models." Science and Technology for the Built Environment 25,
     #  no. 8 (2019): 1036-1051.
 
-    def _time_ClaessonJaved(self, dt, tmax, growth=2.0, cells_per_level=5):
+    def _time_claesson_javed(self, dt, tmax, growth=2.0, cells_per_level=5):
         """
         Build time vector for CJ2012 aggregation (matches pygfunction utility).
         Cell width doubles every cells_per_level cells.
@@ -182,7 +181,7 @@ class GHE:
             time.append(t)
         return np.array(time)
 
-    def _build_ClaessonJaved_standard_data(
+    def _build_claesson_javed_standard_data(
             self,
             q_dot_hourly: np.ndarray,
             times: np.ndarray,
@@ -206,7 +205,8 @@ class GHE:
         if n_max == 0:
             return None
 
-        if times.size >= 2:
+        MIN_TIME_POINTS = 2
+        if times.size >= MIN_TIME_POINTS:
             dts = np.diff(times)
             if not np.allclose(dts, dts[0], rtol=0.0, atol=1e-12):
                 raise ValueError("Claesson Javed 2012 aggregation assumes uniform 'times' spacing (hours).")
@@ -220,7 +220,7 @@ class GHE:
         q_dot_b_watt = q_dot_hourly / float(self.nbh)
         q_dot = q_dot_b_watt / height
 
-        time_req_sec = self._time_ClaessonJaved(
+        time_req_sec = self._time_claesson_javed(
             dt_sec, tmax_sec, growth=growth, cells_per_level=cells_per_level
         )
         nt = len(time_req_sec)
@@ -257,7 +257,7 @@ class GHE:
             "g_s": g_s,
         }
 
-    def _run__build_ClaessonJaved_simulation(self, data):
+    def _run__build_claesson_javed_simulation(self, data):
         n_max = data["n_max"]
         nt = data["nt"]
 
@@ -293,10 +293,9 @@ class GHE:
 
         return list(hp_eft), list(delta_tb)
 
-
-    def simulate_dynamic_load_agg(self, q_dot_hourly, times: np.ndarray, g: interp1d ,growth: float = 2.0,
-                                  cells_per_level: int = 5,):
-        data = self._build_ClaessonJaved_standard_data(
+    def simulate_dynamic_load_agg(self, q_dot_hourly, times: np.ndarray, g: interp1d, growth: float = 2.0,
+                                  cells_per_level: int = 5 ):
+        data = self._build_claesson_javed_standard_data(
             q_dot_hourly=q_dot_hourly,
             times=times,
             g=g,
@@ -310,10 +309,7 @@ class GHE:
         if data["empty"]:
             return [np.nan] * data["n_max"], [np.nan] * data["n_max"]
 
-        return self._run__build_ClaessonJaved_simulation(data)
-
-
-
+        return self._run__build_claesson_javed_simulation(data)
 
     def compute_g_functions(self, h_min: float, h_max: float):
         # Compute g-functions for a bracketed solution, based on min and max height
@@ -351,7 +347,7 @@ class GHE:
             self.loading = q_dot
 
             hp_eft, d_tb = self._simulate_detailed(q_dot, time_values, g)
-        elif method == TimestepType.HOURLY or method == TimestepType.HOURLYNOLOADAGG:
+        elif method in {TimestepType.HOURLY, TimestepType.HOURLYNOLOADAGG}:
             n_months = self.end_month - self.start_month + 1
             n_hours = int(n_months / 12.0 * 8760.0)
             q_dot = self.hourly_extraction_ground_loads
@@ -382,7 +378,8 @@ class GHE:
         return max(hp_eft), min(hp_eft)
 
     def size(
-        self, method: TimestepType, max_height: float, min_height: float, design_max_eft: float, design_min_eft: float
+            self, method: TimestepType, max_height: float, min_height: float, design_max_eft: float,
+            design_min_eft: float
     ) -> None:
         # Size the ground heat exchanger
         def local_objective(h: float):

@@ -134,7 +134,13 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         )
         return ghe
 
-    def design_and_size_ghe(self, ghe_dict: dict, end_month: int, timestep: str = "HYBRID", loads_override: list[float] | None = None):
+    def design_and_size_ghe(
+            self,
+            ghe_dict: dict,
+            end_month: int,
+            timestep: str = "HYBRID",
+            loads_override: list[float] | None = None,
+    ):
         ghe_loads = loads_override if loads_override else get_loads(ghe_dict["loads"])
 
         if (end_month % MONTHS_IN_YEAR) > 0:
