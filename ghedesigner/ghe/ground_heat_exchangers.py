@@ -205,8 +205,8 @@ class GHE:
         if n_max == 0:
             return None
 
-        MIN_TIME_POINTS = 2
-        if times.size >= MIN_TIME_POINTS:
+        min_time_points = 2
+        if times.size >= min_time_points:
             dts = np.diff(times)
             if not np.allclose(dts, dts[0], rtol=0.0, atol=1e-12):
                 raise ValueError("Claesson Javed 2012 aggregation assumes uniform 'times' spacing (hours).")
