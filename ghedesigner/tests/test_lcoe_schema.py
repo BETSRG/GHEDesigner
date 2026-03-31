@@ -6,7 +6,7 @@ Covers:
   - Each required field missing raises ValidationError
   - Wrong types raise ValidationError
   - Unknown keys raise ValidationError (additionalProperties: False)
-  - opex_variable unit enum enforcement (including old field name rates_ts)
+  - opex_variable unit enum enforcement
   - debt principal (explicit vs null)
   - baseline section structure
 """

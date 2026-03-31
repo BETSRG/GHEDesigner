@@ -96,13 +96,15 @@ def run_lcoe(
     #Build GHE debt. returns debt schedule in a list format for input into LCOE-ten package
     ghe_debt = _build_debt(cost_data, ghe_capex_t0_total, years, steps_per_year)
 
+    #Assembles the dictionary of inputs needed to run lcoe-ten package to get results
     ghe_inputs = _assemble_input_data(
         cost_data, q, ghe_capex, ghe_debt, years, steps_per_year, T
     )
-    ghe_result = evaluate_project_ts(**ghe_inputs)
-    # After evaluate_project_ts, ghe_debt[i].annuity is populated
 
-    #if a baseline is provided construct it for input to evaluate_project_ts
+    #calls evaluate_project_ts (imported from lcoe-ten) with ghe_inputs as arguments. returns results
+    ghe_result = evaluate_project_ts(**ghe_inputs)
+
+    #if a baseline is provided, construct it for input to evaluate_project_ts
     baseline_result: dict[str, Any] | None = None
     baseline_debt: list[DebtScheduleTS] = []
     if "baseline" in cost_data:

@@ -1,7 +1,7 @@
 """
 Tests for ghedesigner.lcoe.bridge.
 
-Organisation
+Organization
 ------------
 TestBuildCapex       — unit tests for _build_capex
 TestBuildDebt        — unit tests for _build_debt
