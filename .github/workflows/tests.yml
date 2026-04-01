@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -22,4 +22,10 @@ jobs:
       - name: Lint & Format
         run: uv run pre-commit run -a
       - name: Unit tests
-        run: uv run pytest -v -n auto
+        shell: pwsh
+        run: |
+          $pytestArgs = @("-v", "-n", "auto")
+          if ("${{ matrix.os }}" -eq "windows-latest" -and "${{ matrix.python-version }}" -eq "3.14") {
+            $pytestArgs = @("-v")
+          }
+          uv run pytest @pytestArgs
