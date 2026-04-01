@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "ghedesigner"
-version = "2.1.0"
+version = "2.1.1"
 description = "A ground heat exchanger design tool with the capability to select and size flexibly configured borehole fields that are customized for specific building and property constraints."
 readme = "README.md"
 license = "BSD-3-Clause"
