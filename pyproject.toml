@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv_build>=0.9.22,<0.10.0"]
+requires = ["uv_build>=0.9.22"]
 build-backend = "uv_build"
 
 [project]
@@ -15,7 +15,7 @@ dependencies = [
     "bhresist>=0.3",
     "click>=8.3.1",
     "jsonschema>=4.26.0",
-    "numpy>=2.2.6",
+    "numpy<2.4",
     "pygfunction>=2.3.1",
     "scipy>=1.15.3",
     "secondarycoolantprops>=1.4",
