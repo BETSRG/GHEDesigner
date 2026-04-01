@@ -1,10 +1,10 @@
 [build-system]
-requires = ["uv_build>=0.9.22,<0.10.0"]
+requires = ["uv_build>=0.11.0,<0.12"]
 build-backend = "uv_build"
 
 [project]
 name = "ghedesigner"
-version = "2.1.0"
+version = "2.1.1"
 description = "A ground heat exchanger design tool with the capability to select and size flexibly configured borehole fields that are customized for specific building and property constraints."
 readme = "README.md"
 license = "BSD-3-Clause"
@@ -15,7 +15,7 @@ dependencies = [
     "bhresist>=0.3",
     "click>=8.3.1",
     "jsonschema>=4.26.0",
-    "numpy>=2.2.6",
+    "numpy<2.4",
     "pygfunction>=2.3.1",
     "scipy>=1.15.3",
     "secondarycoolantprops>=1.4",
