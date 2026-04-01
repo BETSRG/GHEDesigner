@@ -18,7 +18,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           version: "0.9.22"
       - name: Install the project
-        run: uv sync --locked
+        run: uv sync --frozen --managed-python
       - name: Lint & Format
         run: uv run pre-commit run -a
       - name: Unit tests
