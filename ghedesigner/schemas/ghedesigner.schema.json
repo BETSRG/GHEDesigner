@@ -73,6 +73,16 @@
       "format": "Meters",
       "description": "Inner diameter of pipe."
     },
+    "max_eft": {
+     "type": "number",
+     "format": "Centigrade",
+     "description": "Maximum heat pump entering fluid temperature."
+    },
+    "min_eft": {
+      "type": "number",
+      "format": "Centigrade",
+      "description": "Minimum heat pump entering fluid temperature."
+    },
     "length": {
       "type": "number",
       "minimum": 0,
@@ -472,6 +482,12 @@
       "additionalProperties": {
         "type": "object",
         "properties": {
+         "max_eft": {
+              "$ref": "#/$defs/max_eft"
+            },
+          "min_eft": {
+            "$ref": "#/$defs/min_eft"
+          },
           "cooling_load": {
             "$ref": "#/$defs/load_inputs"
           },
@@ -490,6 +506,12 @@
               },
               "heating_load": {
                 "$ref": "#/$defs/load_inputs"
+              },
+              "max_eft": {
+                "$ref": "#/$defs/max_eft"
+              },
+              "min_eft": {
+                "$ref": "#/$defs/min_eft"
               }
             },
             "required": ["cooling_load", "heating_load"],
@@ -499,6 +521,12 @@
             "properties": {
               "total_load": {
                 "$ref": "#/$defs/load_inputs"
+              },
+              "max_eft": {
+                "$ref": "#/$defs/max_eft"
+              },
+              "min_eft": {
+                "$ref": "#/$defs/min_eft"
               }
             },
             "required": ["total_load"],
@@ -508,6 +536,12 @@
             "properties": {
               "cooling_load": {
                 "$ref": "#/$defs/load_inputs"
+              },
+              "max_eft": {
+                "$ref": "#/$defs/max_eft"
+              },
+              "min_eft": {
+                "$ref": "#/$defs/min_eft"
               }
             },
             "required": ["cooling_load"],
@@ -517,13 +551,19 @@
             "properties": {
               "heating_load": {
                 "$ref": "#/$defs/load_inputs"
+              },
+              "max_eft": {
+                "$ref": "#/$defs/max_eft"
+              },
+              "min_eft": {
+                "$ref": "#/$defs/min_eft"
               }
             },
             "required": ["heating_load"],
             "additionalProperties": false
           }
         ],
-        "additionalProperties": false
+        "additionalProperties": true
       }
     },
     "ground_heat_exchanger": {
@@ -1086,14 +1126,10 @@
             "type": "object",
             "properties": {
               "max_eft": {
-                "type": "number",
-                "format": "Centigrade",
-                "description": "Maximum heat pump entering fluid temperature."
+                "$ref": "#/$defs/max_eft"
               },
               "min_eft": {
-                "type": "number",
-                "format": "Centigrade",
-                "description": "Minimum heat pump entering fluid temperature."
+                "$ref": "#/$defs/min_eft"
               },
               "max_boreholes": {
                 "type": "number",

@@ -152,5 +152,14 @@ class BisectionZD(Bisection1D):
         )
         self.ghe.compute_g_functions(self.min_height, self.max_height)
         self.ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
-
+        if selection_key_key_outer == len(self.coordinates_domain_nested) - 1 and \
+            selection_key == len(self.coordinates_domain_nested[selection_key_outer]) - 1:
+            self.at_maximum_size = True
+        else:
+            self.at_maximum_size = False
+        if selection_key_key_outer == 0 and \
+            selection_key == 0:
+            self.at_minimum_size = True
+        else:
+            self.at_minimum_size = False
         return selection_key, selected_coordinates

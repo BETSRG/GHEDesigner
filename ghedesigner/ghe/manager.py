@@ -81,7 +81,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             del pipe_parameters["conductivity_outer"]
             self.pipe = Pipe.init_coaxial(**pipe_parameters)
         self.pygfunction_borehole = Borehole(100, borehole_buried_depth, borehole_radius, x=0.0, y=0.0)
-
+        self.bhe_type = pipe_arrangement_type
         self.ghe_geometry_set = False
         self.design_parameters_set = False
         self.flow_parameters_set = False
@@ -94,10 +94,10 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             | GeometricConstraintsBiZoned
         )
         self.geom_type: DesignGeomType | None
-        self.pre_designed_area: float
+        self.pre_designed_area: float | None = None
         self.pre_designed_locations: list[tuple[float, float]]
-        self.pre_designed_height: float
-        self.current_ghe: GHE
+        self.pre_designed_height: float | None = None
+        self.current_ghe: GHE = None
         self.continue_if_design_unmet: bool
         self.min_eft: float
         self.max_eft: float
@@ -106,6 +106,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.max_boreholes: int
         self.flow_type: FlowConfigType
         self.flow_rate: float
+        self.is_sizable = None
 
     @classmethod
     def init_from_dictionary(cls, ghe_dict: dict, fluid_inputs: dict | None = None) -> "GroundHeatExchanger":
@@ -162,10 +163,11 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
     def ghe_setup(self, ghe_dict):
 
         if "pre_designed" in ghe_dict:
+            self.is_sizable = False
             self.configure_geometry(ghe_dict["pre_designed"], is_pre_designed=True)
         else:
+            self.is_sizable = True
             self.configure_geometry(ghe_dict["geometric_constraints"], is_pre_designed=False)
-        if "pre_designed" not in ghe_dict:
             self.configure_design(ghe_dict["design"])
         self.configure_ghe_flow(ghe_dict)
 
@@ -261,6 +263,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.max_height = design_parameters["max_height"]
         self.min_height = design_parameters["min_height"]
         self.max_boreholes = design_parameters.get("max_boreholes")
+        self.design_parameters_set = True
 
     def configure_ghe_flow(self, ghe_dict: dict):
         flow_type_str = ghe_dict["flow_type"]
@@ -281,9 +284,9 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             raise ValueError("The flow argument should be either `borehole` or `system`.")
         return v_flow_system, m_flow_borehole
 
-    def initialize_pre_designed_ghe(self, start_month, end_month, hourly_extraction_ground_loads):
+    def initialize_pre_designed_ghe(self, start_month, end_month, hourly_extraction_ground_loads, log_time=eskilson_log_times()):
         v_flow_system, m_flow_borehole = self.retrieve_flow(self.pre_designed_locations, self.fluid.rho)
-
+        self.log_time = log_time
         self.pygfunction_borehole.H = self.pre_designed_height
         borehole = self.pygfunction_borehole
         fluid = self.fluid
@@ -495,6 +498,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         start_time = time()
         search = design.find_design()  # TODO: I wonder if it would simplify things to just return the GHE object
         search_time = time() - start_time
+        self.at_maximum_size = search.at_maximum_size
+        self.at_minimum_size = search.at_minimum_size
         found_ghe = cast(GHE, search.ghe)
         found_ghe.compute_g_functions(self.min_height, self.max_height)
         found_ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
@@ -514,7 +519,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                 # max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
                 area = self.geometric_constraint.length * self.geometric_constraint.width
             case DesignGeomType.NEARSQUARE:
-                area = self.geometric_constraint.length * self.geometric_constraint.width
+                area = self.geometric_constraint.length * self.geometric_constraint.length
             case DesignGeomType.BIRECTANGLE:
                 area = self.geometric_constraint.length * self.geometric_constraint.width
             case DesignGeomType.BIZONEDRECTANGLE:
@@ -536,9 +541,12 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
 
     def get_design_volume(self):
         area = self.get_design_area()
-        if not self.design_parameters_set:
+        if not self.design_parameters_set and self.pre_designed_height is None:
             raise ValueError("Design parameters must be known before the design volume can be determined.")
-        return area * self.max_height
+        elif self.pre_designed_height is not None:
+            return area * self.pre_designed_height
+        else:
+            return area * self.max_height
 
     def get_g_function(
         self, ghe_dict: (dict | None) = None, boundary_condition="MIFT"
