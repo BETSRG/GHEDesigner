@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from time import time
 from typing import cast
 
-from numpy import array, exp, ndarray
+from numpy import array, average, clip, exp, ndarray
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import DEG_TO_RAD, MONTHS_IN_YEAR
@@ -95,9 +95,10 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         )
         self.geom_type: DesignGeomType | None
         self.pre_designed_area: float | None = None
-        self.pre_designed_locations: list[tuple[float, float]]
+        self.pre_designed_locations: list[tuple[float, float]] | None = None
         self.pre_designed_height: float | None = None
         self.current_ghe: GHE = None
+        self.design = None
         self.continue_if_design_unmet: bool
         self.min_eft: float
         self.max_eft: float
@@ -284,7 +285,19 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             raise ValueError("The flow argument should be either `borehole` or `system`.")
         return v_flow_system, m_flow_borehole
 
-    def initialize_pre_designed_ghe(self, start_month, end_month, hourly_extraction_ground_loads, log_time=eskilson_log_times()):
+    def new_nbh_design(self, design_nbh):
+        design_nbh = clip(design_nbh, *self.design.get_bounds())
+        new_coords = self.design.closest_nbh(design_nbh)
+        self.pre_designed_locations = new_coords
+        self.pre_designed_height = self.max_height
+        self.initialize_pre_designed_ghe()
+
+    def average_bound_nbh(self):
+        return average(self.design.get_bounds())
+
+    def initialize_pre_designed_ghe(
+        self, log_time=eskilson_log_times()
+    ):
         v_flow_system, m_flow_borehole = self.retrieve_flow(self.pre_designed_locations, self.fluid.rho)
         self.log_time = log_time
         self.pygfunction_borehole.H = self.pre_designed_height
@@ -322,9 +335,9 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             grout,
             soil,
             g_function,
-            start_month,
-            end_month,
-            hourly_extraction_ground_loads,
+            0,
+            0,
+            [],
         )
 
     def design_and_size_ghe(
@@ -504,6 +517,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         found_ghe.compute_g_functions(self.min_height, self.max_height)
         found_ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
         self.current_ghe = found_ghe
+        self.search = search
+        self.design = design
         return search, search_time, found_ghe
 
     def get_design_area(self):

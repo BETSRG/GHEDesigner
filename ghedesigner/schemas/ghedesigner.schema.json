@@ -74,9 +74,9 @@
       "description": "Inner diameter of pipe."
     },
     "max_eft": {
-     "type": "number",
-     "format": "Centigrade",
-     "description": "Maximum heat pump entering fluid temperature."
+      "type": "number",
+      "format": "Centigrade",
+      "description": "Maximum heat pump entering fluid temperature."
     },
     "min_eft": {
       "type": "number",
@@ -482,9 +482,9 @@
       "additionalProperties": {
         "type": "object",
         "properties": {
-         "max_eft": {
-              "$ref": "#/$defs/max_eft"
-            },
+          "max_eft": {
+            "$ref": "#/$defs/max_eft"
+          },
           "min_eft": {
             "$ref": "#/$defs/min_eft"
           },

@@ -84,6 +84,7 @@ class DesignNearSquare(DesignBase):
         self.coordinates_domain, self.fieldDescriptors = square_and_near_square(
             1, number_of_boreholes, self.geometric_constraints.b
         )
+        self.borehole_lengths = [len(coords) for coords in self.coordinates_domain]
 
     def find_design(self, disp=False) -> Bisection1D:
         if disp:
@@ -113,3 +114,30 @@ class DesignNearSquare(DesignBase):
             field_type="near-square",
             load_years=self.load_years,
         )
+
+    def get_bounds(self):
+        return min(self.borehole_lengths), max(self.borehole_lengths)
+
+    def closest_nbh(self, desired_nbh):
+        l_idx = 0
+        if self.borehole_lengths[l_idx] == desired_nbh:
+            return self.coordinates_domain[l_idx]
+        r_idx = len(self.borehole_lengths) - 1
+        if self.borehole_lengths[r_idx] == desired_nbh:
+            return self.coordinates_domain[r_idx]
+        while True:
+            m_idx = int(0.5 * (l_idx + r_idx))
+            if self.borehole_lengths[m_idx] == desired_nbh:
+                return self.coordinates_domain[m_idx]
+            elif m_idx == l_idx or m_idx == r_idx:
+                if self.borehole_lengths[l_idx] > desired_nbh:
+                    return self.coordinates_domain[l_idx]
+                else:
+                    return self.coordinates_domain[r_idx]
+            else:
+                if self.borehole_lengths[m_idx] > desired_nbh:
+                    r_idx = m_idx
+                else:
+                    l_idx = m_idx
+
+

@@ -53,24 +53,26 @@ class GHE:
 
         # gFunction object
         self.gFunction = g_function
-        # Additional simulation parameters
-        self.start_month = start_month
-        self.end_month = end_month
 
-        # Hourly ground extraction loads
-        # Building cooling is negative, building heating is positive
-        self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
-        self.times: np.ndarray = np.empty((0,), dtype=np.float64)
-        self.loading: np.ndarray | None = None
+        if len(hourly_extraction_ground_loads) != 0:
+            # Additional simulation parameters
+            self.start_month = start_month
+            self.end_month = end_month
 
-        self.hybrid_load = HybridLoad(
-            self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
-        )
+            # Hourly ground extraction loads
+            # Building cooling is negative, building heating is positive
+            self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
+            self.times: np.ndarray = np.empty((0,), dtype=np.float64)
+            self.loading: np.ndarray | None = None
 
-        # List of heat pump exiting fluid temperatures
-        self.hp_eft: list[float] = []
-        # list of change in borehole wall temperatures
-        self.dTb: list[float] = []
+            self.hybrid_load = HybridLoad(
+                self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
+            )
+
+            # List of heat pump exiting fluid temperatures
+            self.hp_eft: list[float] = []
+            # list of change in borehole wall temperatures
+            self.dTb: list[float] = []
 
     def as_dict(self) -> dict:
         output = {

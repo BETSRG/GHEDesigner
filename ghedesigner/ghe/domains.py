@@ -1,4 +1,4 @@
-from math import ceil, floor, inf
+from math import ceil, floor, inf, sqrt
 from typing import cast
 
 from ghedesigner.ghe.coordinates import (
@@ -6,6 +6,7 @@ from ghedesigner.ghe.coordinates import (
     l_shape,
     lop_u,
     rectangle,
+    rectangle_adjusted_nbh,
     transpose_coordinates,
     zoned_rectangle,
 )
@@ -71,6 +72,24 @@ def square_and_near_square(lower: int, upper: int, b: float):
 
     return coordinates_domain, field_descriptors
 
+def square_and_near_square_adjusted_nbh(lower: int, upper: int, b: float, desired_nbh):
+    if lower < 1 or upper < 1:
+        raise ValueError("The lower and upper arguments must be positive integer values.")
+    if upper < lower:
+        raise ValueError("The lower argument should be less than or equal to the upper.")
+    if desired_nbh > upper * (upper + 1) or desired_nbh < lower * lower:
+        raise ValueError("Desired NBH is not possible with the upper and lower bounds.")
+    smaller_side_length = sqrt(desired_nbh)
+    if smaller_side_length % 1 == 0:
+        smaller_side_length = int(smaller_side_length)
+        return rectangle(smaller_side_length, smaller_side_length, b, b)
+    else:
+        smaller_side_length = int(smaller_side_length)
+        larger_side_length = smaller_side_length + 1
+        if smaller_side_length * larger_side_length == desired_nbh:
+            return rectangle(smaller_side_length, larger_side_length, b, b)
+        else:
+            return rectangle_adjusted_nbh(smaller_side_length, larger_side_length, b, b, desired_nbh)
 
 def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, disp: bool = False):
     # Make this work for the transpose

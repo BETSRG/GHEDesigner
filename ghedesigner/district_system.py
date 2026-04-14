@@ -1,8 +1,7 @@
-import copy
+import json
 from abc import ABC, abstractmethod
 from math import copysign
 from pathlib import Path
-import json
 
 import numpy as np
 import pandas as pd
@@ -12,7 +11,9 @@ from ghedesigner.enums import CentralLoopType, SimCompType, SourceSinkOpMode
 from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.media import Fluid
 from ghedesigner.utilities import get_loads, load_input_file, solve_root
+from scipy.optimize import Bounds, minimize
 
+BOREHOLES_PER_SQUARE_METER = 0.2
 
 class BaseSimComp(ABC):
     def __init__(self) -> None:
@@ -118,8 +119,16 @@ class GHX(BaseSimComp):
     MATRIX_ROWS = 4
     MATRIX_ROWS_FIXED_LOADS = 2
 
-    def __init__(self, ghe_id: str, ghe_data: dict, fluid: Fluid, loop_config: CentralLoopType, num_timesteps: int,
-                 sizing_end_month=240, fixed_loads=False):
+    def __init__(
+        self,
+        ghe_id: str,
+        ghe_data: dict,
+        fluid: Fluid,
+        loop_config: CentralLoopType,
+        num_timesteps: int,
+        sizing_end_month=240,
+        fixed_loads=False,
+    ):
         super().__init__()
         self.name = ghe_id
         self.comp_type = SimCompType.GROUND_HEAT_EXCHANGER
@@ -133,10 +142,14 @@ class GHX(BaseSimComp):
         if fixed_loads:
             self.convolution_completed = False
 
-        self.ghe_manager = GroundHeatExchanger.init_from_dictionary(ghe_data,
-                                                   {"fluid_name": fluid.name,
-                                                                "concentration_percent": fluid.concentration_percent,
-                                                                "temperature": fluid.temperature})
+        self.ghe_manager = GroundHeatExchanger.init_from_dictionary(
+            ghe_data,
+            {
+                "fluid_name": fluid.name,
+                "concentration_percent": fluid.concentration_percent,
+                "temperature": fluid.temperature,
+            },
+        )
         self.ghe_manager.ghe_setup(ghe_data)
         self.ghe_manager.continue_if_design_unmet = True
 
@@ -145,7 +158,7 @@ class GHX(BaseSimComp):
         self.split_ratio = None
 
         self.two_pi_k_recip = 1.0 / (TWO_PI * self.ghe_manager.soil.k)
-        self.time_array = np.arange(1, self.num_timesteps + 1)
+        self.time_array = np.arange(0, self.num_timesteps + 1)
 
         self.num_timesteps = num_timesteps
         self.history_terms, self.total_values_ghe, self.q_ghe = (
@@ -178,7 +191,7 @@ class GHX(BaseSimComp):
             self.ghe_designed = False
 
     def can_be_resized(self, upsize=True):
-        if (upsize and not self.ghe_manager.at_maximum_size) or  (not upsize and not self.ghe_manager.at_minimum_size):
+        if (upsize and not self.ghe_manager.at_maximum_size) or (not upsize and not self.ghe_manager.at_minimum_size):
             return True
         else:
             return False
@@ -186,15 +199,19 @@ class GHX(BaseSimComp):
     def design_new_ghe(self, load_profile, max_eft, min_eft):
         if not self.ghe_manager.is_sizable:
             self.ghe_designed = True
-            self.ghe_manager.initialize_pre_designed_ghe(1, self.sizing_end_month, load_profile)
+            self.ghe_manager.initialize_pre_designed_ghe()
             self.borefield_coordinates = self.ghe_manager.pre_designed_locations
         else:
             self.ghe_designed = True
             self.ghe_manager.max_eft = max_eft
             self.ghe_manager.min_eft = min_eft
-            self.search, self.search_time, _ = \
-            self.ghe_manager.design_and_size_ghe(self.sizing_end_month, loads_override=load_profile)
+            self.search, self.search_time, _ = self.ghe_manager.design_and_size_ghe(
+                self.sizing_end_month, loads_override=load_profile
+            )
             self.borefield_coordinates = self.ghe_manager.current_ghe.gFunction.bore_locations
+
+    def update_ghe_design(self, desired_nbh):
+        self.ghe_manager.new_nbh_design(desired_nbh)
 
     def update_ghe_parameters(self):
         if not self.ghe_designed:
@@ -246,7 +263,7 @@ class GHX(BaseSimComp):
 
         # Compute dimensionless time for all indices from 1 to i-1
         indices = np.arange(1, idx_timestep)
-        dim_less_time = np.log((time_n - self.time_array[indices - 1]) / (self.ts / SEC_IN_HR))
+        dim_less_time = np.log((time_n - self.time_array[indices]) / (self.ts / SEC_IN_HR))
 
         # Compute contributions from all previous steps
         delta_q_ghe = (q_ghe[indices] - q_ghe[indices - 1]) * self.two_pi_k_recip
@@ -267,7 +284,7 @@ class GHX(BaseSimComp):
     def generate_matrix_fixed_loads(self, m_loop, idx_timestep, load_profile=None):
 
         if not self.convolution_completed:
-            assert(load_profile is not None)
+            assert load_profile is not None
             n = load_profile.size
             convolution_length = 2 * n - 1
             time_values = np.log((self.time_array[1:] * SEC_IN_HR) / self.ts)
@@ -276,7 +293,8 @@ class GHX(BaseSimComp):
             q_dot_b_dt[0] = load_profile[0]
             q_dot_b_dt[1:] = load_profile[1:] - load_profile[:-1]
             delta_tb = np.fft.irfft(
-                np.fft.rfft(q_dot_b_dt * self.two_pi_k_recip, n=convolution_length) * np.fft.rfft(g_values, n=convolution_length),
+                np.fft.rfft(q_dot_b_dt * self.two_pi_k_recip, n=convolution_length)
+                * np.fft.rfft(g_values, n=convolution_length),
                 n=convolution_length,
             )[:n]
             self.t_mean = self.ghe_manager.soil.ugt + delta_tb + load_profile * self.bh_effective_resist
@@ -290,7 +308,7 @@ class GHX(BaseSimComp):
             mass_flow_ghe = m_loop * self.split_ratio
 
             # m_ghe * (T_out - T_in) = m_loop * (T_mix_out - T_in) assuming constant c_p
-            row_1[self.row_index] = (m_loop - mass_flow_ghe)
+            row_1[self.row_index] = m_loop - mass_flow_ghe
             row_1[self.row_index + 1] = mass_flow_ghe
             row_1[self.downstream_index] = -m_loop
             rhs_1 = 0.0
@@ -348,7 +366,7 @@ class Building(BaseSimComp):
         fluid: Fluid,
         loop_config: CentralLoopType,
         num_timesteps: int,
-        constant_cop=False
+        constant_cop=False,
     ):
         super().__init__()
         self.name = bldg_id
@@ -358,7 +376,6 @@ class Building(BaseSimComp):
         self.constant_cop = constant_cop
         if constant_cop:
             self.loads = None
-
 
         self.fluid = fluid
         self.loop_config = loop_config
@@ -397,20 +414,8 @@ class Building(BaseSimComp):
         self.power_circ_pump = np.zeros(self.num_timesteps, dtype=float)
 
     def generate_ghe_load_estimate(self, ugt, beta=0.1):
-        min_eft = self.min_eft
-        max_eft = self.max_eft
-        loads = np.zeros(self.num_timesteps, dtype=float)
-        if self.cooling_exists:
-            cooling_temp = ((1 - beta) * max_eft + beta * ugt) / 2.0
-            q_rej_ratio = self.hp_clg.a_clg * cooling_temp * cooling_temp + self.hp_clg.b_clg * cooling_temp + \
-                          self.hp_clg.c_clg
-            loads -= q_rej_ratio * self.clg_vals
-        if self.heating_exists:
-            heating_temp = ((1 - beta) * min_eft + beta * ugt) / 2.0
-            q_extr_ratio = self.hp_htg.a_htg * heating_temp * heating_temp + self.hp_htg.b_htg * heating_temp + \
-                          self.hp_htg.c_htg
-            loads += q_extr_ratio * self.htg_vals
-        return loads
+        self.generate_constant_cop_loads(ugt, beta=beta)
+        return self.loads
 
     def get_excess_temperature(self):
         max_temp = np.max(self.t_in)
@@ -487,13 +492,15 @@ class Building(BaseSimComp):
         self.loads = np.zeros(self.num_timesteps, dtype=float)
         if self.cooling_exists:
             cooling_temp = ((1 - beta) * max_eft + beta * ugt) / 2.0
-            q_rej_ratio = self.hp_clg.a_clg * cooling_temp * cooling_temp + self.hp_clg.b_clg * cooling_temp + \
-                          self.hp_clg.c_clg
+            q_rej_ratio = (
+                self.hp_clg.a_clg * cooling_temp * cooling_temp + self.hp_clg.b_clg * cooling_temp + self.hp_clg.c_clg
+            )
             self.loads -= q_rej_ratio * self.clg_vals
         if self.heating_exists:
             heating_temp = ((1 - beta) * min_eft + beta * ugt) / 2.0
-            q_extr_ratio = self.hp_htg.a_htg * heating_temp * heating_temp + self.hp_htg.b_htg * heating_temp + \
-                           self.hp_htg.c_htg
+            q_extr_ratio = (
+                self.hp_htg.a_htg * heating_temp * heating_temp + self.hp_htg.b_htg * heating_temp + self.hp_htg.c_htg
+            )
             self.loads += q_extr_ratio * self.htg_vals
 
     def generate_matrix_constant_cop(self, m_loop, idx_timestep):
@@ -567,7 +574,7 @@ class HPmodel:
 
 
 class GHEHPSystem:
-    def __init__(self, f_path_json: Path, constant_cop=True, fixed_loads=True):
+    def __init__(self, f_path_json: Path, constant_cop=True, fixed_loads=False):
         self.components: list[Building | GHX | SourceSinkHeatExchanger] = []
         self.nbh_total = None
         self.matrix_size = 0
@@ -581,6 +588,7 @@ class GHEHPSystem:
         self.loop_design_pressure_loss_per_meter = json_data["central_loop"]["design_pressure_loss"]
         self.constant_cop = constant_cop
         self.fixed_loads = fixed_loads
+        self.penalty_baseline = None
 
         fluid_data = json_data["fluid"]
         topology_data = json_data["topology"]
@@ -600,10 +608,8 @@ class GHEHPSystem:
         self.sim_years = json_data["simulation_control"]["simulation_years"]
         self.num_timesteps = self.sim_years * HOURS_IN_YEAR
         self.total_loads = np.zeros(self.num_timesteps, dtype=float)
-        self.previous_temp_adjustment = None
-        self.final_excess_temperature_adjustment = None
         self.final_excess_temperature = None
-        self.excess_temperature_adjustments = []
+        self.nbh_selections = []
         self.excess_temperatures = []
         self.load_profiles = []
         self.ghe_loads = None
@@ -612,6 +618,8 @@ class GHEHPSystem:
         self.coordinate_locations = {}
         self.nbh_values = []
         self.total_drilling_values = []
+        self.objective_function_values = []
+        self.previous_objective_function_evaluations = {}
 
         # get component names we need to build, validate they exist and are referenced correctly
         def get_comp_names(topology: dict, comp_list: dict, comp_type_to_check: SimCompType) -> list[str]:
@@ -642,7 +650,7 @@ class GHEHPSystem:
                     self.fluid,
                     self.loop_config,
                     self.num_timesteps,
-                    constant_cop=constant_cop
+                    constant_cop=constant_cop,
                 )
                 buildings.append(this_bldg)
 
@@ -663,11 +671,11 @@ class GHEHPSystem:
         ground_heat_exchangers: list[GHX] = []
         for ghx_id, ghe_data in ghe_data.items():
             if ghx_id.upper() in ghx_names:
-                this_ghx = GHX(ghx_id, ghe_data, self.fluid, self.loop_config, self.num_timesteps,
-                               fixed_loads=fixed_loads)
+                this_ghx = GHX(
+                    ghx_id, ghe_data, self.fluid, self.loop_config, self.num_timesteps, fixed_loads=fixed_loads
+                )
                 self.cp = this_ghx.cp
                 ground_heat_exchangers.append(this_ghx)
-
 
         self.num_ghx = len(ground_heat_exchangers)
         self.ghe_load_differences = []
@@ -692,19 +700,13 @@ class GHEHPSystem:
         self.pump_power_loop = np.zeros(self.num_timesteps)
 
         def get_bldg(name: str) -> Building | None:
-            return \
-                next((obj for obj in buildings if obj.name and obj.name.upper() == name.upper()), None)
-
+            return next((obj for obj in buildings if obj.name and obj.name.upper() == name.upper()), None)
 
         def get_ghx(name: str) -> GHX | None:
-            return \
-                next((obj for obj in ground_heat_exchangers if obj.name and obj.name.upper() == name.upper()), None)
-
+            return next((obj for obj in ground_heat_exchangers if obj.name and obj.name.upper() == name.upper()), None)
 
         def get_hx(name: str) -> SourceSinkHeatExchanger | None:
-            return \
-                next((obj for obj in heat_exchangers if obj.name and obj.name.upper() == name.upper()), None)
-
+            return next((obj for obj in heat_exchangers if obj.name and obj.name.upper() == name.upper()), None)
 
         for v in topology_data:
             comp_type = v["type"]
@@ -775,7 +777,7 @@ class GHEHPSystem:
                 average = np.average(current_ghe_loads)
                 pos_vals = np.where(current_ghe_loads > 0, current_ghe_loads, 0)
                 neg_vals = np.where(current_ghe_loads < 0, current_ghe_loads, 0)
-                new_differences.append(np.sum((pos_vals - neg_vals)) / average)
+                new_differences.append(np.sum(pos_vals - neg_vals) / average)
                 new_magnitudes.append(average)
             self.ghe_load_differences.append(new_differences)
             self.ghe_load_magnitudes.append(new_magnitudes)
@@ -788,15 +790,21 @@ class GHEHPSystem:
         for i, ghe in enumerate(self.ground_heat_exchangers):
             self.coordinate_locations[new_index][ghe.name] = ghe.borefield_coordinates
 
-    def size_system(self, max_iter=50, lower_bound=0.05, upper_bound=1.0, iteration_per_value=1,
-                    restart=False, max_ub_temperature_adjustment=30.0, min_ub_temperature_adjustment=30.0):
-
+    def size_system(
+        self,
+        max_iter=50,
+        number_of_restarts=0,
+        excess_temperature_tolerance=1e-2,
+        perform_exhaustive_search=True
+    ):
         # Perform initial sizing of GHEs
         average_ugt = 0
         total_design_volume = 0
         load_split = np.zeros(self.num_ghx, dtype=float)
+        self.penalty_baseline = 0
         for i, ghe in enumerate(self.ground_heat_exchangers):
             design_volume = ghe.ghe_manager.get_design_volume()
+            self.penalty_baseline += ghe.ghe_manager.get_design_area() * BOREHOLES_PER_SQUARE_METER
             average_ugt += ghe.ghe_manager.soil.ugt * design_volume
             total_design_volume += design_volume
             load_split[i] = design_volume
@@ -814,55 +822,93 @@ class GHEHPSystem:
             ghe.split_ratio = load_split[i]
             current_load = initial_load * ghe.split_ratio
             ugt = ghe.ghe_manager.soil.ugt
-            ghe.design_new_ghe(current_load, ugt + 0.5 * max_ub_temperature_adjustment,
-                               ugt - 0.5 * min_ub_temperature_adjustment)
+            ghe.design_new_ghe(
+                current_load, ugt + 5.0, ugt - 5.0
+            )
             initial_ghe_load.append(current_load)
             ghe.update_ghe_parameters()
         self.append_load(initial_load, do_ghe_loads=False)
         self.append_new_coordinates("0_0")
-        self.previous_ghe_loads = initial_ghe_load
         self.solve_system()
-        self.previous_temp_adjustment = 0.0
-        self.iteration_indices = []
         self.guess_idx = -1
-        def objective(excess_temp_adjustment):
-            # self.excess_temperature_adjustments.append(excess_temp_adjustment)
-            direction = copysign(1, excess_temp_adjustment - self.previous_temp_adjustment)
-            self.guess_idx += 1
-            for itx in range(iteration_per_value):
-                self.excess_temperature_adjustments.append(excess_temp_adjustment)
-                self.iteration_indices.append(itx)
-                if itx == 0 and restart:
-                    self.total_loads = initial_load
-                    self.ghe_loads = initial_ghe_load
-                    self.previous_ghe_loads = initial_ghe_load
-                else:
-                    self.get_updated_load_profile(based_on_nbh=False)
-                self.append_load(self.total_loads, do_ghe_loads=True)
-                for ghx, ghe in enumerate(self.sizable_ground_heat_exchangers):
-                    if ghe.can_be_resized(upsize=(direction == 1)):
-                        ugt = ghe.ghe_manager.soil.ugt
-                        ghe.design_new_ghe(self.ghe_loads[ghx], ugt + excess_temp_adjustment * max_ub_temperature_adjustment,
-                                           ugt - excess_temp_adjustment * min_ub_temperature_adjustment)
-                nbh_val = 0
-                total_drilling_val = 0.0
-                for ghe in self.ground_heat_exchangers:
-                    nbh_val += ghe.ghe_manager.current_ghe.nbh
-                    total_drilling_val += ghe.ghe_manager.current_ghe.nbh * ghe.ghe_manager.current_ghe.bhe.borehole.H
-                self.nbh_values.append(nbh_val)
-                self.total_drilling_values.append(total_drilling_val)
-                self.append_new_coordinates(f"{self.guess_idx}_{itx}")
-                for ghe in self.ground_heat_exchangers:
-                    ghe.update_ghe_parameters()
-                self.solve_system()
-                excess_temp = self.calculate_building_excess()
-                self.excess_temperatures.append(excess_temp)
-            self.previous_temp_adjustment = excess_temp_adjustment
-            return excess_temp
 
-        self.final_excess_temperature_adjustment = solve_root(0.0, objective, lower_bound, upper_bound,
-                                                              max_iter=max_iter, abs_tol=1.0e-3)
-        self.final_excess_temperature = objective(self.final_excess_temperature_adjustment)
+        design_nbhs = []
+        nbh_bounds = []
+        for ghe in self.sizable_ground_heat_exchangers:
+            design_nbhs.append(ghe.ghe_manager.average_bound_nbh())
+            nbh_bounds.append(ghe.ghe_manager.design.get_bounds())
+        initial_simplex = [[bound[0] for bound in nbh_bounds]]
+        number_of_sizable_ghes = len(self.sizable_ground_heat_exchangers)
+        for i in range(1, number_of_sizable_ghes + 1):
+            average_weights = np.random.rand(number_of_sizable_ghes)
+            vertex = []
+            for j in range(number_of_sizable_ghes):
+                vertex.append(nbh_bounds[j][0] * average_weights[j] +
+                              nbh_bounds[j][1] * (1 - average_weights[j]))
+            initial_simplex.append(vertex)
+        def objective(nbhs):
+            self.guess_idx += 1
+            nbhs = [int(nbh) for nbh in nbhs]
+            eval_key = "_".join([str(nbh) for nbh in nbhs])
+            self.nbh_selections.append(eval_key)
+            if eval_key in self.previous_objective_function_evaluations:
+                self.nbh_values.append(self.previous_objective_function_evaluations[eval_key]["NBH"])
+                self.total_drilling_values.append(self.previous_objective_function_evaluations[eval_key]["TD"])
+                self.excess_temperatures.append(self.previous_objective_function_evaluations[eval_key]["EXC"])
+                total_drilling_val = self.previous_objective_function_evaluations[eval_key]["OFE"]
+                self.objective_function_values.append(total_drilling_val)
+                return total_drilling_val
+            for i, nbh in enumerate(nbhs):
+                ghe = self.sizable_ground_heat_exchangers[i]
+                ghe.update_ghe_design(nbh)
+            nbh_val = 0
+            total_drilling_val = 0.0
+            for ghe in self.ground_heat_exchangers:
+                nbh_val += ghe.ghe_manager.current_ghe.nbh
+                total_drilling_val += ghe.ghe_manager.current_ghe.nbh * ghe.ghe_manager.current_ghe.bhe.borehole.H
+                ghe.update_ghe_parameters()
+            self.solve_system()
+            self.nbh_values.append(nbh_val)
+            self.total_drilling_values.append(total_drilling_val)
+            self.append_new_coordinates(f"{self.guess_idx}")
+            excess_temp = self.calculate_building_excess()
+            self.excess_temperatures.append(excess_temp)
+            penalty_val = 0.0
+            if excess_temp - excess_temperature_tolerance > 0:
+                penalty_val += self.penalty_baseline * (excess_temp + 1.0) ** 2
+            self.objective_function_values.append(total_drilling_val + penalty_val)
+            self.previous_objective_function_evaluations[eval_key] = {
+                "NBH": nbh_val,
+                "TD": total_drilling_val,
+                "EXC": excess_temp,
+                "OFE": total_drilling_val + penalty_val
+            }
+            return total_drilling_val + penalty_val
+
+        if perform_exhaustive_search:
+            x_range = np.arange(50, 250)
+            total = 200 * 200.0
+            sample_rate = 100
+            index = 0
+            for i in x_range:
+                for j in x_range:
+                    if index % sample_rate == 0:
+                        print(f"Percent Completed: {100 * index / total}")
+                    objective([i, j])
+                    index += 1
+
+        else:
+            for i in range(number_of_restarts + 1):
+                if i == 0:
+                    result = minimize(objective, design_nbhs, method='Nelder-Mead', bounds=nbh_bounds,
+                                      options={"xatol": 1.0,"initial_simplex": initial_simplex})
+                else:
+                    result = minimize(objective, design_nbhs, method='Nelder-Mead', bounds=nbh_bounds,
+                                      options={"xatol": 1.0})
+                design_nbhs = result.x
+                print(f"Finished Nelder-Mead Round: {i}; Solver Successful?: {result.success}")
+
+            final_total_drilling = objective(design_nbhs)
 
     def solve_system(self):
         if self.fixed_loads:
@@ -880,9 +926,7 @@ class GHEHPSystem:
             if isinstance(this_comp, GHX):
                 this_comp.split_ratio = this_comp.nbh / self.nbh_total
                 average_ugt += this_comp.ghe_manager.soil.ugt * this_comp.nbh / self.nbh_total
-            elif isinstance(this_comp, Building):
-                this_comp.cp = self.cp
-            elif isinstance(this_comp, SourceSinkHeatExchanger):
+            elif isinstance(this_comp, Building) or isinstance(this_comp, SourceSinkHeatExchanger):
                 this_comp.cp = self.cp
         for building in self.buildings:
             building.generate_constant_cop_loads(average_ugt)
@@ -939,9 +983,7 @@ class GHEHPSystem:
             if isinstance(this_comp, GHX):
                 this_comp.split_ratio = this_comp.nbh / self.nbh_total
                 average_ugt += this_comp.ghe_manager.soil.ugt * this_comp.nbh / self.nbh_total
-            elif isinstance(this_comp, Building):
-                this_comp.cp = self.cp
-            elif isinstance(this_comp, SourceSinkHeatExchanger):
+            elif isinstance(this_comp, Building) or isinstance(this_comp, SourceSinkHeatExchanger):
                 this_comp.cp = self.cp
 
         if self.constant_cop:
@@ -998,8 +1040,13 @@ class GHEHPSystem:
             * self.loop_length
         )
 
-    def create_output(self, output_path: Path, output_path_2: Path=None, output_path_load: Path=None,
-                      output_path_coordinates: Path=None):
+    def create_output(
+        self,
+        output_path: Path,
+        output_path_2: Path = None,
+        output_path_load: Path = None,
+        output_path_coordinates: Path = None,
+    ):
         output_data = pd.DataFrame()
         output_data.index.name = "Hour"
 
@@ -1062,14 +1109,11 @@ class GHEHPSystem:
         if output_path_2 is not None:
             output_data = pd.DataFrame()
             output_data.index.name = "Iteration"
-            output_data["Load Estimation Iterations"] = self.iteration_indices
-            output_data["Excess Temperature Adjustments (°C)"] = self.excess_temperature_adjustments
+            output_data["NBH Selections (-)"] = self.nbh_selections
             output_data["Excess Temperature (°C)"] = self.excess_temperatures
-            for i, ghe in enumerate(self.ground_heat_exchangers):
-                output_data["".join([ghe.name, "_Load_Differences"])] = [row[i] for row in self.ghe_load_differences]
-                output_data["".join([ghe.name, "_Load_Magnitudes"])] = [row[i] for row in self.ghe_load_magnitudes]
             output_data["NBH Total (-)"] = self.nbh_values
             output_data["Total Drilling (m)"] = self.total_drilling_values
+            output_data["Objective Function Value (m)"] = self.objective_function_values
             if not output_path_2.parent.exists():
                 output_path_2.parent.mkdir(parents=True)
             output_data.to_csv(output_path_2, float_format="%0.4f")

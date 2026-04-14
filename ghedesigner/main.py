@@ -119,11 +119,13 @@ def run(input_file_path: Path, output_directory: Path) -> int:
         system = GHEHPSystem(input_file_path)
         system.size_and_simulate()
 
-        if system.previous_temp_adjustment is not None:
-            system.create_output(output_directory / f"{input_file_path.stem}.csv",
-                                 output_path_2=output_directory / "Search_Summary.csv",
-                                 output_path_load=output_directory / "Loads.csv",
-                                 output_path_coordinates=output_directory / "coordinates.json")
+        if len(system.nbh_selections) != 0:
+            system.create_output(
+                output_directory / f"{input_file_path.stem}.csv",
+                output_path_2=output_directory / "Search_Summary.csv",
+                output_path_load=output_directory / "Loads.csv",
+                output_path_coordinates=output_directory / "coordinates.json",
+            )
             for ghe in system.sizable_ground_heat_exchangers:
                 search_object = ghe.search
                 search_time = ghe.search_time
