@@ -278,14 +278,6 @@ class ProcessLoads:
         for zone in self.zones:
             zone.convert_ground_hybrid_loads_to_HP_loads(self.common_time)
 
-    def run_hybrid_pipeline(self):
-        self.prepare_bhe_for_hybrid()
-        self.generate_hybrid_ground_loads()
-        self.generate_common_timegrid()
-        self.map_all_zones()
-        self.create_HP_hybrid_loads()
-        return self.get_hybrid_loads_for_district()
-
     def get_hybrid_loads_for_district(self):
         data = {}
         for zone in self.zones:
@@ -307,7 +299,7 @@ class ProcessLoads:
         self.output_df = df
         return df
 
-    def write_hybrid_output_csv(self, output_file="results/hybrid_loads_data.csv"):
+    def write_hybrid_output_csv(self, output_file="..\\ghedesigner\\ghe\\nbast_results\\hybrid_timesteps.csv"):
         if not hasattr(self, "output_df") or self.output_df is None:
             self.create_output_dataframe()
 
@@ -338,5 +330,15 @@ class ProcessLoads:
             step_df[col] = repeated_values
 
         step_df.to_csv(output_file, index=False)
+
+    def run_hybrid_pipeline(self):
+        self.prepare_bhe_for_hybrid()
+        self.generate_hybrid_ground_loads()
+        self.generate_common_timegrid()
+        self.map_all_zones()
+        self.create_HP_hybrid_loads()
+        self.create_output_dataframe()
+        self.write_hybrid_output_csv()
+        return self.get_hybrid_loads_for_district()
 
 

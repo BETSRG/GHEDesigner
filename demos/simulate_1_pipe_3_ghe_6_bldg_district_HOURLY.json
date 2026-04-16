@@ -317,7 +317,7 @@
     }
   },
   "simulation_control": {
-    "simulation_years": 20,
+    "simulation_years": 1,
     "load_method": "hourly"
   }
 }
