@@ -117,6 +117,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             results.write_all_output_files(output_directory=output_directory, file_suffix="")
     elif central_loop:
         system = GHEHPSystem(input_file_path)
+        system.solve_system()
         system.create_output(output_directory / f"{input_file_path.stem}.csv")
     else:
         print("Bad input file, for now only the following configurations are available:")

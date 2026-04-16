@@ -46,8 +46,8 @@
     "design_pressure_loss": 200
   },
   "fluid": {
-    "fluid_name": "WATER",
-    "concentration_percent": 0,
+    "fluid_name": "PROPYLENEGLYCOL",
+    "concentration_percent": 30,
     "temperature": 20
   },
   "heat_pump": {
@@ -146,6 +146,8 @@
   },
   "building": {
     "building1_htg_clg": {
+      "heating_cop": 4.4,
+      "cooling_cop": 4.5,
       "heating_load": {
         "column_name": "B1Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
@@ -158,6 +160,7 @@
       }
     },
     "building1_dhw": {
+       "heating_cop": 3.7,
       "heating_load": {
         "column_name": "B1Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
@@ -165,6 +168,8 @@
       }
     },
     "building2_htg_clg": {
+      "heating_cop": 4.4,
+      "cooling_cop": 4.9,
       "heating_load": {
         "column_name": "B2Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
@@ -177,6 +182,7 @@
       }
     },
     "building2_dhw": {
+      "heating_cop": 3.7,
       "heating_load": {
         "column_name": "B2Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
@@ -184,6 +190,8 @@
       }
     },
     "building3_htg_clg": {
+      "heating_cop": 4.4,
+      "cooling_cop": 4.9,
       "heating_load": {
         "column_name": "B3Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
@@ -196,6 +204,7 @@
       }
     },
     "building3_dhw": {
+      "heating_cop": 3.7,
       "heating_load": {
         "column_name": "B3Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
@@ -308,6 +317,7 @@
     }
   },
   "simulation_control": {
-    "simulation_years": 1
+    "simulation_years": 20,
+    "load_method": "hourly"
   }
 }

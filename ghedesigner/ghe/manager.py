@@ -427,7 +427,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
 
         return log_time_to_write, g_to_write, g_bhw_to_write
 
-    # def write_input_file(self, output_file_path: Path, simulation_parameters: SimulationParameters) -> None:
+    # def write_input_file(self, output_file_path: Path, simulation_parameters:
+    # SimulationParameters) -> None:
     #     """
     #     Writes an input file based on current simulation configuration.
     #
