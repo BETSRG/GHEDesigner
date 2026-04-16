@@ -338,7 +338,7 @@ class ProcessLoads:
         self.map_all_zones()
         self.create_HP_hybrid_loads()
         self.create_output_dataframe()
-        self.write_hybrid_output_csv()
+        #self.write_hybrid_output_csv()
         return self.get_hybrid_loads_for_district()
 
 
