@@ -241,6 +241,8 @@
       "pre_designed": {
         "arrangement": "RECTANGLE",
         "H": 100,
+        "max_height": 135,
+        "min_height": 60,
         "spacing_in_x_dimension": 5,
         "spacing_in_y_dimension": 5,
         "boreholes_in_x_dimension": 15,
@@ -275,6 +277,8 @@
       "pre_designed": {
         "arrangement": "RECTANGLE",
         "H": 100,
+        "max_height": 135,
+        "min_height": 60,
         "spacing_in_x_dimension": 5,
         "spacing_in_y_dimension": 5,
         "boreholes_in_x_dimension": 10,
@@ -309,6 +313,8 @@
       "pre_designed": {
         "arrangement": "RECTANGLE",
         "H": 100,
+        "max_height": 135,
+        "min_height": 60,
         "spacing_in_x_dimension": 5,
         "spacing_in_y_dimension": 5,
         "boreholes_in_x_dimension": 10,

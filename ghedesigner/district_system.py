@@ -185,8 +185,8 @@ class GHX(BaseSimComp):
         self.n_cols = ghe_data["pre_designed"]["boreholes_in_y_dimension"]
         self.row_spacing = ghe_data["pre_designed"]["spacing_in_x_dimension"]
         self.col_spacing = ghe_data["pre_designed"]["spacing_in_y_dimension"]
-        self.max_height = 135
-        self.min_height = 60
+        self.max_height = ghe_data["pre_designed"]["max_height"]
+        self.min_height = ghe_data["pre_designed"]["min_height"]
         self.nbh = self.n_rows * self.n_cols
         self.mass_flow_ghe_design = ghe_data["flow_rate"] * self.nbh
         self.matrix_size = None
@@ -887,20 +887,34 @@ class GHEHPSystem:
 
             for this_comp in self.components:
                 row_index = this_comp.row_index
+
                 if this_comp.comp_type == SimCompType.BUILDING:
-                    this_comp.t_in[idx_timestep] = x_vector[row_index]
-                    this_comp.t_out[idx_timestep] = x_vector[this_comp.downstream_index]
+
+                    if self.loop_config == CentralLoopType.TWOPIPE:
+                        this_comp.t_in[idx_timestep] = x_vector[this_comp.inlet_index]
+                        this_comp.t_out[idx_timestep] = x_vector[row_index + 1]
+                    else:
+                        this_comp.t_in[idx_timestep] = x_vector[row_index]
+                        this_comp.t_out[idx_timestep] = x_vector[this_comp.downstream_index]
+
                 elif this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
-                    this_comp.t_in[idx_timestep] = x_vector[row_index]
+
+                    if self.loop_config == CentralLoopType.TWOPIPE:
+                        this_comp.t_in[idx_timestep] = x_vector[this_comp.inlet_index]
+                        this_comp.t_mix_out[idx_timestep] = x_vector[row_index]
+                    else:
+                        this_comp.t_in[idx_timestep] = x_vector[row_index]
+                        this_comp.t_mix_out[idx_timestep] = x_vector[this_comp.downstream_index]
+
                     this_comp.t_mean[idx_timestep] = x_vector[row_index + 1]
                     this_comp.q_ghe[idx_timestep] = x_vector[row_index + 2]
-                    this_comp.dq_ghe[idx_timestep - 1] = (
-                        this_comp.q_ghe[idx_timestep] - this_comp.q_ghe[idx_timestep - 1]
+                    this_comp.dq_ghe[idx_timestep - 1] = (this_comp.q_ghe[idx_timestep] - this_comp.q_ghe[
+                                                             idx_timestep - 1]
                                                          ) / this_comp.two_pi_k
                     this_comp.t_out[idx_timestep] = x_vector[row_index + 3]
-                    this_comp.t_mix_out[idx_timestep] = x_vector[this_comp.downstream_index]
 
                 elif this_comp.comp_type == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
+
                     this_comp.t_in[idx_timestep] = x_vector[row_index]
                     this_comp.t_out[idx_timestep] = x_vector[this_comp.downstream_index]
 
