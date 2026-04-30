@@ -263,127 +263,114 @@ class ParallelPipeSystem:
         return temperature_history
 
 
-class SinglePipeSystem:
+class SinglePipeWithSurfaceSystem:
     def __init__(
         self,
+        y_coord: float,  # Depth of the pipe (D)
         pipe: Pipe,
         soil: Soil,
     ):
         self.pipe = pipe
         self.soil = soil
+        self.D = y_coord
         self.r_p = pipe.r_out
 
-        kappa = soil.k / soil.rho_cp
+        kappa = soil.k / soil.rhoCp
         self.characteristic_time = (self.r_p) ** 2 / kappa
 
-    def n0_function(self, sigma: complex, beta: float):
-        """
-        Calculates N_0(sigma) for a single pipe in infinite ground.
-        Formula from Page 10: N_0(sigma) = K1(sigma) / (K0(sigma) + beta * sigma * K1(sigma))
-        """
-        k0 = special.kv(0, sigma)
-        k1 = special.kv(1, sigma)
-        
-        # Handle the equation denominator
-        denominator = k0 + beta * sigma * k1
-        if denominator == 0:
-            return 0j
-            
-        return k1 / denominator
+    def radial_distance_mirror(self, radius, psi):
+        # This is the n=4 term from the original parallel model
+        return math.sqrt(4 * self.D**2 + radius**2 + 4 * self.D * radius * math.sin(psi))
 
-    def heat_transfer(self, time: float, beta: float, epsilon_0: float = 0.01) -> float:
-        """
-        Calculates the dimensionless heat flux q'_p0(tau) for a single pipe 
-        in infinite ground using the two-part Laplace inversion formula from Page 10.
-        """
+    def radial_distance_derivative_mirror(self, radius, psi):
+        # Derivative for the n=4 term
+        return (radius + 2 * self.D * math.sin(psi)) / self.radial_distance_mirror(radius, psi)
+
+    def laplace_integral_sum(self, sigma: complex):
+        # We only evaluate the mirror image (epsilon = -1.0)
+        def integrand_real(psi):
+            dist = self.radial_distance_mirror(self.r_p, psi)
+            argument = (dist / self.r_p) * sigma
+            return np.real(-1.0 * special.kv(0, argument))
+
+        def integrand_imag(psi):
+            dist = self.radial_distance_mirror(self.r_p, psi)
+            argument = (dist / self.r_p) * sigma
+            return np.imag(-1.0 * special.kv(0, argument))
+
+        real_result, _ = integrate.quad(integrand_real, -math.pi, math.pi, limit=200)
+        imag_result, _ = integrate.quad(integrand_imag, -math.pi, math.pi, limit=200)
+
+        return (1 / TWO_PI) * complex(real_result, imag_result)
+
+    def laplace_integral_sum_derivative(self, sigma: complex):
+        def integrand_real(psi):
+            dist = self.radial_distance_mirror(self.r_p, psi)
+            dist_deriv = self.radial_distance_derivative_mirror(self.r_p, psi)
+            argument = (dist / self.r_p) * sigma
+            return np.real(-1.0 * special.kv(1, argument) * dist_deriv)
+
+        def integrand_imag(psi):
+            dist = self.radial_distance_mirror(self.r_p, psi)
+            dist_deriv = self.radial_distance_derivative_mirror(self.r_p, psi)
+            argument = (dist / self.r_p) * sigma
+            return np.imag(-1.0 * special.kv(1, argument) * dist_deriv)
+
+        real_result, _ = integrate.quad(integrand_real, -math.pi, math.pi, limit=200)
+        imag_result, _ = integrate.quad(integrand_imag, -math.pi, math.pi, limit=200)
+
+        return (1 / TWO_PI) * complex(real_result, imag_result)
+
+    def steady_state_heat_flow(self, beta: float):
+        # The exact steady state for a single pipe with a surface
+        return 1.0 / (math.log((2 * self.D) / self.r_p) + beta)
+
+    def n_function(self, sigma: complex, beta: float):
+        numerator = special.kv(1, sigma) + self.laplace_integral_sum_derivative(sigma)
+        denominator = (
+            special.kv(0, sigma)
+            + self.laplace_integral_sum(sigma)
+            + beta * sigma * (special.kv(1, sigma) + self.laplace_integral_sum_derivative(sigma))
+        )
+        return numerator / denominator
+
+    def heat_transfer(self, time: float, beta: float):
         if time <= 0:
             return 1.0 / beta
 
         tau = time / self.characteristic_time
 
-        # 1. Term 1: Real-axis integration from epsilon_0 to infinity 
-        # (approximated upper bound of 5/sqrt(tau) as done in the parallel system)
-        def integrand_real(u):
+        def integrand(u):
             sigma = 1j * u
-            return math.exp(-tau * (u**2)) * np.real(self.n0_function(sigma, beta))
+            real_n = np.real(self.n_function(sigma, beta))
+            return math.exp(-tau * u**2) * real_n
 
-        upper_limit = 5.0 / math.sqrt(tau)
-        # Ensure the upper limit doesn't collapse below epsilon_0 for extremely large times
-        upper_limit = max(upper_limit, epsilon_0 + 0.1)
+        integral_result, _ = integrate.quad(integrand, 0, 5 / math.sqrt(tau), limit=200)
 
-        integral_1_result, _ = integrate.quad(integrand_real, epsilon_0, upper_limit, limit=200)
-        term1 = (2.0 / math.pi) * integral_1_result
+        return (2 / math.pi) * integral_result + self.steady_state_heat_flow(beta)
 
-        # 2. Term 2: Circular integration around the singularity at the origin
-        def integrand_circle(phi):
-            sigma = epsilon_0 * np.exp(0.5j * phi)
-            n0_val = self.n0_function(sigma, beta)
-            
-            # Formulating: exp(tau * epsilon_0^2 * e^{i*phi}) * N_0 * (epsilon_0 * e^{0.5*i*phi})
-            exp_term = np.exp(tau * (epsilon_0**2) * np.exp(1j * phi))
-            
-            # Returning the real part of the combined product
-            return np.real(exp_term * n0_val * sigma)
-
-        integral_2_result, _ = integrate.quad(integrand_circle, -math.pi, math.pi, limit=200)
-        term2 = (1.0 / (2.0 * math.pi)) * integral_2_result
-
-        # Total dimensionless heat flux is the sum of both terms
-        return term1 + term2
-
-    def calculate_fluid_temp(
-        self,
-        known_heat_loss: float,
-        time: float,
-        beta: float,
-    ) -> float:
-        """
-        Calculates the required fluid temperature for a known heat loss at a given time.
-        """
+    def calculate_fluid_temp(self, known_heat_loss: float, time: float, beta: float) -> float:
         heat_flux = self.heat_transfer(time, beta)
-        lambda_soil = self.soil.k
-
         if heat_flux == 0:
             return 0.0
+        return known_heat_loss / (TWO_PI * self.soil.k * heat_flux)
 
-        fluid_temp = known_heat_loss / (TWO_PI * lambda_soil * heat_flux)
-        return fluid_temp
-
-    def simulate_temperature_response(
-        self, heat_load_series: np.ndarray, response_factors: np.ndarray, beta: float
-    ) -> np.ndarray:
-        """
-        Calculates the fluid temperature evolution for a variable heat load
-        using temporal superposition (thermal history).
-        
-        :param heat_load_series: Array of heat loads (W/m) at each time step.
-        :param response_factors: Array of q' values corresponding to the time steps.
-        :param beta: The dimensionless pipe thermal resistance parameter.
-        """
+    def simulate_temperature_response(self, heat_load_series: np.ndarray, response_factors: np.ndarray, beta: float) -> np.ndarray:
         num_steps = len(heat_load_series)
         temperature_history = np.zeros(num_steps)
-        delta_t_history: list[float] = []
+        delta_t_history = [] 
 
         q_prime_0 = 1.0 / beta
         lambda_soil = self.soil.k
         current_t = 0.0
 
         for n in range(num_steps):
-            # 1. Current Load Term
-            q_n = heat_load_series[n]
-            load_term = q_n / (TWO_PI * lambda_soil)
-
-            # 2. History Term
+            load_term = heat_load_series[n] / (TWO_PI * lambda_soil)
             history_term = 0.0
             if n > 0:
-                relevant_q = response_factors[:n]
-                reversed_deltas = delta_t_history[::-1]
-                history_term = np.dot(reversed_deltas, relevant_q)
+                history_term = np.dot(delta_t_history[::-1], response_factors[:n])
 
-            # 3. Solve for NEW temperature step
             delta_t = (load_term - history_term) / q_prime_0
-
-            # 4. Update state
             current_t += delta_t
             delta_t_history.append(delta_t)
             temperature_history[n] = current_t
