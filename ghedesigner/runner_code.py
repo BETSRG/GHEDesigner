@@ -5,8 +5,8 @@ from time import time
 
 def main():
 
-    input_file_path = Path("..\\demos\\simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.json")
-    output_file_path = Path("..\\ghedesigner\\ghe\\nbast_results\\simulation_results.csv")
+    input_file_path = Path("..\\GHEDesigner\\demos\\simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.json")
+    output_file_path = Path("..\\GHEDesigner\\ghedesigner\\ghe\\nbast_results\\simulation_results.csv")
 
     start_time = time()
     system = GHEHPSystem(input_file_path)

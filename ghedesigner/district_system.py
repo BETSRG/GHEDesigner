@@ -4,11 +4,13 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import math
 
 from ghedesigner.constants import HOURS_IN_YEAR, SEC_IN_HR, TWO_PI
 from ghedesigner.enums import BHType, CentralLoopType, SimCompType, SourceSinkOpMode
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
+from ghedesigner.ghe.horizontal_pipe_heat_exchange import SinglePipeSystem
 
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths, GFunction
 from ghedesigner.ghe.pipe import Pipe
@@ -33,6 +35,267 @@ class BaseSimComp(ABC):
     def calc_energy(self) -> None:
         pass
 
+class IsolatedHorizontalPipe(BaseSimComp):
+    MATRIX_ROWS = 10 # hardcoded 3 pipe discretizations for now, number of matrix rows changes with pipe discretization level
+
+    def __init__(
+        self,
+        name: str,
+        length: float,
+        pipe: Pipe,
+        soil: Soil,
+        fluid: Fluid,
+        num_timesteps: int,
+        time_array: np.ndarray,
+        pipe_system: 'SinglePipeSystem',
+        beta: float,
+        ugt_avg: float,
+        ugt_amp1: float,
+        ugt_phase1: float,
+        ugt_amp2: float,
+        ugt_phase2: float,
+        depth: float,
+    ):
+        super().__init__()
+        self.name = name
+        self.comp_type = None  # TODO: Add HORIZONTAL_PIPE to SimCompType Enum
+        self.num_timesteps = num_timesteps
+        self.time_array = time_array
+        
+        self.pipe_system = pipe_system
+        self.beta = beta
+        self.soil = soil
+        self.fluid = fluid
+        self.cp = fluid.cp
+
+        # UGT Model Parameters (Two-Harmonic)
+        self.ugt_avg = ugt_avg
+        self.ugt_amp1 = ugt_amp1
+        self.ugt_phase1 = ugt_phase1
+        self.ugt_amp2 = ugt_amp2
+        self.ugt_phase2 = ugt_phase2
+        self.depth = depth
+        self.alpha_s = self.soil.k / self.soil.rho_cp  # Soil thermal diffusivity
+
+        # Geometry & Discretization (3 Segments)
+        self.length = length
+        self.L_seg = length / 3.0
+        self.V_seg = np.pi * (pipe.r_in ** 2) * self.L_seg
+        self.C_f_seg = self.V_seg * fluid.rho * self.cp
+        self.two_pi_k = TWO_PI * self.soil.k
+
+        # Initialize t=0 UGT for state arrays
+        initial_ugt = self.calculate_current_ugt(self.time_array[0] * SEC_IN_HR)
+
+        # State Arrays for all 3 segments
+        # Segment 1
+        self.t_mean1 = np.full(num_timesteps, initial_ugt, dtype=float)
+        self.q1 = np.zeros(num_timesteps, dtype=float)
+        self.dq1 = np.zeros(num_timesteps, dtype=float)
+        self.t_out1 = np.full(num_timesteps, initial_ugt, dtype=float)
+        
+        # Segment 2
+        self.t_mean2 = np.full(num_timesteps, initial_ugt, dtype=float)
+        self.q2 = np.zeros(num_timesteps, dtype=float)
+        self.dq2 = np.zeros(num_timesteps, dtype=float)
+        self.t_out2 = np.full(num_timesteps, initial_ugt, dtype=float)
+
+        # Segment 3
+        self.t_mean3 = np.full(num_timesteps, initial_ugt, dtype=float)
+        self.q3 = np.zeros(num_timesteps, dtype=float)
+        self.dq3 = np.zeros(num_timesteps, dtype=float)
+        self.t_out3 = np.full(num_timesteps, initial_ugt, dtype=float)
+
+        # Global In/Out arrays for GHEDesigner output generation
+        self.t_in = np.full(num_timesteps, initial_ugt, dtype=float)
+        self.t_out = np.full(num_timesteps, initial_ugt, dtype=float)
+
+        self.history_term1 = np.zeros(num_timesteps, dtype=float)
+        self.history_term2 = np.zeros(num_timesteps, dtype=float)
+        self.history_term3 = np.zeros(num_timesteps, dtype=float)
+        self.c_n = np.zeros(num_timesteps, dtype=float)
+
+    def calculate_current_ugt(self, current_time_sec: float) -> float:
+        """
+        Calculates the Undisturbed Ground Temperature at the pipe's depth 
+        for the current time using the Xing and Spitler two-harmonic model.
+        """
+        # Convert current time to days for the harmonic equation
+        t_days = current_time_sec / (24.0 * 3600.0)
+        t_p = 365.0  # Period in days
+        
+        # Calculate the depth attenuation factor for both harmonics
+        # sqrt(n * pi / (alpha_s * t_p_seconds))
+        t_p_sec = 365.0 * 24.0 * 3600.0
+        attenuation1 = self.depth * math.sqrt((1.0 * math.pi) / (self.alpha_s * t_p_sec))
+        attenuation2 = self.depth * math.sqrt((2.0 * math.pi) / (self.alpha_s * t_p_sec))
+        
+        # Term 1 (Annual harmonic)
+        term1 = (math.exp(-attenuation1) * self.ugt_amp1 * math.cos(((2.0 * math.pi * 1.0) / t_p) * (t_days - self.ugt_phase1) - attenuation1))
+                 
+        # Term 2 (Bi-annual harmonic)
+        term2 = (math.exp(-attenuation2) * self.ugt_amp2 * math.cos(((2.0 * math.pi * 2.0) / t_p) * (t_days - self.ugt_phase2) - attenuation2))
+                 
+        return self.ugt_avg - term1 - term2
+
+    def compute_history_terms(self, idx_timestep: int):
+        """
+        Calculates the history term using temporal superposition of heat fluxes.
+        Uses the single pipe heat transfer evaluation.
+        """
+        sum1, sum2, sum3 = 0.0, 0.0, 0.0
+
+        # 1. Superposition of past changes
+        for j in range(1, idx_timestep):
+            dt_sec = (self.time_array[idx_timestep] - self.time_array[j]) * SEC_IN_HR
+            
+            q_prime = self.pipe_system.heat_transfer(dt_sec, self.beta)
+            R_transient = 1.0 / (self.two_pi_k * q_prime)
+
+            sum1 += self.dq1[j] * R_transient
+            sum2 += self.dq2[j] * R_transient
+            sum3 += self.dq3[j] * R_transient
+
+        # 2. Calculate current timestep resistance (C_n)
+        current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
+        q_prime_current = self.pipe_system.heat_transfer(current_dt_sec, self.beta)
+        
+        self.c_n[idx_timestep] = 1.0 / (self.two_pi_k * q_prime_current)
+
+        # 3. Calculate overlap to subtract from history
+        overlap1 = self.q1[idx_timestep - 1] * self.c_n[idx_timestep]
+        overlap2 = self.q2[idx_timestep - 1] * self.c_n[idx_timestep]
+        overlap3 = self.q3[idx_timestep - 1] * self.c_n[idx_timestep]
+
+        # 4. Final History Terms (incorporating dynamic UGT)
+        current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
+        current_ugt = self.calculate_current_ugt(current_time_sec)
+        
+        self.history_term1[idx_timestep] = current_ugt + sum1 - overlap1
+        self.history_term2[idx_timestep] = current_ugt + sum2 - overlap2
+        self.history_term3[idx_timestep] = current_ugt + sum3 - overlap3
+
+    def generate_matrix(self, mass_bldg, mass_loop, mass_loop_bldg, mass_flow_pipe, mass_loop_ghe, idx_timestep, configuration, method):
+        
+        self.compute_history_terms(idx_timestep)
+
+        # Set up blank rows
+        rows = [np.zeros(self.matrix_size, dtype=np.float64) for _ in range(self.MATRIX_ROWS)]
+        rhs = [0.0 for _ in range(self.MATRIX_ROWS)]
+
+        # Time delta for capacitance
+        dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
+        cap_coeff = self.C_f_seg / dt_sec
+
+        m_cp = mass_flow_pipe * self.cp
+        cn = self.c_n[idx_timestep]
+
+        # Explicit Index Mapping for readability
+        idx_Tin = self.row_index
+        idx_Tm1 = self.row_index + 1
+        idx_q1  = self.row_index + 2
+        idx_To1 = self.row_index + 3
+        idx_Tm2 = self.row_index + 4
+        idx_q2  = self.row_index + 5
+        idx_To2 = self.row_index + 6
+        idx_Tm3 = self.row_index + 7
+        idx_q3  = self.row_index + 8
+        idx_To3 = self.row_index + 9
+
+        # --- ROW 1: Network Mixing Node ---
+        if configuration == CentralLoopType.ONEPIPE:
+            rows[0][idx_Tin] = (mass_loop - mass_flow_pipe) * self.cp
+            rows[0][idx_To3] = m_cp
+            rows[0][self.downstream_index] = -mass_loop * self.cp
+            rhs[0] = 0.0
+        elif configuration == CentralLoopType.TWOPIPE:
+            rows[0][idx_Tin] = 1.0
+            rows[0][idx_To3] = -1.0
+            rows[0][self.inlet_index] = -1.0 
+            pass
+
+        # --- SEGMENT 1 (Rows 2, 3, 4) ---
+        # Eq 2: Ground Resistance
+        rows[1][idx_Tm1] = 1.0
+        rows[1][idx_q1] = -cn
+        rhs[1] = self.history_term1[idx_timestep]
+
+        # Eq 3: Mean Temp
+        rows[2][idx_Tin] = -1.0
+        rows[2][idx_Tm1] = 2.0
+        rows[2][idx_To1] = -1.0
+        rhs[2] = 0.0
+
+        # Eq 4: Energy Bal w/ Capacitance
+        rows[3][idx_Tin] = m_cp
+        rows[3][idx_To1] = -m_cp
+        rows[3][idx_q1] = -self.L_seg
+        rows[3][idx_Tm1] = -cap_coeff
+        rhs[3] = -cap_coeff * self.t_mean1[idx_timestep - 1]
+
+        # --- SEGMENT 2 (Rows 5, 6, 7) ---
+        # Eq 5: Ground Resistance
+        rows[4][idx_Tm2] = 1.0
+        rows[4][idx_q2] = -cn
+        rhs[4] = self.history_term2[idx_timestep]
+
+        # Eq 6: Mean Temp
+        rows[5][idx_To1] = -1.0
+        rows[5][idx_Tm2] = 2.0
+        rows[5][idx_To2] = -1.0
+        rhs[5] = 0.0
+
+        # Eq 7: Energy Bal w/ Capacitance
+        rows[6][idx_To1] = m_cp
+        rows[6][idx_To2] = -m_cp
+        rows[6][idx_q2] = -self.L_seg
+        rows[6][idx_Tm2] = -cap_coeff
+        rhs[6] = -cap_coeff * self.t_mean2[idx_timestep - 1]
+
+        # --- SEGMENT 3 (Rows 8, 9, 10) ---
+        # Eq 8: Ground Resistance
+        rows[7][idx_Tm3] = 1.0
+        rows[7][idx_q3] = -cn
+        rhs[7] = self.history_term3[idx_timestep]
+
+        # Eq 9: Mean Temp
+        rows[8][idx_To2] = -1.0
+        rows[8][idx_Tm3] = 2.0
+        rows[8][idx_To3] = -1.0
+        rhs[8] = 0.0
+
+        # Eq 10: Energy Bal w/ Capacitance
+        rows[9][idx_To2] = m_cp
+        rows[9][idx_To3] = -m_cp
+        rows[9][idx_q3] = -self.L_seg
+        rows[9][idx_Tm3] = -cap_coeff
+        rhs[9] = -cap_coeff * self.t_mean3[idx_timestep - 1]
+
+        return rows, rhs
+
+    def update_post_solve(self, x_vector, idx_timestep):
+        """
+        Extracts and stores the results from the solved global state vector [X].
+        """
+        # Save Temperatures
+        self.t_in[idx_timestep] = x_vector[self.row_index]
+        self.t_mean1[idx_timestep] = x_vector[self.row_index + 1]
+        self.t_out1[idx_timestep] = x_vector[self.row_index + 3]
+        self.t_mean2[idx_timestep] = x_vector[self.row_index + 4]
+        self.t_out2[idx_timestep] = x_vector[self.row_index + 6]
+        self.t_mean3[idx_timestep] = x_vector[self.row_index + 7]
+        self.t_out3[idx_timestep] = x_vector[self.row_index + 9]
+        self.t_out[idx_timestep] = self.t_out3[idx_timestep]
+
+        # Save Heat Fluxes and Calculate Deltas for the next History term
+        self.q1[idx_timestep] = x_vector[self.row_index + 2]
+        self.dq1[idx_timestep - 1] = self.q1[idx_timestep] - self.q1[idx_timestep - 1]
+
+        self.q2[idx_timestep] = x_vector[self.row_index + 5]
+        self.dq2[idx_timestep - 1] = self.q2[idx_timestep] - self.q2[idx_timestep - 1]
+
+        self.q3[idx_timestep] = x_vector[self.row_index + 8]
+        self.dq3[idx_timestep - 1] = self.q3[idx_timestep] - self.q3[idx_timestep - 1]
 
 class SourceSinkHeatExchanger(BaseSimComp):
     MATRIX_ROWS = 1
