@@ -1,12 +1,13 @@
 from pathlib import Path
-from ghedesigner.district_system import GHEHPSystem
 from time import time
+
+from ghedesigner.district_system import GHEHPSystem
 
 
 def main():
 
     input_file_path = Path("..\\GHEDesigner\\demos\\simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json")
-    output_file_path = Path("..\\GHEDesigner\\ghedesigner\\ghe\\nbast_results\\simulation_results_horizontal.csv")
+    output_file_path = Path("..\\GHEDesigner\\ghedesigner\\ghe\\nbast_results\\simulation_results_horizontal_false.csv")
 
     start_time = time()
     system = GHEHPSystem(input_file_path)

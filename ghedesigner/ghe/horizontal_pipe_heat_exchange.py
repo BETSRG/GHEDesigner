@@ -4,8 +4,8 @@ import numpy as np
 from scipy import integrate, special
 
 from ghedesigner.constants import TWO_PI
-from ghedesigner.media import Soil
 from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import Soil
 
 
 class ParallelPipeSystem:
@@ -275,7 +275,7 @@ class SinglePipeWithSurfaceSystem:
         self.D = y_coord
         self.r_p = pipe.r_out
 
-        kappa = soil.k / soil.rhoCp
+        kappa = soil.k / soil.rho_cp
         self.characteristic_time = (self.r_p) ** 2 / kappa
 
     def radial_distance_mirror(self, radius, psi):
@@ -355,10 +355,12 @@ class SinglePipeWithSurfaceSystem:
             return 0.0
         return known_heat_loss / (TWO_PI * self.soil.k * heat_flux)
 
-    def simulate_temperature_response(self, heat_load_series: np.ndarray, response_factors: np.ndarray, beta: float) -> np.ndarray:
+    def simulate_temperature_response(
+        self, heat_load_series: np.ndarray, response_factors: np.ndarray, beta: float
+    ) -> np.ndarray:
         num_steps = len(heat_load_series)
         temperature_history = np.zeros(num_steps)
-        delta_t_history = [] 
+        delta_t_history = []
 
         q_prime_0 = 1.0 / beta
         lambda_soil = self.soil.k

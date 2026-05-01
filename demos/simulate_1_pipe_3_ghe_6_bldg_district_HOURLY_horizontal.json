@@ -10,7 +10,7 @@
       "name": "building1_dhw"
     },
     {
-      "type": "horizontal_pipe",
+      "type": "isolated_horizontal_pipe",
       "name": "building1_building2_line"
     },
     {
@@ -22,7 +22,7 @@
       "name": "building2_dhw"
     },
     {
-      "type": "horizontal_pipe",
+      "type": "isolated_horizontal_pipe",
       "name": "building2_building3_line"
     },
     {
@@ -34,7 +34,7 @@
       "name": "building3_dhw"
     },
     {
-      "type": "horizontal_pipe",
+      "type": "coupled_horizontal_pipe",
       "name": "horiz_return_line"
     },
     {
@@ -42,7 +42,7 @@
       "name": "ghe1"
     },
     {
-      "type": "horizontal_pipe",
+      "type": "isolated_horizontal_pipe",
       "name": "ghe1_ghe2_line"
     },
     {
@@ -50,7 +50,7 @@
       "name": "ghe2"
     },
     {
-      "type": "horizontal_pipe",
+      "type": "isolated_horizontal_pipe",
       "name": "ghe2_ghe3_line"
     },
     {
@@ -58,7 +58,7 @@
       "name": "ghe3"
     },
     {
-      "type": "horizontal_pipe",
+      "type": "coupled_horizontal_pipe",
       "name": "horiz_supply_line"
     }
   ],
@@ -73,6 +73,8 @@
     "horiz_supply_line": {
       "length": 50.0,
       "trench_depth": 1.5,
+      "coupled_to": "horiz_return_line",
+      "spacing": 1.0,
       "soil": {
         "conductivity": 2.0,
         "rho_cp": 2343493
@@ -89,6 +91,8 @@
     "horiz_return_line": {
       "length": 50.0,
       "trench_depth": 1.5,
+      "coupled_to": "horiz_supply_line",
+      "spacing": 1.0,
       "soil": {
         "conductivity": 2.0,
         "rho_cp": 2343493
@@ -289,7 +293,7 @@
       }
     },
     "building1_dhw": {
-       "heating_cop": 3.7,
+      "heating_cop": 3.7,
       "heating_load": {
         "column_name": "B1Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
@@ -453,6 +457,8 @@
   },
   "simulation_control": {
     "simulation_years": 1,
-    "load_method": "hourly"
+    "load_method": "hourly",
+    "horizontal_segments": 3,
+    "horizontal_simulation_considered": false
   }
 }
