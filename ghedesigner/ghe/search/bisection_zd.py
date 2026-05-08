@@ -140,7 +140,10 @@ class BisectionZD(Bisection1D):
 
         negative_excess_values = [v for v in values if v <= 0.0]
 
-        excess_of_interest = max(negative_excess_values)
+        if len(negative_excess_values) > 0:
+            excess_of_interest = max(negative_excess_values)
+        else:
+            excess_of_interest = min(values)
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
         selected_coordinates = self.coordinates_domain_nested[selection_key_outer][selection_key]
@@ -153,13 +156,13 @@ class BisectionZD(Bisection1D):
         self.ghe.compute_g_functions(self.min_height, self.max_height)
         self.ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
         if (
-            selection_key_key_outer == len(self.coordinates_domain_nested) - 1
+            selection_key_outer == len(self.coordinates_domain_nested) - 1
             and selection_key == len(self.coordinates_domain_nested[selection_key_outer]) - 1
         ):
             self.at_maximum_size = True
         else:
             self.at_maximum_size = False
-        if selection_key_key_outer == 0 and selection_key == 0:
+        if selection_key_outer == 0 and selection_key == 0:
             self.at_minimum_size = True
         else:
             self.at_minimum_size = False

@@ -82,7 +82,6 @@ def check_bracket(sign_x_l, sign_x_r) -> bool:
     return sign_x_l < 0 < sign_x_r or sign_x_r < 0 < sign_x_l
     # True if bracketed the root
 
-
 def solve_root(
     x: float,
     objective_function: Callable[..., Any],

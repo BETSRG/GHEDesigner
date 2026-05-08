@@ -5,7 +5,7 @@ from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
-from ghedesigner.ghe.domains import square_and_near_square
+from ghedesigner.ghe.domains import square_and_near_square, square_and_near_square_adjusted_nbh
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_1d import Bisection1D
 from ghedesigner.media import Fluid, Grout, Soil
@@ -80,9 +80,9 @@ class DesignNearSquare(DesignBase):
         # different lower range. The upper number of boreholes range is
         # calculated based on the spacing and length provided.
         n = floor(self.geometric_constraints.length / self.geometric_constraints.b) + 1
-        number_of_boreholes = int(n)
+        self.number_of_boreholes = int(n)
         self.coordinates_domain, self.fieldDescriptors = square_and_near_square(
-            1, number_of_boreholes, self.geometric_constraints.b
+            1, self.number_of_boreholes, self.geometric_constraints.b
         )
         self.borehole_lengths = [len(coords) for coords in self.coordinates_domain]
 
@@ -119,25 +119,7 @@ class DesignNearSquare(DesignBase):
         return min(self.borehole_lengths), max(self.borehole_lengths)
 
     def closest_nbh(self, desired_nbh):
-        l_idx = 0
-        if self.borehole_lengths[l_idx] == desired_nbh:
-            return self.coordinates_domain[l_idx]
-        r_idx = len(self.borehole_lengths) - 1
-        if self.borehole_lengths[r_idx] == desired_nbh:
-            return self.coordinates_domain[r_idx]
-        while True:
-            m_idx = int(0.5 * (l_idx + r_idx))
-            if self.borehole_lengths[m_idx] == desired_nbh:
-                return self.coordinates_domain[m_idx]
-            elif m_idx == l_idx or m_idx == r_idx:
-                if self.borehole_lengths[l_idx] > desired_nbh:
-                    return self.coordinates_domain[l_idx]
-                else:
-                    return self.coordinates_domain[r_idx]
-            else:
-                if self.borehole_lengths[m_idx] > desired_nbh:
-                    r_idx = m_idx
-                else:
-                    l_idx = m_idx
+        return square_and_near_square_adjusted_nbh(1, self.number_of_boreholes, self.geometric_constraints.b,
+                                                   int(desired_nbh))
 
 

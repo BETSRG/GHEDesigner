@@ -39,6 +39,10 @@ def rectangle(
             r.append((x_0 + i * spacing_x, y_0 + j * spacing_y))
     return r
 
+def general_field_nbh_adjustment(coordinates, desired_nbh):
+    sorted_coordinates = sorted(coordinates)
+    return sorted_coordinates[0:desired_nbh]
+
 def rectangle_adjusted_nbh(
     num_bh_x: int,
     num_bh_y: int,
@@ -81,7 +85,10 @@ def rectangle_adjusted_nbh(
         modified_row_1_nbh = num_bh_x - int(boreholes_to_remove * 0.5)
         modified_row_2_nbh = num_bh_x - (int(boreholes_to_remove * 0.5) + 1)
         modified_spacing_1 = (num_bh_x - 1) * spacing_x / (modified_row_1_nbh - 1)
-        modified_spacing_2 = (num_bh_x - 1) * spacing_x / (modified_row_2_nbh - 1)
+        if modified_row_2_nbh == 1:
+            modified_spacing_2 = (num_bh_x - 1) * spacing_x * 0.5
+        else:
+            modified_spacing_2 = (num_bh_x - 1) * spacing_x / (modified_row_2_nbh - 1)
         for j in range(num_bh_y):
             if j == row_to_modify_1:
                 row_nbh = modified_row_1_nbh
@@ -93,7 +100,10 @@ def rectangle_adjusted_nbh(
                 row_nbh = num_bh_x
                 row_spacing = spacing_x
             for i in range(row_nbh):
-                r.append((x_0 + i * row_spacing, y_0 + j * spacing_y))
+                if j == row_to_modify_2 and modified_row_2_nbh == 1:
+                    r.append((x_0 + (i + 1) * row_spacing, y_0 + j * spacing_y))
+                else:
+                    r.append((x_0 + i * row_spacing, y_0 + j * spacing_y))
         return r
     else:
         row_to_modify = int(num_bh_y / 2)
@@ -111,7 +121,7 @@ def rectangle_adjusted_nbh(
                 row_spacing = spacing_x
             for i in range(row_nbh):
                 if j == row_to_modify and modified_row_nbh == 1:
-                    r.append((x_0 + i + 1 * row_spacing, y_0 + j * spacing_y))
+                    r.append((x_0 + (i + 1) * row_spacing, y_0 + j * spacing_y))
                 else:
                     r.append((x_0 + i * row_spacing, y_0 + j * spacing_y))
         return r

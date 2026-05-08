@@ -5,9 +5,10 @@ from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
-from ghedesigner.ghe.domains import polygonal_land_constraint
+from ghedesigner.ghe.domains import polygonal_land_constraint, polygonal_land_constraint_multi_field, \
+    general_domain_nbh_adjustment
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.ghe.search.bisection_zd import BisectionZD
+from ghedesigner.ghe.search.bisection_zd import  Bisection1D, BisectionZD
 from ghedesigner.media import Fluid, Grout, Soil
 
 
@@ -22,8 +23,8 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
     """
 
     b_min: float
-    b_max_x: float
-    b_max_y: float
+    b_max_x: float | None = None
+    b_max_y: float | None = None
     property_boundary: list[list[list[float]]] = field(init=False)
     no_go_boundaries: list[list[list[float]]] | None = None
     type: DesignGeomType = field(default=DesignGeomType.BIRECTANGLECONSTRAINED, init=False, repr=False)
@@ -31,9 +32,9 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
     def __init__(
         self,
         b_min: float,
-        b_max_x: float,
-        b_max_y: float,
         property_boundary: list[list[float]] | list[list[list[float]]],
+        b_max_x: float | None = None,
+        b_max_y: float | None = None,
         no_go_boundaries: list[list[list[float]]] | None = None,
     ) -> None:
         self.b_min = b_min
@@ -101,40 +102,93 @@ class DesignBiRectangleConstrained(DesignBase):
         if keep_contour is None:
             keep_contour = cast(tuple[bool, bool], [True, False])
         self.geometric_constraints = geometric_constraints
-        self.coordinates_domain_nested, self.fieldDescriptors = polygonal_land_constraint(
-            self.geometric_constraints.b_min,
-            self.geometric_constraints.b_max_x,
-            self.geometric_constraints.b_max_y,
-            self.geometric_constraints.property_boundary,
-            self.geometric_constraints.no_go_boundaries,
-            keep_contour=keep_contour,
-        )
+        if self.geometric_constraints.b_max_x is not None and self.geometric_constraints.b_max_y is not None:
+            self.coordinates_domain, self.fieldDescriptors = polygonal_land_constraint(
+                self.geometric_constraints.b_min,
+                self.geometric_constraints.b_max_x,
+                self.geometric_constraints.b_max_y,
+                self.geometric_constraints.property_boundary,
+                self.geometric_constraints.no_go_boundaries,
+                keep_contour=keep_contour,
+            )
+            self.borehole_lengths = [len(coords) for dom in self.coordinates_domain for coords in dom]
+            self.min_nbh = min(self.borehole_lengths)
+            self.max_nbh = max(self.borehole_lengths)
+            self.domain_2d = True
+        else:
+            self.coordinates_domain, self.fieldDescriptors = polygonal_land_constraint_multi_field(
+                self.geometric_constraints.b_min,
+                [self.geometric_constraints.property_boundary],
+                self.geometric_constraints.no_go_boundaries,
+                keep_contour=keep_contour, split_domains_by_property=False
+            )
+            self.borehole_lengths = [len(coords) for coords in self.coordinates_domain]
+            self.domain_2d = False
+            self.min_nbh = min(self.borehole_lengths)
+            self.max_nbh = max(self.borehole_lengths)
 
-    def find_design(self, disp=False) -> BisectionZD:
+    def find_design(self, disp=False) -> (Bisection1D | BisectionZD):
         if disp:
             title = "Find bi-rectangle_constrained..."
             print(title + "\n" + len(title) * "=")
-        return BisectionZD(
-            self.coordinates_domain_nested,
-            self.fieldDescriptors,
-            self.v_flow,
-            self.borehole,
-            self.fluid,
-            self.pipe,
-            self.grout,
-            self.soil,
-            self.max_boreholes,
-            self.min_height,
-            self.max_height,
-            self.continue_if_design_unmet,
-            self.start_month,
-            self.end_month,
-            self.min_EFT_allowable,
-            self.max_EFT_allowable,
-            self.hourly_extraction_ground_loads,
-            method=self.method,
-            flow_type=self.flow_type,
-            disp=disp,
-            field_type="bi-rectangle_constrained",
-            load_years=self.load_years,
-        )
+        if self.domain_2d:
+            return BisectionZD(
+                self.coordinates_domain,
+                self.fieldDescriptors,
+                self.v_flow,
+                self.borehole,
+                self.fluid,
+                self.pipe,
+                self.grout,
+                self.soil,
+                self.max_boreholes,
+                self.min_height,
+                self.max_height,
+                self.continue_if_design_unmet,
+                self.start_month,
+                self.end_month,
+                self.min_EFT_allowable,
+                self.max_EFT_allowable,
+                self.hourly_extraction_ground_loads,
+                method=self.method,
+                flow_type=self.flow_type,
+                disp=disp,
+                field_type="bi-rectangle_constrained",
+                load_years=self.load_years,
+            )
+        else:
+            return Bisection1D(
+                self.coordinates_domain,
+                self.fieldDescriptors,
+                self.v_flow,
+                self.borehole,
+                self.fluid,
+                self.pipe,
+                self.grout,
+                self.soil,
+                self.max_boreholes,
+                self.min_height,
+                self.max_height,
+                self.continue_if_design_unmet,
+                self.start_month,
+                self.end_month,
+                self.min_EFT_allowable,
+                self.max_EFT_allowable,
+                self.hourly_extraction_ground_loads,
+                method=self.method,
+                flow_type=self.flow_type,
+                disp=disp,
+                field_type="bi-rectangle_constrained",
+                load_years=self.load_years,
+            )
+
+    def get_bounds(self):
+        return self.min_nbh, self.max_nbh
+
+    def closest_nbh(self, desired_nbh):
+        if self.domain_2d:
+            raise ValueError("Only a 1D BUPCRS domain supports the \"closest_nbh\" function. You can create a 1d domain"
+                             "by simply omitting the b_max_x and b_max_y inputs to the BUPCRS geometric constraints.")
+        return general_domain_nbh_adjustment(self.coordinates_domain, self.borehole_lengths, self.min_nbh, self.max_nbh,
+                                             desired_nbh)
+

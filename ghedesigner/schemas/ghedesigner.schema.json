@@ -978,8 +978,6 @@
                 },
                 "required": [
                   "b_min",
-                  "b_max_x",
-                  "b_max_y",
                   "property_boundary",
                   "method"
                 ],

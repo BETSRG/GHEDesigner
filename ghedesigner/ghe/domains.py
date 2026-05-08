@@ -4,6 +4,7 @@ from typing import cast
 from ghedesigner.ghe.coordinates import (
     c_shape,
     l_shape,
+    general_field_nbh_adjustment,
     lop_u,
     rectangle,
     rectangle_adjusted_nbh,
@@ -47,6 +48,26 @@ def remove_cutout(coordinates, boundaries, remove_inside=True, keep_contour=True
 
     return new_coordinates
 
+def split_by_property_boundary(original_domain, boundaries, on_edge_tolerance=0.01):
+    if isinstance(boundaries[0][0], (int, float)):
+        boundaries = [boundaries]
+
+    number_of_boundaries = len(boundaries)
+    split_domain = []
+    for coordinates in original_domain:
+        inside = 1
+        on_edge = 0
+        split_coordinates = [[] for _ in range(number_of_boundaries)]
+        for coordinate in coordinates:
+            for b_dx, boundary in enumerate(boundaries):
+                boundary_results = []
+                for bound in boundary:
+                    boundary_results.append(point_polygon_check(bound, coordinate, on_edge_tolerance=on_edge_tolerance))
+                if inside in boundary_results or on_edge in boundary_results:
+                    split_coordinates[b_dx].append(coordinate)
+                    break
+        split_domain.append(split_coordinates)
+    return split_domain
 
 def square_and_near_square(lower: int, upper: int, b: float):
     if lower < 1 or upper < 1:
@@ -80,7 +101,7 @@ def square_and_near_square_adjusted_nbh(lower: int, upper: int, b: float, desire
     if desired_nbh > upper * (upper + 1) or desired_nbh < lower * lower:
         raise ValueError("Desired NBH is not possible with the upper and lower bounds.")
     smaller_side_length = sqrt(desired_nbh)
-    if smaller_side_length % 1 == 0:
+    if smaller_side_length % 1.0 == 0:
         smaller_side_length = int(smaller_side_length)
         return rectangle(smaller_side_length, smaller_side_length, b, b)
     else:
@@ -88,8 +109,34 @@ def square_and_near_square_adjusted_nbh(lower: int, upper: int, b: float, desire
         larger_side_length = smaller_side_length + 1
         if smaller_side_length * larger_side_length == desired_nbh:
             return rectangle(smaller_side_length, larger_side_length, b, b)
-        else:
+        elif smaller_side_length * larger_side_length > desired_nbh:
             return rectangle_adjusted_nbh(smaller_side_length, larger_side_length, b, b, desired_nbh)
+        else:
+            return rectangle_adjusted_nbh(larger_side_length, larger_side_length, b, b, desired_nbh)
+
+def general_domain_nbh_adjustment(field_domain, field_sizes, min_nbh, max_nbh, desired_nbh):
+    if desired_nbh < min_nbh:
+        return general_field_nbh_adjustment(field_domain[0], desired_nbh)
+    elif desired_nbh > max_nbh:
+        raise ValueError("Requested field size exceeds what exists within the field domain.")
+    else:
+        x_l = 0
+        x_r = len(field_domain) - 1
+        if field_sizes[x_l] == desired_nbh:
+            return field_domain[x_l]
+        if field_sizes[x_r] == desired_nbh:
+            return field_domain[x_r]
+        while True:
+            x_m = int(0.5 * (x_l + x_r))
+            if field_sizes[x_m] == desired_nbh:
+                return field_domain[x_m]
+            if x_m == x_l or x_m == x_r:
+                break
+            if field_sizes[x_m] < desired_nbh:
+                x_l = x_m
+            else:
+                x_r = x_m
+        return general_field_nbh_adjustment(field_domain[x_r], desired_nbh)
 
 def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, disp: bool = False):
     # Make this work for the transpose
@@ -168,6 +215,7 @@ def bi_rectangular(length_x, length_y, b_min, b_max_x, b_max_y, transpose=False,
         length_2 = length_x
         b_max_1 = b_max_y
         b_max_2 = b_max_x
+        transpose = True
 
     bi_rectangle_domain = []
     field_descriptors = []
@@ -181,9 +229,9 @@ def bi_rectangular(length_x, length_y, b_min, b_max_x, b_max_y, transpose=False,
 
     n_min = ceil(n_1_min)
     n_max = floor(n_1_max)
+    n_2 = ceil((length_2 / b_max_2) + 1)
+    b_2 = length_2 / (n_2 - 1)
     for n_1 in range(n_min, n_max + 1):
-        n_2 = ceil((length_2 / b_max_2) + 1)
-        b_2 = length_2 / (n_2 - 1)
 
         b_1 = length_1 / (n_1 - 1)
 
@@ -444,10 +492,13 @@ def polygonal_land_constraint(
     coordinates_domain_nested, field_descriptors = bi_rectangle_nested(length, width, b_min, b_max_x, b_max_y)
 
     coordinates_domain_nested_cutout = []
+    field_descriptors_cutout = []
 
-    for domain in coordinates_domain_nested:
+    for i, domain in enumerate(coordinates_domain_nested):
         new_coordinates_domain = []
-        for coordinates in domain:
+        new_field_descriptors = []
+        included_lengths = []
+        for j, coordinates in enumerate(domain):
             # Remove boreholes outside of property
             new_coordinates = remove_cutout(
                 coordinates, property_boundary, remove_inside=False, keep_contour=keep_contour[0]
@@ -459,20 +510,146 @@ def polygonal_land_constraint(
                 new_coordinates = remove_cutout(
                     new_coordinates, no_go_boundaries, remove_inside=True, keep_contour=keep_contour[1]
                 )
-            if len(new_coordinates) == 0:
+            new_coord_length = len(new_coordinates)
+            if len(new_coordinates) == 0 or new_coord_length in included_lengths:
                 continue
+            included_lengths.append(new_coord_length)
             new_coordinates_domain.append(new_coordinates)
+            new_field_descriptors.append(field_descriptors[i][j])
         coordinates_domain_nested_cutout.append(new_coordinates_domain)
+        field_descriptors_cutout.append(new_field_descriptors)
 
     coordinates_domain_nested_cutout_reordered = []
     field_descriptors_reordered = []
     for idx, domain in enumerate(coordinates_domain_nested_cutout):
-        domain_reordered, f_d_reordered = reorder_domain(domain, field_descriptors[idx])
+        domain_reordered, f_d_reordered = reorder_domain(domain, field_descriptors_cutout[idx])
         coordinates_domain_nested_cutout_reordered.append(domain_reordered)
         field_descriptors_reordered.append(f_d_reordered)
 
     return coordinates_domain_nested_cutout_reordered, field_descriptors_reordered
 
+def bi_rectangle_close_spacing(length_x, length_y, b_min, transpose=False, disp=False):
+    # Make this work for the transpose
+    if length_x >= length_y:
+        length_1 = length_x
+        length_2 = length_y
+    else:
+        length_1 = length_y
+        length_2 = length_x
+        transpose = True
+
+    bi_rectangle_domain = []
+    field_descriptors = []
+    # find the maximum number of boreholes as a float
+    n_1_max = (length_1 / b_min) + 1
+    n_1_min = 1
+
+    # if it is the first case in the domain, we want to step up from one
+    # borehole, to a line, to adding the rows
+    _iter = 0
+
+    n_min = ceil(n_1_min)
+    n_max = floor(n_1_max)
+    for n_1 in range(n_min, n_max + 1):
+
+        if n_1 > 1:
+            b_1 = length_1 / (n_1 - 1)
+        else:
+            b_1 = 5.0
+
+        n_2 = floor(length_2 / b_1) + 1
+        if n_2 > 1:
+            b_2 = length_2 / (n_2 - 1)
+        else:
+            b_2 = 5.0
+
+        if _iter == 0:
+            for i in range(1, n_1):
+                coordinates = rectangle(i, 1, b_1, b_1)
+                if transpose:
+                    coordinates = transpose_coordinates(coordinates)
+                bi_rectangle_domain.append(coordinates)
+                field_descriptors.append(f"{i}X{1}_B1{b_1:0.2f}_B2{b_1:0.2f}")
+            for j in range(1, n_2):
+                if j > 1:
+                    b_j = length_2 / (j - 1)
+                else:
+                    b_j = 5.0
+                coordinates = rectangle(n_1, j, b_1, b_j)
+                if transpose:
+                    coordinates = transpose_coordinates(coordinates)
+                bi_rectangle_domain.append(coordinates)
+                field_descriptors.append(f"{n_1}X{j}_B1{b_1:0.2f}_B2{b_j:0.2f}")
+
+            _iter += 1
+
+        if disp:
+            print(f"{n_1}x{n_2} with {b_1:0.1f}x{b_2:0.1f}")
+
+        coordinates = rectangle(n_1, n_2, b_1, b_2)
+        if transpose:
+            coordinates = transpose_coordinates(coordinates)
+        bi_rectangle_domain.append(coordinates)
+        field_descriptors.append(f"{n_1}X{n_2}_B1{b_1:0.2f}_B2{b_2:0.2f}")
+
+    return bi_rectangle_domain, field_descriptors
+
+def polygonal_land_constraint_multi_field(
+    b_min: float,
+    property_boundary: list[list[list[list[float]]]],
+    no_go_boundaries: list[list[list[float]]] | None = None,
+    keep_contour: tuple[bool, bool] | None = None,
+    on_edge_tolerance=0.001,
+    split_domains_by_property=True
+):
+    if no_go_boundaries is None:
+        no_go_boundaries = []
+    if keep_contour is None:
+        keep_contour = cast(tuple[bool, bool], (True, False))
+
+    flattened_property_boundary = [prop_bound for prop_bounds in property_boundary for prop_bound in prop_bounds]
+    outer_rectangle = determine_largest_rectangle(flattened_property_boundary)
+
+    x, y = list(zip(*outer_rectangle))
+    length = max(x)
+    width = max(y)
+    coordinates_domain, field_descriptors = bi_rectangle_close_spacing(length, width, b_min)
+
+    coordinates_domain_cutout = []
+    field_descriptors_cutout = []
+
+    coord_lengths = []
+    for i, coordinates in enumerate(coordinates_domain):
+        # Remove boreholes outside of property
+        new_coordinates = remove_cutout(
+            coordinates, flattened_property_boundary, remove_inside=False, keep_contour=keep_contour[0],
+            on_edge_tolerance=on_edge_tolerance
+        )
+        if len(new_coordinates) == 0:
+            continue
+        # Remove boreholes inside of building
+        if len(no_go_boundaries) > 0:
+            new_coordinates = remove_cutout(
+                new_coordinates, no_go_boundaries, remove_inside=True, keep_contour=keep_contour[1],
+                on_edge_tolerance=on_edge_tolerance
+            )
+        if (len(new_coordinates) == 0 or len(new_coordinates) in coord_lengths):
+            continue
+        coord_lengths.append(len(new_coordinates))
+        coordinates_domain_cutout.append(new_coordinates)
+        field_descriptors_cutout.append(field_descriptors[i])
+
+    coordinates_domain_cutout_reordered, field_descriptors_reordered = reorder_domain(coordinates_domain_cutout,
+                                                                                      field_descriptors_cutout)
+
+
+    if not split_domains_by_property:
+        return coordinates_domain_cutout_reordered, field_descriptors_reordered
+    individual_property_coordinates_domain = split_by_property_boundary(coordinates_domain_cutout_reordered,
+                                                                        property_boundary,
+                                                                        on_edge_tolerance=on_edge_tolerance)
+
+    return individual_property_coordinates_domain, field_descriptors_reordered
 
 def reorder_domain(domain, descriptors):
     """

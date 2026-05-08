@@ -209,11 +209,13 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     )
                 case DesignGeomType.BIRECTANGLECONSTRAINED:
                     no_go_boundaries = geom.get("no_go_boundaries")
+                    b_max_x = geom.get("b_max_x")
+                    b_max_y = geom.get("b_max_y")
                     self.geometric_constraint = GeometricConstraintsBiRectangleConstrained(
                         b_min=geom["b_min"],
-                        b_max_x=geom["b_max_x"],
-                        b_max_y=geom["b_max_y"],
                         property_boundary=geom["property_boundary"],
+                        b_max_x=b_max_x,
+                        b_max_y=b_max_y,
                         no_go_boundaries=no_go_boundaries,
                     )
                 case DesignGeomType.ROWWISE:
@@ -286,7 +288,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         return v_flow_system, m_flow_borehole
 
     def new_nbh_design(self, design_nbh):
-        design_nbh = clip(design_nbh, *self.design.get_bounds())
+        design_nbh = clip(design_nbh, * self.design.get_bounds())
         new_coords = self.design.closest_nbh(design_nbh)
         self.pre_designed_locations = new_coords
         self.pre_designed_height = self.max_height
@@ -543,9 +545,10 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                 area = 0
                 for prop_bound in self.geometric_constraint.property_boundary:
                     area += get_area(prop_bound)  # This presumes that property polygons are non-intersecting
-
-                for ng_zone in self.geometric_constraint.no_go_boundaries:
-                    area -= get_area(ng_zone)  # This presumes that no-go zone polygons are non-intersecting
+                ng = self.geometric_constraint.no_go_boundaries
+                if ng is not None:
+                    for ng_zone in ng:
+                        area -= get_area(ng_zone)  # This presumes that no-go zone polygons are non-intersecting
             case DesignGeomType.ROWWISE:
                 area = get_area(self.geometric_constraint.property_boundary)
                 for ng_zone in self.geometric_constraint.no_go_boundaries:
