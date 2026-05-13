@@ -123,16 +123,8 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             system.create_output(
                 output_directory / f"{input_file_path.stem}.csv",
                 output_path_2=output_directory / "Search_Summary.csv",
-                output_path_load=output_directory / "Loads.csv",
                 output_path_coordinates=output_directory / "coordinates.json",
             )
-            for ghe in system.sizable_ground_heat_exchangers:
-                search_object = ghe.search
-                search_time = ghe.search_time
-                results = OutputManager("GHEDesigner Run from CLI", "Just Calculate G", "", "")
-                results.set_design_data(search_object, search_time, load_method=TimestepType.HYBRID)
-                sub_dir = output_directory / ghe.name
-                results.write_all_output_files(output_directory=sub_dir, file_suffix="")
         else:
             system.create_output(output_directory / f"{input_file_path.stem}.csv")
     else:

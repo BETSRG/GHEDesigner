@@ -92,22 +92,23 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             | GeometricConstraintsRectangle
             | GeometricConstraintsRowWise
             | GeometricConstraintsBiZoned
-        )
+            | None
+        ) = None
         self.geom_type: DesignGeomType | None
-        self.pre_designed_area: float | None = None
+        self.pre_designed_area: float = 0.0
         self.pre_designed_locations: list[tuple[float, float]] | None = None
-        self.pre_designed_height: float | None = None
-        self.current_ghe: GHE = None
-        self.design = None
-        self.continue_if_design_unmet: bool
-        self.min_eft: float
-        self.max_eft: float
-        self.max_height: float
-        self.min_height: float
-        self.max_boreholes: int
-        self.flow_type: FlowConfigType
-        self.flow_rate: float
-        self.is_sizable = None
+        self.pre_designed_height: float = 20.0
+        self.current_ghe: GHE | None = None
+        self.design: DesignBase | None = None
+        self.continue_if_design_unmet: bool = True
+        self.min_eft: float = 0.0
+        self.max_eft: float = 35.0
+        self.max_height: float = 150.0
+        self.min_height: float = 20.0
+        self.max_boreholes: int = 200
+        self.flow_type: FlowConfigType = FlowConfigType.BOREHOLE
+        self.flow_rate: float = 0.0
+        self.is_sizable: bool = False
 
     @classmethod
     def init_from_dictionary(cls, ghe_dict: dict, fluid_inputs: dict | None = None) -> "GroundHeatExchanger":
@@ -162,7 +163,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         return ghe
 
     def ghe_setup(self, ghe_dict):
-
+        self.configure_ghe_flow(ghe_dict)
         if "pre_designed" in ghe_dict:
             self.is_sizable = False
             self.configure_geometry(ghe_dict["pre_designed"], is_pre_designed=True)
@@ -170,7 +171,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             self.is_sizable = True
             self.configure_geometry(ghe_dict["geometric_constraints"], is_pre_designed=False)
             self.configure_design(ghe_dict["design"])
-        self.configure_ghe_flow(ghe_dict)
 
     def configure_geometry(self, geom: dict, is_pre_designed=False):
 
@@ -266,6 +266,140 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.max_height = design_parameters["max_height"]
         self.min_height = design_parameters["min_height"]
         self.max_boreholes = design_parameters.get("max_boreholes")
+        end_month = 2
+        ghe_loads = []
+        design: DesignBase
+        match self.geometric_constraint:
+            case GeometricConstraintsRectangle():
+                # max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
+                design = DesignRectangle(
+                    self.flow_rate,
+                    self.pygfunction_borehole,
+                    self.fluid,
+                    self.pipe,
+                    self.grout,
+                    self.soil,
+                    1,
+                    end_month,
+                    self.max_eft,
+                    self.min_eft,
+                    self.max_height,
+                    self.min_height,
+                    self.continue_if_design_unmet,
+                    self.max_boreholes,
+                    self.geometric_constraint,
+                    ghe_loads,
+                    flow_type=self.flow_type,
+                    method=TimestepType.HYBRID,
+                )
+            case GeometricConstraintsNearSquare():
+                design = DesignNearSquare(
+                    self.flow_rate,
+                    self.pygfunction_borehole,
+                    self.fluid,
+                    self.pipe,
+                    self.grout,
+                    self.soil,
+                    1,
+                    end_month,
+                    self.max_eft,
+                    self.min_eft,
+                    self.max_height,
+                    self.min_height,
+                    self.continue_if_design_unmet,
+                    self.max_boreholes,
+                    self.geometric_constraint,
+                    ghe_loads,
+                    flow_type=self.flow_type,
+                    method=TimestepType.HYBRID,
+                )
+            case GeometricConstraintsBiZoned():
+                design = DesignBiZoned(
+                    self.flow_rate,
+                    self.pygfunction_borehole,
+                    self.fluid,
+                    self.pipe,
+                    self.grout,
+                    self.soil,
+                    1,
+                    end_month,
+                    self.max_eft,
+                    self.min_eft,
+                    self.max_height,
+                    self.min_height,
+                    self.continue_if_design_unmet,
+                    self.max_boreholes,
+                    self.geometric_constraint,
+                    ghe_loads,
+                    flow_type=self.flow_type,
+                    method=TimestepType.HYBRID,
+                )
+            case GeometricConstraintsBiRectangle():
+                design = DesignBiRectangle(
+                    self.flow_rate,
+                    self.pygfunction_borehole,
+                    self.fluid,
+                    self.pipe,
+                    self.grout,
+                    self.soil,
+                    1,
+                    end_month,
+                    self.max_eft,
+                    self.min_eft,
+                    self.max_height,
+                    self.min_height,
+                    self.continue_if_design_unmet,
+                    self.max_boreholes,
+                    self.geometric_constraint,
+                    ghe_loads,
+                    flow_type=self.flow_type,
+                    method=TimestepType.HYBRID,
+                )
+            case GeometricConstraintsBiRectangleConstrained():
+                design = DesignBiRectangleConstrained(
+                    self.flow_rate,
+                    self.pygfunction_borehole,
+                    self.fluid,
+                    self.pipe,
+                    self.grout,
+                    self.soil,
+                    1,
+                    end_month,
+                    self.max_eft,
+                    self.min_eft,
+                    self.max_height,
+                    self.min_height,
+                    self.continue_if_design_unmet,
+                    self.max_boreholes,
+                    self.geometric_constraint,
+                    ghe_loads,
+                    flow_type=self.flow_type,
+                    method=TimestepType.HYBRID,
+                )
+            case GeometricConstraintsRowWise():
+                design = DesignRowWise(
+                    self.flow_rate,
+                    self.pygfunction_borehole,
+                    self.fluid,
+                    self.pipe,
+                    self.grout,
+                    self.soil,
+                    1,
+                    end_month,
+                    self.max_eft,
+                    self.min_eft,
+                    self.max_height,
+                    self.min_height,
+                    self.continue_if_design_unmet,
+                    self.max_boreholes,
+                    self.geometric_constraint,
+                    ghe_loads,
+                    flow_type=self.flow_type,
+                    method=TimestepType.HYBRID,
+                )
+            case _:
+                raise ValueError(f'DesignGeomType "{self.geom_type}" not supported')
+        self.design = design
         self.design_parameters_set = True
 
     def configure_ghe_flow(self, ghe_dict: dict):
@@ -288,7 +422,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         return v_flow_system, m_flow_borehole
 
     def new_nbh_design(self, design_nbh):
-        design_nbh = clip(design_nbh, * self.design.get_bounds())
+        design_nbh = clip(design_nbh, *self.design.get_bounds())
         new_coords = self.design.closest_nbh(design_nbh)
         self.pre_designed_locations = new_coords
         self.pre_designed_height = self.max_height
@@ -297,9 +431,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
     def average_bound_nbh(self):
         return average(self.design.get_bounds())
 
-    def initialize_pre_designed_ghe(
-        self, log_time=eskilson_log_times()
-    ):
+    def initialize_pre_designed_ghe(self, log_time=eskilson_log_times()):
         v_flow_system, m_flow_borehole = self.retrieve_flow(self.pre_designed_locations, self.fluid.rho)
         self.log_time = log_time
         self.pygfunction_borehole.H = self.pre_designed_height
@@ -513,8 +645,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         start_time = time()
         search = design.find_design()  # TODO: I wonder if it would simplify things to just return the GHE object
         search_time = time() - start_time
-        self.at_maximum_size = search.at_maximum_size
-        self.at_minimum_size = search.at_minimum_size
         found_ghe = cast(GHE, search.ghe)
         found_ghe.compute_g_functions(self.min_height, self.max_height)
         found_ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
@@ -523,7 +653,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.design = design
         return search, search_time, found_ghe
 
-    def get_design_area(self):
+    def get_design_area(self) -> float:
 
         if not self.ghe_geometry_set:
             raise ValueError("A set of geometric constraints needs to be set before a design area can be defined.")
@@ -531,17 +661,17 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         if self.pre_designed_area:
             return self.pre_designed_area
 
-        match self.geom_type:
-            case DesignGeomType.RECTANGLE:
+        match self.geometric_constraint:
+            case GeometricConstraintsRectangle():
                 # max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
                 area = self.geometric_constraint.length * self.geometric_constraint.width
-            case DesignGeomType.NEARSQUARE:
+            case GeometricConstraintsNearSquare():
                 area = self.geometric_constraint.length * self.geometric_constraint.length
-            case DesignGeomType.BIRECTANGLE:
+            case GeometricConstraintsBiZoned():
                 area = self.geometric_constraint.length * self.geometric_constraint.width
-            case DesignGeomType.BIZONEDRECTANGLE:
+            case GeometricConstraintsBiRectangle():
                 area = self.geometric_constraint.length * self.geometric_constraint.width
-            case DesignGeomType.BIRECTANGLECONSTRAINED:
+            case GeometricConstraintsBiRectangleConstrained():
                 area = 0
                 for prop_bound in self.geometric_constraint.property_boundary:
                     area += get_area(prop_bound)  # This presumes that property polygons are non-intersecting
@@ -549,10 +679,11 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                 if ng is not None:
                     for ng_zone in ng:
                         area -= get_area(ng_zone)  # This presumes that no-go zone polygons are non-intersecting
-            case DesignGeomType.ROWWISE:
+            case GeometricConstraintsRowWise():
                 area = get_area(self.geometric_constraint.property_boundary)
-                for ng_zone in self.geometric_constraint.no_go_boundaries:
-                    area -= get_area(ng_zone)  # This presumes that no-go zone polygons are non-intersecting
+                if self.geometric_constraint.no_go_boundaries is not None:
+                    for ng_zone in self.geometric_constraint.no_go_boundaries:
+                        area -= get_area(ng_zone)  # This presumes that no-go zone polygons are non-intersecting
             case _:
                 raise ValueError(f'DesignGeomType "{self.geom_type}" not supported')
         return area
@@ -578,7 +709,10 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                 "The field geometry either needs to be set before calling this function or provided in a"
                 " GHE dictionary provided."
             )
-
+        if self.pre_designed_locations is None:
+            raise ValueError(
+                'Pre-designed locations are not already defined ghe_dict must be given to call "get_g_function"'
+            )
         nbh = len(self.pre_designed_locations)
         if ghe_dict is not None:
             flow_rate: float = ghe_dict["flow_rate"]

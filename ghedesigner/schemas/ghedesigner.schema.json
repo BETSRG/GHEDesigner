@@ -976,11 +976,7 @@
                     "$ref": "#/$defs/no_go_boundaries"
                   }
                 },
-                "required": [
-                  "b_min",
-                  "property_boundary",
-                  "method"
-                ],
+                "required": ["b_min", "property_boundary", "method"],
                 "additionalProperties": false
               },
               {
@@ -1184,6 +1180,27 @@
           "enum": ["HYBRID", "HOURLY"],
           "default": "HYBRID",
           "description": "This field is currently unused. Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently available."
+        },
+        "search_method": {
+          "type": "string",
+          "enum": ["GLOBAL_BUPCRS", "NELDER-MEAD", "SIMULATION_ONLY"],
+          "default": "GLOBAL_BUPCRS",
+          "description": "Defines the type of design method to be used for the system GHEs. Use \"SIMULATION_ONLY\" if you only want to simulate pre-designed GHEs."
+        },
+        "constant_cop": {
+          "type": "boolean",
+          "default": true,
+          "description": "Determines if the system heat pumps are simulated with a constant cop (based on ugt, design temp limits, and heat pump models)."
+        },
+        "fixed_loads": {
+          "type": "boolean",
+          "default": false,
+          "description": "Determines if the system simulation pre-determines the ghe load distribution (based on nbh). This can be advantageous as the GHE heat transfer calculations are faster when using hourly timesteps."
+        },
+        "exhaustive_search": {
+          "type": "boolean",
+          "default": false,
+          "description": "Determines if the GHE design algorithm will perform an exhaustive search or a faster search (which depends on the search method type)."
         }
       },
       "oneOf": [
@@ -1194,7 +1211,7 @@
             }
           },
           "required": ["simulation_years"],
-          "additionalProperties": false
+          "additionalProperties": true
         },
         {
           "properties": {
@@ -1203,7 +1220,7 @@
             }
           },
           "required": ["sizing_years"],
-          "additionalProperties": false
+          "additionalProperties": true
         }
       ]
     },

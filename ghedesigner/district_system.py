@@ -1,21 +1,25 @@
 import json
 from abc import ABC, abstractmethod
 from itertools import product
-from math import copysign, cos, isclose,sin
+from math import cos, sin
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy.optimize import minimize
 
-from ghedesigner.constants import DEG_TO_RAD, HOURS_IN_YEAR, PI_OVER_2, SEC_IN_HR, TWO_PI
-from ghedesigner.ghe.domains import polygonal_land_constraint_multi_field
+from ghedesigner.constants import HOURS_IN_YEAR, PI_OVER_2, SEC_IN_HR, TWO_PI
 from ghedesigner.enums import CentralLoopType, DesignGeomType, SimCompType, SourceSinkOpMode
+from ghedesigner.ghe.domains import polygonal_land_constraint_multi_field
 from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.media import Fluid
-from ghedesigner.utilities import get_loads, load_input_file, solve_root
-from scipy.optimize import Bounds, minimize
+from ghedesigner.utilities import get_loads, load_input_file
 
-BOREHOLES_PER_SQUARE_METER = 0.2
+BOREHOLES_PER_SQUARE_METER = 0.0494  # This is the tightest boreholes can be infinitely
+# tessellated with 4.5m spacing (to my knowledge).
+IDX_COMPARISON_OFFSET_1 = 1
+IDX_COMPARISON_OFFSET_2 = 2
+
 
 class BaseSimComp(ABC):
     def __init__(self) -> None:
@@ -99,10 +103,7 @@ class SourceSinkHeatExchanger(BaseSimComp):
             raise ValueError("cp is uninitialized")
         if self.matrix_size is None:
             raise ValueError("matrix_size is uninitialized")
-        if idx_timestep == 1:
-            t_in = self.t_in[0]
-        else:
-            t_in = self.t_in[idx_timestep - 1]
+        t_in = self.t_in[0] if idx_timestep == 1 else self.t_in[idx_timestep - 1]
         is_running = self.is_running(t_in)
         self.operating[idx_timestep - 1] = is_running
         m_flow_source: float = self.source_flow_rate if is_running else 0.0
@@ -198,12 +199,6 @@ class GHX(BaseSimComp):
         else:
             self.ghe_designed = False
 
-    def can_be_resized(self, upsize=True):
-        if (upsize and not self.ghe_manager.at_maximum_size) or (not upsize and not self.ghe_manager.at_minimum_size):
-            return True
-        else:
-            return False
-
     def design_new_ghe(self, load_profile=None, max_eft=None, min_eft=None):
         if not self.ghe_manager.is_sizable:
             self.ghe_designed = True
@@ -225,6 +220,7 @@ class GHX(BaseSimComp):
             self.nbh = 0
             self.borefield_coordinates = []
         else:
+            self.ghe_designed = True
             self.is_bypassed = False
             self.ghe_manager.new_nbh_design(desired_nbh)
 
@@ -235,6 +231,7 @@ class GHX(BaseSimComp):
             self.nbh = 0
             self.borefield_coordinates = []
         else:
+            self.ghe_designed = True
             self.ghe_manager.pre_designed_height = self.ghe_manager.max_height
             self.is_bypassed = False
             self.borefield_coordinates = new_coordinates
@@ -249,7 +246,7 @@ class GHX(BaseSimComp):
             self.ghe_manager.initialize_pre_designed_ghe()
 
     def update_ghe_parameters(self):
-        if not self.ghe_designed:
+        if not self.ghe_designed and not self.is_bypassed:
             raise ValueError("A GHE must be either pre-provided or designed before the parameters can be updated.")
         self.history_terms, self.total_values_ghe, self.q_ghe = (
             np.full(self.num_timesteps + 1, self.ghe_manager.soil.ugt, dtype=float),
@@ -298,11 +295,11 @@ class GHX(BaseSimComp):
             raise IndexError("Timestep index error")
         # Compute contributions from all previous steps
 
-        if idx_timestep > 2:
+        if idx_timestep > IDX_COMPARISON_OFFSET_2:
             self.dq[idx_timestep - 2] -= self.q_ghe[idx_timestep - 3] * self.two_pi_k_recip
-        if idx_timestep > 1:
+        if idx_timestep > IDX_COMPARISON_OFFSET_1:
             self.dq[idx_timestep - 2] += self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip
-            values = np.sum(self.dq[0:idx_timestep - 1] * self.gfunction_evals[-idx_timestep:-1])
+            values = np.sum(self.dq[0 : idx_timestep - 1] * self.gfunction_evals[-idx_timestep:-1])
         else:
             values = 0
 
@@ -320,7 +317,8 @@ class GHX(BaseSimComp):
     def generate_matrix_fixed_loads(self, m_loop, idx_timestep, load_profile=None):
 
         if not self.convolution_completed:
-            assert load_profile is not None
+            if load_profile is None:
+                raise ValueError("Load profile is required to generate fixed loads during the first sim call.")
             n = load_profile.size
             convolution_length = 2 * n - 1
             time_values = np.log((self.time_array[1:] * SEC_IN_HR) / self.ts)
@@ -547,13 +545,13 @@ class Building(BaseSimComp):
         max_eft = self.max_eft
         self.loads = np.zeros(self.num_timesteps, dtype=float)
         if self.cooling_exists:
-            cooling_temp = ((1 - beta) * max_eft + beta * ugt)
+            cooling_temp = (1 - beta) * max_eft + beta * ugt
             q_rej_ratio = (
                 self.hp_clg.a_clg * cooling_temp * cooling_temp + self.hp_clg.b_clg * cooling_temp + self.hp_clg.c_clg
             )
             self.loads -= q_rej_ratio * self.clg_vals
         if self.heating_exists:
-            heating_temp = ((1 - beta) * min_eft + beta * ugt)
+            heating_temp = (1 - beta) * min_eft + beta * ugt
             q_extr_ratio = (
                 self.hp_htg.a_htg * heating_temp * heating_temp + self.hp_htg.b_htg * heating_temp + self.hp_htg.c_htg
             )
@@ -630,8 +628,19 @@ class HPmodel:
 
 
 class GHEHPSystem:
-    def __init__(self, f_path_json: Path, constant_cop=True, fixed_loads=False, exhaustive_search=False,
-                 search_method="GLOBAL_BUPCRS"):
+    total_loads: np.ndarray[tuple[int], np.dtype[np.float64]]
+    nbh_selections: list[str]
+    excess_temperatures: list[float]
+    coordinate_locations: dict[str, list[tuple[float, float]]]
+    nbh_values: list[int]
+    total_drilling_values: list[float]
+    objective_function_values: list[float]
+    borehole_heights: list[float]
+    previous_objective_function_evaluations: dict[str, dict[str, int | float]]
+    guess_idx: int
+    sample_rate: int
+
+    def __init__(self, f_path_json: Path):
         self.components: list[Building | GHX | SourceSinkHeatExchanger] = []
         self.nbh_total = None
         self.matrix_size = 0
@@ -644,62 +653,64 @@ class GHEHPSystem:
         self.loop_pump_efficiency = json_data["central_loop"]["pump_efficiency"]
         self.loop_length = json_data["central_loop"]["loop_length"]
         self.loop_design_pressure_loss_per_meter = json_data["central_loop"]["design_pressure_loss"]
-        self.constant_cop = constant_cop
-        self.fixed_loads = fixed_loads
-        self.sim_years = json_data["simulation_control"]["simulation_years"]
+        sim_controls = json_data["simulation_control"]
+        self.sim_years = sim_controls["simulation_years"]
+        if "search_method" in sim_controls:
+            self.search_method = sim_controls["search_method"]
+        else:
+            self.search_method = "GLOBAL_BUPCRS"
+        if "constant_cop" in sim_controls:
+            self.constant_cop = sim_controls["constant_cop"]
+        else:
+            self.constant_cop = True
+        if "fixed_loads" in sim_controls:
+            self.fixed_loads = sim_controls["fixed_loads"]
+        else:
+            self.fixed_loads = False
+        if "exhaustive_search" in sim_controls:
+            self.exhaustive_search = sim_controls["exhaustive_search"]
+        else:
+            self.exhaustive_search = False
         self.num_timesteps = self.sim_years * HOURS_IN_YEAR
-
-        self.search_method = search_method
-        if search_method == "GLOBAL_BUPCRS":
-            self.domain = None
-            self.field_descriptors = None
+        if self.search_method == "GLOBAL_BUPCRS":
+            self.domain: list[list[list[tuple[float, float]]]] = [[[]]]
+            self.field_descriptors: list[str] = []
             self.total_loads = np.zeros(self.num_timesteps, dtype=float)
             self.nbh_selections = []
             self.excess_temperatures = []
-            self.load_profiles = []
-            self.ghe_loads = None
-            self.previous_ghe_loads = None
-            self.iteration_indices = []
             self.coordinate_locations = {}
             self.nbh_values = []
             self.total_drilling_values = []
             self.objective_function_values = []
             self.borehole_heights = []
             self.previous_objective_function_evaluations = {}
-            self.exhaustive_search = exhaustive_search
             self.guess_idx = -1
             if self.exhaustive_search:
                 self.sample_rate = 100
-        elif search_method == "NELDER-MEAD":
-            self.penalty_baseline = None
-            self.max_iter = 50
-            self.number_of_restarts = 1
-            self.excess_temperature_tolerance = 1e-1
+        elif self.search_method == "NELDER-MEAD":
+            self.penalty_baseline: float = 0.0
+            self.max_iter: int = 50
+            self.number_of_restarts: int = 1
+            self.excess_temperature_tolerance: float = 1e-1
             self.total_loads = np.zeros(self.num_timesteps, dtype=float)
             self.nbh_selections = []
             self.excess_temperatures = []
-            self.load_profiles = []
-            self.ghe_loads = None
-            self.previous_ghe_loads = None
-            self.iteration_indices = []
             self.coordinate_locations = {}
             self.nbh_values = []
             self.total_drilling_values = []
             self.objective_function_values = []
             self.previous_objective_function_evaluations = {}
-            self.exhaustive_search = exhaustive_search
-            self.nbh_bounds = []
+            self.nbh_bounds: list[list[float]] = []
             self.guess_idx = -1
-            self.angles = []
+            self.angles: list[float] = []
             self.borehole_heights = []
-            self.nbh_vectors = []
+            self.nbh_vectors: list[str] = []
             if self.exhaustive_search:
                 self.sample_rate = 5
-        elif search_method == "SIMULATION_ONLY":
+        elif self.search_method == "SIMULATION_ONLY":
             pass
         else:
-            raise ValueError("Given search method not recogized.")
-
+            raise ValueError("Given search method not recognized.")
 
         fluid_data = json_data["fluid"]
         topology_data = json_data["topology"]
@@ -745,7 +756,7 @@ class GHEHPSystem:
                     self.fluid,
                     self.loop_config,
                     self.num_timesteps,
-                    constant_cop=constant_cop,
+                    constant_cop=self.constant_cop,
                 )
                 buildings.append(this_bldg)
 
@@ -767,20 +778,18 @@ class GHEHPSystem:
         for ghx_id, ghe_data in ghe_data.items():
             if ghx_id.upper() in ghx_names:
                 this_ghx = GHX(
-                    ghx_id, ghe_data, self.fluid, self.loop_config, self.num_timesteps, fixed_loads=fixed_loads
+                    ghx_id, ghe_data, self.fluid, self.loop_config, self.num_timesteps, fixed_loads=self.fixed_loads
                 )
                 self.cp = this_ghx.cp
                 ground_heat_exchangers.append(this_ghx)
 
         self.num_ghx = len(ground_heat_exchangers)
-        self.ghe_load_differences = []
-        self.ghe_load_magnitudes = []
         self.ground_heat_exchangers = ground_heat_exchangers
         self.sizable_ground_heat_exchangers = []
         for ghe in self.ground_heat_exchangers:
             if ghe.ghe_manager.is_sizable:
                 self.sizable_ground_heat_exchangers.append(ghe)
-        if fixed_loads:
+        if self.fixed_loads:
             self.matrix_size = np.dot(
                 [GHX.MATRIX_ROWS_FIXED_LOADS, Building.MATRIX_ROWS, SourceSinkHeatExchanger.MATRIX_ROWS],
                 [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
@@ -856,38 +865,6 @@ class GHEHPSystem:
                 max_excess = current_excess
         return max_excess
 
-    def get_updated_load_profile(self, based_on_nbh=False):
-        if self.ghe_loads is not None:
-            self.previous_ghe_loads = self.ghe_loads
-        self.total_loads = np.zeros(self.num_timesteps, dtype=float)
-        self.ghe_loads = [np.zeros(self.num_timesteps, dtype=float) for ghe in self.ground_heat_exchangers]
-        for i, ghe in enumerate(self.ground_heat_exchangers):
-            current_loads = ghe.q_ghe * ghe.nbh * ghe.height
-            self.total_loads += current_loads
-            if not based_on_nbh:
-                self.ghe_loads[i][:] = current_loads[:]
-        if based_on_nbh:
-            for i, ghe in enumerate(self.ground_heat_exchangers):
-                self.ghe_loads[i][:] = self.total_loads * ghe.split_ratio
-
-    def append_load(self, new_load, do_ghe_loads=True):
-        if not do_ghe_loads:
-            pass
-            # self.ghe_load_residuals.append([0.0 for i in range(self.num_ghx)])
-        else:
-            new_differences = []
-            new_magnitudes = []
-            for i, ghe in enumerate(self.ground_heat_exchangers):
-                current_ghe_loads = self.ghe_loads[i]
-                average = np.average(current_ghe_loads)
-                pos_vals = np.where(current_ghe_loads > 0, current_ghe_loads, 0)
-                neg_vals = np.where(current_ghe_loads < 0, current_ghe_loads, 0)
-                new_differences.append(np.sum(pos_vals - neg_vals) / average)
-                new_magnitudes.append(average)
-            self.ghe_load_differences.append(new_differences)
-            self.ghe_load_magnitudes.append(new_magnitudes)
-        self.load_profiles.append(new_load)
-
     def append_new_coordinates(self, iteration_name):
         new_index = len(self.coordinate_locations)
         self.coordinate_locations[new_index] = {}
@@ -934,50 +911,26 @@ class GHEHPSystem:
                 break
         self.set_ground_heat_exchanger_size(r_max)
         self.solve_system()
-        max_et = self.calculate_building_excess()
+        _ = self.calculate_building_excess()
         return
 
     def initialize_system_ghes(self, need_penalty=False):
-        # Perform initial sizing of GHEs
-        average_ugt = 0
-        total_design_volume = 0
-        load_split = np.zeros(self.num_ghx, dtype=float)
+        # Get penalty multiplier based on the estimated number of maximum boreholes and maximum borehole height.
         if need_penalty:
             self.penalty_baseline = 0
-        for i, ghe in enumerate(self.ground_heat_exchangers):
-            design_volume = ghe.ghe_manager.get_design_volume()
-            if need_penalty:
-                self.penalty_baseline += ghe.ghe_manager.get_design_area() * BOREHOLES_PER_SQUARE_METER
-            average_ugt += ghe.ghe_manager.soil.ugt * design_volume
-            total_design_volume += design_volume
-            load_split[i] = design_volume
-        average_ugt /= total_design_volume
-        load_split /= total_design_volume
-
-        initial_load = None
-        for building in self.buildings:
-            if initial_load is None:
-                initial_load = building.generate_ghe_load_estimate(average_ugt)
+            for i, ghe in enumerate(self.ground_heat_exchangers):
+                self.penalty_baseline += (
+                    ghe.ghe_manager.get_design_area() * BOREHOLES_PER_SQUARE_METER * ghe.ghe_manager.max_height
+                )
+        for ghe in self.ground_heat_exchangers:
+            if not ghe.ghe_manager.is_sizable:
+                ghe.design_new_ghe()
             else:
-                initial_load += building.generate_ghe_load_estimate(average_ugt)
-        initial_ghe_load = []
-        for i, ghe in enumerate(self.ground_heat_exchangers):
-            ghe.split_ratio = load_split[i]
-            current_load = initial_load * ghe.split_ratio
-            ugt = ghe.ghe_manager.soil.ugt
-            ghe.design_new_ghe(
-                current_load, ugt + 5.0, ugt - 5.0
-            )
-            initial_ghe_load.append(current_load)
+                ghe.update_ghe_design_coordinate([[0.0, 0.0]])
             ghe.update_ghe_parameters()
-        self.append_load(initial_load, do_ghe_loads=False)
-        # self.append_new_coordinates("0_0")
-        self.solve_system()
         self.guess_idx = -1
 
-    def design_system_single_bupcrs(
-        self
-    ):
+    def design_system_single_bupcrs(self):
         # Perform initial sizing of GHEs
         self.initialize_system_ghes(need_penalty=False)
 
@@ -995,11 +948,15 @@ class GHEHPSystem:
                 else:
                     b_min = min(b_min, ghe.ghe_manager.geometric_constraint.b_min)
             else:
-                raise ValueError("All GHEs must be of type \"BIRECTANGLECONSTRAINED\" for use in the global BUPCRS"
-                                 "system design algorithm.")
+                raise ValueError(
+                    'All GHEs must be of type "BIRECTANGLECONSTRAINED" for use in the global BUPCRS'
+                    "system design algorithm."
+                )
 
-        self.domain, self.field_descriptors = polygonal_land_constraint_multi_field(b_min, property_boundaries,
-                                                                                    no_go_boundaries=nogo_zones)
+        self.domain, self.field_descriptors = polygonal_land_constraint_multi_field(
+            b_min, property_boundaries, no_go_boundaries=nogo_zones
+        )
+
         def objective(field_index, ignore_previous=False):
             self.guess_idx += 1
             eval_key = self.field_descriptors[field_index]
@@ -1009,7 +966,10 @@ class GHEHPSystem:
                 self.total_drilling_values.append(self.previous_objective_function_evaluations[eval_key]["TD"])
                 self.excess_temperatures.append(self.previous_objective_function_evaluations[eval_key]["EXC"])
                 self.objective_function_values.append(self.previous_objective_function_evaluations[eval_key]["EXC"])
-                self.borehole_heights.append(self.previous_objective_function_evaluations[eval_key]["TD"] / self.previous_objective_function_evaluations[eval_key]["NBH"])
+                self.borehole_heights.append(
+                    self.previous_objective_function_evaluations[eval_key]["TD"]
+                    / self.previous_objective_function_evaluations[eval_key]["NBH"]
+                )
                 return self.previous_objective_function_evaluations[eval_key]["EXC"]
             coords = self.domain[field_index]
             for i, coord in enumerate(coords):
@@ -1033,7 +993,7 @@ class GHEHPSystem:
                 "NBH": nbh_val,
                 "TD": total_drilling_val,
                 "EXC": excess_temp,
-                "OFE": excess_temp
+                "OFE": excess_temp,
             }
             return excess_temp
 
@@ -1041,28 +1001,26 @@ class GHEHPSystem:
             x_range = np.arange(0, len(self.domain))
             total = x_range.shape[0]
             sample_rate = self.sample_rate
-            index = 0
-            for i in x_range:
+            for i, index in enumerate(x_range):
                 if index % sample_rate == 0:
                     print(f"Percent Completed: {100 * index / total}")
-                objective(i)
-                index += 1
+                _ = objective(i)
         else:
             min_idx = 0
             max_idx = len(self.domain) - 1
             min_result = objective(min_idx)
             max_result = objective(max_idx)
             if min_result <= 0 and max_result <= 0:
-                final_value = objective(min_idx)
+                _ = objective(min_idx)
             elif min_result > 0 and max_result > 0:
                 # raise ValueError("Largest borefield cannot meet system temperature requirements. It is suggested"
                 #                  "that the minimum spacing or available property area is adjusted to allow for "
                 #                  "additional boreholes.")
-                final_value = objective(max_idx)
+                _ = objective(max_idx)
             elif min_result >= 0 >= max_result:
                 while True:
                     m_idx = int(0.5 * (min_idx + max_idx))
-                    if m_idx == min_idx or m_idx == max_idx:
+                    if m_idx in (min_idx, max_idx):
                         break
                     m_result = objective(m_idx)
                     if m_result > 0:
@@ -1070,17 +1028,21 @@ class GHEHPSystem:
                     elif m_result <= 0:
                         max_idx = m_idx
                     else:
-                        raise ValueError("The has been an error in the bisection search logic of the "
-                                         "\"design_system_single_bupcrs\" algorithm. Please report.")
-                final_value = objective(max_idx, ignore_previous=True)
+                        raise ValueError(
+                            "The has been an error in the bisection search logic of the "
+                            '"design_system_single_bupcrs" algorithm. Please report.'
+                        )
+                _ = objective(max_idx, ignore_previous=True)
             else:
-                raise ValueError("There has been an error in the bracketing logic of the"
-                                 " \"design_system_single_bupcrs\" algorithm. Please report.")
+                raise ValueError(
+                    "There has been an error in the bracketing logic of the"
+                    ' "design_system_single_bupcrs" algorithm. Please report.'
+                )
 
     def design_system_optimizer(
         self,
     ):
-        max_iter = self.max_iter
+        # max_iter = self.max_iter
         number_of_restarts = self.number_of_restarts
         excess_temperature_tolerance = self.excess_temperature_tolerance
 
@@ -1090,10 +1052,11 @@ class GHEHPSystem:
         for ghe in self.sizable_ground_heat_exchangers:
             self.nbh_bounds.append(ghe.ghe_manager.design.get_bounds())
         number_of_sizable_ghes = len(self.sizable_ground_heat_exchangers)
+
         def nbh_sim(nbhs):
             if np.all(nbhs == 0):
-                raise ValueError("Only empty borefields given to \"nbh_sim\".")
-            nbhs = [int(round(nbh)) for nbh in nbhs]
+                raise ValueError('Only empty borefields given to "nbh_sim".')
+            nbhs = [round(nbh) for nbh in nbhs]
             eval_key = "_".join([str(nbh) for nbh in nbhs])
             if eval_key in self.previous_objective_function_evaluations:
                 for i, ghe in enumerate(self.ground_heat_exchangers):
@@ -1109,10 +1072,12 @@ class GHEHPSystem:
             self.previous_objective_function_evaluations[eval_key] = {
                 "EXC": excess_temp,
                 "NBHS": [ghe.ghe_manager.current_ghe.nbh for ghe in self.ground_heat_exchangers],
-                "coords": [ghe.borefield_coordinates for ghe in self.ground_heat_exchangers]
+                "coords": [ghe.borefield_coordinates for ghe in self.ground_heat_exchangers],
             }
             return excess_temp, eval_key
+
         self.inner_obj_func = nbh_sim
+
         def objective(spherical_angles):
             self.guess_idx += 1
             # Find the nbh ratio unit vector from the spherical angles
@@ -1143,14 +1108,14 @@ class GHEHPSystem:
                 else:
                     # We will be rounding the nbh vector to the nearest integer, so a value of 0.5 would round up to
                     # an NBH of 1.
-                    r_r_min = (0.5  + 1e-8) / ratio
+                    r_r_min = (0.5 + 1e-8) / ratio
                     r_r_max = self.nbh_bounds[r_idx][1] / ratio
                 r_min = min(r_min, r_r_min)
                 r_max = min(r_max, r_r_max)
 
             # Next, we need to check if this angle actually brackets a root.
             min_eft, min_eval_key = self.inner_obj_func(ratios * r_min)
-            _, min_td, min_height = self.get_nbh_and_td()
+            _, min_td, _ = self.get_nbh_and_td()
             max_eft, max_eval_key = self.inner_obj_func(ratios * r_max)
             max_nbh, max_td, max_height = self.get_nbh_and_td()
 
@@ -1172,7 +1137,6 @@ class GHEHPSystem:
                 self.nbh_values.append(nbh_val)
                 self.total_drilling_values.append(total_drilling_val)
                 self.append_new_coordinates(f"{self.guess_idx}")
-                total_drilling_val += self.penalty_baseline * (excess_temp + 1.0) ** 2
                 self.objective_function_values.append(total_drilling_val)
                 self.nbh_selections.append(min_eval_key)
                 self.borehole_heights.append(height_val)
@@ -1181,8 +1145,8 @@ class GHEHPSystem:
                 while True:
                     r_mid = 0.5 * (r_min + r_max)
                     mid_eft, mid_eval_key = self.inner_obj_func(ratios * r_mid)
-                    _, mid_td, mid_height = self.get_nbh_and_td()
-                    if (mid_eval_key == min_eval_key or mid_eval_key == max_eval_key):
+                    _, mid_td, _ = self.get_nbh_and_td()
+                    if mid_eval_key in (min_eval_key, max_eval_key):
                         break
                     if mid_eft > 0:
                         min_eft = mid_eft
@@ -1203,7 +1167,7 @@ class GHEHPSystem:
                     max_nbhs = np.array([round(nbh) for nbh in (ratios * r_max)], dtype=float)
                     r_min = max((max_nbhs - 1) / (ratios + 1e-16))
                     min_eft, min_eval_key = self.inner_obj_func(ratios * r_min)
-                    _, min_td, min_height = self.get_nbh_and_td()
+                    _, min_td, _ = self.get_nbh_and_td()
                 excess_temp, final_eval_key = self.inner_obj_func(ratios * r_max)
                 nbh_val, total_drilling_value, height_val = self.get_nbh_and_td()
                 self.nbh_values.append(nbh_val)
@@ -1221,17 +1185,16 @@ class GHEHPSystem:
                 return obf_val
             else:
                 raise ValueError("Bisection search in NBH raycast is producing unexpected results.")
+
         number_of_search_dimensions = number_of_sizable_ghes - 1
         if self.exhaustive_search:
             x_range = np.linspace(0, PI_OVER_2, num=19)
             total = x_range.shape[0] ** number_of_search_dimensions
             sample_rate = self.sample_rate
-            index = 0
-            for angles in product(x_range, repeat=number_of_search_dimensions):
-                    if index % sample_rate == 0:
-                        print(f"Percent Completed: {100 * index / total}")
-                    objective(angles)
-                    index += 1
+            for index, angles in enumerate(product(x_range, repeat=number_of_search_dimensions)):
+                if index % sample_rate == 0:
+                    print(f"Percent Completed: {100 * index / total}")
+                objective(angles)
         else:
             initial_guess = [0.5 * PI_OVER_2 for _ in range(number_of_search_dimensions)]
             initial_simplex = [initial_guess]
@@ -1243,16 +1206,25 @@ class GHEHPSystem:
                 bounds.append((0.0, PI_OVER_2))
             for i in range(number_of_restarts + 1):
                 if i == 0:
-                    result = minimize(objective, initial_guess, method='Nelder-Mead', bounds=bounds,
-                                      options={"initial_simplex": initial_simplex,
-                                               "fatol": excess_temperature_tolerance})
+                    result = minimize(
+                        objective,
+                        initial_guess,
+                        method="Nelder-Mead",
+                        bounds=bounds,
+                        options={"initial_simplex": initial_simplex, "fatol": excess_temperature_tolerance},
+                    )
                 else:
-                    result = minimize(objective, initial_guess, method='Nelder-Mead', bounds=bounds,
-                                      options={"fatol": excess_temperature_tolerance})
+                    result = minimize(
+                        objective,
+                        initial_guess,
+                        method="Nelder-Mead",
+                        bounds=bounds,
+                        options={"fatol": excess_temperature_tolerance},
+                    )
                 initial_guess = result.x
                 print(f"Finished Nelder-Mead Round: {i}; Solver Successful?: {result.success}")
 
-            final_total_drilling = objective(initial_guess)
+            _ = objective(initial_guess)
 
     def get_nbh_and_td(self):
         nbh_val = 0
@@ -1265,7 +1237,8 @@ class GHEHPSystem:
     def solve_system(self):
         self.number_of_simulations += 1
         if self.fixed_loads:
-            assert self.constant_cop
+            if not self.constant_cop:
+                raise ValueError("Fixed Loads simulation requires constant cop heat pumps be enabled.")
             self.solve_system_fixed_loads()
         else:
             self.solve_system_standard()
@@ -1279,7 +1252,7 @@ class GHEHPSystem:
             if isinstance(this_comp, GHX):
                 this_comp.split_ratio = this_comp.nbh / self.nbh_total
                 average_ugt += this_comp.ghe_manager.soil.ugt * this_comp.nbh / self.nbh_total
-            elif isinstance(this_comp, Building) or isinstance(this_comp, SourceSinkHeatExchanger):
+            elif isinstance(this_comp, (Building, SourceSinkHeatExchanger)):
                 this_comp.cp = self.cp
         for building in self.buildings:
             building.generate_constant_cop_loads(average_ugt)
@@ -1336,7 +1309,7 @@ class GHEHPSystem:
             if isinstance(this_comp, GHX):
                 this_comp.split_ratio = this_comp.nbh / self.nbh_total
                 average_ugt += this_comp.ghe_manager.soil.ugt * this_comp.nbh / self.nbh_total
-            elif isinstance(this_comp, Building) or isinstance(this_comp, SourceSinkHeatExchanger):
+            elif isinstance(this_comp, (Building, SourceSinkHeatExchanger)):
                 this_comp.cp = self.cp
 
         if self.constant_cop:
@@ -1376,7 +1349,7 @@ class GHEHPSystem:
                     this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
                     this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
                 elif this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
-                    this_comp.t_in[idx_timestep -1] = x_vector[row_index]
+                    this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
                     this_comp.t_mean[idx_timestep - 1] = x_vector[row_index + 1]
                     this_comp.q_ghe[idx_timestep - 1] = x_vector[row_index + 2]
                     this_comp.t_out[idx_timestep - 1] = x_vector[row_index + 3]
@@ -1397,9 +1370,8 @@ class GHEHPSystem:
     def create_output(
         self,
         output_path: Path,
-        output_path_2: Path = None,
-        output_path_load: Path = None,
-        output_path_coordinates: Path = None,
+        output_path_2: Path | None = None,
+        output_path_coordinates: Path | None = None,
     ):
         output_data = pd.DataFrame()
         output_data.index.name = "Hour"
@@ -1475,15 +1447,6 @@ class GHEHPSystem:
             if not output_path_2.parent.exists():
                 output_path_2.parent.mkdir(parents=True)
             output_data.to_csv(output_path_2, float_format="%0.4f")
-        if output_path_load is not None:
-            output_data = pd.DataFrame()
-            output_data.index.name = "Time (hr)"
-            for i in range(len(self.load_profiles)):
-                output_data[f"Iteration {i}"] = self.load_profiles[i]
-            if not output_path_load.parent.exists():
-                output_path_load.parent.mkdir(parents=True)
-            output_data.to_csv(output_path_load, float_format="%0.4f")
-
-        if output_path_2 is not None:
+        if output_path_coordinates is not None:
             with open(output_path_coordinates, "w") as output_file:
                 json.dump(self.coordinate_locations, output_file)
