@@ -18,7 +18,8 @@ from ghedesigner.utilities import get_loads, load_input_file
 BOREHOLES_PER_SQUARE_METER = 0.0494  # This is the tightest boreholes can be infinitely
 # tessellated with 4.5m spacing (to my knowledge).
 IDX_COMPARISON_OFFSET_1 = 1
-IDX_COMPARISON_OFFSET_2 = 2
+IDX_COMPARISON_OFFSET_2 = 2  # Used for offsets in gfunction calculation
+SIMULATION_CONSTANT_COP_OFFSET = 8.0
 
 
 class BaseSimComp(ABC):
@@ -443,6 +444,9 @@ class Building(BaseSimComp):
         if "max_eft" in bldg_data and "min_eft" in bldg_data:
             self.max_eft = bldg_data["max_eft"]
             self.min_eft = bldg_data["min_eft"]
+        else:
+            self.max_eft = 0.0
+            self.min_eft = 0.0
 
         if self.heating_exists:
             hp_htg_name = bldg_data["heating_load"]["heat_pump_name"]
@@ -541,8 +545,12 @@ class Building(BaseSimComp):
         return r1, r2
 
     def generate_constant_cop_loads(self, ugt, beta=0.1):
-        min_eft = self.min_eft
-        max_eft = self.max_eft
+        if self.min_eft == 0.0 and self.max_eft == 0.0:
+            min_eft = ugt - SIMULATION_CONSTANT_COP_OFFSET
+            max_eft = ugt + SIMULATION_CONSTANT_COP_OFFSET
+        else:
+            min_eft = self.min_eft
+            max_eft = self.max_eft
         self.loads = np.zeros(self.num_timesteps, dtype=float)
         if self.cooling_exists:
             cooling_temp = (1 - beta) * max_eft + beta * ugt
@@ -724,8 +732,8 @@ class GHEHPSystem:
             percent=fluid_data["concentration_percent"],
             temperature=fluid_data["temperature"],
         )
-
-        tg = json_data["ground_heat_exchanger"]["ghe_1"]["soil"]["undisturbed_temp"]  # TODO: fix this
+        first_ghe_key = next(iter(json_data["ground_heat_exchanger"]))
+        tg = json_data["ground_heat_exchanger"][first_ghe_key]["soil"]["undisturbed_temp"]  # TODO: fix this
 
         # get component names we need to build, validate they exist and are referenced correctly
         def get_comp_names(topology: dict, comp_list: dict, comp_type_to_check: SimCompType) -> list[str]:

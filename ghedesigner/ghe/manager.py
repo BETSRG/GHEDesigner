@@ -496,19 +496,19 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             else:
                 raise ValueError("GHE dictionary is required if flow parameters have not been set.")
 
-        # Make sure that necessary design conditions are set
-        if not self.design_parameters_set:
-            if ghe_dict is not None:
-                self.configure_design(ghe_dict["design"])
-            else:
-                raise ValueError("GHE dictionary is required if design parameters have not been set.")
-
         # set up the geometry constraints section
         if not self.ghe_geometry_set:
             if ghe_dict is not None:
                 self.configure_geometry(ghe_dict["geometric_constraints"])
             else:
                 raise ValueError("GHE dictionary is required if geometry constraints have not been set.")
+
+        # Make sure that necessary design conditions are set
+        if not self.design_parameters_set:
+            if ghe_dict is not None:
+                self.configure_design(ghe_dict["design"])
+            else:
+                raise ValueError("GHE dictionary is required if design parameters have not been set.")
 
         design: DesignBase
         match self.geometric_constraint:
