@@ -39,9 +39,11 @@ def rectangle(
             r.append((x_0 + i * spacing_x, y_0 + j * spacing_y))
     return r
 
+
 def general_field_nbh_adjustment(coordinates, desired_nbh):
     sorted_coordinates = sorted(coordinates)
     return sorted_coordinates[0:desired_nbh]
+
 
 def rectangle_adjusted_nbh(
     num_bh_x: int,
@@ -73,9 +75,10 @@ def rectangle_adjusted_nbh(
     """
     nominal_nbh = num_bh_x * num_bh_y
     boreholes_to_remove = nominal_nbh - desired_nbh
-    if  boreholes_to_remove  >= num_bh_x or boreholes_to_remove < 0:
-        raise ValueError("The given desired nbh either exceeds the nominal nbh or requires"
-                         " the removal of an entire row.")
+    if boreholes_to_remove >= num_bh_x or boreholes_to_remove < 0:
+        raise ValueError(
+            "The given desired nbh either exceeds the nominal nbh or requires the removal of an entire row."
+        )
     r = []
     x_0 = origin[0]
     y_0 = origin[1]
@@ -125,6 +128,7 @@ def rectangle_adjusted_nbh(
                 else:
                     r.append((x_0 + i * row_spacing, y_0 + j * spacing_y))
         return r
+
 
 def open_rectangle(
     num_bh_x: int, num_bh_y: int, spacing_x: int | float, spacing_y: int | float

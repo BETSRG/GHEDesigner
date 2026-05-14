@@ -139,11 +139,7 @@ class BisectionZD(Bisection1D):
         values = list(self.calculated_temperatures.values())
 
         negative_excess_values = [v for v in values if v <= 0.0]
-
-        if len(negative_excess_values) > 0:
-            excess_of_interest = max(negative_excess_values)
-        else:
-            excess_of_interest = min(values)
+        excess_of_interest = max(negative_excess_values) if len(negative_excess_values) > 0 else min(values)
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
         selected_coordinates = self.coordinates_domain_nested[selection_key_outer][selection_key]

@@ -5,10 +5,13 @@ from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
-from ghedesigner.ghe.domains import polygonal_land_constraint, polygonal_land_constraint_multi_field, \
-    general_domain_nbh_adjustment
+from ghedesigner.ghe.domains import (
+    general_domain_nbh_adjustment,
+    polygonal_land_constraint,
+    polygonal_land_constraint_multi_field,
+)
 from ghedesigner.ghe.pipe import Pipe
-from ghedesigner.ghe.search.bisection_zd import  Bisection1D, BisectionZD
+from ghedesigner.ghe.search.bisection_zd import Bisection1D, BisectionZD
 from ghedesigner.media import Fluid, Grout, Soil
 
 
@@ -120,14 +123,15 @@ class DesignBiRectangleConstrained(DesignBase):
                 self.geometric_constraints.b_min,
                 [self.geometric_constraints.property_boundary],
                 self.geometric_constraints.no_go_boundaries,
-                keep_contour=keep_contour, split_domains_by_property=False
+                keep_contour=keep_contour,
+                split_domains_by_property=False,
             )
             self.borehole_lengths = [len(coords) for coords in self.coordinates_domain]
             self.domain_2d = False
             self.min_nbh = min(self.borehole_lengths)
             self.max_nbh = max(self.borehole_lengths)
 
-    def find_design(self, disp=False) -> (Bisection1D | BisectionZD):
+    def find_design(self, disp=False) -> Bisection1D | BisectionZD:
         if disp:
             title = "Find bi-rectangle_constrained..."
             print(title + "\n" + len(title) * "=")
@@ -187,8 +191,10 @@ class DesignBiRectangleConstrained(DesignBase):
 
     def closest_nbh(self, desired_nbh):
         if self.domain_2d:
-            raise ValueError("Only a 1D BUPCRS domain supports the \"closest_nbh\" function. You can create a 1d domain"
-                             "by simply omitting the b_max_x and b_max_y inputs to the BUPCRS geometric constraints.")
-        return general_domain_nbh_adjustment(self.coordinates_domain, self.borehole_lengths, self.min_nbh, self.max_nbh,
-                                             desired_nbh)
-
+            raise ValueError(
+                'Only a 1D BUPCRS domain supports the "closest_nbh" function. You can create a 1d domain'
+                "by simply omitting the b_max_x and b_max_y inputs to the BUPCRS geometric constraints."
+            )
+        return general_domain_nbh_adjustment(
+            self.coordinates_domain, self.borehole_lengths, self.min_nbh, self.max_nbh, desired_nbh
+        )

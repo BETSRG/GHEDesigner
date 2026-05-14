@@ -119,7 +119,6 @@ class DesignNearSquare(DesignBase):
         return min(self.borehole_lengths), max(self.borehole_lengths)
 
     def closest_nbh(self, desired_nbh):
-        return square_and_near_square_adjusted_nbh(1, self.number_of_boreholes, self.geometric_constraints.b,
-                                                   int(desired_nbh))
-
-
+        return square_and_near_square_adjusted_nbh(
+            1, self.number_of_boreholes, self.geometric_constraints.b, int(desired_nbh)
+        )
