@@ -416,12 +416,17 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             if len(x_positions) != len(y_positions):
                 raise RuntimeError("Borehole location coordinate mismatch, make sure length of x and y are equal")
             locations = list(zip(x_positions, y_positions))
-            # Preserve None when tilts and orientations are omitted so the equivalent solver stays in use for vertical fields
-            tilts: Sequence[float] = pre_designed.get("tilts")
-            orientations: Sequence[float] = pre_designed.get("orientations")
+            # Preserve None when tilts/orientations are omitted so the equivalent
+            # solver stays in use for vertical fields.
+            tilts: Sequence[float] | None = pre_designed.get("tilts")
+            orientations: Sequence[float] | None = pre_designed.get("orientations")
             if (tilts is None) != (orientations is None):
                 raise RuntimeError("tilts and orientations must both be provided or omitted")
-            if tilts is not None and (len(tilts) != len(locations) or len(orientations) != len(locations)):
+            if (
+                tilts is not None
+                and orientations is not None
+                and (len(tilts) != len(locations) or len(orientations) != len(locations))
+            ):
                 raise RuntimeError("tilts/orientations arrays must match length of x/y")
         elif pre_designed["arrangement"] == "RECTANGLE":
             num_bh_x = pre_designed["boreholes_in_x_dimension"]

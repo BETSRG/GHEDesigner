@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+import pytest
+
 from ghedesigner.enums import PipeType
 from ghedesigner.ghe.manager import GroundHeatExchanger
 
@@ -129,8 +131,8 @@ class TestPreDesignedGHE(TestCase):
             **base,
             "pre_designed": {
                 **base["pre_designed"],
-                "tilts":        [0.0, 0.0, 0.262, 0.262],
-                "orientations": [0.0, 0.0, 0.0,   0.0],
+                "tilts": [0.0, 0.0, 0.262, 0.262],
+                "orientations": [0.0, 0.0, 0.0, 0.0],
             },
         }
         _, g_tilted, _ = ghe.get_g_function(tilted, boundary_condition="UBWT")
@@ -143,9 +145,9 @@ class TestPreDesignedGHE(TestCase):
             **base,
             "pre_designed": {
                 **base["pre_designed"],
-                "tilts":        [0.262],
+                "tilts": [0.262],
                 "orientations": [0.0],
             },
         }
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             ghe.get_g_function(bad, boundary_condition="UBWT")
