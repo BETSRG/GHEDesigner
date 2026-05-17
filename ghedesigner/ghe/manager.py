@@ -416,12 +416,26 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             if len(x_positions) != len(y_positions):
                 raise RuntimeError("Borehole location coordinate mismatch, make sure length of x and y are equal")
             locations = list(zip(x_positions, y_positions))
+            # Preserve None when tilts/orientations are omitted so the equivalent
+            # solver stays in use for vertical fields.
+            tilts: Sequence[float] | None = pre_designed.get("tilts")
+            orientations: Sequence[float] | None = pre_designed.get("orientations")
+            if (tilts is None) != (orientations is None):
+                raise RuntimeError("tilts and orientations must both be provided or omitted")
+            if (
+                tilts is not None
+                and orientations is not None
+                and (len(tilts) != len(locations) or len(orientations) != len(locations))
+            ):
+                raise RuntimeError("tilts/orientations arrays must match length of x/y")
         elif pre_designed["arrangement"] == "RECTANGLE":
             num_bh_x = pre_designed["boreholes_in_x_dimension"]
             num_bh_y = pre_designed["boreholes_in_y_dimension"]
             spacing_x = pre_designed["spacing_in_x_dimension"]
             spacing_y = pre_designed["spacing_in_y_dimension"]
             locations = rectangle(num_bh_x, num_bh_y, spacing_x, spacing_y)
+            tilts = None
+            orientations = None
         else:
             raise RuntimeError("Invalid arrangement type for pre_designed borehole field")
 
@@ -453,6 +467,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             self.grout,
             self.soil,
             boundary_condition=boundary_condition,
+            tilts=tilts,
+            orientations=orientations,
         )
 
         single_u_bh = SingleUTube(

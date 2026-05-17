@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+import pytest
+
 from ghedesigner.enums import PipeType
 from ghedesigner.ghe.manager import GroundHeatExchanger
 
@@ -84,3 +86,68 @@ class TestPreDesignedGHE(TestCase):
 
         # TODO: should be investigated further - test values are not as close as I had hoped, but
         #  MIFT results are consistent with what was happening previously
+
+    def test_pre_designed_ghe_tilted_manual(self):
+        """Optional tilts/orientations arrays in MANUAL pre_designed produce
+        g-functions that differ from the equivalent all-vertical configuration,
+        and mismatched array lengths raise."""
+        ghe = GroundHeatExchanger(
+            grout_conductivity=1.0,
+            grout_rho_cp=3901000.0,
+            soil_conductivity=2.0,
+            soil_rho_cp=2000000,
+            soil_undisturbed_temperature=10,
+            borehole_buried_depth=2.0,
+            borehole_radius=0.08,
+            pipe_arrangement_type=PipeType.SINGLEUTUBE,
+            pipe_parameters={
+                "conductivity": 0.4,
+                "rho_cp": 1500000.0,
+                "inner_diameter": 0.03404,
+                "outer_diameter": 0.04216,
+                "shank_spacing": 0.01856,
+                "roughness": 1e-6,
+            },
+            fluid_name="water",
+            fluid_concentration_percent=0,
+            fluid_temperature=20,
+        )
+
+        # 2x2 field at 5 m, baseline all-vertical
+        base = {
+            "flow_rate": 0.5,
+            "flow_type": "BOREHOLE",
+            "pre_designed": {
+                "arrangement": "MANUAL",
+                "H": 192,
+                "x": [0.0, 0.0, 5.0, 5.0],
+                "y": [0.0, 5.0, 0.0, 5.0],
+            },
+        }
+        _, g_vertical, _ = ghe.get_g_function(base, boundary_condition="UBWT")
+
+        # Same field, two boreholes tilted 15 degrees (0.262 rad)
+        tilted = {
+            **base,
+            "pre_designed": {
+                **base["pre_designed"],
+                "tilts": [0.0, 0.0, 0.262, 0.262],
+                "orientations": [0.0, 0.0, 0.0, 0.0],
+            },
+        }
+        _, g_tilted, _ = ghe.get_g_function(tilted, boundary_condition="UBWT")
+
+        # Tilt must affect long-time field interaction; LTS g-function must differ
+        self.assertNotAlmostEqual(float(g_vertical[-1]), float(g_tilted[-1]), delta=0.01)
+
+        # Length-mismatch validation
+        bad = {
+            **base,
+            "pre_designed": {
+                **base["pre_designed"],
+                "tilts": [0.262],
+                "orientations": [0.0],
+            },
+        }
+        with pytest.raises(RuntimeError):
+            ghe.get_g_function(bad, boundary_condition="UBWT")
