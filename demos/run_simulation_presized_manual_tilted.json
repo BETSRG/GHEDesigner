@@ -1,0 +1,50 @@
+{
+  "version": 2,
+  "topology": [
+    {
+      "type": "ground_heat_exchanger",
+      "name": "ghe1"
+    }
+  ],
+  "fluid": {
+    "fluid_name": "WATER",
+    "concentration_percent": 0,
+    "temperature": 20
+  },
+  "ground_heat_exchanger": {
+    "ghe1": {
+      "flow_rate": 0.5,
+      "flow_type": "BOREHOLE",
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 18.3
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 4,
+        "diameter": 0.150
+      },
+      "pre_designed": {
+        "arrangement": "MANUAL",
+        "H": 150,
+        "x":            [0.0,   7.5,   15.0,  22.5,  30.0,  37.5,  45.0,  52.5],
+        "y":            [0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0],
+        "tilts":        [0.349, 0.349, 0.349, 0.349, 0.349, 0.349, 0.349, 0.349],
+        "orientations": [3.142, 2.356, -2.356, 1.571, -1.571, 0.785, -0.785, 0.0]
+      }
+    }
+  }
+}

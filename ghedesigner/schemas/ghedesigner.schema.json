@@ -575,6 +575,20 @@
                     "items": {
                       "type": "number"
                     }
+                  },
+                  "tilts": {
+                    "type": "array",
+                    "description": "Optional per-borehole tilt angle from vertical, in radians, one value for each borehole in the field. Defaults to vertical if omitted. Length must match x and y.",
+                    "items": {
+                      "type": "number"
+                    }
+                  },
+                  "orientations": {
+                    "type": "array",
+                    "description": "Optional per-borehole orientation (azimuth of the tilt direction), in radians, one value for each borehole in the field. Defaults to vertical if omitted. Length must match x and y.",
+                    "items": {
+                      "type": "number"
+                    }
                   }
                 },
                 "required": ["arrangement", "H", "x", "y"],
