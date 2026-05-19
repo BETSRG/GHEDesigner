@@ -1,4 +1,7 @@
 import json
+import math
+import pickle
+import time
 from abc import ABC, abstractmethod
 from itertools import product
 from math import cos, sin
@@ -11,15 +14,17 @@ from scipy.optimize import minimize
 from ghedesigner.constants import HOURS_IN_YEAR, PI_OVER_2, SEC_IN_HR, TWO_PI
 from ghedesigner.enums import CentralLoopType, DesignGeomType, SimCompType, SourceSinkOpMode
 from ghedesigner.ghe.domains import polygonal_land_constraint_multi_field
+from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads
 from ghedesigner.ghe.manager import GroundHeatExchanger
-from ghedesigner.media import Fluid
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import Fluid, Soil
 from ghedesigner.utilities import get_loads, load_input_file
 
 BOREHOLES_PER_SQUARE_METER = 0.0494  # This is the tightest boreholes can be infinitely
 # tessellated with 4.5m spacing (to my knowledge).
 IDX_COMPARISON_OFFSET_1 = 1
 IDX_COMPARISON_OFFSET_2 = 2  # Used for offsets in gfunction calculation
-SIMULATION_CONSTANT_COP_OFFSET = 8.0
+SIMULATION_CONSTANT_COP_OFFSET = 8.0  # °C used to estimate constant COP if temperature bounds are not given
 
 
 class BaseSimComp(ABC):
@@ -29,13 +34,417 @@ class BaseSimComp(ABC):
         self.matrix_size: int | None = None
         self.row_index: int | None = None
         self.downstream_index: int | None = None
+        self.inlet_index: int | None = None
+        self.downstream_device = None
 
     @abstractmethod
-    def generate_matrix(self, m_loop: float, idx_timestep: int) -> None:
+    def generate_matrix(
+        self,
+        mass_bldg,
+        mass_loop,
+        mass_loop_bldg,
+        mass_flow_ghe,
+        mass_loop_ghe,
+        idx_timestep: int,
+        configuration,
+        method,
+    ):
         pass
 
     def calc_energy(self) -> None:
         pass
+
+
+class IsolatedHorizontalPipe(BaseSimComp):
+    def __init__(
+        self,
+        name: str,
+        length: float,
+        num_segments: int,
+        pipe: Pipe,
+        soil: Soil,
+        fluid: Fluid,
+        num_timesteps: int,
+        time_array: np.ndarray,
+        q_prime_interp,  # <-- REPLACED: Now takes the interpolator function directly
+        beta: float,
+        ugt_avg: float,
+        ugt_amp1: float,
+        ugt_phase1: float,
+        ugt_amp2: float,
+        ugt_phase2: float,
+        depth: float,
+    ):
+        super().__init__()
+        self.name = name
+        self.comp_type = None
+        self.num_timesteps = num_timesteps
+        self.time_array = time_array
+
+        self.num_segments = num_segments  # <-- STORED
+        self.matrix_rows = 3 * num_segments + 1  # <-- DYNAMIC INSTANCE ATTRIBUTE
+
+        self.q_prime_interp = q_prime_interp  # <-- STORED
+        self.beta = beta
+        self.soil = soil
+        self.fluid = fluid
+        self.cp = fluid.cp
+
+        # UGT Model Parameters (Two-Harmonic)
+        self.ugt_avg = ugt_avg
+        self.ugt_amp1 = ugt_amp1
+        self.ugt_phase1 = ugt_phase1
+        self.ugt_amp2 = ugt_amp2
+        self.ugt_phase2 = ugt_phase2
+        self.depth = depth
+        self.alpha_s = self.soil.k / self.soil.rho_cp
+
+        # Geometry & Discretization (3 Segments)
+        self.length = length
+        self.L_seg = length / float(self.num_segments)
+        self.V_seg = np.pi * pipe.r_in**2 * self.L_seg
+        self.C_f_seg = self.V_seg * fluid.rho * self.cp
+        self.two_pi_k = TWO_PI * self.soil.k
+
+        initial_ugt = self.calculate_current_ugt(self.time_array[0] * SEC_IN_HR)
+
+        # --- DYNAMIC STATE ARRAYS (Shape: segments x timesteps) ---
+        self.t_mean_seg = np.full((self.num_segments, num_timesteps), initial_ugt, dtype=float)
+        self.q_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)
+        self.dq_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)
+        self.t_out_seg = np.full((self.num_segments, num_timesteps), initial_ugt, dtype=float)
+        self.history_term_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)
+
+        self.t_in = np.full(num_timesteps, initial_ugt, dtype=float)
+        self.t_out = np.full(num_timesteps, initial_ugt, dtype=float)
+        self.c_n = np.zeros(num_timesteps, dtype=float)
+
+    def calculate_current_ugt(self, current_time_sec: float) -> float:
+        t_days = current_time_sec / (24.0 * 3600.0)
+        t_p = 365.0
+
+        t_p_sec = 365.0 * 24.0 * 3600.0
+        attenuation1 = self.depth * math.sqrt((1.0 * math.pi) / (self.alpha_s * t_p_sec))
+        attenuation2 = self.depth * math.sqrt((2.0 * math.pi) / (self.alpha_s * t_p_sec))
+
+        term1 = (
+            math.exp(-attenuation1)
+            * self.ugt_amp1
+            * math.cos(((2.0 * math.pi * 1.0) / t_p) * (t_days - self.ugt_phase1) - attenuation1)
+        )
+        term2 = (
+            math.exp(-attenuation2)
+            * self.ugt_amp2
+            * math.cos(((2.0 * math.pi * 2.0) / t_p) * (t_days - self.ugt_phase2) - attenuation2)
+        )
+
+        return self.ugt_avg - term1 - term2
+
+    def compute_history_terms(self, idx_timestep: int):
+        # We can calculate R_transient for all j steps once, then apply it to all segments
+        # to save significant computation time.
+        r_transient_array = np.zeros(idx_timestep, dtype=float)
+        for j in range(1, idx_timestep):
+            dt_sec = (self.time_array[idx_timestep] - self.time_array[j]) * SEC_IN_HR
+            q_prime = self.q_prime_interp(dt_sec)
+            r_transient_array[j] = 1.0 / (self.two_pi_k * q_prime)
+
+        current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
+        q_prime_current = self.q_prime_interp(current_dt_sec)
+        self.c_n[idx_timestep] = 1.0 / (self.two_pi_k * q_prime_current)
+
+        current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
+        current_ugt = self.calculate_current_ugt(current_time_sec)
+
+        # --- DYNAMIC SEGMENT LOOP ---
+        for k in range(self.num_segments):
+            # Dot product of this segment's dq history with the R_transient array
+            sum_k = np.dot(self.dq_seg[k, 1:idx_timestep], r_transient_array[1:idx_timestep])
+            overlap_k = self.q_seg[k, idx_timestep - 1] * self.c_n[idx_timestep]
+
+            self.history_term_seg[k, idx_timestep] = current_ugt + sum_k - overlap_k
+
+    def generate_matrix(
+        self,
+        _mass_bldg,
+        mass_loop,
+        _mass_loop_bldg,
+        mass_flow_pipe,
+        _mass_loop_ghe,
+        idx_timestep,
+        configuration,
+        _method,
+    ):
+        idx_timestep -= 1
+        self.compute_history_terms(idx_timestep)
+
+        # Set up blank rows
+        rows = [np.zeros(self.matrix_size, dtype=np.float64) for _ in range(self.matrix_rows)]
+        rhs = [0.0 for _ in range(self.matrix_rows)]
+
+        # Time delta for capacitance
+        dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
+        cap_coeff = self.C_f_seg / dt_sec
+
+        m_cp = mass_flow_pipe * self.cp
+        cn = self.c_n[idx_timestep]
+
+        idx_t_in = self.row_index
+        idx_t_out_final = self.row_index + 3 * self.num_segments
+
+        # --- ROW 0: Network Mixing Node ---
+        if configuration == CentralLoopType.ONEPIPE:
+            rows[0][idx_t_in] = (mass_loop - mass_flow_pipe) * self.cp
+            rows[0][idx_t_out_final] = m_cp
+            rows[0][self.downstream_index] = -mass_loop * self.cp
+        elif configuration == CentralLoopType.TWOPIPE:
+            rows[0][idx_t_in] = 1.0
+            rows[0][self.inlet_index] = -1.0
+
+        # --- DYNAMIC SEGMENT ROWS ---
+        for k in range(self.num_segments):
+            # Determine global matrix indices for this specific segment
+            idx_t_m = self.row_index + 3 * k + 1
+            idx_q = self.row_index + 3 * k + 2
+            idx_t_out = self.row_index + 3 * k + 3
+
+            # The inlet temp for this segment is either the main loop Tin, or the To of the previous segment
+            idx_t_in_seg = self.row_index if k == 0 else self.row_index + 3 * (k - 1) + 3
+
+            # Eq 1: Ground Resistance (Row index = 3k + 1)
+            rows[3 * k + 1][idx_t_m] = 1.0
+            rows[3 * k + 1][idx_q] = -cn
+            rhs[3 * k + 1] = self.history_term_seg[k, idx_timestep]
+
+            # Eq 2: Mean Temp (Row index = 3k + 2)
+            rows[3 * k + 2][idx_t_in_seg] = -1.0
+            rows[3 * k + 2][idx_t_m] = 2.0
+            rows[3 * k + 2][idx_t_out] = -1.0
+
+            # Eq 3: Energy Bal w/ Capacitance (Row index = 3k + 3)
+            rows[3 * k + 3][idx_t_in_seg] = m_cp
+            rows[3 * k + 3][idx_t_out] = -m_cp
+            rows[3 * k + 3][idx_q] = -self.L_seg
+            rows[3 * k + 3][idx_t_m] = -cap_coeff
+            rhs[3 * k + 3] = -cap_coeff * self.t_mean_seg[k, idx_timestep - 1]
+
+        return rows, rhs
+
+    def update_post_solve(self, x_vector, idx_timestep):
+        """
+        Extracts and stores the results from the solved global state vector [X].
+        """
+        self.t_in[idx_timestep] = x_vector[self.row_index]
+
+        for k in range(self.num_segments):
+            self.t_mean_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 1]
+            self.t_out_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 3]
+
+            self.q_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 2]
+            self.dq_seg[k, idx_timestep - 1] = self.q_seg[k, idx_timestep] - self.q_seg[k, idx_timestep - 1]
+
+        # Final pipe output temperature is the output of the last segment
+        self.t_out[idx_timestep] = self.t_out_seg[-1, idx_timestep]
+
+
+class CoupledHorizontalPipe(BaseSimComp):
+    def __init__(
+        self,
+        name: str,
+        length: float,
+        num_segments: int,
+        pipe: Pipe,
+        soil: Soil,
+        fluid: Fluid,
+        num_timesteps: int,
+        time_array: np.ndarray,
+        q_prime_even_interp,  # <-- Takes both curves
+        q_prime_odd_interp,
+        beta: float,
+        ugt_avg: float,
+        ugt_amp1: float,
+        ugt_phase1: float,
+        ugt_amp2: float,
+        ugt_phase2: float,
+        depth: float,
+    ):
+        super().__init__()
+        self.name = name
+        self.comp_type = SimCompType.COUPLED_HORIZONTAL_PIPE
+        self.num_timesteps = num_timesteps
+        self.time_array = time_array
+        self.num_segments = num_segments
+        self.matrix_rows = 3 * num_segments + 1
+
+        self.q_prime_even_interp = q_prime_even_interp
+        self.q_prime_odd_interp = q_prime_odd_interp
+
+        self.coupled_pipe: CoupledHorizontalPipe | None = None  # <-- The memory pointer
+
+        self.beta = beta
+        self.soil = soil
+        self.fluid = fluid
+        self.cp = fluid.cp
+
+        self.ugt_avg = ugt_avg
+        self.ugt_amp1 = ugt_amp1
+        self.ugt_phase1 = ugt_phase1
+        self.ugt_amp2 = ugt_amp2
+        self.ugt_phase2 = ugt_phase2
+        self.depth = depth
+        self.alpha_s = self.soil.k / self.soil.rho_cp
+
+        self.length = length
+        self.L_seg = length / float(self.num_segments)
+        self.V_seg = np.pi * pipe.r_in**2 * self.L_seg
+        self.C_f_seg = self.V_seg * fluid.rho * self.cp
+        self.two_pi_k = TWO_PI * self.soil.k
+
+        initial_ugt = self.calculate_current_ugt(self.time_array[0] * SEC_IN_HR)
+
+        self.t_mean_seg = np.full((self.num_segments, num_timesteps), initial_ugt, dtype=float)
+        self.q_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)
+        self.dq_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)
+        self.t_out_seg = np.full((self.num_segments, num_timesteps), initial_ugt, dtype=float)
+        self.history_term_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)
+
+        self.t_in = np.full(num_timesteps, initial_ugt, dtype=float)
+        self.t_out = np.full(num_timesteps, initial_ugt, dtype=float)
+
+        self.c_n = np.zeros(num_timesteps, dtype=float)
+        self.c_cross = np.zeros(num_timesteps, dtype=float)  # <-- Tracks cross resistance
+
+    def calculate_current_ugt(self, current_time_sec: float) -> float:
+        # Exact same as IsolatedHorizontalPipe
+        t_days = current_time_sec / (24.0 * 3600.0)
+        t_p = 365.0
+        t_p_sec = 365.0 * 24.0 * 3600.0
+        attenuation1 = self.depth * math.sqrt((1.0 * math.pi) / (self.alpha_s * t_p_sec))
+        attenuation2 = self.depth * math.sqrt((2.0 * math.pi) / (self.alpha_s * t_p_sec))
+        term1 = (
+            math.exp(-attenuation1)
+            * self.ugt_amp1
+            * math.cos(((2.0 * math.pi * 1.0) / t_p) * (t_days - self.ugt_phase1) - attenuation1)
+        )
+        term2 = (
+            math.exp(-attenuation2)
+            * self.ugt_amp2
+            * math.cos(((2.0 * math.pi * 2.0) / t_p) * (t_days - self.ugt_phase2) - attenuation2)
+        )
+        return self.ugt_avg - term1 - term2
+
+    def compute_history_terms(self, idx_timestep: int):
+        if self.coupled_pipe is None:
+            raise ValueError("History terms cannot be computed without a defined coupled pipe.")
+
+        r_self_array = np.zeros(idx_timestep, dtype=float)
+        r_cross_array = np.zeros(idx_timestep, dtype=float)
+
+        for j in range(1, idx_timestep):
+            dt_sec = (self.time_array[idx_timestep] - self.time_array[j]) * SEC_IN_HR
+
+            c_even = 1.0 / (self.two_pi_k * self.q_prime_even_interp(dt_sec))
+            c_odd = 1.0 / (self.two_pi_k * self.q_prime_odd_interp(dt_sec))
+
+            r_self_array[j] = (c_even + c_odd) / 2.0
+            r_cross_array[j] = (c_even - c_odd) / 2.0
+
+        current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
+        c_even_cur = 1.0 / (self.two_pi_k * self.q_prime_even_interp(current_dt_sec))
+        c_odd_cur = 1.0 / (self.two_pi_k * self.q_prime_odd_interp(current_dt_sec))
+
+        self.c_n[idx_timestep] = (c_even_cur + c_odd_cur) / 2.0
+        self.c_cross[idx_timestep] = (c_even_cur - c_odd_cur) / 2.0
+
+        current_ugt = self.calculate_current_ugt(self.time_array[idx_timestep] * SEC_IN_HR)
+
+        for k in range(self.num_segments):
+            # Convolution includes the partner pipe's dq history!
+            sum_self = np.dot(self.dq_seg[k, 1:idx_timestep], r_self_array[1:idx_timestep])
+            sum_cross = np.dot(self.coupled_pipe.dq_seg[k, 1:idx_timestep], r_cross_array[1:idx_timestep])
+
+            overlap_self = self.q_seg[k, idx_timestep - 1] * self.c_n[idx_timestep]
+            overlap_cross = self.coupled_pipe.q_seg[k, idx_timestep - 1] * self.c_cross[idx_timestep]
+
+            self.history_term_seg[k, idx_timestep] = (
+                current_ugt + (sum_self + sum_cross) - (overlap_self + overlap_cross)
+            )
+
+    def generate_matrix(
+        self,
+        _mass_bldg,
+        mass_loop,
+        _mass_loop_bldg,
+        mass_flow_pipe,
+        _mass_loop_ghe,
+        idx_timestep,
+        configuration,
+        _method,
+    ):
+        if self.coupled_pipe is None:
+            raise ValueError("Simulation matrix cannot be computed without a defined coupled pipe.")
+        idx_timestep -= 1
+        self.compute_history_terms(idx_timestep)
+
+        rows = [np.zeros(self.matrix_size, dtype=np.float64) for _ in range(self.matrix_rows)]
+        rhs = [0.0 for _ in range(self.matrix_rows)]
+
+        dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
+        cap_coeff = self.C_f_seg / dt_sec
+        m_cp = mass_flow_pipe * self.cp
+
+        idx_t_in = self.row_index
+        idx_t_out_final = self.row_index + 3 * self.num_segments
+
+        # --- ROW 0: Network Mixing Node ---
+        if configuration == CentralLoopType.ONEPIPE:
+            rows[0][idx_t_in] = (mass_loop - mass_flow_pipe) * self.cp
+            rows[0][idx_t_out_final] = m_cp
+            rows[0][self.downstream_index] = -mass_loop * self.cp
+        elif configuration == CentralLoopType.TWOPIPE:
+            rows[0][idx_t_in] = 1.0
+            rows[0][self.inlet_index] = -1.0
+
+        for k in range(self.num_segments):
+            idx_t_m = self.row_index + 3 * k + 1
+            idx_q_self = self.row_index + 3 * k + 2
+            idx_t_out = self.row_index + 3 * k + 3
+
+            idx_t_in_seg = self.row_index if k == 0 else self.row_index + 3 * (k - 1) + 3
+
+            # Eq 1: Ground Resistance
+            rows[3 * k + 1][idx_t_m] = 1.0
+            rows[3 * k + 1][idx_q_self] = -self.c_n[idx_timestep]
+
+            # THE THERMAL BRIDGE: Reaching into the neighbor's matrix!
+            idx_q_neighbor = self.coupled_pipe.row_index + 3 * k + 2
+            rows[3 * k + 1][idx_q_neighbor] = -self.c_cross[idx_timestep]
+
+            rhs[3 * k + 1] = self.history_term_seg[k, idx_timestep]
+
+            # Eq 2: Mean Temp
+            rows[3 * k + 2][idx_t_in_seg] = -1.0
+            rows[3 * k + 2][idx_t_m] = 2.0
+            rows[3 * k + 2][idx_t_out] = -1.0
+
+            # Eq 3: Energy Bal w/ Capacitance
+            rows[3 * k + 3][idx_t_in_seg] = m_cp
+            rows[3 * k + 3][idx_t_out] = -m_cp
+            rows[3 * k + 3][idx_q_self] = -self.L_seg
+            rows[3 * k + 3][idx_t_m] = -cap_coeff
+            rhs[3 * k + 3] = -cap_coeff * self.t_mean_seg[k, idx_timestep - 1]
+
+        return rows, rhs
+
+    def update_post_solve(self, x_vector, idx_timestep):
+        # Exact same as IsolatedHorizontalPipe
+        self.t_in[idx_timestep] = x_vector[self.row_index]
+        for k in range(self.num_segments):
+            self.t_mean_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 1]
+            self.t_out_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 3]
+            self.q_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 2]
+            self.dq_seg[k, idx_timestep - 1] = self.q_seg[k, idx_timestep] - self.q_seg[k, idx_timestep - 1]
+        self.t_out[idx_timestep] = self.t_out_seg[-1, idx_timestep]
 
 
 class SourceSinkHeatExchanger(BaseSimComp):
@@ -99,7 +508,17 @@ class SourceSinkHeatExchanger(BaseSimComp):
         self.was_running_last_time = False
         return False
 
-    def generate_matrix(self, m_loop: float, idx_timestep: int):
+    def generate_matrix(
+        self,
+        _mass_bldg,
+        mass_loop,
+        _mass_loop_bldg,
+        _mass_flow_ghe,
+        _mass_loop_ghe,
+        idx_timestep,
+        _configuration,
+        _method,
+    ):
         if self.cp is None:
             raise ValueError("cp is uninitialized")
         if self.matrix_size is None:
@@ -109,7 +528,7 @@ class SourceSinkHeatExchanger(BaseSimComp):
         self.operating[idx_timestep - 1] = is_running
         m_flow_source: float = self.source_flow_rate if is_running else 0.0
         c_source = m_flow_source * self.cp
-        c_loop = m_loop * self.cp
+        c_loop = mass_loop * self.cp
         c_min = min(c_source, c_loop)
         eff_c_min = self.effectiveness * c_min
         row = np.zeros(self.matrix_size, dtype=np.float64)
@@ -118,7 +537,11 @@ class SourceSinkHeatExchanger(BaseSimComp):
         row[self.row_index] = c_loop - eff_c_min
         row[self.downstream_index] = -c_loop
         rhs = -eff_c_min * self.source_temp
-        return [row], [rhs]
+
+        rows = [row]
+        rhs = [rhs]
+
+        return rows, rhs
 
 
 class GHX(BaseSimComp):
@@ -132,6 +555,7 @@ class GHX(BaseSimComp):
         fluid: Fluid,
         loop_config: CentralLoopType,
         num_timesteps: int,
+        time_array: np.ndarray[tuple[int], np.dtype[np.float64]],
         sizing_end_month=240,
         fixed_loads=False,
     ):
@@ -146,6 +570,8 @@ class GHX(BaseSimComp):
         self.num_timesteps = num_timesteps
         self.fixed_loads = fixed_loads
         self.is_bypassed = False
+        self.time_differences = np.diff(time_array)
+        self.constant_time_step = np.all(self.time_differences == self.time_differences[0])
         if fixed_loads:
             self.convolution_completed = False
 
@@ -162,10 +588,10 @@ class GHX(BaseSimComp):
 
         self.fluid = self.ghe_manager.fluid
         self.bh_type = self.ghe_manager.pipe.type
-        self.split_ratio = None
+        self.split_ratio: float = 0.1
 
         self.two_pi_k_recip = 1.0 / (TWO_PI * self.ghe_manager.soil.k)
-        self.time_array = np.arange(0, self.num_timesteps + 1)
+        self.time_array = time_array
 
         self.num_timesteps = num_timesteps
         self.history_terms, self.total_values_ghe, self.q_ghe = (
@@ -199,6 +625,12 @@ class GHX(BaseSimComp):
             self.base_min_eft = self.ghe_manager.min_eft
         else:
             self.ghe_designed = False
+
+    def update_time_array(self, num_timesteps, time_array):
+        self.time_array = time_array
+        self.num_timesteps = num_timesteps
+        self.time_differences = np.diff(time_array)
+        self.constant_time_step = np.all(self.time_differences == self.time_differences[0])
 
     def design_new_ghe(self, load_profile=None, max_eft=None, min_eft=None):
         if not self.ghe_manager.is_sizable:
@@ -266,7 +698,6 @@ class GHX(BaseSimComp):
         self.g, _ = ghe_object.grab_g_function(b_over_h)
         self.ts = ghe_object.bhe_eq.t_s
         self.bh_effective_resist = ghe_object.bhe.calc_effective_borehole_resistance()
-
         if self.fixed_loads:
             self.convolution_completed = False
         else:
@@ -300,7 +731,13 @@ class GHX(BaseSimComp):
             self.dq[idx_timestep - 2] -= self.q_ghe[idx_timestep - 3] * self.two_pi_k_recip
         if idx_timestep > IDX_COMPARISON_OFFSET_1:
             self.dq[idx_timestep - 2] += self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip
-            values = np.sum(self.dq[0 : idx_timestep - 1] * self.gfunction_evals[-idx_timestep:-1])
+            if self.constant_time_step:
+                values = np.dot(self.dq[0 : idx_timestep - 1], self.gfunction_evals[-idx_timestep:-1])
+            else:
+                gfunction_evals = self.g(
+                    np.log((self.time_array[idx_timestep] - self.time_array[0:idx_timestep]) / (self.ts / SEC_IN_HR))
+                )
+                values = np.dot(self.dq[0 : idx_timestep - 1], gfunction_evals)
         else:
             values = 0
 
@@ -313,10 +750,51 @@ class GHX(BaseSimComp):
             + (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.gfunction_evals[-1])
         )
 
-        return history_terms, total_values_ghe
+        return self.history_terms[idx_timestep]
 
-    def generate_matrix_fixed_loads(self, m_loop, idx_timestep, load_profile=None):
+    def generate_matrix_fixed_loads(
+        self,
+        _mass_bldg,
+        mass_loop,
+        _mass_loop_bldg,
+        mass_flow_ghe,
+        mass_loop_ghe,
+        idx_timestep,
+        configuration,
+        method,
+        load_profile=None,
+    ):
+        if not self.constant_time_step:
+            raise ValueError(
+                "Using the fixed loads option in the GHE simulation requires constant time steps."
+                " Variable timesteps were provided."
+            )
+        row_1 = np.zeros(self.matrix_size, dtype=np.float64)
+        row_2 = np.zeros(self.matrix_size, dtype=np.float64)
+        if self.is_bypassed:
+            if method == CentralLoopType.ONEPIPE:
+                row_1[self.row_index] = -1.0
+                row_1[self.downstream_index] = 1.0
 
+                row_2[self.row_index] = -1.0
+                row_2[self.row_index + 1] = 1.0
+
+                rhs_1, rhs_2 = 0, 0
+            elif method == CentralLoopType.TWOPIPE:
+                row_2[self.row_index] = -1.0
+
+                row_1[self.inlet_index] = -1.0
+                row_1[self.row_index + 1] = 1.0
+
+                if self.downstream_device.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
+                    row_2[self.downstream_index] = 1.0
+                else:
+                    row_2[self.downstream_device.inlet_index] = -mass_loop_ghe * self.cp
+
+                rhs_1, rhs_2 = 0, 0
+            else:
+                raise ValueError(f"Unknown configuration: {configuration}")
+            return [row_1, row_2], [rhs_1, rhs_2]
         if not self.convolution_completed:
             if load_profile is None:
                 raise ValueError("Load profile is required to generate fixed loads during the first sim call.")
@@ -336,74 +814,119 @@ class GHX(BaseSimComp):
             self.q_ghe = load_profile
             self.convolution_completed = True
             return [0.0, 0.0]
-        else:
-            row_1 = np.zeros(self.matrix_size, dtype=np.float64)
-            row_2 = np.zeros(self.matrix_size, dtype=np.float64)
-
-            mass_flow_ghe = m_loop * self.split_ratio
-
+        elif configuration == CentralLoopType.ONEPIPE:
             # m_ghe * (T_out - T_in) = m_loop * (T_mix_out - T_in) assuming constant c_p
-            row_1[self.row_index] = m_loop - mass_flow_ghe
+            row_1[self.row_index] = mass_loop - mass_flow_ghe
             row_1[self.row_index + 1] = mass_flow_ghe
-            row_1[self.downstream_index] = -m_loop
+            row_1[self.downstream_index] = -mass_loop
             rhs_1 = 0.0
 
             # 2 * T_mean = T_in + T_out
             row_2[self.row_index] = 1
             row_2[self.row_index + 1] = 1
             rhs_2 = 2 * self.t_mean[idx_timestep - 1]
+        elif configuration == CentralLoopType.TWOPIPE:
+            # m_ghe * (T_out - T_in) = m_loop * (T_mix_out - T_in) assuming constant c_p
+            row_2[self.row_index] = mass_loop_ghe - mass_flow_ghe
+            row_2[self.row_index + 1] = mass_flow_ghe
+            if self.downstream_device.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
+                row_2[self.downstream_index] = -mass_loop_ghe
+            else:
+                row_2[self.downstream_device.inlet_index] = -mass_loop_ghe
+            rhs_2 = 0.0
+
+            # 2 * T_mean = T_in + T_out
+            row_1[self.row_index] = 1
+            row_1[self.row_index + 1] = 1
+            rhs_1 = 2 * self.t_mean[idx_timestep - 1]
+        else:
+            raise ValueError(f"Unknown configuration: {configuration}")
 
         return [row_1, row_2], [rhs_1, rhs_2]
 
-    def generate_matrix(self, m_loop, idx_timestep):
+    def generate_matrix(
+        self, _mass_bldg, mass_loop, _mass_loop_bldg, mass_flow_ghe, mass_loop_ghe, idx_timestep, configuration, _method
+    ):
+        row_1 = np.zeros(self.matrix_size, dtype=np.float64)
+        row_2 = np.zeros(self.matrix_size, dtype=np.float64)
+        row_3 = np.zeros(self.matrix_size, dtype=np.float64)
+        row_4 = np.zeros(self.matrix_size, dtype=np.float64)
         if self.is_bypassed:
             # If this ghe is bypassed q_ghe is 0 and the outgoing temperature is the same as the entering one.
-            row_1 = np.zeros(self.matrix_size, dtype=np.float64)
-            row_2 = np.zeros(self.matrix_size, dtype=np.float64)
-            row_3 = np.zeros(self.matrix_size, dtype=np.float64)
-            row_4 = np.zeros(self.matrix_size, dtype=np.float64)
+            if configuration == CentralLoopType.ONEPIPE:
+                row_1[self.row_index] = -1.0
+                row_1[self.downstream_index] = 1.0
 
-            row_1[self.row_index] = -1.0
-            row_1[self.downstream_index] = 1.0
+                row_2[self.row_index + 2] = 1.0
 
-            row_2[self.row_index + 2] = 1.0
+                row_3[self.row_index + 1] = 1.0
+                row_3[self.row_index] = -1.0
 
-            row_3[self.row_index + 1] = 1.0
-            row_3[self.row_index] = -1.0
+                row_4[self.row_index + 3] = 1.0
+                row_4[self.row_index] = -1.0
 
-            row_4[self.row_index + 3] = 1.0
-            row_4[self.row_index] = -1.0
+                rhs_1, rhs_2, rhs_3, rhs_4 = 0, 0, 0, 0
+            elif configuration == CentralLoopType.TWOPIPE:
+                row_4[self.row_index] = -1.0
+                if self.downstream_device.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
+                    row_4[self.downstream_index] = 1.0
+                else:
+                    row_4[self.downstream_device.inlet_index] = 1.0
 
-            rhs_1, rhs_2, rhs_3, rhs_4 = 0, 0, 0, 0
+                row_1[self.row_index + 2] = 1.0
+
+                row_2[self.row_index + 1] = 1.0
+                row_2[self.row_index] = -1.0
+
+                row_3[self.row_index + 3] = 1.0
+                row_3[self.row_index] = -1.0
+
+                rhs_1, rhs_2, rhs_3, rhs_4 = 0, 0, 0, 0
+            else:
+                raise ValueError(f"Unknown configuration: {configuration}")
         else:
             self.history_terms, self.total_values_ghe = self.calc_history_term(
                 idx_timestep, self.history_terms, self.total_values_ghe
             )
+            if configuration == CentralLoopType.ONEPIPE:
+                row_1[self.row_index] = (mass_loop - mass_flow_ghe) * self.cp
+                row_1[self.row_index + 3] = mass_flow_ghe * self.cp
+                row_1[self.downstream_index] = -mass_loop * self.cp
 
-            row_1 = np.zeros(self.matrix_size, dtype=np.float64)
-            row_2 = np.zeros(self.matrix_size, dtype=np.float64)
-            row_3 = np.zeros(self.matrix_size, dtype=np.float64)
-            row_4 = np.zeros(self.matrix_size, dtype=np.float64)
+                row_2[self.row_index + 1] = 1
+                row_2[self.row_index + 2] = self.c_n[idx_timestep - 1]
 
-            mass_flow_ghe = m_loop * self.split_ratio
+                row_3[self.row_index] = -1
+                row_3[self.row_index + 1] = 2
+                row_3[self.row_index + 3] = -1
 
-            row_1[self.row_index] = (m_loop - mass_flow_ghe) * self.cp
-            row_1[self.row_index + 3] = mass_flow_ghe * self.cp
-            row_1[self.downstream_index] = -m_loop * self.cp
+                row_4[self.row_index] = mass_flow_ghe * self.cp
+                row_4[self.row_index + 2] = self.height * self.nbh
+                row_4[self.row_index + 3] = -mass_flow_ghe * self.cp
 
-            row_2[self.row_index + 1] = 1
-            row_2[self.row_index + 2] = self.c_n[idx_timestep - 1]
+                rhs_1, rhs_2, rhs_3, rhs_4 = 0, self.history_terms[idx_timestep], 0, 0
+            elif configuration == CentralLoopType.TWOPIPE:
+                row_1[self.row_index + 1] = 1
+                row_1[self.row_index + 2] = self.c_n[idx_timestep - 1]
 
-            row_3[self.row_index] = -1
-            row_3[self.row_index + 1] = 2
-            row_3[self.row_index + 3] = -1
+                row_2[self.row_index + 1] = 2
+                row_2[self.inlet_index] = -1
+                row_2[self.row_index + 3] = -1
 
-            row_4[self.row_index] = mass_flow_ghe * self.cp
-            row_4[self.row_index + 2] = self.height * self.nbh
-            row_4[self.row_index + 3] = -mass_flow_ghe * self.cp
+                row_3[self.inlet_index] = mass_flow_ghe * self.cp
+                row_3[self.row_index + 3] = -mass_flow_ghe * self.cp
+                row_3[self.row_index + 2] = self.nbh * self.height
 
-            rhs_1, rhs_2, rhs_3, rhs_4 = 0, self.history_terms[idx_timestep], 0, 0
+                row_4[self.row_index] = (mass_loop_ghe - mass_flow_ghe) * self.cp
+                row_4[self.row_index + 3] = mass_flow_ghe * self.cp
 
+                if self.downstream_device.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
+                    row_4[self.downstream_index] = -mass_loop_ghe * self.cp
+                else:
+                    row_4[self.downstream_device.inlet_index] = -mass_loop_ghe * self.cp
+                rhs_1, rhs_2, rhs_3, rhs_4 = self.history_terms[idx_timestep], 0, 0, 0
+            else:
+                raise ValueError(f"Unknown configuration: {configuration}")
         rows = [row_1, row_2, row_3, row_4]
         rhs = [rhs_1, rhs_2, rhs_3, rhs_4]
         return rows, rhs
@@ -422,6 +945,8 @@ class Building(BaseSimComp):
         loop_config: CentralLoopType,
         num_timesteps: int,
         constant_cop=False,
+        load_method: str = "hourly",
+        external_loads: dict | None = None,
     ):
         super().__init__()
         self.name = bldg_id
@@ -451,16 +976,48 @@ class Building(BaseSimComp):
         if self.heating_exists:
             hp_htg_name = bldg_data["heating_load"]["heat_pump_name"]
             hp_htg_data = hp_data[hp_htg_name]
-            one_yr_htg_vals = np.array(get_loads(hp_htg_name, SimCompType.HEAT_PUMP.name, bldg_data["heating_load"]))
-            self.htg_vals = np.tile(one_yr_htg_vals, self.sim_years)
             self.hp_htg = HPmodel(hp_htg_name, hp_htg_data)
 
         if self.cooling_exists:
             hp_clg_name = bldg_data["cooling_load"]["heat_pump_name"]
             hp_clg_data = hp_data[hp_clg_name]
-            one_yr_clg_vals = np.array(get_loads(hp_clg_name, SimCompType.HEAT_PUMP.name, bldg_data["cooling_load"]))
-            self.clg_vals = np.tile(one_yr_clg_vals, self.sim_years)
             self.hp_clg = HPmodel(hp_clg_name, hp_clg_data)
+
+        if load_method == "hourly":
+            if self.heating_exists:
+                one_yr_htg_vals = np.array(
+                    get_loads(hp_htg_name, SimCompType.HEAT_PUMP.name, bldg_data["heating_load"]),
+                    dtype=float,
+                )
+                hourly_htg = np.tile(one_yr_htg_vals, self.sim_years)
+                self.htg_vals = np.insert(hourly_htg, 0, 0.0)
+
+            if self.cooling_exists:
+                one_yr_clg_vals = np.array(
+                    get_loads(hp_clg_name, SimCompType.HEAT_PUMP.name, bldg_data["cooling_load"]),
+                    dtype=float,
+                )
+                hourly_clg = np.tile(one_yr_clg_vals, self.sim_years)
+                self.clg_vals = np.insert(hourly_clg, 0, 0.0)
+
+        elif load_method == "hybrid":
+            if external_loads is None:
+                raise ValueError(f"Hybrid loads missing for building '{bldg_id}'")
+
+            self.htg_vals = np.array(
+                external_loads.get("q_htg", np.zeros(self.num_timesteps)),
+                dtype=float,
+            )
+            self.clg_vals = np.array(
+                external_loads.get("q_clg", np.zeros(self.num_timesteps)),
+                dtype=float,
+            )
+
+            if len(self.htg_vals) != self.num_timesteps or len(self.clg_vals) != self.num_timesteps:
+                raise ValueError(f"Hybrid load length mismatch for building '{bldg_id}'")
+
+        else:
+            raise ValueError(f"Unknown load_method: {load_method}")
 
         self.q_net = self.htg_vals - self.clg_vals
         self.t_in = np.full(self.num_timesteps, tg, dtype=float)
@@ -498,14 +1055,13 @@ class Building(BaseSimComp):
             m_single_hp_clg = 0.0
 
         m_single_hp = max(m_single_hp_htg, m_single_hp_clg)
+        if cap_clg == 0:
+            rtf = abs(self.htg_vals[idx_timestep] / cap_htg)
+        else:
+            rtf = abs(self.htg_vals[idx_timestep] / cap_htg + abs(self.clg_vals[idx_timestep] / cap_clg))
 
-        q_net_i = self.q_net[idx_timestep]
-        hp_capacity = cap_htg if q_net_i > 0 else cap_clg
+        mass_flow_bldg = rtf * m_single_hp
 
-        # compute mass flow rates
-        mass_flow_bldg = max(np.abs(q_net_i) / hp_capacity * m_single_hp, m_single_hp)
-
-        # save for later
         self.m_flow[idx_timestep] = mass_flow_bldg
 
         return mass_flow_bldg
@@ -521,8 +1077,8 @@ class Building(BaseSimComp):
         v = 0
 
         # Extract loads
-        h = self.htg_vals[idx_timestep - 1]
-        c = self.clg_vals[idx_timestep - 1]
+        h = self.htg_vals[idx_timestep]  # NB changed it from h = self.htg_vals[idx_timestep-1]??
+        c = self.clg_vals[idx_timestep]  # NB changed it from c = self.clg_vals[idx_timestep - 1]
 
         # Heating calculations
         if self.heating_exists:
@@ -565,24 +1121,76 @@ class Building(BaseSimComp):
             )
             self.loads += q_extr_ratio * self.htg_vals
 
-    def generate_matrix_constant_cop(self, m_loop, idx_timestep):
-        row = np.zeros(self.matrix_size, dtype=float)
-        row[self.row_index] = m_loop * self.cp
-        row[self.downstream_index] = -m_loop * self.cp
-        rhs = self.loads[idx_timestep]
-        return [row], [rhs]
+    def generate_matrix_constant_cop(self, mass_bldg, mass_loop, mass_loop_bldg, idx_timestep, configuration):
+        if configuration == CentralLoopType.ONEPIPE:
+            row = np.zeros(self.matrix_size, dtype=float)
+            row[self.row_index] = mass_loop * self.cp
+            row[self.downstream_index] = -mass_loop * self.cp
+            rhs = self.loads[idx_timestep]
+            return [row], [rhs]
+        elif configuration == CentralLoopType.TWOPIPE:
+            row1 = np.zeros(self.matrix_size)
+            row2 = np.zeros(self.matrix_size)
 
-    def generate_matrix(self, m_loop, idx_timestep):
+            if mass_bldg == 0:
+                row1[self.inlet_index] = 1
+                row1[self.row_index + 1] = -1
+            else:
+                row1[self.inlet_index] = mass_bldg * self.cp
+                row1[self.row_index + 1] = -mass_bldg * self.cp
+
+            row2[self.row_index] = (mass_loop_bldg - mass_bldg) * self.cp
+            row2[self.row_index + 1] = mass_bldg * self.cp
+            row2[self.downstream_index] = -mass_loop_bldg * self.cp
+
+            rhs1, rhs2 = self.loads[idx_timestep], 0
+
+            rows = [row1, row2]
+            rhs = [rhs1, rhs2]
+
+            return rows, rhs
+        else:
+            raise ValueError(f"Unknown configuration: {configuration}")
+
+    def generate_matrix(
+        self, mass_bldg, mass_loop, mass_loop_bldg, _mass_flow_ghe, _mass_loop_ghe, idx_timestep, configuration, _method
+    ):
         if self.constant_cop:
-            return self.generate_matrix_constant_cop(m_loop, idx_timestep - 1)
+            return self.generate_matrix_constant_cop(
+                mass_bldg, mass_loop, mass_loop_bldg, idx_timestep - 1, configuration
+            )
         else:
             t_in = self.t_in[idx_timestep - 1]
             r1, r2 = self.calc_r1_r2(t_in, idx_timestep - 1)
-            row = np.zeros(self.matrix_size, dtype=float)
-            row[self.row_index] = 1 + r1 / (m_loop * self.cp)
-            row[self.downstream_index] = -1
-            rhs = -r2 / (m_loop * self.cp)
-            return [row], [rhs]
+            if configuration == CentralLoopType.ONEPIPE:
+                row = np.zeros(self.matrix_size, dtype=float)
+                row[self.row_index] = 1 + r1 / (mass_loop * self.cp)
+                row[self.downstream_index] = -1
+                rhs = -r2 / (mass_loop * self.cp)
+                return [row], [rhs]
+            elif configuration == CentralLoopType:
+                row1 = np.zeros(self.matrix_size)
+                row2 = np.zeros(self.matrix_size)
+
+                if mass_bldg == 0:
+                    row1[self.inlet_index] = 1
+                    row1[self.row_index + 1] = -1
+                else:
+                    row1[self.inlet_index] = r1 + mass_bldg * self.cp
+                    row1[self.row_index + 1] = -mass_bldg * self.cp
+
+                row2[self.row_index] = (mass_loop_bldg - mass_bldg) * self.cp
+                row2[self.row_index + 1] = mass_bldg * self.cp
+                row2[self.downstream_index] = -mass_loop_bldg * self.cp
+
+                rhs1, rhs2 = -r2, 0
+
+                rows = [row1, row2]
+                rhs = [rhs1, rhs2]
+
+                return rows, rhs
+            else:
+                raise ValueError(f"Unknown configuration: {configuration}")
 
     def calc_energy(self):
         """Calculate energy consumption of the heat pump system."""
@@ -649,7 +1257,7 @@ class GHEHPSystem:
     sample_rate: int
 
     def __init__(self, f_path_json: Path):
-        self.components: list[Building | GHX | SourceSinkHeatExchanger] = []
+        self.components: list = []  # Will hold Building, GHX, SourceSinkHeatExchanger, and IsolatedHorizontalPipe
         self.nbh_total = None
         self.matrix_size = 0
         self.number_of_simulations = 0
@@ -722,10 +1330,35 @@ class GHEHPSystem:
 
         fluid_data = json_data["fluid"]
         topology_data = json_data["topology"]
-        heat_pump_data = json_data["heat_pump"]
+        heat_pump_data = json_data.get("heat_pump", {})
         building_data = json_data.get("building", {})
         ghe_data = json_data.get("ground_heat_exchanger", {})
         hx_data = json_data.get("source_sink_heat_exchanger", {})
+
+        # --- NEW: Extract Horizontal Pipe and UGT Data ---
+        horiz_data = json_data.get("horizontal_piping", {})
+        ugt_data = json_data.get("ground_temperature_model", {})
+
+        self.use_horizontal = json_data.get("simulation_control", {}).get("horizontal_simulation_considered", False)
+
+        if horiz_data and not ugt_data:
+            raise ValueError("A 'ground_temperature_model' block is required when simulating horizontal piping.")
+
+        # --- NEW: Load the Interpolation Table ---
+        horiz_axes = {}
+        if self.use_horizontal and horiz_data:
+            try:
+                with open("unified_horizontal_library.pkl", "rb") as f:
+                    # Note: I am ignoring the pickle-related warning for now as this is planned to be shortly removed.
+                    lib_data = pickle.load(f)  # noqa: S301
+                table_single = lib_data["table_single"]
+                table_parallel = lib_data["table_parallel"]
+                horiz_axes = lib_data["axes"]
+            except FileNotFoundError:
+                raise FileNotFoundError(
+                    "The interpolation library 'unified_horizontal_library.pkl' is required for horizontal"
+                    " simulation but was not found."
+                )
 
         self.fluid = Fluid(
             fluid_name=fluid_data["fluid_name"],
@@ -735,27 +1368,55 @@ class GHEHPSystem:
         first_ghe_key = next(iter(json_data["ground_heat_exchanger"]))
         tg = json_data["ground_heat_exchanger"][first_ghe_key]["soil"]["undisturbed_temp"]  # TODO: fix this
 
+        self.sim_years = json_data["simulation_control"]["simulation_years"]
+        self.load_method = json_data["simulation_control"].get("load_method", "hourly").lower()
+
+        self.horiz_segments = json_data["simulation_control"].get("horizontal_segments", 3)
+
+        self.hybrid_load_data: dict[str, float] = {}
+
+        if self.load_method == "hourly":
+            self.time_array = np.arange(self.sim_years * HOURS_IN_YEAR + 1, dtype=float)
+            self.num_timesteps = len(self.time_array) - 1
+
+        elif self.load_method == "hybrid":
+            processor = ProcessLoads()
+            processor.read_data_from_json_file(json_data)
+            processor.read_hp_load_from_json(json_data)
+            self.hybrid_load_data = processor.run_hybrid_pipeline()
+
+            first_bldg = next(iter(self.hybrid_load_data))
+            self.time_array = np.array(self.hybrid_load_data[first_bldg]["time"], dtype=float)
+            self.num_timesteps = len(self.time_array)
+            self.time_array = np.insert(self.time_array, 0, 0)
+        else:
+            raise ValueError(f"Unknown load_method: {self.load_method}")
+
         # get component names we need to build, validate they exist and are referenced correctly
         def get_comp_names(topology: dict, comp_list: dict, comp_type_to_check: SimCompType) -> list[str]:
             comp_names = [c["name"].upper() for c in topology if SimCompType[c["type"].upper()] == comp_type_to_check]
-
             avail_comps = {k.upper() for k in comp_list}
             for name in comp_names:
                 if name not in avail_comps:
                     c_type_name = comp_type_to_check.name
                     msg = f"{c_type_name} name '{name}' in 'topology' not found in key '{c_type_name}'"
                     raise ValueError(msg)
-
             return comp_names
 
         building_names = get_comp_names(topology_data, building_data, SimCompType.BUILDING)
         ghx_names = get_comp_names(topology_data, ghe_data, SimCompType.GROUND_HEAT_EXCHANGER)
         hx_names = get_comp_names(topology_data, hx_data, SimCompType.SOURCE_SINK_HEAT_EXCHANGER)
+        isolated_names = get_comp_names(topology_data, horiz_data, SimCompType.ISOLATED_HORIZONTAL_PIPE)
+        coupled_names = get_comp_names(topology_data, horiz_data, SimCompType.COUPLED_HORIZONTAL_PIPE)
 
         # get needed buildings
-        buildings: list[Building] = []
+        buildings = []
         for this_building_id, this_bldg_data in building_data.items():
             if this_building_id.upper() in building_names:
+                external_loads = None
+                if self.load_method == "hybrid":
+                    external_loads = self.hybrid_load_data[this_building_id]
+
                 this_bldg = Building(
                     this_building_id,
                     this_bldg_data,
@@ -765,13 +1426,15 @@ class GHEHPSystem:
                     self.loop_config,
                     self.num_timesteps,
                     constant_cop=self.constant_cop,
+                    load_method=self.load_method,
+                    external_loads=external_loads,
                 )
                 buildings.append(this_bldg)
 
         self.num_buildings = len(buildings)
         self.buildings = buildings
 
-        heat_exchangers: list[SourceSinkHeatExchanger] = []
+        heat_exchangers = []
         for this_hx_id, this_hx_data in hx_data.items():
             if this_hx_id.upper() in hx_names:
                 this_hx = SourceSinkHeatExchanger(this_hx_id, this_hx_data, tg, self.num_timesteps)
@@ -780,13 +1443,19 @@ class GHEHPSystem:
         self.num_heat_exchangers = len(heat_exchangers)
         self.heat_exchangers = heat_exchangers
 
-        self.cp = 0.0
+        cp = self.fluid.cp
 
-        ground_heat_exchangers: list[GHX] = []
-        for ghx_id, ghe_data in ghe_data.items():
+        ground_heat_exchangers = []
+        for ghx_id, ghx_item_data in ghe_data.items():
             if ghx_id.upper() in ghx_names:
                 this_ghx = GHX(
-                    ghx_id, ghe_data, self.fluid, self.loop_config, self.num_timesteps, fixed_loads=self.fixed_loads
+                    ghx_id,
+                    ghx_item_data,
+                    self.fluid,
+                    self.loop_config,
+                    self.num_timesteps,
+                    self.time_array,
+                    fixed_loads=self.fixed_loads,
                 )
                 self.cp = this_ghx.cp
                 ground_heat_exchangers.append(this_ghx)
@@ -808,6 +1477,129 @@ class GHEHPSystem:
                 [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
             )
 
+        self.nbh_total = sum([x.nbh for x in ground_heat_exchangers]) if ground_heat_exchangers is not None else 0
+        self.num_ghx = len(ground_heat_exchangers)
+
+        isolated_names = get_comp_names(topology_data, horiz_data, SimCompType.ISOLATED_HORIZONTAL_PIPE)
+        coupled_names = get_comp_names(topology_data, horiz_data, SimCompType.COUPLED_HORIZONTAL_PIPE)
+
+        # Helper function to snap to nearest table grid value
+        def get_nearest(value, array):
+            idx = (np.abs(array - value)).argmin()
+            return array[idx]
+
+        isolated_pipes = []
+        coupled_pipes_dict = {}
+
+        if self.use_horizontal:
+            # PASS 1: Build the components
+            for h_id, h_data in horiz_data.items():
+                is_isolated = h_id.upper() in isolated_names
+                is_coupled = h_id.upper() in coupled_names
+
+                if not is_isolated and not is_coupled:
+                    continue
+
+                h_soil = Soil(k=h_data["soil"]["conductivity"], rho_cp=h_data["soil"]["rho_cp"], ugt=0)
+                h_pipe = Pipe.init_single_u_tube(
+                    inner_diameter=h_data["pipe"]["inner_diameter"],
+                    outer_diameter=h_data["pipe"]["outer_diameter"],
+                    shank_spacing=0.0,
+                    roughness=h_data["pipe"]["roughness"],
+                    conductivity=h_data["pipe"]["conductivity"],
+                    rho_cp=h_data["pipe"]["rho_cp"],
+                )
+
+                r_pipe = 0.1  # TODO: Placeholder: update to actual resistance later
+                beta = r_pipe / (TWO_PI * h_soil.k)
+
+                target_d = get_nearest(h_data["trench_depth"], horiz_axes["depths"])
+                target_beta = get_nearest(beta, horiz_axes["betas"])
+                target_r = get_nearest(h_pipe.r_out, horiz_axes["radii"])
+                this_horiz: IsolatedHorizontalPipe | CoupledHorizontalPipe
+                if is_isolated:
+                    q_prime_interp = table_single[(target_d, target_beta, target_r)]
+
+                    this_horiz = IsolatedHorizontalPipe(
+                        name=h_id,
+                        length=h_data["length"],
+                        num_segments=self.horiz_segments,
+                        pipe=h_pipe,
+                        soil=h_soil,
+                        fluid=self.fluid,
+                        num_timesteps=self.num_timesteps,
+                        time_array=self.time_array,
+                        q_prime_interp=q_prime_interp,
+                        beta=beta,
+                        ugt_avg=ugt_data["annual_average"],
+                        ugt_amp1=ugt_data["amplitude_1"],
+                        ugt_phase1=ugt_data["phase_lag_1"],
+                        ugt_amp2=ugt_data["amplitude_2"],
+                        ugt_phase2=ugt_data["phase_lag_2"],
+                        depth=h_data["trench_depth"],
+                    )
+                    this_horiz.comp_type = SimCompType.ISOLATED_HORIZONTAL_PIPE
+                    isolated_pipes.append(this_horiz)
+
+                elif is_coupled:
+                    target_b = get_nearest(h_data["spacing"], horiz_axes["spacings"])
+                    q_prime_even, q_prime_odd = table_parallel[(target_d, target_b, target_beta, target_r)]
+
+                    this_horiz = CoupledHorizontalPipe(
+                        name=h_id,
+                        length=h_data["length"],
+                        num_segments=self.horiz_segments,
+                        pipe=h_pipe,
+                        soil=h_soil,
+                        fluid=self.fluid,
+                        num_timesteps=self.num_timesteps,
+                        time_array=self.time_array,
+                        q_prime_even_interp=q_prime_even,
+                        q_prime_odd_interp=q_prime_odd,
+                        beta=beta,
+                        ugt_avg=ugt_data["annual_average"],
+                        ugt_amp1=ugt_data["amplitude_1"],
+                        ugt_phase1=ugt_data["phase_lag_1"],
+                        ugt_amp2=ugt_data["amplitude_2"],
+                        ugt_phase2=ugt_data["phase_lag_2"],
+                        depth=h_data["trench_depth"],
+                    )
+                    coupled_pipes_dict[h_id] = this_horiz
+
+            # PASS 2: Link the Coupled Pipes
+            for h_id, pipe in coupled_pipes_dict.items():
+                partner_id = horiz_data[h_id].get("coupled_to")
+
+                if not partner_id or partner_id not in coupled_pipes_dict:
+                    raise ValueError(
+                        f"Coupled pipe '{h_id}' is missing a valid 'coupled_to' partner in the horizontal_piping block."
+                    )
+
+                partner_pipe = coupled_pipes_dict[partner_id]
+
+                if pipe.length != partner_pipe.length:
+                    raise ValueError(
+                        f"Coupled pipes '{pipe.name}' and '{partner_pipe.name}' must have identical lengths."
+                    )
+
+                pipe.coupled_pipe = partner_pipe
+
+        # Flatten into the master horizontal list
+        horizontal_pipes = isolated_pipes + list(coupled_pipes_dict.values())
+
+        # Update MATRIX_ROWS handling
+        if self.loop_config == CentralLoopType.ONEPIPE:
+            Building.MATRIX_ROWS = 1
+        else:
+            Building.MATRIX_ROWS = 2
+
+        self.matrix_size = (
+            GHX.MATRIX_ROWS * self.num_ghx
+            + Building.MATRIX_ROWS * self.num_buildings
+            + SourceSinkHeatExchanger.MATRIX_ROWS * self.num_heat_exchangers
+            + sum(pipe.matrix_rows for pipe in horizontal_pipes)
+        )
+
         self.m_flow_loop = np.zeros(self.num_timesteps)
         self.pump_power_loop = np.zeros(self.num_timesteps)
 
@@ -820,9 +1612,13 @@ class GHEHPSystem:
         def get_hx(name: str) -> SourceSinkHeatExchanger | None:
             return next((obj for obj in heat_exchangers if obj.name and obj.name.upper() == name.upper()), None)
 
+        def get_horiz(name: str):
+            return next((obj for obj in horizontal_pipes if obj.name and obj.name.upper() == name.upper()), None)
+
+        # Topology assembly
+        comp: GHX | Building | SourceSinkHeatExchanger | IsolatedHorizontalPipe | CoupledHorizontalPipe | None
         for v in topology_data:
             comp_type = v["type"]
-            comp: Building | GHX | SourceSinkHeatExchanger | None
             if SimCompType[comp_type.upper()] == SimCompType.BUILDING:
                 comp = get_bldg(v["name"])
                 if comp is not None:
@@ -835,19 +1631,59 @@ class GHEHPSystem:
                 comp = get_hx(v["name"])
                 if comp is not None:
                     self.components.append(comp)
+            elif SimCompType[comp_type.upper()] in (
+                SimCompType.ISOLATED_HORIZONTAL_PIPE,
+                SimCompType.COUPLED_HORIZONTAL_PIPE,
+            ):
+                if self.use_horizontal:
+                    comp = get_horiz(v["name"])
+                    if comp is not None:
+                        self.components.append(comp)
+
+        for this_comp in self.components:
+            this_comp.matrix_size = self.matrix_size
+            if isinstance(this_comp, GHX):
+                this_comp.split_ratio = this_comp.nbh / self.nbh_total
+            elif isinstance(
+                this_comp, (Building, SourceSinkHeatExchanger, IsolatedHorizontalPipe, CoupledHorizontalPipe)
+            ):
+                this_comp.cp = cp
+
+        # Assigning downstream device to each component
+        for i in range(len(self.components)):
+            self.components[i].downstream_device = self.components[(i + 1) % len(self.components)]
 
         # Assigning row_indices
         idx_comp = 0
         for this_comp in self.components:
             this_comp.row_index = idx_comp
             if self.fixed_loads and isinstance(this_comp, GHX):
-                idx_comp += this_comp.MATRIX_ROWS_FIXED_LOADS
+                idx_comp += getattr(
+                    this_comp, "matrix_rows", getattr(this_comp.__class__, "MATRIX_ROWS_FIXED_LOADS", 1)
+                )
             else:
-                idx_comp += this_comp.MATRIX_ROWS
+                # Use dynamic instance attribute if present, otherwise default to class attribute
+                rows_required = getattr(this_comp, "matrix_rows", getattr(this_comp.__class__, "MATRIX_ROWS", 1))
+                idx_comp += rows_required
             this_comp.downstream_index = idx_comp
 
-        # set the last component to loops back to the start
+        # set the last component to loop back to the start
         self.components[-1].downstream_index = 0
+
+        # Assigning inlet_index
+        common_inlet_index_bldg = None
+        common_inlet_index_ghx = None
+
+        for i, comp in enumerate(self.components):
+            if comp.comp_type == SimCompType.BUILDING:
+                comp.inlet_index = common_inlet_index_bldg
+            elif comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
+                comp.inlet_index = common_inlet_index_ghx
+            elif comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
+                # Transit lines simply take the outlet of the component right before them in the topology
+                comp.inlet_index = self.components[i - 1].downstream_index
+            else:
+                pass
 
     def size_and_simulate(self):
         if np.any([ghe.ghe_manager.is_sizable for ghe in self.ground_heat_exchangers]):
@@ -1252,6 +2088,7 @@ class GHEHPSystem:
             self.solve_system_standard()
 
     def solve_system_fixed_loads(self):
+        t_start = time.perf_counter()
         self.nbh_total = sum([x.nbh for x in self.ground_heat_exchangers])
         total_loads = np.zeros(self.num_timesteps, dtype=float)
         average_ugt = 0.0
@@ -1266,25 +2103,72 @@ class GHEHPSystem:
             building.generate_constant_cop_loads(average_ugt)
             total_loads += building.loads
         for ghe in self.ground_heat_exchangers:
-            ghe.generate_matrix_fixed_loads(0.0, 1, load_profile=total_loads * ghe.split_ratio / (ghe.nbh * ghe.height))
+            ghe.generate_matrix_fixed_loads(
+                0.0, 0.0, 0.0, 0.0, 0.0, 1, load_profile=total_loads * ghe.split_ratio / (ghe.nbh * ghe.height)
+            )
         for idx_timestep in range(1, self.num_timesteps + 1):  # loop over all timestep
             matrix_rows = []
             matrix_rhs = []
             total_hp_flow = 0
+            m_bldg_cum = 0
+            m_ghe_cum = 0
+
+            # ---- RESET flows for all components ----
+            for comp in self.components:
+                comp.mass_bldg = 0.0
+                comp.mass_flow_ghe = 0.0
+                comp.mass_flow_pipe = 0.0
+                comp.mass_loop_bldg = 0.0
+                comp.mass_loop_ghe = 0.0
 
             for this_comp in self.components:
                 if isinstance(this_comp, Building):
                     t_in = this_comp.t_in[idx_timestep - 2]
                     m_bldg = this_comp.calc_mass_flow_rate(t_in, idx_timestep - 1)
                     total_hp_flow += m_bldg
+                    this_comp.mass_bldg = this_comp.calc_mass_flow_rate(t_in, idx_timestep)
+                    total_hp_flow += this_comp.mass_bldg
+                    m_bldg_cum += this_comp.mass_bldg
+                this_comp.mass_loop_bldg = m_bldg_cum
 
-            m_loop = max(total_hp_flow * self.loop_flow_factor, 0.1)
+            mass_loop = max(total_hp_flow * self.loop_flow_factor, 0.1)
 
             for this_comp in self.components:
                 if isinstance(this_comp, GHX):
-                    rows, rhs = this_comp.generate_matrix_fixed_loads(m_loop, idx_timestep)
+                    this_comp.mass_flow_ghe = mass_loop * this_comp.split_ratio
+                    m_ghe_cum += this_comp.mass_flow_ghe
+                elif isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
+                    # For a series pipe, the mass flow is the total loop mass flow
+                    this_comp.mass_flow_pipe = mass_loop
+
+                this_comp.mass_loop_ghe = m_ghe_cum
+
+                # Note: We pass this_comp.mass_flow_pipe in the mass_flow_ghe slot for Horizontal pipes
+                flow_to_pass = getattr(this_comp, "mass_flow_ghe", 0.0)
+                if isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
+                    flow_to_pass = this_comp.mass_flow_pipe
+                if isinstance(this_comp, GHX):
+                    rows, rhs = this_comp.generate_matrix_fixed_loads(
+                        this_comp.mass_bldg,
+                        mass_loop,
+                        this_comp.mass_loop_bldg,
+                        flow_to_pass,
+                        this_comp.mass_loop_ghe,
+                        idx_timestep,
+                        self.loop_config,
+                        self.load_method,
+                    )
                 else:
-                    rows, rhs = this_comp.generate_matrix(m_loop, idx_timestep)
+                    rows, rhs = this_comp.generate_matrix(
+                        this_comp.mass_bldg,
+                        mass_loop,
+                        this_comp.mass_loop_bldg,
+                        flow_to_pass,
+                        this_comp.mass_loop_ghe,
+                        idx_timestep,
+                        self.loop_config,
+                        self.load_method,
+                    )
                 matrix_rows.extend(rows)
                 matrix_rhs.extend(rhs)
 
@@ -1294,22 +2178,46 @@ class GHEHPSystem:
             x_vector = np.linalg.solve(a_matrix, b_vector)
 
             # save output data
-            self.m_flow_loop[idx_timestep - 1] = m_loop
+            self.m_flow_loop[idx_timestep - 1] = mass_loop
 
             for this_comp in self.components:
                 row_index = this_comp.row_index
                 if this_comp.comp_type == SimCompType.BUILDING:
-                    this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
-                    this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
+                    if self.loop_config == CentralLoopType.TWOPIPE:
+                        this_comp.t_in[idx_timestep - 1] = x_vector[this_comp.inlet_index]
+                        this_comp.t_out[idx_timestep - 1] = x_vector[row_index + 1]
+                    else:
+                        this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
+                        this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
+
                 elif this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
-                    this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
+                    if self.loop_config == CentralLoopType.TWOPIPE:
+                        this_comp.t_in[idx_timestep - 1] = x_vector[this_comp.inlet_index]
+                        this_comp.t_mix_out[idx_timestep - 1] = x_vector[row_index]
+                    else:
+                        this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
+                        this_comp.t_mix_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
                     this_comp.t_out[idx_timestep - 1] = x_vector[row_index + 1]
-                    this_comp.t_mix_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
                 elif this_comp.comp_type == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
                     this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
                     this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
+                elif isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
+                    this_comp.update_post_solve(x_vector, idx_timestep - 1)
+            # Update the console every 100 timesteps or on the very last step
+            if (idx_timestep - 1) % 100 == 0 or idx_timestep == self.num_timesteps - 1:
+                elapsed = time.perf_counter() - t_start
+                percent = ((idx_timestep - 1) / (self.num_timesteps - 1)) * 100
+                print(
+                    f"  Progress: {(idx_timestep - 1)}/{self.num_timesteps - 1} ({percent:.1f}%)"
+                    f" | Elapsed time: {elapsed:.2f}s",
+                    end="\r",
+                    flush=True,
+                )
+        # 3. Add the final completion print OUTSIDE the loop
+        print(f"\n--- Solver finished in {time.perf_counter() - t_start:.2f} seconds! ---")
 
     def solve_system_standard(self):
+        t_start = time.perf_counter()
         self.nbh_total = sum([x.nbh for x in self.ground_heat_exchangers])
         average_ugt = 0.0
         for this_comp in self.components:
@@ -1329,17 +2237,52 @@ class GHEHPSystem:
             matrix_rows = []
             matrix_rhs = []
             total_hp_flow = 0
+            m_bldg_cum = 0
+            m_ghe_cum = 0
+
+            # ---- RESET flows for all components ----
+            for comp in self.components:
+                comp.mass_bldg = 0.0
+                comp.mass_flow_ghe = 0.0
+                comp.mass_flow_pipe = 0.0
+                comp.mass_loop_bldg = 0.0
+                comp.mass_loop_ghe = 0.0
 
             for this_comp in self.components:
                 if isinstance(this_comp, Building):
                     t_in = this_comp.t_in[idx_timestep - 2]
-                    m_bldg = this_comp.calc_mass_flow_rate(t_in, idx_timestep - 1)
-                    total_hp_flow += m_bldg
+                    this_comp.mass_bldg = this_comp.calc_mass_flow_rate(t_in, idx_timestep - 1)
+                    total_hp_flow += this_comp.mass_bldg
+                    m_bldg_cum += this_comp.mass_bldg
+                this_comp.mass_loop_bldg = m_bldg_cum
 
-            m_loop = max(total_hp_flow * self.loop_flow_factor, 0.1)
+            mass_loop = max(total_hp_flow * self.loop_flow_factor, 0.1)
 
             for this_comp in self.components:
-                rows, rhs = this_comp.generate_matrix(m_loop, idx_timestep)
+                if isinstance(this_comp, GHX):
+                    this_comp.mass_flow_ghe = mass_loop * this_comp.split_ratio
+                    m_ghe_cum += this_comp.mass_flow_ghe
+                elif isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
+                    # For a series pipe, the mass flow is the total loop mass flow
+                    this_comp.mass_flow_pipe = mass_loop
+
+                this_comp.mass_loop_ghe = m_ghe_cum
+
+                # Note: We pass this_comp.mass_flow_pipe in the mass_flow_ghe slot for Horizontal pipes
+                flow_to_pass = getattr(this_comp, "mass_flow_ghe", 0.0)
+                if isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
+                    flow_to_pass = this_comp.mass_flow_pipe
+
+                rows, rhs = this_comp.generate_matrix(
+                    this_comp.mass_bldg,
+                    mass_loop,
+                    this_comp.mass_loop_bldg,
+                    flow_to_pass,
+                    this_comp.mass_loop_ghe,
+                    idx_timestep,
+                    self.loop_config,
+                    self.load_method,
+                )
                 matrix_rows.extend(rows)
                 matrix_rhs.extend(rhs)
 
@@ -1349,23 +2292,46 @@ class GHEHPSystem:
             x_vector = np.linalg.solve(a_matrix, b_vector)
 
             # save output data
-            self.m_flow_loop[idx_timestep - 1] = m_loop
+            self.m_flow_loop[idx_timestep - 1] = mass_loop
 
             for this_comp in self.components:
                 row_index = this_comp.row_index
                 if this_comp.comp_type == SimCompType.BUILDING:
-                    this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
-                    this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
+                    if self.loop_config == CentralLoopType.TWOPIPE:
+                        this_comp.t_in[idx_timestep - 1] = x_vector[this_comp.inlet_index]
+                        this_comp.t_out[idx_timestep - 1] = x_vector[row_index + 1]
+                    else:
+                        this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
+                        this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
+
                 elif this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
-                    this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
+                    if self.loop_config == CentralLoopType.TWOPIPE:
+                        this_comp.t_in[idx_timestep - 1] = x_vector[this_comp.inlet_index]
+                        this_comp.t_mix_out[idx_timestep - 1] = x_vector[row_index]
+                    else:
+                        this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
+                        this_comp.t_mix_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
                     this_comp.t_mean[idx_timestep - 1] = x_vector[row_index + 1]
                     this_comp.q_ghe[idx_timestep - 1] = x_vector[row_index + 2]
                     this_comp.t_out[idx_timestep - 1] = x_vector[row_index + 3]
-                    this_comp.t_mix_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
-
                 elif this_comp.comp_type == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
                     this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
                     this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
+                elif isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
+                    this_comp.update_post_solve(x_vector, idx_timestep - 1)
+
+            # Update the console every 100 timesteps or on the very last step
+            if (idx_timestep - 1) % 100 == 0 or idx_timestep == self.num_timesteps - 1:
+                elapsed = time.perf_counter() - t_start
+                percent = ((idx_timestep - 1) / (self.num_timesteps - 1)) * 100
+                print(
+                    f"  Progress: {(idx_timestep - 1)}/{self.num_timesteps - 1} ({percent:.1f}%) |"
+                    f" Elapsed time: {elapsed:.2f}s",
+                    end="\r",
+                    flush=True,
+                )
+        # 3. Add the final completion print OUTSIDE the loop
+        print(f"\n--- Solver finished in {time.perf_counter() - t_start:.2f} seconds! ---")
 
     def calc_energy(self):
         self.pump_power_loop = (
@@ -1381,61 +2347,73 @@ class GHEHPSystem:
         output_path_2: Path | None = None,
         output_path_coordinates: Path | None = None,
     ):
-        output_data = pd.DataFrame()
-        output_data.index.name = "Hour"
+        output_data = pd.DataFrame(index=self.time_array[1:])
+        output_data.index.name = "Time [hr]"
 
         network_q_net_bldg_tot = np.zeros(self.num_timesteps, dtype=float)
         network_q_net_ghe_tot = np.zeros(self.num_timesteps, dtype=float)
 
-        # compute energy use for central loop
         self.calc_energy()
 
-        # compute energy use for all components
         for this_comp in self.components:
             this_comp.calc_energy()
 
         for this_comp in self.components:
             if isinstance(this_comp, Building):
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
-                output_data[f"{this_comp.name}:Q_htg [W]"] = this_comp.htg_vals
-                output_data[f"{this_comp.name}:Q_clg [W]"] = this_comp.clg_vals
-                output_data[f"{this_comp.name}:Q_net [W]"] = this_comp.q_net
-                output_data[f"{this_comp.name}:M_flow [kg/s]"] = this_comp.m_flow
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
+                output_data[f"{this_comp.name}:Q_htg [W]"] = this_comp.htg_vals[1:]
+                output_data[f"{this_comp.name}:Q_clg [W]"] = this_comp.clg_vals[1:]
+                output_data[f"{this_comp.name}:Q_net [W]"] = this_comp.q_net[1:]
+                output_data[f"{this_comp.name}:M_flow [kg/s]"] = this_comp.m_flow[1:]
                 network_q_net_bldg_tot += this_comp.q_net
-                output_data[f"{this_comp.name}:P_hp_htg [W]"] = this_comp.power_hp_htg
-                output_data[f"{this_comp.name}:P_hp_clg [W]"] = this_comp.power_hp_clg
-                output_data[f"{this_comp.name}:P_hp_tot [W]"] = this_comp.power_hp_tot
-                output_data[f"{this_comp.name}:P_pump [W]"] = this_comp.power_circ_pump
+                output_data[f"{this_comp.name}:P_hp_htg [W]"] = this_comp.power_hp_htg[1:]
+                output_data[f"{this_comp.name}:P_hp_clg [W]"] = this_comp.power_hp_clg[1:]
+                output_data[f"{this_comp.name}:P_hp_tot [W]"] = this_comp.power_hp_tot[1:]
+                output_data[f"{this_comp.name}:P_pump [W]"] = this_comp.power_circ_pump[1:]
+
                 q_src_clg = this_comp.clg_vals + this_comp.power_hp_clg
                 q_src_htg = this_comp.htg_vals - this_comp.power_hp_htg
-                output_data[f"{this_comp.name}:Q_src_clg [W]"] = q_src_clg
-                output_data[f"{this_comp.name}:Q_src_htg [W]"] = q_src_htg
-                output_data[f"{this_comp.name}:Q_src_het [W]"] = q_src_htg - q_src_clg
+
+                output_data[f"{this_comp.name}:Q_src_clg [W]"] = q_src_clg[1:]
+                output_data[f"{this_comp.name}:Q_src_htg [W]"] = q_src_htg[1:]
+                output_data[f"{this_comp.name}:Q_src_het [W]"] = (q_src_htg - q_src_clg)[1:]
 
         for this_comp in self.components:
             if isinstance(this_comp, GHX):
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
-                output_data[f"{this_comp.name}:ExFT Mixed Loop [C]"] = this_comp.t_mix_out
-                output_data[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean
-                output_data[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe
-                output_data[f"{this_comp.name}:Q_tot [W]"] = this_comp.q_ghe * this_comp.nbh * this_comp.height
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
+                output_data[f"{this_comp.name}:ExFT Mixed Loop [C]"] = this_comp.t_mix_out[1:]
+                output_data[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean[1:]
+                output_data[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe[1:]
+                output_data[f"{this_comp.name}:Q_tot [W]"] = (this_comp.q_ghe * this_comp.nbh * this_comp.height)[1:]
                 network_q_net_ghe_tot += this_comp.q_ghe * this_comp.nbh * this_comp.height
 
         for this_comp in self.components:
             if isinstance(this_comp, SourceSinkHeatExchanger):
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
-                output_data[f"{this_comp.name}:Operating [T/F]"] = this_comp.operating
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
+                output_data[f"{this_comp.name}:Operating [T/F]"] = this_comp.operating[1:]
                 output_data[f"{this_comp.name}:Q [W]"] = (
                     this_comp.operating * self.m_flow_loop * self.fluid.cp * (this_comp.t_out - this_comp.t_in)
-                )
+                )[1:]
 
-        output_data["Network:M_flow [kg/s]"] = self.m_flow_loop
-        output_data["Network:P_pump [W]"] = self.pump_power_loop
-        output_data["Network:Q_net_bldg [W]"] = network_q_net_bldg_tot
-        output_data["Network:Q_net_ghe [W]"] = network_q_net_ghe_tot
+        # --- NEW: Output Data for Horizontal Pipes ---
+        for this_comp in self.components:
+            if isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
+
+                # Loop through the dynamic array to print each segment's details
+                for k in range(this_comp.num_segments):
+                    output_data[f"{this_comp.name}:Node{k + 1}_Out [C]"] = this_comp.t_out_seg[k, 1:]
+                    output_data[f"{this_comp.name}:Q{k + 1} [W/m]"] = this_comp.q_seg[k, 1:]
+
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
+
+        output_data["Network:M_flow [kg/s]"] = self.m_flow_loop[1:]
+        output_data["Network:P_pump [W]"] = self.pump_power_loop[1:]
+        output_data["Network:Q_net_bldg [W]"] = network_q_net_bldg_tot[1:]
+        output_data["Network:Q_net_ghe [W]"] = network_q_net_ghe_tot[1:]
 
         if not output_path.parent.exists():
             output_path.parent.mkdir(parents=True)

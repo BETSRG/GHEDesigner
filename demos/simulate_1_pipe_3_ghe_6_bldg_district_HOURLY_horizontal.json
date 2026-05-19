@@ -10,12 +10,20 @@
       "name": "building1_dhw"
     },
     {
+      "type": "isolated_horizontal_pipe",
+      "name": "building1_building2_line"
+    },
+    {
       "type": "building",
       "name": "building2_htg_clg"
     },
     {
       "type": "building",
       "name": "building2_dhw"
+    },
+    {
+      "type": "isolated_horizontal_pipe",
+      "name": "building2_building3_line"
     },
     {
       "type": "building",
@@ -26,18 +34,143 @@
       "name": "building3_dhw"
     },
     {
+      "type": "coupled_horizontal_pipe",
+      "name": "horiz_return_line"
+    },
+    {
       "type": "ground_heat_exchanger",
       "name": "ghe1"
+    },
+    {
+      "type": "isolated_horizontal_pipe",
+      "name": "ghe1_ghe2_line"
     },
     {
       "type": "ground_heat_exchanger",
       "name": "ghe2"
     },
     {
+      "type": "isolated_horizontal_pipe",
+      "name": "ghe2_ghe3_line"
+    },
+    {
       "type": "ground_heat_exchanger",
       "name": "ghe3"
+    },
+    {
+      "type": "coupled_horizontal_pipe",
+      "name": "horiz_supply_line"
     }
   ],
+  "ground_temperature_model": {
+    "annual_average": 15.0,
+    "amplitude_1": 10.0,
+    "phase_lag_1": 30.0,
+    "amplitude_2": 2.0,
+    "phase_lag_2": 15.0
+  },
+  "horizontal_piping": {
+    "horiz_supply_line": {
+      "length": 50.0,
+      "trench_depth": 1.5,
+      "coupled_to": "horiz_return_line",
+      "spacing": 1.0,
+      "soil": {
+        "conductivity": 2.0,
+        "rho_cp": 2343493
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "roughness": 0.000001,
+        "arrangement": "SINGLEUTUBE"
+      }
+    },
+    "horiz_return_line": {
+      "length": 50.0,
+      "trench_depth": 1.5,
+      "coupled_to": "horiz_supply_line",
+      "spacing": 1.0,
+      "soil": {
+        "conductivity": 2.0,
+        "rho_cp": 2343493
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "roughness": 0.000001,
+        "arrangement": "SINGLEUTUBE"
+      }
+    },
+    "building1_building2_line": {
+      "length": 25.0,
+      "trench_depth": 1.5,
+      "soil": {
+        "conductivity": 2.0,
+        "rho_cp": 2343493
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "roughness": 0.000001,
+        "arrangement": "SINGLEUTUBE"
+      }
+    },
+    "building2_building3_line": {
+      "length": 25.0,
+      "trench_depth": 1.5,
+      "soil": {
+        "conductivity": 2.0,
+        "rho_cp": 2343493
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "roughness": 0.000001,
+        "arrangement": "SINGLEUTUBE"
+      }
+    },
+    "ghe1_ghe2_line": {
+      "length": 25.0,
+      "trench_depth": 1.5,
+      "soil": {
+        "conductivity": 2.0,
+        "rho_cp": 2343493
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "roughness": 0.000001,
+        "arrangement": "SINGLEUTUBE"
+      }
+    },
+    "ghe2_ghe3_line": {
+      "length": 25.0,
+      "trench_depth": 1.5,
+      "soil": {
+        "conductivity": 2.0,
+        "rho_cp": 2343493
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "roughness": 0.000001,
+        "arrangement": "SINGLEUTUBE"
+      }
+    }
+  },
   "central_loop": {
     "pipe_configuration": "ONEPIPE",
     "flow_factor": 1.5,
@@ -46,8 +179,8 @@
     "design_pressure_loss": 200
   },
   "fluid": {
-    "fluid_name": "WATER",
-    "concentration_percent": 0,
+    "fluid_name": "PROPYLENEGLYCOL",
+    "concentration_percent": 30,
     "temperature": 20
   },
   "heat_pump": {
@@ -146,6 +279,8 @@
   },
   "building": {
     "building1_htg_clg": {
+      "heating_cop": 4.4,
+      "cooling_cop": 4.5,
       "heating_load": {
         "column_name": "B1Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
@@ -158,6 +293,7 @@
       }
     },
     "building1_dhw": {
+      "heating_cop": 3.7,
       "heating_load": {
         "column_name": "B1Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
@@ -165,6 +301,8 @@
       }
     },
     "building2_htg_clg": {
+      "heating_cop": 4.4,
+      "cooling_cop": 4.9,
       "heating_load": {
         "column_name": "B2Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
@@ -177,6 +315,7 @@
       }
     },
     "building2_dhw": {
+      "heating_cop": 3.7,
       "heating_load": {
         "column_name": "B2Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
@@ -184,6 +323,8 @@
       }
     },
     "building3_htg_clg": {
+      "heating_cop": 4.4,
+      "cooling_cop": 4.9,
       "heating_load": {
         "column_name": "B3Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
@@ -196,6 +337,7 @@
       }
     },
     "building3_dhw": {
+      "heating_cop": 3.7,
       "heating_load": {
         "column_name": "B3Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
@@ -232,6 +374,8 @@
       "pre_designed": {
         "arrangement": "RECTANGLE",
         "H": 100,
+        "max_height": 135,
+        "min_height": 60,
         "spacing_in_x_dimension": 5,
         "spacing_in_y_dimension": 5,
         "boreholes_in_x_dimension": 15,
@@ -266,6 +410,8 @@
       "pre_designed": {
         "arrangement": "RECTANGLE",
         "H": 100,
+        "max_height": 135,
+        "min_height": 60,
         "spacing_in_x_dimension": 5,
         "spacing_in_y_dimension": 5,
         "boreholes_in_x_dimension": 10,
@@ -300,6 +446,8 @@
       "pre_designed": {
         "arrangement": "RECTANGLE",
         "H": 100,
+        "max_height": 135,
+        "min_height": 60,
         "spacing_in_x_dimension": 5,
         "spacing_in_y_dimension": 5,
         "boreholes_in_x_dimension": 10,
@@ -308,6 +456,9 @@
     }
   },
   "simulation_control": {
-    "simulation_years": 1
+    "simulation_years": 1,
+    "load_method": "hourly",
+    "horizontal_segments": 3,
+    "horizontal_simulation_considered": false
   }
 }

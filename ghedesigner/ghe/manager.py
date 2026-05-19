@@ -268,7 +268,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.max_boreholes = design_parameters.get("max_boreholes")
         end_month = 2
         ghe_loads = []
-        design: DesignBase
         match self.geometric_constraint:
             case GeometricConstraintsRectangle():
                 # max_height: float, min_height: float, length: float, width: float, b_min: float, b_max: float
@@ -771,7 +770,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
 
         return log_time_to_write, g_to_write, g_bhw_to_write
 
-    # def write_input_file(self, output_file_path: Path, simulation_parameters: SimulationParameters) -> None:
+    # def write_input_file(self, output_file_path: Path, simulation_parameters:
+    # SimulationParameters) -> None:
     #     """
     #     Writes an input file based on current simulation configuration.
     #
