@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from itertools import product
 from math import cos, sin
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -24,7 +25,8 @@ BOREHOLES_PER_SQUARE_METER = 0.0494  # This is the tightest boreholes can be inf
 # tessellated with 4.5m spacing (to my knowledge).
 IDX_COMPARISON_OFFSET_1 = 1
 IDX_COMPARISON_OFFSET_2 = 2  # Used for offsets in gfunction calculation
-SIMULATION_CONSTANT_COP_OFFSET = 8.0  # °C used to estimate constant COP if temperature bounds are not given
+SIMULATION_CONSTANT_COP_OFFSET = 15.0  # °C used to estimate constant COP if temperature bounds are not given. Also used
+# to determine flowrate if only COP is given for HP model.
 
 
 class BaseSimComp(ABC):
@@ -102,7 +104,7 @@ class IsolatedHorizontalPipe(BaseSimComp):
         # Geometry & Discretization (3 Segments)
         self.length = length
         self.L_seg = length / float(self.num_segments)
-        self.V_seg = np.pi * pipe.r_in**2 * self.L_seg
+        self.V_seg = np.pi * cast(float, pipe.r_in) ** 2 * self.L_seg
         self.C_f_seg = self.V_seg * fluid.rho * self.cp
         self.two_pi_k = TWO_PI * self.soil.k
 
@@ -296,7 +298,7 @@ class CoupledHorizontalPipe(BaseSimComp):
 
         self.length = length
         self.L_seg = length / float(self.num_segments)
-        self.V_seg = np.pi * pipe.r_in**2 * self.L_seg
+        self.V_seg = np.pi * cast(float, pipe.r_in) ** 2 * self.L_seg
         self.C_f_seg = self.V_seg * fluid.rho * self.cp
         self.two_pi_k = TWO_PI * self.soil.k
 
@@ -611,7 +613,7 @@ class GHX(BaseSimComp):
         self.b = None
         self.g = None
         self.ts = None
-        self.nbh = None
+        self.nbh: int = 0
         self.bh_effective_resist = None
         self.c_n = None
         self.borefield_coordinates = None
@@ -718,7 +720,7 @@ class GHX(BaseSimComp):
 
         return c_n
 
-    def calc_history_term(self, idx_timestep, history_terms, total_values_ghe):
+    def calc_history_term(self, idx_timestep):
         """
         Computes the history term H_n for this GHX at time index `i`.
         Updates self.total_values_ghe and self.H_n_ghe in place.
@@ -741,12 +743,12 @@ class GHX(BaseSimComp):
         else:
             values = 0
 
-        total_values_ghe[idx_timestep - 1] = values
+        self.total_values_ghe[idx_timestep - 1] = values
 
         # Contribution from the last time step only
-        history_terms[idx_timestep] = (
+        self.history_terms[idx_timestep] = (
             self.ghe_manager.soil.ugt
-            - total_values_ghe[idx_timestep - 1]
+            - self.total_values_ghe[idx_timestep - 1]
             + (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.gfunction_evals[-1])
         )
 
@@ -885,9 +887,7 @@ class GHX(BaseSimComp):
             else:
                 raise ValueError(f"Unknown configuration: {configuration}")
         else:
-            self.history_terms, self.total_values_ghe = self.calc_history_term(
-                idx_timestep, self.history_terms, self.total_values_ghe
-            )
+            _ = self.calc_history_term(idx_timestep)
             if configuration == CentralLoopType.ONEPIPE:
                 row_1[self.row_index] = (mass_loop - mass_flow_ghe) * self.cp
                 row_1[self.row_index + 3] = mass_flow_ghe * self.cp
@@ -973,32 +973,44 @@ class Building(BaseSimComp):
             self.max_eft = 0.0
             self.min_eft = 0.0
 
+        self.heating_fixed_cop: float | None = None
+        self.hp_htg: HPmodel
         if self.heating_exists:
-            hp_htg_name = bldg_data["heating_load"]["heat_pump_name"]
-            hp_htg_data = hp_data[hp_htg_name]
-            self.hp_htg = HPmodel(hp_htg_name, hp_htg_data)
+            if self.constant_cop and "heat_pump_cop" in bldg_data["heating_load"]:
+                self.heating_fixed_cop = bldg_data["heating_load"]["heat_pump_cop"]
+            else:
+                hp_htg_name = bldg_data["heating_load"]["heat_pump_name"]
+                hp_htg_data = hp_data[hp_htg_name]
+                self.hp_htg = HPmodel(hp_htg_name, hp_htg_data)
 
+        self.cooling_fixed_cop: float | None = None
+        self.hp_clg: HPmodel
         if self.cooling_exists:
-            hp_clg_name = bldg_data["cooling_load"]["heat_pump_name"]
-            hp_clg_data = hp_data[hp_clg_name]
-            self.hp_clg = HPmodel(hp_clg_name, hp_clg_data)
+            if self.constant_cop and "heat_pump_cop" in bldg_data["cooling_load"]:
+                self.cooling_fixed_cop = bldg_data["cooling_load"]["heat_pump_cop"]
+            else:
+                hp_clg_name = bldg_data["cooling_load"]["heat_pump_name"]
+                hp_clg_data = hp_data[hp_clg_name]
+                self.hp_clg = HPmodel(hp_clg_name, hp_clg_data)
 
         if load_method == "hourly":
             if self.heating_exists:
                 one_yr_htg_vals = np.array(
-                    get_loads(hp_htg_name, SimCompType.HEAT_PUMP.name, bldg_data["heating_load"]),
+                    get_loads(self.name + "_htg", SimCompType.HEAT_PUMP.name, bldg_data["heating_load"]),
                     dtype=float,
                 )
                 hourly_htg = np.tile(one_yr_htg_vals, self.sim_years)
-                self.htg_vals = np.insert(hourly_htg, 0, 0.0)
+                self.htg_vals = hourly_htg
+                # self.htg_vals = np.insert(hourly_htg, 0, 0.0)
 
             if self.cooling_exists:
                 one_yr_clg_vals = np.array(
-                    get_loads(hp_clg_name, SimCompType.HEAT_PUMP.name, bldg_data["cooling_load"]),
+                    get_loads(self.name + "_clg", SimCompType.HEAT_PUMP.name, bldg_data["cooling_load"]),
                     dtype=float,
                 )
                 hourly_clg = np.tile(one_yr_clg_vals, self.sim_years)
-                self.clg_vals = np.insert(hourly_clg, 0, 0.0)
+                self.clg_vals = hourly_clg
+                # self.clg_vals = np.insert(hourly_clg, 0, 0.0)
 
         elif load_method == "hybrid":
             if external_loads is None:
@@ -1041,15 +1053,23 @@ class Building(BaseSimComp):
 
     def calc_mass_flow_rate(self, t_in, idx_timestep):
         if self.heating_exists:
-            cap_htg = self.hp_htg.c1_htg * t_in**2 + self.hp_htg.c2_htg * t_in + self.hp_htg.c3_htg
-            m_single_hp_htg = self.hp_htg.m_flow_single_hp
+            if self.heating_fixed_cop is not None:
+                cap_htg = abs(self.htg_vals[idx_timestep])
+                m_single_hp_htg = cap_htg / (self.cp * SIMULATION_CONSTANT_COP_OFFSET)
+            else:
+                cap_htg = self.hp_htg.c1_htg * t_in**2 + self.hp_htg.c2_htg * t_in + self.hp_htg.c3_htg
+                m_single_hp_htg = self.hp_htg.m_flow_single_hp
         else:
             cap_htg = 0.0
             m_single_hp_htg = 0.0
 
         if self.cooling_exists:
-            cap_clg = self.hp_clg.c1_clg * t_in**2 + self.hp_clg.c2_clg * t_in + self.hp_clg.c3_clg
-            m_single_hp_clg = self.hp_clg.m_flow_single_hp
+            if self.cooling_fixed_cop is not None:
+                cap_clg = abs(self.clg_vals[idx_timestep])
+                m_single_hp_clg = cap_clg / (self.cp * SIMULATION_CONSTANT_COP_OFFSET)
+            else:
+                cap_clg = self.hp_clg.c1_clg * t_in**2 + self.hp_clg.c2_clg * t_in + self.hp_clg.c3_clg
+                m_single_hp_clg = self.hp_clg.m_flow_single_hp
         else:
             cap_clg = 0.0
             m_single_hp_clg = 0.0
@@ -1109,16 +1129,26 @@ class Building(BaseSimComp):
             max_eft = self.max_eft
         self.loads = np.zeros(self.num_timesteps, dtype=float)
         if self.cooling_exists:
-            cooling_temp = (1 - beta) * max_eft + beta * ugt
-            q_rej_ratio = (
-                self.hp_clg.a_clg * cooling_temp * cooling_temp + self.hp_clg.b_clg * cooling_temp + self.hp_clg.c_clg
-            )
+            if self.cooling_fixed_cop is not None:
+                q_rej_ratio = 1 + 1.0 / self.cooling_fixed_cop
+            else:
+                cooling_temp = (1 - beta) * max_eft + beta * ugt
+                q_rej_ratio = (
+                    self.hp_clg.a_clg * cooling_temp * cooling_temp
+                    + self.hp_clg.b_clg * cooling_temp
+                    + self.hp_clg.c_clg
+                )
             self.loads -= q_rej_ratio * self.clg_vals
         if self.heating_exists:
-            heating_temp = (1 - beta) * min_eft + beta * ugt
-            q_extr_ratio = (
-                self.hp_htg.a_htg * heating_temp * heating_temp + self.hp_htg.b_htg * heating_temp + self.hp_htg.c_htg
-            )
+            if self.heating_fixed_cop is not None:
+                q_extr_ratio = 1 - 1.0 / self.heating_fixed_cop
+            else:
+                heating_temp = (1 - beta) * min_eft + beta * ugt
+                q_extr_ratio = (
+                    self.hp_htg.a_htg * heating_temp * heating_temp
+                    + self.hp_htg.b_htg * heating_temp
+                    + self.hp_htg.c_htg
+                )
             self.loads += q_extr_ratio * self.htg_vals
 
     def generate_matrix_constant_cop(self, mass_bldg, mass_loop, mass_loop_bldg, idx_timestep, configuration):
@@ -1196,24 +1226,36 @@ class Building(BaseSimComp):
         """Calculate energy consumption of the heat pump system."""
 
         if self.cooling_exists:
-            ratio_clg = self.hp_clg.a_clg * self.t_in**2 + self.hp_clg.b_clg * self.t_in + self.hp_clg.c_clg
-            self.power_hp_clg = np.abs(self.clg_vals * (ratio_clg - 1))
+            if self.cooling_fixed_cop is not None:
+                self.power_hp_clg = np.abs(self.clg_vals / self.cooling_fixed_cop)
+            else:
+                ratio_clg = self.hp_clg.a_clg * self.t_in**2 + self.hp_clg.b_clg * self.t_in + self.hp_clg.c_clg
+                self.power_hp_clg = np.abs(self.clg_vals * (ratio_clg - 1))
 
         if self.heating_exists:
-            ratio_htg = self.hp_htg.a_htg * self.t_in**2 + self.hp_htg.b_htg * self.t_in + self.hp_htg.c_htg
-            self.power_hp_htg = self.htg_vals * (1 - ratio_htg)
+            if self.heating_fixed_cop is not None:
+                self.power_hp_htg = self.htg_vals / self.heating_fixed_cop
+            else:
+                ratio_htg = self.hp_htg.a_htg * self.t_in**2 + self.hp_htg.b_htg * self.t_in + self.hp_htg.c_htg
+                self.power_hp_htg = self.htg_vals * (1 - ratio_htg)
 
         self.power_hp_tot = self.power_hp_clg + self.power_hp_htg
 
         # power consumed by circulating pump
         if self.heating_exists:
-            self.power_circ_pump = (
-                self.m_flow / (self.fluid.rho * self.hp_htg.pump_efficiency) * self.hp_htg.design_pressure_loss
-            )
+            if self.heating_fixed_cop is not None:
+                self.power_circ_pump = 0.0
+            else:
+                self.power_circ_pump = (
+                    self.m_flow / (self.fluid.rho * self.hp_htg.pump_efficiency) * self.hp_htg.design_pressure_loss
+                )
         if self.cooling_exists:
-            self.power_circ_pump = (
-                self.m_flow / (self.fluid.rho * self.hp_clg.pump_efficiency) * self.hp_clg.design_pressure_loss
-            )
+            if self.cooling_fixed_cop:
+                self.power_circ_pump = 0.0
+            else:
+                self.power_circ_pump = (
+                    self.m_flow / (self.fluid.rho * self.hp_clg.pump_efficiency) * self.hp_clg.design_pressure_loss
+                )
 
 
 class HPmodel:
@@ -1258,7 +1300,6 @@ class GHEHPSystem:
 
     def __init__(self, f_path_json: Path):
         self.components: list = []  # Will hold Building, GHX, SourceSinkHeatExchanger, and IsolatedHorizontalPipe
-        self.nbh_total = None
         self.matrix_size = 0
         self.number_of_simulations = 0
 
@@ -1373,12 +1414,11 @@ class GHEHPSystem:
 
         self.horiz_segments = json_data["simulation_control"].get("horizontal_segments", 3)
 
-        self.hybrid_load_data: dict[str, float] = {}
+        self.hybrid_load_data: dict[str, dict[str, list[float]]] = {}
 
         if self.load_method == "hourly":
             self.time_array = np.arange(self.sim_years * HOURS_IN_YEAR + 1, dtype=float)
             self.num_timesteps = len(self.time_array) - 1
-
         elif self.load_method == "hybrid":
             processor = ProcessLoads()
             processor.read_data_from_json_file(json_data)
@@ -1413,7 +1453,7 @@ class GHEHPSystem:
         buildings = []
         for this_building_id, this_bldg_data in building_data.items():
             if this_building_id.upper() in building_names:
-                external_loads = None
+                external_loads: dict[str, list[float]] = {}
                 if self.load_method == "hybrid":
                     external_loads = self.hybrid_load_data[this_building_id]
 
@@ -1443,7 +1483,7 @@ class GHEHPSystem:
         self.num_heat_exchangers = len(heat_exchangers)
         self.heat_exchangers = heat_exchangers
 
-        cp = self.fluid.cp
+        # cp = self.fluid.cp
 
         ground_heat_exchangers = []
         for ghx_id, ghx_item_data in ghe_data.items():
@@ -1477,7 +1517,7 @@ class GHEHPSystem:
                 [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
             )
 
-        self.nbh_total = sum([x.nbh for x in ground_heat_exchangers]) if ground_heat_exchangers is not None else 0
+        self.nbh_total: int = sum([x.nbh for x in ground_heat_exchangers]) if ground_heat_exchangers is not None else 0
         self.num_ghx = len(ground_heat_exchangers)
 
         isolated_names = get_comp_names(topology_data, horiz_data, SimCompType.ISOLATED_HORIZONTAL_PIPE)
@@ -1640,14 +1680,14 @@ class GHEHPSystem:
                     if comp is not None:
                         self.components.append(comp)
 
-        for this_comp in self.components:
-            this_comp.matrix_size = self.matrix_size
-            if isinstance(this_comp, GHX):
-                this_comp.split_ratio = this_comp.nbh / self.nbh_total
-            elif isinstance(
-                this_comp, (Building, SourceSinkHeatExchanger, IsolatedHorizontalPipe, CoupledHorizontalPipe)
-            ):
-                this_comp.cp = cp
+        # for this_comp in self.components:
+        #     this_comp.matrix_size = self.matrix_size
+        #     if isinstance(this_comp, GHX):
+        #         this_comp.split_ratio = this_comp.nbh / self.nbh_total
+        #     elif isinstance(
+        #         this_comp, (Building, SourceSinkHeatExchanger, IsolatedHorizontalPipe, CoupledHorizontalPipe)
+        #     ):
+        #         this_comp.cp = cp
 
         # Assigning downstream device to each component
         for i in range(len(self.components)):
@@ -2360,60 +2400,60 @@ class GHEHPSystem:
 
         for this_comp in self.components:
             if isinstance(this_comp, Building):
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
-                output_data[f"{this_comp.name}:Q_htg [W]"] = this_comp.htg_vals[1:]
-                output_data[f"{this_comp.name}:Q_clg [W]"] = this_comp.clg_vals[1:]
-                output_data[f"{this_comp.name}:Q_net [W]"] = this_comp.q_net[1:]
-                output_data[f"{this_comp.name}:M_flow [kg/s]"] = this_comp.m_flow[1:]
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
+                output_data[f"{this_comp.name}:Q_htg [W]"] = this_comp.htg_vals
+                output_data[f"{this_comp.name}:Q_clg [W]"] = this_comp.clg_vals
+                output_data[f"{this_comp.name}:Q_net [W]"] = this_comp.q_net
+                output_data[f"{this_comp.name}:M_flow [kg/s]"] = this_comp.m_flow
                 network_q_net_bldg_tot += this_comp.q_net
-                output_data[f"{this_comp.name}:P_hp_htg [W]"] = this_comp.power_hp_htg[1:]
-                output_data[f"{this_comp.name}:P_hp_clg [W]"] = this_comp.power_hp_clg[1:]
-                output_data[f"{this_comp.name}:P_hp_tot [W]"] = this_comp.power_hp_tot[1:]
-                output_data[f"{this_comp.name}:P_pump [W]"] = this_comp.power_circ_pump[1:]
+                output_data[f"{this_comp.name}:P_hp_htg [W]"] = this_comp.power_hp_htg
+                output_data[f"{this_comp.name}:P_hp_clg [W]"] = this_comp.power_hp_clg
+                output_data[f"{this_comp.name}:P_hp_tot [W]"] = this_comp.power_hp_tot
+                output_data[f"{this_comp.name}:P_pump [W]"] = this_comp.power_circ_pump
 
                 q_src_clg = this_comp.clg_vals + this_comp.power_hp_clg
                 q_src_htg = this_comp.htg_vals - this_comp.power_hp_htg
 
-                output_data[f"{this_comp.name}:Q_src_clg [W]"] = q_src_clg[1:]
-                output_data[f"{this_comp.name}:Q_src_htg [W]"] = q_src_htg[1:]
-                output_data[f"{this_comp.name}:Q_src_het [W]"] = (q_src_htg - q_src_clg)[1:]
+                output_data[f"{this_comp.name}:Q_src_clg [W]"] = q_src_clg
+                output_data[f"{this_comp.name}:Q_src_htg [W]"] = q_src_htg
+                output_data[f"{this_comp.name}:Q_src_het [W]"] = q_src_htg - q_src_clg
 
         for this_comp in self.components:
             if isinstance(this_comp, GHX):
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
-                output_data[f"{this_comp.name}:ExFT Mixed Loop [C]"] = this_comp.t_mix_out[1:]
-                output_data[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean[1:]
-                output_data[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe[1:]
-                output_data[f"{this_comp.name}:Q_tot [W]"] = (this_comp.q_ghe * this_comp.nbh * this_comp.height)[1:]
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
+                output_data[f"{this_comp.name}:ExFT Mixed Loop [C]"] = this_comp.t_mix_out
+                output_data[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean
+                output_data[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe
+                output_data[f"{this_comp.name}:Q_tot [W]"] = this_comp.q_ghe * this_comp.nbh * this_comp.height
                 network_q_net_ghe_tot += this_comp.q_ghe * this_comp.nbh * this_comp.height
 
         for this_comp in self.components:
             if isinstance(this_comp, SourceSinkHeatExchanger):
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
-                output_data[f"{this_comp.name}:Operating [T/F]"] = this_comp.operating[1:]
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
+                output_data[f"{this_comp.name}:Operating [T/F]"] = this_comp.operating
                 output_data[f"{this_comp.name}:Q [W]"] = (
                     this_comp.operating * self.m_flow_loop * self.fluid.cp * (this_comp.t_out - this_comp.t_in)
-                )[1:]
+                )
 
         # --- NEW: Output Data for Horizontal Pipes ---
         for this_comp in self.components:
             if isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
 
                 # Loop through the dynamic array to print each segment's details
                 for k in range(this_comp.num_segments):
-                    output_data[f"{this_comp.name}:Node{k + 1}_Out [C]"] = this_comp.t_out_seg[k, 1:]
-                    output_data[f"{this_comp.name}:Q{k + 1} [W/m]"] = this_comp.q_seg[k, 1:]
+                    output_data[f"{this_comp.name}:Node{k + 1}_Out [C]"] = this_comp.t_out_seg[k, :]
+                    output_data[f"{this_comp.name}:Q{k + 1} [W/m]"] = this_comp.q_seg[k, :]
 
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
 
-        output_data["Network:M_flow [kg/s]"] = self.m_flow_loop[1:]
-        output_data["Network:P_pump [W]"] = self.pump_power_loop[1:]
-        output_data["Network:Q_net_bldg [W]"] = network_q_net_bldg_tot[1:]
-        output_data["Network:Q_net_ghe [W]"] = network_q_net_ghe_tot[1:]
+        output_data["Network:M_flow [kg/s]"] = self.m_flow_loop
+        output_data["Network:P_pump [W]"] = self.pump_power_loop
+        output_data["Network:Q_net_bldg [W]"] = network_q_net_bldg_tot
+        output_data["Network:Q_net_ghe [W]"] = network_q_net_ghe_tot
 
         if not output_path.parent.exists():
             output_path.parent.mkdir(parents=True)

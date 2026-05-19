@@ -1,4 +1,5 @@
 import math
+from typing import cast
 
 import numpy as np
 from scipy import integrate, special
@@ -26,7 +27,7 @@ class ParallelPipeSystem:
         # self.beta = beta
         self.B = x_coord
         self.D = y_coord
-        self.r_p: float = pipe.r_out  # TODO: This may not handle all cases for pipe radii.
+        self.r_p: float = cast(float, pipe.r_out)  # TODO: This may not handle all cases for pipe radii.
 
         kappa = soil.k / soil.rho_cp
         self.characteristic_time = self.r_p**2 / kappa
@@ -273,7 +274,7 @@ class SinglePipeWithSurfaceSystem:
         self.pipe = pipe
         self.soil = soil
         self.D = y_coord
-        self.r_p = pipe.r_out
+        self.r_p: float = cast(float, pipe.r_out)
 
         kappa = soil.k / soil.rho_cp
         self.characteristic_time = self.r_p**2 / kappa
@@ -323,7 +324,7 @@ class SinglePipeWithSurfaceSystem:
 
     def steady_state_heat_flow(self, beta: float):
         # The exact steady state for a single pipe with a surface
-        return 1.0 / float(math.log((2 * self.D) / self.r_p) + beta)
+        return 1.0 / float(math.log((2 * self.D) / float(self.r_p)) + beta)
 
     def n_function(self, sigma: complex, beta: float):
         numerator = special.kv(1, sigma) + self.laplace_integral_sum_derivative(sigma)
