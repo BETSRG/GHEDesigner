@@ -1428,7 +1428,7 @@ class GHEHPSystem:
             first_bldg = next(iter(self.hybrid_load_data))
             self.time_array = (np.array(self.hybrid_load_data[first_bldg]["time"], dtype=float)).flatten()
             self.num_timesteps = len(self.time_array)
-            self.time_array = np.insert(self.time_array, 0, 0)
+            self.time_array = np.insert(self.time_array, 0, 0, axis=None)
         else:
             raise ValueError(f"Unknown load_method: {self.load_method}")
 
