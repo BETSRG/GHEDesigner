@@ -146,69 +146,60 @@
   },
   "building": {
     "building1_htg_clg": {
-      "heating_cop": 4.4,
-      "cooling_cop": 4.5,
       "heating_load": {
         "column_name": "B1Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp1"
+        "heat_pump_cop": 4.4
       },
       "cooling_load": {
         "column_name": "B1Z1_HPClgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp1"
+        "heat_pump_cop": 4.5
       }
     },
     "building1_dhw": {
-      "heating_cop": 3.7,
       "heating_load": {
         "column_name": "B1Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp4"
+        "heat_pump_cop": 3.7
       }
     },
     "building2_htg_clg": {
-      "heating_cop": 4.4,
-      "cooling_cop": 4.9,
       "heating_load": {
         "column_name": "B2Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp2"
+        "heat_pump_cop": 4.4
       },
       "cooling_load": {
         "column_name": "B2Z1_HPClgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp2"
+        "heat_pump_cop": 4.9
       }
     },
     "building2_dhw": {
-      "heating_cop": 3.7,
       "heating_load": {
         "column_name": "B2Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp4"
+        "heat_pump_cop": 3.7
       }
     },
     "building3_htg_clg": {
-      "heating_cop": 4.4,
-      "cooling_cop": 4.9,
       "heating_load": {
         "column_name": "B3Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp3"
+        "heat_pump_cop": 4.4
       },
       "cooling_load": {
         "column_name": "B3Z1_HPClgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp3"
+        "heat_pump_cop": 4.9
       }
     },
     "building3_dhw": {
-      "heating_cop": 3.7,
       "heating_load": {
         "column_name": "B3Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp4"
+        "heat_pump_cop": 3.7
       }
     }
   },
@@ -241,8 +232,6 @@
       "pre_designed": {
         "arrangement": "RECTANGLE",
         "H": 100,
-        "max_height": 135,
-        "min_height": 60,
         "spacing_in_x_dimension": 5,
         "spacing_in_y_dimension": 5,
         "boreholes_in_x_dimension": 15,
@@ -277,8 +266,6 @@
       "pre_designed": {
         "arrangement": "RECTANGLE",
         "H": 100,
-        "max_height": 135,
-        "min_height": 60,
         "spacing_in_x_dimension": 5,
         "spacing_in_y_dimension": 5,
         "boreholes_in_x_dimension": 10,
@@ -313,8 +300,6 @@
       "pre_designed": {
         "arrangement": "RECTANGLE",
         "H": 100,
-        "max_height": 135,
-        "min_height": 60,
         "spacing_in_x_dimension": 5,
         "spacing_in_y_dimension": 5,
         "boreholes_in_x_dimension": 10,
@@ -324,6 +309,6 @@
   },
   "simulation_control": {
     "simulation_years": 1,
-    "load_method": "hourly"
+    "load_method": "HOURLY"
   }
 }

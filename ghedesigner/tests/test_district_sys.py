@@ -4,7 +4,7 @@ from ghedesigner.tests.test_base_case import GHEBaseTest
 
 class TestDistrictSys(GHEBaseTest):
     def test_simulate_1_pipe_3_ghe_6_bldg_district(self):
-        f_path_json = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district.json"
+        f_path_json = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.json"
         system = GHEHPSystem(f_path_json)
         system.size_and_simulate()
 
