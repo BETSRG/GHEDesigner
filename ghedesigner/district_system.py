@@ -177,7 +177,6 @@ class IsolatedHorizontalPipe(BaseSimComp):
         configuration,
         _method,
     ):
-        idx_timestep -= 1
         self.compute_history_terms(idx_timestep)
 
         # Set up blank rows
@@ -385,7 +384,6 @@ class CoupledHorizontalPipe(BaseSimComp):
     ):
         if self.coupled_pipe is None:
             raise ValueError("Simulation matrix cannot be computed without a defined coupled pipe.")
-        idx_timestep -= 1
         self.compute_history_terms(idx_timestep)
 
         rows = [np.zeros(self.matrix_size, dtype=np.float64) for _ in range(self.matrix_rows)]
@@ -1077,10 +1075,10 @@ class Building(BaseSimComp):
             m_single_hp_clg = 0.0
 
         m_single_hp = max(m_single_hp_htg, m_single_hp_clg)
-        if cap_clg == 0:
-            rtf = abs(self.htg_vals[idx_timestep] / cap_htg)
-        else:
-            rtf = abs(self.htg_vals[idx_timestep] / cap_htg + abs(self.clg_vals[idx_timestep] / cap_clg))
+        rtf_htg = abs(self.htg_vals[idx_timestep] / cap_htg) if cap_htg != 0 else 0.0
+        rtf_clg = abs(self.clg_vals[idx_timestep] / cap_clg) if cap_clg != 0 else 0.0
+
+        rtf = rtf_htg + rtf_clg
 
         mass_flow_bldg = rtf * m_single_hp
 
@@ -1569,7 +1567,7 @@ class GHEHPSystem:
                         pipe=h_pipe,
                         soil=h_soil,
                         fluid=self.fluid,
-                        num_timesteps=self.num_timesteps,
+                        num_timesteps=len(self.time_array),
                         time_array=self.time_array,
                         q_prime_interp=q_prime_interp,
                         beta=beta,
@@ -1594,7 +1592,7 @@ class GHEHPSystem:
                         pipe=h_pipe,
                         soil=h_soil,
                         fluid=self.fluid,
-                        num_timesteps=self.num_timesteps,
+                        num_timesteps=len(self.time_array),
                         time_array=self.time_array,
                         q_prime_even_interp=q_prime_even,
                         q_prime_odd_interp=q_prime_odd,
@@ -2244,9 +2242,9 @@ class GHEHPSystem:
                     this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
                     this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
                 elif isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
-                    this_comp.update_post_solve(x_vector, idx_timestep - 1)
-            # Update the console every 100 timesteps or on the very last step
-            if (idx_timestep - 1) % 100 == 0 or idx_timestep == self.num_timesteps - 1:
+                    this_comp.update_post_solve(x_vector, idx_timestep)
+            # Update the console every 1 timesteps or on the very last step
+            if (idx_timestep - 1) % 1 == 0 or idx_timestep == self.num_timesteps - 1:
                 elapsed = time.perf_counter() - t_start
                 percent = ((idx_timestep - 1) / (self.num_timesteps - 1)) * 100
                 print(
@@ -2360,10 +2358,10 @@ class GHEHPSystem:
                     this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
                     this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
                 elif isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
-                    this_comp.update_post_solve(x_vector, idx_timestep - 1)
+                    this_comp.update_post_solve(x_vector, idx_timestep)
 
-            # Update the console every 100 timesteps or on the very last step
-            if (idx_timestep - 1) % 100 == 0 or idx_timestep == self.num_timesteps - 1:
+            # Update the console every 1 timesteps or on the very last step
+            if (idx_timestep - 1) % 1 == 0 or idx_timestep == self.num_timesteps - 1:
                 elapsed = time.perf_counter() - t_start
                 percent = ((idx_timestep - 1) / (self.num_timesteps - 1)) * 100
                 print(
@@ -2443,14 +2441,15 @@ class GHEHPSystem:
         # --- NEW: Output Data for Horizontal Pipes ---
         for this_comp in self.components:
             if isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
+                # Add [1:] to slice off the 0th hour and match the DataFrame length
+                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
 
                 # Loop through the dynamic array to print each segment's details
                 for k in range(this_comp.num_segments):
-                    output_data[f"{this_comp.name}:Node{k + 1}_Out [C]"] = this_comp.t_out_seg[k, :]
-                    output_data[f"{this_comp.name}:Q{k + 1} [W/m]"] = this_comp.q_seg[k, :]
+                    output_data[f"{this_comp.name}:Node{k + 1}_Out [C]"] = this_comp.t_out_seg[k, 1:]
+                    output_data[f"{this_comp.name}:Q{k + 1} [W/m]"] = this_comp.q_seg[k, 1:]
 
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
+                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
 
         output_data["Network:M_flow [kg/s]"] = self.m_flow_loop
         output_data["Network:P_pump [W]"] = self.pump_power_loop

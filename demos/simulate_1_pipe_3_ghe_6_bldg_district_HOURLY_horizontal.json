@@ -281,57 +281,57 @@
     "building1_htg_clg": {
       "heating_load": {
         "column_name": "B1Z1_HPHtgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/BALTIMORE_3GHE_6HP_Example_Loads.csv",
         "heat_pump_cop": 4.4
       },
       "cooling_load": {
         "column_name": "B1Z1_HPClgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/BALTIMORE_3GHE_6HP_Example_Loads.csv",
         "heat_pump_cop": 4.5
       }
     },
     "building1_dhw": {
       "heating_load": {
         "column_name": "B1Z2_HPHtgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/BALTIMORE_3GHE_6HP_Example_Loads.csv",
         "heat_pump_cop": 3.7
       }
     },
     "building2_htg_clg": {
       "heating_load": {
         "column_name": "B2Z1_HPHtgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/BALTIMORE_3GHE_6HP_Example_Loads.csv",
         "heat_pump_cop": 4.4
       },
       "cooling_load": {
         "column_name": "B2Z1_HPClgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/BALTIMORE_3GHE_6HP_Example_Loads.csv",
         "heat_pump_cop": 4.9
       }
     },
     "building2_dhw": {
       "heating_load": {
         "column_name": "B2Z2_HPHtgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/BALTIMORE_3GHE_6HP_Example_Loads.csv",
         "heat_pump_cop": 3.7
       }
     },
     "building3_htg_clg": {
       "heating_load": {
         "column_name": "B3Z1_HPHtgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/BALTIMORE_3GHE_6HP_Example_Loads.csv",
         "heat_pump_cop": 4.4
       },
       "cooling_load": {
         "column_name": "B3Z1_HPClgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/BALTIMORE_3GHE_6HP_Example_Loads.csv",
         "heat_pump_cop": 4.9
       }
     },
     "building3_dhw": {
       "heating_load": {
         "column_name": "B3Z2_HPHtgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/BALTIMORE_3GHE_6HP_Example_Loads.csv",
         "heat_pump_cop": 3.7
       }
     }
@@ -347,7 +347,7 @@
       "soil": {
         "conductivity": 2,
         "rho_cp": 2343493,
-        "undisturbed_temp": 6.1
+        "undisturbed_temp": 15.0
       },
       "pipe": {
         "inner_diameter": 0.03404,
@@ -381,7 +381,7 @@
       "soil": {
         "conductivity": 2,
         "rho_cp": 2343493,
-        "undisturbed_temp": 6.1
+        "undisturbed_temp": 15.0
       },
       "pipe": {
         "inner_diameter": 0.03404,
@@ -415,7 +415,7 @@
       "soil": {
         "conductivity": 2,
         "rho_cp": 2343493,
-        "undisturbed_temp": 6.1
+        "undisturbed_temp": 15.0
       },
       "pipe": {
         "inner_diameter": 0.03404,

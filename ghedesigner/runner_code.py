@@ -8,7 +8,7 @@ def main():
 
     input_file_path = Path("..\\GHEDesigner\\demos\\simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json")
     output_file_path = Path(
-        "..\\Documents\\GHEDesigner csv results\\simulation_results_horizontal_3_segments_test4.csv"
+        "..\\Documents\\GHEDesigner csv results\\simulation_results_horizontal_3_segments_test9.csv"
     )
 
     start_time = time()
