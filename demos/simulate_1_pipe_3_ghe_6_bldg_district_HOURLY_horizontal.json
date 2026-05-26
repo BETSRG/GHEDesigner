@@ -80,8 +80,8 @@
         "rho_cp": 2343493
       },
       "pipe": {
-        "inner_diameter": 0.03404,
-        "outer_diameter": 0.04216,
+        "inner_diameter": 0.1524,
+        "outer_diameter": 0.1624,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "roughness": 0.000001,
@@ -98,8 +98,8 @@
         "rho_cp": 2343493
       },
       "pipe": {
-        "inner_diameter": 0.03404,
-        "outer_diameter": 0.04216,
+        "inner_diameter": 0.1524,
+        "outer_diameter": 0.1624,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "roughness": 0.000001,
@@ -114,8 +114,8 @@
         "rho_cp": 2343493
       },
       "pipe": {
-        "inner_diameter": 0.03404,
-        "outer_diameter": 0.04216,
+        "inner_diameter": 0.1016,
+        "outer_diameter": 0.1116,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "roughness": 0.000001,
@@ -130,8 +130,8 @@
         "rho_cp": 2343493
       },
       "pipe": {
-        "inner_diameter": 0.03404,
-        "outer_diameter": 0.04216,
+        "inner_diameter": 0.1016,
+        "outer_diameter": 0.1116,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "roughness": 0.000001,
@@ -146,8 +146,8 @@
         "rho_cp": 2343493
       },
       "pipe": {
-        "inner_diameter": 0.03404,
-        "outer_diameter": 0.04216,
+        "inner_diameter": 0.1016,
+        "outer_diameter": 0.1116,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "roughness": 0.000001,
@@ -162,8 +162,8 @@
         "rho_cp": 2343493
       },
       "pipe": {
-        "inner_diameter": 0.03404,
-        "outer_diameter": 0.04216,
+        "inner_diameter": 0.1016,
+        "outer_diameter": 0.1116,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "roughness": 0.000001,
@@ -444,6 +444,6 @@
     "simulation_years": 1,
     "load_method": "HOURLY",
     "horizontal_segments": 3,
-    "horizontal_simulation_considered": false
+    "horizontal_simulation_considered": true
   }
 }

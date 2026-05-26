@@ -626,7 +626,9 @@ class GHX(BaseSimComp):
             self.base_max_eft = self.ghe_manager.max_eft
             self.base_min_eft = self.ghe_manager.min_eft
         else:
-            self.ghe_designed = False
+            self.ghe_designed = True
+            self.ghe_manager.initialize_pre_designed_ghe()
+            self.update_ghe_parameters()
 
     def update_time_array(self, num_timesteps, time_array):
         self.time_array = time_array
