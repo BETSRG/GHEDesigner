@@ -64,10 +64,10 @@
   ],
   "ground_temperature_model": {
     "annual_average": 15.0,
-    "amplitude_1": 10.0,
-    "phase_lag_1": 30.0,
-    "amplitude_2": 2.0,
-    "phase_lag_2": 15.0
+    "amplitude_1": 0.0,
+    "phase_lag_1": 0.0,
+    "amplitude_2": 0.0,
+    "phase_lag_2": 0.0
   },
   "horizontal_piping": {
     "horiz_supply_line": {

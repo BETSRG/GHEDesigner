@@ -2135,7 +2135,7 @@ class GHEHPSystem:
         for this_comp in self.components:
             this_comp.matrix_size = self.matrix_size
             if isinstance(this_comp, GHX):
-                this_comp.split_ratio = this_comp.nbh / self.nbh_total
+                this_comp.split_ratio = this_comp.nbh / self.nbh_total  # 1.0 # testing value #
                 average_ugt += this_comp.ghe_manager.soil.ugt * this_comp.nbh / self.nbh_total
             elif isinstance(this_comp, (Building, SourceSinkHeatExchanger)):
                 this_comp.cp = self.cp
@@ -2263,7 +2263,7 @@ class GHEHPSystem:
         for this_comp in self.components:
             this_comp.matrix_size = self.matrix_size
             if isinstance(this_comp, GHX):
-                this_comp.split_ratio = this_comp.nbh / self.nbh_total
+                this_comp.split_ratio = this_comp.nbh / self.nbh_total  # 1.0 # testing value #
                 average_ugt += this_comp.ghe_manager.soil.ugt * this_comp.nbh / self.nbh_total
             elif isinstance(this_comp, (Building, SourceSinkHeatExchanger)):
                 this_comp.cp = self.cp
