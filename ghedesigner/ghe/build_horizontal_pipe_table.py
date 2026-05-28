@@ -82,9 +82,9 @@ def main():
 
     # tiny array of values for testing quickly
     depths = np.array([1.5])
-    spacings = np.array([1.0])
+    spacings = np.array([0.5, 1.0, 5.0])
     betas = np.array([0.008])
-    radii = np.array([0.02108, 0.1016, 0.2032])
+    radii = np.array([0.02108, 0.1016, 0.1524, 0.2032])
 
     # Build the combined job list
     single_jobs = [("single", d, beta, r) for d in depths for beta in betas for r in radii]

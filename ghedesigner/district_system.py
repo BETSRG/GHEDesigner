@@ -146,10 +146,12 @@ class IsolatedHorizontalPipe(BaseSimComp):
         # We can calculate R_transient for all j steps once, then apply it to all segments
         # to save significant computation time.
         r_transient_array = np.zeros(idx_timestep, dtype=float)
-        for j in range(1, idx_timestep):
-            dt_sec = (self.time_array[idx_timestep] - self.time_array[j]) * SEC_IN_HR
-            q_prime = self.q_prime_interp(dt_sec)
-            r_transient_array[j] = 1.0 / (self.two_pi_k * q_prime)
+
+        # VECTORIZED: Calculate all past time deltas and interpolate in one shot
+        if idx_timestep > 1:
+            dt_sec_array = (self.time_array[idx_timestep] - self.time_array[1:idx_timestep]) * SEC_IN_HR
+            q_prime_array = self.q_prime_interp(dt_sec_array)
+            r_transient_array[1:idx_timestep] = 1.0 / (self.two_pi_k * q_prime_array)
 
         current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
         q_prime_current = self.q_prime_interp(current_dt_sec)
@@ -341,14 +343,15 @@ class CoupledHorizontalPipe(BaseSimComp):
         r_self_array = np.zeros(idx_timestep, dtype=float)
         r_cross_array = np.zeros(idx_timestep, dtype=float)
 
-        for j in range(1, idx_timestep):
-            dt_sec = (self.time_array[idx_timestep] - self.time_array[j]) * SEC_IN_HR
+        # VECTORIZED: Calculate all past time deltas and interpolate in one shot
+        if idx_timestep > 1:
+            dt_sec_array = (self.time_array[idx_timestep] - self.time_array[1:idx_timestep]) * SEC_IN_HR
 
-            c_even = 1.0 / (self.two_pi_k * self.q_prime_even_interp(dt_sec))
-            c_odd = 1.0 / (self.two_pi_k * self.q_prime_odd_interp(dt_sec))
+            c_even_array = 1.0 / (self.two_pi_k * self.q_prime_even_interp(dt_sec_array))
+            c_odd_array = 1.0 / (self.two_pi_k * self.q_prime_odd_interp(dt_sec_array))
 
-            r_self_array[j] = (c_even + c_odd) / 2.0
-            r_cross_array[j] = (c_even - c_odd) / 2.0
+            r_self_array[1:idx_timestep] = (c_even_array + c_odd_array) / 2.0
+            r_cross_array[1:idx_timestep] = (c_even_array - c_odd_array) / 2.0
 
         current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
         c_even_cur = 1.0 / (self.two_pi_k * self.q_prime_even_interp(current_dt_sec))
@@ -2135,7 +2138,7 @@ class GHEHPSystem:
         for this_comp in self.components:
             this_comp.matrix_size = self.matrix_size
             if isinstance(this_comp, GHX):
-                this_comp.split_ratio = this_comp.nbh / self.nbh_total  # 1.0 # testing value #
+                this_comp.split_ratio = this_comp.nbh / self.nbh_total
                 average_ugt += this_comp.ghe_manager.soil.ugt * this_comp.nbh / self.nbh_total
             elif isinstance(this_comp, (Building, SourceSinkHeatExchanger)):
                 this_comp.cp = self.cp
@@ -2263,7 +2266,7 @@ class GHEHPSystem:
         for this_comp in self.components:
             this_comp.matrix_size = self.matrix_size
             if isinstance(this_comp, GHX):
-                this_comp.split_ratio = this_comp.nbh / self.nbh_total  # 1.0 # testing value #
+                this_comp.split_ratio = this_comp.nbh / self.nbh_total
                 average_ugt += this_comp.ghe_manager.soil.ugt * this_comp.nbh / self.nbh_total
             elif isinstance(this_comp, (Building, SourceSinkHeatExchanger)):
                 this_comp.cp = self.cp
