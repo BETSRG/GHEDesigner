@@ -74,6 +74,7 @@
       "length": 50.0,
       "trench_depth": 1.5,
       "coupled_to": "horiz_return_line",
+      "counter_flow": false,
       "spacing": 1.0,
       "soil": {
         "conductivity": 2.0,
@@ -92,6 +93,7 @@
       "length": 50.0,
       "trench_depth": 1.5,
       "coupled_to": "horiz_supply_line",
+      "counter_flow": false,
       "spacing": 1.0,
       "soil": {
         "conductivity": 2.0,
@@ -441,7 +443,7 @@
     }
   },
   "simulation_control": {
-    "simulation_years": 20,
+    "simulation_years": 1,
     "load_method": "HOURLY",
     "horizontal_segments": 3,
     "horizontal_simulation_considered": true

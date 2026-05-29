@@ -1,0 +1,137 @@
+{
+  "simulation_control": {
+    "simulation_years": 1,
+    "load_method": "hourly",
+    "horizontal_simulation_considered": true,
+    "horizontal_segments": 9
+  },
+  "central_loop": {
+    "pipe_configuration": "ONEPIPE",
+    "flow_factor": 1.0,
+    "pump_efficiency": 1.0,
+    "loop_length": 0.0,
+    "design_pressure_loss": 0.0
+  },
+  "fluid": {
+    "fluid_name": "WATER",
+    "concentration_percent": 0.0,
+    "temperature": 22.0
+  },
+  "heat_pump": {
+    "dummy_hp": {
+      "design_flow_rate": 0.197,
+      "design_pressure_loss": 0,
+      "pump_efficiency": 1.0,
+      "cooling_performance": {
+        "a": 0.0,
+        "b": 0.0,
+        "c": 1.0,
+        "c1": 0.0,
+        "c2": 0.0,
+        "c3": 1052.0,
+        "design_cap": 1052.0
+      },
+      "heating_performance": {
+        "a": 0.0,
+        "b": 0.0,
+        "c": 0.0,
+        "c1": 0.0,
+        "c2": 0.0,
+        "c3": 0.0,
+        "design_cap": 0.0
+      }
+    }
+  },
+  "building": {
+    "trt_heater": {
+      "heating_load": {
+        "heat_pump_name": "dummy_hp",
+        "column_name": "q_htg",
+        "file_path": "../ghedesigner/tests/test_data/trt_hourly_loads.csv"
+      },
+      "cooling_load": {
+        "heat_pump_name": "dummy_hp",
+        "column_name": "q_clg",
+        "file_path": "../ghedesigner/tests/test_data/trt_hourly_loads.csv"
+      },
+      "max_eft": 50.0,
+      "min_eft": 0.0
+    }
+  },
+  "ground_temperature_model": {
+    "annual_average": 22.0,
+    "amplitude_1": 0.0,
+    "phase_lag_1": 0.0,
+    "amplitude_2": 0.0,
+    "phase_lag_2": 0.0
+  },
+  "ground_heat_exchanger": {
+    "ghe1": {
+      "flow_rate": 0.0,
+      "flow_type": "mass",
+      "soil": {
+        "conductivity": 2.82,
+        "rho_cp": 3200000.0,
+        "undisturbed_temp": 22.0
+      },
+      "grout": { "conductivity": 0.73, "rho_cp": 3800000.0 },
+      "pipe": {
+        "inner_diameter": 0.0273,
+        "outer_diameter": 0.0334,
+        "shank_spacing": 0.053,
+        "roughness": 1e-6,
+        "conductivity": 0.39,
+        "rho_cp": 1770000.0,
+        "arrangement": "singleutube"
+      },
+      "borehole": { "diameter": 0.126, "buried_depth": 2.0 },
+      "pre_designed": { "H": 18.3 }
+    }
+  },
+  "horizontal_piping": {
+    "leg_1": {
+      "coupled_to": "leg_2",
+      "counter_flow": true,
+      "length": 183,
+      "spacing": 0.053,
+      "trench_depth": 50.0,
+      "soil": { "conductivity": 2.82, "rho_cp": 3200000.0 },
+      "pipe": {
+        "inner_diameter": 0.0273,
+        "outer_diameter": 0.0334,
+        "roughness": 1e-6,
+        "conductivity": 0.39,
+        "rho_cp": 1770000.0
+      }
+    },
+    "leg_2": {
+      "coupled_to": "leg_1",
+      "counter_flow": true,
+      "length": 183,
+      "spacing": 0.053,
+      "trench_depth": 50.0,
+      "soil": { "conductivity": 2.82, "rho_cp": 3200000.0 },
+      "pipe": {
+        "inner_diameter": 0.0273,
+        "outer_diameter": 0.0334,
+        "roughness": 1e-6,
+        "conductivity": 0.39,
+        "rho_cp": 1770000.0
+      }
+    }
+  },
+  "topology": [
+    {
+      "type": "building",
+      "name": "trt_heater"
+    },
+    {
+      "type": "coupled_horizontal_pipe",
+      "name": "leg_1"
+    },
+    {
+      "type": "coupled_horizontal_pipe",
+      "name": "leg_2"
+    }
+  ]
+}

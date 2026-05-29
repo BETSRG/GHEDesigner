@@ -148,10 +148,10 @@ class IsolatedHorizontalPipe(BaseSimComp):
         r_transient_array = np.zeros(idx_timestep, dtype=float)
 
         # VECTORIZED: Calculate all past time deltas and interpolate in one shot
-        if idx_timestep > 1:
-            dt_sec_array = (self.time_array[idx_timestep] - self.time_array[1:idx_timestep]) * SEC_IN_HR
+        if idx_timestep > 0:
+            dt_sec_array = (self.time_array[idx_timestep] - self.time_array[0:idx_timestep]) * SEC_IN_HR
             q_prime_array = self.q_prime_interp(dt_sec_array)
-            r_transient_array[1:idx_timestep] = 1.0 / (self.two_pi_k * q_prime_array)
+            r_transient_array[0:idx_timestep] = 1.0 / (self.two_pi_k * q_prime_array)
 
         current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
         q_prime_current = self.q_prime_interp(current_dt_sec)
@@ -270,10 +270,12 @@ class CoupledHorizontalPipe(BaseSimComp):
         ugt_amp2: float,
         ugt_phase2: float,
         depth: float,
+        counter_flow: bool = False,
     ):
         super().__init__()
         self.name = name
         self.comp_type = SimCompType.COUPLED_HORIZONTAL_PIPE
+        self.counter_flow = counter_flow
         self.num_timesteps = num_timesteps
         self.time_array = time_array
         self.num_segments = num_segments
@@ -300,7 +302,9 @@ class CoupledHorizontalPipe(BaseSimComp):
         self.length = length
         self.L_seg = length / float(self.num_segments)
         self.V_seg = np.pi * cast(float, pipe.r_in) ** 2 * self.L_seg
-        self.C_f_seg = self.V_seg * fluid.rho * self.cp
+        self.C_f_seg = (
+            self.V_seg * fluid.rho * self.cp
+        )  # testing value of 2.5, reverted to 1.0 to run actual simulations
         self.two_pi_k = TWO_PI * self.soil.k
 
         initial_ugt = self.calculate_current_ugt(self.time_array[0] * SEC_IN_HR)
@@ -344,14 +348,14 @@ class CoupledHorizontalPipe(BaseSimComp):
         r_cross_array = np.zeros(idx_timestep, dtype=float)
 
         # VECTORIZED: Calculate all past time deltas and interpolate in one shot
-        if idx_timestep > 1:
-            dt_sec_array = (self.time_array[idx_timestep] - self.time_array[1:idx_timestep]) * SEC_IN_HR
+        if idx_timestep > 0:
+            dt_sec_array = (self.time_array[idx_timestep] - self.time_array[0:idx_timestep]) * SEC_IN_HR
 
             c_even_array = 1.0 / (self.two_pi_k * self.q_prime_even_interp(dt_sec_array))
             c_odd_array = 1.0 / (self.two_pi_k * self.q_prime_odd_interp(dt_sec_array))
 
-            r_self_array[1:idx_timestep] = (c_even_array + c_odd_array) / 2.0
-            r_cross_array[1:idx_timestep] = (c_even_array - c_odd_array) / 2.0
+            r_self_array[0:idx_timestep] = (c_even_array + c_odd_array) / 2.0
+            r_cross_array[0:idx_timestep] = (c_even_array - c_odd_array) / 2.0
 
         current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
         c_even_cur = 1.0 / (self.two_pi_k * self.q_prime_even_interp(current_dt_sec))
@@ -364,8 +368,8 @@ class CoupledHorizontalPipe(BaseSimComp):
 
         for k in range(self.num_segments):
             # Convolution includes the partner pipe's dq history!
-            sum_self = np.dot(self.dq_seg[k, 1:idx_timestep], r_self_array[1:idx_timestep])
-            sum_cross = np.dot(self.coupled_pipe.dq_seg[k, 1:idx_timestep], r_cross_array[1:idx_timestep])
+            sum_self = np.dot(self.dq_seg[k, 0:idx_timestep], r_self_array[0:idx_timestep])
+            sum_cross = np.dot(self.coupled_pipe.dq_seg[k, 0:idx_timestep], r_cross_array[0:idx_timestep])
 
             overlap_self = self.q_seg[k, idx_timestep - 1] * self.c_n[idx_timestep]
             overlap_cross = self.coupled_pipe.q_seg[k, idx_timestep - 1] * self.c_cross[idx_timestep]
@@ -419,8 +423,10 @@ class CoupledHorizontalPipe(BaseSimComp):
             rows[3 * k + 1][idx_t_m] = 1.0
             rows[3 * k + 1][idx_q_self] = -self.c_n[idx_timestep]
 
-            # THE THERMAL BRIDGE: Reaching into the neighbor's matrix!
-            idx_q_neighbor = self.coupled_pipe.row_index + 3 * k + 2
+            # THE THERMAL BRIDGE: Reaching into the neighbor's matrix
+            # If counter-flow, we map to the neighbor's inverted segment index
+            neighbor_k = self.num_segments - 1 - k if self.counter_flow else k
+            idx_q_neighbor = self.coupled_pipe.row_index + 3 * neighbor_k + 2
             rows[3 * k + 1][idx_q_neighbor] = -self.c_cross[idx_timestep]
 
             rhs[3 * k + 1] = self.history_term_seg[k, idx_timestep]
@@ -1409,6 +1415,7 @@ class GHEHPSystem:
             percent=fluid_data["concentration_percent"],
             temperature=fluid_data["temperature"],
         )
+        self.cp = self.fluid.cp
         first_ghe_key = next(iter(json_data["ground_heat_exchanger"]))
         tg = json_data["ground_heat_exchanger"][first_ghe_key]["soil"]["undisturbed_temp"]  # TODO: fix this
 
@@ -1554,7 +1561,7 @@ class GHEHPSystem:
                 )
 
                 r_pipe = 0.1  # TODO: Placeholder: update to actual resistance later
-                beta = r_pipe / (TWO_PI * h_soil.k)
+                beta = r_pipe * (TWO_PI * h_soil.k)
 
                 target_d = get_nearest(h_data["trench_depth"], horiz_axes["depths"])
                 target_beta = get_nearest(beta, horiz_axes["betas"])
@@ -1606,6 +1613,7 @@ class GHEHPSystem:
                         ugt_amp2=ugt_data["amplitude_2"],
                         ugt_phase2=ugt_data["phase_lag_2"],
                         depth=h_data["trench_depth"],
+                        counter_flow=h_data.get("counter_flow", False),
                     )
                     coupled_pipes_dict[h_id] = this_horiz
 
