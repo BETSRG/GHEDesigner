@@ -915,7 +915,6 @@ class GHX(BaseSimComp):
 
                 rhs_1, rhs_2, rhs_3, rhs_4 = 0, self.history_terms[idx_timestep], 0, 0
             elif configuration == CentralLoopType.TWOPIPE:
-
                 row_1[self.row_index + 1] = 1
                 row_1[self.row_index + 2] = self.c_n[idx_timestep - 1]
 
