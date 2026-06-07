@@ -75,7 +75,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
         _no_go_boundaries: list[list[list[float]]],
     ):
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
-        fluid = Fluid("water")
+        fluid = Fluid("water", temperature=18.3)
         grout = Grout(1.0, 3901000.0)
         ground_loads = self.get_atlanta_loads()
         borehole = Borehole(burial_depth=2.0, borehole_radius=borehole_radius)

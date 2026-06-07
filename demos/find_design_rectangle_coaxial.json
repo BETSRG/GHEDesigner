@@ -9,7 +9,7 @@
   "fluid": {
     "fluid_name": "WATER",
     "concentration_percent": 0,
-    "temperature": 20
+    "temperature": 18.3
   },
   "ground_heat_exchanger": {
     "ghe1": {

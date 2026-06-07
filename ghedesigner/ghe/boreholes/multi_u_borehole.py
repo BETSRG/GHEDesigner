@@ -155,11 +155,11 @@ class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
         self.calc_fluid_pipe_resistance()
 
     def calc_fluid_pipe_resistance(self) -> float:
-        self.R_fp = self.bhr_borehole.calc_fluid_pipe_resist(self.m_flow_borehole, self.soil.ugt)
+        self.R_fp = self.bhr_borehole.calc_fluid_pipe_resist(self.m_flow_borehole, self.fluid.temperature)
         return self.R_fp
 
     def calc_effective_borehole_resistance(self) -> float:
-        resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.soil.ugt)
+        resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.fluid.temperature)
         return resist_bh_effective
 
     def u_tube_volumes(self) -> tuple[float, float]:

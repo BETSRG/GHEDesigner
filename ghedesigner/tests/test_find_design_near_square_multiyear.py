@@ -18,7 +18,7 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
     def get_design(self, pipe: Pipe, flow_rate: float):
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
         grout = Grout(k=1.0, rho_cp=3901000.0)
-        fluid = Fluid(fluid_name="water", percent=0.0, temperature=20.0)
+        fluid = Fluid(fluid_name="water", percent=0.0, temperature=18.3)
         borehole = Borehole(burial_depth=2.0, borehole_radius=0.07)
         ground_loads = self.get_multiyear_loads()
         b = 5.0

@@ -50,14 +50,14 @@ class CoaxialPipe(GHEDesignerBoreholeWithMultiplePipes):
         )
 
     def calc_effective_borehole_resistance(self) -> float:
-        resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.soil.ugt)
+        resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.fluid.temperature)
         return resist_bh_effective
 
     def to_single(self) -> SingleUTube:
         # Find an equivalent single U-tube given a coaxial heat exchanger
         vol_fluid, vol_pipe = self.concentric_tube_volumes()
 
-        resist_conv = self.bhr_borehole.calc_fluid_resist(self.m_flow_borehole, self.soil.ugt)
+        resist_conv = self.bhr_borehole.calc_fluid_resist(self.m_flow_borehole, self.fluid.temperature)
         resist_pipe = self.bhr_borehole.calc_pipe_cond_resist()
         preliminary = self.equivalent_single_u_tube(vol_fluid, vol_pipe, resist_conv, resist_pipe, self.pipe.rho_cp)
 
