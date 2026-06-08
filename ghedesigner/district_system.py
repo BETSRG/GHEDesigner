@@ -924,9 +924,9 @@ class GHX(BaseSimComp):
 
                 row_3[self.inlet_index] = mass_flow_ghe * self.cp
                 row_3[self.row_index + 3] = -mass_flow_ghe * self.cp
-                row_3[self.row_index + 2] = self.nbh * self.height
+                row_3[self.row_index + 2] = -self.nbh * self.height
 
-                row_4[self.row_index] = (mass_loop_ghe - mass_flow_ghe) * self.cp
+                row_4[self.inlet_index] = (mass_loop_ghe - mass_flow_ghe) * self.cp
                 row_4[self.row_index + 3] = mass_flow_ghe * self.cp
 
                 if self.downstream_device.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
@@ -2358,7 +2358,10 @@ class GHEHPSystem:
                 elif this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
                     if self.loop_config == CentralLoopType.TWOPIPE:
                         this_comp.t_in[idx_timestep - 1] = x_vector[this_comp.inlet_index]
-                        this_comp.t_mix_out[idx_timestep - 1] = x_vector[row_index]
+                        if this_comp.downstream_device.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
+                            this_comp.t_mix_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
+                        else:
+                            this_comp.t_mix_out[idx_timestep - 1] = x_vector[this_comp.downstream_device.inlet_index]
                     else:
                         this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
                         this_comp.t_mix_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
