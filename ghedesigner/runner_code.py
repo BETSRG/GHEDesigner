@@ -7,7 +7,7 @@ from ghedesigner.district_system import GHEHPSystem
 def main():
 
     input_file_path = Path("..\\GHEDesigner\\demos\\beier_trt_validation.json")
-    output_file_path = Path("..\\Documents\\GHEDesigner csv results\\simulation_results_trt_9discstudy.csv")
+    output_file_path = Path("..\\Documents\\GHEDesigner csv results\\TEST.csv")
 
     start_time = time()
     system = GHEHPSystem(input_file_path)

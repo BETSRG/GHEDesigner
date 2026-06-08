@@ -26,7 +26,7 @@ def worker_single(args):
     d, beta, r = args
     print(f"    -> Starting SINGLE job: Depth={d}, Beta={beta:.3f}, r={r:.3f}", flush=True)
     pipe = MockPipe(r_out=r, k=0.4)
-    soil = MockSoil(k=2.82, rhocp=3200000.0)
+    soil = MockSoil(k=1.5, rhocp=2.3e6)
     system = SinglePipeWithSurfaceSystem(y_coord=d, pipe=pipe, soil=soil)
 
     years = 100
@@ -47,7 +47,7 @@ def worker_parallel(args):
     d, b, beta, r = args
     print(f"    -> Starting PARALLEL job: Depth={d}, Spacing={b}, Beta={beta:.3f}, r={r:.3f}", flush=True)
     pipe = MockPipe(r_out=r, k=0.4)
-    soil = MockSoil(k=2.82, rhocp=3200000.0)
+    soil = MockSoil(k=1.5, rhocp=2.3e6)
     system = ParallelPipeSystem(x_coord=b, y_coord=d, pipe=pipe, soil=soil)
 
     years = 100
@@ -82,12 +82,12 @@ def main():
     t_start = time.perf_counter()
     output_filename = "unified_horizontal_library.pkl"
 
-    # Define the parameters you want to ensure exist in the library
-    depths = np.array([1.5, 5.0, 15.0, 50.0])
-    spacings = np.array([0.053, 0.5, 1.0, 5.0])
-    # Added 4.783 (the calibrated beta) to the array below
+    # Define the parameters
+    depths = np.array([1.5, 5.0, 15.0])
+    spacings = np.array([0.053, 0.5, 1.0])
     betas = np.array([0.008, 0.01473, 4.783])
-    radii = np.array([0.0167, 0.02108, 0.1016, 0.1524, 0.2032])
+    radii = np.array([0.0167, 0.02108, 0.0635, 0.0762, 0.1016, 0.1524, 0.2032])
+    # 0.00635, 0.015875, 0.0167, 0.01905, 0.02108, 0.0381, 0.0508, 0.0635, 0.0762, 0.1016, 0.1524, 0.2032
 
     table_single = {}
     table_parallel = {}
@@ -160,7 +160,7 @@ def main():
 
     print("\n\nPackaging updated data...")
 
-    # Merge old and new axes using the actual input arrays instead of undefined variables
+    # Merge old and new axes
     final_depths = np.array(sorted(existing_depths.union(depths)))
     final_spacings = np.array(sorted(existing_spacings.union(spacings)))
     final_betas = np.array(sorted(existing_betas.union(betas)))

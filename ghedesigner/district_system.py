@@ -228,6 +228,7 @@ class IsolatedHorizontalPipe(BaseSimComp):
             rows[3 * k + 3][idx_t_in_seg] = m_cp
             rows[3 * k + 3][idx_t_out] = -m_cp
             rows[3 * k + 3][idx_q] = -self.L_seg
+            # temporarily comment out capacitance for testing (next two rows)
             rows[3 * k + 3][idx_t_m] = -cap_coeff
             rhs[3 * k + 3] = -cap_coeff * self.t_mean_seg[k, idx_timestep - 1]
 
@@ -302,9 +303,7 @@ class CoupledHorizontalPipe(BaseSimComp):
         self.length = length
         self.L_seg = length / float(self.num_segments)
         self.V_seg = np.pi * cast(float, pipe.r_in) ** 2 * self.L_seg
-        self.C_f_seg = (
-            self.V_seg * fluid.rho * self.cp
-        )  # testing value of 2.5, reverted to 1.0 to run actual simulations
+        self.C_f_seg = self.V_seg * fluid.rho * self.cp
         self.two_pi_k = TWO_PI * self.soil.k
 
         initial_ugt = self.calculate_current_ugt(self.time_array[0] * SEC_IN_HR)
@@ -440,6 +439,7 @@ class CoupledHorizontalPipe(BaseSimComp):
             rows[3 * k + 3][idx_t_in_seg] = m_cp
             rows[3 * k + 3][idx_t_out] = -m_cp
             rows[3 * k + 3][idx_q_self] = -self.L_seg
+            # temporarily comment out capacitance for testing (next two rows)
             rows[3 * k + 3][idx_t_m] = -cap_coeff
             rhs[3 * k + 3] = -cap_coeff * self.t_mean_seg[k, idx_timestep - 1]
 
