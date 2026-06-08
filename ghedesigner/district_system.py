@@ -1536,7 +1536,8 @@ class GHEHPSystem:
         # Helper function to snap to nearest table grid value
         def get_nearest(value, array):
             idx = (np.abs(array - value)).argmin()
-            return array[idx]
+            # Cast the NumPy float back to a native Python float
+            return float(array[idx])
 
         isolated_pipes = []
         coupled_pipes_dict = {}
