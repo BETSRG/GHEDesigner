@@ -98,7 +98,7 @@ include:
 
 ## Requirements
 
-GHEDesigner is supported for Python versions >= 3.10 and is tested with Python 3.10–3.14. GHEDesigner is dependent on
+GHEDesigner is supported for Python versions >= 3.11 and is tested with Python 3.11–3.14. GHEDesigner is dependent on
 the following packages:
 
 - [bhresist][bhresist]

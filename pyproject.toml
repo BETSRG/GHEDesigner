@@ -4,13 +4,13 @@ build-backend = "uv_build"
 
 [project]
 name = "ghedesigner"
-version = "2.1.1"
+version = "2.2.0"
 description = "A ground heat exchanger design tool with the capability to select and size flexibly configured borehole fields that are customized for specific building and property constraints."
 readme = "README.md"
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
 authors = [{ name = "Jeffrey D. Spitler", email = "spitler@okstate.edu" }]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "bhresist>=0.3",
     "click>=8.3.1",
@@ -28,7 +28,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
