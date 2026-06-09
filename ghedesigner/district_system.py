@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from itertools import product
 from math import cos, sin
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -2402,7 +2402,7 @@ class GHEHPSystem:
         output_path_2: Path | None = None,
         output_path_coordinates: Path | None = None,
     ):
-        output_columns = {}
+        output_columns: dict[str, Any] = {}
 
         network_q_net_bldg_tot = np.zeros(self.num_timesteps, dtype=float)
         network_q_net_ghe_tot = np.zeros(self.num_timesteps, dtype=float)
