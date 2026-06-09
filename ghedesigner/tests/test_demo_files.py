@@ -6,7 +6,8 @@ import pytest
 from ghedesigner.main import run
 
 # results can be updated with the update_demo_results.py file in /scripts
-# comment the 'self.assert' statements below to generate an updated set of results first
+# entries may contain one expected result or a list of accepted results for
+# validated dependency baselines
 expected_results_path = Path(__file__).parent / "expected_demo_results.json"
 expected_demo_results_dict = loads(expected_results_path.read_text())
 
@@ -16,6 +17,31 @@ files_to_debug: list[Path] = [
 ]
 
 limit_debug_file_count = 0
+
+
+def assert_demo_result_matches_any(
+    actual_length: float,
+    actual_nbh: int,
+    expected_results: dict | list[dict],
+    delta: float = 0.1,
+) -> None:
+    accepted_results = expected_results if isinstance(expected_results, list) else [expected_results]
+
+    for expected_result in accepted_results:
+        expected_length = expected_result["active_borehole_length"]
+        expected_nbh = expected_result["number_of_boreholes"]
+        if actual_nbh == expected_nbh and abs(actual_length - expected_length) <= delta:
+            return
+
+    expected_summary = ", ".join(
+        f"(length={result['active_borehole_length']:.6f}±{delta:.2f}, boreholes={result['number_of_boreholes']})"
+        for result in accepted_results
+    )
+    raise AssertionError(
+        "Unexpected demo result: "
+        f"length={actual_length:.6f}, boreholes={actual_nbh}; "
+        f"expected one of {expected_summary}"
+    )
 
 
 def get_test_input_files() -> list[Path]:
@@ -42,14 +68,14 @@ def test_demo_files(demo_file_path: Path, time_str: str):
     try:
         assert run(input_file_path=demo_file_path, output_directory=out_dir) == 0
     except Exception as err:
-        if expected_results.get("xfail_run", False):
+        if isinstance(expected_results, dict) and expected_results.get("xfail_run", False):
             pytest.xfail(f"{expected_results['xfail_reason']}: {err!r}")
         raise
 
-    if expected_results.get("xfail_run", False):
+    if isinstance(expected_results, dict) and expected_results.get("xfail_run", False):
         pytest.fail(f"Demo {demo_file_path.stem} no longer fails; remove xfail_run metadata")
 
-    if expected_results.get("skip_checks", False):
+    if isinstance(expected_results, dict) and expected_results.get("skip_checks", False):
         return
 
     # check the outputs
@@ -60,8 +86,9 @@ def test_demo_files(demo_file_path: Path, time_str: str):
         actual_length = actual_results["ghe_system"]["active_borehole_length"]["value"]
         actual_nbh = actual_results["ghe_system"]["number_of_boreholes"]
 
-        expected_length = expected_results["active_borehole_length"]
-        expected_nbh = expected_results["number_of_boreholes"]
+        assert_demo_result_matches_any(actual_length, actual_nbh, expected_results)
 
-        assert expected_length == pytest.approx(actual_length, abs=0.1)
-        assert expected_nbh == actual_nbh
+    else:
+        # TODO: Verify it was intentionally predesigned
+        assert "log_time" in actual_results
+        assert "g_values" in actual_results

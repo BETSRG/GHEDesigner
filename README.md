@@ -197,7 +197,7 @@ indirect costs to Dr. Jeffrey D. Spitler.
   and Thermal Mass of the Fluid. 10th International Conference on Thermal Energy Storage - Ecostock 2006, Pomona,
   NJ. https://hvac.okstate.edu/sites/default/files/pubs/papers/2006/07-Xu_Spitler_06.pdf
 
-[bhresist]: https://github.com/NREL/BHResist
+[bhresist]: https://github.com/NatLabRockies/BHResist
 [click]: https://click.palletsprojects.com/en/8.1.x/
 [closed]: https://github.com/BETSRG/GHEDesigner/issues?q=is%3Aissue+is%3Aclosed
 [create]: https://github.com/BETSRG/GHEDesigner/issues/new
@@ -209,4 +209,4 @@ indirect costs to Dr. Jeffrey D. Spitler.
 [ruff-editors]: https://docs.astral.sh/ruff/editors/setup/#pycharm
 [ruff-plugin]: https://docs.astral.sh/ruff/editors/setup/#via-third-party-plugin
 [scipy]: https://docs.scipy.org/doc/scipy/
-[secondarycoolantprops]: https://github.com/NREL/SecondaryCoolantProps
+[secondarycoolantprops]: https://github.com/NatLabRockies/SecondaryCoolantProps
