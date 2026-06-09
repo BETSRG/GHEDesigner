@@ -31,14 +31,23 @@ def get_test_input_files() -> list[Path]:
 
 @pytest.mark.parametrize("demo_file_path", get_test_input_files(), ids=lambda f: "Demo: " + f.stem)
 def test_demo_files(demo_file_path: Path, time_str: str):
+    expected_results = expected_demo_results_dict.get(demo_file_path.stem)
+    assert expected_results is not None, f"Missing expected demo results for {demo_file_path.stem}"
+
     # run demo files first
     demo_output_parent_dir = Path(__file__).parent.parent.parent / "demo_outputs"
     out_dir = demo_output_parent_dir / time_str / demo_file_path.stem
     out_dir.mkdir(parents=True, exist_ok=True)
     print(f"Running: {demo_file_path}")
-    assert run(input_file_path=demo_file_path, output_directory=out_dir) == 0
+    try:
+        assert run(input_file_path=demo_file_path, output_directory=out_dir) == 0
+    except Exception as err:
+        if expected_results.get("xfail_run", False):
+            pytest.xfail(f"{expected_results['xfail_reason']}: {err!r}")
+        raise
 
-    expected_results = expected_demo_results_dict[out_dir.stem]
+    if expected_results.get("xfail_run", False):
+        pytest.fail(f"Demo {demo_file_path.stem} no longer fails; remove xfail_run metadata")
 
     if expected_results.get("skip_checks", False):
         return
