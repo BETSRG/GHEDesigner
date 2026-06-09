@@ -471,8 +471,7 @@ class HybridLoad:
                     + 12
                     - (self.monthly_peak_hl_duration[i] / 2)
                 )
-                if first_hour_heating_peak < month_start_hour:
-                    first_hour_heating_peak = month_start_hour
+                first_hour_heating_peak = max(first_hour_heating_peak, month_start_hour)
                 last_hour_heating_peak = first_hour_heating_peak + self.monthly_peak_hl_duration[i]
                 first_hour_cooling_peak = (
                     month_start_hour
@@ -480,8 +479,7 @@ class HybridLoad:
                     + 12
                     - self.monthly_peak_cl_duration[i] / 2
                 )
-                if first_hour_cooling_peak < month_start_hour:
-                    first_hour_cooling_peak = month_start_hour
+                first_hour_cooling_peak = max(first_hour_cooling_peak, month_start_hour)
                 last_hour_cooling_peak = first_hour_cooling_peak + self.monthly_peak_cl_duration[i]
             else:  # peak load not used this month
                 month_duration = monthdays(i, current_year) * HRS_IN_DAY
