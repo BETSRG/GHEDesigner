@@ -1,4 +1,3 @@
-import warnings
 from calendar import monthrange
 from json import dumps
 from math import floor
@@ -409,11 +408,6 @@ class HybridLoad:
         # simulation
         # This routine is taking loads applied to the ground NOT to a heat pump.
 
-        warn_msg_neg_timestep = (
-            "A negative time step has been generated in the hybrid loading scheme. \n"
-            "This will reduce the accuracy of the simulation."
-        )
-
         # First, begin array with zero load before simulation starts.
         self.load = np.append(self.load, 0)
         last_zero_hour = first_month_hour(self.start_month, self.years) - 1
@@ -446,6 +440,7 @@ class HybridLoad:
         else:
             ipf = [True] * (self.end_month + 1)
         peak_last_avg_hour = 0.0
+        negative_timestep_generated = False
         for i in range(self.start_month, (self.end_month + 1)):
             # There may be a more sophisticated way to do this, but I will loop
             # through the lists month duration is the number of hours over which to
@@ -469,28 +464,25 @@ class HybridLoad:
                 # hybrid time step.)
                 # Catch the first and last peak hours to make sure they aren't 0
                 # Could only be 0 when the first month has no load.
+                month_start_hour = first_month_hour(i, self.years)
                 first_hour_heating_peak = (
-                    first_month_hour(i, self.years)
+                    month_start_hour
                     + (self.monthly_peak_hl_day[i]) * HRS_IN_DAY
                     + 12
                     - (self.monthly_peak_hl_duration[i] / 2)
                 )
-                if first_hour_heating_peak < 0.0:
-                    first_hour_heating_peak = 1.0e-6
+                if first_hour_heating_peak < month_start_hour:
+                    first_hour_heating_peak = month_start_hour
                 last_hour_heating_peak = first_hour_heating_peak + self.monthly_peak_hl_duration[i]
-                if last_hour_heating_peak < 0.0:
-                    last_hour_heating_peak = 1.0e-6
                 first_hour_cooling_peak = (
-                    first_month_hour(i, self.years)
+                    month_start_hour
                     + (self.monthly_peak_cl_day[i]) * HRS_IN_DAY
                     + 12
                     - self.monthly_peak_cl_duration[i] / 2
                 )
-                if first_hour_cooling_peak < 0.0:
-                    first_hour_cooling_peak = 1.0e-06
+                if first_hour_cooling_peak < month_start_hour:
+                    first_hour_cooling_peak = month_start_hour
                 last_hour_cooling_peak = first_hour_cooling_peak + self.monthly_peak_cl_duration[i]
-                if last_hour_cooling_peak < 0.0:
-                    last_hour_cooling_peak = 1.0e-06
             else:  # peak load not used this month
                 month_duration = monthdays(i, current_year) * HRS_IN_DAY
 
@@ -513,7 +505,7 @@ class HybridLoad:
                     self.hour = np.append(self.hour, last_hour_cooling_peak)
 
                     if last_avg_hour - peak_last_avg_hour < 0.0:
-                        warnings.warn(warn_msg_neg_timestep)
+                        negative_timestep_generated = True
                     peak_last_avg_hour = last_avg_hour
                 # monthly average conditions between cooling peak and heating peak
                 if self.monthly_peak_hl[i] > 0 and ipf[i]:
@@ -527,7 +519,7 @@ class HybridLoad:
                     self.hour = np.append(self.hour, last_hour_heating_peak)
 
                     if last_avg_hour - peak_last_avg_hour < 0.0:
-                        warnings.warn(warn_msg_neg_timestep)
+                        negative_timestep_generated = True
                     peak_last_avg_hour = last_avg_hour
                 # rest of month
                 last_avg_hour = last_month_hour(i, self.years)
@@ -535,7 +527,7 @@ class HybridLoad:
                 self.hour = np.append(self.hour, last_avg_hour)
 
                 if last_avg_hour - peak_last_avg_hour < 0.0:
-                    warnings.warn(warn_msg_neg_timestep)
+                    negative_timestep_generated = True
                 peak_last_avg_hour = last_avg_hour
 
             elif peak_day_diff > 0:
@@ -550,7 +542,7 @@ class HybridLoad:
                     self.hour = np.append(self.hour, last_hour_heating_peak)
 
                     if last_avg_hour - peak_last_avg_hour < 0.0:
-                        warnings.warn(warn_msg_neg_timestep)
+                        negative_timestep_generated = True
                     peak_last_avg_hour = last_avg_hour
                 # monthly average conditions between heating peak and cooling peak
                 if self.monthly_peak_cl[i] > 0 and ipf[i]:
@@ -562,7 +554,7 @@ class HybridLoad:
                     self.hour = np.append(self.hour, last_hour_cooling_peak)
 
                     if last_avg_hour - peak_last_avg_hour < 0.0:
-                        warnings.warn(warn_msg_neg_timestep)
+                        negative_timestep_generated = True
                     peak_last_avg_hour = last_avg_hour
                 # rest of month
                 last_avg_hour = last_month_hour(i, self.years)
@@ -570,7 +562,7 @@ class HybridLoad:
                 self.hour = np.append(self.hour, last_avg_hour)
 
                 if last_avg_hour - peak_last_avg_hour < 0.0:
-                    warnings.warn(warn_msg_neg_timestep)
+                    negative_timestep_generated = True
                 peak_last_avg_hour = last_avg_hour
             else:
                 # monthly peak heating day and cooling day are the same
@@ -593,7 +585,7 @@ class HybridLoad:
                         )
 
                         if last_avg_hour - peak_last_avg_hour < 0.0:
-                            warnings.warn(warn_msg_neg_timestep)
+                            negative_timestep_generated = True
                         peak_last_avg_hour = last_avg_hour
                     # monthly average conditions between cooling peak and heating peak
                     if self.monthly_peak_hl[i] > 0 and ipf[i]:
@@ -607,7 +599,7 @@ class HybridLoad:
                         )
 
                         if last_avg_hour - peak_last_avg_hour < 0.0:
-                            warnings.warn(warn_msg_neg_timestep)
+                            negative_timestep_generated = True
                         peak_last_avg_hour = last_avg_hour
                     # rest of month
                     last_avg_hour = last_month_hour(i, self.years)
@@ -615,7 +607,7 @@ class HybridLoad:
                     self.hour = np.append(self.hour, last_avg_hour)
 
                     if last_avg_hour - peak_last_avg_hour < 0.0:
-                        warnings.warn(warn_msg_neg_timestep)
+                        negative_timestep_generated = True
                     peak_last_avg_hour = last_avg_hour
 
                 else:
@@ -624,11 +616,16 @@ class HybridLoad:
                     self.hour = np.append(self.hour, last_avg_hour)
 
                 if last_avg_hour - peak_last_avg_hour < 0.0:
-                    warnings.warn(warn_msg_neg_timestep)
+                    negative_timestep_generated = True
                 peak_last_avg_hour = last_avg_hour
 
         #       Now fill array containing step function loads
         #       Note they are paired with the ending hour, so the ith load will start with the (i-1)th time
+
+        if negative_timestep_generated:
+            order = np.argsort(self.hour, kind="stable")
+            self.hour = self.hour[order]
+            self.load = self.load[order]
 
         n = self.hour.size
         # Note at this point the load and hour np arrays contain zeroes in indices zero and one, then continue from

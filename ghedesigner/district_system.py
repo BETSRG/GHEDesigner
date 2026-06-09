@@ -2402,8 +2402,7 @@ class GHEHPSystem:
         output_path_2: Path | None = None,
         output_path_coordinates: Path | None = None,
     ):
-        output_data = pd.DataFrame(index=self.time_array[1:])
-        output_data.index.name = "Time [hr]"
+        output_columns = {}
 
         network_q_net_bldg_tot = np.zeros(self.num_timesteps, dtype=float)
         network_q_net_ghe_tot = np.zeros(self.num_timesteps, dtype=float)
@@ -2415,41 +2414,41 @@ class GHEHPSystem:
 
         for this_comp in self.components:
             if isinstance(this_comp, Building):
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
-                output_data[f"{this_comp.name}:Q_htg [W]"] = this_comp.htg_vals
-                output_data[f"{this_comp.name}:Q_clg [W]"] = this_comp.clg_vals
-                output_data[f"{this_comp.name}:Q_net [W]"] = this_comp.q_net
-                output_data[f"{this_comp.name}:M_flow [kg/s]"] = this_comp.m_flow
+                output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
+                output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
+                output_columns[f"{this_comp.name}:Q_htg [W]"] = this_comp.htg_vals
+                output_columns[f"{this_comp.name}:Q_clg [W]"] = this_comp.clg_vals
+                output_columns[f"{this_comp.name}:Q_net [W]"] = this_comp.q_net
+                output_columns[f"{this_comp.name}:M_flow [kg/s]"] = this_comp.m_flow
                 network_q_net_bldg_tot += this_comp.q_net
-                output_data[f"{this_comp.name}:P_hp_htg [W]"] = this_comp.power_hp_htg
-                output_data[f"{this_comp.name}:P_hp_clg [W]"] = this_comp.power_hp_clg
-                output_data[f"{this_comp.name}:P_hp_tot [W]"] = this_comp.power_hp_tot
-                output_data[f"{this_comp.name}:P_pump [W]"] = this_comp.power_circ_pump
+                output_columns[f"{this_comp.name}:P_hp_htg [W]"] = this_comp.power_hp_htg
+                output_columns[f"{this_comp.name}:P_hp_clg [W]"] = this_comp.power_hp_clg
+                output_columns[f"{this_comp.name}:P_hp_tot [W]"] = this_comp.power_hp_tot
+                output_columns[f"{this_comp.name}:P_pump [W]"] = this_comp.power_circ_pump
 
                 q_src_clg = this_comp.clg_vals + this_comp.power_hp_clg
                 q_src_htg = this_comp.htg_vals - this_comp.power_hp_htg
 
-                output_data[f"{this_comp.name}:Q_src_clg [W]"] = q_src_clg
-                output_data[f"{this_comp.name}:Q_src_htg [W]"] = q_src_htg
-                output_data[f"{this_comp.name}:Q_src_het [W]"] = q_src_htg - q_src_clg
+                output_columns[f"{this_comp.name}:Q_src_clg [W]"] = q_src_clg
+                output_columns[f"{this_comp.name}:Q_src_htg [W]"] = q_src_htg
+                output_columns[f"{this_comp.name}:Q_src_het [W]"] = q_src_htg - q_src_clg
 
         for this_comp in self.components:
             if isinstance(this_comp, GHX):
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
-                output_data[f"{this_comp.name}:ExFT Mixed Loop [C]"] = this_comp.t_mix_out
-                output_data[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean
-                output_data[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe
-                output_data[f"{this_comp.name}:Q_tot [W]"] = this_comp.q_ghe * this_comp.nbh * this_comp.height
+                output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
+                output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
+                output_columns[f"{this_comp.name}:ExFT Mixed Loop [C]"] = this_comp.t_mix_out
+                output_columns[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean
+                output_columns[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe
+                output_columns[f"{this_comp.name}:Q_tot [W]"] = this_comp.q_ghe * this_comp.nbh * this_comp.height
                 network_q_net_ghe_tot += this_comp.q_ghe * this_comp.nbh * this_comp.height
 
         for this_comp in self.components:
             if isinstance(this_comp, SourceSinkHeatExchanger):
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
-                output_data[f"{this_comp.name}:Operating [T/F]"] = this_comp.operating
-                output_data[f"{this_comp.name}:Q [W]"] = (
+                output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
+                output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
+                output_columns[f"{this_comp.name}:Operating [T/F]"] = this_comp.operating
+                output_columns[f"{this_comp.name}:Q [W]"] = (
                     this_comp.operating * self.m_flow_loop * self.fluid.cp * (this_comp.t_out - this_comp.t_in)
                 )
 
@@ -2457,19 +2456,22 @@ class GHEHPSystem:
         for this_comp in self.components:
             if isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
                 # Add [1:] to slice off the 0th hour and match the DataFrame length
-                output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
+                output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
 
                 # Loop through the dynamic array to print each segment's details
                 for k in range(this_comp.num_segments):
-                    output_data[f"{this_comp.name}:Node{k + 1}_Out [C]"] = this_comp.t_out_seg[k, 1:]
-                    output_data[f"{this_comp.name}:Q{k + 1} [W/m]"] = this_comp.q_seg[k, 1:]
+                    output_columns[f"{this_comp.name}:Node{k + 1}_Out [C]"] = this_comp.t_out_seg[k, 1:]
+                    output_columns[f"{this_comp.name}:Q{k + 1} [W/m]"] = this_comp.q_seg[k, 1:]
 
-                output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
+                output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
 
-        output_data["Network:M_flow [kg/s]"] = self.m_flow_loop
-        output_data["Network:P_pump [W]"] = self.pump_power_loop
-        output_data["Network:Q_net_bldg [W]"] = network_q_net_bldg_tot
-        output_data["Network:Q_net_ghe [W]"] = network_q_net_ghe_tot
+        output_columns["Network:M_flow [kg/s]"] = self.m_flow_loop
+        output_columns["Network:P_pump [W]"] = self.pump_power_loop
+        output_columns["Network:Q_net_bldg [W]"] = network_q_net_bldg_tot
+        output_columns["Network:Q_net_ghe [W]"] = network_q_net_ghe_tot
+
+        output_data = pd.DataFrame(output_columns, index=self.time_array[1:])
+        output_data.index.name = "Time [hr]"
 
         if not output_path.parent.exists():
             output_path.parent.mkdir(parents=True)
