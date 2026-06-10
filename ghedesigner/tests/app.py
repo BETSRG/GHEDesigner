@@ -29,7 +29,7 @@ HERE = Path(__file__).resolve().parent
 
 DATA_FILES: dict[str, Path] = {
     "1-bldg, 1 GHE": HERE / "test_data" / "simulate_1_pipe_1_ghe_1_bldg_district.csv",
-    "6-bldg, 3-GHE": HERE / "test_data" / "simulate_1_pipe_3_ghe_6_bldg_district.csv",
+    "6-bldg, 3-GHE": HERE / "test_data" / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.csv",
     "1-bldg, 1-GHE, 1-HX": HERE / "test_data" / "simulate_1_pipe_1_ghe_1_hx_1_bldg_district.csv",
     "1-bldg w/loads, 1-GHE, 1-HX": HERE / "test_data" / "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district.csv",
 }
