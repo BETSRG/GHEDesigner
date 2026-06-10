@@ -123,6 +123,26 @@ class TestDistrictSys(GHEBaseTest):
         assert system.coordinate_locations == {}
         assert system.total_loads.shape == (8760,)
 
+    def test_fixed_loads_simulation_uses_valid_building_flow_indices(self):
+        f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
+        data = json.loads(f_path_json.read_text())
+        data["simulation_control"]["fixed_loads"] = True
+        data["simulation_control"]["constant_cop"] = True
+        for building_data in data["building"].values():
+            for load_data in building_data.values():
+                if isinstance(load_data, dict) and "file_path" in load_data:
+                    load_data["file_path"] = str((f_path_json.parent / load_data["file_path"]).resolve())
+
+        with TemporaryDirectory() as tmp_dir:
+            fixed_loads_path = Path(tmp_dir) / "fixed_loads.json"
+            fixed_loads_path.write_text(json.dumps(data))
+            system = GHEHPSystem(fixed_loads_path)
+
+        system.size_and_simulate()
+
+        assert system.number_of_simulations == 1
+        assert all(building.m_flow[-1] >= 0.0 for building in system.buildings)
+
     def test_horizontal_piping_schema_rejects_missing_pipe(self):
         f_path_json = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
         data = json.loads(f_path_json.read_text())

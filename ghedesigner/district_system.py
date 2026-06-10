@@ -1637,8 +1637,9 @@ class GHEHPSystem:
         else:
             Building.MATRIX_ROWS = 2
 
+        ghx_matrix_rows = GHX.MATRIX_ROWS_FIXED_LOADS if self.fixed_loads else GHX.MATRIX_ROWS
         self.matrix_size = (
-            GHX.MATRIX_ROWS * self.num_ghx
+            ghx_matrix_rows * self.num_ghx
             + Building.MATRIX_ROWS * self.num_buildings
             + SourceSinkHeatExchanger.MATRIX_ROWS * self.num_heat_exchangers
             + sum(pipe.matrix_rows for pipe in horizontal_pipes)
@@ -2161,7 +2162,15 @@ class GHEHPSystem:
             total_loads += building.loads
         for ghe in self.ground_heat_exchangers:
             ghe.generate_matrix_fixed_loads(
-                0.0, 0.0, 0.0, 0.0, 0.0, 1, load_profile=total_loads * ghe.split_ratio / (ghe.nbh * ghe.height)
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1,
+                self.loop_config,
+                self.load_method,
+                load_profile=total_loads * ghe.split_ratio / (ghe.nbh * ghe.height),
             )
         for idx_timestep in range(1, self.num_timesteps + 1):  # loop over all timestep
             matrix_rows = []
@@ -2180,10 +2189,9 @@ class GHEHPSystem:
 
             for this_comp in self.components:
                 if isinstance(this_comp, Building):
-                    t_in = this_comp.t_in[idx_timestep - 2]
-                    m_bldg = this_comp.calc_mass_flow_rate(t_in, idx_timestep - 1)
-                    total_hp_flow += m_bldg
-                    this_comp.mass_bldg = this_comp.calc_mass_flow_rate(t_in, idx_timestep)
+                    zero_based_timestep = idx_timestep - 1
+                    t_in = this_comp.t_in[zero_based_timestep - 1] if zero_based_timestep > 0 else this_comp.t_in[0]
+                    this_comp.mass_bldg = this_comp.calc_mass_flow_rate(t_in, zero_based_timestep)
                     total_hp_flow += this_comp.mass_bldg
                     m_bldg_cum += this_comp.mass_bldg
                 this_comp.mass_loop_bldg = m_bldg_cum
