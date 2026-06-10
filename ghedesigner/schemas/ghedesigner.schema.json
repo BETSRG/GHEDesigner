@@ -1215,7 +1215,7 @@
           "type": "string",
           "enum": ["HYBRID", "HOURLY"],
           "default": "HYBRID",
-          "description": "This field is currently unused. Simulation timestep used in ground heat exchanger sizing. 'HYBRID' is the only option currently available."
+          "description": "Load method used for simulations and sizing. HYBRID aggregates loads before GHE calculations; HOURLY uses hourly loads directly."
         },
         "search_method": {
           "type": "string",
@@ -1226,7 +1226,7 @@
         "constant_cop": {
           "type": "boolean",
           "default": true,
-          "description": "Determines if the system heat pumps are simulated with a constant cop (based on ugt, design temp limits, and heat pump models)."
+          "description": "Determines if system heat pump loads are converted with fixed COP behavior instead of full heat pump performance calculations."
         },
         "fixed_loads": {
           "type": "boolean",
@@ -1248,7 +1248,7 @@
         "horizontal_simulation_considered": {
           "type": "boolean",
           "default": false,
-          "description": "Determines if the simulation will account for the thermal effects of the horizontal pipes."
+          "description": "Determines if the simulation accounts for thermal effects from horizontal_piping components using the ground_temperature_model."
         }
       },
       "oneOf": [
