@@ -69,6 +69,41 @@ class TestDistrictSys(GHEBaseTest):
         assert {comp.inlet_index for comp in ghes} == {ghes[0].row_index}
         assert all(isinstance(comp.inlet_index, int) for comp in buildings + ghes)
 
+    def test_two_pipe_non_constant_cop_building_matrix_is_generated(self):
+        f_path_json = self.demos_path / "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json"
+        data = json.loads(f_path_json.read_text())
+        data["simulation_control"]["constant_cop"] = False
+        heat_pump_name = next(iter(data["heat_pump"]))
+        for building_data in data["building"].values():
+            for load_data in building_data.values():
+                if isinstance(load_data, dict) and "file_path" in load_data:
+                    load_data["file_path"] = str((f_path_json.parent / load_data["file_path"]).resolve())
+                    load_data["heat_pump_name"] = heat_pump_name
+
+        with TemporaryDirectory() as tmp_dir:
+            two_pipe_path = Path(tmp_dir) / "two_pipe_non_constant_cop.json"
+            two_pipe_path.write_text(json.dumps(data))
+            system = GHEHPSystem(two_pipe_path)
+
+        building = next(comp for comp in system.components if comp.comp_type == SimCompType.BUILDING)
+        building.matrix_size = system.matrix_size
+        building.cp = system.cp
+        mass_bldg = building.calc_mass_flow_rate(building.t_in[0], 0)
+
+        rows, rhs = building.generate_matrix(
+            mass_bldg,
+            mass_bldg * system.loop_flow_factor,
+            mass_bldg,
+            0.0,
+            0.0,
+            1,
+            system.loop_config,
+            system.load_method,
+        )
+
+        assert len(rows) == 2
+        assert len(rhs) == 2
+
     def test_simulation_only_initializes_output_bookkeeping(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
         data = json.loads(f_path_json.read_text())

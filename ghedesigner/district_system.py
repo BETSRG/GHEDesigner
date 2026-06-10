@@ -1208,7 +1208,7 @@ class Building(BaseSimComp):
                 row[self.downstream_index] = -1
                 rhs = -r2 / (mass_loop * self.cp)
                 return [row], [rhs]
-            elif configuration == CentralLoopType:
+            elif configuration == CentralLoopType.TWOPIPE:
                 row1 = np.zeros(self.matrix_size)
                 row2 = np.zeros(self.matrix_size)
 
