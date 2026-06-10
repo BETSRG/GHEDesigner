@@ -3,6 +3,7 @@ import math
 import pickle
 import time
 from abc import ABC, abstractmethod
+from importlib import resources
 from itertools import product
 from math import cos, sin
 from pathlib import Path
@@ -1338,19 +1339,20 @@ class GHEHPSystem:
         else:
             self.exhaustive_search = False
         self.num_timesteps = self.sim_years * HOURS_IN_YEAR
+        self.total_loads = np.zeros(self.num_timesteps, dtype=float)
+        self.nbh_selections = []
+        self.excess_temperatures = []
+        self.coordinate_locations = {}
+        self.nbh_values = []
+        self.total_drilling_values = []
+        self.objective_function_values = []
+        self.borehole_heights = []
+        self.previous_objective_function_evaluations = {}
+        self.guess_idx = -1
+
         if self.search_method == "GLOBAL_BUPCRS":
             self.domain: list[list[list[tuple[float, float]]]] = [[[]]]
             self.field_descriptors: list[str] = []
-            self.total_loads = np.zeros(self.num_timesteps, dtype=float)
-            self.nbh_selections = []
-            self.excess_temperatures = []
-            self.coordinate_locations = {}
-            self.nbh_values = []
-            self.total_drilling_values = []
-            self.objective_function_values = []
-            self.borehole_heights = []
-            self.previous_objective_function_evaluations = {}
-            self.guess_idx = -1
             if self.exhaustive_search:
                 self.sample_rate = 100
         elif self.search_method == "NELDER-MEAD":
@@ -1358,18 +1360,8 @@ class GHEHPSystem:
             self.max_iter: int = 50
             self.number_of_restarts: int = 1
             self.excess_temperature_tolerance: float = 1e-1
-            self.total_loads = np.zeros(self.num_timesteps, dtype=float)
-            self.nbh_selections = []
-            self.excess_temperatures = []
-            self.coordinate_locations = {}
-            self.nbh_values = []
-            self.total_drilling_values = []
-            self.objective_function_values = []
-            self.previous_objective_function_evaluations = {}
             self.nbh_bounds: list[list[float]] = []
-            self.guess_idx = -1
             self.angles: list[float] = []
-            self.borehole_heights = []
             self.nbh_vectors: list[str] = []
             if self.exhaustive_search:
                 self.sample_rate = 5
@@ -1398,7 +1390,7 @@ class GHEHPSystem:
         horiz_axes = {}
         if self.use_horizontal and horiz_data:
             try:
-                with open("unified_horizontal_library.pkl", "rb") as f:
+                with resources.files("ghedesigner.ghe").joinpath("unified_horizontal_library.pkl").open("rb") as f:
                     # Note: I am ignoring the pickle-related warning for now as this is planned to be shortly removed.
                     lib_data = pickle.load(f)  # noqa: S301
                 table_single = lib_data["table_single"]
@@ -1407,7 +1399,7 @@ class GHEHPSystem:
             except FileNotFoundError:
                 raise FileNotFoundError(
                     "The interpolation library 'unified_horizontal_library.pkl' is required for horizontal"
-                    " simulation but was not found."
+                    " simulation but was not found in the installed package."
                 )
 
         self.fluid = Fluid(

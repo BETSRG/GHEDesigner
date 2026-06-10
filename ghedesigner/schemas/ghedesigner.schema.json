@@ -373,6 +373,39 @@
       "format": "Meters",
       "description": "Horizontal width of property boundary defining surface area available for ground heat exchanger."
     },
+    "horizontal_pipe": {
+      "type": "object",
+      "properties": {
+        "arrangement": {
+          "const": "SINGLEUTUBE",
+          "description": "Horizontal pipe arrangement specified."
+        },
+        "inner_diameter": {
+          "$ref": "#/$defs/inner_diameter"
+        },
+        "outer_diameter": {
+          "$ref": "#/$defs/outer_diameter"
+        },
+        "roughness": {
+          "$ref": "#/$defs/roughness"
+        },
+        "conductivity": {
+          "$ref": "#/$defs/conductivity"
+        },
+        "rho_cp": {
+          "$ref": "#/$defs/rho_cp"
+        }
+      },
+      "required": [
+        "inner_diameter",
+        "outer_diameter",
+        "roughness",
+        "conductivity",
+        "rho_cp",
+        "arrangement"
+      ],
+      "additionalProperties": false
+    },
     "pipe": {
       "type": "object",
       "properties": {
@@ -1305,35 +1338,44 @@
       "additionalProperties": {
         "type": "object",
         "description": "Horizontal pipe object.",
-        "length": {
-          "type": "number",
-          "minimum": 0
-        },
-        "trench_depth": {
-          "type": "number",
-          "minimum": 0
-        },
-        "coupled_to": {
-          "type": "string"
-        },
-        "spacing": {
-          "type": "number",
-          "minimum": 0
-        },
-        "soil": {
-          "type": "object",
-          "properties": {
-            "conductivity": {
-              "type": "number"
+        "properties": {
+          "length": {
+            "type": "number",
+            "minimum": 0
+          },
+          "trench_depth": {
+            "type": "number",
+            "minimum": 0
+          },
+          "coupled_to": {
+            "type": "string"
+          },
+          "counter_flow": {
+            "type": "boolean"
+          },
+          "spacing": {
+            "type": "number",
+            "minimum": 0
+          },
+          "soil": {
+            "type": "object",
+            "properties": {
+              "conductivity": {
+                "$ref": "#/$defs/conductivity"
+              },
+              "rho_cp": {
+                "$ref": "#/$defs/rho_cp"
+              }
             },
-            "rho_cp": {
-              "type": "number"
-            }
+            "required": ["conductivity", "rho_cp"],
+            "additionalProperties": false
+          },
+          "pipe": {
+            "$ref": "#/$defs/horizontal_pipe"
           }
         },
-        "pipe": {
-          "$ref": "#/$defs/pipe"
-        }
+        "required": ["length", "trench_depth", "soil", "pipe"],
+        "additionalProperties": false
       }
     }
   },
