@@ -2,7 +2,9 @@ import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
 from jsonschema.exceptions import ValidationError
 
 from ghedesigner.district_system import GHEHPSystem
@@ -12,48 +14,40 @@ from ghedesigner.validate import validate_input_file
 
 
 class TestDistrictSys(GHEBaseTest):
+    def assert_simulation_output_matches_baseline(self, system: GHEHPSystem, baseline_name: str):
+        baseline_path = self.test_data_directory / baseline_name
+        with TemporaryDirectory() as tmp_dir:
+            output_path = Path(tmp_dir) / baseline_name
+            system.create_output(output_path)
+            actual = pd.read_csv(output_path)
+
+        expected = pd.read_csv(baseline_path)
+        assert_frame_equal(actual, expected, check_dtype=False, check_exact=False, rtol=0.0, atol=5e-5)
+
     def test_simulate_1_pipe_3_ghe_6_bldg_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.json"
         system = GHEHPSystem(f_path_json)
         system.size_and_simulate()
-
-        # don't put in the timestamped directory for now
-        # system.create_output(self.test_outputs_directory / "test_district_sys" / "output_simulate_3_bldg_3_ghe.csv")
-        system.create_output(
-            self.tests_directory / self.test_data_directory / "simulate_1_pipe_3_ghe_6_bldg_district.csv"
-        )
+        self.assert_simulation_output_matches_baseline(system, "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.csv")
 
     def test_simulate_1_pipe_1_ghe_1_bldg_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
         system = GHEHPSystem(f_path_json)
         system.size_and_simulate()
-
-        # don't put in the timestamped directory for now
-        # system.create_output(self.test_outputs_directory / "test_simple_district" / "output_simple_district.csv")
-        system.create_output(
-            self.tests_directory / self.test_data_directory / "simulate_1_pipe_1_ghe_1_bldg_district.csv"
-        )
+        self.assert_simulation_output_matches_baseline(system, "simulate_1_pipe_1_ghe_1_bldg_district.csv")
 
     def test_simulate_1_pipe_1_ghe_1_hx_1_bldg_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_hx_1_bldg_district.json"
         system = GHEHPSystem(f_path_json)
         system.size_and_simulate()
-
-        # don't put in the timestamped directory for now
-        # system.create_output(self.test_outputs_directory / "test_simple_district" / "output_simple_district.csv")
-        system.create_output(
-            self.tests_directory / self.test_data_directory / "simulate_1_pipe_1_ghe_1_hx_1_bldg_district.csv"
-        )
+        self.assert_simulation_output_matches_baseline(system, "simulate_1_pipe_1_ghe_1_hx_1_bldg_district.csv")
 
     def test_simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district.json"
         system = GHEHPSystem(f_path_json)
         system.size_and_simulate()
-
-        # don't put in the timestamped directory for now
-        # system.create_output(self.test_outputs_directory / "test_simple_district" / "output_simple_district.csv")
-        system.create_output(
-            self.tests_directory / self.test_data_directory / "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district.csv"
+        self.assert_simulation_output_matches_baseline(
+            system, "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district.csv"
         )
 
     def test_two_pipe_inlet_indices_are_assigned(self):

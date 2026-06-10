@@ -1,7 +1,9 @@
 from json import loads
 from pathlib import Path
 
+import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
 
 from ghedesigner.main import run
 
@@ -9,6 +11,7 @@ from ghedesigner.main import run
 # entries may contain one expected result or a list of accepted results for
 # validated dependency baselines
 expected_results_path = Path(__file__).parent / "expected_demo_results.json"
+timeseries_baseline_path = Path(__file__).parent / "test_data"
 expected_demo_results_dict = loads(expected_results_path.read_text())
 
 # override this with a list of Paths to JSON config files to run, or set to `None` to run all demo files
@@ -44,6 +47,12 @@ def assert_demo_result_matches_any(
     )
 
 
+def assert_timeseries_csv_matches_baseline(actual_path: Path, baseline_path: Path) -> None:
+    actual = pd.read_csv(actual_path)
+    expected = pd.read_csv(baseline_path)
+    assert_frame_equal(actual, expected, check_dtype=False, check_exact=False, rtol=0.0, atol=5e-5)
+
+
 def get_test_input_files() -> list[Path]:
     if files_to_debug:
         return files_to_debug
@@ -74,6 +83,12 @@ def test_demo_files(demo_file_path: Path, time_str: str):
 
     if isinstance(expected_results, dict) and expected_results.get("xfail_run", False):
         pytest.fail(f"Demo {demo_file_path.stem} no longer fails; remove xfail_run metadata")
+
+    timeseries_baseline = timeseries_baseline_path / f"{demo_file_path.stem}.csv"
+    if timeseries_baseline.exists():
+        timeseries_output = out_dir / f"{demo_file_path.stem}.csv"
+        assert timeseries_output.exists(), f"Missing timeseries output CSV: {timeseries_output}"
+        assert_timeseries_csv_matches_baseline(timeseries_output, timeseries_baseline)
 
     if isinstance(expected_results, dict) and expected_results.get("skip_checks", False):
         return
