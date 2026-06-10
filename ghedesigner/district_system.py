@@ -1200,7 +1200,8 @@ class Building(BaseSimComp):
                 mass_bldg, mass_loop, mass_loop_bldg, idx_timestep - 1, configuration
             )
         else:
-            t_in = self.t_in[idx_timestep - 1]
+            t_in_idx = 0 if idx_timestep == 1 else idx_timestep - 2
+            t_in = self.t_in[t_in_idx]
             r1, r2 = self.calc_r1_r2(t_in, idx_timestep - 1)
             if configuration == CentralLoopType.ONEPIPE:
                 row = np.zeros(self.matrix_size, dtype=float)

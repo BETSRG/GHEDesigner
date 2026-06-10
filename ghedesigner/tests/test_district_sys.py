@@ -98,6 +98,32 @@ class TestDistrictSys(GHEBaseTest):
         assert len(rows) == 2
         assert len(rhs) == 2
 
+        captured = {}
+
+        def capture_r1_r2(t_in, idx_timestep):
+            captured["t_in"] = t_in
+            captured["idx_timestep"] = idx_timestep
+            return 0.0, 0.0
+
+        building.t_in[0] = 12.5
+        building.t_in[1] = 99.5
+        building.calc_r1_r2 = capture_r1_r2
+
+        rows, rhs = building.generate_matrix(
+            mass_bldg,
+            mass_bldg * system.loop_flow_factor,
+            mass_bldg,
+            0.0,
+            0.0,
+            2,
+            system.loop_config,
+            system.load_method,
+        )
+
+        assert len(rows) == 2
+        assert len(rhs) == 2
+        assert captured == {"t_in": 12.5, "idx_timestep": 1}
+
     def test_simulation_only_initializes_output_bookkeeping(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
         data = json.loads(f_path_json.read_text())
