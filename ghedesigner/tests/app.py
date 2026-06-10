@@ -34,7 +34,7 @@ DATA_FILES: dict[str, Path] = {
     "1-bldg w/loads, 1-GHE, 1-HX": HERE / "test_data" / "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district.csv",
 }
 
-X_COL = "Hour"
+X_COL = "Time [hr]"
 
 CONTROL_CARD_STYLE = {
     "display": "flex",

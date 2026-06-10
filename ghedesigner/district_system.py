@@ -1724,11 +1724,7 @@ class GHEHPSystem:
                 None,
             )
             common_inlet_index_ghx = next(
-                (
-                    comp.row_index
-                    for comp in self.components
-                    if comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER
-                ),
+                (comp.row_index for comp in self.components if comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER),
                 None,
             )
 
