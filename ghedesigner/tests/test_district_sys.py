@@ -6,6 +6,7 @@ import pytest
 from jsonschema.exceptions import ValidationError
 
 from ghedesigner.district_system import GHEHPSystem
+from ghedesigner.enums import SimCompType
 from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.validate import validate_input_file
 
@@ -54,6 +55,19 @@ class TestDistrictSys(GHEBaseTest):
         system.create_output(
             self.tests_directory / self.test_data_directory / "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district.csv"
         )
+
+    def test_two_pipe_inlet_indices_are_assigned(self):
+        f_path_json = self.demos_path / "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json"
+        system = GHEHPSystem(f_path_json)
+
+        buildings = [comp for comp in system.components if comp.comp_type == SimCompType.BUILDING]
+        ghes = [comp for comp in system.components if comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER]
+
+        assert buildings
+        assert ghes
+        assert {comp.inlet_index for comp in buildings} == {buildings[0].row_index}
+        assert {comp.inlet_index for comp in ghes} == {ghes[0].row_index}
+        assert all(isinstance(comp.inlet_index, int) for comp in buildings + ghes)
 
     def test_simulation_only_initializes_output_bookkeeping(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"

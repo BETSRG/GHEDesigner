@@ -1717,6 +1717,19 @@ class GHEHPSystem:
         # Assigning inlet_index
         common_inlet_index_bldg = None
         common_inlet_index_ghx = None
+        if self.loop_config == CentralLoopType.TWOPIPE:
+            common_inlet_index_bldg = next(
+                (comp.row_index for comp in self.components if comp.comp_type == SimCompType.BUILDING),
+                None,
+            )
+            common_inlet_index_ghx = next(
+                (
+                    comp.row_index
+                    for comp in self.components
+                    if comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER
+                ),
+                None,
+            )
 
         for i, comp in enumerate(self.components):
             if comp.comp_type == SimCompType.BUILDING:

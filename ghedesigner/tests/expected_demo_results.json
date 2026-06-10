@@ -174,8 +174,7 @@
     "skip_checks": true
   },
   "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY": {
-    "xfail_run": true,
-    "xfail_reason": "The two-pipe hourly district demo currently raises a singular matrix during solve_system_standard."
+    "skip_checks": true
   },
   "find_design_simple_system": [
     {
