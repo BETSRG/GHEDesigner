@@ -27,12 +27,20 @@ from plotly.subplots import make_subplots
 # Defaults to the example CSVs placed next to this app.py.
 HERE = Path(__file__).resolve().parent
 
-DATA_FILES: dict[str, Path] = {
-    "1-bldg, 1 GHE": HERE / "test_data" / "simulate_1_pipe_1_ghe_1_bldg_district.csv",
-    "6-bldg, 3-GHE": HERE / "test_data" / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.csv",
-    "1-bldg, 1-GHE, 1-HX": HERE / "test_data" / "simulate_1_pipe_1_ghe_1_hx_1_bldg_district.csv",
-    "1-bldg w/loads, 1-GHE, 1-HX": HERE / "test_data" / "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district.csv",
-}
+def dataset_label(path: Path) -> str:
+    label = path.stem.removeprefix("simulate_")
+    label = label.replace("_bldg_w_loads", "_bldg_with_loads")
+    label = label.replace("ghe", "GHE")
+    return label.replace("_", " ")
+
+
+def discover_data_files() -> dict[str, Path]:
+    test_data = HERE / "test_data"
+    files = sorted(test_data.glob("simulate*.csv"), key=lambda p: p.stem)
+    return {dataset_label(path): path for path in files}
+
+
+DATA_FILES: dict[str, Path] = discover_data_files()
 
 X_COL = "Time [hr]"
 
