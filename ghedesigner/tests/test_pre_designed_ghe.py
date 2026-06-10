@@ -52,6 +52,10 @@ class TestPreDesignedGHE(TestCase):
         self.assertAlmostEqual(2.8351, float(g_vals[30]), delta=0.001)
         self.assertAlmostEqual(6.7569, float(g_vals[-1]), delta=0.1)
 
+        log_time_vals_stateful, g_vals_stateful, _g_bhw_vals_stateful = ghe.get_g_function(boundary_condition="UBWT")
+        self.assertAlmostEqual(float(log_time_vals[-1]), float(log_time_vals_stateful[-1]), delta=0.001)
+        self.assertAlmostEqual(float(g_vals[-1]), float(g_vals_stateful[-1]), delta=0.1)
+
         # case 2: "g-function_library_1.0/rectangle_5m_v1.0.json, 2_2, 5._192._0.08"
         get_g_func_inputs = {
             "flow_rate": 0.5,

@@ -703,6 +703,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         if ghe_dict is not None:
             pre_designed = ghe_dict["pre_designed"]
             self.configure_geometry(pre_designed, is_pre_designed=True)
+            self.configure_ghe_flow(ghe_dict)
         elif not self.ghe_geometry_set:
             raise ValueError(
                 "The field geometry either needs to be set before calling this function or provided in a"
@@ -712,18 +713,19 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             raise ValueError(
                 'Pre-designed locations are not already defined ghe_dict must be given to call "get_g_function"'
             )
-        nbh = len(self.pre_designed_locations)
-        if ghe_dict is not None:
-            flow_rate: float = ghe_dict["flow_rate"]
-            flow_type_str: str = str(ghe_dict["flow_type"]).upper()
+        if not self.flow_parameters_set:
+            raise ValueError(
+                "Flow parameters either need to be set before calling this function or provided in a GHE dictionary."
+            )
 
-        if flow_type_str == FlowConfigType.BOREHOLE.name:
-            m_flow_borehole = flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
-        elif flow_type_str == FlowConfigType.SYSTEM.name:
-            m_flow_ghe = flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
+        nbh = len(self.pre_designed_locations)
+        if self.flow_type == FlowConfigType.BOREHOLE:
+            m_flow_borehole = self.flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
+        elif self.flow_type == FlowConfigType.SYSTEM:
+            m_flow_ghe = self.flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
             m_flow_borehole = m_flow_ghe / nbh
         else:
-            raise NotImplementedError(f"FlowConfigType {flow_type_str} not implemented.")
+            raise NotImplementedError(f"FlowConfigType {self.flow_type} not implemented.")
 
         self.pygfunction_borehole.H = self.pre_designed_height
         ts = self.pre_designed_height**2 / (9 * self.soil.alpha)
