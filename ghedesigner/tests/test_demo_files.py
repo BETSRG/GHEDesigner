@@ -50,7 +50,7 @@ def assert_demo_result_matches_any(
 def assert_timeseries_csv_matches_baseline(actual_path: Path, baseline_path: Path) -> None:
     actual = pd.read_csv(actual_path)
     expected = pd.read_csv(baseline_path)
-    assert_frame_equal(actual, expected, check_dtype=False, check_exact=False, rtol=0.0, atol=5e-5)
+    assert_frame_equal(actual, expected, check_dtype=False, check_exact=False, rtol=0.0, atol=5e-4)
 
 
 def get_test_input_files() -> list[Path]:

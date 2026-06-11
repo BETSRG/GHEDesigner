@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import logging
 import sys
 from pathlib import Path
 
@@ -14,9 +13,6 @@ from ghedesigner.heat_pump_fixed_cop import HeatPumpFixedCOP
 from ghedesigner.output.manager import OutputManager
 from ghedesigner.utilities import load_input_file, write_idf
 from ghedesigner.validate import validate_input_file
-
-logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
-logger = logging.getLogger(__name__)
 
 
 def run(input_file_path: Path, output_directory: Path) -> int:
@@ -56,7 +52,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
     building_input = "building" in full_inputs
     valid_load_source = all_ghe_has_loads ^ (building_input and no_ghe_has_loads)  # XOR because we don't want both
     if not valid_load_source:
-        logger.warning("Bad load specified, need exactly one of: loads in each ghe, or building object")
+        print("Bad load specified, need exactly one of: loads in each ghe, or building object")
 
     # Loop over the topology and init the found objects, for now just the GHE or a GHE with an HP
     topology_props: list[dict] = full_inputs["topology"]
@@ -149,10 +145,10 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
     if validate_only:
         try:
             validate_input_file(input_path)
-            logger.info("Valid input file.")
+            print("Valid input file.")
             sys.exit(0)
         except ValidationError as ve:
-            logger.error(ve)
+            print(ve)
             sys.exit(1)
 
     if convert:
@@ -162,11 +158,11 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
                 print("Output converted to IDF objects.")
                 sys.exit(0)
             except Exception as e:  # noqa: BLE001
-                logger.warning(f"Conversion to IDF error: {e}")
+                print(f"Conversion to IDF error: {e}")
                 sys.exit(1)
 
         else:
-            print(f"Unsupported conversion format type: {format}", file=sys.stderr)
+            print(f"Unsupported conversion format type: {convert}", file=sys.stderr)
             sys.exit(1)
 
     if output_directory is None:
