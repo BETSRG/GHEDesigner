@@ -27,6 +27,7 @@ from plotly.subplots import make_subplots
 # Defaults to the example CSVs placed next to this app.py.
 HERE = Path(__file__).resolve().parent
 
+
 def dataset_label(path: Path) -> str:
     label = path.stem.removeprefix("simulate_")
     label = label.replace("_bldg_w_loads", "_bldg_with_loads")

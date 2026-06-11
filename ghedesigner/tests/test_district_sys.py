@@ -4,8 +4,8 @@ from tempfile import TemporaryDirectory
 
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
 from jsonschema.exceptions import ValidationError
+from pandas.testing import assert_frame_equal
 
 from ghedesigner.district_system import GHEHPSystem
 from ghedesigner.enums import SimCompType
@@ -46,9 +46,7 @@ class TestDistrictSys(GHEBaseTest):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district.json"
         system = GHEHPSystem(f_path_json)
         system.size_and_simulate()
-        self.assert_simulation_output_matches_baseline(
-            system, "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district.csv"
-        )
+        self.assert_simulation_output_matches_baseline(system, "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district.csv")
 
     def test_two_pipe_inlet_indices_are_assigned(self):
         f_path_json = self.demos_path / "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json"
