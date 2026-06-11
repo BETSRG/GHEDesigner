@@ -1320,7 +1320,7 @@ class GHEHPSystem:
         self.loop_flow_factor = json_data["central_loop"]["flow_factor"]
         self.loop_pump_efficiency = json_data["central_loop"]["pump_efficiency"]
         self.loop_length = json_data["central_loop"]["loop_length"]
-        self.loop_design_pressure_loss_per_meter = json_data["central_loop"]["design_pressure_loss"]
+        self.loop_design_pressure_loss_per_meter = json_data["central_loop"]["design_pressure_loss_per_meter"]
         sim_controls = json_data["simulation_control"]
         self.sim_years = sim_controls["simulation_years"]
         if "search_method" in sim_controls:

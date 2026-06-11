@@ -47,6 +47,11 @@
       "format": "Pascals",
       "description": "Design pressure loss."
     },
+    "design_pressure_loss_per_meter": {
+      "type": "number",
+      "format": "Pascals/Meter",
+      "description": "Design pressure loss per meter."
+    },
     "file_path": {
       "type": "string"
     },
@@ -611,8 +616,8 @@
         "loop_length": {
           "$ref": "#/$defs/loop_length"
         },
-        "design_pressure_loss": {
-          "$ref": "#/$defs/design_pressure_loss"
+        "design_pressure_loss_per_meter": {
+          "$ref": "#/$defs/design_pressure_loss_per_meter"
         }
       }
     },
