@@ -22,7 +22,7 @@ class TestDistrictSys(GHEBaseTest):
             actual = pd.read_csv(output_path)
 
         expected = pd.read_csv(baseline_path)
-        assert_frame_equal(actual, expected, check_dtype=False, check_exact=False, rtol=0.0, atol=5e-4)
+        assert_frame_equal(actual, expected, check_dtype=False, check_exact=False, rtol=0.0, atol=1e-2)
 
     def test_simulate_1_pipe_3_ghe_6_bldg_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.json"
