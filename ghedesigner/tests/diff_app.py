@@ -1,4 +1,5 @@
 import json
+from io import StringIO
 from pathlib import Path
 
 import dash
@@ -245,8 +246,8 @@ def update_plots(data1, data2, col1, col2):
     if not data1 or not data2 or not col1 or not col2:
         return empty_figure()
 
-    df1 = pd.read_json(data1, orient="split")
-    df2 = pd.read_json(data2, orient="split")
+    df1 = pd.read_json(StringIO(data1), orient="split")
+    df2 = pd.read_json(StringIO(data2), orient="split")
 
     if col1 not in df1.columns or col2 not in df2.columns:
         return empty_figure("Selected columns not found in loaded data.")
