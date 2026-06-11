@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 
-from ghedesigner.constants import HOURS_IN_YEAR, PI_OVER_2, SEC_IN_HR, TWO_PI
+from ghedesigner.constants import DAYS_IN_YEAR, HOURS_IN_YEAR, PI_OVER_2, SEC_IN_DAY, SEC_IN_HR, SEC_IN_YEAR, TWO_PI
 from ghedesigner.enums import CentralLoopType, DesignGeomType, SimCompType, SourceSinkOpMode
 from ghedesigner.ghe.domains import polygonal_land_constraint_multi_field
 from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads
@@ -323,9 +323,9 @@ class CoupledHorizontalPipe(BaseSimComp):
 
     def calculate_current_ugt(self, current_time_sec: float) -> float:
         # Exact same as IsolatedHorizontalPipe
-        t_days = current_time_sec / (24.0 * 3600.0)
-        t_p = 365.0
-        t_p_sec = 365.0 * 24.0 * 3600.0
+        t_days = current_time_sec / SEC_IN_DAY
+        t_p = DAYS_IN_YEAR
+        t_p_sec = SEC_IN_YEAR
         attenuation1 = self.depth * math.sqrt((1.0 * math.pi) / (self.alpha_s * t_p_sec))
         attenuation2 = self.depth * math.sqrt((2.0 * math.pi) / (self.alpha_s * t_p_sec))
         term1 = (

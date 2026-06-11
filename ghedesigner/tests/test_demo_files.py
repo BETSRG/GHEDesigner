@@ -8,8 +8,6 @@ from pandas.testing import assert_frame_equal
 from ghedesigner.main import run
 
 # results can be updated with the update_demo_results.py file in /scripts
-# entries may contain one expected result or a list of accepted results for
-# validated dependency baselines
 expected_results_path = Path(__file__).parent / "expected_demo_results.json"
 timeseries_baseline_path = Path(__file__).parent / "test_data"
 expected_demo_results_dict = loads(expected_results_path.read_text())
@@ -20,31 +18,6 @@ files_to_debug: list[Path] = [
 ]
 
 limit_debug_file_count = 0
-
-
-def assert_demo_result_matches_any(
-    actual_length: float,
-    actual_nbh: int,
-    expected_results: dict | list[dict],
-    delta: float = 0.1,
-) -> None:
-    accepted_results = expected_results if isinstance(expected_results, list) else [expected_results]
-
-    for expected_result in accepted_results:
-        expected_length = expected_result["active_borehole_length"]
-        expected_nbh = expected_result["number_of_boreholes"]
-        if actual_nbh == expected_nbh and abs(actual_length - expected_length) <= delta:
-            return
-
-    expected_summary = ", ".join(
-        f"(length={result['active_borehole_length']:.6f}±{delta:.2f}, boreholes={result['number_of_boreholes']})"
-        for result in accepted_results
-    )
-    raise AssertionError(
-        "Unexpected demo result: "
-        f"length={actual_length:.6f}, boreholes={actual_nbh}; "
-        f"expected one of {expected_summary}"
-    )
 
 
 def assert_timeseries_csv_matches_baseline(actual_path: Path, baseline_path: Path) -> None:
@@ -101,7 +74,11 @@ def test_demo_files(demo_file_path: Path, time_str: str):
         actual_length = actual_results["ghe_system"]["active_borehole_length"]["value"]
         actual_nbh = actual_results["ghe_system"]["number_of_boreholes"]
 
-        assert_demo_result_matches_any(actual_length, actual_nbh, expected_results)
+        expected_length = expected_results["active_borehole_length"]
+        expected_nbh = expected_results["number_of_boreholes"]
+
+        assert expected_length == pytest.approx(actual_length, abs=0.1)
+        assert expected_nbh == actual_nbh
 
     else:
         # TODO: Verify it was intentionally predesigned

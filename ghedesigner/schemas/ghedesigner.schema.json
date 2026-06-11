@@ -610,6 +610,9 @@
         "pipe_configuration": {
           "$ref": "#/$defs/pipe_configuration"
         },
+        "flow_factor": {
+          "$ref": "#/$defs/flow_factor"
+        },
         "pump_efficiency": {
           "$ref": "#/$defs/pump_efficiency"
         },
@@ -619,7 +622,15 @@
         "design_pressure_loss_per_meter": {
           "$ref": "#/$defs/design_pressure_loss_per_meter"
         }
-      }
+      },
+      "required": [
+        "pipe_configuration",
+        "flow_factor",
+        "pump_efficiency",
+        "loop_length",
+        "design_pressure_loss_per_meter"
+      ],
+      "additionalProperties": false
     },
     "topology": {
       "type": "array",
