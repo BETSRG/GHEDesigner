@@ -127,7 +127,7 @@ class DeferredDuplicateCheckList:
         # This is based on Amanatides & Woo's algorithm as described here:
         # https://github.com/cgyurgyik/fast-voxel-traversal-algorithm/blob/master/overview/FastVoxelTraversalOverview.md
         # It should be noted that this implementation assumes that the line segment begins on the spatial grid
-        # which simplifies the initialization of some of the values.
+        # which simplifies the initialization of some values.
 
         buckets_visited: list[tuple[int, int]] = []
 

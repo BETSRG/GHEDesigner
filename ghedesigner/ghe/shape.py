@@ -312,3 +312,19 @@ def point_polygon_check(contour, point, on_edge_tolerance=1e-6):
                 inside = not inside
 
     return -1 if inside else 1
+
+
+def get_area(c):
+    """
+    returns area of shape
+
+    :return: float
+        area of shape
+    """
+    area_sum = 0
+    for i in range(len(c)):
+        if i == len(c) - 1:
+            area_sum += c[len(c) - 1][0] * c[0][1] - (c[len(c) - 1][1] * c[0][0])
+            continue
+        area_sum += c[i][0] * c[i + 1][1] - (c[i][1] * c[i + 1][0])
+    return 0.5 * area_sum

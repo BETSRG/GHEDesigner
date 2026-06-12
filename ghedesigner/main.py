@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import logging
 import sys
 from pathlib import Path
 
@@ -14,9 +13,6 @@ from ghedesigner.heat_pump_fixed_cop import HeatPumpFixedCOP
 from ghedesigner.output.manager import OutputManager
 from ghedesigner.utilities import load_input_file, write_idf
 from ghedesigner.validate import validate_input_file
-
-logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
-logger = logging.getLogger(__name__)
 
 
 def run(input_file_path: Path, output_directory: Path) -> int:
@@ -47,16 +43,16 @@ def run(input_file_path: Path, output_directory: Path) -> int:
     # any GHE instances found with pre_designed will just be ignored since they don't need anything added
     unsized_ghe_contains_loads = []
     for _, ghe_dict in full_inputs["ground_heat_exchanger"].items():
-        if "pre_designed" in ghe_dict:
-            continue  # no need for loads checks here, don't even add them to the contains_loads list
         if "loads" in ghe_dict:
             unsized_ghe_contains_loads.append(True)
+        else:
+            unsized_ghe_contains_loads.append(False)
     all_ghe_has_loads = all(unsized_ghe_contains_loads)
     no_ghe_has_loads = not any(unsized_ghe_contains_loads)
     building_input = "building" in full_inputs
     valid_load_source = all_ghe_has_loads ^ (building_input and no_ghe_has_loads)  # XOR because we don't want both
     if not valid_load_source:
-        logger.warning("Bad load specified, need exactly one of: loads in each ghe, or building object")
+        print("Bad load specified, need exactly one of: loads in each ghe, or building object")
 
     # Loop over the topology and init the found objects, for now just the GHE or a GHE with an HP
     topology_props: list[dict] = full_inputs["topology"]
@@ -94,7 +90,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
                 # TODO: Assert that "design" data is in the ghe object
                 ghe_dict["name"] = ghe_name
                 end_month = full_inputs["simulation_control"]["sizing_years"] * MONTHS_IN_YEAR
-                search, search_time, _ = ghe.design_and_size_ghe(ghe_dict, end_month)
+                search, search_time, _ = ghe.design_and_size_ghe(end_month, ghe_dict=ghe_dict)
                 results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
                 results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
                 results.write_all_output_files(output_directory=output_directory, file_suffix="")
@@ -111,13 +107,22 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             print(g_values, g_bhw_values)
         else:
             end_month = full_inputs["simulation_control"]["sizing_years"] * MONTHS_IN_YEAR
-            search, search_time, _ = ghe.design_and_size_ghe(ghe_dict, end_month, loads_override=ghe_loads)
+            search, search_time, _ = ghe.design_and_size_ghe(end_month, loads_override=ghe_loads, ghe_dict=ghe_dict)
             results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
             results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
             results.write_all_output_files(output_directory=output_directory, file_suffix="")
     elif central_loop:
         system = GHEHPSystem(input_file_path)
-        system.create_output(output_directory / f"{input_file_path.stem}.csv")
+        system.size_and_simulate()
+
+        if len(system.nbh_selections) != 0:
+            system.create_output(
+                output_directory / f"{input_file_path.stem}.csv",
+                output_path_2=output_directory / "Search_Summary.csv",
+                output_path_coordinates=output_directory / "coordinates.json",
+            )
+        else:
+            system.create_output(output_directory / f"{input_file_path.stem}.csv")
     else:
         print("Bad input file, for now only the following configurations are available:")
         print("1 GHE; 1 GHE + 1 Building; or N GHE + M Buildings + 1 Central Loop")
@@ -140,10 +145,10 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
     if validate_only:
         try:
             validate_input_file(input_path)
-            logger.info("Valid input file.")
+            print("Valid input file.")
             sys.exit(0)
         except ValidationError as ve:
-            logger.error(ve)
+            print(ve)
             sys.exit(1)
 
     if convert:
@@ -153,11 +158,11 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
                 print("Output converted to IDF objects.")
                 sys.exit(0)
             except Exception as e:  # noqa: BLE001
-                logger.warning(f"Conversion to IDF error: {e}")
+                print(f"Conversion to IDF error: {e}")
                 sys.exit(1)
 
         else:
-            print(f"Unsupported conversion format type: {format}", file=sys.stderr)
+            print(f"Unsupported conversion format type: {convert}", file=sys.stderr)
             sys.exit(1)
 
     if output_directory is None:

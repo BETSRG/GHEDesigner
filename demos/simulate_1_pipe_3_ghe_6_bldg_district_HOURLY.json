@@ -43,11 +43,11 @@
     "flow_factor": 1.5,
     "pump_efficiency": 0.5,
     "loop_length": 200,
-    "design_pressure_loss": 200
+    "design_pressure_loss_per_meter": 200
   },
   "fluid": {
-    "fluid_name": "WATER",
-    "concentration_percent": 0,
+    "fluid_name": "PROPYLENEGLYCOL",
+    "concentration_percent": 30,
     "temperature": 20
   },
   "heat_pump": {
@@ -149,57 +149,57 @@
       "heating_load": {
         "column_name": "B1Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp1"
+        "heat_pump_cop": 4.4
       },
       "cooling_load": {
         "column_name": "B1Z1_HPClgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp1"
+        "heat_pump_cop": 4.5
       }
     },
     "building1_dhw": {
       "heating_load": {
         "column_name": "B1Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp4"
+        "heat_pump_cop": 3.7
       }
     },
     "building2_htg_clg": {
       "heating_load": {
         "column_name": "B2Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp2"
+        "heat_pump_cop": 4.4
       },
       "cooling_load": {
         "column_name": "B2Z1_HPClgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp2"
+        "heat_pump_cop": 4.9
       }
     },
     "building2_dhw": {
       "heating_load": {
         "column_name": "B2Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp4"
+        "heat_pump_cop": 3.7
       }
     },
     "building3_htg_clg": {
       "heating_load": {
         "column_name": "B3Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp3"
+        "heat_pump_cop": 4.4
       },
       "cooling_load": {
         "column_name": "B3Z1_HPClgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp3"
+        "heat_pump_cop": 4.9
       }
     },
     "building3_dhw": {
       "heating_load": {
         "column_name": "B3Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_name": "hp4"
+        "heat_pump_cop": 3.7
       }
     }
   },
@@ -308,6 +308,7 @@
     }
   },
   "simulation_control": {
-    "simulation_years": 1
+    "simulation_years": 1,
+    "load_method": "HOURLY"
   }
 }

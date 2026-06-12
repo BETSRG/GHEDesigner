@@ -17,7 +17,11 @@ as [GLHEPRO](https://betsrg.org/ground-loop-heat-exchanger-design-software), GHE
 - is highly automated. It can select library configurations or custom configurations and determine the final number and
   depth requirement of boreholes,
 - can make automated conversion of hourly loads to an improved hybrid time step
-  representation ([Cullin and Spitler 2011](https://doi.org/10.1016/j.geothermics.2011.01.001)), and
+  representation ([Cullin and Spitler 2011](https://doi.org/10.1016/j.geothermics.2011.01.001)),
+- can simulate district-scale systems with buildings, one-pipe or two-pipe central loops, multiple GHEs, and heat pump
+  performance maps or fixed COP load conversion,
+- can include buried horizontal distribution piping in district simulations when horizontal pipe heat transfer is part of
+  the model, and
 - is under continuing development at Oklahoma State University (OSU), Oak Ridge National Laboratory (ORNL), and the
   National Laboratory of the Rockies (NLR). (GLHEPRO remains under development at OSU.)
 
@@ -36,6 +40,10 @@ National Laboratory of the Rockies.
 Updates since [Cook (2021)](https://hdl.handle.net/11244/335489) include:
 
 - Development and addition of RowWise algorithm to efficiently place boreholes in the available land area.
+- Addition of system simulation inputs for buildings, heat pumps, central loops, source/sink heat exchangers, and
+  multiple GHEs.
+- Addition of optional system sizing workflows using BUPCRS or Nelder-Mead search methods.
+- Addition of optional buried horizontal pipe heat transfer calculations for district loop simulations.
 - Extensive refactoring for creating a user-focused, stable API.
 - Simplification of library dependencies.
 - Development of automated testing and deployment procedures.
@@ -79,14 +87,16 @@ Updates since [Cook (2021)](https://hdl.handle.net/11244/335489) include:
   - The RowWise method generates and searches custom borehole fields that make full use of the available property. The
     RowWise algorithms are described by [Spitler et al. (2022a)](https://shareok.org/handle/11244/336846).
 
-## Limitations
+## Current Scope and Limitations
 
-GHEDesigner does not have every feature that is found in a tool like GLHEPRO. Features that are currently missing
-include:
+GHEDesigner does not have every feature that is found in a tool like GLHEPRO. Current scope and limitations include:
 
-- Heat pumps are not modeled. Users input heat rejection/extraction rates.
-- An hourly simulation is available, but it doesn't make use of load aggregation, so is very slow.
-- GHEDesigner only covers vertical borehole ground heat exchangers. Horizontal ground heat exchangers are not treated.
+- Standalone GHE designs can use direct heat rejection/extraction loads. System simulations can convert building loads
+  with heat pump performance maps or fixed COP values.
+- Hybrid and hourly load methods are supported. Hourly simulations solve each hour directly and are generally more
+  computationally expensive than hybrid load aggregation.
+- Vertical borehole fields are the GHE technology sized by GHEDesigner. District simulations can include buried
+  horizontal distribution piping, but horizontal ground heat exchanger fields are not sized as GHE fields.
 - GHEDesigner does not calculate the head loss in the ground heat exchanger or warn the user that head loss may be
   excessive.
 - GHEDesigner does not have a graphical user interface.
@@ -94,14 +104,16 @@ include:
 
 ## Requirements
 
-GHEDesigner is supported for Python versions >= 3.10, and is tested with Python 3.10-3.13. GHEDesigner is dependent on
+GHEDesigner is supported for Python versions >= 3.11 and is tested with Python 3.11-3.14. GHEDesigner is dependent on
 the following packages:
 
+- [bhresist][bhresist]
 - [click][click]
 - [jsonschema][jsonschema]
 - [numpy][numpy]
 - [pygfunction][pygfunction]
 - [scipy][scipy]
+- [secondarycoolantprops][secondarycoolantprops]
 
 ## Quick Start
 
@@ -140,8 +152,9 @@ git clone git@github.com:BETSRG/GHEDesigner.git
 During development, we can [serve docs locally](https://squidfunk.github.io/mkdocs-material/creating-your-site/#previewing-as-you-write) and view updates with every save.
 
 1. Start a documentation update branch: `git checkout -b <branch_name>`
-2. `mkdocs serve`
-3. Point browser to [http://localhost:8000/](http://localhost:8000/)
+2. Ensure that the environment variable `LANGUAGE` is set to `en_US` before running `mkdocs serve` to avoid babel errors
+3. `uv run mkdocs serve`
+4. Point browser to [http://localhost:8000/](http://localhost:8000/)
 
 ## Questions
 
@@ -190,6 +203,7 @@ indirect costs to Dr. Jeffrey D. Spitler.
   and Thermal Mass of the Fluid. 10th International Conference on Thermal Energy Storage - Ecostock 2006, Pomona,
   NJ. https://hvac.okstate.edu/sites/default/files/pubs/papers/2006/07-Xu_Spitler_06.pdf
 
+[bhresist]: https://github.com/NatLabRockies/BHResist
 [click]: https://click.palletsprojects.com/en/8.1.x/
 [closed]: https://github.com/BETSRG/GHEDesigner/issues?q=is%3Aissue+is%3Aclosed
 [create]: https://github.com/BETSRG/GHEDesigner/issues/new
@@ -201,3 +215,4 @@ indirect costs to Dr. Jeffrey D. Spitler.
 [ruff-editors]: https://docs.astral.sh/ruff/editors/setup/#pycharm
 [ruff-plugin]: https://docs.astral.sh/ruff/editors/setup/#via-third-party-plugin
 [scipy]: https://docs.scipy.org/doc/scipy/
+[secondarycoolantprops]: https://github.com/NatLabRockies/SecondaryCoolantProps

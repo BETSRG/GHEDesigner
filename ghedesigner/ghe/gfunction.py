@@ -1,5 +1,3 @@
-import logging
-import warnings
 from math import log
 
 import numpy as np
@@ -10,9 +8,6 @@ from pygfunction.gfunction import gFunction
 from scipy.interpolate import interp1d, lagrange
 
 from ghedesigner.enums import BHType
-
-logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
-logger = logging.getLogger(__name__)
 
 pyg_bh_type_map = {
     BHType.SINGLEUTUBE.name: PygBHType.SINGLE_UTUBE.name,
@@ -178,7 +173,6 @@ class GFunction:
             fill_value = ""
         else:
             fill_value = "extrapolate"
-            warnings.warn("Extrapolation is being used.")
 
         # if the interpolation kind is default, use what we know about the
         # accuracy of interpolation to choose a technique
