@@ -1,15 +1,18 @@
 name: PyPIRelease
 
 on:
-  push:
-    tags:
-      - v*
+  release:
+    types: [published]
 
 jobs:
   release:
+    if: github.event.release.prerelease == false && github.event.release.draft == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -18,6 +21,7 @@ jobs:
         run: uv sync --frozen --managed-python --no-dev
       - name: Build
         run: uv build
+
       - name: Deploy on PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:

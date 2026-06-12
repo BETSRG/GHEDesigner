@@ -107,6 +107,8 @@ class Bisection1D:
         )
 
         self.calculated_temperatures: dict[int, np.float64] = {}
+        self.at_maximum_size = False
+        self.at_minimum_size = False
 
         if search:
             self.selection_key, self.selected_coordinates = self.search()
@@ -189,7 +191,7 @@ class Bisection1D:
             x_r_idx = [idx for idx, x in enumerate(num_coordinates_in_each) if x < self.max_boreholes][-1]
         else:
             x_r_idx = len(self.coordinates_domain) - 1
-
+        x_max = x_r_idx
         if self.disp:
             print("Do some initial checks before searching.")
         # Get the lowest possible excess temperature from minimum height at the
@@ -217,6 +219,7 @@ class Bisection1D:
             if self.disp:
                 print("Size between min and max of lower bound in domain.")
             self.initialize_ghe(self.coordinates_domain[x_l_idx], self.max_height)
+            self.at_minimum_size = True
             return x_l_idx, self.coordinates_domain[x_l_idx]
         elif check_bracket(sign(t_0_upper), sign(t_m1)):
             if self.disp:
@@ -227,6 +230,7 @@ class Bisection1D:
                 "than what is possible based on the current design parameters."
             )
             print(condition_msg)
+            self.at_minimum_size = True
             if self.continue_if_design_unmet:
                 print("Smallest available configuration selected.")
                 selection_key = x_l_idx
@@ -326,4 +330,6 @@ class Bisection1D:
         self.initialize_ghe(
             self.coordinates_domain[selection_key], self.max_height, self.fieldDescriptors[selection_key]
         )
+        if selection_key == x_max:
+            self.at_maximum_size = True
         return selection_key, self.coordinates_domain[selection_key]

@@ -40,6 +40,96 @@ def rectangle(
     return r
 
 
+def general_field_nbh_adjustment(coordinates, desired_nbh):
+    sorted_coordinates = sorted(coordinates)
+    return sorted_coordinates[0:desired_nbh]
+
+
+def rectangle_adjusted_nbh(
+    num_bh_x: int,
+    num_bh_y: int,
+    spacing_x: int | float,
+    spacing_y: int | float,
+    desired_nbh: int,
+    origin=(0, 0),
+) -> list[tuple[float, float]]:
+    """
+    Creates a rectangular borehole field. Boreholes are removed from the middle row(s) to achieve a given
+    desired nbh.
+
+    X   X   X   X
+    X   X   X   X
+    X   X   X   X
+    X   X   X   X
+
+    Args:
+        num_bh_x: number of borehole rows in x-direction
+        num_bh_y: number of borehole rows in y-direction
+        spacing_x: spacing between borehole rows in x-direction
+        spacing_y: spacing between borehole rows in y-direction
+        desired_nbh: the number of boreholes desired for this field layout
+        origin: coordinates for origin at lower-left corner
+
+    Returns:
+        list of tuples (x, y) containing borehole coordinates
+    """
+    nominal_nbh = num_bh_x * num_bh_y
+    boreholes_to_remove = nominal_nbh - desired_nbh
+    if boreholes_to_remove >= num_bh_x or boreholes_to_remove < 0:
+        raise ValueError(
+            "The given desired nbh either exceeds the nominal nbh or requires the removal of an entire row."
+        )
+    r = []
+    x_0 = origin[0]
+    y_0 = origin[1]
+    if num_bh_y % 2 == 0:
+        row_to_modify_1 = int(num_bh_y / 2) - 1
+        row_to_modify_2 = int(num_bh_y / 2)
+        modified_row_1_nbh = num_bh_x - int(boreholes_to_remove * 0.5)
+        modified_row_2_nbh = num_bh_x - (int(boreholes_to_remove * 0.5) + 1)
+        modified_spacing_1 = (num_bh_x - 1) * spacing_x / (modified_row_1_nbh - 1)
+        if modified_row_2_nbh == 1:
+            modified_spacing_2 = (num_bh_x - 1) * spacing_x * 0.5
+        else:
+            modified_spacing_2 = (num_bh_x - 1) * spacing_x / (modified_row_2_nbh - 1)
+        for j in range(num_bh_y):
+            if j == row_to_modify_1:
+                row_nbh = modified_row_1_nbh
+                row_spacing = modified_spacing_1
+            elif j == row_to_modify_2:
+                row_nbh = modified_row_2_nbh
+                row_spacing = modified_spacing_2
+            else:
+                row_nbh = num_bh_x
+                row_spacing = spacing_x
+            for i in range(row_nbh):
+                if j == row_to_modify_2 and modified_row_2_nbh == 1:
+                    r.append((x_0 + (i + 1) * row_spacing, y_0 + j * spacing_y))
+                else:
+                    r.append((x_0 + i * row_spacing, y_0 + j * spacing_y))
+        return r
+    else:
+        row_to_modify = int(num_bh_y / 2)
+        modified_row_nbh = num_bh_x - boreholes_to_remove
+        if modified_row_nbh == 1:
+            modified_spacing = (num_bh_x - 1) * spacing_x * 0.5
+        else:
+            modified_spacing = (num_bh_x - 1) * spacing_x / (modified_row_nbh - 1)
+        for j in range(num_bh_y):
+            if j == row_to_modify:
+                row_nbh = modified_row_nbh
+                row_spacing = modified_spacing
+            else:
+                row_nbh = num_bh_x
+                row_spacing = spacing_x
+            for i in range(row_nbh):
+                if j == row_to_modify and modified_row_nbh == 1:
+                    r.append((x_0 + (i + 1) * row_spacing, y_0 + j * spacing_y))
+                else:
+                    r.append((x_0 + i * row_spacing, y_0 + j * spacing_y))
+        return r
+
+
 def open_rectangle(
     num_bh_x: int, num_bh_y: int, spacing_x: int | float, spacing_y: int | float
 ) -> list[tuple[float, float]]:

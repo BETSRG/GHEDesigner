@@ -5,7 +5,7 @@ from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
-from ghedesigner.ghe.domains import square_and_near_square
+from ghedesigner.ghe.domains import square_and_near_square, square_and_near_square_adjusted_nbh
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_1d import Bisection1D
 from ghedesigner.media import Fluid, Grout, Soil
@@ -80,10 +80,11 @@ class DesignNearSquare(DesignBase):
         # different lower range. The upper number of boreholes range is
         # calculated based on the spacing and length provided.
         n = floor(self.geometric_constraints.length / self.geometric_constraints.b) + 1
-        number_of_boreholes = int(n)
+        self.number_of_boreholes = int(n)
         self.coordinates_domain, self.fieldDescriptors = square_and_near_square(
-            1, number_of_boreholes, self.geometric_constraints.b
+            1, self.number_of_boreholes, self.geometric_constraints.b
         )
+        self.borehole_lengths = [len(coords) for coords in self.coordinates_domain]
 
     def find_design(self, disp=False) -> Bisection1D:
         if disp:
@@ -112,4 +113,12 @@ class DesignNearSquare(DesignBase):
             disp=disp,
             field_type="near-square",
             load_years=self.load_years,
+        )
+
+    def get_bounds(self):
+        return min(self.borehole_lengths), max(self.borehole_lengths)
+
+    def closest_nbh(self, desired_nbh):
+        return square_and_near_square_adjusted_nbh(
+            1, self.number_of_boreholes, self.geometric_constraints.b, int(desired_nbh)
         )

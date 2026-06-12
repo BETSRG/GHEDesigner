@@ -129,7 +129,8 @@ class SingleUTube(GHEDesignerBoreholeBase):
         return self.R_fp
 
     def calc_effective_borehole_resistance(self) -> float:
-        resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.soil.ugt)
+        # resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.soil.ugt)
+        resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.init_temp)  # change by NB
         return resist_bh_effective
 
     def to_single(self):
@@ -362,5 +363,7 @@ class SingleUTube(GHEDesignerBoreholeBase):
         self.g = np.array(uniform_g_vals)
         self.g_bhw = np.array(uniform_g_bhw_vals)
         self.g_sts = interp1d(self.lntts, self.g)
+
+        fluid_resist = self.bhr_borehole.calc_fluid_resist(self.m_flow_borehole, self.soil.ugt)
 
         return self.lntts, self.g

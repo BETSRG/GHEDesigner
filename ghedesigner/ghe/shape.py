@@ -11,7 +11,6 @@ class Shapes:
         constructs a shape object
         """
         self.c = np.array(c)
-        # print(c)
         self.max_x = np.max(self.c[:, 0])
         self.min_x = np.min(self.c[:, 0])
         self.max_y = np.max(self.c[:, 1])
@@ -121,11 +120,8 @@ class Shapes:
                     ):
                         continue
                     r_a.append(r)
-        # print("x value: %f, r values:"%x1)
-        # print(r_a)
 
         r_a = sort_intersections(r_a, rotate)
-        # print(r_a)
         return r_a
 
     def point_intersect(self, xy):
@@ -142,15 +138,12 @@ class Shapes:
         """
         x, y = xy
         if (x > self.max_x or x < self.min_x) or (y > self.max_y or y < self.min_y):
-            # print("Returning False b/c outside of box")
+            print("Returning False b/c outside of box")
             return False
         far_x = self.min_x - 10
         inters = self.line_intersect([far_x, y, far_x + 1, y])
-        # print(inters)
         inters = [inter for inter in inters if inter[0] <= x]
-        # print("x: %f"%x,inters)
         if len(inters) == 1:
-            # print("Returning True")
             return True
         i = 0
         while i < len(inters):
@@ -160,8 +153,9 @@ class Shapes:
                     i -= 1
                     break
             i += 1
-        return len(inters) % 2 != 0
+
         # False if even, True if odd
+        return len(inters) % 2 != 0
 
     def get_area(self):
         """
@@ -318,3 +312,19 @@ def point_polygon_check(contour, point, on_edge_tolerance=1e-6):
                 inside = not inside
 
     return -1 if inside else 1
+
+
+def get_area(c):
+    """
+    returns area of shape
+
+    :return: float
+        area of shape
+    """
+    area_sum = 0
+    for i in range(len(c)):
+        if i == len(c) - 1:
+            area_sum += c[len(c) - 1][0] * c[0][1] - (c[len(c) - 1][1] * c[0][0])
+            continue
+        area_sum += c[i][0] * c[i + 1][1] - (c[i][1] * c[i + 1][0])
+    return 0.5 * area_sum

@@ -1,7 +1,7 @@
 from enum import Enum, auto
 
 
-class PipeType(Enum):
+class BHType(Enum):
     COAXIAL = "COAXIAL"
     DOUBLEUTUBEPARALLEL = "DOUBLEUTUBEPARALLEL"
     DOUBLEUTUBESERIES = "DOUBLEUTUBESERIES"
@@ -39,3 +39,22 @@ class FluidType(Enum):
     METHYLALCOHOL = auto()
     PROPYLENEGLYCOL = auto()
     WATER = auto()
+
+
+class SimCompType(Enum):
+    BUILDING = auto()
+    GROUND_HEAT_EXCHANGER = auto()
+    SOURCE_SINK_HEAT_EXCHANGER = auto()
+    HEAT_PUMP = auto()
+    ISOLATED_HORIZONTAL_PIPE = auto()
+    COUPLED_HORIZONTAL_PIPE = auto()
+
+
+class CentralLoopType(Enum):
+    ONEPIPE = auto()
+    TWOPIPE = auto()
+
+
+class SourceSinkOpMode(Enum):
+    SOURCE = auto()
+    SINK = auto()

@@ -1,6 +1,7 @@
 from math import inf, sqrt
 
 import numpy as np
+from numpy.typing import NDArray
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.enums import FlowConfigType, TimestepType
@@ -76,7 +77,7 @@ class RowWiseModifiedBisectionSearch:
         self.calculated_temperatures: dict = {}
         if advanced_tracking:
             self.advanced_tracking = [["TargetSpacing", "Field Specifier", "nbh", "ExcessTemperature"]]
-            self.checkedFields: list[np.ndarray[tuple[np.float64, np.float64]]] = []
+            self.checkedFields: list[NDArray[np.float64]] = []
         if search:
             self.selected_coordinates, self.selected_specifier = self.search()
             self.initialize_ghe(self.selected_coordinates, self.max_height, field_specifier=self.selected_specifier)
@@ -412,7 +413,7 @@ class RowWiseModifiedBisectionSearch:
 
             if self.advanced_tracking:
                 self.advanced_tracking.append(["N/A", "1X1", 1, t_e_single])
-                self.checkedFields.append([[0, 0]])
+                self.checkedFields.append(np.array([(0.0, 0.0)], dtype=np.float64))
             if t_e_single <= 0:
                 selected_temp_excess = t_e_single
                 selected_specifier = "1X1"

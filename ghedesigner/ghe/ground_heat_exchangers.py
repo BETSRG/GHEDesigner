@@ -5,7 +5,7 @@ from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d
 
 from ghedesigner.constants import SEC_IN_HR, TWO_PI, VERSION
-from ghedesigner.enums import PipeType, TimestepType
+from ghedesigner.enums import BHType, TimestepType
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_loads import HybridLoad
@@ -19,7 +19,7 @@ class GHE:
         self,
         v_flow_system: float,
         b_spacing: float,
-        bhe_type: PipeType,
+        bhe_type: BHType,
         fluid,
         borehole: Borehole,
         pipe: Pipe,
@@ -53,24 +53,26 @@ class GHE:
 
         # gFunction object
         self.gFunction = g_function
-        # Additional simulation parameters
-        self.start_month = start_month
-        self.end_month = end_month
 
-        # Hourly ground extraction loads
-        # Building cooling is negative, building heating is positive
-        self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
-        self.times = np.empty((0,), dtype=np.float64)
-        self.loading: list | None = None
+        if len(hourly_extraction_ground_loads) != 0:
+            # Additional simulation parameters
+            self.start_month = start_month
+            self.end_month = end_month
 
-        self.hybrid_load = HybridLoad(
-            self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
-        )
+            # Hourly ground extraction loads
+            # Building cooling is negative, building heating is positive
+            self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
+            self.times: np.ndarray = np.empty((0,), dtype=np.float64)
+            self.loading: np.ndarray | None = None
 
-        # List of heat pump exiting fluid temperatures
-        self.hp_eft: list[float] = []
-        # list of change in borehole wall temperatures
-        self.dTb: list[float] = []
+            self.hybrid_load = HybridLoad(
+                self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
+            )
+
+            # List of heat pump exiting fluid temperatures
+            self.hp_eft: list[float] = []
+            # list of change in borehole wall temperatures
+            self.dTb: list[float] = []
 
     def as_dict(self) -> dict:
         output = {
@@ -80,7 +82,6 @@ class GHE:
             "borehole_spacing": {"value": self.b_spacing, "units": "m"},
             "borehole_heat_exchanger": self.bhe.as_dict(),
             "equivalent_borehole_heat_exchanger": self.bhe_eq.as_dict(),
-            # "simulation_parameters": self.sim_params.as_dict(),
         }
         return output
 
@@ -175,7 +176,7 @@ class GHE:
             self.bhe.soil,
         )
 
-    def simulate(self, method: TimestepType):
+    def simulate(self, method: TimestepType) -> tuple[float, float]:
         b = self.b_spacing
         b_over_h = b / self.bhe.borehole.H
 
@@ -197,17 +198,17 @@ class GHE:
         elif method == TimestepType.HOURLY:
             n_months = self.end_month - self.start_month + 1
             n_hours = int(n_months / 12.0 * 8760.0)
-            q_dot = self.hourly_extraction_ground_loads
+            q_dot_list = self.hourly_extraction_ground_loads
             # How many times does q need to be repeated?
             n_years = ceil(n_hours / 8760)
-            if len(q_dot) // 8760 < n_years:
-                q_dot = q_dot * n_years
+            if len(q_dot_list) // 8760 < n_years:
+                q_dot_list = q_dot_list * n_years
             else:
-                n_hours = len(q_dot)
-            q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
+                n_hours = len(q_dot_list)
+            q_dot = -1.0 * np.array(q_dot_list)  # Convert loads to rejection
             # print("Times:",self.times)
             if len(self.times) == 0:
-                self.times = np.arange(1, n_hours + 1, 1)
+                self.times = np.arange(1, n_hours + 1, 1, dtype=np.float64)
             t = self.times
             self.loading = q_dot
 

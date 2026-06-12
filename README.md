@@ -21,7 +21,11 @@ as [GLHEPRO](https://betsrg.org/ground-loop-heat-exchanger-design-software), GHE
 - is highly automated. It can select library configurations or custom configurations and determine the final number and
   depth requirement of boreholes,
 - can make automated conversion of hourly loads to an improved hybrid time step
-  representation ([Cullin and Spitler 2011](https://doi.org/10.1016/j.geothermics.2011.01.001)), and
+  representation ([Cullin and Spitler 2011](https://doi.org/10.1016/j.geothermics.2011.01.001)),
+- can simulate district-scale systems with buildings, one-pipe or two-pipe central loops, multiple GHEs, and heat pump
+  performance maps or fixed COP load conversion,
+- can include buried horizontal distribution piping in district simulations when horizontal pipe heat transfer is part of
+  the model, and
 - is under continuing development at Oklahoma State University (OSU), Oak Ridge National Laboratory (ORNL), and the
   National Laboratory of the Rockies (NLR). (GLHEPRO remains under development at OSU.)
 
@@ -40,6 +44,10 @@ National Laboratory of the Rockies.
 Updates since [Cook (2021)](https://hdl.handle.net/11244/335489) include:
 
 - Development and addition of RowWise algorithm to efficiently place boreholes in the available land area.
+- Addition of system simulation inputs for buildings, heat pumps, central loops, source/sink heat exchangers, and
+  multiple GHEs.
+- Addition of optional system sizing workflows using BUPCRS or Nelder-Mead search methods.
+- Addition of optional buried horizontal pipe heat transfer calculations for district loop simulations.
 - Extensive refactoring for creating a user-focused, stable API.
 - Simplification of library dependencies.
 - Development of automated testing and deployment procedures.
@@ -83,14 +91,16 @@ Updates since [Cook (2021)](https://hdl.handle.net/11244/335489) include:
   - The RowWise method generates and searches custom borehole fields that make full use of the available property. The
     RowWise algorithms are described by [Spitler et al. (2022a)](https://shareok.org/handle/11244/336846).
 
-## Limitations
+## Current Scope and Limitations
 
-GHEDesigner does not have every feature that is found in a tool like GLHEPRO. Features that are currently missing
-include:
+GHEDesigner does not have every feature that is found in a tool like GLHEPRO. Current scope and limitations include:
 
-- Heat pumps are not modeled. Users input heat rejection/extraction rates.
-- An hourly simulation is available, but it doesn't make use of load aggregation, so is very slow.
-- GHEDesigner only covers vertical borehole ground heat exchangers. Horizontal ground heat exchangers are not treated.
+- Standalone GHE designs can use direct heat rejection/extraction loads. System simulations can convert building loads
+  with heat pump performance maps or fixed COP values.
+- Hybrid and hourly load methods are supported. Hourly simulations solve each hour directly and are generally more
+  computationally expensive than hybrid load aggregation.
+- Vertical borehole fields are the GHE technology sized by GHEDesigner. District simulations can include buried
+  horizontal distribution piping, but horizontal ground heat exchanger fields are not sized as GHE fields.
 - GHEDesigner does not calculate the head loss in the ground heat exchanger or warn the user that head loss may be
   excessive.
 - GHEDesigner does not have a graphical user interface.

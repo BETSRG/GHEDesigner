@@ -1,22 +1,18 @@
 #!/usr/bin/env python
-import logging
 import sys
-from json import loads
 from pathlib import Path
 
 import click
 from jsonschema.exceptions import ValidationError
 
-from ghedesigner.constants import VERSION
+from ghedesigner.constants import MONTHS_IN_YEAR, VERSION
+from ghedesigner.district_system import GHEHPSystem
 from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.manager import GroundHeatExchanger
-from ghedesigner.heat_pump import HeatPump
+from ghedesigner.heat_pump_fixed_cop import HeatPumpFixedCOP
 from ghedesigner.output.manager import OutputManager
-from ghedesigner.utilities import write_idf
+from ghedesigner.utilities import load_input_file, write_idf
 from ghedesigner.validate import validate_input_file
-
-logging.basicConfig(level=logging.WARN, format="%(message)s", datefmt="[%X]")
-logger = logging.getLogger(__name__)
 
 
 def run(input_file_path: Path, output_directory: Path) -> int:
@@ -27,14 +23,14 @@ def run(input_file_path: Path, output_directory: Path) -> int:
     :param output_directory: path to write output files. Output directory must be a valid path.
     """
 
-    # validate inputs against schema before doing anything
+    # validate inputs against the schema before doing anything
     try:
         validate_input_file(input_file_path)
     except ValidationError:
         return 1
 
     # read all inputs into a dict
-    full_inputs = loads(input_file_path.read_text())
+    full_inputs = load_input_file(input_file_path)
 
     # Read in all the inputs into small dicts
     # it is possible to define multiple fluids, GHEs, and boreholes in the inputs, I'm just taking the first for now
@@ -47,28 +43,27 @@ def run(input_file_path: Path, output_directory: Path) -> int:
     # any GHE instances found with pre_designed will just be ignored since they don't need anything added
     unsized_ghe_contains_loads = []
     for _, ghe_dict in full_inputs["ground_heat_exchanger"].items():
-        if "pre_designed" in ghe_dict:
-            continue  # no need for loads checks here, don't even add them to the contains_loads list
         if "loads" in ghe_dict:
             unsized_ghe_contains_loads.append(True)
+        else:
+            unsized_ghe_contains_loads.append(False)
     all_ghe_has_loads = all(unsized_ghe_contains_loads)
     no_ghe_has_loads = not any(unsized_ghe_contains_loads)
     building_input = "building" in full_inputs
     valid_load_source = all_ghe_has_loads ^ (building_input and no_ghe_has_loads)  # XOR because we don't want both
     if not valid_load_source:
-        logger.warning("Bad load specified, need exactly one of: loads in each ghe, or building object")
+        print("Bad load specified, need exactly one of: loads in each ghe, or building object")
 
     # Loop over the topology and init the found objects, for now just the GHE or a GHE with an HP
     topology_props: list[dict] = full_inputs["topology"]
     ghe_names = []
     building_names = []
+    central_loop = "central_loop" in full_inputs
     for component in topology_props:
         if component["type"] == "building":
             building_names.append(component["name"])
         elif component["type"] == "ground_heat_exchanger":
             ghe_names.append(component["name"])
-
-    # TODO: check on simulation_control, it's not required by schema because it may not be needed
 
     # do actions depending on what is provided in input
     if len(ghe_names) >= 1 and len(building_names) == 0:
@@ -77,14 +72,14 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             ghe_dict = full_inputs["ground_heat_exchanger"][ghe_name]
 
             if "loads" in ghe_dict and "file_path" in ghe_dict["loads"]:
-                if Path(ghe_dict["loads"]["file_path"]).is_absolute():
-                    ghe_dict["loads"]["file_path"] = str(Path(ghe_dict["loads"]["file_path"]).resolve())
+                if "column_name" in ghe_dict["loads"]:
+                    column = ghe_dict["loads"]["column_name"]
+                elif "column_number" in ghe_dict["loads"]:
+                    column = ghe_dict["loads"]["column_number"]
                 else:
-                    # relatives paths as referenced from input file
-                    input_file_dir = input_file_path.parent.resolve()
-                    relative_file_path = Path(ghe_dict["loads"]["file_path"])
-                    loads_path = input_file_dir / relative_file_path
-                    ghe_dict["loads"]["file_path"] = str(loads_path.resolve())
+                    raise ValueError(f"Column name or number must be provided for loads in GHE '{ghe_name}'")
+
+                ghe_dict["loads"]["column"] = column
 
             ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, full_inputs["fluid"])
             if "pre_designed" in ghe_dict:
@@ -93,39 +88,44 @@ def run(input_file_path: Path, output_directory: Path) -> int:
                 results.just_write_g_function(output_directory, log_time, g_values, g_bhw_values)
             else:
                 # TODO: Assert that "design" data is in the ghe object
-                search, search_time, _ = ghe.design_and_size_ghe(
-                    ghe_dict, full_inputs["simulation_control"]["sizing_months"]
-                )
+                ghe_dict["name"] = ghe_name
+                end_month = full_inputs["simulation_control"]["sizing_years"] * MONTHS_IN_YEAR
+                search, search_time, _ = ghe.design_and_size_ghe(end_month, ghe_dict=ghe_dict)
                 results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
                 results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
                 results.write_all_output_files(output_directory=output_directory, file_suffix="")
-    elif len(ghe_names) == 1 and len(building_names) == 1:
+    elif len(ghe_names) == 1 and len(building_names) == 1 and not central_loop:
         # we have a GHE and a building, grab both
         ghe_dict = full_inputs["ground_heat_exchanger"][ghe_names[0]]
+        ghe_dict["name"] = ghe_names[0]
         ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, full_inputs["fluid"])
-        single_building = full_inputs["building"][building_names[0]]
-        heat_pump = HeatPump(single_building["name"])
-        heat_pump.set_fixed_cop(single_building["cop"])
-        loads_file_path = Path(single_building["loads"]).resolve()
-        if not loads_file_path.exists():  # TODO: I'll try to find it relative to repo/tests/ for now...
-            this_file = Path(__file__).resolve()
-            ghe_designer_dir = this_file.parent
-            tests_dir = ghe_designer_dir / "tests"
-            loads_file_path = tests_dir / single_building["loads"]
-        heat_pump.set_loads_from_file(loads_file_path)
+        single_building_data = full_inputs["building"][building_names[0]]
+        heat_pump = HeatPumpFixedCOP(building_names[0], single_building_data)
         ghe_loads = heat_pump.get_ground_loads()
         if "pre_designed" in ghe_dict:
             log_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
             print(g_values, g_bhw_values)
         else:
-            search, search_time, _ = ghe.design_and_size_ghe(
-                ghe_dict, full_inputs["simulation_control"]["sizing_months"], loads_override=ghe_loads
-            )
+            end_month = full_inputs["simulation_control"]["sizing_years"] * MONTHS_IN_YEAR
+            search, search_time, _ = ghe.design_and_size_ghe(end_month, loads_override=ghe_loads, ghe_dict=ghe_dict)
             results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
             results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
             results.write_all_output_files(output_directory=output_directory, file_suffix="")
+    elif central_loop:
+        system = GHEHPSystem(input_file_path)
+        system.size_and_simulate()
+
+        if len(system.nbh_selections) != 0:
+            system.create_output(
+                output_directory / f"{input_file_path.stem}.csv",
+                output_path_2=output_directory / "Search_Summary.csv",
+                output_path_coordinates=output_directory / "coordinates.json",
+            )
+        else:
+            system.create_output(output_directory / f"{input_file_path.stem}.csv")
     else:
-        print("Bad input file, for now the only available configs are: 1 GLHE alone, or 1 GLHE and 1 building")
+        print("Bad input file, for now only the following configurations are available:")
+        print("1 GHE; 1 GHE + 1 Building; or N GHE + M Buildings + 1 Central Loop")
         return 1
     return 0
 
@@ -145,10 +145,10 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
     if validate_only:
         try:
             validate_input_file(input_path)
-            logger.info("Valid input file.")
+            print("Valid input file.")
             sys.exit(0)
         except ValidationError as ve:
-            logger.error(ve)
+            print(ve)
             sys.exit(1)
 
     if convert:
@@ -158,11 +158,11 @@ def run_manager_from_cli(input_path, output_directory, validate_only, convert):
                 print("Output converted to IDF objects.")
                 sys.exit(0)
             except Exception as e:  # noqa: BLE001
-                logger.warning(f"Conversion to IDF error: {e}")
+                print(f"Conversion to IDF error: {e}")
                 sys.exit(1)
 
         else:
-            print(f"Unsupported conversion format type: {format}", file=sys.stderr)
+            print(f"Unsupported conversion format type: {convert}", file=sys.stderr)
             sys.exit(1)
 
     if output_directory is None:

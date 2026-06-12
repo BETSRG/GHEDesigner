@@ -39,6 +39,11 @@ classifiers = [
 ghedesigner = "ghedesigner.main:run_manager_from_cli"
 
 [dependency-groups]
+app = [
+    "dash>=4.0.0",
+    "pandas<=3.0.0",
+    "plotly>=6.5.0"
+]
 dev = [
     "pre-commit>=4.5.1",
     "pytest>=9.0.2",
@@ -57,7 +62,7 @@ testpaths = "ghedesigner/tests"
 addopts = ["--cov=ghedesigner", "--cov-report=html"]
 
 [tool.uv]
-default-groups = ["dev", "docs"]
+default-groups = ["app", "dev", "docs"]
 
 [tool.uv.build-backend]
 module-root = ""
