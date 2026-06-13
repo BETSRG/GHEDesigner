@@ -73,8 +73,8 @@ class TestDistrictSys(GHEBaseTest):
             system = GHEHPSystem(one_pipe_path)
             system.size_and_simulate()
 
-        building1, building2 = [comp for comp in system.components if comp.comp_type == SimCompType.BUILDING]
-        ghe1, ghe2 = [comp for comp in system.components if comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER]
+        building1, building2 = (comp for comp in system.components if comp.comp_type == SimCompType.BUILDING)
+        ghe1, ghe2 = (comp for comp in system.components if comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER)
 
         return_fraction = system.loop_return_current_fraction
         expected_first_inlet = return_fraction * ghe2.t_out[1:] + (1.0 - return_fraction) * ghe2.t_out[:-1]
