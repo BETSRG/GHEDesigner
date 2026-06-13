@@ -2,7 +2,7 @@
 from ghedesigner.gui.main_window import GHEDesignerWindow
 
 
-def main_gui():
+def main_gui() -> None:
     GHEDesignerWindow().run()
 
 

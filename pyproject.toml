@@ -37,6 +37,7 @@ classifiers = [
 
 [project.scripts]
 ghedesigner = "ghedesigner.main:run_manager_from_cli"
+ghedesigner-gui = "ghedesigner.gui.runner:main_gui"
 
 [dependency-groups]
 app = [
@@ -66,4 +67,4 @@ default-groups = ["app", "dev", "docs"]
 
 [tool.uv.build-backend]
 module-root = ""
-source-exclude = ["ghedesigner/gui", "ghedesigner/tests"]
+source-exclude = ["ghedesigner/tests"]
