@@ -1,7 +1,9 @@
+import copy
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import numpy as np
 import pandas as pd
 import pytest
 from jsonschema.exceptions import ValidationError
@@ -36,6 +38,54 @@ class TestDistrictSys(GHEBaseTest):
         system.size_and_simulate()
         self.assert_simulation_output_matches_baseline(system, "simulate_1_pipe_1_ghe_1_bldg_district.csv")
 
+    def test_one_pipe_single_loop_startup_does_not_oscillate(self):
+        f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
+        system = GHEHPSystem(f_path_json)
+        system.size_and_simulate()
+
+        building = next(comp for comp in system.components if comp.comp_type == SimCompType.BUILDING)
+
+        assert np.all(np.diff(building.t_in[:20]) < 0.0)
+
+    def test_one_pipe_eft_state_flows_downstream_for_identical_series_components(self):
+        f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
+        data = json.loads(f_path_json.read_text())
+        data["topology"] = [
+            {"type": "building", "name": "building1"},
+            {"type": "ground_heat_exchanger", "name": "ghe1"},
+            {"type": "building", "name": "building2"},
+            {"type": "ground_heat_exchanger", "name": "ghe2"},
+        ]
+        data["building"]["building2"] = copy.deepcopy(data["building"]["building1"])
+        data["ground_heat_exchanger"]["ghe2"] = copy.deepcopy(data["ground_heat_exchanger"]["ghe1"])
+        data["simulation_control"]["search_method"] = "SIMULATION_ONLY"
+        data["simulation_control"]["constant_cop"] = True
+        for building_data in data["building"].values():
+            for load_data in building_data.values():
+                if isinstance(load_data, dict) and "file_path" in load_data:
+                    load_data["file_path"] = str((f_path_json.parent / load_data["file_path"]).resolve())
+                    load_data.pop("heat_pump_name", None)
+                    load_data["heat_pump_cop"] = 4.0
+
+        with TemporaryDirectory() as tmp_dir:
+            one_pipe_path = Path(tmp_dir) / "one_pipe_identical_series.json"
+            one_pipe_path.write_text(json.dumps(data))
+            system = GHEHPSystem(one_pipe_path)
+            system.size_and_simulate()
+
+        building1, building2 = [comp for comp in system.components if comp.comp_type == SimCompType.BUILDING]
+        ghe1, ghe2 = [comp for comp in system.components if comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER]
+
+        return_fraction = system.loop_return_current_fraction
+        expected_first_inlet = return_fraction * ghe2.t_out[1:] + (1.0 - return_fraction) * ghe2.t_out[:-1]
+
+        assert np.allclose(building1.t_out, ghe1.t_in)
+        assert np.allclose(ghe1.t_out, building2.t_in)
+        assert np.allclose(building2.t_out, ghe2.t_in)
+        assert np.allclose(expected_first_inlet, building1.t_in[1:])
+        assert not np.allclose(building1.t_in, building2.t_in)
+        assert not np.allclose(ghe1.t_in, ghe2.t_in)
+
     def test_simulate_1_pipe_1_ghe_1_hx_1_bldg_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_hx_1_bldg_district.json"
         system = GHEHPSystem(f_path_json)
@@ -48,7 +98,7 @@ class TestDistrictSys(GHEBaseTest):
         system.size_and_simulate()
         self.assert_simulation_output_matches_baseline(system, "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district.csv")
 
-    def test_two_pipe_inlet_indices_are_assigned(self):
+    def test_two_pipe_inlet_indices_follow_topology_order(self):
         f_path_json = self.demos_path / "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json"
         system = GHEHPSystem(f_path_json)
 
@@ -57,9 +107,22 @@ class TestDistrictSys(GHEBaseTest):
 
         assert buildings
         assert ghes
-        assert {comp.inlet_index for comp in buildings} == {buildings[0].row_index}
-        assert {comp.inlet_index for comp in ghes} == {ghes[0].row_index}
+        assert [comp.inlet_index for comp in buildings] == [comp.row_index for comp in buildings]
+        assert [comp.inlet_index for comp in ghes] == [comp.row_index for comp in ghes]
+        assert len({comp.inlet_index for comp in buildings}) == len(buildings)
+        assert len({comp.inlet_index for comp in ghes}) == len(ghes)
         assert all(isinstance(comp.inlet_index, int) for comp in buildings + ghes)
+
+    def test_two_pipe_eft_state_flows_downstream(self):
+        f_path_json = self.demos_path / "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json"
+        system = GHEHPSystem(f_path_json)
+        system.size_and_simulate()
+
+        buildings = [comp for comp in system.components if comp.comp_type == SimCompType.BUILDING]
+        ghes = [comp for comp in system.components if comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER]
+
+        assert not np.allclose(buildings[0].t_in, buildings[2].t_in)
+        assert not np.allclose(ghes[0].t_in, ghes[1].t_in)
 
     def test_two_pipe_non_constant_cop_building_matrix_is_generated(self):
         f_path_json = self.demos_path / "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json"

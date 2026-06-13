@@ -767,7 +767,7 @@ class GHX(BaseSimComp):
     def generate_matrix_fixed_loads(
         self,
         _mass_bldg,
-        mass_loop,
+        _mass_loop,
         _mass_loop_bldg,
         mass_flow_ghe,
         mass_loop_ghe,
@@ -827,10 +827,10 @@ class GHX(BaseSimComp):
             self.convolution_completed = True
             return [0.0, 0.0]
         elif configuration == CentralLoopType.ONEPIPE:
-            # m_ghe * (T_out - T_in) = m_loop * (T_mix_out - T_in) assuming constant c_p
-            row_1[self.row_index] = mass_loop - mass_flow_ghe
-            row_1[self.row_index + 1] = mass_flow_ghe
-            row_1[self.downstream_index] = -mass_loop
+            # In one-pipe ordered topologies, the downstream component receives
+            # this GHE outlet directly rather than a bypass-mixed loop state.
+            row_1[self.row_index + 1] = 1.0
+            row_1[self.downstream_index] = -1.0
             rhs_1 = 0.0
 
             # 2 * T_mean = T_in + T_out
@@ -857,7 +857,15 @@ class GHX(BaseSimComp):
         return [row_1, row_2], [rhs_1, rhs_2]
 
     def generate_matrix(
-        self, _mass_bldg, mass_loop, _mass_loop_bldg, mass_flow_ghe, mass_loop_ghe, idx_timestep, configuration, _method
+        self,
+        _mass_bldg,
+        _mass_loop,
+        _mass_loop_bldg,
+        mass_flow_ghe,
+        mass_loop_ghe,
+        idx_timestep,
+        configuration,
+        _method,
     ):
         row_1 = np.zeros(self.matrix_size, dtype=np.float64)
         row_2 = np.zeros(self.matrix_size, dtype=np.float64)
@@ -899,9 +907,10 @@ class GHX(BaseSimComp):
         else:
             _ = self.calc_history_term(idx_timestep)
             if configuration == CentralLoopType.ONEPIPE:
-                row_1[self.row_index] = (mass_loop - mass_flow_ghe) * self.cp
-                row_1[self.row_index + 3] = mass_flow_ghe * self.cp
-                row_1[self.downstream_index] = -mass_loop * self.cp
+                # In one-pipe ordered topologies, the downstream component receives
+                # this GHE outlet directly rather than a bypass-mixed loop state.
+                row_1[self.row_index + 3] = 1.0
+                row_1[self.downstream_index] = -1.0
 
                 row_2[self.row_index + 1] = 1
                 row_2[self.row_index + 2] = self.c_n[idx_timestep - 1]
@@ -1664,6 +1673,12 @@ class GHEHPSystem:
             + SourceSinkHeatExchanger.MATRIX_ROWS * self.num_heat_exchangers
             + sum(pipe.matrix_rows for pipe in horizontal_pipes)
         )
+        self.loop_return_index: int | None = None
+        if self.loop_config == CentralLoopType.ONEPIPE:
+            self.loop_return_index = self.matrix_size
+            self.matrix_size += 1
+
+        self.loop_return_current_fraction = 0.9
 
         self.m_flow_loop = np.zeros(self.num_timesteps)
         self.pump_power_loop = np.zeros(self.num_timesteps)
@@ -1732,27 +1747,21 @@ class GHEHPSystem:
                 idx_comp += rows_required
             this_comp.downstream_index = idx_comp
 
-        # set the last component to loop back to the start
-        self.components[-1].downstream_index = 0
+        # For one-pipe ordered topologies, the last component returns to a
+        # one-timestep delayed loop state instead of closing an instantaneous
+        # algebraic cycle back to the first component.
+        if self.loop_config == CentralLoopType.ONEPIPE:
+            self.components[-1].downstream_index = self.loop_return_index
+        else:
+            self.components[-1].downstream_index = 0
 
-        # Assigning inlet_index
-        common_inlet_index_bldg = None
-        common_inlet_index_ghx = None
-        if self.loop_config == CentralLoopType.TWOPIPE:
-            common_inlet_index_bldg = next(
-                (comp.row_index for comp in self.components if comp.comp_type == SimCompType.BUILDING),
-                None,
-            )
-            common_inlet_index_ghx = next(
-                (comp.row_index for comp in self.components if comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER),
-                None,
-            )
-
+        # Assign inlet indices for component branch calculations.
+        # For TWOPIPE loops, each building/GHE inlet is the topology-local upstream
+        # state. This keeps the component state moving downstream instead of using
+        # one shared building inlet and one shared GHE inlet for the whole group.
         for i, comp in enumerate(self.components):
-            if comp.comp_type == SimCompType.BUILDING:
-                comp.inlet_index = common_inlet_index_bldg
-            elif comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
-                comp.inlet_index = common_inlet_index_ghx
+            if comp.comp_type in (SimCompType.BUILDING, SimCompType.GROUND_HEAT_EXCHANGER):
+                comp.inlet_index = comp.row_index
             elif comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
                 # Transit lines simply take the outlet of the component right before them in the topology
                 comp.inlet_index = self.components[i - 1].downstream_index
@@ -2161,6 +2170,21 @@ class GHEHPSystem:
         else:
             self.solve_system_standard()
 
+    def _append_one_pipe_return_row(self, matrix_rows, matrix_rhs, idx_timestep, initial_loop_temperature):
+        if self.loop_config != CentralLoopType.ONEPIPE:
+            return
+
+        row = np.zeros(self.matrix_size, dtype=float)
+        row[self.components[0].row_index] = 1.0
+        if self.loop_return_index is not None:
+            row[self.loop_return_index] = -self.loop_return_current_fraction
+        matrix_rows.append(row)
+
+        previous_return_temperature = (
+            initial_loop_temperature if idx_timestep == 1 else self.loop_return_t[idx_timestep - 2]
+        )
+        matrix_rhs.append((1.0 - self.loop_return_current_fraction) * previous_return_temperature)
+
     def solve_system_fixed_loads(self):
         t_start = time.perf_counter()
         self.nbh_total = sum([x.nbh for x in self.ground_heat_exchangers])
@@ -2176,6 +2200,7 @@ class GHEHPSystem:
         for building in self.buildings:
             building.generate_constant_cop_loads(average_ugt)
             total_loads += building.loads
+        self.loop_return_t = np.full(self.num_timesteps, average_ugt, dtype=float)
         for ghe in self.ground_heat_exchangers:
             ghe.generate_matrix_fixed_loads(
                 0.0,
@@ -2191,6 +2216,7 @@ class GHEHPSystem:
         for idx_timestep in range(1, self.num_timesteps + 1):  # loop over all timestep
             matrix_rows = []
             matrix_rhs = []
+            self._append_one_pipe_return_row(matrix_rows, matrix_rhs, idx_timestep, average_ugt)
             total_hp_flow = 0
             m_bldg_cum = 0
             m_ghe_cum = 0
@@ -2260,6 +2286,8 @@ class GHEHPSystem:
 
             # save output data
             self.m_flow_loop[idx_timestep - 1] = mass_loop
+            if self.loop_config == CentralLoopType.ONEPIPE and self.loop_return_index is not None:
+                self.loop_return_t[idx_timestep - 1] = x_vector[self.loop_return_index]
 
             for this_comp in self.components:
                 row_index = this_comp.row_index
@@ -2309,6 +2337,8 @@ class GHEHPSystem:
             elif isinstance(this_comp, (Building, SourceSinkHeatExchanger)):
                 this_comp.cp = self.cp
 
+        self.loop_return_t = np.full(self.num_timesteps, average_ugt, dtype=float)
+
         if self.constant_cop:
             for building in self.buildings:
                 building.generate_constant_cop_loads(average_ugt)
@@ -2317,6 +2347,7 @@ class GHEHPSystem:
         for idx_timestep in range(1, self.num_timesteps + 1):  # loop over all timestep
             matrix_rows = []
             matrix_rhs = []
+            self._append_one_pipe_return_row(matrix_rows, matrix_rhs, idx_timestep, average_ugt)
             total_hp_flow = 0
             m_bldg_cum = 0
             m_ghe_cum = 0
@@ -2374,6 +2405,8 @@ class GHEHPSystem:
 
             # save output data
             self.m_flow_loop[idx_timestep - 1] = mass_loop
+            if self.loop_config == CentralLoopType.ONEPIPE and self.loop_return_index is not None:
+                self.loop_return_t[idx_timestep - 1] = x_vector[self.loop_return_index]
 
             for this_comp in self.components:
                 row_index = this_comp.row_index
