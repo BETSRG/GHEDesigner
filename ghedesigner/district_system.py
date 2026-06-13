@@ -983,6 +983,9 @@ class Building(BaseSimComp):
             self.max_eft = 0.0
             self.min_eft = 0.0
 
+        self.design_pressure_loss = bldg_data.get("design_pressure_loss", 0.0)
+        self.pump_efficiency = bldg_data.get("pump_efficiency", 0.0)
+
         self.heating_fixed_cop: float | None = None
         self.hp_htg: HPmodel
         if self.heating_exists:
@@ -1252,21 +1255,37 @@ class Building(BaseSimComp):
 
         self.power_hp_tot = self.power_hp_clg + self.power_hp_htg
 
-        # power consumed by circulating pump
+        self.power_circ_pump = np.zeros(self.num_timesteps, dtype=float)
         if self.heating_exists:
             if self.heating_fixed_cop is not None:
-                self.power_circ_pump = 0.0
-            else:
-                self.power_circ_pump = (
-                    self.m_flow / (self.fluid.rho * self.hp_htg.pump_efficiency) * self.hp_htg.design_pressure_loss
+                heating_pump_power = self._calc_circulation_pump_power(
+                    self.design_pressure_loss,
+                    self.pump_efficiency,
                 )
+            else:
+                heating_pump_power = self._calc_circulation_pump_power(
+                    self.hp_htg.design_pressure_loss,
+                    self.hp_htg.pump_efficiency,
+                )
+            self.power_circ_pump = np.where(np.abs(self.htg_vals) > 0.0, heating_pump_power, self.power_circ_pump)
+
         if self.cooling_exists:
-            if self.cooling_fixed_cop:
-                self.power_circ_pump = 0.0
-            else:
-                self.power_circ_pump = (
-                    self.m_flow / (self.fluid.rho * self.hp_clg.pump_efficiency) * self.hp_clg.design_pressure_loss
+            if self.cooling_fixed_cop is not None:
+                cooling_pump_power = self._calc_circulation_pump_power(
+                    self.design_pressure_loss,
+                    self.pump_efficiency,
                 )
+            else:
+                cooling_pump_power = self._calc_circulation_pump_power(
+                    self.hp_clg.design_pressure_loss,
+                    self.hp_clg.pump_efficiency,
+                )
+            self.power_circ_pump = np.where(np.abs(self.clg_vals) > 0.0, cooling_pump_power, self.power_circ_pump)
+
+    def _calc_circulation_pump_power(self, design_pressure_loss: float, pump_efficiency: float):
+        if design_pressure_loss <= 0.0 or pump_efficiency <= 0.0:
+            return np.zeros(self.num_timesteps, dtype=float)
+        return self.m_flow / (self.fluid.rho * pump_efficiency) * design_pressure_loss
 
 
 class HPmodel:

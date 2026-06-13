@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ctypes
 import json
+import re
 import sys
 from contextlib import suppress
 from pathlib import Path
@@ -46,6 +47,7 @@ from ghedesigner.main import run as run_ghedesigner
 NODE_WIDTH = 180
 NODE_HEIGHT = 66
 NODE_RADIUS = 10
+DEFAULT_GUI_RUN_STEM = "ghedesigner_gui_run"
 
 
 def _enable_dpi_awareness() -> None:
@@ -58,6 +60,17 @@ def _enable_dpi_awareness() -> None:
 
 
 _enable_dpi_awareness()
+
+
+def demo_style_stem(value: str) -> str:
+    stem = re.sub(r"[^A-Za-z0-9]+", "_", value.strip().lower()).strip("_")
+    return stem or DEFAULT_GUI_RUN_STEM
+
+
+def build_run_paths(output_parent: Path, project_title: str) -> tuple[Path, Path, str]:
+    stem = demo_style_stem(project_title)
+    output_dir = output_parent if output_parent.name == stem else output_parent / stem
+    return output_dir, output_dir / f"{stem}.json", stem
 
 
 class GHEDesignerWindow(Tk):
@@ -620,10 +633,10 @@ class GHEDesignerWindow(Tk):
             messagebox.showerror("Simulation input references missing files", "\n".join(path_messages))
             return
 
-        output_dir = Path(output_dir_text).expanduser().resolve()
+        output_parent = Path(output_dir_text).expanduser().resolve()
+        output_dir, input_path, run_stem = build_run_paths(output_parent, self.document.title)
         try:
             output_dir.mkdir(parents=True, exist_ok=True)
-            input_path = output_dir / "ghedesigner_gui_input.json"
             input_path.write_text(json.dumps(exported, indent=2))
         except OSError as error:
             messagebox.showerror("Output folder error", str(error))
@@ -631,7 +644,7 @@ class GHEDesignerWindow(Tk):
 
         self.simulation_running = True
         self.execute_button.configure(state="disabled")
-        self._set_status(f"Running simulation with {input_path} ...")
+        self._set_status(f"Running {run_stem} with {input_path} ...")
         Thread(target=self._run_simulation_worker, args=(input_path, output_dir), daemon=True).start()
 
     def _run_simulation_worker(self, input_path: Path, output_dir: Path) -> None:

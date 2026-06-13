@@ -42,6 +42,8 @@ def _default_component_config(component_type: ComponentType) -> dict[str, Any]:
                 "column_name": "B1Z1_HPClgLd_W",
                 "heat_pump_cop": 4.5,
             },
+            "design_pressure_loss": 25000,
+            "pump_efficiency": 0.5,
         }
     if component_type == "ground_heat_exchanger":
         return {
@@ -204,6 +206,7 @@ def default_settings() -> dict[str, Any]:
             "simulation_years": 1,
             "load_method": "HOURLY",
             "search_method": "SIMULATION_ONLY",
+            "constant_cop": True,
         },
         "ground_temperature_model": {
             "annual_average": 10.0,

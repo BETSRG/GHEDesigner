@@ -734,6 +734,12 @@
           },
           "total_load": {
             "$ref": "#/$defs/load_inputs"
+          },
+          "design_pressure_loss": {
+            "$ref": "#/$defs/design_pressure_loss"
+          },
+          "pump_efficiency": {
+            "$ref": "#/$defs/pump_efficiency"
           }
         },
         "oneOf": [
@@ -750,6 +756,12 @@
               },
               "min_eft": {
                 "$ref": "#/$defs/min_eft"
+              },
+              "design_pressure_loss": {
+                "$ref": "#/$defs/design_pressure_loss"
+              },
+              "pump_efficiency": {
+                "$ref": "#/$defs/pump_efficiency"
               }
             },
             "required": ["cooling_load", "heating_load"],
@@ -765,6 +777,12 @@
               },
               "min_eft": {
                 "$ref": "#/$defs/min_eft"
+              },
+              "design_pressure_loss": {
+                "$ref": "#/$defs/design_pressure_loss"
+              },
+              "pump_efficiency": {
+                "$ref": "#/$defs/pump_efficiency"
               }
             },
             "required": ["total_load"],
@@ -780,6 +798,12 @@
               },
               "min_eft": {
                 "$ref": "#/$defs/min_eft"
+              },
+              "design_pressure_loss": {
+                "$ref": "#/$defs/design_pressure_loss"
+              },
+              "pump_efficiency": {
+                "$ref": "#/$defs/pump_efficiency"
               }
             },
             "required": ["cooling_load"],
@@ -795,6 +819,12 @@
               },
               "min_eft": {
                 "$ref": "#/$defs/min_eft"
+              },
+              "design_pressure_loss": {
+                "$ref": "#/$defs/design_pressure_loss"
+              },
+              "pump_efficiency": {
+                "$ref": "#/$defs/pump_efficiency"
               }
             },
             "required": ["heating_load"],

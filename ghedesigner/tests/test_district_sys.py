@@ -141,6 +141,33 @@ class TestDistrictSys(GHEBaseTest):
         assert system.coordinate_locations == {}
         assert system.total_loads.shape == (8760,)
 
+    def test_fixed_cop_building_pump_power_uses_building_pump_parameters(self):
+        f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
+        data = json.loads(f_path_json.read_text())
+        data["simulation_control"]["constant_cop"] = True
+        for building_data in data["building"].values():
+            building_data["design_pressure_loss"] = 25000.0
+            building_data["pump_efficiency"] = 0.5
+            for load_data in building_data.values():
+                if isinstance(load_data, dict) and "file_path" in load_data:
+                    load_data["file_path"] = str((f_path_json.parent / load_data["file_path"]).resolve())
+                    load_data.pop("heat_pump_name", None)
+                    load_data["heat_pump_cop"] = 4.0
+
+        with TemporaryDirectory() as tmp_dir:
+            fixed_cop_path = Path(tmp_dir) / "fixed_cop_pump_power.json"
+            fixed_cop_path.write_text(json.dumps(data))
+            system = GHEHPSystem(fixed_cop_path)
+
+        building = next(comp for comp in system.components if comp.comp_type == SimCompType.BUILDING)
+        building.cp = system.cp
+        building.calc_mass_flow_rate(building.t_in[0], 0)
+        building.calc_energy()
+
+        expected = building.m_flow[0] / (building.fluid.rho * 0.5) * 25000.0
+        assert building.power_circ_pump[0] == pytest.approx(expected)
+        assert building.power_circ_pump[0] > 0.0
+
     def test_fixed_loads_simulation_uses_valid_building_flow_indices(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
         data = json.loads(f_path_json.read_text())
