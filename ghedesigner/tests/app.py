@@ -11,6 +11,7 @@ Features
 - Linked x-axis: zoom/pan any pane keeps all panes aligned.
 """
 
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,7 @@ from plotly.subplots import make_subplots
 # ----------------------------------------------------------------------
 # Defaults to the example CSVs placed next to this app.py.
 HERE = Path(__file__).resolve().parent
+CONFIG_FILE = HERE / "test_outputs" / "app_paths.json"
 
 
 def dataset_label(path: Path) -> str:
@@ -35,13 +37,79 @@ def dataset_label(path: Path) -> str:
     return label.replace("_", " ")
 
 
+def _unique_label(path: Path, existing: set[str]) -> str:
+    base_label = dataset_label(path)
+    label = base_label
+    if label in existing:
+        label = f"{base_label} ({path.parent.name})"
+    counter = 2
+    while label in existing:
+        label = f"{base_label} ({path.parent.name} {counter})"
+        counter += 1
+    existing.add(label)
+    return label
+
+
 def discover_data_files() -> dict[str, Path]:
     test_data = HERE / "test_data"
     files = sorted(test_data.glob("simulate*.csv"), key=lambda p: p.stem)
-    return {dataset_label(path): path for path in files}
+    existing: set[str] = set()
+    return {_unique_label(path, existing): path for path in files}
+
+
+def split_path_entries(value: str | None) -> list[Path]:
+    entries = []
+    for raw_entry in (value or "").replace(",", "\n").splitlines():
+        entry = raw_entry.strip()
+        if entry:
+            entries.append(Path(entry).expanduser())
+    return entries
+
+
+def discover_extra_data_files(value: str | None, existing_labels: set[str]) -> tuple[dict[str, Path], list[str]]:
+    files: list[Path] = []
+    messages: list[str] = []
+    for path in split_path_entries(value):
+        if path.is_file():
+            if path.suffix.lower() == ".csv":
+                files.append(path)
+            else:
+                messages.append(f"Skipped non-CSV file: {path}")
+        elif path.is_dir():
+            files.extend(sorted(path.rglob("*.csv"), key=lambda p: (str(p.parent), p.name)))
+        else:
+            messages.append(f"Path not found: {path}")
+
+    discovered: dict[str, Path] = {}
+    seen_paths: set[Path] = set()
+    for path in files:
+        resolved = path.resolve()
+        if resolved in seen_paths:
+            continue
+        seen_paths.add(resolved)
+        discovered[_unique_label(path, existing_labels)] = path
+    return discovered, messages
+
+
+def load_config() -> dict[str, Any]:
+    if not CONFIG_FILE.is_file():
+        return {}
+    try:
+        return json.loads(CONFIG_FILE.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def save_config(extra_paths: str | None) -> None:
+    try:
+        CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        CONFIG_FILE.write_text(json.dumps({"extra_paths": extra_paths or ""}, indent=2))
+    except OSError as exc:
+        print(f"Failed to save app path config: {exc}")
 
 
 DATA_FILES: dict[str, Path] = discover_data_files()
+INITIAL_EXTRA_PATHS = str(load_config().get("extra_paths", ""))
 
 X_COL = "Time [hr]"
 
@@ -253,7 +321,7 @@ app.layout = html.Div(
         dcc.Store(id="columns-store"),
         dcc.Store(id="panes-store"),
         dcc.Store(id="axis-store"),
-        dcc.Interval(id="poll-interval", interval=300000, n_intervals=0),  # 2s polling
+        dcc.Interval(id="poll-interval", interval=300000, n_intervals=0),  # 300s polling
         html.H1("District Time-Series Dashboard", style={"marginBottom": "0.25rem"}),
         html.P("Multi-pane time-series explorer (linked x-axis, live reload).", style={"color": "#555"}),
         html.Div(
@@ -271,7 +339,7 @@ app.layout = html.Div(
                         dcc.Dropdown(
                             id="dataset-dropdown",
                             options=[{"label": name, "value": name} for name in DATA_FILES],
-                            value=next(iter(DATA_FILES.keys())),
+                            value=next(iter(DATA_FILES.keys()), None),
                             clearable=False,
                         ),
                     ]
@@ -306,6 +374,21 @@ app.layout = html.Div(
                 ),
             ],
         ),
+        html.Div(
+            style={"marginBottom": "0.75rem"},
+            children=[
+                html.Label("Additional output CSV files or folders", style={"fontWeight": "600"}),
+                dcc.Textarea(
+                    id="extra-paths",
+                    value=INITIAL_EXTRA_PATHS,
+                    placeholder=(
+                        "Enter one CSV file or output folder per line. "
+                        "Directories are scanned recursively for CSV files."
+                    ),
+                    style={"width": "100%", "height": "5rem", "marginTop": "0.25rem"},
+                ),
+            ],
+        ),
         html.Div(id="reload-status", style={"color": "#555", "marginBottom": "0.75rem"}),
         html.Hr(style={"margin": "1rem 0"}),
         html.Div(id="pane-controls", style={"display": "flex", "flexDirection": "column", "gap": "0.75rem"}),
@@ -321,25 +404,50 @@ app.layout = html.Div(
 @app.callback(
     Output("datasets-store", "data"),
     Output("columns-store", "data"),
+    Output("dataset-dropdown", "options"),
+    Output("dataset-dropdown", "value"),
     Output("reload-status", "children"),
     Input("poll-interval", "n_intervals"),
     Input("reload-button", "n_clicks"),
+    State("extra-paths", "value"),
+    State("dataset-dropdown", "value"),
     prevent_initial_call=False,
 )
-def load_all(_n_intervals: int, _n_clicks: int):
+def load_all(_n_intervals: int, _n_clicks: int, extra_paths: str | None, selected_dataset: str | None):
+    discovered = dict(DATA_FILES)
+    extra_files, messages = discover_extra_data_files(extra_paths, set(discovered))
+    discovered.update(extra_files)
+
     datasets: dict[str, list[dict[str, Any]]] = {}
     columns: dict[str, list[str]] = {}
-    try:
-        for name, path in DATA_FILES.items():
+    failed: list[str] = []
+    for name, path in discovered.items():
+        try:
             df = load_dataset(path)
-            datasets[name] = [{str(k): v for k, v in record.items()} for record in df.to_dict("records")]
-            columns[name] = [c for c in df.columns if c != X_COL]
-    except (FileNotFoundError, OSError, ValueError, pd.errors.ParserError) as exc:
+        except (FileNotFoundError, OSError, ValueError, pd.errors.ParserError) as exc:
+            failed.append(f"{name}: {exc}")
+            continue
+        datasets[name] = [{str(k): v for k, v in record.items()} for record in df.to_dict("records")]
+        columns[name] = [c for c in df.columns if c != X_COL]
+
+    if not datasets:
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        return no_update, no_update, f"Reload failed at {ts}: {exc}"
+        detail = "; ".join(messages + failed)
+        return no_update, no_update, no_update, no_update, f"Reload failed at {ts}: no usable datasets found. {detail}"
+
+    save_config(extra_paths)
+    options = [{"label": name, "value": name} for name in datasets]
+    selected = selected_dataset if selected_dataset in datasets else next(iter(datasets))
 
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return datasets, columns, f"Loaded/updated datasets at {ts}."
+    status_parts = [f"Loaded/updated {len(datasets)} dataset(s) at {ts}."]
+    if messages:
+        status_parts.append("Path notes: " + "; ".join(messages))
+    if failed:
+        status_parts.append("Skipped files: " + "; ".join(failed[:5]))
+        if len(failed) > 5:
+            status_parts.append(f"... and {len(failed) - 5} more.")
+    return datasets, columns, options, selected, " ".join(status_parts)
 
 
 # ----------------------------------------------------------------------
