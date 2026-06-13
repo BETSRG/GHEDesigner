@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import ctypes
 import json
-import re
 import sys
 from contextlib import suppress
+from functools import partial
 from pathlib import Path
 from threading import Thread
 from tkinter import (
@@ -20,6 +20,7 @@ from tkinter import (
     Label,
     LabelFrame,
     Menu,
+    Misc,
     PanedWindow,
     Scrollbar,
     StringVar,
@@ -41,13 +42,13 @@ from ghedesigner.gui.ghedesigner_adapter import (
     validate_file_paths,
     validate_network,
 )
-from ghedesigner.gui.models import COMPONENT_TYPES, NODE_COLORS, NetworkDocument
+from ghedesigner.gui.models import COMPONENT_TYPES, NODE_COLORS, ComponentType, NetworkDocument
+from ghedesigner.gui.run_paths import build_run_paths
 from ghedesigner.main import run as run_ghedesigner
 
 NODE_WIDTH = 180
 NODE_HEIGHT = 66
 NODE_RADIUS = 10
-DEFAULT_GUI_RUN_STEM = "ghedesigner_gui_run"
 
 
 def _enable_dpi_awareness() -> None:
@@ -60,17 +61,6 @@ def _enable_dpi_awareness() -> None:
 
 
 _enable_dpi_awareness()
-
-
-def demo_style_stem(value: str) -> str:
-    stem = re.sub(r"[^A-Za-z0-9]+", "_", value.strip().lower()).strip("_")
-    return stem or DEFAULT_GUI_RUN_STEM
-
-
-def build_run_paths(output_parent: Path, project_title: str) -> tuple[Path, Path, str]:
-    stem = demo_style_stem(project_title)
-    output_dir = output_parent if output_parent.name == stem else output_parent / stem
-    return output_dir, output_dir / f"{stem}.json", stem
 
 
 class GHEDesignerWindow(Tk):
@@ -169,7 +159,7 @@ class GHEDesignerWindow(Tk):
     def _build_palette(self, parent: Frame) -> None:
         ttk.Label(parent, text="Components", font=("TkDefaultFont", 11, "bold")).pack(anchor="w", pady=(0, 8))
         for component_type, label in COMPONENT_TYPES.items():
-            ttk.Button(parent, text=f"Add {label}", command=lambda c=component_type: self._add_component(c)).pack(
+            ttk.Button(parent, text=f"Add {label}", command=partial(self._add_component, component_type)).pack(
                 fill="x", pady=3
             )
 
@@ -231,7 +221,7 @@ class GHEDesignerWindow(Tk):
         preview_frame.pack(fill=BOTH, expand=True, pady=(8, 0))
         self.preview_text = self._scrolling_text(preview_frame, height=14)
 
-    def _scrolling_text(self, parent: Frame, height: int) -> Text:
+    def _scrolling_text(self, parent: Misc, height: int) -> Text:
         frame = Frame(parent)
         frame.pack(fill=BOTH, expand=True)
         scrollbar = Scrollbar(frame, orient=VERTICAL)
@@ -247,7 +237,7 @@ class GHEDesignerWindow(Tk):
         self.bind("<Delete>", lambda _event: self._delete_selected())
         self.bind("<Escape>", lambda _event: self._cancel_connection())
 
-    def _add_component(self, component_type: str) -> None:
+    def _add_component(self, component_type: ComponentType) -> None:
         offset = len(self.document.nodes) * 28
         node = self.document.add_node(component_type, 180 + offset, 180 + offset)
         self.selected_node_id = node.id
@@ -322,7 +312,8 @@ class GHEDesignerWindow(Tk):
                 self.document.set_downstream(self.connect_source_id, node_id)
                 source = self.document.find_node(self.connect_source_id)
                 target = self.document.find_node(node_id)
-                self._set_status(f"Set downstream: {source.name} -> {target.name}")
+                if source is not None and target is not None:
+                    self._set_status(f"Set downstream: {source.name} -> {target.name}")
             except ValueError as error:
                 self._set_status(str(error))
             self.connect_source_id = None
@@ -379,7 +370,8 @@ class GHEDesignerWindow(Tk):
     def _apply_component_edits(self) -> None:
         if self._sync_selected_component_edits():
             node = self.document.find_node(self.selected_node_id)
-            self._set_status(f"Updated {node.name}")
+            if node is not None:
+                self._set_status(f"Updated {node.name}")
             self._redraw()
 
     def _sync_selected_component_edits(self) -> bool:

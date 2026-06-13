@@ -4,8 +4,8 @@ from pathlib import Path
 from jsonschema import Draft7Validator
 
 from ghedesigner.gui.ghedesigner_adapter import export_to_ghedesigner
-from ghedesigner.gui.main_window import build_run_paths, demo_style_stem
 from ghedesigner.gui.models import NetworkDocument
+from ghedesigner.gui.run_paths import build_run_paths, demo_style_stem
 
 
 def test_gui_run_paths_follow_demo_stem_layout(tmp_path: Path):
