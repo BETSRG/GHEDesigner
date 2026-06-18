@@ -20,7 +20,7 @@ from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads
 from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Soil
-from ghedesigner.utilities import get_loads, load_input_file
+from ghedesigner.utilities import HPmodel, get_loads, load_input_file
 
 BOREHOLES_PER_SQUARE_METER = 0.0494  # This is the tightest boreholes can be infinitely
 # tessellated with 4.5m spacing (to my knowledge).
@@ -718,6 +718,11 @@ class GHX(BaseSimComp):
             self.gfunction_evals = self.g(self.dim_less_time)
             self.c_n = self.calc_cn_constant()
 
+        self.t_in = np.full(self.num_timesteps, self.ghe_manager.soil.ugt, dtype=float)
+        self.t_mean = np.full(self.num_timesteps, self.ghe_manager.soil.ugt, dtype=float)
+        self.t_mix_out = np.full(self.num_timesteps, self.ghe_manager.soil.ugt, dtype=float)
+        self.t_out = np.full(self.num_timesteps, self.ghe_manager.soil.ugt, dtype=float)
+
     def calc_cn_constant(self):
         """
         Calculate C_n values for three GHEs based on their g-functions.
@@ -744,10 +749,13 @@ class GHX(BaseSimComp):
         if idx_timestep > IDX_COMPARISON_OFFSET_1:
             self.dq[idx_timestep - 2] += self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip
             if self.constant_time_step:
-                values = np.dot(self.dq[0 : idx_timestep - 1], self.gfunction_evals[-idx_timestep:-1])
+                values = np.dot(self.dq[0 : idx_timestep - 1], self.gfunction_evals[-idx_timestep + 1 :])
             else:
                 gfunction_evals = self.g(
-                    np.log((self.time_array[idx_timestep] - self.time_array[0:idx_timestep]) / (self.ts / SEC_IN_HR))
+                    np.log(
+                        (self.time_array[idx_timestep - 1] - self.time_array[0 : idx_timestep - 1])
+                        / (self.ts / SEC_IN_HR)
+                    )
                 )
                 values = np.dot(self.dq[0 : idx_timestep - 1], gfunction_evals)
         else:
@@ -1027,11 +1035,11 @@ class Building(BaseSimComp):
                 raise ValueError(f"Hybrid loads missing for building '{bldg_id}'")
 
             self.htg_vals = np.array(
-                external_loads.get("q_htg", np.zeros(self.num_timesteps)),
+                external_loads.get("q_htg", np.zeros(self.num_timesteps))[1:],
                 dtype=float,
             )
             self.clg_vals = np.array(
-                external_loads.get("q_clg", np.zeros(self.num_timesteps)),
+                external_loads.get("q_clg", np.zeros(self.num_timesteps))[1:],
                 dtype=float,
             )
 
@@ -1269,33 +1277,6 @@ class Building(BaseSimComp):
                 )
 
 
-class HPmodel:
-    def __init__(self, hp_id: str, hp_data: dict):
-        self.name = hp_id
-
-        self.a_htg = hp_data["heating_performance"]["a"]
-        self.b_htg = hp_data["heating_performance"]["b"]
-        self.c_htg = hp_data["heating_performance"]["c"]
-
-        self.a_clg = hp_data["cooling_performance"]["a"]
-        self.b_clg = hp_data["cooling_performance"]["b"]
-        self.c_clg = hp_data["cooling_performance"]["c"]
-
-        self.c1_htg = hp_data["heating_performance"]["c1"]
-        self.c2_htg = hp_data["heating_performance"]["c2"]
-        self.c3_htg = hp_data["heating_performance"]["c3"]
-
-        self.c1_clg = hp_data["cooling_performance"]["c1"]
-        self.c2_clg = hp_data["cooling_performance"]["c2"]
-        self.c3_clg = hp_data["cooling_performance"]["c3"]
-
-        self.m_flow_single_hp = hp_data["design_flow_rate"]
-        self.design_pressure_loss = hp_data["design_pressure_loss"]
-        self.pump_efficiency = hp_data["pump_efficiency"]
-        self.design_htg_cap_single_hp = hp_data["heating_performance"]["design_cap"]
-        self.design_clg_cap_single_hp = hp_data["cooling_performance"]["design_cap"]
-
-
 class GHEHPSystem:
     total_loads: np.ndarray[tuple[int], np.dtype[np.float64]]
     nbh_selections: list[str]
@@ -1430,8 +1411,8 @@ class GHEHPSystem:
 
             first_bldg = next(iter(self.hybrid_load_data))
             self.time_array = (np.array(self.hybrid_load_data[first_bldg]["time"], dtype=float)).flatten()
-            self.num_timesteps = len(self.time_array)
-            self.time_array = (np.insert(self.time_array, 0, 0)).flatten()
+            self.num_timesteps = len(self.time_array) - 1
+            # self.time_array = (np.insert(self.time_array, 0, 0)).flatten()
         else:
             raise ValueError(f"Unknown load_method: {self.load_method}")
 
@@ -2265,8 +2246,8 @@ class GHEHPSystem:
                     this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
                 elif isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
                     this_comp.update_post_solve(x_vector, idx_timestep)
-            # Update the console every 1 timesteps or on the very last step
-            if (idx_timestep - 1) % 1 == 0 or idx_timestep == self.num_timesteps - 1:
+            # Update the console every 100 timesteps or on the very last step
+            if (idx_timestep - 1) % 100 == 0 or idx_timestep == self.num_timesteps - 1:
                 elapsed = time.perf_counter() - t_start
                 percent = ((idx_timestep - 1) / (self.num_timesteps - 1)) * 100
                 print(

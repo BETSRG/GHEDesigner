@@ -559,7 +559,7 @@ def bi_rectangle_close_spacing(length_x, length_y, b_min, transpose=False, disp=
     n_max = floor(n_1_max)
     for n_1 in range(n_min, n_max + 1):
         b_1 = length_1 / (n_1 - 1) if n_1 > 1 else DEFAULT_MINIMUM_BOREHOLE_SPACING
-        n_2 = floor(length_2 / b_1) + 1
+        n_2 = floor(length_2 / b_1) + 1 if n_1 > 1 else 1
         b_2 = length_2 / (n_2 - 1) if n_2 > 1 else DEFAULT_MINIMUM_BOREHOLE_SPACING
 
         if _iter == 0:

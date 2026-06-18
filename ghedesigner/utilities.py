@@ -403,3 +403,30 @@ def absolutize_file_paths(json_path: Path, inplace: bool = False) -> dict:
 
 def load_input_file(f_path: Path) -> dict:
     return absolutize_file_paths(f_path, inplace=False)
+
+
+class HPmodel:
+    def __init__(self, hp_id: str, hp_data: dict):
+        self.name = hp_id
+
+        self.a_htg = hp_data["heating_performance"]["a"]
+        self.b_htg = hp_data["heating_performance"]["b"]
+        self.c_htg = hp_data["heating_performance"]["c"]
+
+        self.a_clg = hp_data["cooling_performance"]["a"]
+        self.b_clg = hp_data["cooling_performance"]["b"]
+        self.c_clg = hp_data["cooling_performance"]["c"]
+
+        self.c1_htg = hp_data["heating_performance"]["c1"]
+        self.c2_htg = hp_data["heating_performance"]["c2"]
+        self.c3_htg = hp_data["heating_performance"]["c3"]
+
+        self.c1_clg = hp_data["cooling_performance"]["c1"]
+        self.c2_clg = hp_data["cooling_performance"]["c2"]
+        self.c3_clg = hp_data["cooling_performance"]["c3"]
+
+        self.m_flow_single_hp = hp_data["design_flow_rate"]
+        self.design_pressure_loss = hp_data["design_pressure_loss"]
+        self.pump_efficiency = hp_data["pump_efficiency"]
+        self.design_htg_cap_single_hp = hp_data["heating_performance"]["design_cap"]
+        self.design_clg_cap_single_hp = hp_data["cooling_performance"]["design_cap"]
