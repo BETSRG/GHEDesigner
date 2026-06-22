@@ -26,7 +26,7 @@ def worker_single(args):
     d, beta, r = args
     print(f"    -> Starting SINGLE job: Depth={d}, Beta={beta:.3f}, r={r:.3f}", flush=True)
     pipe = MockPipe(r_out=r, k=0.4)
-    soil = MockSoil(k=1.5, rhocp=2.3e6)
+    soil = MockSoil(k=2.82, rhocp=3200000.0)  # k=1.5, rhocp=2.3e6
     system = SinglePipeWithSurfaceSystem(y_coord=d, pipe=pipe, soil=soil)
 
     years = 100
@@ -47,7 +47,7 @@ def worker_parallel(args):
     d, b, beta, r = args
     print(f"    -> Starting PARALLEL job: Depth={d}, Spacing={b}, Beta={beta:.3f}, r={r:.3f}", flush=True)
     pipe = MockPipe(r_out=r, k=0.4)
-    soil = MockSoil(k=1.5, rhocp=2.3e6)
+    soil = MockSoil(k=2.82, rhocp=3200000.0)  # k=1.5, rhocp=2.3e6
     system = ParallelPipeSystem(x_coord=b, y_coord=d, pipe=pipe, soil=soil)
 
     years = 100
@@ -80,7 +80,7 @@ def worker_dispatcher(job):
 def main():
     print("--- Building/Updating Unified Interpolation Library ---")
     t_start = time.perf_counter()
-    output_filename = "unified_horizontal_library.pkl"
+    output_filename = r"C:\Users\drewm\GHEDesigner\ghedesigner\ghe\unified_horizontal_library.pkl"
 
     # Define the parameters
     depths = np.array([1.5, 5.0, 15.0])
@@ -102,6 +102,29 @@ def main():
         table_single = existing_data.get("table_single", {})
         table_parallel = existing_data.get("table_parallel", {})
 
+        # Define the exact parameters we want to overwrite.
+
+        # Parallel format: (depth, spacing, beta, radius)
+        force_recalc_parallel = [
+            # (15.0, 0.053, 4.783, 0.0167),
+        ]
+
+        # Single format: (depth, beta, radius)
+        force_recalc_single = [
+            # (15.0, 4.783, 0.0167),
+        ]
+
+        # Remove them from the loaded tables so the script recalculates them
+        for key in force_recalc_parallel:
+            if key in table_parallel:
+                del table_parallel[key]
+                print(f"Forcing recalculation for parallel case: {key}")
+
+        for key in force_recalc_single:
+            if key in table_single:
+                del table_single[key]
+                print(f"Forcing recalculation for single case: {key}")
+
         axes = existing_data.get("axes", {})
         existing_depths = set(axes.get("depths", []))
         existing_spacings = set(axes.get("spacings", []))
@@ -121,6 +144,18 @@ def main():
         for r in radii
         if (d, b, beta, r) not in table_parallel
     ]
+
+    target_single = (15.0, 4.94, 0.0167)
+    if target_single not in table_single:
+        new_single_jobs.append(("single", *target_single))
+        existing_betas.add(5.13)
+        print(f"Injecting specific single job: {target_single}")
+
+    target_parallel = (15.0, 0.053, 4.94, 0.0167)
+    if target_parallel not in table_parallel:
+        new_parallel_jobs.append(("parallel", *target_parallel))
+        existing_betas.add(5.13)
+        print(f"Injecting specific parallel job: {target_parallel}")
 
     all_new_jobs = new_single_jobs + new_parallel_jobs
     total_new_jobs = len(all_new_jobs)

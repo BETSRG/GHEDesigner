@@ -69,7 +69,7 @@ class IsolatedHorizontalPipe(BaseSimComp):
         fluid: Fluid,
         num_timesteps: int,
         time_array: np.ndarray,
-        q_prime_interp,  # <-- REPLACED: Now takes the interpolator function directly
+        q_prime_interp,
         beta: float,
         ugt_avg: float,
         ugt_amp1: float,
@@ -84,10 +84,10 @@ class IsolatedHorizontalPipe(BaseSimComp):
         self.num_timesteps = num_timesteps
         self.time_array = time_array
 
-        self.num_segments = num_segments  # <-- STORED
-        self.matrix_rows = 3 * num_segments + 1  # <-- DYNAMIC INSTANCE ATTRIBUTE
+        self.num_segments = num_segments
+        self.matrix_rows = 3 * num_segments + 1
 
-        self.q_prime_interp = q_prime_interp  # <-- STORED
+        self.q_prime_interp = q_prime_interp
         self.beta = beta
         self.soil = soil
         self.fluid = fluid
@@ -102,25 +102,25 @@ class IsolatedHorizontalPipe(BaseSimComp):
         self.depth = depth
         self.alpha_s = self.soil.k / self.soil.rho_cp
 
-        # Geometry & Discretization (3 Segments)
+        # Geometry & Discretization
         self.length = length
         self.L_seg = length / float(self.num_segments)
         self.V_seg = np.pi * cast(float, pipe.r_in) ** 2 * self.L_seg
-        self.C_f_seg = self.V_seg * fluid.rho * self.cp
+        self.C_f_seg = self.V_seg * fluid.rho * self.cp  # * 2.2 #testing value
         self.two_pi_k = TWO_PI * self.soil.k
 
         initial_ugt = self.calculate_current_ugt(self.time_array[0] * SEC_IN_HR)
 
-        # --- DYNAMIC STATE ARRAYS (Shape: segments x timesteps) ---
+        # --- DYNAMIC STATE ARRAYS ---
         self.t_mean_seg = np.full((self.num_segments, num_timesteps), initial_ugt, dtype=float)
         self.q_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)
-        self.dq_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)
+        self.dtheta_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)  # Tracking temp steps
         self.t_out_seg = np.full((self.num_segments, num_timesteps), initial_ugt, dtype=float)
         self.history_term_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)
 
         self.t_in = np.full(num_timesteps, initial_ugt, dtype=float)
         self.t_out = np.full(num_timesteps, initial_ugt, dtype=float)
-        self.c_n = np.zeros(num_timesteps, dtype=float)
+        self.y_n = np.zeros(num_timesteps, dtype=float)
 
     def calculate_current_ugt(self, current_time_sec: float) -> float:
         t_days = current_time_sec / (24.0 * 3600.0)
@@ -144,30 +144,23 @@ class IsolatedHorizontalPipe(BaseSimComp):
         return self.ugt_avg - term1 - term2
 
     def compute_history_terms(self, idx_timestep: int):
-        # We can calculate R_transient for all j steps once, then apply it to all segments
-        # to save significant computation time.
-        r_transient_array = np.zeros(idx_timestep, dtype=float)
+        y_transient_array = np.zeros(idx_timestep, dtype=float)
 
-        # VECTORIZED: Calculate all past time deltas and interpolate in one shot
         if idx_timestep > 0:
             dt_sec_array = (self.time_array[idx_timestep] - self.time_array[0:idx_timestep]) * SEC_IN_HR
             q_prime_array = self.q_prime_interp(dt_sec_array)
-            r_transient_array[0:idx_timestep] = 1.0 / (self.two_pi_k * q_prime_array)
+            # Converted to Admittance (Y = 2*pi*k*q')
+            y_transient_array[0:idx_timestep] = self.two_pi_k * q_prime_array
 
         current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
         q_prime_current = self.q_prime_interp(current_dt_sec)
-        self.c_n[idx_timestep] = 1.0 / (self.two_pi_k * q_prime_current)
+        self.y_n[idx_timestep] = self.two_pi_k * q_prime_current
 
-        current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
-        current_ugt = self.calculate_current_ugt(current_time_sec)
-
-        # --- DYNAMIC SEGMENT LOOP ---
         for k in range(self.num_segments):
-            # Dot product of this segment's dq history with the R_transient array
-            sum_k = np.dot(self.dq_seg[k, 1:idx_timestep], r_transient_array[1:idx_timestep])
-            overlap_k = self.q_seg[k, idx_timestep - 1] * self.c_n[idx_timestep]
+            # Dot product of this segment's temperature step history with the Admittance array
+            sum_k = np.dot(self.dtheta_seg[k, 1:idx_timestep], y_transient_array[0 : idx_timestep - 1])
 
-            self.history_term_seg[k, idx_timestep] = current_ugt + sum_k - overlap_k
+            self.history_term_seg[k, idx_timestep] = sum_k
 
     def generate_matrix(
         self,
@@ -182,21 +175,18 @@ class IsolatedHorizontalPipe(BaseSimComp):
     ):
         self.compute_history_terms(idx_timestep)
 
-        # Set up blank rows
         rows = [np.zeros(self.matrix_size, dtype=np.float64) for _ in range(self.matrix_rows)]
         rhs = [0.0 for _ in range(self.matrix_rows)]
 
-        # Time delta for capacitance
         dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
         cap_coeff = self.C_f_seg / dt_sec
 
         m_cp = mass_flow_pipe * self.cp
-        cn = self.c_n[idx_timestep]
+        yn = self.y_n[idx_timestep]
 
         idx_t_in = self.row_index
         idx_t_out_final = self.row_index + 3 * self.num_segments
 
-        # --- ROW 0: Network Mixing Node ---
         if configuration == CentralLoopType.ONEPIPE:
             rows[0][idx_t_in] = (mass_loop - mass_flow_pipe) * self.cp
             rows[0][idx_t_out_final] = m_cp
@@ -205,50 +195,57 @@ class IsolatedHorizontalPipe(BaseSimComp):
             rows[0][idx_t_in] = 1.0
             rows[0][self.inlet_index] = -1.0
 
-        # --- DYNAMIC SEGMENT ROWS ---
+        current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
+        prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
+        current_ugt = self.calculate_current_ugt(current_time_sec)
+        prev_ugt = self.calculate_current_ugt(prev_time_sec)
+
         for k in range(self.num_segments):
-            # Determine global matrix indices for this specific segment
             idx_t_m = self.row_index + 3 * k + 1
             idx_q = self.row_index + 3 * k + 2
             idx_t_out = self.row_index + 3 * k + 3
 
-            # The inlet temp for this segment is either the main loop Tin, or the To of the previous segment
             idx_t_in_seg = self.row_index if k == 0 else self.row_index + 3 * (k - 1) + 3
 
-            # Eq 1: Ground Resistance (Row index = 3k + 1)
-            rows[3 * k + 1][idx_t_m] = 1.0
-            rows[3 * k + 1][idx_q] = -cn
-            rhs[3 * k + 1] = self.history_term_seg[k, idx_timestep]
+            # Eq 1: Ground Admittance formulation
+            rows[3 * k + 1][idx_q] = 1.0
+            rows[3 * k + 1][idx_t_m] = -yn
 
-            # Eq 2: Mean Temp (Row index = 3k + 2)
+            t_m_prev = self.t_mean_seg[k, idx_timestep - 1]
+            rhs[3 * k + 1] = self.history_term_seg[k, idx_timestep] + yn * (-current_ugt - t_m_prev + prev_ugt)
+
+            # Eq 2: Mean Temp
             rows[3 * k + 2][idx_t_in_seg] = -1.0
             rows[3 * k + 2][idx_t_m] = 2.0
             rows[3 * k + 2][idx_t_out] = -1.0
 
-            # Eq 3: Energy Bal w/ Capacitance (Row index = 3k + 3)
+            # Eq 3: Energy Bal w/ Capacitance
             rows[3 * k + 3][idx_t_in_seg] = m_cp
             rows[3 * k + 3][idx_t_out] = -m_cp
             rows[3 * k + 3][idx_q] = -self.L_seg
-            # temporarily comment out capacitance for testing (next two rows)
             rows[3 * k + 3][idx_t_m] = -cap_coeff
-            rhs[3 * k + 3] = -cap_coeff * self.t_mean_seg[k, idx_timestep - 1]
+            rhs[3 * k + 3] = -cap_coeff * t_m_prev
 
         return rows, rhs
 
     def update_post_solve(self, x_vector, idx_timestep):
-        """
-        Extracts and stores the results from the solved global state vector [X].
-        """
         self.t_in[idx_timestep] = x_vector[self.row_index]
+
+        current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
+        prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
+        current_ugt = self.calculate_current_ugt(current_time_sec)
+        prev_ugt = self.calculate_current_ugt(prev_time_sec)
 
         for k in range(self.num_segments):
             self.t_mean_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 1]
+            self.q_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 2]
             self.t_out_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 3]
 
-            self.q_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 2]
-            self.dq_seg[k, idx_timestep - 1] = self.q_seg[k, idx_timestep] - self.q_seg[k, idx_timestep - 1]
+            # Calculate and store the discrete driving potential step (dtheta) that just occurred
+            theta_n = self.t_mean_seg[k, idx_timestep] - current_ugt
+            theta_n_minus_1 = self.t_mean_seg[k, idx_timestep - 1] - prev_ugt
+            self.dtheta_seg[k, idx_timestep] = theta_n - theta_n_minus_1
 
-        # Final pipe output temperature is the output of the last segment
         self.t_out[idx_timestep] = self.t_out_seg[-1, idx_timestep]
 
 
@@ -263,7 +260,7 @@ class CoupledHorizontalPipe(BaseSimComp):
         fluid: Fluid,
         num_timesteps: int,
         time_array: np.ndarray,
-        q_prime_even_interp,  # <-- Takes both curves
+        q_prime_even_interp,
         q_prime_odd_interp,
         beta: float,
         ugt_avg: float,
@@ -286,7 +283,7 @@ class CoupledHorizontalPipe(BaseSimComp):
         self.q_prime_even_interp = q_prime_even_interp
         self.q_prime_odd_interp = q_prime_odd_interp
 
-        self.coupled_pipe: CoupledHorizontalPipe | None = None  # <-- The memory pointer
+        self.coupled_pipe: CoupledHorizontalPipe | None = None
 
         self.beta = beta
         self.soil = soil
@@ -304,25 +301,24 @@ class CoupledHorizontalPipe(BaseSimComp):
         self.length = length
         self.L_seg = length / float(self.num_segments)
         self.V_seg = np.pi * cast(float, pipe.r_in) ** 2 * self.L_seg
-        self.C_f_seg = self.V_seg * fluid.rho * self.cp
+        self.C_f_seg = self.V_seg * fluid.rho * self.cp  # * 2.2 #testing value
         self.two_pi_k = TWO_PI * self.soil.k
 
         initial_ugt = self.calculate_current_ugt(self.time_array[0] * SEC_IN_HR)
 
         self.t_mean_seg = np.full((self.num_segments, num_timesteps), initial_ugt, dtype=float)
         self.q_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)
-        self.dq_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)
+        self.dtheta_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)
         self.t_out_seg = np.full((self.num_segments, num_timesteps), initial_ugt, dtype=float)
         self.history_term_seg = np.zeros((self.num_segments, num_timesteps), dtype=float)
 
         self.t_in = np.full(num_timesteps, initial_ugt, dtype=float)
         self.t_out = np.full(num_timesteps, initial_ugt, dtype=float)
 
-        self.c_n = np.zeros(num_timesteps, dtype=float)
-        self.c_cross = np.zeros(num_timesteps, dtype=float)  # <-- Tracks cross resistance
+        self.y_n = np.zeros(num_timesteps, dtype=float)
+        self.y_cross = np.zeros(num_timesteps, dtype=float)
 
     def calculate_current_ugt(self, current_time_sec: float) -> float:
-        # Exact same as IsolatedHorizontalPipe
         t_days = current_time_sec / SEC_IN_DAY
         t_p = DAYS_IN_YEAR
         t_p_sec = SEC_IN_YEAR
@@ -344,39 +340,34 @@ class CoupledHorizontalPipe(BaseSimComp):
         if self.coupled_pipe is None:
             raise ValueError("History terms cannot be computed without a defined coupled pipe.")
 
-        r_self_array = np.zeros(idx_timestep, dtype=float)
-        r_cross_array = np.zeros(idx_timestep, dtype=float)
+        y_self_array = np.zeros(idx_timestep, dtype=float)
+        y_cross_array = np.zeros(idx_timestep, dtype=float)
 
-        # VECTORIZED: Calculate all past time deltas and interpolate in one shot
         if idx_timestep > 0:
             dt_sec_array = (self.time_array[idx_timestep] - self.time_array[0:idx_timestep]) * SEC_IN_HR
 
-            c_even_array = 1.0 / (self.two_pi_k * self.q_prime_even_interp(dt_sec_array))
-            c_odd_array = 1.0 / (self.two_pi_k * self.q_prime_odd_interp(dt_sec_array))
+            y_even_array = self.two_pi_k * self.q_prime_even_interp(dt_sec_array)
+            y_odd_array = self.two_pi_k * self.q_prime_odd_interp(dt_sec_array)
 
-            r_self_array[0:idx_timestep] = (c_even_array + c_odd_array) / 2.0
-            r_cross_array[0:idx_timestep] = (c_even_array - c_odd_array) / 2.0
+            y_self_array[0:idx_timestep] = (y_even_array + y_odd_array) / 2.0
+            y_cross_array[0:idx_timestep] = (y_even_array - y_odd_array) / 2.0
 
         current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
-        c_even_cur = 1.0 / (self.two_pi_k * self.q_prime_even_interp(current_dt_sec))
-        c_odd_cur = 1.0 / (self.two_pi_k * self.q_prime_odd_interp(current_dt_sec))
+        y_even_cur = self.two_pi_k * self.q_prime_even_interp(current_dt_sec)
+        y_odd_cur = self.two_pi_k * self.q_prime_odd_interp(current_dt_sec)
 
-        self.c_n[idx_timestep] = (c_even_cur + c_odd_cur) / 2.0
-        self.c_cross[idx_timestep] = (c_even_cur - c_odd_cur) / 2.0
-
-        current_ugt = self.calculate_current_ugt(self.time_array[idx_timestep] * SEC_IN_HR)
+        self.y_n[idx_timestep] = (y_even_cur + y_odd_cur) / 2.0
+        self.y_cross[idx_timestep] = (y_even_cur - y_odd_cur) / 2.0
 
         for k in range(self.num_segments):
-            # Convolution includes the partner pipe's dq history!
-            sum_self = np.dot(self.dq_seg[k, 0:idx_timestep], r_self_array[0:idx_timestep])
-            sum_cross = np.dot(self.coupled_pipe.dq_seg[k, 0:idx_timestep], r_cross_array[0:idx_timestep])
+            sum_self = np.dot(self.dtheta_seg[k, 1:idx_timestep], y_self_array[0 : idx_timestep - 1])
 
-            overlap_self = self.q_seg[k, idx_timestep - 1] * self.c_n[idx_timestep]
-            overlap_cross = self.coupled_pipe.q_seg[k, idx_timestep - 1] * self.c_cross[idx_timestep]
-
-            self.history_term_seg[k, idx_timestep] = (
-                current_ugt + (sum_self + sum_cross) - (overlap_self + overlap_cross)
+            neighbor_k = self.num_segments - 1 - k if self.counter_flow else k
+            sum_cross = np.dot(
+                self.coupled_pipe.dtheta_seg[neighbor_k, 1:idx_timestep], y_cross_array[0 : idx_timestep - 1]
             )
+
+            self.history_term_seg[k, idx_timestep] = sum_self + sum_cross
 
     def generate_matrix(
         self,
@@ -403,7 +394,6 @@ class CoupledHorizontalPipe(BaseSimComp):
         idx_t_in = self.row_index
         idx_t_out_final = self.row_index + 3 * self.num_segments
 
-        # --- ROW 0: Network Mixing Node ---
         if configuration == CentralLoopType.ONEPIPE:
             rows[0][idx_t_in] = (mass_loop - mass_flow_pipe) * self.cp
             rows[0][idx_t_out_final] = m_cp
@@ -412,6 +402,11 @@ class CoupledHorizontalPipe(BaseSimComp):
             rows[0][idx_t_in] = 1.0
             rows[0][self.inlet_index] = -1.0
 
+        current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
+        prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
+        current_ugt = self.calculate_current_ugt(current_time_sec)
+        prev_ugt = self.calculate_current_ugt(prev_time_sec)
+
         for k in range(self.num_segments):
             idx_t_m = self.row_index + 3 * k + 1
             idx_q_self = self.row_index + 3 * k + 2
@@ -419,17 +414,22 @@ class CoupledHorizontalPipe(BaseSimComp):
 
             idx_t_in_seg = self.row_index if k == 0 else self.row_index + 3 * (k - 1) + 3
 
-            # Eq 1: Ground Resistance
-            rows[3 * k + 1][idx_t_m] = 1.0
-            rows[3 * k + 1][idx_q_self] = -self.c_n[idx_timestep]
+            # Eq 1: Ground Admittance formulation
+            rows[3 * k + 1][idx_q_self] = 1.0
+            rows[3 * k + 1][idx_t_m] = -self.y_n[idx_timestep]
 
-            # THE THERMAL BRIDGE: Reaching into the neighbor's matrix
-            # If counter-flow, we map to the neighbor's inverted segment index
+            # THE THERMAL BRIDGE: Linking to the neighbor's temperature state
             neighbor_k = self.num_segments - 1 - k if self.counter_flow else k
-            idx_q_neighbor = self.coupled_pipe.row_index + 3 * neighbor_k + 2
-            rows[3 * k + 1][idx_q_neighbor] = -self.c_cross[idx_timestep]
+            idx_t_m_neighbor = self.coupled_pipe.row_index + 3 * neighbor_k + 1
+            rows[3 * k + 1][idx_t_m_neighbor] = -self.y_cross[idx_timestep]
 
-            rhs[3 * k + 1] = self.history_term_seg[k, idx_timestep]
+            t_m_prev = self.t_mean_seg[k, idx_timestep - 1]
+            t_m_neighbor_prev = self.coupled_pipe.t_mean_seg[neighbor_k, idx_timestep - 1]
+
+            rhs_self = self.y_n[idx_timestep] * (-current_ugt - t_m_prev + prev_ugt)
+            rhs_cross = self.y_cross[idx_timestep] * (-current_ugt - t_m_neighbor_prev + prev_ugt)
+
+            rhs[3 * k + 1] = self.history_term_seg[k, idx_timestep] + rhs_self + rhs_cross
 
             # Eq 2: Mean Temp
             rows[3 * k + 2][idx_t_in_seg] = -1.0
@@ -440,20 +440,29 @@ class CoupledHorizontalPipe(BaseSimComp):
             rows[3 * k + 3][idx_t_in_seg] = m_cp
             rows[3 * k + 3][idx_t_out] = -m_cp
             rows[3 * k + 3][idx_q_self] = -self.L_seg
-            # temporarily comment out capacitance for testing (next two rows)
             rows[3 * k + 3][idx_t_m] = -cap_coeff
-            rhs[3 * k + 3] = -cap_coeff * self.t_mean_seg[k, idx_timestep - 1]
+            rhs[3 * k + 3] = -cap_coeff * t_m_prev
 
         return rows, rhs
 
     def update_post_solve(self, x_vector, idx_timestep):
-        # Exact same as IsolatedHorizontalPipe
         self.t_in[idx_timestep] = x_vector[self.row_index]
+
+        current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
+        prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
+        current_ugt = self.calculate_current_ugt(current_time_sec)
+        prev_ugt = self.calculate_current_ugt(prev_time_sec)
+
         for k in range(self.num_segments):
             self.t_mean_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 1]
-            self.t_out_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 3]
             self.q_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 2]
-            self.dq_seg[k, idx_timestep - 1] = self.q_seg[k, idx_timestep] - self.q_seg[k, idx_timestep - 1]
+            self.t_out_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 3]
+
+            # Calculate and store the discrete driving potential step (dtheta) that just occurred
+            theta_n = self.t_mean_seg[k, idx_timestep] - current_ugt
+            theta_n_minus_1 = self.t_mean_seg[k, idx_timestep - 1] - prev_ugt
+            self.dtheta_seg[k, idx_timestep] = theta_n - theta_n_minus_1
+
         self.t_out[idx_timestep] = self.t_out_seg[-1, idx_timestep]
 
 
@@ -520,15 +529,15 @@ class SourceSinkHeatExchanger(BaseSimComp):
 
     def generate_matrix(
         self,
-        _mass_bldg,
-        mass_loop,
-        _mass_loop_bldg,
-        _mass_flow_ghe,
-        _mass_loop_ghe,
-        idx_timestep,
-        _configuration,
-        _method,
-    ):
+        _mass_bldg: float,
+        mass_loop: float,
+        _mass_loop_bldg: float,
+        _mass_flow_ghe: float,
+        _mass_loop_ghe: float,
+        idx_timestep: int,
+        _configuration: CentralLoopType,
+        _method: str,
+    ) -> tuple[list[np.ndarray], list[float]]:
         if self.cp is None:
             raise ValueError("cp is uninitialized")
         if self.matrix_size is None:
@@ -1491,14 +1500,18 @@ class GHEHPSystem:
             if ghe.ghe_manager.is_sizable:
                 self.sizable_ground_heat_exchangers.append(ghe)
         if self.fixed_loads:
-            self.matrix_size = np.dot(
-                [GHX.MATRIX_ROWS_FIXED_LOADS, Building.MATRIX_ROWS, SourceSinkHeatExchanger.MATRIX_ROWS],
-                [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
+            self.matrix_size = int(
+                np.dot(
+                    [GHX.MATRIX_ROWS_FIXED_LOADS, Building.MATRIX_ROWS, SourceSinkHeatExchanger.MATRIX_ROWS],
+                    [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
+                )
             )
         else:
-            self.matrix_size = np.dot(
-                [GHX.MATRIX_ROWS, Building.MATRIX_ROWS, SourceSinkHeatExchanger.MATRIX_ROWS],
-                [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
+            self.matrix_size = int(
+                np.dot(
+                    [GHX.MATRIX_ROWS, Building.MATRIX_ROWS, SourceSinkHeatExchanger.MATRIX_ROWS],
+                    [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
+                )
             )
 
         self.nbh_total: int = sum([x.nbh for x in ground_heat_exchangers]) if ground_heat_exchangers is not None else 0
