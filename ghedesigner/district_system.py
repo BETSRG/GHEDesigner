@@ -101,6 +101,10 @@ class IsolatedHorizontalPipe(BaseSimComp):
         self.ugt_phase2 = ugt_phase2
         self.depth = depth
         self.alpha_s = self.soil.k / self.soil.rho_cp
+        if isinstance(pipe.r_out, list):
+            raise TypeError("Expected pipe.r_out to be a float, but got a list.")
+
+        self.t_p = (pipe.r_out**2) / self.alpha_s
 
         # Geometry & Discretization
         self.length = length
@@ -148,16 +152,21 @@ class IsolatedHorizontalPipe(BaseSimComp):
 
         if idx_timestep > 0:
             dt_sec_array = (self.time_array[idx_timestep] - self.time_array[0:idx_timestep]) * SEC_IN_HR
-            q_prime_array = self.q_prime_interp(dt_sec_array)
-            # Converted to Admittance (Y = 2*pi*k*q')
+            tau_array = dt_sec_array / self.t_p  # Convert to dimensionless time
+
+            # Ask for q' using tau
+            q_prime_array = self.q_prime_interp(tau_array)
             y_transient_array[0:idx_timestep] = self.two_pi_k * q_prime_array
 
         current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
-        q_prime_current = self.q_prime_interp(current_dt_sec)
+        current_tau = current_dt_sec / self.t_p  # Convert to dimensionless time
+
+        # Ask for q' using tau
+        q_prime_current = self.q_prime_interp(current_tau)
         self.y_n[idx_timestep] = self.two_pi_k * q_prime_current
 
         for k in range(self.num_segments):
-            # Dot product of this segment's temperature step history with the Admittance array
+            # Your original, correct convolution logic
             sum_k = np.dot(self.dtheta_seg[k, 1:idx_timestep], y_transient_array[0 : idx_timestep - 1])
 
             self.history_term_seg[k, idx_timestep] = sum_k
@@ -297,6 +306,10 @@ class CoupledHorizontalPipe(BaseSimComp):
         self.ugt_phase2 = ugt_phase2
         self.depth = depth
         self.alpha_s = self.soil.k / self.soil.rho_cp
+        if isinstance(pipe.r_out, list):
+            raise TypeError("Expected pipe.r_out to be a float, but got a list.")
+
+        self.t_p = (pipe.r_out**2) / self.alpha_s
 
         self.length = length
         self.L_seg = length / float(self.num_segments)
@@ -345,21 +358,27 @@ class CoupledHorizontalPipe(BaseSimComp):
 
         if idx_timestep > 0:
             dt_sec_array = (self.time_array[idx_timestep] - self.time_array[0:idx_timestep]) * SEC_IN_HR
+            tau_array = dt_sec_array / self.t_p  # Convert to dimensionless time
 
-            y_even_array = self.two_pi_k * self.q_prime_even_interp(dt_sec_array)
-            y_odd_array = self.two_pi_k * self.q_prime_odd_interp(dt_sec_array)
+            # Ask for q' using tau
+            y_even_array = self.two_pi_k * self.q_prime_even_interp(tau_array)
+            y_odd_array = self.two_pi_k * self.q_prime_odd_interp(tau_array)
 
             y_self_array[0:idx_timestep] = (y_even_array + y_odd_array) / 2.0
             y_cross_array[0:idx_timestep] = (y_even_array - y_odd_array) / 2.0
 
         current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
-        y_even_cur = self.two_pi_k * self.q_prime_even_interp(current_dt_sec)
-        y_odd_cur = self.two_pi_k * self.q_prime_odd_interp(current_dt_sec)
+        current_tau = current_dt_sec / self.t_p  # Convert to dimensionless time
+
+        # Ask for q' using tau
+        y_even_cur = self.two_pi_k * self.q_prime_even_interp(current_tau)
+        y_odd_cur = self.two_pi_k * self.q_prime_odd_interp(current_tau)
 
         self.y_n[idx_timestep] = (y_even_cur + y_odd_cur) / 2.0
         self.y_cross[idx_timestep] = (y_even_cur - y_odd_cur) / 2.0
 
         for k in range(self.num_segments):
+            # Your original, correct convolution logic
             sum_self = np.dot(self.dtheta_seg[k, 1:idx_timestep], y_self_array[0 : idx_timestep - 1])
 
             neighbor_k = self.num_segments - 1 - k if self.counter_flow else k

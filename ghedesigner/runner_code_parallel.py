@@ -36,7 +36,7 @@ def main():
     start_total = time()
 
     input_dir = Path("..\\GHEDesigner\\demos")
-    output_dir = Path("..\\Documents\\GHEDesigner csv results\\TRT")
+    output_dir = Path("..\\Documents\\research\\GHEDesigner csv results\\TRT")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     target_files = [
