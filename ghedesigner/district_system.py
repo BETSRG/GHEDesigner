@@ -166,7 +166,6 @@ class IsolatedHorizontalPipe(BaseSimComp):
         self.y_n[idx_timestep] = self.two_pi_k * q_prime_current
 
         for k in range(self.num_segments):
-            # Your original, correct convolution logic
             sum_k = np.dot(self.dtheta_seg[k, 1:idx_timestep], y_transient_array[0 : idx_timestep - 1])
 
             self.history_term_seg[k, idx_timestep] = sum_k
@@ -378,7 +377,6 @@ class CoupledHorizontalPipe(BaseSimComp):
         self.y_cross[idx_timestep] = (y_even_cur - y_odd_cur) / 2.0
 
         for k in range(self.num_segments):
-            # Your original, correct convolution logic
             sum_self = np.dot(self.dtheta_seg[k, 1:idx_timestep], y_self_array[0 : idx_timestep - 1])
 
             neighbor_k = self.num_segments - 1 - k if self.counter_flow else k
@@ -1319,7 +1317,7 @@ class GHEHPSystem:
     sample_rate: int
 
     def __init__(self, f_path_json: Path):
-        self.components: list = []  # Will hold Building, GHX, SourceSinkHeatExchanger, and IsolatedHorizontalPipe
+        self.components: list = []  # Will hold Building, GHX, SourceSinkHeatExchanger, Isolated/CoupledHorizontalPipe
         self.matrix_size = 0
         self.number_of_simulations = 0
 
@@ -1387,7 +1385,6 @@ class GHEHPSystem:
         ghe_data = json_data.get("ground_heat_exchanger", {})
         hx_data = json_data.get("source_sink_heat_exchanger", {})
 
-        # --- NEW: Extract Horizontal Pipe and UGT Data ---
         horiz_data = json_data.get("horizontal_piping", {})
         ugt_data = json_data.get("ground_temperature_model", {})
 
@@ -1396,12 +1393,10 @@ class GHEHPSystem:
         if horiz_data and not ugt_data:
             raise ValueError("A 'ground_temperature_model' block is required when simulating horizontal piping.")
 
-        # --- NEW: Load the Interpolation Table ---
         horiz_axes = {}
         if self.use_horizontal and horiz_data:
             try:
                 with resources.files("ghedesigner.ghe").joinpath("unified_horizontal_library.pkl").open("rb") as f:
-                    # Note: I am ignoring the pickle-related warning for now as this is planned to be shortly removed.
                     lib_data = pickle.load(f)  # noqa: S301
                 table_single = lib_data["table_single"]
                 table_parallel = lib_data["table_parallel"]
@@ -2288,7 +2283,6 @@ class GHEHPSystem:
                     end="\r",
                     flush=True,
                 )
-        # 3. Add the final completion print OUTSIDE the loop
         print(f"\n--- Solver finished in {time.perf_counter() - t_start:.2f} seconds! ---")
 
     def solve_system_standard(self):
@@ -2408,7 +2402,6 @@ class GHEHPSystem:
                     end="\r",
                     flush=True,
                 )
-        # 3. Add the final completion print OUTSIDE the loop
         print(f"\n--- Solver finished in {time.perf_counter() - t_start:.2f} seconds! ---")
 
     def calc_energy(self):
@@ -2475,7 +2468,6 @@ class GHEHPSystem:
                     this_comp.operating * self.m_flow_loop * self.fluid.cp * (this_comp.t_out - this_comp.t_in)
                 )
 
-        # --- NEW: Output Data for Horizontal Pipes ---
         for this_comp in self.components:
             if isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
                 # Add [1:] to slice off the 0th hour and match the DataFrame length
