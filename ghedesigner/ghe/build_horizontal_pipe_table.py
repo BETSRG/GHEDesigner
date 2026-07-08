@@ -24,38 +24,49 @@ class MockSoil:
 
 def worker_single(args):
     d, beta, r = args
-    print(f"    -> Starting SINGLE job: Depth={d}, Beta={beta:.3f}, r={r:.3f}", flush=True)
+    print(f"    -> Starting SINGLE job: Depth={d}, Beta={beta:.3f}, r={r:.4f}", flush=True)
     pipe = MockPipe(r_out=r, k=0.4)
-    soil = MockSoil(k=1.5, rhocp=2.3e6)
+    soil = MockSoil(k=1.5, rhocp=2.3e6)  # k=2.82, rhocp=3200000.0
     system = SinglePipeWithSurfaceSystem(y_coord=d, pipe=pipe, soil=soil)
+
+    # Calculate characteristic time tp
+    alpha_s = soil.k / soil.rho_cp
+    t_p = (pipe.r_out**2) / alpha_s
 
     years = 100
     t_min_hours = 0.1
     tau_seconds = np.logspace(np.log10(t_min_hours * 3600), np.log10(years * 365.25 * 24 * 3600), 80)
-    final_tau_seconds = np.insert(tau_seconds, 0, 0.0)
 
+    # Calculate heat transfer using dimensional seconds for the Claesson equations
     q_raw = np.array([system.heat_transfer(t, beta) for t in tau_seconds])
     q_start_raw = 1.0 / beta
     final_q = np.insert(q_raw, 0, q_start_raw)
 
-    interp_q = interpolate.interp1d(final_tau_seconds, final_q, kind="cubic", fill_value="extrapolate")
+    # Convert the seconds array to true dimensionless time (tau) for the interpolator
+    true_tau = tau_seconds / t_p
+    final_true_tau = np.insert(true_tau, 0, 0.0)
+
+    interp_q = interpolate.interp1d(final_true_tau, final_q, kind="cubic", fill_value="extrapolate")
 
     return ("single", (d, beta, r), interp_q)
 
 
 def worker_parallel(args):
     d, b, beta, r = args
-    print(f"    -> Starting PARALLEL job: Depth={d}, Spacing={b}, Beta={beta:.3f}, r={r:.3f}", flush=True)
+    print(f"    -> Starting PARALLEL job: Depth={d}, Spacing={b}, Beta={beta:.3f}, r={r:.4f}", flush=True)
     pipe = MockPipe(r_out=r, k=0.4)
-    soil = MockSoil(k=1.5, rhocp=2.3e6)
+    soil = MockSoil(k=1.5, rhocp=2.3e6)  # k=2.82, rhocp=3200000.0
     system = ParallelPipeSystem(x_coord=b, y_coord=d, pipe=pipe, soil=soil)
+
+    # Calculate characteristic time tp
+    alpha_s = soil.k / soil.rho_cp
+    t_p = (pipe.r_out**2) / alpha_s
 
     years = 100
     t_min_hours = 0.1
     tau_seconds = np.logspace(np.log10(t_min_hours * 3600), np.log10(years * 365.25 * 24 * 3600), 80)
-    final_tau_seconds = np.insert(tau_seconds, 0, 0.0)
 
-    # Calculate both Even and Odd cases
+    # Calculate both Even and Odd cases using dimensional seconds
     q_even_raw = np.array([system.heat_transfer(t, 1.0, beta) for t in tau_seconds])
     q_odd_raw = np.array([system.heat_transfer(t, -1.0, beta) for t in tau_seconds])
 
@@ -63,8 +74,12 @@ def worker_parallel(args):
     final_q_even = np.insert(q_even_raw, 0, q_start_raw)
     final_q_odd = np.insert(q_odd_raw, 0, q_start_raw)
 
-    interp_even = interpolate.interp1d(final_tau_seconds, final_q_even, kind="cubic", fill_value="extrapolate")
-    interp_odd = interpolate.interp1d(final_tau_seconds, final_q_odd, kind="cubic", fill_value="extrapolate")
+    # Convert the seconds array to true dimensionless time (tau) for the interpolators
+    true_tau = tau_seconds / t_p
+    final_true_tau = np.insert(true_tau, 0, 0.0)
+
+    interp_even = interpolate.interp1d(final_true_tau, final_q_even, kind="cubic", fill_value="extrapolate")
+    interp_odd = interpolate.interp1d(final_true_tau, final_q_odd, kind="cubic", fill_value="extrapolate")
 
     return ("parallel", (d, b, beta, r), (interp_even, interp_odd))
 
@@ -80,14 +95,16 @@ def worker_dispatcher(job):
 def main():
     print("--- Building/Updating Unified Interpolation Library ---")
     t_start = time.perf_counter()
-    output_filename = "unified_horizontal_library.pkl"
+    output_filename = r"C:\Users\drewm\GHEDesigner\ghedesigner\ghe\unified_horizontal_library.pkl"
 
     # Define the parameters
-    depths = np.array([1.5, 5.0, 15.0])
-    spacings = np.array([0.053, 0.5, 1.0])
-    betas = np.array([0.008, 0.01473, 4.783])
-    radii = np.array([0.0167, 0.02108, 0.0635, 0.0762, 0.1016, 0.1524, 0.2032])
-    # 0.00635, 0.015875, 0.0167, 0.01905, 0.02108, 0.0381, 0.0508, 0.0635, 0.0762, 0.1016, 0.1524, 0.2032
+    depths = np.array([1.5])  # , 5.0, 15.0
+    spacings = np.array([0.5])  # 0.053, , 1.0
+    betas = np.array([0.344])  # 0.008, 0.01473, 4.783
+
+    # Input as nominal diameters, then mathematically convert to radii for the solver grid
+    diameters = np.array([0.0762])  # 0.0167, 0.02108, 0.0635, , 0.1016, 0.1524, 0.2032
+    radii = diameters / 2.0
 
     table_single = {}
     table_parallel = {}
@@ -101,6 +118,29 @@ def main():
 
         table_single = existing_data.get("table_single", {})
         table_parallel = existing_data.get("table_parallel", {})
+
+        # Define the exact parameters we want to overwrite.
+
+        # Parallel format: (depth, spacing, beta, radius)
+        force_recalc_parallel = [
+            # (15.0, 0.053, 4.783, 0.0167 / 2.0),
+        ]
+
+        # Single format: (depth, beta, radius)
+        force_recalc_single = [
+            # (15.0, 4.783, 0.0167 / 2.0),
+        ]
+
+        # Remove them from the loaded tables so the script recalculates them
+        for key in force_recalc_parallel:
+            if key in table_parallel:
+                del table_parallel[key]
+                print(f"Forcing recalculation for parallel case: {key}")
+
+        for key in force_recalc_single:
+            if key in table_single:
+                del table_single[key]
+                print(f"Forcing recalculation for single case: {key}")
 
         axes = existing_data.get("axes", {})
         existing_depths = set(axes.get("depths", []))
