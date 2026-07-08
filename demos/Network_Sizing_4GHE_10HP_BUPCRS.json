@@ -196,7 +196,7 @@
       },
       "cooling_load": {
         "column_name": "B2_Z1_Clg",
-        "file_path":"../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
         "heat_pump_name": "hp1"
       },
       "min_eft": 3.0,
@@ -329,7 +329,16 @@
         ],
         "borehole_removal_method": "LINE_SEGMENTS",
         "borehole_removal_options": {
-          "line_segments": [[[375.0, 217.5], [412.5, 217.5]], [[412.5, 217.5], [412.5, 260.0]]],
+          "line_segments": [
+            [
+              [375.0, 217.5],
+              [412.5, 217.5]
+            ],
+            [
+              [412.5, 217.5],
+              [412.5, 260.0]
+            ]
+          ],
           "points": [[412.5, 217.5]]
         },
         "method": "BIRECTANGLECONSTRAINED"
@@ -420,11 +429,13 @@
           [220.0, 105.0],
           [120.0, 105.0]
         ],
-        "no_go_boundaries":[
-          [[160.0, 45.0],
-          [180.0, 45.0],
-          [180.0, 65.0],
-          [160.0, 65.0]]
+        "no_go_boundaries": [
+          [
+            [160.0, 45.0],
+            [180.0, 45.0],
+            [180.0, 65.0],
+            [160.0, 65.0]
+          ]
         ],
         "method": "BIRECTANGLECONSTRAINED"
       },

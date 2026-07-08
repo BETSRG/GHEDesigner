@@ -253,7 +253,16 @@
         ],
         "borehole_removal_method": "LINE_SEGMENTS",
         "borehole_removal_options": {
-          "line_segments": [[[185.0, 164.5], [262.5, 164.5]], [[262.5, 164.5], [262.5, 247.0]]]
+          "line_segments": [
+            [
+              [185.0, 164.5],
+              [262.5, 164.5]
+            ],
+            [
+              [262.5, 164.5],
+              [262.5, 247.0]
+            ]
+          ]
         },
         "method": "BIRECTANGLECONSTRAINED"
       },
@@ -343,11 +352,13 @@
           [75.0, 65.0],
           [15.0, 65.0]
         ],
-        "no_go_boundaries":[
-          [[27.5, 27.5],
-          [60.0, 27.5],
-          [60.0, 42.5],
-          [27.5, 42.5]]
+        "no_go_boundaries": [
+          [
+            [27.5, 27.5],
+            [60.0, 27.5],
+            [60.0, 42.5],
+            [27.5, 42.5]
+          ]
         ],
         "method": "BIRECTANGLECONSTRAINED"
       },
