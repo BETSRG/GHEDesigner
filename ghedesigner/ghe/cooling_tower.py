@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
 
 class WeatherProcessor:
@@ -93,3 +94,25 @@ class WeatherProcessor:
             + 0.00391838 * np.power(self.rh, 1.5) * np.arctan(0.023101 * self.rh)
             - 4.686035
         )
+
+
+# little test code to demonstrate usage (should probably be removed in production)
+if __name__ == "__main__":
+    FILE_PATH = Path(r"C:\Users\drewm\Downloads\Abisko_Kiruna_102023_2025.csv")
+
+    print(f"Processing weather file: {FILE_PATH.name}...")
+
+    processor = WeatherProcessor(FILE_PATH)
+
+    weather_data_array = processor.process()
+
+    print("\nSuccessfully processed psychrometrics!")
+    print(f"Output array shape: {weather_data_array.shape}")
+
+    columns = ["Hour", "Dry_Bulb_C", "Atm_Pressure_Pa", "Wet_Bulb_C", "Enthalpy_kJ_kg"]
+    df = pd.DataFrame(weather_data_array, columns=columns)
+
+    output_csv = Path("cooling_tower_weather_input.csv")
+    df.to_csv(output_csv, index=False, float_format="%0.4f")
+
+    print(f"\nSaved full output to: {output_csv.resolve()}")
