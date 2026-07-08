@@ -30,6 +30,10 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
     b_max_y: float | None = None
     property_boundary: list[list[list[float]]] = field(init=False)
     no_go_boundaries: list[list[list[float]]] | None = None
+    borehole_removal_method = "RADIAL"
+    borehole_removal_options: dict[str, list[tuple[float, float]] | list[list[tuple[float, float]]]] = field(
+        default_factory=dict
+    )
     type: DesignGeomType = field(default=DesignGeomType.BIRECTANGLECONSTRAINED, init=False, repr=False)
 
     def __init__(
@@ -39,11 +43,15 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
         b_max_x: float | None = None,
         b_max_y: float | None = None,
         no_go_boundaries: list[list[list[float]]] | None = None,
+        borehole_removal_method="RADIAL",
+        borehole_removal_options={},
     ) -> None:
         self.b_min = b_min
         self.b_max_x = b_max_x
         self.b_max_y = b_max_y
         self.no_go_boundaries = no_go_boundaries
+        self.borehole_removal_method = borehole_removal_method
+        self.borehole_removal_options = borehole_removal_options
 
         if is_2d(property_boundary):
             self.property_boundary = [property_boundary]
@@ -196,5 +204,11 @@ class DesignBiRectangleConstrained(DesignBase):
                 "by simply omitting the b_max_x and b_max_y inputs to the BUPCRS geometric constraints."
             )
         return general_domain_nbh_adjustment(
-            self.coordinates_domain, self.borehole_lengths, self.min_nbh, self.max_nbh, desired_nbh
+            self.coordinates_domain,
+            self.borehole_lengths,
+            self.min_nbh,
+            self.max_nbh,
+            desired_nbh,
+            removal_type=self.geometric_constraints.borehole_removal_method,
+            removal_options=self.geometric_constraints.borehole_removal_options,
         )

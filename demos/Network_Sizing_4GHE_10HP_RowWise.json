@@ -1,0 +1,502 @@
+{
+  "version": 2,
+  "topology": [
+    {
+      "type": "building",
+      "name": "bldg_1_zone_1"
+    },
+    {
+      "type": "building",
+      "name": "bldg_1_zone_2"
+    },
+    {
+      "type": "ground_heat_exchanger",
+      "name": "ghe_1"
+    },
+    {
+      "type": "building",
+      "name": "bldg_2_zone_1"
+    },
+    {
+      "type": "building",
+      "name": "bldg_3_zone_1"
+    },
+    {
+      "type": "building",
+      "name": "bldg_3_zone_2"
+    },
+    {
+      "type": "ground_heat_exchanger",
+      "name": "ghe_2"
+    },
+    {
+      "type": "building",
+      "name": "bldg_4_zone_1"
+    },
+    {
+      "type": "ground_heat_exchanger",
+      "name": "ghe_3"
+    },
+    {
+      "type": "building",
+      "name": "bldg_5_zone_1"
+    },
+    {
+      "type": "building",
+      "name": "bldg_6_zone_1"
+    },
+    {
+      "type": "ground_heat_exchanger",
+      "name": "ghe_4"
+    },
+    {
+      "type": "building",
+      "name": "bldg_7_zone_1"
+    },
+    {
+      "type": "building",
+      "name": "bldg_7_zone_2"
+    }
+  ],
+  "central_loop": {
+    "pipe_configuration": "ONEPIPE",
+    "flow_factor": 1.5,
+    "pump_efficiency": 0.5,
+    "loop_length": 200,
+    "design_pressure_loss_per_meter": 1
+  },
+  "fluid": {
+    "fluid_name": "WATER",
+    "concentration_percent": 0,
+    "temperature": 30
+  },
+  "heat_pump": {
+    "hp1": {
+      "cooling_performance": {
+        "a": 0.0001,
+        "b": 0.00112,
+        "c": 1.13,
+        "c1": -0.393,
+        "c2": -30.3,
+        "c3": 6777.0,
+        "design_cap": 4396.0
+      },
+      "design_flow_rate": 0.296,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
+      "heating_performance": {
+        "a": -0.0000713,
+        "b": 0.00534,
+        "c": 0.734,
+        "c1": -0.124,
+        "c2": 112.0,
+        "c3": 4114.0,
+        "design_cap": 4140.0
+      }
+    },
+    "hp2": {
+      "cooling_performance": {
+        "a": 0.0001,
+        "b": -0.00041,
+        "c": 1.15,
+        "c1": -1.2,
+        "c2": -4.72,
+        "c3": 9629.0,
+        "design_cap": 6709.0
+      },
+      "design_flow_rate": 0.495,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
+      "heating_performance": {
+        "a": -7.86e-5,
+        "b": 0.00539,
+        "c": 0.734,
+        "c1": 0.178,
+        "c2": 158.0,
+        "c3": 6712.0,
+        "design_cap": 6797.0
+      }
+    },
+    "hp3": {
+      "cooling_performance": {
+        "a": 0.0001,
+        "b": -0.00084,
+        "c": 1.16,
+        "c1": -2.16,
+        "c2": 46.8,
+        "c3": 12397.0,
+        "design_cap": 9752.0
+      },
+      "design_flow_rate": 0.693,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
+      "heating_performance": {
+        "a": -6.8e-5,
+        "b": 0.00497,
+        "c": 0.738,
+        "c1": 0.091,
+        "c2": 224.0,
+        "c3": 9422.0,
+        "design_cap": 9500.0
+      }
+    },
+    "hp4": {
+      "cooling_performance": {
+        "a": 0.0,
+        "b": 0.0,
+        "c": 0.0,
+        "c1": 0.0,
+        "c2": 0.0,
+        "c3": 0.0,
+        "design_cap": 0.0
+      },
+      "design_flow_rate": 0.425,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
+      "heating_performance": {
+        "a": -6.06e-5,
+        "b": 0.0051,
+        "c": 0.692,
+        "c1": -1.19,
+        "c2": 212.0,
+        "c3": 8932.0,
+        "design_cap": 9561.0
+      }
+    }
+  },
+  "building": {
+    "bldg_1_zone_1": {
+      "heating_load": {
+        "column_name": "B1_Z1_Htg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "cooling_load": {
+        "column_name": "B1_Z1_Clg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "min_eft": 3.0,
+      "max_eft": 33.5
+    },
+    "bldg_1_zone_2": {
+      "heating_load": {
+        "column_name": "B1_Z2_Htg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp4"
+      },
+      "min_eft": 3.0,
+      "max_eft": 33.5
+    },
+    "bldg_2_zone_1": {
+      "heating_load": {
+        "column_name": "B2_Z1_Htg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "cooling_load": {
+        "column_name": "B2_Z1_Clg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "min_eft": 3.0,
+      "max_eft": 33.5
+    },
+    "bldg_3_zone_1": {
+      "heating_load": {
+        "column_name": "B3_Z1_Htg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "cooling_load": {
+        "column_name": "B3_Z1_Clg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "min_eft": 3.0,
+      "max_eft": 33.5
+    },
+    "bldg_3_zone_2": {
+      "heating_load": {
+        "column_name": "B3_Z2_Htg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp4"
+      },
+      "min_eft": 3.0,
+      "max_eft": 33.5
+    },
+    "bldg_4_zone_1": {
+      "heating_load": {
+        "column_name": "B4_Z1_Htg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "cooling_load": {
+        "column_name": "B4_Z1_Clg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "min_eft": 3.0,
+      "max_eft": 33.5
+    },
+    "bldg_5_zone_1": {
+      "heating_load": {
+        "column_name": "B5_Z1_Htg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "cooling_load": {
+        "column_name": "B5_Z1_Clg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "min_eft": 3.0,
+      "max_eft": 33.5
+    },
+    "bldg_6_zone_1": {
+      "heating_load": {
+        "column_name": "B6_Z1_Htg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "cooling_load": {
+        "column_name": "B6_Z1_Clg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "min_eft": 3.0,
+      "max_eft": 33.5
+    },
+    "bldg_7_zone_1": {
+      "heating_load": {
+        "column_name": "B7_Z1_Htg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp4"
+      },
+      "min_eft": 3.0,
+      "max_eft": 33.5
+    },
+    "bldg_7_zone_2": {
+      "heating_load": {
+        "column_name": "B7_Z2_Htg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "cooling_load": {
+        "column_name": "B7_Z2_Clg",
+        "file_path": "../ghedesigner/tests/test_data/Test_Case_2_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "min_eft": 3.0,
+      "max_eft": 33.5
+    }
+  },
+  "ground_heat_exchanger": {
+    "ghe_1": {
+      "flow_rate": 0.5,
+      "flow_type": "BOREHOLE",
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 14.35
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "geometric_constraints": {
+        "min_spacing": 4.5,
+        "max_spacing": 20.0,
+        "min_rotation": -90.0,
+        "max_rotation": 90.0,
+        "rotate_step": 2.5,
+        "perimeter_spacing_ratio": 0.8,
+        "property_boundary": [
+          [325.0, 190.0],
+          [445.0, 190.0],
+          [445.0, 310.0],
+          [380.0, 310.0],
+          [380.0, 245.0],
+          [325.0, 245.0]
+        ],
+        "method": "ROWWISE"
+      },
+      "design": {
+        "min_eft": 3.0,
+        "max_eft": 33.5,
+        "max_height": 175,
+        "min_height": 60
+      }
+    },
+    "ghe_2": {
+      "flow_rate": 0.5,
+      "flow_type": "BOREHOLE",
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 14.35
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "geometric_constraints": {
+        "min_spacing": 4.5,
+        "max_spacing": 20.0,
+        "min_rotation": -90.0,
+        "max_rotation": 90.0,
+        "rotate_step": 2.5,
+        "perimeter_spacing_ratio": 0.8,
+        "property_boundary": [
+          [255.0, 5.0],
+          [355.0, 5.0],
+          [355.0, 105.0],
+          [325.0, 105.0],
+          [325.0, 85.0],
+          [290.0, 85.0],
+          [290.0, 105.0],
+          [255.0, 105.0]
+        ],
+        "method": "ROWWISE"
+      },
+      "design": {
+        "min_eft": 3.0,
+        "max_eft": 33.5,
+        "max_height": 175,
+        "min_height": 60
+      }
+    },
+    "ghe_3": {
+      "flow_rate": 0.5,
+      "flow_type": "BOREHOLE",
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 14.35
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "geometric_constraints": {
+        "min_spacing": 4.5,
+        "max_spacing": 20.0,
+        "min_rotation": -90.0,
+        "max_rotation": 90.0,
+        "rotate_step": 2.5,
+        "perimeter_spacing_ratio": 0.8,
+        "property_boundary": [
+          [120.0, 5.0],
+          [220.0, 5.0],
+          [220.0, 105.0],
+          [120.0, 105.0]
+        ],
+        "no_go_boundaries":[
+          [[160.0, 45.0],
+          [180.0, 45.0],
+          [180.0, 65.0],
+          [160.0, 65.0]]
+        ],
+        "method": "ROWWISE"
+      },
+      "design": {
+        "min_eft": 3.0,
+        "max_eft": 33.5,
+        "max_height": 175,
+        "min_height": 60
+      }
+    },
+    "ghe_4": {
+      "flow_rate": 0.5,
+      "flow_type": "BOREHOLE",
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 14.35
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "geometric_constraints": {
+        "min_spacing": 4.5,
+        "max_spacing": 20.0,
+        "min_rotation": -90.0,
+        "max_rotation": 90.0,
+        "rotate_step": 2.5,
+        "perimeter_spacing_ratio": 0.8,
+        "property_boundary": [
+          [5.0, 230.0],
+          [105.0, 230.0],
+          [105.0, 380.0],
+          [5.0, 380.0]
+        ],
+        "method": "ROWWISE"
+      },
+      "design": {
+        "min_eft": 3.0,
+        "max_eft": 33.5,
+        "max_height": 175,
+        "min_height": 60
+      }
+    }
+  },
+  "simulation_control": {
+    "simulation_years": 20,
+    "search_method": "GLOBAL_ROWWISE",
+    "exhaustive_search": false,
+    "load_method": "HYBRID"
+  }
+}

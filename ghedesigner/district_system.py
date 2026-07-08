@@ -5,7 +5,7 @@ import time
 from abc import ABC, abstractmethod
 from importlib import resources
 from itertools import product
-from math import cos, sin
+from math import cos, isclose, sin
 from pathlib import Path
 from typing import Any, cast
 
@@ -668,6 +668,7 @@ class GHX(BaseSimComp):
             self.ghe_designed = True
             self.is_bypassed = False
             self.ghe_manager.new_nbh_design(desired_nbh)
+            self.borefield_coordinates = self.ghe_manager.current_ghe.gFunction.bore_locations
 
     def update_ghe_design_coordinate(self, new_coordinates):
         if len(new_coordinates) == 0:
@@ -682,6 +683,16 @@ class GHX(BaseSimComp):
             self.borefield_coordinates = new_coordinates
             self.ghe_manager.pre_designed_locations = self.borefield_coordinates
             self.ghe_manager.initialize_pre_designed_ghe()
+
+    def update_ghe_design_target_spacing(self, target_spacing):
+        if self.ghe_manager.geom_type != DesignGeomType.ROWWISE:
+            raise ValueError(
+                '"update_ghe_design_target_spacing" can only be used on GHEs which have RowWisegeometric constraints.'
+            )
+        self.ghe_designed = True
+        self.is_bypassed = False
+        self.ghe_manager.new_ts_design(target_spacing)
+        self.borefield_coordinates = self.ghe_manager.current_ghe.gFunction.bore_locations.tolist()
 
     def update_ghe_design_height(self, new_height):
         if self.is_bypassed:
@@ -1337,9 +1348,11 @@ class GHEHPSystem:
             self.field_descriptors: list[str] = []
             if self.exhaustive_search:
                 self.sample_rate = 100
+        elif self.search_method == "GLOBAL_ROWWISE":
+            if self.exhaustive_search:
+                self.sample_rate = 100
         elif self.search_method == "NELDER-MEAD":
             self.penalty_baseline: float = 0.0
-            self.max_iter: int = 50
             self.number_of_restarts: int = 1
             self.excess_temperature_tolerance: float = 1e-1
             self.nbh_bounds: list[list[float]] = []
@@ -1351,6 +1364,9 @@ class GHEHPSystem:
             pass
         else:
             raise ValueError("Given search method not recognized.")
+
+        if self.search_method in ("GLOBAL_ROWWISE", "NELDER-MEAD"):
+            self.max_iter: int = 50
 
         fluid_data = json_data["fluid"]
         topology_data = json_data["topology"]
@@ -1725,6 +1741,8 @@ class GHEHPSystem:
         if np.any([ghe.ghe_manager.is_sizable for ghe in self.ground_heat_exchangers]):
             if self.search_method == "GLOBAL_BUPCRS":
                 self.design_system_single_bupcrs()
+            elif self.search_method == "GLOBAL_ROWWISE":
+                self.design_system_single_rowwise()
             elif self.search_method == "NELDER-MEAD":
                 self.design_system_optimizer()
             else:
@@ -1877,6 +1895,26 @@ class GHEHPSystem:
             }
             return excess_temp
 
+        def final_bupcrs_adjustment(nbhs):
+            self.guess_idx += 1
+            self.nbh_selections.append("Final Placement Adjustment")
+            for i, ghe in enumerate(self.sizable_ground_heat_exchangers):
+                ghe.update_ghe_design_desired_nbh(len(nbhs[i]))
+            nbh_val = 0
+            total_drilling_val = 0.0
+            for ghe in self.ground_heat_exchangers:
+                ghe.update_ghe_parameters()
+                nbh_val += ghe.nbh
+                total_drilling_val += ghe.nbh * ghe.ghe_manager.current_ghe.bhe.borehole.H
+            self.solve_system()
+            self.nbh_values.append(nbh_val)
+            self.total_drilling_values.append(total_drilling_val)
+            self.borehole_heights.append(total_drilling_val / nbh_val)
+            self.append_new_coordinates(f"{self.guess_idx}")
+            excess_temp = self.calculate_building_excess()
+            self.excess_temperatures.append(excess_temp)
+            self.objective_function_values.append(excess_temp)
+
         if self.exhaustive_search:
             x_range = np.arange(0, len(self.domain))
             total = x_range.shape[0]
@@ -1891,12 +1929,14 @@ class GHEHPSystem:
             min_result = objective(min_idx)
             max_result = objective(max_idx)
             if min_result <= 0 and max_result <= 0:
-                _ = objective(min_idx)
+                _ = objective(min_idx, ignore_previous=True)
+                final_bupcrs_adjustment(self.domain[min_idx])
             elif min_result > 0 and max_result > 0:
                 # raise ValueError("Largest borefield cannot meet system temperature requirements. It is suggested"
                 #                  "that the minimum spacing or available property area is adjusted to allow for "
                 #                  "additional boreholes.")
-                _ = objective(max_idx)
+                _ = objective(max_idx, ignore_previous=True)
+                final_bupcrs_adjustment(self.domain[max_idx])
             elif min_result >= 0 >= max_result:
                 while True:
                     m_idx = int(0.5 * (min_idx + max_idx))
@@ -1913,6 +1953,87 @@ class GHEHPSystem:
                             '"design_system_single_bupcrs" algorithm. Please report.'
                         )
                 _ = objective(max_idx, ignore_previous=True)
+                final_bupcrs_adjustment(self.domain[max_idx])
+            else:
+                raise ValueError(
+                    "There has been an error in the bracketing logic of the"
+                    ' "design_system_single_bupcrs" algorithm. Please report.'
+                )
+
+    def design_system_single_rowwise(self):
+        min_target_spacing = float("inf")
+        max_target_spacing = float("-inf")
+        for ghe in self.sizable_ground_heat_exchangers:
+            if ghe.ghe_manager.geom_type == DesignGeomType.ROWWISE:
+                min_target_spacing = min(min_target_spacing, ghe.ghe_manager.geometric_constraint.min_spacing)
+                max_target_spacing = max(max_target_spacing, ghe.ghe_manager.geometric_constraint.max_spacing)
+            else:
+                raise ValueError(
+                    'All GHEs must be of type "ROWWISE" for use in the global ROWWISEsystem design algorithm.'
+                )
+
+        # Perform initial sizing of GHEs
+        self.initialize_system_ghes(need_penalty=False)
+
+        def objective(target_spacing):
+            self.guess_idx += 1
+            eval_key = f"{target_spacing:.3f}m"
+            print(eval_key)
+            self.nbh_selections.append(eval_key)
+            for ghe in self.sizable_ground_heat_exchangers:
+                ghe.update_ghe_design_target_spacing(target_spacing)
+            nbh_val = 0
+            total_drilling_val = 0.0
+            for ghe in self.ground_heat_exchangers:
+                ghe.update_ghe_parameters()
+                nbh_val += ghe.nbh
+                total_drilling_val += ghe.nbh * ghe.ghe_manager.current_ghe.bhe.borehole.H
+            self.solve_system()
+            self.nbh_values.append(nbh_val)
+            self.total_drilling_values.append(total_drilling_val)
+            self.borehole_heights.append(total_drilling_val / nbh_val)
+            self.append_new_coordinates(f"{self.guess_idx}")
+            excess_temp = self.calculate_building_excess()
+            self.excess_temperatures.append(excess_temp)
+            self.objective_function_values.append(excess_temp)
+            return excess_temp
+
+        if self.exhaustive_search:
+            x_range = np.linspace(min_target_spacing, max_target_spacing, num=19)
+            total = x_range.shape[0]
+            sample_rate = self.sample_rate
+            for i, index in enumerate(x_range):
+                if index % sample_rate == 0:
+                    print(f"Percent Completed: {100 * index / total}")
+                _ = objective(i)
+        else:
+            min_result = objective(max_target_spacing)
+            max_result = objective(min_target_spacing)
+            if min_result <= 0 and max_result <= 0:
+                _ = objective(max_target_spacing)
+            elif min_result > 0 and max_result > 0:
+                # raise ValueError("Largest borefield cannot meet system temperature requirements. It is suggested"
+                #                  "that the minimum spacing or available property area is adjusted to allow for "
+                #                  "additional boreholes.")
+                _ = objective(min_target_spacing)
+            elif min_result >= 0 >= max_result:
+                n_iter = 0
+                while n_iter < self.max_iter:
+                    n_iter += 1
+                    if isclose(max_target_spacing, min_target_spacing, abs_tol=0.001):
+                        break
+                    mid_spacing = 0.5 * (min_target_spacing + max_target_spacing)
+                    mid_result = objective(mid_spacing)
+                    if mid_result > 0:
+                        max_target_spacing = mid_spacing
+                    elif mid_result <= 0:
+                        min_target_spacing = mid_spacing
+                    else:
+                        raise ValueError(
+                            "The has been an error in the bisection search logic of the "
+                            '"design_system_single_rowwise" algorithm. Please report.'
+                        )
+                _ = objective(min_target_spacing)
             else:
                 raise ValueError(
                     "There has been an error in the bracketing logic of the"
@@ -2064,7 +2185,7 @@ class GHEHPSystem:
                 self.objective_function_values.append(obf_val)
                 return obf_val
             else:
-                raise ValueError("Bisection search in NBH raycast is producing unexpected results.")
+                raise ValueError("Bisection search in NBH ray-cast is producing unexpected results.")
 
         number_of_search_dimensions = number_of_sizable_ghes - 1
         if self.exhaustive_search:

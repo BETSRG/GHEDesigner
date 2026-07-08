@@ -1,3 +1,4 @@
+import csv
 from json import loads
 from pathlib import Path
 
@@ -98,16 +99,27 @@ def test_demo_files(demo_file_path: Path, time_str: str):
         return
 
     # check the outputs
-    results_path = out_dir / "SimulationSummary.json"
+    output_files = [out_dir / "SimulationSummary.json", out_dir / "Search_Summary.csv"]
+    if output_files[0].is_file():
+        results_path = output_files[0]
+        actual_results = loads(results_path.read_text())
+        if "ghe_system" in actual_results:
+            actual_length = actual_results["ghe_system"]["active_borehole_length"]["value"]
+            actual_nbh = actual_results["ghe_system"]["number_of_boreholes"]
 
-    actual_results = loads(results_path.read_text())
-    if "ghe_system" in actual_results:
-        actual_length = actual_results["ghe_system"]["active_borehole_length"]["value"]
-        actual_nbh = actual_results["ghe_system"]["number_of_boreholes"]
+            assert_demo_result_matches_any(actual_length, actual_nbh, expected_results)
 
-        assert_demo_result_matches_any(actual_length, actual_nbh, expected_results)
+        else:
+            # TODO: Verify it was intentionally predesigned
+            assert "log_time" in actual_results
+            assert "g_values" in actual_results
+    elif output_files[1].is_file():
+        with open(output_files[1]) as input_file:
+            csv_reader = list(csv.reader(input_file))
+            last_row = csv_reader[-1]
+            actual_length = float(last_row[4])
+            actual_nbh = int(last_row[3])
+            assert_demo_result_matches_any(actual_length, actual_nbh, expected_results)
 
     else:
-        # TODO: Verify it was intentionally predesigned
-        assert "log_time" in actual_results
-        assert "g_values" in actual_results
+        raise ValueError(f"No relevant output file was found in: {out_dir}")
