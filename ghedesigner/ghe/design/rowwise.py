@@ -6,6 +6,7 @@ from ghedesigner.constants import RAD_TO_DEG
 from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
 from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.ghe.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
 from ghedesigner.ghe.search.rowwise import RowWiseModifiedBisectionSearch
 from ghedesigner.media import Fluid, Grout, Soil
 
@@ -81,6 +82,13 @@ class DesignRowWise(DesignBase):
             load_years,
         )
         self.geometric_constraints = geometric_constraints
+        self.prop_bound, self.ng_zones = gen_shape(
+            self.geometric_constraints.property_boundary, self.geometric_constraints.no_go_boundaries
+        )
+        self.use_perimeter = not (
+            self.geometric_constraints.perimeter_spacing_ratio is None
+            or self.geometric_constraints.perimeter_spacing_ratio == 0
+        )
 
     def find_design(self, disp=False) -> RowWiseModifiedBisectionSearch:
         if disp:
@@ -109,3 +117,26 @@ class DesignRowWise(DesignBase):
             field_type="row-wise",
             load_years=self.load_years,
         )
+
+    def get_field_by_target_spacing(self, target_spacing):
+        if self.use_perimeter:
+            resulting_field, _ = field_optimization_wp_space_fr(
+                self.geometric_constraints.perimeter_spacing_ratio,
+                target_spacing,
+                self.geometric_constraints.rotate_step,
+                self.prop_bound,
+                ng_zones=self.ng_zones,
+                rotate_start=self.geometric_constraints.min_rotation,
+                rotate_stop=self.geometric_constraints.max_rotation,
+            )
+            return resulting_field
+        else:
+            resulting_field, _ = field_optimization_fr(
+                target_spacing,
+                self.geometric_constraints.rotate_step,
+                self.prop_bound,
+                ng_zones=self.ng_zones,
+                rotate_start=self.geometric_constraints.min_rotation,
+                rotate_stop=self.geometric_constraints.max_rotation,
+            )
+            return resulting_field

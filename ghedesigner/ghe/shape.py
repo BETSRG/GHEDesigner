@@ -124,7 +124,7 @@ class Shapes:
         r_a = sort_intersections(r_a, rotate)
         return r_a
 
-    def point_intersect(self, xy):
+    def point_intersect(self, xy, tol=1e-4):
         """
         returns whether the given point is inside the rectangle
 
@@ -137,11 +137,11 @@ class Shapes:
             true if inside, false if not
         """
         x, y = xy
-        if (x > self.max_x or x < self.min_x) or (y > self.max_y or y < self.min_y):
-            print("Returning False b/c outside of box")
+        if (x > self.max_x + tol or x + tol < self.min_x) or (y > self.max_y + tol or y + tol < self.min_y):
+            # print("Returning False b/c outside of box")
             return False
         far_x = self.min_x - 10
-        inters = self.line_intersect([far_x, y, far_x + 1, y])
+        inters = self.line_intersect([far_x, y, far_x + 1, y], intersection_tolerance=tol)
         inters = [inter for inter in inters if inter[0] <= x]
         if len(inters) == 1:
             return True

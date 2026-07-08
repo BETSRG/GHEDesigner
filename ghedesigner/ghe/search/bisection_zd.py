@@ -95,7 +95,7 @@ class BisectionZD(Bisection1D):
 
         i = self.selection_key_outer
 
-        old_height = 99999
+        # old_height = 99999
 
         while i < len(self.coordinates_domain_nested) and i < max_iter:
             self.coordinates_domain = self.coordinates_domain_nested[i]
@@ -120,10 +120,10 @@ class BisectionZD(Bisection1D):
             total_drilling = nbh * self.ghe.bhe.borehole.H
             self.calculated_heights[i] = total_drilling
 
-            if old_height < total_drilling:
-                break
-            else:
-                old_height = total_drilling
+            # if old_height < total_drilling:
+            #     break
+            # else:
+            #     old_height = total_drilling
 
             i += 1
 
