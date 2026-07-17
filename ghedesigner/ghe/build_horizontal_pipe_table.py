@@ -6,7 +6,6 @@ import time
 import numpy as np
 from scipy import interpolate
 
-# Ensure this import matches your file structure
 from ghedesigner.ghe.horizontal_pipe_heat_exchange import ParallelPipeSystem, SinglePipeWithSurfaceSystem
 
 
@@ -23,10 +22,10 @@ class MockSoil:
 
 
 def worker_single(args):
-    d, beta, r = args
-    print(f"    -> Starting SINGLE job: Depth={d}, Beta={beta:.3f}, r={r:.4f}", flush=True)
+    d, beta, r, k_s = args
+    print(f"    -> Starting SINGLE job: Depth={d}, Beta={beta:.3f}, r={r:.4f}, ks={k_s:.2f}", flush=True)
     pipe = MockPipe(r_out=r, k=0.4)
-    soil = MockSoil(k=1.5, rhocp=2.3e6)  # k=2.82, rhocp=3200000.0
+    soil = MockSoil(k=k_s, rhocp=2.3e6)
     system = SinglePipeWithSurfaceSystem(y_coord=d, pipe=pipe, soil=soil)
 
     # Calculate characteristic time tp
@@ -48,14 +47,14 @@ def worker_single(args):
 
     interp_q = interpolate.interp1d(final_true_tau, final_q, kind="cubic", fill_value="extrapolate")
 
-    return ("single", (d, beta, r), interp_q)
+    return ("single", (d, beta, r, k_s), interp_q)
 
 
 def worker_parallel(args):
-    d, b, beta, r = args
-    print(f"    -> Starting PARALLEL job: Depth={d}, Spacing={b}, Beta={beta:.3f}, r={r:.4f}", flush=True)
+    d, b, beta, r, k_s = args
+    print(f"    -> Starting PARALLEL job: Depth={d}, Spacing={b}, Beta={beta:.3f}, r={r:.4f}, ks={k_s:.2f}", flush=True)
     pipe = MockPipe(r_out=r, k=0.4)
-    soil = MockSoil(k=1.5, rhocp=2.3e6)  # k=2.82, rhocp=3200000.0
+    soil = MockSoil(k=k_s, rhocp=2.3e6)
     system = ParallelPipeSystem(x_coord=b, y_coord=d, pipe=pipe, soil=soil)
 
     # Calculate characteristic time tp
@@ -81,7 +80,7 @@ def worker_parallel(args):
     interp_even = interpolate.interp1d(final_true_tau, final_q_even, kind="cubic", fill_value="extrapolate")
     interp_odd = interpolate.interp1d(final_true_tau, final_q_odd, kind="cubic", fill_value="extrapolate")
 
-    return ("parallel", (d, b, beta, r), (interp_even, interp_odd))
+    return ("parallel", (d, b, beta, r, k_s), (interp_even, interp_odd))
 
 
 def worker_dispatcher(job):
@@ -98,17 +97,19 @@ def main():
     output_filename = r"C:\Users\drewm\GHEDesigner\ghedesigner\ghe\unified_horizontal_library.pkl"
 
     # Define the parameters
-    depths = np.array([1.5])  # , 5.0, 15.0
-    spacings = np.array([0.5])  # 0.053, , 1.0
-    betas = np.array([0.344])  # 0.008, 0.01473, 4.783
+    depths = np.array([1.5, 5.0, 15.0])
+    spacings = np.array([0.25, 0.5, 1.0])
+    betas = np.array([0.344])
+    soil_ks = np.array([1.0, 1.5, 2.0, 2.5])
 
     # Input as nominal diameters, then mathematically convert to radii for the solver grid
-    diameters = np.array([0.0762])  # 0.0167, 0.02108, 0.0635, , 0.1016, 0.1524, 0.2032
+    diameters = np.array([0.0762, 0.1016, 0.1524])
     radii = diameters / 2.0
 
     table_single = {}
     table_parallel = {}
-    existing_depths, existing_spacings, existing_betas, existing_radii = set(), set(), set(), set()
+    existing_depths, existing_spacings, existing_betas = set(), set(), set()
+    existing_radii, existing_soil_ks = set(), set()
 
     # 1. Load existing data if it exists
     if os.path.exists(output_filename):
@@ -120,15 +121,14 @@ def main():
         table_parallel = existing_data.get("table_parallel", {})
 
         # Define the exact parameters we want to overwrite.
-
-        # Parallel format: (depth, spacing, beta, radius)
+        # Parallel format: (depth, spacing, beta, radius, soil_k)
         force_recalc_parallel = [
-            # (15.0, 0.053, 4.783, 0.0167 / 2.0),
+            # (15.0, 0.053, 4.783, 0.0167 / 2.0, 1.5),
         ]
 
-        # Single format: (depth, beta, radius)
+        # Single format: (depth, beta, radius, soil_k)
         force_recalc_single = [
-            # (15.0, 4.783, 0.0167 / 2.0),
+            # (15.0, 4.783, 0.0167 / 2.0, 1.5),
         ]
 
         # Remove them from the loaded tables so the script recalculates them
@@ -147,19 +147,26 @@ def main():
         existing_spacings = set(axes.get("spacings", []))
         existing_betas = set(axes.get("betas", []))
         existing_radii = set(axes.get("radii", []))
+        existing_soil_ks = set(axes.get("soil_ks", []))
 
     # 2. Filter out jobs that have already been computed
     new_single_jobs = [
-        ("single", d, beta, r) for d in depths for beta in betas for r in radii if (d, beta, r) not in table_single
+        ("single", d, beta, r, k_s)
+        for d in depths
+        for beta in betas
+        for r in radii
+        for k_s in soil_ks
+        if (d, beta, r, k_s) not in table_single
     ]
 
     new_parallel_jobs = [
-        ("parallel", d, b, beta, r)
+        ("parallel", d, b, beta, r, k_s)
         for d in depths
         for b in spacings
         for beta in betas
         for r in radii
-        if (d, b, beta, r) not in table_parallel
+        for k_s in soil_ks
+        if (d, b, beta, r, k_s) not in table_parallel
     ]
 
     all_new_jobs = new_single_jobs + new_parallel_jobs
@@ -205,9 +212,16 @@ def main():
     final_spacings = np.array(sorted(existing_spacings.union(spacings)))
     final_betas = np.array(sorted(existing_betas.union(betas)))
     final_radii = np.array(sorted(existing_radii.union(radii)))
+    final_soil_ks = np.array(sorted(existing_soil_ks.union(soil_ks)))
 
     data = {
-        "axes": {"depths": final_depths, "spacings": final_spacings, "betas": final_betas, "radii": final_radii},
+        "axes": {
+            "depths": final_depths,
+            "spacings": final_spacings,
+            "betas": final_betas,
+            "radii": final_radii,
+            "soil_ks": final_soil_ks,
+        },
         "table_single": table_single,
         "table_parallel": table_parallel,
     }

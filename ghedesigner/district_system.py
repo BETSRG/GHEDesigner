@@ -1584,9 +1584,11 @@ class GHEHPSystem:
                 target_d = get_nearest(h_data["trench_depth"], horiz_axes["depths"])
                 target_beta = get_nearest(beta, horiz_axes["betas"])
                 target_r = get_nearest(h_pipe.r_out, horiz_axes["radii"])
+                target_k = get_nearest(h_soil.k, horiz_axes["soil_ks"])
+
                 this_horiz: IsolatedHorizontalPipe | CoupledHorizontalPipe
                 if is_isolated:
-                    q_prime_interp = table_single[(target_d, target_beta, target_r)]
+                    q_prime_interp = table_single[(target_d, target_beta, target_r, target_k)]
 
                     this_horiz = IsolatedHorizontalPipe(
                         name=h_id,
@@ -1611,7 +1613,7 @@ class GHEHPSystem:
 
                 elif is_coupled:
                     target_b = get_nearest(h_data["spacing"], horiz_axes["spacings"])
-                    q_prime_even, q_prime_odd = table_parallel[(target_d, target_b, target_beta, target_r)]
+                    q_prime_even, q_prime_odd = table_parallel[(target_d, target_b, target_beta, target_r, target_k)]
 
                     this_horiz = CoupledHorizontalPipe(
                         name=h_id,
