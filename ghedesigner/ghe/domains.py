@@ -124,6 +124,7 @@ def general_domain_nbh_adjustment(
     field_domain, field_sizes, min_nbh, max_nbh, desired_nbh, removal_type="RADIAL", removal_options={}
 ):
     if desired_nbh < min_nbh:
+        return field_domain[0]
         return general_field_nbh_adjustment(field_domain[0], desired_nbh, removal_type)
     elif desired_nbh > max_nbh:
         raise ValueError("Requested field size exceeds what exists within the field domain.")
@@ -145,6 +146,7 @@ def general_domain_nbh_adjustment(
             else:
                 x_r = x_m
         print(f"Removing {field_sizes[x_r] - desired_nbh} boreholes.")
+        return field_domain[x_r]
         return general_field_nbh_adjustment(field_domain[x_r], desired_nbh, removal_type, options=removal_options)
 
 

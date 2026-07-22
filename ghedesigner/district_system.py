@@ -1369,11 +1369,15 @@ class GHEHPSystem:
         self.previous_objective_function_evaluations = {}
         self.guess_idx = -1
 
-        if self.search_method == "GLOBAL_BUPCRS":
+        if self.search_method in ("GLOBAL_BUPCRS", "GLOBAL_BUPCRS_BR"):
             self.domain: list[list[list[tuple[float, float]]]] = [[[]]]
             self.field_descriptors: list[str] = []
             if self.exhaustive_search:
                 self.sample_rate = 100
+            if self.search_method == "GLOBAL_BUPCRS":
+                self.remove_boreholes = False
+            else:
+                self.remove_boreholes = True
         elif self.search_method == "GLOBAL_ROWWISE":
             if self.exhaustive_search:
                 self.sample_rate = 100
@@ -1766,7 +1770,7 @@ class GHEHPSystem:
 
     def size_and_simulate(self):
         if np.any([ghe.ghe_manager.is_sizable for ghe in self.ground_heat_exchangers]):
-            if self.search_method == "GLOBAL_BUPCRS":
+            if self.search_method in ("GLOBAL_BUPCRS", "GLOBAL_BUPCRS_BR"):
                 self.design_system_single_bupcrs()
             elif self.search_method == "GLOBAL_ROWWISE":
                 self.design_system_single_rowwise()
@@ -1957,13 +1961,15 @@ class GHEHPSystem:
             max_result = objective(max_idx)
             if min_result <= 0 and max_result <= 0:
                 _ = objective(min_idx, ignore_previous=True)
-                final_bupcrs_adjustment(self.domain[min_idx])
+                if self.remove_boreholes:
+                    final_bupcrs_adjustment(self.domain[min_idx])
             elif min_result > 0 and max_result > 0:
                 # raise ValueError("Largest borefield cannot meet system temperature requirements. It is suggested"
                 #                  "that the minimum spacing or available property area is adjusted to allow for "
                 #                  "additional boreholes.")
                 _ = objective(max_idx, ignore_previous=True)
-                final_bupcrs_adjustment(self.domain[max_idx])
+                if self.remove_boreholes:
+                    final_bupcrs_adjustment(self.domain[max_idx])
             elif min_result >= 0 >= max_result:
                 while True:
                     m_idx = int(0.5 * (min_idx + max_idx))
@@ -1980,7 +1986,8 @@ class GHEHPSystem:
                             '"design_system_single_bupcrs" algorithm. Please report.'
                         )
                 _ = objective(max_idx, ignore_previous=True)
-                final_bupcrs_adjustment(self.domain[max_idx])
+                if self.remove_boreholes:
+                    final_bupcrs_adjustment(self.domain[max_idx])
             else:
                 raise ValueError(
                     "There has been an error in the bracketing logic of the"

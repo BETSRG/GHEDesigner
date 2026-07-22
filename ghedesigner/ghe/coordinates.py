@@ -58,7 +58,7 @@ def general_field_nbh_adjustment(coordinates, desired_nbh, removal_type, options
         if "line_segments" not in options:
             raise ValueError('A list of line segments is necessary to use the "LINE_SEGMENTS" removal option.')
         line_segments = options["line_segments"]
-        reference_points = options.get("points", [0.0, 0.0])
+        reference_points = options.get("points", [[0.0, 0.0]])
         line_distances = []
         point_distances = []
         for point in coordinates:

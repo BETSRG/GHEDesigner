@@ -241,6 +241,7 @@ def field_optimization_wp_space_fr(
     rotate_stop=None,
     partition_ratio=1.0,
     duplicate_spacing_ratio=0.1,
+    sinter_spacing=None
 ):
     """Optimizes a Field by iterating over input values w/o perimeter spacing
 
@@ -266,8 +267,11 @@ def field_optimization_wp_space_fr(
     space = space_start
     rt = rotate_start
 
-    y_s = space
-    x_s = y_s
+    if sinter_spacing is not None:
+        y_s = sinter_spacing
+    else:
+        y_s = space
+    x_s = space
 
     max_l = 0
     max_hole: DeferredDuplicateCheckList | None = None
@@ -661,7 +665,7 @@ def gen_borehole_config(
         raise ValueError("No borehole configuration found within the specified parameters")
 
     # Determines the number of rows as well as the distance between the rows
-    num_rows = int((highest_vert_val - lowest_vert_val) // y_space)
+    num_rows = max(int((highest_vert_val - lowest_vert_val) // y_space), 1)
     d = highest_vert_val - lowest_vert_val
     s = d / num_rows
     row_space = [-1 * s * cos(PI_OVER_2 - rotate), s * sin(PI_OVER_2 - rotate)]

@@ -1284,6 +1284,7 @@
           "type": "string",
           "enum": [
             "GLOBAL_BUPCRS",
+            "GLOBAL_BUPCRS_BR",
             "GLOBAL_ROWWISE",
             "NELDER-MEAD",
             "SIMULATION_ONLY"
