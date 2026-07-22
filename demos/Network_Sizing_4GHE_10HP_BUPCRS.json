@@ -491,7 +491,7 @@
   },
   "simulation_control": {
     "simulation_years": 20,
-    "search_method": "GLOBAL_BUPCRS",
+    "search_method": "GLOBAL_BUPCRS_BR",
     "exhaustive_search": false,
     "load_method": "HYBRID"
   }

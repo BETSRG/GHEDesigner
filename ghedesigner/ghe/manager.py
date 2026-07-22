@@ -442,8 +442,9 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
     def average_bound_nbh(self):
         return average(self.design.get_bounds())
 
-    def initialize_pre_designed_ghe(self, log_time=eskilson_log_times(), start_month=0, end_month=0,
-                                    hourly_extraction_ground_loads=[]):
+    def initialize_pre_designed_ghe(
+        self, log_time=eskilson_log_times(), start_month=0, end_month=0, hourly_extraction_ground_loads=[]
+    ):
         v_flow_system, m_flow_borehole = self.retrieve_flow(self.pre_designed_locations, self.fluid.rho)
         self.log_time = log_time
         self.pygfunction_borehole.H = self.pre_designed_height
@@ -483,7 +484,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             g_function,
             start_month,
             end_month,
-            hourly_extraction_ground_loads
+            hourly_extraction_ground_loads,
         )
 
     def design_and_size_ghe(

@@ -241,7 +241,7 @@ def field_optimization_wp_space_fr(
     rotate_stop=None,
     partition_ratio=1.0,
     duplicate_spacing_ratio=0.1,
-    sinter_spacing=None
+    sinter_spacing=None,
 ):
     """Optimizes a Field by iterating over input values w/o perimeter spacing
 
@@ -267,10 +267,7 @@ def field_optimization_wp_space_fr(
     space = space_start
     rt = rotate_start
 
-    if sinter_spacing is not None:
-        y_s = sinter_spacing
-    else:
-        y_s = space
+    y_s = sinter_spacing if sinter_spacing is not None else space
     x_s = space
 
     max_l = 0
