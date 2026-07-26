@@ -62,6 +62,15 @@ class SourceSinkHeatExchanger(BaseSimComp):
         if self.op_mode == SourceSinkOpMode.SINK and self.cut_in_temp <= self.cut_out_temp:
             raise ValueError("SINK mode requires cut_in_temp > cut_out_temp")
 
+        # for bidirectional flow
+        self.node_network_inlet_ID = None
+        self.node_network_outlet_ID = None
+        self.node_HP_inlet_ID = None
+        self.node_HP_outlet_ID = None
+        self.bldgIDs = []
+        self.bldgs = []
+        self.type = "HX"
+
     def is_running(self, t_in: float) -> bool:
         # Hysteresis assumes a proper band:
         #  - SOURCE (heating): cut_in_temp < cut_out_temp
@@ -234,6 +243,23 @@ class GHX(BaseSimComp):
         self.bh_effective_resist = self.bhe.calc_effective_borehole_resistance()
         self.c_n = self.calc_cn_constant()
 
+        # for bidirectional flow
+        self.inlet = None
+        self.outlet = None
+        self.temp_index_one = None
+        self.temp_index_two = None
+        self.temp_index_mean = None
+        self.heat_rejection_index = None
+        self.mass_flow_ghe = None
+        self.input = None
+        self.output = None
+        self.inlet_nodeID = ghe_data["inlet_nodeID"]
+        self.outlet_nodeID = ghe_data["outlet_nodeID"]
+        self.m_ghe_array = None
+        self.type = "GHX"
+        self.ID = ghe_data["id"]
+        self.m_ghe_array = np.zeros(num_timesteps, dtype=float)
+
     def initialize_gFunction_object(self):
         self.gFunction.bore_locations = [(i * self.row_spacing, j * self.row_spacing) for i in range(int(self.n_rows)) for j in range(int(self.n_cols))]
         self.gFunction.log_time = eskilson_log_times()
@@ -369,6 +395,9 @@ class GHX(BaseSimComp):
 
             rhs1, rhs2, rhs3, rhs4 = 0, self.history_terms[idx_timestep], 0, 0
 
+            rows = [row1, row2, row3, row4]
+            rhs = [rhs1, rhs2, rhs3, rhs4]
+
         elif configuration == CentralLoopType.TWOPIPE:
             row1[self.row_index + 1] = 1
             row1[self.row_index + 2] = -self.c_n[idx_timestep]
@@ -391,11 +420,33 @@ class GHX(BaseSimComp):
 
             rhs1, rhs2, rhs3, rhs4 = self.history_terms[idx_timestep], 0, 0, 0
 
+            rows = [row1, row2, row3, row4]
+            rhs = [rhs1, rhs2, rhs3, rhs4]
+
+        elif configuration == CentralLoopType.TWOPIPE_RING:
+            row1[self.temp_index_one] = -1.0
+            row1[self.temp_index_two] = -1.0
+            row1[self.temp_index_mean] = 2.0
+
+            row2[self.temp_index_mean] = 1
+            row2[self.heat_rejection_index] = -self.c_n[idx_timestep]
+
+            if mass_flow_ghe < 0:
+                row3[self.temp_index_two] = abs(mass_flow_ghe) * self.cp
+                row3[self.temp_index_one] = - abs(mass_flow_ghe) * self.cp
+                row3[self.heat_rejection_index] = - self.height * (self.n_rows * self.n_cols)
+            else:
+                row3[self.temp_index_one] = abs(mass_flow_ghe) * self.cp
+                row3[self.temp_index_two] = - abs(mass_flow_ghe) * self.cp
+                row3[self.heat_rejection_index] = - self.height * (self.n_rows * self.n_cols)
+
+            rhs1, rhs2, rhs3 = 0.0, self.history_terms[idx_timestep], 0.0
+
+            rows = [row1, row2, row3]
+            rhs = [rhs1, rhs2, rhs3]
+
         else:
             raise ValueError(f"Unknown configuration: {configuration}")
-
-        rows = [row1, row2, row3, row4]
-        rhs = [rhs1, rhs2, rhs3, rhs4]
 
         return rows, rhs
 
@@ -486,6 +537,24 @@ class Building(BaseSimComp):
         self.power_hp_tot = np.zeros(self.num_timesteps, dtype=float)
         self.power_circ_pump = np.zeros(self.num_timesteps, dtype=float)
 
+        # for bidirectional flow
+        self.inlet = None
+        self.outlet = None
+        self.loop = None
+        self.temp_index_one = None
+        self.temp_index_two = None
+        self.q_ext = None
+        self.q_rej = None
+        self.mass_bldg = None
+        self.q_net_c = self.clg_vals - self.htg_vals
+        self.mass_bldg_array = np.zeros(num_timesteps,dtype=float)
+        self.input = None
+        self.output = None
+        self.inlet_nodeID = bldg_data["inlet_nodeID"]
+        self.outlet_nodeID = bldg_data["outlet_nodeID"]
+        self.type = "bldg"
+        self.ID = bldg_data["id"]
+
     def calc_mass_flow_rate(self, t_in, idx_timestep):
         if self.heating_exists:
             cap_htg = self.hp_htg.c1_htg * t_in**2 + self.hp_htg.c2_htg * t_in + self.hp_htg.c3_htg
@@ -556,7 +625,8 @@ class Building(BaseSimComp):
             row[self.row_index] = 1 + r1 / (mass_loop * self.cp)
             row[self.downstream_index] = -1
             rhs = -r2 / (mass_loop * self.cp)
-            return [row], [rhs]
+            rows = [row]
+            rhs_list = [rhs]
 
         elif configuration == CentralLoopType.TWOPIPE:
             row1 = np.zeros(self.matrix_size)
@@ -576,12 +646,31 @@ class Building(BaseSimComp):
             rhs1, rhs2 = -r2, 0
 
             rows = [row1, row2]
-            rhs = [rhs1, rhs2]
+            rhs_list = [rhs1, rhs2]
 
-            return rows, rhs
+        elif configuration == CentralLoopType.TWOPIPE_RING:
+            row = np.zeros(self.matrix_size)
+
+            if abs(mass_bldg) == 0:
+                row[self.temp_index_one] = 1
+                row[self.temp_index_two] = -1
+                rhs = 0
+
+            elif mass_bldg < 0:
+                row[self.temp_index_two] = r1 + abs(self.mass_bldg) * self.cp
+                row[self.temp_index_one] = - abs(self.mass_bldg) * self.cp
+                rhs = -r2
+            else:
+                row[self.temp_index_one] = r1 + abs(self.mass_bldg) * self.cp
+                row[self.temp_index_two] = - abs(self.mass_bldg) * self.cp
+                rhs = -r2
+
+            rows = [row]
+            rhs_list = [rhs]
 
         else:
             raise ValueError(f"Unknown configuration: {configuration}")
+        return rows, rhs_list
 
     def calc_energy(self):
         """Calculate energy consumption of the heat pump system."""
@@ -621,7 +710,8 @@ class HPmodel:
 
         self.c1_htg = hp_data["heating_performance"]["c1"]
         self.c2_htg = hp_data["heating_performance"]["c2"]
-        self.c3_htg = hp_data["heating_performance"]["c3"]
+        self.c_ = hp_data["heating_performance"]["c3"]
+        self.c3_htg = self.c_
 
         self.c1_clg = hp_data["cooling_performance"]["c1"]
         self.c2_clg = hp_data["cooling_performance"]["c2"]
@@ -632,6 +722,117 @@ class HPmodel:
         self.pump_efficiency = hp_data["pump_efficiency"]
         self.design_htg_cap_single_hp = hp_data["heating_performance"]["design_cap"]
         self.design_clg_cap_single_hp = hp_data["cooling_performance"]["design_cap"]
+
+
+class Node:
+    def __init__(self, node_id: str, node_data: dict):
+        self.ID = node_id
+        self.type = node_data["type"]
+
+        self.x = float(node_data["x"])
+        self.y = float(node_data["y"])
+        self.z = float(node_data["z"])
+
+        self.connection = node_data["connection"]
+        self.connection_id = node_data["connection_id"]
+
+        # Assigned later
+        self.input = None
+        self.output = None
+        self.device_pipe = None
+        self.diversion = None
+        self.merger = None
+
+        # for bidirectional flow
+        self.inlet = None
+        self.outlet = None
+        self.row_index = None
+
+    def generate_node_matrix(self, matrix_size, cp, bldg_lookup, GHX_lookup):
+        if self.type not in ("branching", "merging"):
+            return [], []
+
+        row1 = np.zeros(matrix_size)
+        row2 = np.zeros(matrix_size)
+
+        if self.type in ("branching", "merging"):
+            if self.connection == "building":
+                bldg = bldg_lookup[self.connection_id]
+            if self.connection == "ground_heat_exchanger":
+                ghx = GHX_lookup[self.connection_id]
+
+            row1[self.input.temp_index] = self.input.mass_flow_rate * cp
+            row1[self.output.temp_index] = - self.output.mass_flow_rate * cp
+            if self.input.type == "main_or" and self.connection == "building":
+                row1[bldg.temp_index_one] = -bldg.mass_bldg * cp
+            elif self.input.type == "main_ir" and self.connection == "building":
+                row1[bldg.temp_index_two] = bldg.mass_bldg * cp
+            elif self.input.type == "main_or" and self.connection == "ground_heat_exchanger":
+                row1[ghx.temp_index_two] = ghx.mass_flow_ghe * cp
+            elif self.input.type == "main_ir" and self.connection == "ground_heat_exchanger":
+                row1[ghx.temp_index_one] = - ghx.mass_flow_ghe * cp
+
+        rows = [row1]
+        rhs = [0.0]
+
+        if self.temp_type == "branching":
+            row2[self.input.temp_index] = 1.0
+            if self.input.type == "main_or" and self.connection == "building":
+                row2[bldg.temp_index_one] = -1.0
+            if self.input.type == "main_ir" and self.connection == "building":
+                row2[bldg.temp_index_two] = -1.0
+            if self.input.type == "main_or" and self.connection == "ground_heat_exchanger":
+                row2[ghx.temp_index_two] = -1.0
+            if self.input.type == "main_ir" and self.connection == "ground_heat_exchanger":
+                row2[ghx.temp_index_one] = -1.0
+
+            rows.append(row2)
+            rhs.append(0.0)
+
+        return rows, rhs
+
+
+class NetworkPipe:
+
+    def __init__(self, pipe_id: str, pipe_data: dict, num_timesteps: int):
+        # Pipe identification
+        self.ID = pipe_id
+        self.type = pipe_data["type"]
+
+        # Node IDs read from JSON
+        self.node_in_name = pipe_data["node_in_name"]
+        self.node_out_name = pipe_data["node_out_name"]
+
+        # Physical properties
+        self.length = float(pipe_data["length"])
+        self.nominal_mass_flow = float(pipe_data["nominal_mass_flow"])
+        self.diameter = float(pipe_data["diameter"])
+
+
+        # Actual Node objects will be assigned later
+        self.input = None
+        self.output = None
+        self.roughness = 0.000001
+        self.matrix_index = None
+
+        # for bidirectional flow
+        self.inlet = None
+        self.outlet = None
+        self.temp_index = None
+        self.temp = None
+        self.mass_flow_rate = None
+        self.num_timesteps = num_timesteps
+        self.mass_flow_rate_array = np.zeros(num_timesteps,dtype=float)
+
+    def calc_pipe_resistance(self, density, kinematic_viscosity):
+        vol_flow_rate = self.nominal_mass_flow / density
+        velocity = vol_flow_rate / (np.pi/4*self.diameter**2)
+        Reynolds_num = velocity * self.diameter / kinematic_viscosity
+        friction_factor = 1/(-1.8*np.log10(((self.roughness/self.diameter)/3.7)**1.11 + 6.9/Reynolds_num))**2
+        pressure_drop = (friction_factor*self.length*density*velocity**2)/(2*self.diameter)
+        pipe_resistance = pressure_drop/self.nominal_mass_flow
+
+        return pipe_resistance
 
 
 class GHEHPSystem:
@@ -654,6 +855,8 @@ class GHEHPSystem:
         building_data = json_data.get("building", {})
         ghe_data = json_data.get("ground_heat_exchanger", {})
         hx_data = json_data.get("source_sink_heat_exchanger", {})
+        node_data = json_data.get("node", {})
+        pipe_data = json_data.get("pipe", {})
 
         self.fluid = Fluid(
             fluid_name=fluid_data["fluid_name"],
@@ -725,6 +928,7 @@ class GHEHPSystem:
                 )
                 buildings.append(this_bldg)
 
+        self.buildings = buildings
         self.num_buildings = len(buildings)
 
         heat_exchangers: list[SourceSinkHeatExchanger] = []
@@ -733,6 +937,7 @@ class GHEHPSystem:
                 this_hx = SourceSinkHeatExchanger(this_hx_id, this_hx_data, tg, self.num_timesteps)
                 heat_exchangers.append(this_hx)
 
+        self.heat_exchangers = heat_exchangers
         self.num_heat_exchangers = len(heat_exchangers)
 
         cp = 0.0
@@ -744,6 +949,31 @@ class GHEHPSystem:
                 cp = this_ghx.cp
                 ground_heat_exchangers.append(this_ghx)
 
+        self.ground_heat_exchangers = ground_heat_exchangers
+        self.num_ground_heat_exchangers = len(ground_heat_exchangers)
+
+        nodes: list[Node] = []
+        for node_id, node_data in node_data.items():
+            this_node = Node(node_id, node_data)
+            nodes.append(this_node)
+
+        self.nodes = nodes
+        self.num_nodes = len(nodes)
+
+        pipes: list[NetworkPipe] = []
+        for pipe_id, pipe_data in pipe_data.items():
+            this_pipe = NetworkPipe(pipe_id, pipe_data, self.num_timesteps)
+            pipes.append(this_pipe)
+
+        self.pipes = pipes
+        self.num_pipes = len(pipes)
+
+        # for ghx_id, ghe_data in ghe_data.items():
+        #     if ghx_id.upper() in ghx_names:
+        #         this_ghx = GHX(ghx_id, ghe_data, self.fluid, self.loop_config, self.num_timesteps, self.time_array)
+        #         cp = this_ghx.cp
+        #         ground_heat_exchangers.append(this_ghx)
+
         if self.load_method == "hourly":
             for ghx in ground_heat_exchangers:
                 ts_hr = ghx.ts / SEC_IN_HR
@@ -753,14 +983,33 @@ class GHEHPSystem:
 
         self.nbh_total = sum(x.nbh for x in ground_heat_exchangers)
         self.num_ghx = len(ground_heat_exchangers)
+
         if self.loop_config == CentralLoopType.ONEPIPE:
             Building.MATRIX_ROWS = 1
-        else:
+            GHX.MATRIX_ROWS = 4
+            node_matrix_rows = 0
+
+        elif self.loop_config == CentralLoopType.TWOPIPE:
             Building.MATRIX_ROWS = 2
+            GHX.MATRIX_ROWS = 1
+            node_matrix_rows = 0
+
+        elif self.loop_config == CentralLoopType.TWOPIPE_RING:
+            Building.MATRIX_ROWS = 1
+            GHX.MATRIX_ROWS = 3
+            node_matrix_rows = sum(
+                2 if node.type == "branching"
+                else 1 if node.type == "merging"
+                else 0
+                for node in self.nodes
+    )
+        else:
+            raise ValueError("Invalid CentralLoopType")
+
         self.matrix_size = np.dot(
             [GHX.MATRIX_ROWS, Building.MATRIX_ROWS, SourceSinkHeatExchanger.MATRIX_ROWS],
             [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
-        )
+        ) + node_matrix_rows
 
         self.m_flow_loop = np.zeros(self.num_timesteps)
         self.pump_power_loop = np.zeros(self.num_timesteps)
@@ -807,6 +1056,9 @@ class GHEHPSystem:
         for i in range(len(self.components)):
             self.components[i].downstream_device = self.components[(i+1) % len(self.components)]
 
+        # Updating connections
+        self.UpdateConnections()
+
         # Assigning row_indices
         idx_comp = 0
         for this_comp in self.components:
@@ -841,7 +1093,122 @@ class GHEHPSystem:
             else:
                 pass
 
+        # Assigning temperature indices for bidirectional flow
+        index = 0
+
+        for pipe in self.pipes:
+            if pipe.type in ("main_ir", "main_or"):
+                pipe.temp_index = index
+                index += 1
+
+        # Assigning appropriate temp_index to dummy pipes
+        bldg_lookup = {bldg.ID: bldg for bldg in self.buildings}
+        GHX_lookup = {ghx.ID: ghx for ghx in self.ground_heat_exchangers}
+
+        for pipe in self.pipes:
+            if pipe.type == "main_dir":
+                current = pipe
+                while current.type != "main_ir":
+                    current = current.output
+                pipe.temp_index = current.temp_index
+
+        for pipe in self.pipes:
+            if pipe.type == "main_dor":
+                current = pipe
+                while current.type != "main_or":
+                    current = current.output
+                pipe.temp_index = current.temp_index
+
+        for this_comp in self.components:
+
+            if isinstance(this_comp, Building):
+                idx_one = index
+                index += 1
+
+                idx_two = index
+                index += 1
+
+                # Assign to component copy
+                this_comp.temp_index_one = idx_one
+                this_comp.temp_index_two = idx_two
+
+                # Assign same indices to original building
+                original_bldg = bldg_lookup[this_comp.ID]
+                original_bldg.temp_index_one = idx_one
+                original_bldg.temp_index_two = idx_two
+
+            elif isinstance(this_comp, GHX):
+                idx_one = index
+                index += 1
+
+                idx_two = index
+                index += 1
+
+                idx_mean = index
+                index += 1
+
+                idx_q = index
+                index += 1
+
+                # Assign to component copy
+                this_comp.temp_index_one = idx_one
+                this_comp.temp_index_two = idx_two
+                this_comp.temp_index_mean = idx_mean
+                this_comp.heat_rejection_index = idx_q
+
+                # Assign same indices to original GHX
+                original_ghx = GHX_lookup[this_comp.ID]
+                original_ghx.temp_index_one = idx_one
+                original_ghx.temp_index_two = idx_two
+                original_ghx.temp_index_mean = idx_mean
+                original_ghx.heat_rejection_index = idx_q
+
+        # for this_comp in self.components:
+        #     if isinstance(this_comp, Building):
+        #         this_comp.temp_index_one = index
+        #         index += 1
+        #
+        #         this_comp.temp_index_two = index
+        #         index += 1
+        #
+        #     elif isinstance(this_comp, GHX):
+        #         this_comp.temp_index_one = index
+        #         index += 1
+        #
+        #         this_comp.temp_index_two = index
+        #         index += 1
+        #
+        #         this_comp.temp_index_mean = index
+        #         index += 1
+        #
+        #         this_comp.heat_rejection_index = index
+        #         index += 1
+
+        # for bldg in self.buildings:
+        #     bldg.temp_index_one = index
+        #     index += 1
+        #     bldg.temp_index_two = index
+        #     index += 1
+        #
+        # for ghx in self.ground_heat_exchangers:
+        #     ghx.temp_index_one = index
+        #     index += 1
+        #     ghx.temp_index_two = index
+        #     index += 1
+        #     ghx.temp_index_mean = index
+        #     index += 1
+        #     ghx.heat_rejection_index = index
+        #     index += 1
+
     def solve_system(self):
+        # for bidirectional flow - calculating fluid resistances
+        density = self.fluid.rho
+        kinematic_viscosity = self.fluid.mu / self.fluid.rho
+
+        for pipe in self.pipes:
+            if pipe.type in ("main_ir", "main_or"):
+                pipe.resistance = abs(pipe.calc_pipe_resistance(density, kinematic_viscosity))
+
         for idx_timestep in range(1, self.num_timesteps):  # loop over all timestep
             matrix_rows = []
             matrix_rhs = []
@@ -865,10 +1232,205 @@ class GHEHPSystem:
 
                 this_comp.mass_loop_bldg = m_bldg_cum
 
+            # for bidirectional flow
+
+            # Calculating zone mass flow rates
+            if self.loop_config == CentralLoopType.TWOPIPE_RING:
+                total_bldg_flow = 0.0
+                for bldg in self.buildings:
+                    t_in = bldg.t_in[idx_timestep - 1]
+                    mass_bldg = bldg.calc_mass_flow_rate(t_in, idx_timestep)
+
+                    if bldg.q_net_c[idx_timestep] > 0:
+                        bldg.mass_bldg = mass_bldg
+                    else:
+                        bldg.mass_bldg = -mass_bldg
+
+                    # Copy the same value to the component copy
+                    for comp in self.components:
+                        if isinstance(comp, Building) and comp.ID == bldg.ID:
+                            comp.mass_bldg = bldg.mass_bldg
+                            break
+
+                    bldg.mass_bldg_array[idx_timestep] = bldg.mass_bldg
+
+                    # Add to total flow
+                    total_bldg_flow += bldg.mass_bldg
+
+                    # my convention is cooling-reference (clockwise) flow heating-reverse flow (counter-clockwise)
+
+                    bldg.input.input.mass_flow_rate = bldg.mass_bldg
+                    bldg.output.output.mass_flow_rate = bldg.mass_bldg
+
+                # Calculating mass flow rate of GHE
+                nbh_total = sum(GHE.nbh for GHE in self.ground_heat_exchangers)
+                for GHE in self.ground_heat_exchangers:
+                    GHE.nbh = len(GHE.gFunction.bore_locations)
+                    split_ratio = GHE.nbh / nbh_total
+                    GHE.mass_flow_ghe = total_bldg_flow * split_ratio
+
+                # building the mass_matrix
+
+                index = 0
+                for pipe in self.pipes:
+                    if pipe.type == "main_ir":
+                        pipe.matrix_index = index
+                        index += 1
+
+                for pipe in self.pipes:
+                    if pipe.type == "main_or":
+                        pipe.matrix_index = index
+                        index += 1
+
+                # Assigning appropriate matrix_index and temp_index to dummy pipes
+                for pipe in self.pipes:
+                    if pipe.type == "main_dir":
+                        current = pipe
+                        while current.type != "main_ir":
+                            current = current.output
+                        pipe.matrix_index = current.matrix_index
+                        pipe.temp_index = current.temp_index
+
+                for pipe in self.pipes:
+                    if pipe.type == "main_dor":
+                        current = pipe
+                        while current.type != "main_or":
+                            current = current.output
+                        pipe.matrix_index = current.matrix_index
+                        pipe.temp_index = current.temp_index
+
+                mass_matrix_size = 2 * len(self.buildings) + 2 * (len(self.ground_heat_exchangers) - 1) + 2
+
+                mass_matrix = []
+                mass_matrix_rhs = []
+
+                # generating matrix for pipes
+                row1 = np.zeros(mass_matrix_size)
+                row2 = np.zeros(mass_matrix_size)
+
+                main_ir_index = 0
+                main_or_index = len(self.buildings) + (len(self.ground_heat_exchangers) - 1) + 1
+
+                for pipe in self.pipes:
+                    if pipe.type == "main_ir":
+                        row1[main_ir_index] = pipe.resistance
+                        main_ir_index += 1
+
+                    elif pipe.type == "main_or":
+                        row2[main_or_index] = pipe.resistance
+                        main_or_index += 1
+
+                mass_matrix.append(row1)
+                mass_matrix_rhs.append(0.0)
+
+                mass_matrix.append(row2)
+                mass_matrix_rhs.append(0.0)
+
+                # generating matrix for nodes
+                bldg_lookup = {bldg.ID: bldg for bldg in self.buildings}
+                GHX_lookup = {ghx.ID: ghx for ghx in self.ground_heat_exchangers}
+                last_ghe_id = self.ground_heat_exchangers[-1].ID
+
+                for node in self.nodes:
+                    if node.connection == "ground_heat_exchanger" and node.connection_id == last_ghe_id:
+                        continue
+
+                    row = np.zeros(mass_matrix_size)
+
+                    if node.type == "merging" and node.connection == "building":
+                        row[node.output.matrix_index] = 1
+                        row[node.input.matrix_index] = -1
+                    elif node.type == "branching" and node.connection == "building":
+                        row[node.input.matrix_index] = 1
+                        row[node.output.matrix_index] = -1
+                    elif node.type == "merging" and node.connection == "ground_heat_exchanger":
+                        row[node.output.matrix_index] = 1
+                        row[node.input.matrix_index] = -1
+                    elif node.type == "branching" and node.connection == "ground_heat_exchanger":
+                        row[node.input.matrix_index] = 1
+                        row[node.output.matrix_index] = -1
+                    else:
+                        continue
+
+                    if node.connection == "building":
+                        rhs = bldg_lookup[node.connection_id].mass_bldg
+                    elif node.connection == "ground_heat_exchanger":
+                        rhs = GHX_lookup[node.connection_id].mass_flow_ghe
+
+                    mass_matrix.append(row)
+                    mass_matrix_rhs.append(rhs)
+
+                mass_matrix = np.array(mass_matrix)
+                mass_matrix_rhs = np.array(mass_matrix_rhs)
+
+                solution = np.linalg.solve(mass_matrix, mass_matrix_rhs)
+
+                # Assigning mass flow rates to loop segments
+                inner_index = 0
+                outer_index = len(self.buildings) + len(self.ground_heat_exchangers)
+
+                for pipe in self.pipes:
+                    if pipe.type == "main_ir":
+                        pipe.mass_flow_rate = solution[inner_index]
+                        inner_index += 1
+
+                    elif pipe.type == "main_or":
+                        pipe.mass_flow_rate = solution[outer_index]
+                        outer_index += 1
+
+                for pipe in self.pipes:
+                    if pipe.type == "main_dir":
+                        current = pipe
+                        while current.output.type != "main_ir":
+                            current = current.output
+                        pipe.mass_flow_rate = current.output.mass_flow_rate
+
+                for pipe in self.pipes:
+                    if pipe.type == "main_dor":
+                        current = pipe
+                        while current.output.type != "main_or":
+                            current = current.output
+                        pipe.mass_flow_rate = current.output.mass_flow_rate
+
+                for pipe in self.pipes:
+                    pipe.mass_flow_rate_array[idx_timestep] = pipe.mass_flow_rate
+
+                # solving node mass balance to find mass flow rate of GHE and assigning flows to GHE connecting pipes
+                for ghx in self.ground_heat_exchangers:
+                    node_upstream = ghx.input.input.input
+                    ghx.mass_flow_ghe = node_upstream.input.mass_flow_rate - node_upstream.output.mass_flow_rate  # comment by NB: I may not need to do this as I already have GHE flow before building matrix, check and remove!!
+                    ghx.input.input.mass_flow_rate = ghx.mass_flow_ghe
+                    ghx.output.output.mass_flow_rate = ghx.mass_flow_ghe
+                    ghx.m_ghe_array[idx_timestep] = ghx.mass_flow_ghe
+
+                    # Copy the same value to the component copy
+                    for comp in self.components:
+                        if isinstance(comp, GHX) and comp.ID == ghx.ID:
+                            comp.mass_flow_ghe = ghx.mass_flow_ghe
+                            break
+
+                self.UpdateThermalConnections()
+
+            for this_comp in self.components:
+                if isinstance(this_comp, Building):
+                    t_in = this_comp.t_in[idx_timestep - 1]
+                    if self.loop_config == CentralLoopType.TWOPIPE_RING:
+                        this_comp.mass_bldg = this_comp.mass_bldg
+                    else:
+                        this_comp.mass_bldg = this_comp.calc_mass_flow_rate(t_in, idx_timestep)
+                    total_hp_flow += this_comp.mass_bldg
+                    m_bldg_cum += this_comp.mass_bldg
+
+                this_comp.mass_loop_bldg = m_bldg_cum
             mass_loop = max(total_hp_flow * self.loop_flow_factor, 0.1)
+
             for this_comp in self.components:
                 if isinstance(this_comp, GHX):
-                    this_comp.mass_flow_ghe = mass_loop * this_comp.split_ratio
+                    if self.loop_config != CentralLoopType.TWOPIPE_RING:
+                        this_comp.mass_flow_ghe = (
+                                mass_loop * this_comp.split_ratio
+                        )
+
                     m_ghe_cum += this_comp.mass_flow_ghe
 
                 this_comp.mass_loop_ghe = m_ghe_cum
@@ -877,10 +1439,28 @@ class GHEHPSystem:
                 matrix_rows.extend(rows)
                 matrix_rhs.extend(rhs)
 
+            # Generating matrix for nodes
+
+            if self.loop_config == CentralLoopType.TWOPIPE_RING:
+                bldg_lookup = {bldg.ID: bldg for bldg in self.buildings}
+                GHX_lookup = {ghx.ID: ghx for ghx in self.ground_heat_exchangers}
+                for node in self.nodes:
+                    rows, rhs_values = node.generate_node_matrix(self.matrix_size, self.fluid.cp, bldg_lookup, GHX_lookup)
+
+                    matrix_rows.extend(rows)
+                    matrix_rhs.extend(rhs_values)
+
             # Solve the system = A * X = B
             a_matrix = np.array(matrix_rows, dtype=float)
             b_vector = np.array(matrix_rhs, dtype=float)
             x_vector = np.linalg.solve(a_matrix, b_vector)
+
+            check_times = (100, 5000, 7000)
+            if idx_timestep in check_times:
+                print(f"\nTimestep {idx_timestep}")
+                print(x_vector)
+                print(b_vector)
+
 
             # save output data
             self.m_flow_loop[idx_timestep] = mass_loop
@@ -907,7 +1487,11 @@ class GHEHPSystem:
                         this_comp.t_mix_out[idx_timestep] = x_vector[this_comp.downstream_index]
 
                     this_comp.t_mean[idx_timestep] = x_vector[row_index + 1]
-                    this_comp.q_ghe[idx_timestep] = x_vector[row_index + 2]
+                    if self.loop_config == CentralLoopType.TWOPIPE_RING:
+                        this_comp.q_ghe[idx_timestep] = x_vector[this_comp.heat_rejection_index]
+                    else:
+                        this_comp.q_ghe[idx_timestep] = x_vector[row_index + 2]
+
                     this_comp.dq_ghe[idx_timestep - 1] = (this_comp.q_ghe[idx_timestep] - this_comp.q_ghe[
                                                              idx_timestep - 1]
                                                          ) / this_comp.two_pi_k
@@ -917,6 +1501,18 @@ class GHEHPSystem:
 
                     this_comp.t_in[idx_timestep] = x_vector[row_index]
                     this_comp.t_out[idx_timestep] = x_vector[this_comp.downstream_index]
+
+                    if self.loop_config == CentralLoopType.TWOPIPE:
+
+                        this_comp.t_in[idx_timestep] = x_vector[
+                            this_comp.inlet_index
+                        ]
+                        this_comp.t_mix_out[idx_timestep] = x_vector[row_index]
+
+                        this_comp.t_mean[idx_timestep] = x_vector[row_index + 1]
+                        this_comp.q_ghe[idx_timestep] = x_vector[row_index + 2]
+                        this_comp.t_out[idx_timestep] = x_vector[row_index + 3]
+
 
     def calc_energy(self):
         self.pump_power_loop = (
@@ -988,3 +1584,312 @@ class GHEHPSystem:
         if not output_path.parent.exists():
             output_path.parent.mkdir(parents=True)
         output_data.to_csv(output_path, float_format="%0.4f")
+
+    def UpdateConnections(self):
+
+        for pipe in self.pipes:
+            pipe.input = FindItemByID(pipe.node_in_name, self.nodes)
+            pipe.output = FindItemByID(pipe.node_out_name, self.nodes)
+            if pipe.type in ("main_ir", "main_or", "main_dir", "main_dor", "main"):
+                pipe.input.output = pipe
+                pipe.output.input = pipe
+            elif pipe.type == "branch":
+                pipe.input.diversion = pipe
+                pipe.input.device_pipe = pipe
+                pipe.output.input = pipe
+            else:
+                pipe.output.merger = pipe
+                pipe.output.device_pipe = pipe
+                pipe.input.output = pipe
+
+        for bldg in self.buildings:
+            #bldg.HP = FindItemByID(bldg.HPmodel, self.HPmodels)
+            bldg.input = FindItemByID(bldg.inlet_nodeID, self.nodes)
+            if bldg.input is None:
+                raise ValueError(
+                    f"Inlet node '{bldg.inlet_nodeID}' for building "
+                    f"'{bldg.name}' was not found."
+                )
+
+            bldg.input.output = bldg
+            if self.loop_config in (CentralLoopType.TWOPIPE, CentralLoopType.TWOPIPE_RING):
+                bldg.output = FindItemByID(bldg.outlet_nodeID, self.nodes)
+                bldg.output.input = bldg
+
+        # for building in self.buildings:
+        #     for zoneID in building.zoneIDs:
+        #         zone = FindItemByID(zoneID, self.zones)
+        #         building.zones.append(zone)
+
+        for ghx in self.ground_heat_exchangers:
+            ghx.input = FindItemByID(ghx.inlet_nodeID, self.nodes)
+            ghx.input.output = ghx
+            if self.loop_config in (CentralLoopType.TWOPIPE, CentralLoopType.TWOPIPE_RING):
+                ghx.output = FindItemByID(ghx.outlet_nodeID, self.nodes)
+                ghx.output.input = ghx
+
+        for HX in self.heat_exchangers:
+            HX.input = FindItemByID(HX.node_network_inlet_ID, self.nodes)
+            HX.output = FindItemByID(HX.node_network_outlet_ID, self.nodes)
+            HX.HP_input = FindItemByID(HX.node_HP_inlet_ID, self.nodes)
+            HX.HP_output = FindItemByID(HX.node_HP_outlet_ID, self.nodes)
+
+            HX.input.output = HX
+            HX.HP_output.input = HX
+            HX.HP_input.output = HX
+            if self.loop_config in (CentralLoopType.TWOPIPE, CentralLoopType.TWOPIPE_RING):
+                HX.output.input = HX
+
+        for HX in self.heat_exchangers:
+            for bldgID in HX.bldgIDs:
+                bldg = FindItemByID(bldgID, self.buildings)
+                HX.bldgs.append(bldg)
+
+        # finding upstream and downstream device for GHE
+
+        for ghx in self.ground_heat_exchangers:
+
+            # find the first upstream branching node
+            device = ghx.input
+            while device.type != "branching":
+                device = device.input
+
+            # find the second upstream branching node
+            device = device.input
+            while device.type != "branching" and device.type != "merging":
+                device = device.input
+
+            # find the upstream device
+            if device.type == "branching":
+                device = device.diversion
+                while device.type != "GHX" and device.type != "bldg" and device.type != "HX":
+                    device = device.output
+            else:
+                device = device.merger
+                while device.type != "GHX" and device.type != "bldg":
+                    device = device.input
+
+            ghx.upstream_device = device
+            device.downstream_device = ghx
+
+        # finding upstream and downstream device for zones
+
+        for bldg in self.buildings:
+            # find the first upstream branching node
+            device = bldg.input
+            while device.type != "branching":
+                device = device.input
+
+            # find the second upstream branching node or upstream device, if it is connected to ISHX
+            device = device.input
+            while device.type != "branching" and device.type != "device" and device.type != "merging":
+                device = device.input
+
+            # find the upstream device
+            if device.type == "branching":
+                device = device.diversion
+                while device.type != "GHX" and device.type != "bldg" and device.type != "HX":
+                    device = device.output
+            elif device.type == "merging":
+                device = device.merger
+                while device.type != "GHX":
+                    device = device.input
+
+            else:
+                device = device.input
+
+            bldg.upstream_device = device
+            if device.type != "HX":
+                device.downstream_device = bldg
+
+        # finding upstream and downstream device for ISHX
+        for HX in self.heat_exchangers:
+            # find first upstream node
+            device = HX.input
+            while device.type != "branching":
+                device = device.input
+
+            # find the second upstream branching node
+            device = device.input
+            while device.type != "branching" and device.type != "merging":
+                device = device.input
+
+            # finding upstream device
+            if device.type == "branching":
+                device = device.diversion
+                while device.type != "GHX" and device.type != "bldg":
+                    device = device.output
+            else:
+                device = device.merger
+            while device.type != "GHX" and device.type != "bldg":
+                device = device.input
+
+            HX.upstream_device = device
+            device.downstream_device = HX
+
+        # finding ISHX upstream device in HP side
+
+        for HX in self.heat_exchangers:
+            device = HX.HP_input
+            # finding first upstream branching node
+            while device.type != "branching" and device.type != "merging":
+                device = device.input
+
+            # finding upstream device
+            if device.type == "branching":
+                device = device.diversion
+                while device.type != "bldg":
+                    device = device.output
+            else:
+                device = device.merger
+                while device.type != "bldg":
+                    device = device.input
+
+            HX.upstream_device_HP = device
+            device.downstream_device = HX
+
+        # finding ISHX downstream device in HP side
+
+        for HX in self.heat_exchangers:
+            device = HX.HP_output
+
+            # finding first branching node
+            while device.type != "branching":
+                device = device.output
+
+            # finding downstream device
+            device = device.diversion
+            while device.type != "bldg":
+                device = device.output
+
+            HX.downstream_device_HP = device
+            device.upstream_device = HX
+
+    def UpdateThermalConnections(self):
+
+        # Updating pipe directions
+
+        for pipe in self.pipes:
+            if pipe.mass_flow_rate < 0:
+                pipe.inlet = pipe.output
+                pipe.outlet = pipe.input
+                # assigning inlets and outlets to connecting nodes
+                pipe.inlet.outlet = pipe
+                pipe.outlet.inlet = pipe
+            else:
+                pipe.inlet = pipe.input
+                pipe.outlet = pipe.output
+                # assigning inlets and outlets to connecting nodes
+                pipe.inlet.outlet = pipe
+                pipe.outlet.inlet = pipe
+
+        # Updating zone/ heat pump directions
+
+        for bldg in self.buildings:
+            if bldg.mass_bldg < 0:
+                # reversing input and output nodes
+                bldg.inlet = bldg.output
+                bldg.outlet = bldg.input
+                # reversing pipe flow directions for pipes connecting zones to inner and outer rings
+                bldg.input.input.inlet = bldg.input.input.output
+                bldg.input.input.outlet = bldg.input.input.input
+                bldg.output.output.inlet = bldg.output.output.output
+                bldg.output.output.outlet = bldg.output.output.input
+                # assigning inlets and outlets to connecting nodes
+                bldg.inlet.outlet = bldg
+                bldg.outlet.inlet = bldg
+
+            else:
+                bldg.inlet = bldg.input
+                bldg.outlet = bldg.output
+                # the flow remains same if mass flow rate is not negative
+                bldg.input.input.inlet = bldg.input.input.input
+                bldg.input.input.outlet = bldg.input.input.output
+                bldg.output.output.inlet = bldg.output.output.input
+                bldg.output.output.outlet = bldg.output.output.output
+                # assigning inlets and outlets to connecting nodes
+                bldg.inlet.outlet = bldg
+                bldg.outlet.inlet = bldg
+
+        # Updating GHE directions
+
+        for ghx in self.ground_heat_exchangers:
+            if ghx.mass_flow_ghe < 0:
+                # reversing input and output nodes
+                ghx.inlet = ghx.output
+                ghx.outlet = ghx.input
+                # reversing pipe flow directions for pipes connecting zones to inner and outer rings
+                ghx.output.output.inlet = ghx.output.output.output
+                ghx.output.output.outlet = ghx.output.output.input
+                ghx.input.input.inlet = ghx.input.input.output
+                ghx.input.input.outlet = ghx.input.input.input
+                # assigning inlets and outlets to connecting nodes
+                ghx.inlet.outlet = ghx
+                ghx.outlet.inlet = ghx
+
+            else:
+                ghx.inlet = ghx.input
+                ghx.outlet = ghx.output
+                ghx.output.output.inlet = ghx.output.output.input
+                ghx.output.output.outlet = ghx.output.output.output
+                ghx.input.input.inlet = ghx.input.input.input
+                ghx.input.input.outlet = ghx.input.input.output
+                # assigning inlets and outlets to connecting nodes
+                ghx.inlet.outlet = ghx
+                ghx.outlet.inlet = ghx
+
+        self.UpdateNodeTypes()
+
+    def UpdateNodeTypes(self):
+
+        for node in self.nodes:
+
+            if node.type not in ("branching", "merging"):
+                continue
+
+            components = [
+                node.input,
+                node.output,
+                node.device_pipe
+            ]
+
+            n_in = sum(component.outlet is node for component in components)
+            n_out = sum(component.inlet is node for component in components)
+
+            if n_in == 2 and n_out == 1:
+                node.temp_type = "merging"
+
+            elif n_in == 1 and n_out == 2:
+                node.temp_type = "branching"
+
+            else:
+                raise ValueError(
+                    f"Invalid node flow pattern: "
+                    f"{n_in} incoming, {n_out} outgoing."
+                )
+
+    def is_zero_flow_timestep(self):
+
+        for pipe in self.pipes:
+            if abs(pipe.mass_flow_rate) > 0:
+                return False
+
+        for bldg in self.buildings:
+            if abs(bldg.mass_bldg) > 0:
+                return False
+
+        for ghx in self.ground_heat_exchangers:
+            if abs(ghx.mass_flow_ghe) > 0:
+                return False
+
+        return True
+
+
+def FindItemByID(ID, objectlist):
+    # search a list of objects to find one with a particular name
+    # of course, the objects must have a "name" member
+    for item in objectlist:  # all objects in the list
+        if item.ID == ID:  # does it have the ID I am seeking?
+            return item  # then return this one
+    # next item
+    return None  # couldn't find it

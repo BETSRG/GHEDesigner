@@ -51,6 +51,7 @@ class SimCompType(Enum):
 class CentralLoopType(Enum):
     ONEPIPE = auto()
     TWOPIPE = auto()
+    TWOPIPE_RING = auto()
 
 
 class SourceSinkOpMode(Enum):

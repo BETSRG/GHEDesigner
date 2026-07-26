@@ -5,7 +5,7 @@ from time import time
 
 def main():
 
-    input_file_path = Path("..\\demos\\simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.json")
+    input_file_path = Path("..\\demos\\simulate_2_pipe_ring_1_ghe_2_bldg_district_HOURLY.json")
     output_file_path = Path("..\\ghedesigner\\ghe\\nbast_results\\simulation_results.csv")
 
     start_time = time()
@@ -13,7 +13,7 @@ def main():
     system.solve_system()
     end_time = time()
 
-    system.create_output(output_file_path)
+    #system.create_output(output_file_path)
 
     print(f"Total time taken: {end_time - start_time:.2f} seconds")
 
