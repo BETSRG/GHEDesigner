@@ -1455,12 +1455,11 @@ class GHEHPSystem:
             b_vector = np.array(matrix_rhs, dtype=float)
             x_vector = np.linalg.solve(a_matrix, b_vector)
 
-            check_times = (100, 5000, 7000)
-            if idx_timestep in check_times:
-                print(f"\nTimestep {idx_timestep}")
-                print(x_vector)
-                print(b_vector)
-
+            # check_times = (100, 5000, 7000)
+            # if idx_timestep in check_times:
+            #     print(f"\nTimestep {idx_timestep}")
+            #     print(x_vector)
+            #     print(b_vector)
 
             # save output data
             self.m_flow_loop[idx_timestep] = mass_loop
