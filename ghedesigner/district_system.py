@@ -28,6 +28,8 @@ IDX_COMPARISON_OFFSET_1 = 1
 IDX_COMPARISON_OFFSET_2 = 2  # Used for offsets in gfunction calculation
 SIMULATION_CONSTANT_COP_OFFSET = 15.0  # °C used to estimate constant COP if temperature bounds are not given. Also used
 # to determine flowrate if only COP is given for HP model.
+DLA_EXPANSION_RATE = 1.62
+DLA_BINS_PER_LEVEL = 9
 
 
 class DynamicAggregator:
@@ -42,9 +44,12 @@ class DynamicAggregator:
         exp_rate: float = 1.62,
         bins_per_level: int = 9,
         base_dt_sec: float = 3600.0,
+        constant_time_step=True
     ):
         self.exp_rate = exp_rate
         self.bins_per_level = bins_per_level
+        self.constant_time_step = constant_time_step
+        self.base_dt_sec = base_dt_sec
 
         dt = base_dt_sec
         t = 0.0
@@ -66,6 +71,12 @@ class DynamicAggregator:
         # Pre-compute bin ages for evaluating response functions
         self.bin_ages = np.cumsum(self.dts)
         self.last_idx = 0
+        self.dts_reciprocal = 1.0 / self.dts
+        if constant_time_step:
+            self.constant_frac_shift = np.zeros(self.num_bins, dtype=float)
+            self.constant_frac_shift[:-1] = base_dt_sec * self.dts_reciprocal[:-1]
+        self.deltas = np.zeros(self.num_bins, dtype=float)
+        self.average_vals = np.zeros(self.num_bins, dtype=float)
 
     def shift_and_add(self, new_value: float, current_dt_sec: float, idx_timestep: int):
         """
@@ -73,17 +84,29 @@ class DynamicAggregator:
         Tracking last_idx ensures idempotent shifts if called multiple times by coupled components.
         """
         if idx_timestep > self.last_idx:
-            frac_shift = current_dt_sec / self.dts
-            frac_shift[-1] = 0.0
-            delta = self.energy_bins * frac_shift
-            self.energy_bins = self.energy_bins - delta + np.roll(delta, 1)
-            self.energy_bins[0] += new_value * current_dt_sec
+            if self.constant_time_step:
+                frac_shift = self.constant_frac_shift
+            else:
+                frac_shift = current_dt_sec * self.dts_reciprocal
+                frac_shift[-1] = 0.0
+            np.multiply(self.energy_bins, frac_shift, out=self.deltas)
+            self.energy_bins -= self.deltas
+            self.energy_bins[1:] += self.deltas[:-1]
+            if self.constant_time_step:
+                self.energy_bins[0] += new_value * self.base_dt_sec
+            else:
+                self.energy_bins[0] += new_value * current_dt_sec
             self.last_idx = idx_timestep
 
     def get_step_changes(self) -> np.ndarray:
         """Returns the discrete step changes between consecutive averaged bins."""
-        avg_vals = self.energy_bins / self.dts
-        return -np.diff(avg_vals, append=0.0)
+        np.multiply(self.energy_bins, self.dts_reciprocal, out=self.average_vals)
+        self.average_vals[:-1] = self.average_vals[:-1] - self.average_vals[1:]
+        return self.average_vals
+
+    def clear_history(self):
+        self.energy_bins = np.zeros(self.num_bins, dtype=float)
+        self.last_idx = 0
 
 
 class BaseSimComp(ABC):
@@ -188,7 +211,8 @@ class IsolatedHorizontalPipe(BaseSimComp):
         if self.load_method == "hourlyloadagg":
             total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
             self.aggregators = [
-                DynamicAggregator(total_sim_time_sec, exp_rate=1.62, bins_per_level=9, base_dt_sec=SEC_IN_HR)
+                DynamicAggregator(total_sim_time_sec, exp_rate=DLA_EXPANSION_RATE, bins_per_level=DLA_BINS_PER_LEVEL,
+                                  base_dt_sec=SEC_IN_HR)
                 for _ in range(self.num_segments)
             ]
             tau_agg = self.aggregators[0].bin_ages / self.t_p
@@ -420,7 +444,8 @@ class CoupledHorizontalPipe(BaseSimComp):
         if self.load_method == "hourlyloadagg":
             total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
             self.aggregators = [
-                DynamicAggregator(total_sim_time_sec, exp_rate=1.62, bins_per_level=9, base_dt_sec=SEC_IN_HR)
+                DynamicAggregator(total_sim_time_sec, exp_rate=DLA_EXPANSION_RATE, bins_per_level=DLA_BINS_PER_LEVEL,
+                                  base_dt_sec=SEC_IN_HR)
                 for _ in range(self.num_segments)
             ]
             tau_agg = self.aggregators[0].bin_ages / self.t_p
@@ -789,6 +814,15 @@ class GHX(BaseSimComp):
 
         self.load_method = load_method
 
+        if load_method == "hourlyloadagg":
+            total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
+            self.aggregator = DynamicAggregator(
+                total_sim_time_sec, exp_rate=DLA_EXPANSION_RATE, bins_per_level=DLA_BINS_PER_LEVEL,
+                base_dt_sec=SEC_IN_HR,
+                constant_time_step=True
+            )
+            self.g_agg = None
+
         if self.ghe_manager.is_sizable:
             self.ghe_designed = False
             self.base_max_eft = self.ghe_manager.max_eft
@@ -889,14 +923,10 @@ class GHX(BaseSimComp):
             self.gfunction_evals = self.g(self.dim_less_time)
             self.c_n = self.calc_cn_constant()
 
-        # Pre-compute the static aggregator fields if needed
-        if getattr(self, "load_method", "hourly") == "hourlyloadagg":
-            total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
-            self.aggregator = DynamicAggregator(
-                total_sim_time_sec, exp_rate=1.62, bins_per_level=9, base_dt_sec=SEC_IN_HR
-            )
-            lntts_agg = np.log(self.aggregator.bin_ages / self.ts)
-            self.g_agg = self.g(lntts_agg)
+        if self.load_method == "hourlyloadagg":
+           self.aggregator.clear_history()
+           lntts_agg = np.log(self.aggregator.bin_ages / self.ts)
+           self.g_agg = self.g(lntts_agg)
 
         self.t_in = np.full(self.num_timesteps, self.ghe_manager.soil.ugt, dtype=float)
         self.t_mean = np.full(self.num_timesteps, self.ghe_manager.soil.ugt, dtype=float)
@@ -925,7 +955,7 @@ class GHX(BaseSimComp):
         # Compute contributions from all previous steps
 
         if getattr(self, "load_method", "hourly") == "hourlyloadagg":
-            if idx_timestep > 1:
+            if idx_timestep > IDX_COMPARISON_OFFSET_1:
                 dt_sec = (self.time_array[idx_timestep - 1] - self.time_array[idx_timestep - 2]) * SEC_IN_HR
                 self.aggregator.shift_and_add(self.q_ghe[idx_timestep - 2], dt_sec, idx_timestep)
                 dq_b = self.aggregator.get_step_changes()
@@ -933,34 +963,23 @@ class GHX(BaseSimComp):
             else:
                 values = 0.0
 
-            self.total_values_ghe[idx_timestep - 1] = values
-            self.history_terms[idx_timestep] = (
-                self.ghe_manager.soil.ugt
-                - values
-                + (
-                    self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.gfunction_evals[-1]
-                    if idx_timestep > 1
-                    else 0.0
-                )
-            )
-            return self.history_terms[idx_timestep]
-
-        if idx_timestep > IDX_COMPARISON_OFFSET_2:
-            self.dq[idx_timestep - 2] -= self.q_ghe[idx_timestep - 3] * self.two_pi_k_recip
-        if idx_timestep > IDX_COMPARISON_OFFSET_1:
-            self.dq[idx_timestep - 2] += self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip
-            if self.constant_time_step:
-                values = np.dot(self.dq[0 : idx_timestep - 1], self.gfunction_evals[-idx_timestep + 1 :])
-            else:
-                gfunction_evals = self.g(
-                    np.log(
-                        (self.time_array[idx_timestep - 1] - self.time_array[0 : idx_timestep - 1])
-                        / (self.ts / SEC_IN_HR)
-                    )
-                )
-                values = np.dot(self.dq[0 : idx_timestep - 1], gfunction_evals)
         else:
-            values = 0
+            if idx_timestep > IDX_COMPARISON_OFFSET_2:
+                self.dq[idx_timestep - 2] -= self.q_ghe[idx_timestep - 3] * self.two_pi_k_recip
+            if idx_timestep > IDX_COMPARISON_OFFSET_1:
+                self.dq[idx_timestep - 2] += self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip
+                if self.constant_time_step: # Handles hourly (or other constant timesteps)
+                    values = np.dot(self.dq[0 : idx_timestep - 1], self.gfunction_evals[-idx_timestep + 1 :])
+                else: # Handles hybrid (or other uneven timesteps)
+                    gfunction_evals = self.g(
+                        np.log(
+                            (self.time_array[idx_timestep - 1] - self.time_array[0 : idx_timestep - 1])
+                            / (self.ts / SEC_IN_HR)
+                        )
+                    )
+                    values = np.dot(self.dq[0 : idx_timestep - 1], gfunction_evals)
+            else:
+                values = 0
 
         self.total_values_ghe[idx_timestep - 1] = values
 

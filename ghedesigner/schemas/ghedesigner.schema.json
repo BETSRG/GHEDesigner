@@ -1276,7 +1276,7 @@
         },
         "load_method": {
           "type": "string",
-          "enum": ["HYBRID", "HOURLY"],
+          "enum": ["HYBRID", "HOURLY", "HOURLYLOADAGG"],
           "default": "HYBRID",
           "description": "Load method used for simulations and sizing. HYBRID aggregates loads before GHE calculations; HOURLY uses hourly loads directly."
         },
@@ -1289,7 +1289,7 @@
             "NELDER-MEAD",
             "SIMULATION_ONLY"
           ],
-          "default": "GLOBAL_BUPCRS",
+          "default": "GLOBAL_BUPCRS_BR",
           "description": "Defines the type of design method to be used for the system GHEs. Use \"SIMULATION_ONLY\" if you only want to simulate pre-designed GHEs."
         },
         "constant_cop": {
