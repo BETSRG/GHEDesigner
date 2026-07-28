@@ -1,6 +1,6 @@
 name: Python Testing
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -28,4 +28,14 @@ jobs:
           if ("${{ matrix.os }}" -eq "windows-latest" -and "${{ matrix.python-version }}" -eq "3.14") {
             $pytestArgs = @("-v")
           }
+          if ("${{ matrix.os }}" -eq "ubuntu-latest" -and "${{ matrix.python-version }}" -eq "3.14") {
+            $pytestArgs += @("--cov-report=xml:coverage.xml")
+          }
           uv run pytest @pytestArgs
+      - name: Upload coverage to Coveralls
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14'
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          format: cobertura
+          file: coverage.xml
