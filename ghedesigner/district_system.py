@@ -1509,16 +1509,12 @@ class GHEHPSystem:
         for ghe in self.ground_heat_exchangers:
             if ghe.ghe_manager.is_sizable:
                 self.sizable_ground_heat_exchangers.append(ghe)
-        if self.fixed_loads:
-            self.matrix_size = np.dot(
-                [GHX.MATRIX_ROWS_FIXED_LOADS, Building.MATRIX_ROWS, SourceSinkHeatExchanger.MATRIX_ROWS],
-                [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
-            )
-        else:
-            self.matrix_size = np.dot(
-                [GHX.MATRIX_ROWS, Building.MATRIX_ROWS, SourceSinkHeatExchanger.MATRIX_ROWS],
-                [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
-            )
+        ghx_matrix_rows = GHX.MATRIX_ROWS_FIXED_LOADS if self.fixed_loads else GHX.MATRIX_ROWS
+        self.matrix_size = (
+            ghx_matrix_rows * self.num_ghx
+            + Building.MATRIX_ROWS * self.num_buildings
+            + SourceSinkHeatExchanger.MATRIX_ROWS * self.num_heat_exchangers
+        )
 
         self.nbh_total: int = sum([x.nbh for x in ground_heat_exchangers]) if ground_heat_exchangers is not None else 0
         self.num_ghx = len(ground_heat_exchangers)
