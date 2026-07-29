@@ -120,11 +120,9 @@ def square_and_near_square_adjusted_nbh(lower: int, upper: int, b: float, desire
             return rectangle_adjusted_nbh(larger_side_length, larger_side_length, b, b, desired_nbh)
 
 
-def general_domain_nbh_adjustment(
-    field_domain, field_sizes, min_nbh, max_nbh, desired_nbh, removal_type="RADIAL", removal_options={}
-):
+def general_domain_nbh_adjustment(field_domain, field_sizes, min_nbh, max_nbh, desired_nbh, removal_options):
     if desired_nbh < min_nbh:
-        return general_field_nbh_adjustment(field_domain[0], desired_nbh, removal_type)
+        return general_field_nbh_adjustment(field_domain[0], desired_nbh, removal_options)
     elif desired_nbh > max_nbh:
         raise ValueError("Requested field size exceeds what exists within the field domain.")
     else:
@@ -145,7 +143,7 @@ def general_domain_nbh_adjustment(
             else:
                 x_r = x_m
         print(f"Removing {field_sizes[x_r] - desired_nbh} boreholes.")
-        return general_field_nbh_adjustment(field_domain[x_r], desired_nbh, removal_type, options=removal_options)
+        return general_field_nbh_adjustment(field_domain[x_r], desired_nbh, removal_options)
 
 
 def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, disp: bool = False):

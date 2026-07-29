@@ -43,10 +43,11 @@ def rectangle(
     return r
 
 
-def general_field_nbh_adjustment(coordinates, desired_nbh, removal_type, options={}):
-    if removal_type.upper() == "RIGHT_TOP":
+def general_field_nbh_adjustment(coordinates, desired_nbh, removal_options):
+    removal_method = removal_options["borehole_removal_method"]
+    if removal_method.upper() == "RIGHT_TOP":
         sorted_coordinates = sorted(coordinates)
-    elif removal_type.upper() == "RADIAL":
+    elif removal_method.upper() == "RADIAL":
         number_of_coordinates = len(coordinates)
         x_vals = [p[0] for p in coordinates]
         y_vals = [p[1] for p in coordinates]
@@ -54,11 +55,11 @@ def general_field_nbh_adjustment(coordinates, desired_nbh, removal_type, options
         cy = sum(y_vals) / number_of_coordinates
         squared_distances = [((x_vals[i] - cx) ** 2 + (y_vals[i] - cy) ** 2) for i in range(number_of_coordinates)]
         sorted_coordinates = [coord for _, coord in sorted(zip(squared_distances, coordinates), reverse=True)]
-    elif removal_type.upper() == "LINE_SEGMENTS":
-        if "line_segments" not in options:
+    elif removal_method.upper() == "LINE_SEGMENTS":
+        if "line_segments" not in removal_options:
             raise ValueError('A list of line segments is necessary to use the "LINE_SEGMENTS" removal option.')
-        line_segments = options["line_segments"]
-        reference_points = options.get("points", [[0.0, 0.0]])
+        line_segments = removal_options["line_segments"]
+        reference_points = removal_options.get("points", [[0.0, 0.0]])
         line_distances = []
         point_distances = []
         for point in coordinates:

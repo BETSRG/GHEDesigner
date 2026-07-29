@@ -746,7 +746,6 @@ class SourceSinkHeatExchanger(BaseSimComp):
 
 class GHX(BaseSimComp):
     MATRIX_ROWS = 4
-    MATRIX_ROWS_FIXED_LOADS = 2
 
     def __init__(
         self,
@@ -757,7 +756,6 @@ class GHX(BaseSimComp):
         num_timesteps: int,
         time_array: np.ndarray[tuple[int], np.dtype[np.float64]],
         sizing_end_month=240,
-        fixed_loads=False,
         load_method: str = "hourly",
     ):
         super().__init__()
@@ -769,12 +767,9 @@ class GHX(BaseSimComp):
         self.sizing_end_month = sizing_end_month
         self.search, self.search_time = None, None
         self.num_timesteps = num_timesteps
-        self.fixed_loads = fixed_loads
         self.is_bypassed = False
         self.time_differences = np.diff(time_array)
         self.constant_time_step = np.all(self.time_differences == self.time_differences[0])
-        if fixed_loads:
-            self.convolution_completed = False
 
         self.ghe_manager = GroundHeatExchanger.init_from_dictionary(
             ghe_data,
@@ -925,13 +920,10 @@ class GHX(BaseSimComp):
         self.g, _ = ghe_object.grab_g_function(b_over_h)
         self.ts = ghe_object.bhe_eq.t_s
         self.bh_effective_resist = ghe_object.bhe.calc_effective_borehole_resistance()
-        if self.fixed_loads:
-            self.convolution_completed = False
-        else:
-            self.dq = np.zeros(self.num_timesteps, dtype=float)
-            self.dim_less_time = np.log((self.time_array[-1] - self.time_array[0:-1]) / (self.ts / SEC_IN_HR))
-            self.gfunction_evals = self.g(self.dim_less_time)
-            self.c_n = self.calc_cn_constant()
+        self.dq = np.zeros(self.num_timesteps, dtype=float)
+        self.dim_less_time = np.log((self.time_array[-1] - self.time_array[0:-1]) / (self.ts / SEC_IN_HR))
+        self.gfunction_evals = self.g(self.dim_less_time)
+        self.c_n = self.calc_cn_constant()
 
         if self.load_method == "hourlyloadagg":
             self.aggregator.clear_history()
@@ -1001,98 +993,6 @@ class GHX(BaseSimComp):
         )
 
         return self.history_terms[idx_timestep]
-
-    def generate_matrix_fixed_loads(
-        self,
-        _mass_bldg,
-        mass_loop,
-        _mass_loop_bldg,
-        mass_flow_ghe,
-        mass_loop_ghe,
-        idx_timestep,
-        configuration,
-        method,
-        load_profile=None,
-    ):
-        if not self.constant_time_step:
-            raise ValueError(
-                "Using the fixed loads option in the GHE simulation requires constant time steps."
-                " Variable timesteps were provided."
-            )
-        row_1 = np.zeros(self.matrix_size, dtype=np.float64)
-        row_2 = np.zeros(self.matrix_size, dtype=np.float64)
-        if self.is_bypassed:
-            if method == CentralLoopType.ONEPIPE:
-                row_1[self.row_index] = -1.0
-                row_1[self.downstream_index] = 1.0
-
-                row_2[self.row_index] = -1.0
-                row_2[self.row_index + 1] = 1.0
-
-                rhs_1, rhs_2 = 0, 0
-            elif method == CentralLoopType.TWOPIPE:
-                row_2[self.row_index] = -1.0
-
-                row_1[self.inlet_index] = -1.0
-                row_1[self.row_index + 1] = 1.0
-
-                if self.downstream_device.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
-                    row_2[self.downstream_index] = 1.0
-                else:
-                    row_2[self.downstream_device.inlet_index] = -mass_loop_ghe * self.cp
-
-                rhs_1, rhs_2 = 0, 0
-            else:
-                raise ValueError(f"Unknown configuration: {configuration}")
-            return [row_1, row_2], [rhs_1, rhs_2]
-        if not self.convolution_completed:
-            if load_profile is None:
-                raise ValueError("Load profile is required to generate fixed loads during the first sim call.")
-            n = load_profile.size
-            convolution_length = 2 * n - 1
-            time_values = np.log((self.time_array[1:] * SEC_IN_HR) / self.ts)
-            g_values = self.g(time_values)
-            q_dot_b_dt = np.zeros(n, dtype=float)
-            q_dot_b_dt[0] = load_profile[0]
-            q_dot_b_dt[1:] = load_profile[1:] - load_profile[:-1]
-            delta_tb = np.fft.irfft(
-                np.fft.rfft(q_dot_b_dt * self.two_pi_k_recip, n=convolution_length)
-                * np.fft.rfft(g_values, n=convolution_length),
-                n=convolution_length,
-            )[:n]
-            self.t_mean = self.ghe_manager.soil.ugt + delta_tb + load_profile * self.bh_effective_resist
-            self.q_ghe = load_profile
-            self.convolution_completed = True
-            return [0.0, 0.0]
-        elif configuration == CentralLoopType.ONEPIPE:
-            # m_ghe * (T_out - T_in) = m_loop * (T_mix_out - T_in) assuming constant c_p
-            row_1[self.row_index] = mass_loop - mass_flow_ghe
-            row_1[self.row_index + 1] = mass_flow_ghe
-            row_1[self.downstream_index] = -mass_loop
-            rhs_1 = 0.0
-
-            # 2 * T_mean = T_in + T_out
-            row_2[self.row_index] = 1
-            row_2[self.row_index + 1] = 1
-            rhs_2 = 2 * self.t_mean[idx_timestep - 1]
-        elif configuration == CentralLoopType.TWOPIPE:
-            # m_ghe * (T_out - T_in) = m_loop * (T_mix_out - T_in) assuming constant c_p
-            row_2[self.row_index] = mass_loop_ghe - mass_flow_ghe
-            row_2[self.row_index + 1] = mass_flow_ghe
-            if self.downstream_device.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
-                row_2[self.downstream_index] = -mass_loop_ghe
-            else:
-                row_2[self.downstream_device.inlet_index] = -mass_loop_ghe
-            rhs_2 = 0.0
-
-            # 2 * T_mean = T_in + T_out
-            row_1[self.row_index] = 1
-            row_1[self.row_index + 1] = 1
-            rhs_1 = 2 * self.t_mean[idx_timestep - 1]
-        else:
-            raise ValueError(f"Unknown configuration: {configuration}")
-
-        return [row_1, row_2], [rhs_1, rhs_2]
 
     def generate_matrix(
         self, _mass_bldg, mass_loop, _mass_loop_bldg, mass_flow_ghe, mass_loop_ghe, idx_timestep, configuration, _method
@@ -1542,10 +1442,7 @@ class GHEHPSystem:
             self.constant_cop = sim_controls["constant_cop"]
         else:
             self.constant_cop = True
-        if "fixed_loads" in sim_controls:
-            self.fixed_loads = sim_controls["fixed_loads"]
-        else:
-            self.fixed_loads = False
+
         if "exhaustive_search" in sim_controls:
             self.exhaustive_search = sim_controls["exhaustive_search"]
         else:
@@ -1715,7 +1612,6 @@ class GHEHPSystem:
                     self.loop_config,
                     self.num_timesteps,
                     self.time_array,
-                    fixed_loads=self.fixed_loads,
                     load_method=self.load_method,
                 )
                 self.cp = this_ghx.cp
@@ -1727,7 +1623,7 @@ class GHEHPSystem:
         for ghe in self.ground_heat_exchangers:
             if ghe.ghe_manager.is_sizable:
                 self.sizable_ground_heat_exchangers.append(ghe)
-        ghx_matrix_rows = GHX.MATRIX_ROWS_FIXED_LOADS if self.fixed_loads else GHX.MATRIX_ROWS
+        ghx_matrix_rows = GHX.MATRIX_ROWS
         self.matrix_size = (
             ghx_matrix_rows * self.num_ghx
             + Building.MATRIX_ROWS * self.num_buildings
@@ -1856,7 +1752,7 @@ class GHEHPSystem:
         else:
             Building.MATRIX_ROWS = 2
 
-        ghx_matrix_rows = GHX.MATRIX_ROWS_FIXED_LOADS if self.fixed_loads else GHX.MATRIX_ROWS
+        ghx_matrix_rows = GHX.MATRIX_ROWS
         self.matrix_size = (
             ghx_matrix_rows * self.num_ghx
             + Building.MATRIX_ROWS * self.num_buildings
@@ -1921,14 +1817,9 @@ class GHEHPSystem:
         idx_comp = 0
         for this_comp in self.components:
             this_comp.row_index = idx_comp
-            if self.fixed_loads and isinstance(this_comp, GHX):
-                idx_comp += getattr(
-                    this_comp, "matrix_rows", getattr(this_comp.__class__, "MATRIX_ROWS_FIXED_LOADS", 1)
-                )
-            else:
-                # Use dynamic instance attribute if present, otherwise default to class attribute
-                rows_required = getattr(this_comp, "matrix_rows", getattr(this_comp.__class__, "MATRIX_ROWS", 1))
-                idx_comp += rows_required
+            # Use dynamic instance attribute if present, otherwise default to class attribute
+            rows_required = getattr(this_comp, "matrix_rows", getattr(this_comp.__class__, "MATRIX_ROWS", 1))
+            idx_comp += rows_required
             this_comp.downstream_index = idx_comp
 
         # set the last component to loop back to the start
@@ -2461,147 +2352,7 @@ class GHEHPSystem:
 
     def solve_system(self):
         self.number_of_simulations += 1
-        if self.fixed_loads:
-            if not self.constant_cop:
-                raise ValueError("Fixed Loads simulation requires constant cop heat pumps be enabled.")
-            self.solve_system_fixed_loads()
-        else:
-            self.solve_system_standard()
-
-    def solve_system_fixed_loads(self):
-        t_start = time.perf_counter()
-        self.nbh_total = sum([x.nbh for x in self.ground_heat_exchangers])
-        total_loads = np.zeros(self.num_timesteps, dtype=float)
-        average_ugt = 0.0
-        for this_comp in self.components:
-            this_comp.matrix_size = self.matrix_size
-            if isinstance(this_comp, GHX):
-                this_comp.split_ratio = this_comp.nbh / self.nbh_total
-                average_ugt += this_comp.ghe_manager.soil.ugt * this_comp.nbh / self.nbh_total
-            elif isinstance(this_comp, (Building, SourceSinkHeatExchanger)):
-                this_comp.cp = self.cp
-        for building in self.buildings:
-            building.generate_constant_cop_loads(average_ugt)
-            total_loads += building.loads
-        for ghe in self.ground_heat_exchangers:
-            ghe.generate_matrix_fixed_loads(
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1,
-                self.loop_config,
-                self.load_method,
-                load_profile=total_loads * ghe.split_ratio / (ghe.nbh * ghe.height),
-            )
-        for idx_timestep in range(1, self.num_timesteps + 1):  # loop over all timestep
-            matrix_rows = []
-            matrix_rhs = []
-            total_hp_flow = 0
-            m_bldg_cum = 0
-            m_ghe_cum = 0
-
-            # ---- RESET flows for all components ----
-            for comp in self.components:
-                comp.mass_bldg = 0.0
-                comp.mass_flow_ghe = 0.0
-                comp.mass_flow_pipe = 0.0
-                comp.mass_loop_bldg = 0.0
-                comp.mass_loop_ghe = 0.0
-
-            for this_comp in self.components:
-                if isinstance(this_comp, Building):
-                    zero_based_timestep = idx_timestep - 1
-                    t_in = this_comp.t_in[zero_based_timestep - 1] if zero_based_timestep > 0 else this_comp.t_in[0]
-                    this_comp.mass_bldg = this_comp.calc_mass_flow_rate(t_in, zero_based_timestep)
-                    total_hp_flow += this_comp.mass_bldg
-                    m_bldg_cum += this_comp.mass_bldg
-                this_comp.mass_loop_bldg = m_bldg_cum
-
-            mass_loop = max(total_hp_flow * self.loop_flow_factor, 0.1)
-
-            for this_comp in self.components:
-                if isinstance(this_comp, GHX):
-                    this_comp.mass_flow_ghe = mass_loop * this_comp.split_ratio
-                    m_ghe_cum += this_comp.mass_flow_ghe
-                elif isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
-                    # For a series pipe, the mass flow is the total loop mass flow
-                    this_comp.mass_flow_pipe = mass_loop
-
-                this_comp.mass_loop_ghe = m_ghe_cum
-
-                # Note: We pass this_comp.mass_flow_pipe in the mass_flow_ghe slot for Horizontal pipes
-                flow_to_pass = getattr(this_comp, "mass_flow_ghe", 0.0)
-                if isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
-                    flow_to_pass = this_comp.mass_flow_pipe
-                if isinstance(this_comp, GHX):
-                    rows, rhs = this_comp.generate_matrix_fixed_loads(
-                        this_comp.mass_bldg,
-                        mass_loop,
-                        this_comp.mass_loop_bldg,
-                        flow_to_pass,
-                        this_comp.mass_loop_ghe,
-                        idx_timestep,
-                        self.loop_config,
-                        self.load_method,
-                    )
-                else:
-                    rows, rhs = this_comp.generate_matrix(
-                        this_comp.mass_bldg,
-                        mass_loop,
-                        this_comp.mass_loop_bldg,
-                        flow_to_pass,
-                        this_comp.mass_loop_ghe,
-                        idx_timestep,
-                        self.loop_config,
-                        self.load_method,
-                    )
-                matrix_rows.extend(rows)
-                matrix_rhs.extend(rhs)
-
-            # Solve the system = A * X = B
-            a_matrix = np.array(matrix_rows, dtype=float)
-            b_vector = np.array(matrix_rhs, dtype=float)
-            x_vector = np.linalg.solve(a_matrix, b_vector)
-
-            # save output data
-            self.m_flow_loop[idx_timestep - 1] = mass_loop
-
-            for this_comp in self.components:
-                row_index = this_comp.row_index
-                if this_comp.comp_type == SimCompType.BUILDING:
-                    if self.loop_config == CentralLoopType.TWOPIPE:
-                        this_comp.t_in[idx_timestep - 1] = x_vector[this_comp.inlet_index]
-                        this_comp.t_out[idx_timestep - 1] = x_vector[row_index + 1]
-                    else:
-                        this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
-                        this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
-
-                elif this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
-                    if self.loop_config == CentralLoopType.TWOPIPE:
-                        this_comp.t_in[idx_timestep - 1] = x_vector[this_comp.inlet_index]
-                        this_comp.t_mix_out[idx_timestep - 1] = x_vector[row_index]
-                    else:
-                        this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
-                        this_comp.t_mix_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
-                    this_comp.t_out[idx_timestep - 1] = x_vector[row_index + 1]
-                elif this_comp.comp_type == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
-                    this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
-                    this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
-                elif isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
-                    this_comp.update_post_solve(x_vector, idx_timestep)
-            # Update the console every 100 timesteps or on the very last step
-            if (idx_timestep - 1) % 100 == 0 or idx_timestep == self.num_timesteps - 1:
-                elapsed = time.perf_counter() - t_start
-                percent = ((idx_timestep - 1) / (self.num_timesteps - 1)) * 100
-                print(
-                    f"  Progress: {(idx_timestep - 1)}/{self.num_timesteps - 1} ({percent:.1f}%)"
-                    f" | Elapsed time: {elapsed:.2f}s",
-                    end="\r",
-                    flush=True,
-                )
-        print(f"\n--- Solver finished in {time.perf_counter() - t_start:.2f} seconds! ---")
+        self.solve_system_standard()
 
     def solve_system_standard(self):
         t_start = time.perf_counter()

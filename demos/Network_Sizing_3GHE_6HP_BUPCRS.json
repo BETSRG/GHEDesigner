@@ -251,8 +251,8 @@
           [230.0, 192.0],
           [175.0, 192.0]
         ],
-        "borehole_removal_method": "LINE_SEGMENTS",
         "borehole_removal_options": {
+          "borehole_removal_method": "LINE_SEGMENTS",
           "line_segments": [
             [
               [185.0, 164.5],
@@ -360,7 +360,10 @@
             [27.5, 42.5]
           ]
         ],
-        "method": "BIRECTANGLECONSTRAINED"
+        "method": "BIRECTANGLECONSTRAINED",
+        "borehole_removal_options": {
+          "borehole_removal_method": "RIGHT_TOP"
+        }
       },
       "design": {
         "min_eft": 5.92,

@@ -209,8 +209,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     )
                 case DesignGeomType.BIRECTANGLECONSTRAINED:
                     no_go_boundaries = geom.get("no_go_boundaries")
-                    removal_method = geom.get("borehole_removal_method", "RADIAL")
-                    removal_options = geom.get("borehole_removal_options", {})
+                    removal_options = geom.get("borehole_removal_options", {"borehole_removal_method": "RADIAL"})
                     b_max_x = geom.get("b_max_x")
                     b_max_y = geom.get("b_max_y")
                     self.geometric_constraint = GeometricConstraintsBiRectangleConstrained(
@@ -219,7 +218,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                         b_max_x=b_max_x,
                         b_max_y=b_max_y,
                         no_go_boundaries=no_go_boundaries,
-                        borehole_removal_method=removal_method,
                         borehole_removal_options=removal_options,
                     )
                 case DesignGeomType.ROWWISE:

@@ -27,7 +27,7 @@
     },
     "borehole_removal_method": {
       "type": "string",
-      "enum": ["TOP_RIGHT", "RADIAL", "LINE_SEGMENTS"],
+      "enum": ["RIGHT_TOP", "RADIAL", "LINE_SEGMENTS"],
       "default": "RADIAL",
       "description": "Defines the method used to remove boreholes from a borefield. This is planned to be an optional parameter for multiple borefield design methods."
     },
@@ -1067,12 +1067,50 @@
                   "no_go_boundaries": {
                     "$ref": "#/$defs/no_go_boundaries"
                   },
-                  "borehole_removal_method": {
-                    "$ref": "#/$defs/borehole_removal_method"
-                  },
                   "borehole_removal_options": {
-                    "line_segments": "#/$defs/line_segments",
-                    "points": "#/$defs/points"
+                    "properties": {
+                      "borehole_removal_method": {
+                        "$ref": "#/$defs/borehole_removal_method"
+                      }
+                    },
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "borehole_removal_method": {
+                            "const": "LINE_SEGMENTS"
+                          },
+                          "line_segments": {
+                            "$ref": "#/$defs/line_segments"
+                          },
+                          "points": {
+                            "$ref": "#/$defs/points"
+                          }
+                        },
+                        "required": [
+                          "borehole_removal_method",
+                          "line_segments"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "properties": {
+                          "borehole_removal_method": {
+                            "const": "RADIAL"
+                          }
+                        },
+                        "required": ["borehole_removal_method"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "properties": {
+                          "borehole_removal_method": {
+                            "const": "RIGHT_TOP"
+                          }
+                        },
+                        "required": ["borehole_removal_method"],
+                        "additionalProperties": false
+                      }
+                    ]
                   }
                 },
                 "required": ["b_min", "property_boundary", "method"],

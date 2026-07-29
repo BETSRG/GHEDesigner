@@ -1,6 +1,6 @@
 {
   "Network_Sizing_3GHE_6HP_BUPCRS": {
-    "active_borehole_length": 36404.2969,
+    "active_borehole_length": 36998.0469,
     "number_of_boreholes": 380
   },
   "Network_Sizing_3GHE_6HP_RowWise": {
@@ -8,7 +8,7 @@
     "number_of_boreholes": 337
   },
   "Network_Sizing_4GHE_10HP_BUPCRS": {
-    "active_borehole_length": 64005.3955,
+    "active_borehole_length": 64396.0693,
     "number_of_boreholes": 381
   },
   "Network_Sizing_4GHE_10HP_RowWise": {
