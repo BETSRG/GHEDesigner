@@ -41,6 +41,9 @@ repos:
     rev: v1.19.1
     hooks:
       - id: mypy
+        args: [--ignore-missing-imports, ghedesigner]
+        always_run: true
+        pass_filenames: false
         additional_dependencies:
           - pandas-stubs
   - repo: https://github.com/astral-sh/ruff-pre-commit
