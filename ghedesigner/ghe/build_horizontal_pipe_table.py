@@ -97,13 +97,13 @@ def main():
     output_filename = r"C:\Users\drewm\GHEDesigner\ghedesigner\ghe\unified_horizontal_library.pkl"
 
     # Define the parameters
-    depths = np.array([1.5, 5.0, 15.0])
+    depths = np.array([1.0, 1.5, 5.0, 15.0])
     spacings = np.array([0.25, 0.5, 1.0])
-    betas = np.array([0.344])
+    betas = np.array([0.344, 12.0])  # add 12.0
     soil_ks = np.array([1.0, 1.5, 2.0, 2.5])
 
     # Input as nominal diameters, then mathematically convert to radii for the solver grid
-    diameters = np.array([0.0762, 0.1016, 0.1524])
+    diameters = np.array([0.0762, 0.1016, 0.1524, 0.3])  # add 0.3
     radii = diameters / 2.0
 
     table_single = {}
@@ -111,7 +111,20 @@ def main():
     existing_depths, existing_spacings, existing_betas = set(), set(), set()
     existing_radii, existing_soil_ks = set(), set()
 
-    # 1. Load existing data if it exists
+    new_single_jobs = []
+    new_parallel_jobs = []
+
+    # Parallel format: (depth, spacing, beta, radius, soil_k)
+    force_recalc_parallel = [
+        # (15.0, 0.053, 4.783, 0.0167 / 2.0, 1.5),
+    ]
+
+    # Single format: (depth, beta, radius, soil_k)
+    force_recalc_single = [
+        # (1.0, 12.0, 0.3 / 2.0, 1.5),
+    ]
+
+    # 1. Load file if it exists
     if os.path.exists(output_filename):
         print(f"Found existing library: '{output_filename}'. Loading...")
         with open(output_filename, "rb") as f:
@@ -119,55 +132,67 @@ def main():
 
         table_single = existing_data.get("table_single", {})
         table_parallel = existing_data.get("table_parallel", {})
-
-        # Define the exact parameters we want to overwrite.
-        # Parallel format: (depth, spacing, beta, radius, soil_k)
-        force_recalc_parallel = [
-            # (15.0, 0.053, 4.783, 0.0167 / 2.0, 1.5),
-        ]
-
-        # Single format: (depth, beta, radius, soil_k)
-        force_recalc_single = [
-            # (15.0, 4.783, 0.0167 / 2.0, 1.5),
-        ]
-
-        # Remove them from the loaded tables so the script recalculates them
-        for key in force_recalc_parallel:
-            if key in table_parallel:
-                del table_parallel[key]
-                print(f"Forcing recalculation for parallel case: {key}")
-
-        for key in force_recalc_single:
-            if key in table_single:
-                del table_single[key]
-                print(f"Forcing recalculation for single case: {key}")
-
         axes = existing_data.get("axes", {})
+
         existing_depths = set(axes.get("depths", []))
         existing_spacings = set(axes.get("spacings", []))
         existing_betas = set(axes.get("betas", []))
         existing_radii = set(axes.get("radii", []))
         existing_soil_ks = set(axes.get("soil_ks", []))
 
-    # 2. Filter out jobs that have already been computed
-    new_single_jobs = [
-        ("single", d, beta, r, k_s)
-        for d in depths
-        for beta in betas
-        for r in radii
-        for k_s in soil_ks
-        if (d, beta, r, k_s) not in table_single
-    ]
+    # 2. Process forced cases
+    for key in force_recalc_parallel:
+        if key in table_parallel:
+            del table_parallel[key]
+            print(f"Forcing recalculation for parallel case: {key}")
+        else:
+            print(f"Adding brand new parallel case: {key}")
 
-    new_parallel_jobs = [
-        ("parallel", d, b, beta, r, k_s)
-        for d in depths
-        for b in spacings
-        for beta in betas
-        for r in radii
-        for k_s in soil_ks
-        if (d, b, beta, r, k_s) not in table_parallel
-    ]
+        new_parallel_jobs.append(("parallel", *key))
+
+        existing_depths.add(key[0])
+        existing_spacings.add(key[1])
+        existing_betas.add(key[2])
+        existing_radii.add(key[3])
+        existing_soil_ks.add(key[4])
+
+    for key in force_recalc_single:
+        if key in table_single:
+            del table_single[key]
+            print(f"Forcing recalculation for single case: {key}")
+        else:
+            print(f"Adding brand new single case: {key}")
+
+        new_single_jobs.append(("single", *key))
+
+        existing_depths.add(key[0])
+        existing_betas.add(key[1])
+        existing_radii.add(key[2])
+        existing_soil_ks.add(key[3])
+
+    # 3. Process standard grid
+    new_single_jobs.extend(
+        [
+            ("single", d, beta, r, k_s)
+            for d in depths
+            for beta in betas
+            for r in radii
+            for k_s in soil_ks
+            if (d, beta, r, k_s) not in table_single and (d, beta, r, k_s) not in force_recalc_single
+        ]
+    )
+
+    new_parallel_jobs.extend(
+        [
+            ("parallel", d, b, beta, r, k_s)
+            for d in depths
+            for b in spacings
+            for beta in betas
+            for r in radii
+            for k_s in soil_ks
+            if (d, b, beta, r, k_s) not in table_parallel and (d, b, beta, r, k_s) not in force_recalc_parallel
+        ]
+    )
 
     all_new_jobs = new_single_jobs + new_parallel_jobs
     total_new_jobs = len(all_new_jobs)
@@ -180,7 +205,7 @@ def main():
     print(f"Identified {len(new_parallel_jobs)} new parallel-pipe curve pairs to compute.")
     print(f"Total new jobs: {total_new_jobs}")
 
-    # 3. Process only the new jobs
+    # 4. Process only the new jobs
     with multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1) as pool:
         for i, result in enumerate(pool.imap_unordered(worker_dispatcher, all_new_jobs), 1):
             job_type, key, payload = result

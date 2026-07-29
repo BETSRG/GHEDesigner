@@ -44,7 +44,7 @@ class DynamicAggregator:
         exp_rate: float = 1.62,
         bins_per_level: int = 9,
         base_dt_sec: float = 3600.0,
-        constant_time_step=True
+        constant_time_step=True,
     ):
         self.exp_rate = exp_rate
         self.bins_per_level = bins_per_level
@@ -211,8 +211,12 @@ class IsolatedHorizontalPipe(BaseSimComp):
         if self.load_method == "hourlyloadagg":
             total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
             self.aggregators = [
-                DynamicAggregator(total_sim_time_sec, exp_rate=DLA_EXPANSION_RATE, bins_per_level=DLA_BINS_PER_LEVEL,
-                                  base_dt_sec=SEC_IN_HR)
+                DynamicAggregator(
+                    total_sim_time_sec,
+                    exp_rate=DLA_EXPANSION_RATE,
+                    bins_per_level=DLA_BINS_PER_LEVEL,
+                    base_dt_sec=SEC_IN_HR,
+                )
                 for _ in range(self.num_segments)
             ]
             tau_agg = self.aggregators[0].bin_ages / self.t_p
@@ -444,8 +448,12 @@ class CoupledHorizontalPipe(BaseSimComp):
         if self.load_method == "hourlyloadagg":
             total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
             self.aggregators = [
-                DynamicAggregator(total_sim_time_sec, exp_rate=DLA_EXPANSION_RATE, bins_per_level=DLA_BINS_PER_LEVEL,
-                                  base_dt_sec=SEC_IN_HR)
+                DynamicAggregator(
+                    total_sim_time_sec,
+                    exp_rate=DLA_EXPANSION_RATE,
+                    bins_per_level=DLA_BINS_PER_LEVEL,
+                    base_dt_sec=SEC_IN_HR,
+                )
                 for _ in range(self.num_segments)
             ]
             tau_agg = self.aggregators[0].bin_ages / self.t_p
@@ -817,9 +825,11 @@ class GHX(BaseSimComp):
         if load_method == "hourlyloadagg":
             total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
             self.aggregator = DynamicAggregator(
-                total_sim_time_sec, exp_rate=DLA_EXPANSION_RATE, bins_per_level=DLA_BINS_PER_LEVEL,
+                total_sim_time_sec,
+                exp_rate=DLA_EXPANSION_RATE,
+                bins_per_level=DLA_BINS_PER_LEVEL,
                 base_dt_sec=SEC_IN_HR,
-                constant_time_step=True
+                constant_time_step=True,
             )
             self.g_agg = None
 
@@ -924,9 +934,9 @@ class GHX(BaseSimComp):
             self.c_n = self.calc_cn_constant()
 
         if self.load_method == "hourlyloadagg":
-           self.aggregator.clear_history()
-           lntts_agg = np.log(self.aggregator.bin_ages / self.ts)
-           self.g_agg = self.g(lntts_agg)
+            self.aggregator.clear_history()
+            lntts_agg = np.log(self.aggregator.bin_ages / self.ts)
+            self.g_agg = self.g(lntts_agg)
 
         self.t_in = np.full(self.num_timesteps, self.ghe_manager.soil.ugt, dtype=float)
         self.t_mean = np.full(self.num_timesteps, self.ghe_manager.soil.ugt, dtype=float)
@@ -968,9 +978,9 @@ class GHX(BaseSimComp):
                 self.dq[idx_timestep - 2] -= self.q_ghe[idx_timestep - 3] * self.two_pi_k_recip
             if idx_timestep > IDX_COMPARISON_OFFSET_1:
                 self.dq[idx_timestep - 2] += self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip
-                if self.constant_time_step: # Handles hourly (or other constant timesteps)
+                if self.constant_time_step:  # Handles hourly (or other constant timesteps)
                     values = np.dot(self.dq[0 : idx_timestep - 1], self.gfunction_evals[-idx_timestep + 1 :])
-                else: # Handles hybrid (or other uneven timesteps)
+                else:  # Handles hybrid (or other uneven timesteps)
                     gfunction_evals = self.g(
                         np.log(
                             (self.time_array[idx_timestep - 1] - self.time_array[0 : idx_timestep - 1])
@@ -1717,20 +1727,12 @@ class GHEHPSystem:
         for ghe in self.ground_heat_exchangers:
             if ghe.ghe_manager.is_sizable:
                 self.sizable_ground_heat_exchangers.append(ghe)
-        if self.fixed_loads:
-            self.matrix_size = int(
-                np.dot(
-                    [GHX.MATRIX_ROWS_FIXED_LOADS, Building.MATRIX_ROWS, SourceSinkHeatExchanger.MATRIX_ROWS],
-                    [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
-                )
-            )
-        else:
-            self.matrix_size = int(
-                np.dot(
-                    [GHX.MATRIX_ROWS, Building.MATRIX_ROWS, SourceSinkHeatExchanger.MATRIX_ROWS],
-                    [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
-                )
-            )
+        ghx_matrix_rows = GHX.MATRIX_ROWS_FIXED_LOADS if self.fixed_loads else GHX.MATRIX_ROWS
+        self.matrix_size = (
+            ghx_matrix_rows * self.num_ghx
+            + Building.MATRIX_ROWS * self.num_buildings
+            + SourceSinkHeatExchanger.MATRIX_ROWS * self.num_heat_exchangers
+        )
 
         self.nbh_total: int = sum([x.nbh for x in ground_heat_exchangers]) if ground_heat_exchangers is not None else 0
         self.num_ghx = len(ground_heat_exchangers)
