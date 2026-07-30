@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -8,8 +9,9 @@ import pytest
 from jsonschema.exceptions import ValidationError
 from pandas.testing import assert_frame_equal
 
-from ghedesigner.district_system import GHEHPSystem, IsolatedHorizontalPipe
-from ghedesigner.enums import SimCompType
+from ghedesigner.district_system import CoupledHorizontalPipe, GHEHPSystem, IsolatedHorizontalPipe
+from ghedesigner.enums import DesignGeomType, SimCompType
+from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
@@ -89,6 +91,94 @@ class TestDistrictSys(GHEBaseTest):
         assert aggregator.base_dt_sec == pytest.approx(180.0)
         aggregator.shift_and_add(2.0, 180.0, 1)
         assert aggregator.energy_bins[0] == pytest.approx(360.0)
+
+    def test_coupled_loadagg_uses_neighbor_ground_temperature(self):
+        time_array = np.array([0.0, 1.0, 2.0])
+        pipe = Pipe.init_single_u_tube(
+            inner_diameter=0.1524,
+            outer_diameter=0.1624,
+            shank_spacing=0.0,
+            roughness=1e-6,
+            conductivity=0.4,
+            rho_cp=1542000,
+        )
+        soil = Soil(k=2.0, rho_cp=2343520, ugt=15.0)
+        fluid = Fluid(fluid_name="WATER", percent=0, temperature=70)
+
+        def q_prime_interp(tau):
+            return np.zeros_like(np.asarray(tau, dtype=float))
+
+        def make_pipe(name, ugt_avg):
+            return CoupledHorizontalPipe(
+                name=name,
+                length=10.0,
+                num_segments=1,
+                pipe=pipe,
+                soil=soil,
+                fluid=fluid,
+                num_timesteps=time_array.size,
+                time_array=time_array,
+                q_prime_even_interp=q_prime_interp,
+                q_prime_odd_interp=q_prime_interp,
+                beta=0.344,
+                ugt_avg=ugt_avg,
+                ugt_amp1=0.0,
+                ugt_phase1=0.0,
+                ugt_amp2=0.0,
+                ugt_phase2=0.0,
+                depth=1.0,
+                load_method="hourlyloadagg",
+            )
+
+        pipe_a = make_pipe("pipe_a", 10.0)
+        pipe_b = make_pipe("pipe_b", 20.0)
+        pipe_a.coupled_pipe = pipe_b
+        pipe_b.coupled_pipe = pipe_a
+        pipe_a.t_mean_seg[0, 1] = 15.0
+        pipe_b.t_mean_seg[0, 1] = 30.0
+
+        pipe_a.compute_history_terms(2)
+
+        assert pipe_a.aggregators[0].energy_bins[0] == pytest.approx(5.0 * 3600.0)
+        assert pipe_b.aggregators[0].energy_bins[0] == pytest.approx(10.0 * 3600.0)
+
+    def test_hybrid_fixed_cop_loads_do_not_require_heat_pump_names(self):
+        processor = ProcessLoads()
+        processor.read_hp_load_from_json(
+            {
+                "building": {
+                    "building": {
+                        "heating_load": {"load_values": [1.0, 2.0], "heat_pump_cop": 3.5},
+                        "cooling_load": {"load_values": [3.0, 4.0], "heat_pump_cop": 4.5},
+                    }
+                }
+            }
+        )
+
+        zone = processor.zones[0]
+        np.testing.assert_array_equal(zone.q_htg_1yr, [1.0, 2.0])
+        np.testing.assert_array_equal(zone.q_clg_1yr, [3.0, 4.0])
+        assert zone.COP_htg == pytest.approx(3.5)
+        assert zone.COP_clg == pytest.approx(4.5)
+
+    def test_rowwise_spacing_bounds_use_constraint_intersection(self):
+        def make_ghe(min_spacing, max_spacing):
+            constraint = SimpleNamespace(min_spacing=min_spacing, max_spacing=max_spacing)
+            manager = SimpleNamespace(geom_type=DesignGeomType.ROWWISE, geometric_constraint=constraint)
+            return SimpleNamespace(ghe_manager=manager)
+
+        bounds = GHEHPSystem._get_rowwise_spacing_bounds([make_ghe(4.5, 10.0), make_ghe(6.0, 8.0)])
+
+        assert bounds == (6.0, 8.0)
+
+    def test_rowwise_spacing_bounds_reject_disjoint_constraints(self):
+        def make_ghe(min_spacing, max_spacing):
+            constraint = SimpleNamespace(min_spacing=min_spacing, max_spacing=max_spacing)
+            manager = SimpleNamespace(geom_type=DesignGeomType.ROWWISE, geometric_constraint=constraint)
+            return SimpleNamespace(ghe_manager=manager)
+
+        with pytest.raises(ValueError, match="do not have a common range"):
+            GHEHPSystem._get_rowwise_spacing_bounds([make_ghe(4.5, 5.0), make_ghe(6.0, 8.0)])
 
     def test_simulate_1_pipe_1_ghe_1_bldg_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
