@@ -30,6 +30,22 @@ class TestDistrictSys(GHEBaseTest):
         system.size_and_simulate()
         self.assert_simulation_output_matches_baseline(system, "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.csv")
 
+    def test_simulate_1_pipe_3_ghe_6_bldg_district_horizontal(self):
+        f_path_json = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
+        system = GHEHPSystem(f_path_json)
+        system.size_and_simulate()
+        self.assert_simulation_output_matches_baseline(
+            system, "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.csv"
+        )
+
+    def test_simulate_1_pipe_3_ghe_6_bldg_district_horizontal_loadagg(self):
+        f_path_json = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_LOADAGGHOURLY_horizontal.json"
+        system = GHEHPSystem(f_path_json)
+        system.size_and_simulate()
+        self.assert_simulation_output_matches_baseline(
+            system, "simulate_1_pipe_3_ghe_6_bldg_district_LOADAGGHOURLY_horizontal.csv"
+        )
+
     def test_simulate_1_pipe_1_ghe_1_bldg_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
         system = GHEHPSystem(f_path_json)

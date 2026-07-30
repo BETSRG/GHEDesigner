@@ -229,7 +229,7 @@ class ProcessLoads:
             else:
                 zone.COP_htg = 1.0  # assigning harmless value
 
-            if "cooling_Load" in bldg_data and "heat_pump_cop" in bldg_data["cooling_load"]:
+            if "cooling_load" in bldg_data and "heat_pump_cop" in bldg_data["cooling_load"]:
                 zone.COP_clg = float(bldg_data["cooling_cop"])
             elif "cooling_load" in bldg_data and "heat_pump_name" in bldg_data["cooling_load"]:
                 hp_clg_name = bldg_data["cooling_load"]["heat_pump_name"]

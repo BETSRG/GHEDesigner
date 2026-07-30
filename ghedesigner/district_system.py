@@ -13,7 +13,21 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 
-from ghedesigner.constants import DAYS_IN_YEAR, HOURS_IN_YEAR, PI_OVER_2, SEC_IN_DAY, SEC_IN_HR, SEC_IN_YEAR, TWO_PI
+from ghedesigner.constants import (
+    BOREHOLES_PER_SQUARE_METER,
+    DAYS_IN_YEAR,
+    DLA_BINS_PER_LEVEL,
+    DLA_EXPANSION_RATE,
+    HOURS_IN_YEAR,
+    IDX_COMPARISON_OFFSET_1,
+    IDX_COMPARISON_OFFSET_2,
+    PI_OVER_2,
+    SEC_IN_DAY,
+    SEC_IN_HR,
+    SEC_IN_YEAR,
+    SIMULATION_CONSTANT_COP_OFFSET,
+    TWO_PI,
+)
 from ghedesigner.enums import CentralLoopType, DesignGeomType, SimCompType, SourceSinkOpMode
 from ghedesigner.ghe.domains import polygonal_land_constraint_multi_field
 from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads
@@ -21,15 +35,6 @@ from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Soil
 from ghedesigner.utilities import HPmodel, get_loads, load_input_file
-
-BOREHOLES_PER_SQUARE_METER = 0.0494  # This is the tightest boreholes can be infinitely
-# tessellated with 4.5m spacing (to my knowledge).
-IDX_COMPARISON_OFFSET_1 = 1
-IDX_COMPARISON_OFFSET_2 = 2  # Used for offsets in gfunction calculation
-SIMULATION_CONSTANT_COP_OFFSET = 15.0  # °C used to estimate constant COP if temperature bounds are not given. Also used
-# to determine flowrate if only COP is given for HP model.
-DLA_EXPANSION_RATE = 1.62
-DLA_BINS_PER_LEVEL = 9
 
 
 class DynamicAggregator:
@@ -2117,10 +2122,10 @@ class GHEHPSystem:
             x_range = np.linspace(min_target_spacing, max_target_spacing, num=19)
             total = x_range.shape[0]
             sample_rate = self.sample_rate
-            for i, index in enumerate(x_range):
-                if index % sample_rate == 0:
-                    print(f"Percent Completed: {100 * index / total}")
-                _ = objective(i)
+            for i, spacing in enumerate(x_range):
+                if i % sample_rate == 0:
+                    print(f"Percent Completed: {100 * i / total}")
+                _ = objective(spacing)
         else:
             min_result = objective(max_target_spacing)
             max_result = objective(min_target_spacing)
