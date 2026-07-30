@@ -1,12 +1,15 @@
+import json
 import multiprocessing
-import pickle
 import time
 from pathlib import Path
 
 import numpy as np
-from scipy import interpolate
 
+from ghedesigner.constants import HORZ_LIBRARY_FILENAME
 from ghedesigner.ghe.horizontal_pipe_heat_exchange import ParallelPipeSystem, SinglePipeWithSurfaceSystem
+from ghedesigner.utilities import float_tuple_to_string
+
+LIBRARY_DECIMALS_OF_PRECISION = 10
 
 
 class MockPipe:
@@ -45,9 +48,12 @@ def worker_single(args):
     true_tau = tau_seconds / t_p
     final_true_tau = np.insert(true_tau, 0, 0.0)
 
-    interp_q = interpolate.interp1d(final_true_tau, final_q, kind="cubic", fill_value="extrapolate")
+    q_data = {
+        "x": np.round(final_true_tau, decimals=LIBRARY_DECIMALS_OF_PRECISION).tolist(),
+        "y": np.round(final_q, decimals=LIBRARY_DECIMALS_OF_PRECISION).tolist(),
+    }
 
-    return ("single", (d, beta, r, k_s), interp_q)
+    return "single", float_tuple_to_string((d, beta, r, k_s)), q_data
 
 
 def worker_parallel(args):
@@ -77,10 +83,14 @@ def worker_parallel(args):
     true_tau = tau_seconds / t_p
     final_true_tau = np.insert(true_tau, 0, 0.0)
 
-    interp_even = interpolate.interp1d(final_true_tau, final_q_even, kind="cubic", fill_value="extrapolate")
-    interp_odd = interpolate.interp1d(final_true_tau, final_q_odd, kind="cubic", fill_value="extrapolate")
+    q_prime_data = {
+        "x1": np.round(final_true_tau, decimals=LIBRARY_DECIMALS_OF_PRECISION).tolist(),
+        "y1": np.round(final_q_even, decimals=LIBRARY_DECIMALS_OF_PRECISION).tolist(),
+        "x2": np.round(final_true_tau, decimals=LIBRARY_DECIMALS_OF_PRECISION).tolist(),
+        "y2": np.round(final_q_odd, decimals=LIBRARY_DECIMALS_OF_PRECISION).tolist(),
+    }
 
-    return ("parallel", (d, b, beta, r, k_s), (interp_even, interp_odd))
+    return "parallel", float_tuple_to_string((d, b, beta, r, k_s)), q_prime_data
 
 
 def worker_dispatcher(job):
@@ -94,7 +104,7 @@ def worker_dispatcher(job):
 def main():
     print("--- Building/Updating Unified Interpolation Library ---")
     t_start = time.perf_counter()
-    output_path = Path(__file__).with_name("unified_horizontal_library.pkl")
+    output_path = Path(__file__).with_name(HORZ_LIBRARY_FILENAME)
 
     # Define the parameters
     depths = np.array([1.0, 1.5, 5.0, 15.0])
@@ -128,7 +138,7 @@ def main():
     if output_path.exists():
         print(f"Found existing library: '{output_path}'. Loading...")
         with output_path.open("rb") as f:
-            existing_data = pickle.load(f)  # noqa: S301
+            existing_data = json.load(f)
 
         table_single = existing_data.get("table_single", {})
         table_parallel = existing_data.get("table_parallel", {})
@@ -142,8 +152,9 @@ def main():
 
     # 2. Process forced cases
     for key in force_recalc_parallel:
-        if key in table_parallel:
-            del table_parallel[key]
+        json_key = float_tuple_to_string(key)
+        if json_key in table_parallel:
+            del table_parallel[json_key]
             print(f"Forcing recalculation for parallel case: {key}")
         else:
             print(f"Adding brand new parallel case: {key}")
@@ -157,8 +168,9 @@ def main():
         existing_soil_ks.add(key[4])
 
     for key in force_recalc_single:
-        if key in table_single:
-            del table_single[key]
+        json_key = float_tuple_to_string(key)
+        if json_key in table_single:
+            del table_single[json_key]
             print(f"Forcing recalculation for single case: {key}")
         else:
             print(f"Adding brand new single case: {key}")
@@ -241,18 +253,18 @@ def main():
 
     data = {
         "axes": {
-            "depths": final_depths,
-            "spacings": final_spacings,
-            "betas": final_betas,
-            "radii": final_radii,
-            "soil_ks": final_soil_ks,
+            "depths": final_depths.tolist(),
+            "spacings": final_spacings.tolist(),
+            "betas": final_betas.tolist(),
+            "radii": final_radii.tolist(),
+            "soil_ks": final_soil_ks.tolist(),
         },
         "table_single": table_single,
         "table_parallel": table_parallel,
     }
 
     with output_path.open("wb") as f:
-        pickle.dump(data, f)
+        json.dump(data, f)
 
     print(f"Done. Saved updated library to '{output_path}' in {time.perf_counter() - t_start:.2f}s")
 

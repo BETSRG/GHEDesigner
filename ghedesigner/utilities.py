@@ -252,6 +252,10 @@ def check_arg_bounds(min_val: float, max_val: float, min_val_name: str, max_val_
         raise ValueError(f"{min_val_name} ({min_val}) should be less than or equal to {max_val_name} ({max_val})")
 
 
+def float_tuple_to_string(float_tuple):
+    return "_".join([str(val) for val in float_tuple])
+
+
 def combine_sts_lts(log_time_lts: list, g_lts: list, log_time_sts: list, g_sts: list) -> interp1d:
     # make sure the short time step doesn't overlap with the long time step
     max_log_time_sts = max(log_time_sts)

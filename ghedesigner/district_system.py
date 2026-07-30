@@ -1,6 +1,5 @@
 import json
 import math
-import pickle
 import time
 from abc import ABC, abstractmethod
 from importlib import resources
@@ -11,6 +10,7 @@ from typing import Any, cast
 
 import numpy as np
 import pandas as pd
+from scipy import interpolate
 from scipy.optimize import minimize
 
 from ghedesigner.constants import (
@@ -18,6 +18,7 @@ from ghedesigner.constants import (
     DAYS_IN_YEAR,
     DLA_BINS_PER_LEVEL,
     DLA_EXPANSION_RATE,
+    HORZ_LIBRARY_FILENAME,
     HOURS_IN_YEAR,
     IDX_COMPARISON_OFFSET_1,
     IDX_COMPARISON_OFFSET_2,
@@ -34,7 +35,7 @@ from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads
 from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Soil
-from ghedesigner.utilities import HPmodel, get_loads, load_input_file
+from ghedesigner.utilities import HPmodel, float_tuple_to_string, get_loads, load_input_file
 
 
 class DynamicAggregator:
@@ -1525,8 +1526,8 @@ class GHEHPSystem:
         horiz_axes = {}
         if self.use_horizontal and horiz_data:
             try:
-                with resources.files("ghedesigner.ghe").joinpath("unified_horizontal_library.pkl").open("rb") as f:
-                    lib_data = pickle.load(f)  # noqa: S301
+                with resources.files("ghedesigner.ghe").joinpath(HORZ_LIBRARY_FILENAME).open("rb") as f:
+                    lib_data = json.load(f)
                 table_single = lib_data["table_single"]
                 table_parallel = lib_data["table_parallel"]
                 horiz_axes = lib_data["axes"]
@@ -1686,14 +1687,17 @@ class GHEHPSystem:
                 r_pipe = 0.1  # TODO: Placeholder: update to actual resistance later
                 beta = r_pipe * (TWO_PI * h_soil.k)
 
-                target_d = get_nearest(h_data["trench_depth"], horiz_axes["depths"])
-                target_beta = get_nearest(beta, horiz_axes["betas"])
-                target_r = get_nearest(h_pipe.r_out, horiz_axes["radii"])
-                target_k = get_nearest(h_soil.k, horiz_axes["soil_ks"])
+                target_d = get_nearest(h_data["trench_depth"], np.array(horiz_axes["depths"], dtype=float))
+                target_beta = get_nearest(beta, np.array(horiz_axes["betas"], dtype=float))
+                target_r = get_nearest(h_pipe.r_out, np.array(horiz_axes["radii"], dtype=float))
+                target_k = get_nearest(h_soil.k, np.array(horiz_axes["soil_ks"], dtype=float))
 
                 this_horiz: IsolatedHorizontalPipe | CoupledHorizontalPipe
                 if is_isolated:
-                    q_prime_interp = table_single[(target_d, target_beta, target_r, target_k)]
+                    q_prime_data = table_single[float_tuple_to_string((target_d, target_beta, target_r, target_k))]
+                    q_prime_interp = interpolate.interp1d(
+                        q_prime_data["x"], q_prime_data["y"], kind="cubic", fill_value="extrapolate"
+                    )
 
                     this_horiz = IsolatedHorizontalPipe(
                         name=h_id,
@@ -1718,8 +1722,16 @@ class GHEHPSystem:
                     isolated_pipes.append(this_horiz)
 
                 elif is_coupled:
-                    target_b = get_nearest(h_data["spacing"], horiz_axes["spacings"])
-                    q_prime_even, q_prime_odd = table_parallel[(target_d, target_b, target_beta, target_r, target_k)]
+                    target_b = get_nearest(h_data["spacing"], np.array(horiz_axes["spacings"], dtype=float))
+                    q_prime_data = table_parallel[
+                        float_tuple_to_string((target_d, target_b, target_beta, target_r, target_k))
+                    ]
+                    q_prime_even = interpolate.interp1d(
+                        q_prime_data["x1"], q_prime_data["y1"], kind="cubic", fill_value="extrapolate"
+                    )
+                    q_prime_odd = interpolate.interp1d(
+                        q_prime_data["x2"], q_prime_data["y2"], kind="cubic", fill_value="extrapolate"
+                    )
 
                     this_horiz = CoupledHorizontalPipe(
                         name=h_id,

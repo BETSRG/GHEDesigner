@@ -17,10 +17,11 @@ MONTHS_IN_YEAR = 12
 HOURS_IN_YEAR = HRS_IN_DAY * DAYS_IN_YEAR
 LPS_TO_M3S = 1 / 1000
 BOREHOLES_PER_SQUARE_METER = 0.0494  # This is the tightest boreholes can be infinitely
-# tessellated with 4.5m spacing (to my knowledge).
-IDX_COMPARISON_OFFSET_1 = 1
-IDX_COMPARISON_OFFSET_2 = 2  # Used for offsets in gfunction calculation
+# tessellated with a minimum 4.5m spacing (to my knowledge).
+IDX_COMPARISON_OFFSET_1 = 1  # Used for offsets in history term calculation
+IDX_COMPARISON_OFFSET_2 = 2  # Used for offsets in history term calculation
 SIMULATION_CONSTANT_COP_OFFSET = 15.0  # °C used to estimate constant COP if temperature bounds are not given. Also used
 # to determine flowrate if only COP is given for HP model.
 DLA_EXPANSION_RATE = 1.62
 DLA_BINS_PER_LEVEL = 9
+HORZ_LIBRARY_FILENAME = "unified_horizontal_library.json"
