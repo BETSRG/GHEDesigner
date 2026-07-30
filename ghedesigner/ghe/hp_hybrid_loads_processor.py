@@ -184,21 +184,23 @@ class ProcessLoads:
             zone.name = bldg_id
 
             if "heating_load" in bldg_data:
+                heating_load = bldg_data["heating_load"]
                 zone.q_htg_1yr = np.array(
                     get_loads(
-                        bldg_data["heating_load"]["heat_pump_name"],
+                        heating_load.get("heat_pump_name", f"{bldg_id}_heating"),
                         SimCompType.HEAT_PUMP.name,
-                        bldg_data["heating_load"],
+                        heating_load,
                     ),
                     dtype=float,
                 )
 
             if "cooling_load" in bldg_data:
+                cooling_load = bldg_data["cooling_load"]
                 zone.q_clg_1yr = np.array(
                     get_loads(
-                        bldg_data["cooling_load"]["heat_pump_name"],
+                        cooling_load.get("heat_pump_name", f"{bldg_id}_cooling"),
                         SimCompType.HEAT_PUMP.name,
-                        bldg_data["cooling_load"],
+                        cooling_load,
                     ),
                     dtype=float,
                 )
@@ -230,7 +232,7 @@ class ProcessLoads:
                 zone.COP_htg = 1.0  # assigning harmless value
 
             if "cooling_load" in bldg_data and "heat_pump_cop" in bldg_data["cooling_load"]:
-                zone.COP_clg = float(bldg_data["cooling_cop"])
+                zone.COP_clg = float(bldg_data["cooling_load"]["heat_pump_cop"])
             elif "cooling_load" in bldg_data and "heat_pump_name" in bldg_data["cooling_load"]:
                 hp_clg_name = bldg_data["cooling_load"]["heat_pump_name"]
                 hp_clg_data = self.hp_data[hp_clg_name]

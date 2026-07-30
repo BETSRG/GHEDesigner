@@ -509,6 +509,7 @@ class CoupledHorizontalPipe(BaseSimComp):
                 dt_sec = (self.time_array[idx_timestep - 1] - self.time_array[idx_timestep - 2]) * SEC_IN_HR
                 prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
                 prev_ugt = self.calculate_current_ugt(prev_time_sec)
+                prev_ugt_neighbor = self.coupled_pipe.calculate_current_ugt(prev_time_sec)
 
                 for k in range(self.num_segments):
                     # Safely shift self
@@ -517,7 +518,7 @@ class CoupledHorizontalPipe(BaseSimComp):
 
                     # Safely shift neighbor ensuring asynchronous state consistency
                     neighbor_k = self.num_segments - 1 - k if self.counter_flow else k
-                    theta_prev_neighbor = self.coupled_pipe.t_mean_seg[neighbor_k, idx_timestep - 1] - prev_ugt
+                    theta_prev_neighbor = self.coupled_pipe.t_mean_seg[neighbor_k, idx_timestep - 1] - prev_ugt_neighbor
                     self.coupled_pipe.aggregators[neighbor_k].shift_and_add(theta_prev_neighbor, dt_sec, idx_timestep)
 
                     dtheta_b_self = self.aggregators[k].get_step_changes()
@@ -2106,17 +2107,29 @@ class GHEHPSystem:
                     ' "design_system_single_bupcrs" algorithm. Please report.'
                 )
 
-    def design_system_single_rowwise(self):
-        min_target_spacing = float("inf")
-        max_target_spacing = float("-inf")
-        for ghe in self.sizable_ground_heat_exchangers:
+    @staticmethod
+    def _get_rowwise_spacing_bounds(ground_heat_exchangers):
+        if not ground_heat_exchangers:
+            raise ValueError("At least one sizable GHE is required for the global ROWWISE system design algorithm.")
+
+        constraints = []
+        for ghe in ground_heat_exchangers:
             if ghe.ghe_manager.geom_type == DesignGeomType.ROWWISE:
-                min_target_spacing = min(min_target_spacing, ghe.ghe_manager.geometric_constraint.min_spacing)
-                max_target_spacing = max(max_target_spacing, ghe.ghe_manager.geometric_constraint.max_spacing)
+                constraints.append(ghe.ghe_manager.geometric_constraint)
             else:
                 raise ValueError(
                     'All GHEs must be of type "ROWWISE" for use in the global ROWWISEsystem design algorithm.'
                 )
+
+        min_target_spacing = max(constraint.min_spacing for constraint in constraints)
+        max_target_spacing = min(constraint.max_spacing for constraint in constraints)
+        if min_target_spacing > max_target_spacing:
+            raise ValueError("Row-wise GHE target-spacing constraints do not have a common range.")
+
+        return min_target_spacing, max_target_spacing
+
+    def design_system_single_rowwise(self):
+        min_target_spacing, max_target_spacing = self._get_rowwise_spacing_bounds(self.sizable_ground_heat_exchangers)
 
         # Perform initial sizing of GHEs
         self.initialize_system_ghes(need_penalty=False)
