@@ -1,7 +1,7 @@
 import multiprocessing
-import os
 import pickle
 import time
+from pathlib import Path
 
 import numpy as np
 from scipy import interpolate
@@ -94,7 +94,7 @@ def worker_dispatcher(job):
 def main():
     print("--- Building/Updating Unified Interpolation Library ---")
     t_start = time.perf_counter()
-    output_filename = r"C:\Users\drewm\GHEDesigner\ghedesigner\ghe\unified_horizontal_library.pkl"
+    output_path = Path(__file__).with_name("unified_horizontal_library.pkl")
 
     # Define the parameters
     depths = np.array([1.0, 1.5, 5.0, 15.0])
@@ -125,9 +125,9 @@ def main():
     ]
 
     # 1. Load file if it exists
-    if os.path.exists(output_filename):
-        print(f"Found existing library: '{output_filename}'. Loading...")
-        with open(output_filename, "rb") as f:
+    if output_path.exists():
+        print(f"Found existing library: '{output_path}'. Loading...")
+        with output_path.open("rb") as f:
             existing_data = pickle.load(f)  # noqa: S301
 
         table_single = existing_data.get("table_single", {})
@@ -251,10 +251,10 @@ def main():
         "table_parallel": table_parallel,
     }
 
-    with open(output_filename, "wb") as f:
+    with output_path.open("wb") as f:
         pickle.dump(data, f)
 
-    print(f"Done. Saved updated library to '{output_filename}' in {time.perf_counter() - t_start:.2f}s")
+    print(f"Done. Saved updated library to '{output_path}' in {time.perf_counter() - t_start:.2f}s")
 
 
 if __name__ == "__main__":

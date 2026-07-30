@@ -114,6 +114,16 @@ class DynamicAggregator:
         self.last_idx = 0
 
 
+def _aggregation_timestep_params(time_array: np.ndarray) -> tuple[float, bool]:
+    time_differences_sec = np.diff(time_array) * SEC_IN_HR
+    if time_differences_sec.size == 0:
+        return SEC_IN_HR, True
+
+    base_dt_sec = float(time_differences_sec[0])
+    constant_time_step = bool(np.allclose(time_differences_sec, base_dt_sec))
+    return base_dt_sec, constant_time_step
+
+
 class BaseSimComp(ABC):
     def __init__(self) -> None:
         self.name: str | None = None
@@ -215,12 +225,14 @@ class IsolatedHorizontalPipe(BaseSimComp):
         self.load_method = load_method
         if self.load_method == "hourlyloadagg":
             total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
+            base_dt_sec, constant_time_step = _aggregation_timestep_params(self.time_array)
             self.aggregators = [
                 DynamicAggregator(
                     total_sim_time_sec,
                     exp_rate=DLA_EXPANSION_RATE,
                     bins_per_level=DLA_BINS_PER_LEVEL,
-                    base_dt_sec=SEC_IN_HR,
+                    base_dt_sec=base_dt_sec,
+                    constant_time_step=constant_time_step,
                 )
                 for _ in range(self.num_segments)
             ]
@@ -452,12 +464,14 @@ class CoupledHorizontalPipe(BaseSimComp):
         self.load_method = load_method
         if self.load_method == "hourlyloadagg":
             total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
+            base_dt_sec, constant_time_step = _aggregation_timestep_params(self.time_array)
             self.aggregators = [
                 DynamicAggregator(
                     total_sim_time_sec,
                     exp_rate=DLA_EXPANSION_RATE,
                     bins_per_level=DLA_BINS_PER_LEVEL,
-                    base_dt_sec=SEC_IN_HR,
+                    base_dt_sec=base_dt_sec,
+                    constant_time_step=constant_time_step,
                 )
                 for _ in range(self.num_segments)
             ]

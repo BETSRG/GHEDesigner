@@ -2,13 +2,16 @@ import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import numpy as np
 import pandas as pd
 import pytest
 from jsonschema.exceptions import ValidationError
 from pandas.testing import assert_frame_equal
 
-from ghedesigner.district_system import GHEHPSystem
+from ghedesigner.district_system import GHEHPSystem, IsolatedHorizontalPipe
 from ghedesigner.enums import SimCompType
+from ghedesigner.ghe.pipe import Pipe
+from ghedesigner.media import Fluid, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.validate import validate_input_file
 
@@ -45,6 +48,47 @@ class TestDistrictSys(GHEBaseTest):
         self.assert_simulation_output_matches_baseline(
             system, "simulate_1_pipe_3_ghe_6_bldg_district_LOADAGGHOURLY_horizontal.csv"
         )
+
+    def test_horizontal_loadagg_uses_subhourly_timestep(self):
+        time_array = np.linspace(0.0, 1.0, 20, endpoint=False)
+        pipe = Pipe.init_single_u_tube(
+            inner_diameter=0.1524,
+            outer_diameter=0.1624,
+            shank_spacing=0.0,
+            roughness=1e-6,
+            conductivity=0.4,
+            rho_cp=1542000,
+        )
+        soil = Soil(k=2.0, rho_cp=2343520, ugt=15.0)
+        fluid = Fluid(fluid_name="WATER", percent=0, temperature=70)
+
+        def q_prime_interp(tau):
+            return np.zeros_like(np.asarray(tau, dtype=float))
+
+        horiz_pipe = IsolatedHorizontalPipe(
+            name="subhourly_pipe",
+            length=10.0,
+            num_segments=1,
+            pipe=pipe,
+            soil=soil,
+            fluid=fluid,
+            num_timesteps=time_array.size,
+            time_array=time_array,
+            q_prime_interp=q_prime_interp,
+            beta=0.344,
+            ugt_avg=15.0,
+            ugt_amp1=0.0,
+            ugt_phase1=0.0,
+            ugt_amp2=0.0,
+            ugt_phase2=0.0,
+            depth=1.0,
+            load_method="hourlyloadagg",
+        )
+
+        aggregator = horiz_pipe.aggregators[0]
+        assert aggregator.base_dt_sec == pytest.approx(180.0)
+        aggregator.shift_and_add(2.0, 180.0, 1)
+        assert aggregator.energy_bins[0] == pytest.approx(360.0)
 
     def test_simulate_1_pipe_1_ghe_1_bldg_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
