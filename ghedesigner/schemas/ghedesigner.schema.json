@@ -395,13 +395,13 @@
       "description": "Surface roughness of pipe."
     },
     "simulation_years": {
-      "type": "number",
+      "type": "integer",
       "minimum": 1,
       "format": "Years",
       "description": "Number of years used in system simulation."
     },
     "sizing_years": {
-      "type": "number",
+      "type": "integer",
       "minimum": 1,
       "format": "Years",
       "description": "Number of years used in ground heat exchanger sizing."
@@ -1291,6 +1291,14 @@
             "$ref": "#/$defs/load_inputs"
           }
         },
+        "anyOf": [
+          {
+            "required": ["pre_designed"]
+          },
+          {
+            "required": ["geometric_constraints", "design"]
+          }
+        ],
         "required": [
           "soil",
           "grout",
@@ -1335,11 +1343,6 @@
           "default": true,
           "description": "Determines if system heat pump loads are converted with fixed COP behavior instead of full heat pump performance calculations."
         },
-        "fixed_loads": {
-          "type": "boolean",
-          "default": false,
-          "description": "Determines if the system simulation pre-determines the ghe load distribution (based on nbh). This can be advantageous as the GHE heat transfer calculations are faster when using hourly timesteps."
-        },
         "exhaustive_search": {
           "type": "boolean",
           "default": false,
@@ -1377,7 +1380,8 @@
           "required": ["sizing_years"],
           "additionalProperties": true
         }
-      ]
+      ],
+      "additionalProperties": false
     },
     "source_sink_heat_exchanger": {
       "type": "object",
@@ -1437,7 +1441,15 @@
         "phase_lag_2": {
           "type": "number"
         }
-      }
+      },
+      "required": [
+        "annual_average",
+        "amplitude_1",
+        "amplitude_2",
+        "phase_lag_1",
+        "phase_lag_2"
+      ],
+      "additionalProperties": false
     },
     "horizontal_piping": {
       "type": "object",
