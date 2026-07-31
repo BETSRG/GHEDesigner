@@ -115,7 +115,7 @@ class DynamicAggregator:
         self.last_idx = 0
 
 
-def _aggregation_timestep_params(time_array: np.ndarray) -> tuple[float, bool]:
+def timestep_params_generator(time_array: np.ndarray) -> tuple[float, bool]:
     time_differences_sec = np.diff(time_array) * SEC_IN_HR
     if time_differences_sec.size == 0:
         return SEC_IN_HR, True
@@ -172,6 +172,7 @@ class IsolatedHorizontalPipe(BaseSimComp):
         ugt_amp2: float,
         ugt_phase2: float,
         depth: float,
+        time_step_params: tuple[float, bool],
         load_method: str = "hourly",
     ):
         super().__init__()
@@ -179,6 +180,7 @@ class IsolatedHorizontalPipe(BaseSimComp):
         self.comp_type = None
         self.num_timesteps = num_timesteps
         self.time_array = time_array
+        self.base_dt_sec, self.constant_time_step = time_step_params
 
         self.num_segments = num_segments
         self.matrix_rows = 3 * num_segments + 1
@@ -226,19 +228,21 @@ class IsolatedHorizontalPipe(BaseSimComp):
         self.load_method = load_method
         if self.load_method == "hourlyloadagg":
             total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
-            base_dt_sec, constant_time_step = _aggregation_timestep_params(self.time_array)
             self.aggregators = [
                 DynamicAggregator(
                     total_sim_time_sec,
                     exp_rate=DLA_EXPANSION_RATE,
                     bins_per_level=DLA_BINS_PER_LEVEL,
-                    base_dt_sec=base_dt_sec,
-                    constant_time_step=constant_time_step,
+                    base_dt_sec=self.base_dt_sec,
+                    constant_time_step=self.constant_time_step,
                 )
                 for _ in range(self.num_segments)
             ]
             tau_agg = self.aggregators[0].bin_ages / self.t_p
             self.y_agg_evals = self.two_pi_k * self.q_prime_interp(tau_agg)
+        elif self.constant_time_step:
+            tau_vals = (self.time_array[-1] - self.time_array[0:-1]) * SEC_IN_HR / self.t_p
+            self.y_evals = self.two_pi_k * self.q_prime_interp(tau_vals)
 
     def calculate_current_ugt(self, current_time_sec: float) -> float:
         t_days = current_time_sec / (24.0 * 3600.0)
@@ -263,7 +267,7 @@ class IsolatedHorizontalPipe(BaseSimComp):
 
     def compute_history_terms(self, idx_timestep: int):
         if getattr(self, "load_method", "hourly") == "hourlyloadagg":
-            if idx_timestep > 1:
+            if idx_timestep > IDX_COMPARISON_OFFSET_1:
                 dt_sec = (self.time_array[idx_timestep - 1] - self.time_array[idx_timestep - 2]) * SEC_IN_HR
                 prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
                 prev_ugt = self.calculate_current_ugt(prev_time_sec)
@@ -281,20 +285,26 @@ class IsolatedHorizontalPipe(BaseSimComp):
 
         y_transient_array = np.zeros(idx_timestep, dtype=float)
 
-        if idx_timestep > 0:
-            dt_sec_array = (self.time_array[idx_timestep] - self.time_array[0:idx_timestep]) * SEC_IN_HR
-            tau_array = dt_sec_array / self.t_p  # Convert to dimensionless time
+        if idx_timestep > IDX_COMPARISON_OFFSET_1:
+            if self.constant_time_step:
+                y_transient_array[0 : idx_timestep - 1] = self.y_evals[-idx_timestep:-1]
+            else:
+                dt_sec_array = (self.time_array[idx_timestep] - self.time_array[0:idx_timestep]) * SEC_IN_HR
+                tau_array = dt_sec_array / self.t_p  # Convert to dimensionless time
+
+                # Ask for q' using tau
+                q_prime_array = self.q_prime_interp(tau_array)
+                y_transient_array[0:idx_timestep] = self.two_pi_k * q_prime_array
+
+        if self.constant_time_step:
+            self.y_n[idx_timestep] = self.y_evals[-1]
+        else:
+            current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
+            current_tau = current_dt_sec / self.t_p  # Convert to dimensionless time
 
             # Ask for q' using tau
-            q_prime_array = self.q_prime_interp(tau_array)
-            y_transient_array[0:idx_timestep] = self.two_pi_k * q_prime_array
-
-        current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
-        current_tau = current_dt_sec / self.t_p  # Convert to dimensionless time
-
-        # Ask for q' using tau
-        q_prime_current = self.q_prime_interp(current_tau)
-        self.y_n[idx_timestep] = self.two_pi_k * q_prime_current
+            q_prime_current = self.q_prime_interp(current_tau)
+            self.y_n[idx_timestep] = self.two_pi_k * q_prime_current
 
         for k in range(self.num_segments):
             sum_k = np.dot(self.dtheta_seg[k, 1:idx_timestep], y_transient_array[0 : idx_timestep - 1])
@@ -408,6 +418,7 @@ class CoupledHorizontalPipe(BaseSimComp):
         ugt_amp2: float,
         ugt_phase2: float,
         depth: float,
+        time_step_params: tuple[float, bool],
         counter_flow: bool = False,
         load_method: str = "hourly",
     ):
@@ -418,6 +429,7 @@ class CoupledHorizontalPipe(BaseSimComp):
         self.num_timesteps = num_timesteps
         self.time_array = time_array
         self.num_segments = num_segments
+        self.base_dt_sec, self.constant_time_step = time_step_params
         self.matrix_rows = 3 * num_segments + 1
 
         self.q_prime_even_interp = q_prime_even_interp
@@ -465,14 +477,13 @@ class CoupledHorizontalPipe(BaseSimComp):
         self.load_method = load_method
         if self.load_method == "hourlyloadagg":
             total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
-            base_dt_sec, constant_time_step = _aggregation_timestep_params(self.time_array)
             self.aggregators = [
                 DynamicAggregator(
                     total_sim_time_sec,
                     exp_rate=DLA_EXPANSION_RATE,
                     bins_per_level=DLA_BINS_PER_LEVEL,
-                    base_dt_sec=base_dt_sec,
-                    constant_time_step=constant_time_step,
+                    base_dt_sec=self.base_dt_sec,
+                    constant_time_step=self.constant_time_step,
                 )
                 for _ in range(self.num_segments)
             ]
@@ -481,6 +492,12 @@ class CoupledHorizontalPipe(BaseSimComp):
             y_odd_agg = self.two_pi_k * self.q_prime_odd_interp(tau_agg)
             self.y_self_agg_evals = (y_even_agg + y_odd_agg) / 2.0
             self.y_cross_agg_evals = (y_even_agg - y_odd_agg) / 2.0
+        elif self.constant_time_step:
+            tau_vals = (self.time_array[-1] - self.time_array[:-1]) * SEC_IN_HR / self.t_p
+            y_even_evals = self.two_pi_k * self.q_prime_even_interp(tau_vals)
+            y_odd_evals = self.two_pi_k * self.q_prime_odd_interp(tau_vals)
+            self.y_self_evals = (y_even_evals + y_odd_evals) * 0.5
+            self.y_cross_evals = (y_even_evals - y_odd_evals) * 0.5
 
     def calculate_current_ugt(self, current_time_sec: float) -> float:
         t_days = current_time_sec / SEC_IN_DAY
@@ -505,7 +522,7 @@ class CoupledHorizontalPipe(BaseSimComp):
             raise ValueError("History terms cannot be computed without a defined coupled pipe.")
 
         if getattr(self, "load_method", "hourly") == "hourlyloadagg":
-            if idx_timestep > 1:
+            if idx_timestep > IDX_COMPARISON_OFFSET_1:
                 dt_sec = (self.time_array[idx_timestep - 1] - self.time_array[idx_timestep - 2]) * SEC_IN_HR
                 prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
                 prev_ugt = self.calculate_current_ugt(prev_time_sec)
@@ -540,26 +557,34 @@ class CoupledHorizontalPipe(BaseSimComp):
         y_self_array = np.zeros(idx_timestep, dtype=float)
         y_cross_array = np.zeros(idx_timestep, dtype=float)
 
-        if idx_timestep > 0:
-            dt_sec_array = (self.time_array[idx_timestep] - self.time_array[0:idx_timestep]) * SEC_IN_HR
-            tau_array = dt_sec_array / self.t_p  # Convert to dimensionless time
+        if idx_timestep > IDX_COMPARISON_OFFSET_1:
+            if self.constant_time_step:
+                y_self_array[0 : idx_timestep - 1] = self.y_self_evals[-idx_timestep:-1]
+                y_cross_array[0 : idx_timestep - 1] = self.y_cross_evals[-idx_timestep:-1]
+            else:
+                dt_sec_array = (self.time_array[idx_timestep] - self.time_array[0:idx_timestep]) * SEC_IN_HR
+                tau_array = dt_sec_array / self.t_p  # Convert to dimensionless time
+
+                # Ask for q' using tau
+                y_even_array = self.two_pi_k * self.q_prime_even_interp(tau_array)
+                y_odd_array = self.two_pi_k * self.q_prime_odd_interp(tau_array)
+
+                y_self_array[0:idx_timestep] = (y_even_array + y_odd_array) / 2.0
+                y_cross_array[0:idx_timestep] = (y_even_array - y_odd_array) / 2.0
+
+        if self.constant_time_step:
+            self.y_n[idx_timestep] = self.y_self_evals[-1]
+            self.y_cross[idx_timestep] = self.y_cross_evals[-1]
+        else:
+            current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
+            current_tau = current_dt_sec / self.t_p  # Convert to dimensionless time
 
             # Ask for q' using tau
-            y_even_array = self.two_pi_k * self.q_prime_even_interp(tau_array)
-            y_odd_array = self.two_pi_k * self.q_prime_odd_interp(tau_array)
+            y_even_cur = self.two_pi_k * self.q_prime_even_interp(current_tau)
+            y_odd_cur = self.two_pi_k * self.q_prime_odd_interp(current_tau)
 
-            y_self_array[0:idx_timestep] = (y_even_array + y_odd_array) / 2.0
-            y_cross_array[0:idx_timestep] = (y_even_array - y_odd_array) / 2.0
-
-        current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
-        current_tau = current_dt_sec / self.t_p  # Convert to dimensionless time
-
-        # Ask for q' using tau
-        y_even_cur = self.two_pi_k * self.q_prime_even_interp(current_tau)
-        y_odd_cur = self.two_pi_k * self.q_prime_odd_interp(current_tau)
-
-        self.y_n[idx_timestep] = (y_even_cur + y_odd_cur) / 2.0
-        self.y_cross[idx_timestep] = (y_even_cur - y_odd_cur) / 2.0
+            self.y_n[idx_timestep] = (y_even_cur + y_odd_cur) / 2.0
+            self.y_cross[idx_timestep] = (y_even_cur - y_odd_cur) / 2.0
 
         for k in range(self.num_segments):
             sum_self = np.dot(self.dtheta_seg[k, 1:idx_timestep], y_self_array[0 : idx_timestep - 1])
@@ -776,6 +801,7 @@ class GHX(BaseSimComp):
         loop_config: CentralLoopType,
         num_timesteps: int,
         time_array: np.ndarray[tuple[int], np.dtype[np.float64]],
+        time_step_params: tuple[float, bool],
         sizing_end_month=240,
         load_method: str = "hourly",
     ):
@@ -790,7 +816,7 @@ class GHX(BaseSimComp):
         self.num_timesteps = num_timesteps
         self.is_bypassed = False
         self.time_differences = np.diff(time_array)
-        self.constant_time_step = np.all(self.time_differences == self.time_differences[0])
+        self.base_dt_sec, self.constant_time_step = time_step_params
 
         self.ghe_manager = GroundHeatExchanger.init_from_dictionary(
             ghe_data,
@@ -844,8 +870,8 @@ class GHX(BaseSimComp):
                 total_sim_time_sec,
                 exp_rate=DLA_EXPANSION_RATE,
                 bins_per_level=DLA_BINS_PER_LEVEL,
-                base_dt_sec=SEC_IN_HR,
-                constant_time_step=True,
+                base_dt_sec=self.base_dt_sec,
+                constant_time_step=self.constant_time_step,
             )
             self.g_agg = None
 
@@ -857,12 +883,6 @@ class GHX(BaseSimComp):
             self.ghe_designed = True
             self.ghe_manager.initialize_pre_designed_ghe()
             self.update_ghe_parameters()
-
-    def update_time_array(self, num_timesteps, time_array):
-        self.time_array = time_array
-        self.num_timesteps = num_timesteps
-        self.time_differences = np.diff(time_array)
-        self.constant_time_step = np.all(self.time_differences == self.time_differences[0])
 
     def design_new_ghe(self, load_profile=None, max_eft=None, min_eft=None):
         if not self.ghe_manager.is_sizable:
@@ -1570,6 +1590,8 @@ class GHEHPSystem:
         else:
             raise ValueError(f"Unknown load_method: {self.load_method}")
 
+        self.time_step_params = timestep_params_generator(self.time_array)
+
         # get component names we need to build, validate they exist and are referenced correctly
         def get_comp_names(topology: dict, comp_list: dict, comp_type_to_check: SimCompType) -> list[str]:
             comp_names = [c["name"].upper() for c in topology if SimCompType[c["type"].upper()] == comp_type_to_check]
@@ -1633,6 +1655,7 @@ class GHEHPSystem:
                     self.loop_config,
                     self.num_timesteps,
                     self.time_array,
+                    self.time_step_params,
                     load_method=self.load_method,
                 )
                 self.cp = this_ghx.cp
@@ -1717,6 +1740,7 @@ class GHEHPSystem:
                         ugt_amp2=ugt_data["amplitude_2"],
                         ugt_phase2=ugt_data["phase_lag_2"],
                         depth=h_data["trench_depth"],
+                        time_step_params=self.time_step_params,
                         load_method=self.load_method,
                     )
                     this_horiz.comp_type = SimCompType.ISOLATED_HORIZONTAL_PIPE
@@ -1752,6 +1776,7 @@ class GHEHPSystem:
                         ugt_amp2=ugt_data["amplitude_2"],
                         ugt_phase2=ugt_data["phase_lag_2"],
                         depth=h_data["trench_depth"],
+                        time_step_params=self.time_step_params,
                         counter_flow=h_data.get("counter_flow", False),
                         load_method=self.load_method,
                     )

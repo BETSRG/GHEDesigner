@@ -9,7 +9,12 @@ import pytest
 from jsonschema.exceptions import ValidationError
 from pandas.testing import assert_frame_equal
 
-from ghedesigner.district_system import CoupledHorizontalPipe, GHEHPSystem, IsolatedHorizontalPipe
+from ghedesigner.district_system import (
+    CoupledHorizontalPipe,
+    GHEHPSystem,
+    IsolatedHorizontalPipe,
+    timestep_params_generator,
+)
 from ghedesigner.enums import DesignGeomType, SimCompType
 from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads
 from ghedesigner.ghe.pipe import Pipe
@@ -84,6 +89,7 @@ class TestDistrictSys(GHEBaseTest):
             ugt_amp2=0.0,
             ugt_phase2=0.0,
             depth=1.0,
+            time_step_params=timestep_params_generator(time_array),
             load_method="hourlyloadagg",
         )
 
@@ -127,6 +133,7 @@ class TestDistrictSys(GHEBaseTest):
                 ugt_amp2=0.0,
                 ugt_phase2=0.0,
                 depth=1.0,
+                time_step_params=timestep_params_generator(time_array),
                 load_method="hourlyloadagg",
             )
 
