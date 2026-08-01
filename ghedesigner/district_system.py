@@ -177,7 +177,7 @@ class IsolatedHorizontalPipe(BaseSimComp):
     ):
         super().__init__()
         self.name = name
-        self.comp_type = None
+        self.comp_type = SimCompType.ISOLATED_HORIZONTAL_PIPE
         self.num_timesteps = num_timesteps
         self.time_array = time_array
         self.base_dt_sec, self.constant_time_step = time_step_params
@@ -2429,10 +2429,10 @@ class GHEHPSystem:
         average_ugt = 0.0
         for this_comp in self.components:
             this_comp.matrix_size = self.matrix_size
-            if isinstance(this_comp, GHX):
+            if this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
                 this_comp.split_ratio = this_comp.nbh / self.nbh_total
                 average_ugt += this_comp.ghe_manager.soil.ugt * this_comp.nbh / self.nbh_total
-            elif isinstance(this_comp, (Building, SourceSinkHeatExchanger)):
+            elif this_comp.comp_type in (SimCompType.BUILDING, SimCompType.SOURCE_SINK_HEAT_EXCHANGER):
                 this_comp.cp = self.cp
 
         if self.constant_cop:
@@ -2456,7 +2456,7 @@ class GHEHPSystem:
                 comp.mass_loop_ghe = 0.0
 
             for this_comp in self.components:
-                if isinstance(this_comp, Building):
+                if this_comp.comp_type == SimCompType.BUILDING:
                     t_in = this_comp.t_in[idx_timestep - 2]
                     this_comp.mass_bldg = this_comp.calc_mass_flow_rate(t_in, idx_timestep - 1)
                     total_hp_flow += this_comp.mass_bldg
@@ -2466,10 +2466,10 @@ class GHEHPSystem:
             mass_loop = max(total_hp_flow * self.loop_flow_factor, 0.1)
 
             for this_comp in self.components:
-                if isinstance(this_comp, GHX):
+                if this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
                     this_comp.mass_flow_ghe = mass_loop * this_comp.split_ratio
                     m_ghe_cum += this_comp.mass_flow_ghe
-                elif isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
+                elif this_comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
                     # For a series pipe, the mass flow is the total loop mass flow
                     this_comp.mass_flow_pipe = mass_loop
 
@@ -2477,7 +2477,7 @@ class GHEHPSystem:
 
                 # Note: We pass this_comp.mass_flow_pipe in the mass_flow_ghe slot for Horizontal pipes
                 flow_to_pass = getattr(this_comp, "mass_flow_ghe", 0.0)
-                if isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
+                if this_comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
                     flow_to_pass = this_comp.mass_flow_pipe
 
                 rows, rhs = this_comp.generate_matrix(
@@ -2527,7 +2527,7 @@ class GHEHPSystem:
                 elif this_comp.comp_type == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
                     this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
                     this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
-                elif isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
+                elif this_comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
                     this_comp.update_post_solve(x_vector, idx_timestep)
 
             # Update the console every 1 timesteps or on the very last step
@@ -2567,7 +2567,7 @@ class GHEHPSystem:
             this_comp.calc_energy()
 
         for this_comp in self.components:
-            if isinstance(this_comp, Building):
+            if this_comp.comp_type == SimCompType.BUILDING:
                 output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
                 output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
                 output_columns[f"{this_comp.name}:Q_htg [W]"] = this_comp.htg_vals
@@ -2588,7 +2588,7 @@ class GHEHPSystem:
                 output_columns[f"{this_comp.name}:Q_src_het [W]"] = q_src_htg - q_src_clg
 
         for this_comp in self.components:
-            if isinstance(this_comp, GHX):
+            if this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
                 output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
                 output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
                 output_columns[f"{this_comp.name}:ExFT Mixed Loop [C]"] = this_comp.t_mix_out
@@ -2598,7 +2598,7 @@ class GHEHPSystem:
                 network_q_net_ghe_tot += this_comp.q_ghe * this_comp.nbh * this_comp.height
 
         for this_comp in self.components:
-            if isinstance(this_comp, SourceSinkHeatExchanger):
+            if this_comp.comp_type == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
                 output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
                 output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
                 output_columns[f"{this_comp.name}:Operating [T/F]"] = this_comp.operating
@@ -2607,7 +2607,7 @@ class GHEHPSystem:
                 )
 
         for this_comp in self.components:
-            if isinstance(this_comp, (IsolatedHorizontalPipe, CoupledHorizontalPipe)):
+            if this_comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
                 # Add [1:] to slice off the 0th hour and match the DataFrame length
                 output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
 
