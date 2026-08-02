@@ -2,18 +2,152 @@
   "version": 2,
   "topology": [
     {
-      "type": "building",
-      "name": "building1_htg_clg"
+        "type": "building",
+        "name": "building1_htg_clg"
     },
     {
-      "type": "building",
-      "name": "building2_htg_clg"
+        "type": "building",
+        "name": "building2_htg_clg"
     },
     {
-    "type": "ground_heat_exchanger",
-      "name": "ghe1"
+        "type": "ground_heat_exchanger",
+        "name": "ghe1"
+    },
+
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_pir1"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_pir2"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_pir7"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_por1"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_por2"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_por7"
     }
   ],
+  "ground_temperature_model": {
+    "annual_average": 15.0,
+    "amplitude_1": 10.0,
+    "phase_lag_1": 30.0,
+    "amplitude_2": 2.0,
+    "phase_lag_2": 15.0
+  },
+  "horizontal_piping": {
+  "hp_pir1": {
+    "length": 30.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+
+  "hp_pir2": {
+    "length": 35.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+
+  "hp_pir7": {
+    "length": 95.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+
+  "hp_por1": {
+    "length": 30.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+
+  "hp_por2": {
+    "length": 45.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_por7": {
+    "length": 215.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  }
+},
   "central_loop": {
     "pipe_configuration": "TWOPIPE_RING",
     "flow_factor": 1.0,
@@ -118,7 +252,7 @@
       "type": "GHX",
       "inlet_nodeID": "n10",
       "outlet_nodeID": "n11",
-      "flow_rate": 0.104,
+      "flow_rate": 0.065,
       "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
@@ -144,13 +278,13 @@
       },
       "pre_designed": {
         "arrangement": "RECTANGLE",
-        "H": 100,
+        "H": 135,
         "max_height": 135,
         "min_height": 60,
         "spacing_in_x_dimension": 5,
         "spacing_in_y_dimension": 5,
-        "boreholes_in_x_dimension": 20,
-        "boreholes_in_y_dimension": 15
+        "boreholes_in_x_dimension": 25,
+        "boreholes_in_y_dimension": 20
       }
     }
   },
@@ -398,7 +532,8 @@
       "node_out_name": "n8",
       "length": 30,
       "nominal_mass_flow": 32.58,
-      "diameter": 0.177
+      "diameter": 0.177,
+      "horizontal_pipe": "hp_pir1"
     },
     "pir2": {
       "id": "pir2",
@@ -407,7 +542,8 @@
       "node_out_name": "n9",
       "length": 35,
       "nominal_mass_flow": 32.58,
-      "diameter": 0.177
+      "diameter": 0.177,
+      "horizontal_pipe": "hp_pir2"
     },
     "pir3": {
       "id": "pir3",
@@ -452,7 +588,8 @@
       "node_out_name": "n4",
       "length": 95,
       "nominal_mass_flow": 32.58,
-      "diameter": 0.177
+      "diameter": 0.177,
+      "horizontal_pipe": "hp_pir7"
     },
     "por1": {
       "id": "por1",
@@ -461,7 +598,8 @@
       "node_out_name": "n5",
       "length": 30,
       "nominal_mass_flow": 32.58,
-      "diameter": 0.177
+      "diameter": 0.177,
+      "horizontal_pipe": "hp_por1"
     },
     "por2": {
       "id": "por2",
@@ -470,7 +608,8 @@
       "node_out_name": "n12",
       "length": 45,
       "nominal_mass_flow": 32.58,
-      "diameter": 0.177
+      "diameter": 0.177,
+      "horizontal_pipe": "hp_por2"
     },
     "por3": {
       "id": "por3",
@@ -515,7 +654,8 @@
       "node_out_name": "n1",
       "length": 215,
       "nominal_mass_flow": 32.58,
-      "diameter": 0.177
+      "diameter": 0.177,
+      "horizontal_pipe": "hp_por7"
     }
   },
    "pressure_drop": {
@@ -539,6 +679,8 @@
   },
   "simulation_control": {
     "simulation_years": 1,
-    "load_method": "hourly"
+    "load_method": "hourly",
+    "horizontal_segments": 1,
+    "horizontal_simulated_considered": true
   }
 }

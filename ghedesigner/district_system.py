@@ -172,9 +172,13 @@ class IsolatedHorizontalPipe(BaseSimComp):
 
         # for bidirectional flow
         self.temp_index_one = None
-        self.temp_index_two = None
         self.temp_index_mean = None
-        self.pipe_heat_rejection_index = None
+        self.index_q = None
+        self.temp_index_two = None
+        self.mass_flow_rate = None
+
+        # Corresponding hydraulic NetworkPipe
+        self.network_pipe = None
 
         # Initialize load aggregation if specified
         self.load_method = load_method
@@ -266,20 +270,34 @@ class IsolatedHorizontalPipe(BaseSimComp):
 
         dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
         cap_coeff = self.C_f_seg / dt_sec
-
         m_cp = mass_flow_pipe * self.cp
         yn = self.y_n[idx_timestep]
 
         idx_t_in = self.row_index
         idx_t_out_final = self.row_index + 3 * self.num_segments
 
-        if configuration == CentralLoopType.ONEPIPE:
+        # for bidirectional flow
+        if configuration == CentralLoopType.TWOPIPE_RING:
+            if self.num_segments != 1:
+                raise NotImplementedError(
+                    "TWOPIPE_RING currently supports one "
+                    "horizontal-pipe segment."
+                )
+            if mass_flow_pipe >= 0.0:
+                idx_t_in = self.temp_index_one
+                idx_t_out_final = self.temp_index_two
+            else:
+                idx_t_in = self.temp_index_two
+                idx_t_out_final = self.temp_index_one
+
+        elif configuration == CentralLoopType.ONEPIPE:
             rows[0][idx_t_in] = (mass_loop - mass_flow_pipe) * self.cp
             rows[0][idx_t_out_final] = m_cp
             rows[0][self.downstream_index] = -mass_loop * self.cp
+
         elif configuration == CentralLoopType.TWOPIPE:
             rows[0][idx_t_in] = 1.0
-            rows[0][self.inlet_index] = -1.0
+            rows[0][self.inlet_index] = -1
 
         current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
         prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
@@ -287,17 +305,22 @@ class IsolatedHorizontalPipe(BaseSimComp):
         prev_ugt = self.calculate_current_ugt(prev_time_sec)
 
         for k in range(self.num_segments):
-            idx_t_m = self.row_index + 3 * k + 1
-            idx_q = self.row_index + 3 * k + 2
-            idx_t_out = self.row_index + 3 * k + 3
+            if configuration == CentralLoopType.TWOPIPE_RING:
+                idx_t_m = self.temp_index_mean
+                idx_q = self.index_q
+                idx_t_in_seg = idx_t_in
+                idx_t_out = idx_t_out_final
+            else:
+                idx_t_m = self.row_index + 3 * k + 1
+                idx_q = self.row_index + 3 * k + 2
+                idx_t_out = self.row_index + 3 * k + 3
+                idx_t_in_seg = self.row_index if k == 0 else self.row_index + 3 * (k - 1) + 3
 
-            idx_t_in_seg = self.row_index if k == 0 else self.row_index + 3 * (k - 1) + 3
+            t_m_prev = self.t_mean_seg[k, idx_timestep - 1]
 
             # Eq 1: Ground Admittance formulation
             rows[3 * k + 1][idx_q] = 1.0
             rows[3 * k + 1][idx_t_m] = -yn
-
-            t_m_prev = self.t_mean_seg[k, idx_timestep - 1]
             rhs[3 * k + 1] = self.history_term_seg[k, idx_timestep] + yn * (-current_ugt - t_m_prev + prev_ugt)
 
             # Eq 2: Mean Temp
@@ -306,27 +329,41 @@ class IsolatedHorizontalPipe(BaseSimComp):
             rows[3 * k + 2][idx_t_out] = -1.0
 
             # Eq 3: Energy Bal w/ Capacitance
-            rows[3 * k + 3][idx_t_in_seg] = m_cp
-            rows[3 * k + 3][idx_t_out] = -m_cp
+            rows[3 * k + 3][idx_t_in_seg] = abs(m_cp)
+            rows[3 * k + 3][idx_t_out] = -abs(m_cp)
             rows[3 * k + 3][idx_q] = -self.L_seg
             rows[3 * k + 3][idx_t_m] = -cap_coeff
             rhs[3 * k + 3] = -cap_coeff * t_m_prev
 
         return rows, rhs
 
-    def update_post_solve(self, x_vector, idx_timestep):
-        self.t_in[idx_timestep] = x_vector[self.row_index]
-
+    def update_post_solve(self, x_vector, idx_timestep, configuration):
         current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
         prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
         current_ugt = self.calculate_current_ugt(current_time_sec)
         prev_ugt = self.calculate_current_ugt(prev_time_sec)
 
-        for k in range(self.num_segments):
-            self.t_mean_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 1]
-            self.q_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 2]
-            self.t_out_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 3]
+        if configuration == CentralLoopType.TWOPIPE_RING:
+            if self.network_pipe.mass_flow_rate >= 0.0:
+                idx_t_in = self.temp_index_one
+                idx_t_out = self.temp_index_two
+            else:
+                idx_t_in = self.temp_index_two
+                idx_t_out = self.temp_index_one
 
+            self.t_in[idx_timestep] = x_vector[idx_t_in]
+            self.t_mean_seg[0, idx_timestep] = x_vector[self.temp_index_mean]
+            self.q_seg[0, idx_timestep] = x_vector[self.index_q]
+            self.t_out_seg[0, idx_timestep] = x_vector[idx_t_out]
+        else:
+            self.t_in[idx_timestep] = x_vector[self.row_index]
+
+            for k in range(self.num_segments):
+                self.t_mean_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 1]
+                self.q_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 2]
+                self.t_out_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 3]
+
+        for k in range(self.num_segments):
             # Calculate and store the discrete driving potential step (dtheta) that just occurred
             theta_n = self.t_mean_seg[k, idx_timestep] - current_ugt
             theta_n_minus_1 = self.t_mean_seg[k, idx_timestep - 1] - prev_ugt
@@ -1326,6 +1363,7 @@ class Node:
         self.inlet = None
         self.outlet = None
         self.row_index = None
+        self.temp_type = None
 
     def generate_node_matrix(self, matrix_size, cp, bldg_lookup, GHX_lookup):
         if self.type not in ("branching", "merging"):
@@ -1340,8 +1378,8 @@ class Node:
             if self.connection == "ground_heat_exchanger":
                 ghx = GHX_lookup[self.connection_id]
 
-            row1[self.input.temp_index] = self.input.mass_flow_rate * cp
-            row1[self.output.temp_index] = - self.output.mass_flow_rate * cp
+            row1[self.input.temp_index_two] = self.input.mass_flow_rate * cp
+            row1[self.output.temp_index_one] = - self.output.mass_flow_rate * cp
             if self.input.type == "main_or" and self.connection == "building":
                 row1[bldg.temp_index_one] = -bldg.mass_bldg * cp
             elif self.input.type == "main_ir" and self.connection == "building":
@@ -1355,7 +1393,7 @@ class Node:
         rhs = [0.0]
 
         if self.temp_type == "branching":
-            row2[self.input.temp_index] = 1.0
+            row2[self.input.temp_index_two] = 1.0
             if self.input.type == "main_or" and self.connection == "building":
                 row2[bldg.temp_index_one] = -1.0
             if self.input.type == "main_ir" and self.connection == "building":
@@ -1387,6 +1425,11 @@ class NetworkPipe:
         self.nominal_mass_flow = float(pipe_data["nominal_mass_flow"])
         self.diameter = float(pipe_data["diameter"])
 
+        # Horizontal thermal model
+        self.horizontal_pipe_name = pipe_data.get(
+            "horizontal_pipe"
+        )
+        self.horizontal_pipe = None
 
         # Actual Node objects will be assigned later
         self.input = None
@@ -1398,10 +1441,13 @@ class NetworkPipe:
         self.inlet = None
         self.outlet = None
         self.temp_index = None
-        self.temp = None
+        self.temp_index_one = None
+        self.temp_index_two = None
+        self.temp_index_mean = None
+        self.heat_rejection_index = None
         self.mass_flow_rate = None
-        self.num_timesteps = num_timesteps
         self.mass_flow_rate_array = np.zeros(num_timesteps,dtype=float)
+        self.num_timesteps = num_timesteps
 
     def calc_pipe_resistance(self, density, kinematic_viscosity):
         vol_flow_rate = self.nominal_mass_flow / density
@@ -1435,7 +1481,6 @@ class GHEHPSystem:
         ghe_data = json_data.get("ground_heat_exchanger", {})
         hx_data = json_data.get("source_sink_heat_exchanger", {})
 
-
         # addition for bidirectional flow
         node_data = json_data.get("node", {})
         pipe_data = json_data.get("pipe", {})
@@ -1444,7 +1489,7 @@ class GHEHPSystem:
         horiz_data = json_data.get("horizontal_piping", {})
         ugt_data = json_data.get("ground_temperature_model", {})
 
-        self.use_horizontal = json_data.get("simulation_control", {}).get("horizontal_simulation_considered", False)
+        self.use_horizontal = json_data.get("simulation_control", {}).get("horizontal_simulation_considered", True)
 
         if horiz_data and not ugt_data:
             raise ValueError("A 'ground_temperature_model' block is required when simulating horizontal piping.")
@@ -1699,6 +1744,7 @@ class GHEHPSystem:
 
         # Flatten into the master horizontal list
         horizontal_pipes = isolated_pipes + list(coupled_pipes_dict.values())
+        self.horizontal_pipes = horizontal_pipes
 
         # Update MATRIX_ROWS handling
         if self.loop_config == CentralLoopType.ONEPIPE:
@@ -1723,10 +1769,22 @@ class GHEHPSystem:
         else:
             raise ValueError("Invalid CentralLoopType")
 
+        # Horizontal pipes contribute one fewer unknown in TWO_PIPE_RING
+        if self.loop_config == CentralLoopType.TWOPIPE_RING:
+            horizontal_matrix_size = sum(
+                pipe.matrix_rows - 1
+                for pipe in horizontal_pipes
+            )
+        else:
+            horizontal_matrix_size = sum(
+                pipe.matrix_rows
+                for pipe in horizontal_pipes
+            )
+
         self.matrix_size = np.dot(
             [GHX.MATRIX_ROWS, Building.MATRIX_ROWS, SourceSinkHeatExchanger.MATRIX_ROWS],
             [self.num_ghx, self.num_buildings, self.num_heat_exchangers],
-        ) + node_matrix_rows + sum(pipe.matrix_rows for pipe in horizontal_pipes)
+        ) + node_matrix_rows + horizontal_matrix_size
 
         self.m_flow_loop = np.zeros(self.num_timesteps)
         self.pump_power_loop = np.zeros(self.num_timesteps)
@@ -1745,9 +1803,10 @@ class GHEHPSystem:
             return copy.deepcopy(
                 next((obj for obj in heat_exchangers if obj.name and obj.name.upper() == name.upper()), None)
             )
-        def get_horiz(name: str):
-            return copy.deepcopy(
-                 next((obj for obj in horizontal_pipes if obj.name and obj.name.upper() == name.upper()), None)
+
+        def get_horiz(name: str) -> IsolatedHorizontalPipe | CoupledHorizontalPipe | None:
+            return (
+                next((obj for obj in horizontal_pipes if obj.name and obj.name.upper() == name.upper()), None)
             )
 
         # Topology Assembly
@@ -1776,6 +1835,44 @@ class GHEHPSystem:
                     if comp is not None:
                         self.components.append(comp)
 
+        # Link each physical NetworkPipe to its horizontal thermal model
+        for network_pipe in self.pipes:
+            horizontal_pipe_name = network_pipe.horizontal_pipe_name
+
+            # Dummy or non-horizontal pipes have no thermal model
+            if horizontal_pipe_name is None:
+                continue
+
+            horizontal_pipe = next(
+                (
+                    comp
+                    for comp in self.components
+                    if isinstance(
+                    comp,
+                    (
+                        IsolatedHorizontalPipe,
+                        CoupledHorizontalPipe,
+                    ),
+                )
+                       and comp.name
+                       and comp.name.upper()
+                       == horizontal_pipe_name.upper()
+                ),
+                None,
+            )
+
+            if horizontal_pipe is None:
+                raise ValueError(
+                    f"NetworkPipe '{network_pipe.ID}' references "
+                    f"horizontal pipe '{horizontal_pipe_name}', "
+                    "but that horizontal pipe was not found in "
+                    "self.components."
+                )
+
+            # Establish the two-way connection
+            network_pipe.horizontal_pipe = horizontal_pipe
+            horizontal_pipe.network_pipe = network_pipe
+
         for this_comp in self.components:
             this_comp.matrix_size = self.matrix_size
             if isinstance(this_comp, GHX):
@@ -1794,7 +1891,15 @@ class GHEHPSystem:
         idx_comp = 0
         for this_comp in self.components:
             this_comp.row_index = idx_comp
-            idx_comp += this_comp.MATRIX_ROWS
+            # Use matrix_rows for horizontal pipes; MATRIX_ROWS is not defined for them.
+            if isinstance(
+                    this_comp,
+                    (IsolatedHorizontalPipe, CoupledHorizontalPipe),
+            ):
+                idx_comp += this_comp.matrix_rows
+            else:
+                idx_comp += this_comp.MATRIX_ROWS
+
             this_comp.downstream_index = idx_comp
 
         # set the last component to loops back to the start
@@ -1832,10 +1937,10 @@ class GHEHPSystem:
                 pipe.temp_index = index
                 index += 1
 
-        # Assigning appropriate temp_index to dummy pipes
         bldg_lookup = {bldg.ID: bldg for bldg in self.buildings}
         GHX_lookup = {ghx.ID: ghx for ghx in self.ground_heat_exchangers}
 
+        # Assigning appropriate temp_index to dummy pipes
         for pipe in self.pipes:
             if pipe.type == "main_dir":
                 current = pipe
@@ -1895,28 +2000,40 @@ class GHEHPSystem:
                 original_ghx.heat_rejection_index = idx_q
 
             elif isinstance(this_comp, IsolatedHorizontalPipe):
-                idx_one = index
-                index += 1
+                if this_comp.network_pipe is None:
+                    raise ValueError(
+                        f"Horizontal pipe '{this_comp.name}' "
+                        "is not linked to a NetworkPipe."
+                    )
+                if this_comp.num_segments != 1:
+                    raise NotImplementedError(
+                        f"Horizontal pipe '{this_comp.name}' currently supports "
+                        "only num_segments = 1 in the integrated ring solver."
+                    )
 
-                idx_two = index
-                index += 1
+                # Reuse the existing temperature index of the linked NetworkPipe
+                # as endpoint one of the horizontal pipe.
+                idx_one = this_comp.network_pipe.temp_index
 
+                # Add the three new unknowns for a one-segment pipe
                 idx_mean = index
                 index += 1
 
                 idx_q = index
                 index += 1
 
-                # Assign to component copy
-                this_comp.temp_index_one = idx_one
-                this_comp.temp_index_two = idx_two
-                this_comp.temp_index_mean = idx_mean
-                this_comp.pipe_heat_rejection_index = idx_mean
+                idx_two = index
+                index += 1
 
-                # Assign same indices to original building
-                original_bldg = pipe_lookup[this_comp.ID]
-                original_bldg.temp_index_one = idx_one
-                original_bldg.temp_index_two = idx_two
+                # Assign indices directly to the horizontal-pipe object
+                this_comp.temp_index_one = idx_one
+                this_comp.temp_index_mean = idx_mean
+                this_comp.index_q = idx_q
+                this_comp.temp_index_two = idx_two
+
+                # Save endpoint indices on the linked NetworkPipe too
+                this_comp.network_pipe.temp_index_one = idx_one
+                this_comp.network_pipe.temp_index_two = idx_two
 
     def solve_system(self):
         # for bidirectional flow - calculating fluid resistances
@@ -2185,9 +2302,26 @@ class GHEHPSystem:
 
                 this_comp.mass_loop_ghe = m_ghe_cum
 
-                rows, rhs = this_comp.generate_matrix(this_comp.mass_bldg, mass_loop, this_comp.mass_loop_bldg, this_comp.mass_flow_ghe, this_comp.mass_loop_ghe, idx_timestep, self.loop_config, self.load_method)
-                matrix_rows.extend(rows)
-                matrix_rhs.extend(rhs)
+                # The 4th generate_matrix() argument is the component-specific mass flow.
+                if isinstance(this_comp, IsolatedHorizontalPipe):
+                    component_mass_flow = (
+                        this_comp.network_pipe.mass_flow_rate
+                    )
+                else:
+                    component_mass_flow = this_comp.mass_flow_ghe
+                rows, rhs = this_comp.generate_matrix(this_comp.mass_bldg, mass_loop, this_comp.mass_loop_bldg, component_mass_flow, this_comp.mass_loop_ghe, idx_timestep, self.loop_config, self.load_method)
+                #rows, rhs = this_comp.generate_matrix(this_comp.mass_bldg, mass_loop, this_comp.mass_loop_bldg, this_comp.mass_flow_ghe, this_comp.mass_loop_ghe, idx_timestep, self.loop_config, self.load_method)
+
+                if (
+                        self.loop_config == CentralLoopType.TWOPIPE_RING
+                        and isinstance(this_comp, IsolatedHorizontalPipe)
+                ):
+                    # Skip Drew's unused connection row; node equations provide the connection.
+                    matrix_rows.extend(rows[1:])
+                    matrix_rhs.extend(rhs[1:])
+                else:
+                    matrix_rows.extend(rows)
+                    matrix_rhs.extend(rhs)
 
             # Generating matrix for nodes
 
