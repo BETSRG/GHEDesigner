@@ -90,25 +90,29 @@ class DynamicAggregator:
         Tracking last_idx ensures idempotent shifts if called multiple times by coupled components.
         """
         if idx_timestep > self.last_idx:
-            if self.constant_time_step:
+            constant_time_step = self.constant_time_step
+            if constant_time_step:
                 frac_shift = self.constant_frac_shift
             else:
                 frac_shift = current_dt_sec * self.dts_reciprocal
                 frac_shift[-1] = 0.0
-            np.multiply(self.energy_bins, frac_shift, out=self.deltas)
-            self.energy_bins -= self.deltas
-            self.energy_bins[1:] += self.deltas[:-1]
-            if self.constant_time_step:
-                self.energy_bins[0] += new_value * self.base_dt_sec
+            energy_bins = self.energy_bins
+            deltas = self.deltas
+            np.multiply(energy_bins, frac_shift, out=deltas)
+            energy_bins -= deltas
+            energy_bins[1:] += deltas[:-1]
+            if constant_time_step:
+                energy_bins[0] += new_value * self.base_dt_sec
             else:
-                self.energy_bins[0] += new_value * current_dt_sec
+                energy_bins[0] += new_value * current_dt_sec
             self.last_idx = idx_timestep
 
     def get_step_changes(self) -> np.ndarray:
         """Returns the discrete step changes between consecutive averaged bins."""
-        np.multiply(self.energy_bins, self.dts_reciprocal, out=self.average_vals)
-        self.average_vals[:-1] = self.average_vals[:-1] - self.average_vals[1:]
-        return self.average_vals
+        average_vals = self.average_vals
+        np.multiply(self.energy_bins, self.dts_reciprocal, out=average_vals)
+        average_vals[:-1] = average_vals[:-1] - average_vals[1:]
+        return average_vals
 
     def clear_history(self):
         self.energy_bins = np.zeros(self.num_bins, dtype=float)
@@ -147,6 +151,10 @@ class BaseSimComp(ABC):
         configuration,
         method,
     ):
+        pass
+
+    @abstractmethod
+    def update_post_solve(self, x_vector, idx_timestep, detailed=True):
         pass
 
     def calc_energy(self) -> None:
@@ -377,8 +385,9 @@ class IsolatedHorizontalPipe(BaseSimComp):
 
         return rows, rhs
 
-    def update_post_solve(self, x_vector, idx_timestep):
-        self.t_in[idx_timestep] = x_vector[self.row_index]
+    def update_post_solve(self, x_vector, idx_timestep, detailed=True):
+        if detailed:
+            self.t_in[idx_timestep] = x_vector[self.row_index]
 
         current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
         prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
@@ -387,15 +396,17 @@ class IsolatedHorizontalPipe(BaseSimComp):
 
         for k in range(self.num_segments):
             self.t_mean_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 1]
-            self.q_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 2]
-            self.t_out_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 3]
-
             # Calculate and store the discrete driving potential step (dtheta) that just occurred
             theta_n = self.t_mean_seg[k, idx_timestep] - current_ugt
             theta_n_minus_1 = self.t_mean_seg[k, idx_timestep - 1] - prev_ugt
             self.dtheta_seg[k, idx_timestep] = theta_n - theta_n_minus_1
 
-        self.t_out[idx_timestep] = self.t_out_seg[-1, idx_timestep]
+            if detailed:
+                self.q_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 2]
+                self.t_out_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 3]
+
+        if detailed:
+            self.t_out[idx_timestep] = self.t_out_seg[-1, idx_timestep]
 
 
 class CoupledHorizontalPipe(BaseSimComp):
@@ -672,8 +683,9 @@ class CoupledHorizontalPipe(BaseSimComp):
 
         return rows, rhs
 
-    def update_post_solve(self, x_vector, idx_timestep):
-        self.t_in[idx_timestep] = x_vector[self.row_index]
+    def update_post_solve(self, x_vector, idx_timestep, detailed=True):
+        if detailed:
+            self.t_in[idx_timestep] = x_vector[self.row_index]
 
         current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
         prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
@@ -682,15 +694,18 @@ class CoupledHorizontalPipe(BaseSimComp):
 
         for k in range(self.num_segments):
             self.t_mean_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 1]
-            self.q_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 2]
-            self.t_out_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 3]
+
+            if detailed:
+                self.q_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 2]
+                self.t_out_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 3]
 
             # Calculate and store the discrete driving potential step (dtheta) that just occurred
             theta_n = self.t_mean_seg[k, idx_timestep] - current_ugt
             theta_n_minus_1 = self.t_mean_seg[k, idx_timestep - 1] - prev_ugt
             self.dtheta_seg[k, idx_timestep] = theta_n - theta_n_minus_1
 
-        self.t_out[idx_timestep] = self.t_out_seg[-1, idx_timestep]
+        if detailed:
+            self.t_out[idx_timestep] = self.t_out_seg[-1, idx_timestep]
 
 
 class SourceSinkHeatExchanger(BaseSimComp):
@@ -788,6 +803,11 @@ class SourceSinkHeatExchanger(BaseSimComp):
         rhs = [rhs]
 
         return rows, rhs
+
+    def update_post_solve(self, x_vector, idx_timestep, detailed=True):
+        self.t_in[idx_timestep - 1] = x_vector[self.row_index]
+        if detailed:
+            self.t_out[idx_timestep - 1] = x_vector[self.downstream_index]
 
 
 class GHX(BaseSimComp):
@@ -1120,6 +1140,22 @@ class GHX(BaseSimComp):
         rhs = [rhs_1, rhs_2, rhs_3, rhs_4]
         return rows, rhs
 
+    def update_post_solve(self, x_vector, idx_timestep, detailed=True):
+        row_index = self.row_index
+        self.q_ghe[idx_timestep - 1] = x_vector[row_index + 2]
+        if detailed:
+            if self.loop_config == CentralLoopType.TWOPIPE:
+                self.t_in[idx_timestep - 1] = x_vector[self.inlet_index]
+                if self.downstream_device.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
+                    self.t_mix_out[idx_timestep - 1] = x_vector[self.downstream_index]
+                else:
+                    self.t_mix_out[idx_timestep - 1] = x_vector[self.downstream_device.inlet_index]
+            else:
+                self.t_in[idx_timestep - 1] = x_vector[row_index]
+                self.t_mix_out[idx_timestep - 1] = x_vector[self.downstream_index]
+            self.t_mean[idx_timestep - 1] = x_vector[row_index + 1]
+            self.t_out[idx_timestep - 1] = x_vector[row_index + 3]
+
 
 class Building(BaseSimComp):
     MATRIX_ROWS = 1
@@ -1164,23 +1200,35 @@ class Building(BaseSimComp):
 
         self.heating_fixed_cop: float | None = None
         self.hp_htg: HPmodel
+        self.heating_mode = 0
         if self.heating_exists:
             if self.constant_cop and "heat_pump_cop" in bldg_data["heating_load"]:
                 self.heating_fixed_cop = bldg_data["heating_load"]["heat_pump_cop"]
+                self.heating_mode = 1
+                self.heating_cp_offset_reciprocal = None
             else:
                 hp_htg_name = bldg_data["heating_load"]["heat_pump_name"]
                 hp_htg_data = hp_data[hp_htg_name]
                 self.hp_htg = HPmodel(hp_htg_name, hp_htg_data)
+                self.heating_mode = 2
+                self.heating_data = (self.hp_htg.c1_htg, self.hp_htg.c2_htg, self.hp_htg.c3_htg)
+                self.heating_m_flow_single_hp = self.hp_htg.m_flow_single_hp
 
         self.cooling_fixed_cop: float | None = None
         self.hp_clg: HPmodel
+        self.cooling_mode = 0
         if self.cooling_exists:
             if self.constant_cop and "heat_pump_cop" in bldg_data["cooling_load"]:
                 self.cooling_fixed_cop = bldg_data["cooling_load"]["heat_pump_cop"]
+                self.cooling_mode = 1
+                self.cooling_cp_offset_reciprocal = None
             else:
                 hp_clg_name = bldg_data["cooling_load"]["heat_pump_name"]
                 hp_clg_data = hp_data[hp_clg_name]
                 self.hp_clg = HPmodel(hp_clg_name, hp_clg_data)
+                self.cooling_mode = 2
+                self.cooling_data = (self.hp_clg.c1_clg, self.hp_clg.c2_clg, self.hp_clg.c3_clg)
+                self.cooling_m_flow_single_hp = self.hp_clg.m_flow_single_hp
 
         if load_method in ("hourly", "hourlyloadagg"):
             if self.heating_exists:
@@ -1233,6 +1281,13 @@ class Building(BaseSimComp):
         self.generate_constant_cop_loads(ugt, beta=beta)
         return self.loads
 
+    def update_cp(self, new_cp):
+        self.cp = new_cp
+        if self.cooling_mode == 1:
+            self.cooling_cp_offset_reciprocal = 1 / (self.cp * SIMULATION_CONSTANT_COP_OFFSET)
+        if self.heating_mode == 1:
+            self.heating_cp_offset_reciprocal = 1 / (self.cp * SIMULATION_CONSTANT_COP_OFFSET)
+
     def get_excess_temperature(self):
         max_temp = np.max(self.t_in)
         min_temp = np.min(self.t_in)
@@ -1241,38 +1296,38 @@ class Building(BaseSimComp):
         return max(max_temp - self.max_eft, self.min_eft - min_temp)
 
     def calc_mass_flow_rate(self, t_in, idx_timestep):
-        if self.heating_exists:
-            if self.heating_fixed_cop is not None:
-                cap_htg = abs(self.htg_vals[idx_timestep])
-                m_single_hp_htg = cap_htg / (self.cp * SIMULATION_CONSTANT_COP_OFFSET)
-            else:
-                cap_htg = self.hp_htg.c1_htg * t_in**2 + self.hp_htg.c2_htg * t_in + self.hp_htg.c3_htg
-                m_single_hp_htg = self.hp_htg.m_flow_single_hp
-        else:
+        heating_mode = self.heating_mode
+        htg_val = abs(self.htg_vals[idx_timestep])
+        if heating_mode == 0:
             cap_htg = 0.0
             m_single_hp_htg = 0.0
-
-        if self.cooling_exists:
-            if self.cooling_fixed_cop is not None:
-                cap_clg = abs(self.clg_vals[idx_timestep])
-                m_single_hp_clg = cap_clg / (self.cp * SIMULATION_CONSTANT_COP_OFFSET)
-            else:
-                cap_clg = self.hp_clg.c1_clg * t_in**2 + self.hp_clg.c2_clg * t_in + self.hp_clg.c3_clg
-                m_single_hp_clg = self.hp_clg.m_flow_single_hp
+        elif heating_mode == 1:
+            cap_htg = htg_val
+            m_single_hp_htg = cap_htg * self.heating_cp_offset_reciprocal
         else:
+            c1, c2, c3 = self.heating_data
+            cap_htg = c1 * t_in * t_in + c2 * t_in + c3
+            m_single_hp_htg = self.heating_m_flow_single_hp
+
+        cooling_mode = self.cooling_mode
+        clg_val = abs(self.clg_vals[idx_timestep])
+        if cooling_mode == 0:
             cap_clg = 0.0
             m_single_hp_clg = 0.0
+        elif cooling_mode == 1:
+            cap_clg = clg_val
+            m_single_hp_clg = cap_clg * self.cooling_cp_offset_reciprocal
+        else:
+            c1, c2, c3 = self.cooling_data
+            cap_clg = c1 * t_in * t_in + c2 * t_in + c3
+            m_single_hp_clg = self.cooling_m_flow_single_hp
 
-        m_single_hp = max(m_single_hp_htg, m_single_hp_clg)
-        rtf_htg = abs(self.htg_vals[idx_timestep] / cap_htg) if cap_htg != 0 else 0.0
-        rtf_clg = abs(self.clg_vals[idx_timestep] / cap_clg) if cap_clg != 0 else 0.0
+        m_single_hp = m_single_hp_htg if m_single_hp_htg > m_single_hp_clg else m_single_hp_clg
+        rtf_htg = htg_val / cap_htg if cap_htg != 0 else 0.0
+        rtf_clg = clg_val / cap_clg if cap_clg != 0 else 0.0
 
-        rtf = rtf_htg + rtf_clg
-
-        mass_flow_bldg = rtf * m_single_hp
-
+        mass_flow_bldg = (rtf_htg + rtf_clg) * m_single_hp
         self.m_flow[idx_timestep] = mass_flow_bldg
-
         return mass_flow_bldg
 
     def calc_r1_r2(self, t_in, idx_timestep):
@@ -1411,6 +1466,16 @@ class Building(BaseSimComp):
                 return rows, rhs
             else:
                 raise ValueError(f"Unknown configuration: {configuration}")
+
+    def update_post_solve(self, x_vector, idx_timestep, detailed=True):
+        if self.loop_config == CentralLoopType.TWOPIPE:
+            self.t_in[idx_timestep - 1] = x_vector[self.inlet_index]
+            if detailed:
+                self.t_out[idx_timestep - 1] = x_vector[self.row_index + 1]
+        else:
+            self.t_in[idx_timestep - 1] = x_vector[self.row_index]
+            if detailed:
+                self.t_out[idx_timestep - 1] = x_vector[self.downstream_index]
 
     def calc_energy(self):
         """Calculate energy consumption of the heat pump system."""
@@ -1958,7 +2023,7 @@ class GHEHPSystem:
         while True:
             r_mid = 0.5 * (r_min + r_max)
             self.set_ground_heat_exchanger_size(r_mid)
-            self.solve_system()
+            self.solve_system(detailed=False)
             mid_et = self.calculate_building_excess()
             self.nbh_selections.append(self.nbh_selections[-1])
             self.excess_temperatures.append(mid_et)
@@ -1977,7 +2042,7 @@ class GHEHPSystem:
             if abs(r_max - r_min) < size_tolerance:
                 break
         self.set_ground_heat_exchanger_size(r_max)
-        self.solve_system()
+        self.solve_system(detailed=True)
         _ = self.calculate_building_excess()
         return
 
@@ -2024,7 +2089,7 @@ class GHEHPSystem:
             b_min, property_boundaries, no_go_boundaries=nogo_zones
         )
 
-        def objective(field_index, ignore_previous=False):
+        def objective(field_index, ignore_previous=False, detailed=False):
             self.guess_idx += 1
             eval_key = self.field_descriptors[field_index]
             self.nbh_selections.append(eval_key)
@@ -2048,7 +2113,7 @@ class GHEHPSystem:
                 ghe.update_ghe_parameters()
                 nbh_val += ghe.nbh
                 total_drilling_val += ghe.nbh * ghe.ghe_manager.current_ghe.bhe.borehole.H
-            self.solve_system()
+            self.solve_system(detailed=detailed)
             self.nbh_values.append(nbh_val)
             self.total_drilling_values.append(total_drilling_val)
             self.borehole_heights.append(total_drilling_val / nbh_val)
@@ -2064,7 +2129,7 @@ class GHEHPSystem:
             }
             return excess_temp
 
-        def final_bupcrs_adjustment(nbhs):
+        def final_bupcrs_adjustment(nbhs, detailed=False):
             self.guess_idx += 1
             self.nbh_selections.append("Final Placement Adjustment")
             for i, ghe in enumerate(self.sizable_ground_heat_exchangers):
@@ -2075,7 +2140,7 @@ class GHEHPSystem:
                 ghe.update_ghe_parameters()
                 nbh_val += ghe.nbh
                 total_drilling_val += ghe.nbh * ghe.ghe_manager.current_ghe.bhe.borehole.H
-            self.solve_system()
+            self.solve_system(detailed=detailed)
             self.nbh_values.append(nbh_val)
             self.total_drilling_values.append(total_drilling_val)
             self.borehole_heights.append(total_drilling_val / nbh_val)
@@ -2159,7 +2224,7 @@ class GHEHPSystem:
         # Perform initial sizing of GHEs
         self.initialize_system_ghes(need_penalty=False)
 
-        def objective(target_spacing):
+        def objective(target_spacing, detailed=False):
             self.guess_idx += 1
             eval_key = f"{target_spacing:.3f}m"
             print(eval_key)
@@ -2172,7 +2237,7 @@ class GHEHPSystem:
                 ghe.update_ghe_parameters()
                 nbh_val += ghe.nbh
                 total_drilling_val += ghe.nbh * ghe.ghe_manager.current_ghe.bhe.borehole.H
-            self.solve_system()
+            self.solve_system(detailed=detailed)
             self.nbh_values.append(nbh_val)
             self.total_drilling_values.append(total_drilling_val)
             self.borehole_heights.append(total_drilling_val / nbh_val)
@@ -2419,11 +2484,11 @@ class GHEHPSystem:
             total_drilling_val += ghe.ghe_manager.current_ghe.nbh * ghe.ghe_manager.current_ghe.bhe.borehole.H
         return nbh_val, total_drilling_val, total_drilling_val / nbh_val
 
-    def solve_system(self):
+    def solve_system(self, detailed=True):
         self.number_of_simulations += 1
-        self.solve_system_standard()
+        self.solve_system_standard(detailed=detailed)
 
-    def solve_system_standard(self):
+    def solve_system_standard(self, detailed=True):
         t_start = time.perf_counter()
         self.nbh_total = sum([x.nbh for x in self.ground_heat_exchangers])
         average_ugt = 0.0
@@ -2432,9 +2497,10 @@ class GHEHPSystem:
             if this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
                 this_comp.split_ratio = this_comp.nbh / self.nbh_total
                 average_ugt += this_comp.ghe_manager.soil.ugt * this_comp.nbh / self.nbh_total
-            elif this_comp.comp_type in (SimCompType.BUILDING, SimCompType.SOURCE_SINK_HEAT_EXCHANGER):
+            elif this_comp.comp_type == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
                 this_comp.cp = self.cp
-
+            elif this_comp.comp_type == SimCompType.BUILDING:
+                this_comp.update_cp(self.cp)
         if self.constant_cop:
             for building in self.buildings:
                 building.generate_constant_cop_loads(average_ugt)
@@ -2476,9 +2542,10 @@ class GHEHPSystem:
                 this_comp.mass_loop_ghe = m_ghe_cum
 
                 # Note: We pass this_comp.mass_flow_pipe in the mass_flow_ghe slot for Horizontal pipes
-                flow_to_pass = getattr(this_comp, "mass_flow_ghe", 0.0)
                 if this_comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
                     flow_to_pass = this_comp.mass_flow_pipe
+                else:
+                    flow_to_pass = getattr(this_comp, "mass_flow_ghe", 0.0)
 
                 rows, rhs = this_comp.generate_matrix(
                     this_comp.mass_bldg,
@@ -2502,36 +2569,10 @@ class GHEHPSystem:
             self.m_flow_loop[idx_timestep - 1] = mass_loop
 
             for this_comp in self.components:
-                row_index = this_comp.row_index
-                if this_comp.comp_type == SimCompType.BUILDING:
-                    if self.loop_config == CentralLoopType.TWOPIPE:
-                        this_comp.t_in[idx_timestep - 1] = x_vector[this_comp.inlet_index]
-                        this_comp.t_out[idx_timestep - 1] = x_vector[row_index + 1]
-                    else:
-                        this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
-                        this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
+                this_comp.update_post_solve(x_vector, idx_timestep, detailed=detailed)
 
-                elif this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
-                    if self.loop_config == CentralLoopType.TWOPIPE:
-                        this_comp.t_in[idx_timestep - 1] = x_vector[this_comp.inlet_index]
-                        if this_comp.downstream_device.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
-                            this_comp.t_mix_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
-                        else:
-                            this_comp.t_mix_out[idx_timestep - 1] = x_vector[this_comp.downstream_device.inlet_index]
-                    else:
-                        this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
-                        this_comp.t_mix_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
-                    this_comp.t_mean[idx_timestep - 1] = x_vector[row_index + 1]
-                    this_comp.q_ghe[idx_timestep - 1] = x_vector[row_index + 2]
-                    this_comp.t_out[idx_timestep - 1] = x_vector[row_index + 3]
-                elif this_comp.comp_type == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
-                    this_comp.t_in[idx_timestep - 1] = x_vector[row_index]
-                    this_comp.t_out[idx_timestep - 1] = x_vector[this_comp.downstream_index]
-                elif this_comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
-                    this_comp.update_post_solve(x_vector, idx_timestep)
-
-            # Update the console every 1 timesteps or on the very last step
-            if (idx_timestep - 1) % 1 == 0 or idx_timestep == self.num_timesteps - 1:
+            # Update the console every 730 timesteps or on the very last step
+            if (idx_timestep - 1) % 730 == 0 or idx_timestep == self.num_timesteps - 1:
                 elapsed = time.perf_counter() - t_start
                 percent = ((idx_timestep - 1) / (self.num_timesteps - 1)) * 100
                 print(
