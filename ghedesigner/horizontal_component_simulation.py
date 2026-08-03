@@ -1,39 +1,46 @@
+import argparse
 import itertools
+import json
 import multiprocessing
-import pickle
 import time
 from importlib import resources
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy import interpolate
 
-from ghedesigner.district_system import CoupledHorizontalPipe, IsolatedHorizontalPipe
+from ghedesigner.constants import HORZ_LIBRARY_FILENAME
+from ghedesigner.district_system import CoupledHorizontalPipe, IsolatedHorizontalPipe, timestep_params_generator
 from ghedesigner.enums import CentralLoopType
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Soil
+from ghedesigner.utilities import float_tuple_to_string
 
 # Global variable to hold the library data for each worker process
-global_lib_data = None
+global_lib_data: dict | None = None
 
 
 def init_worker():
     """Initializes the worker process by loading the interpolation library once into memory."""
     global global_lib_data  # noqa: PLW0603
-    with resources.files("ghedesigner.ghe").joinpath("unified_horizontal_library.pkl").open("rb") as f:
-        global_lib_data = pickle.load(f)  # noqa: S301
+    with resources.files("ghedesigner.ghe").joinpath(HORZ_LIBRARY_FILENAME).open("r", encoding="utf-8") as f:
+        global_lib_data = json.load(f)
 
 
 def get_nearest(value, array):
     """Helper function identical to the main system solver for snapping to grid keys."""
-    idx = (np.abs(array - value)).argmin()
-    return float(array[idx])
+    values = np.asarray(array, dtype=float)
+    idx = np.abs(values - value).argmin()
+    return float(values[idx])
 
 
 def run_horizontal_simulation(config):
     """Runs a single simulation case using the globally loaded library."""
     try:
         lib_data = global_lib_data
+        if lib_data is None:
+            raise RuntimeError("Horizontal interpolation library has not been initialized.")
 
         # --- Setup Time and Boundary Conditions ---
         num_hours = config.get("num_hours", 8760)
@@ -43,6 +50,7 @@ def run_horizontal_simulation(config):
         # Create a fractional time array
         time_array = np.linspace(0, num_hours, total_steps, endpoint=False)
         num_timesteps = len(time_array)
+        time_step_params = timestep_params_generator(time_array)
 
         step_hour = config.get("step_hour", 1)
         mass_flow = config.get("mass_flow", 22)
@@ -85,7 +93,10 @@ def run_horizontal_simulation(config):
         steel_cp = 500
 
         if not is_coupled:
-            q_prime_interp = table_single[(target_d, target_beta, target_r, target_k)]
+            q_prime_data = table_single[float_tuple_to_string((target_d, target_beta, target_r, target_k))]
+            q_prime_interp = interpolate.interp1d(
+                q_prime_data["x"], q_prime_data["y"], kind="cubic", fill_value="extrapolate"
+            )
             horiz_pipe = IsolatedHorizontalPipe(
                 name=f"{config['run_name']}_pipe",
                 length=config["length"],
@@ -103,6 +114,7 @@ def run_horizontal_simulation(config):
                 ugt_amp2=config.get("ugt_amp2", 0.0),
                 ugt_phase2=config.get("ugt_phase2", 0.0),
                 depth=config["depth"],
+                time_step_params=time_step_params,
                 load_method=load_method,
             )
 
@@ -121,7 +133,13 @@ def run_horizontal_simulation(config):
 
         else:
             target_b = get_nearest(config["spacing"], horiz_axes["spacings"])
-            q_prime_even, q_prime_odd = table_parallel[(target_d, target_b, target_beta, target_r, target_k)]
+            q_prime_data = table_parallel[float_tuple_to_string((target_d, target_b, target_beta, target_r, target_k))]
+            q_prime_even = interpolate.interp1d(
+                q_prime_data["x1"], q_prime_data["y1"], kind="cubic", fill_value="extrapolate"
+            )
+            q_prime_odd = interpolate.interp1d(
+                q_prime_data["x2"], q_prime_data["y2"], kind="cubic", fill_value="extrapolate"
+            )
 
             pipe1 = CoupledHorizontalPipe(
                 name=f"{config['run_name']}_branch_A",
@@ -141,6 +159,7 @@ def run_horizontal_simulation(config):
                 ugt_amp2=config.get("ugt_amp2_A", config.get("ugt_amp2", 0.0)),
                 ugt_phase2=config.get("ugt_phase2_A", config.get("ugt_phase2", 0.0)),
                 depth=config["depth"],
+                time_step_params=time_step_params,
                 load_method=load_method,
             )
             pipe2 = CoupledHorizontalPipe(
@@ -161,6 +180,7 @@ def run_horizontal_simulation(config):
                 ugt_amp2=config.get("ugt_amp2_B", config.get("ugt_amp2", 0.0)),
                 ugt_phase2=config.get("ugt_phase2_B", config.get("ugt_phase2", 0.0)),
                 depth=config["depth"],
+                time_step_params=time_step_params,
                 load_method=load_method,
             )
 
@@ -339,12 +359,9 @@ def generate_batch_configs(output_dir):
     return sim_configs
 
 
-def main():
-    # Setup Output Directory explicitly once before multiprocessing starts
-    base_dir = Path(r"C:\Users\drewm\documents\research")
-    output_dir = (
-        base_dir / "GHEDesigner csv results" / "horiz pipe component testing" / "new tau star tests" / "low flow"
-    )
+def main(output_dir: Path | None = None):
+    if output_dir is None:
+        output_dir = Path.cwd() / "horizontal_component_results"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     sim_configs = generate_batch_configs(str(output_dir))
@@ -392,53 +409,53 @@ def main():
             print(f"  - {name}: {err}")
 
 
+def run_single_case(output_dir: Path, inlet_temperature_csv: Path | None = None):
+    init_worker()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    single_config = {
+        "run_name": "Vilnius_DH_Experiment_v4",
+        "output_dir": str(output_dir),
+        "type": "ISOLATED",
+        "length": 470.0,
+        "segments": 47,
+        "depth": 1.0,
+        "inner_diameter": 0.300,
+        "outer_diameter": 0.450,
+        "beta": 12.0,
+        "soil_k": 1.5,
+        "ugt_avg": 7.0,
+        "mass_flow": 2.76,
+        "load_method": "hourlyloadagg",
+        "num_hours": 8760,
+        "steps_per_hour": 20,
+    }
+    if inlet_temperature_csv is not None:
+        single_config["t_in_csv_path"] = str(inlet_temperature_csv)
+
+    print("--- Running Single Horizontal Pipe Simulation ---")
+    print(f"Run Name: {single_config['run_name']}")
+    t_start = time.perf_counter()
+    _, success, error_msg = run_horizontal_simulation(single_config)
+
+    if not success:
+        raise RuntimeError(f"Simulation failed: {error_msg}")
+    print(f"Success! Finished in {time.perf_counter() - t_start:.2f} seconds.")
+    print(f"Output saved to: {output_dir}")
+
+
 if __name__ == "__main__":
-    RUN_SINGLE_CASE = True
+    parser = argparse.ArgumentParser(description="Run standalone horizontal-pipe component simulations.")
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path.cwd() / "horizontal_component_results",
+        help="Directory for simulation CSV output.",
+    )
+    parser.add_argument("--batch", action="store_true", help="Run the generated batch instead of the single case.")
+    parser.add_argument("--inlet-temperature-csv", type=Path, help="Optional T_in CSV for the single case.")
+    arguments = parser.parse_args()
 
-    if RUN_SINGLE_CASE:
-        init_worker()
-
-        base_dir = Path(r"C:\Users\drewm\documents\research")
-        single_out_dir = base_dir / "GHEDesigner csv results" / "horiz pipe component testing" / "vilnius tests"
-        single_out_dir.mkdir(parents=True, exist_ok=True)
-
-        single_config = {
-            "run_name": "Vilnius_DH_Experiment_v4",
-            "output_dir": str(single_out_dir),
-            "type": "ISOLATED",
-            "length": 470.0,
-            "segments": 47,
-            "depth": 1.0,
-            "inner_diameter": 0.300,
-            "outer_diameter": 0.450,
-            "beta": 12.0,
-            "soil_k": 1.5,
-            "ugt_avg": 7.0,
-            "mass_flow": 2.76,
-            "load_method": "hourlyloadagg",
-            "t_in_csv_path": str(
-                base_dir
-                / "GHEDesigner csv results"
-                / "horiz pipe component testing"
-                / "vilnius tests"
-                / "v2_inlet_temps.csv"
-            ),
-            "num_hours": 8760,
-            "steps_per_hour": 20,
-        }
-
-        print("--- Running Single Horizontal Pipe Simulation ---")
-        print(f"Run Name: {single_config['run_name']}")
-
-        t_start = time.perf_counter()
-
-        run_name, success, error_msg = run_horizontal_simulation(single_config)
-
-        if success:
-            print(f"Success! Finished in {time.perf_counter() - t_start:.2f} seconds.")
-            print(f"Output saved to: {single_out_dir}")
-        else:
-            print(f"Simulation Failed!\nError: {error_msg}")
-
+    if arguments.batch:
+        main(arguments.output_dir)
     else:
-        main()
+        run_single_case(arguments.output_dir, arguments.inlet_temperature_csv)

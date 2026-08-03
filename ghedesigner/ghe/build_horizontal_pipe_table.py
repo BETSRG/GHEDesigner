@@ -10,6 +10,12 @@ from ghedesigner.ghe.horizontal_pipe_heat_exchange import ParallelPipeSystem, Si
 from ghedesigner.utilities import float_tuple_to_string
 
 LIBRARY_DECIMALS_OF_PRECISION = 10
+STANDARD_DEPTHS = (1.0, 1.5, 5.0, 15.0)
+STANDARD_SPACINGS = (0.25, 0.5, 1.0)
+STANDARD_BETAS = (0.344, 12.0)
+STANDARD_SOIL_CONDUCTIVITIES = (1.0, 1.5, 2.0, 2.5)
+STANDARD_DIAMETERS = (0.0762, 0.1016, 0.1524, 0.3)
+STANDARD_RADII = tuple(diameter / 2.0 for diameter in STANDARD_DIAMETERS)
 
 
 class MockPipe:
@@ -22,6 +28,11 @@ class MockSoil:
     def __init__(self, k, rhocp):
         self.k = k
         self.rho_cp = rhocp
+
+
+def table_contains_case(table: dict, key: tuple[float, ...]) -> bool:
+    """Return whether a response table contains the serialized parameter tuple."""
+    return float_tuple_to_string(key) in table
 
 
 def worker_single(args):
@@ -107,14 +118,13 @@ def main():
     output_path = Path(__file__).with_name(HORZ_LIBRARY_FILENAME)
 
     # Define the parameters
-    depths = np.array([1.0, 1.5, 5.0, 15.0])
-    spacings = np.array([0.25, 0.5, 1.0])
-    betas = np.array([0.344, 12.0])  # add 12.0
-    soil_ks = np.array([1.0, 1.5, 2.0, 2.5])
+    depths = np.array(STANDARD_DEPTHS)
+    spacings = np.array(STANDARD_SPACINGS)
+    betas = np.array(STANDARD_BETAS)
+    soil_ks = np.array(STANDARD_SOIL_CONDUCTIVITIES)
 
     # Input as nominal diameters, then mathematically convert to radii for the solver grid
-    diameters = np.array([0.0762, 0.1016, 0.1524, 0.3])  # add 0.3
-    radii = diameters / 2.0
+    radii = np.array(STANDARD_RADII)
 
     table_single = {}
     table_parallel = {}
@@ -190,7 +200,7 @@ def main():
             for beta in betas
             for r in radii
             for k_s in soil_ks
-            if (d, beta, r, k_s) not in table_single and (d, beta, r, k_s) not in force_recalc_single
+            if not table_contains_case(table_single, (d, beta, r, k_s)) and (d, beta, r, k_s) not in force_recalc_single
         ]
     )
 
@@ -202,7 +212,8 @@ def main():
             for beta in betas
             for r in radii
             for k_s in soil_ks
-            if (d, b, beta, r, k_s) not in table_parallel and (d, b, beta, r, k_s) not in force_recalc_parallel
+            if not table_contains_case(table_parallel, (d, b, beta, r, k_s))
+            and (d, b, beta, r, k_s) not in force_recalc_parallel
         ]
     )
 
