@@ -388,6 +388,18 @@ class TestDistrictSys(GHEBaseTest):
         np.testing.assert_allclose(building.power_hp_htg[:3], expected_heating_power)
         np.testing.assert_allclose(building.power_hp_clg[:3], expected_cooling_power)
 
+    def test_nonconstant_cop_matrix_terms_scale_with_cooling_load(self):
+        system = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
+        building = system.buildings[0]
+        building.htg_vals[0] = 0.0
+
+        building.clg_vals[0] = 1000.0
+        matrix_terms_1000_w = building.calc_r1_r2(25.0, 0)
+        building.clg_vals[0] = 2000.0
+        matrix_terms_2000_w = building.calc_r1_r2(25.0, 0)
+
+        assert matrix_terms_2000_w == pytest.approx(tuple(2.0 * value for value in matrix_terms_1000_w))
+
     def test_simulation_only_initializes_output_bookkeeping(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
         data = json.loads(f_path_json.read_text())

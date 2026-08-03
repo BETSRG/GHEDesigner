@@ -1365,34 +1365,30 @@ class Building(BaseSimComp):
         Calculate r1 and r2 for this building based on entering fluid temperature and HP coefficients.
         """
 
-        a = 0
-        b = 0
-        u = 0
-        v = 0
+        cooling_intercept = 0.0
+        cooling_slope = 0.0
+        heating_intercept = 0.0
+        heating_slope = 0.0
 
         # Extract loads
-        h = self.htg_vals[idx_timestep]  # NB changed it from h = self.htg_vals[idx_timestep-1]??
-        c = self.clg_vals[idx_timestep]  # NB changed it from c = self.clg_vals[idx_timestep - 1]
+        heating_load = self.htg_vals[idx_timestep]
+        cooling_load = self.clg_vals[idx_timestep]
 
         # Heating calculations
         if self.heating_exists:
-            _, _, c, _, _ = self.heating_ratio_data
-            slope_htg = self.hp_htg.heating_ratio_slope(t_in)
+            heating_slope = self.hp_htg.heating_ratio_slope(t_in)
             ratio_htg = self.hp_htg.heating_ratio(t_in)
-            u = ratio_htg - slope_htg * t_in
-            v = slope_htg
+            heating_intercept = ratio_htg - heating_slope * t_in
 
         # Cooling calculations
         if self.cooling_exists:
-            _, _, c, _, _ = self.cooling_ratio_data
-            slope_clg = self.hp_clg.cooling_ratio_slope(t_in)
+            cooling_slope = self.hp_clg.cooling_ratio_slope(t_in)
             ratio_clg = self.hp_clg.cooling_ratio(t_in)
-            a = ratio_clg - slope_clg * t_in
-            b = slope_clg
+            cooling_intercept = ratio_clg - cooling_slope * t_in
 
         # Final arrays
-        r1 = b * c - v * h
-        r2 = a * c - u * h
+        r1 = cooling_slope * cooling_load - heating_slope * heating_load
+        r2 = cooling_intercept * cooling_load - heating_intercept * heating_load
 
         return r1, r2
 
