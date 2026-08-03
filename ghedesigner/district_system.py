@@ -354,8 +354,8 @@ class IsolatedHorizontalPipe(BaseSimComp):
             rows[0][idx_t_out_final] = m_cp
             rows[0][self.downstream_index] = -mass_loop * self.cp
         elif configuration == CentralLoopType.TWOPIPE:
-            rows[0][idx_t_in] = 1.0
-            rows[0][self.inlet_index] = -1.0
+            rows[0][idx_t_out_final] = 1.0
+            rows[0][self.downstream_index] = -1.0
 
         current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
         prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
@@ -642,8 +642,8 @@ class CoupledHorizontalPipe(BaseSimComp):
             rows[0][idx_t_out_final] = m_cp
             rows[0][self.downstream_index] = -mass_loop * self.cp
         elif configuration == CentralLoopType.TWOPIPE:
-            rows[0][idx_t_in] = 1.0
-            rows[0][self.inlet_index] = -1.0
+            rows[0][idx_t_out_final] = 1.0
+            rows[0][self.downstream_index] = -1.0
 
         current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
         prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
@@ -1980,14 +1980,14 @@ class GHEHPSystem:
                 None,
             )
 
-        for i, comp in enumerate(self.components):
+        for comp in self.components:
             if comp.comp_type == SimCompType.BUILDING:
                 comp.inlet_index = common_inlet_index_bldg
             elif comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
                 comp.inlet_index = common_inlet_index_ghx
             elif comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
-                # Transit lines simply take the outlet of the component right before them in the topology
-                comp.inlet_index = self.components[i - 1].downstream_index
+                # The upstream component writes directly to the horizontal pipe's inlet state.
+                comp.inlet_index = comp.row_index
             else:
                 pass
 

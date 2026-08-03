@@ -23,6 +23,7 @@ from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads, Zone, enforc
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
+from ghedesigner.utilities import load_input_file
 from ghedesigner.validate import validate_input_file
 
 
@@ -294,6 +295,47 @@ class TestDistrictSys(GHEBaseTest):
         assert {comp.inlet_index for comp in buildings} == {buildings[0].row_index}
         assert {comp.inlet_index for comp in ghes} == {ghes[0].row_index}
         assert all(isinstance(comp.inlet_index, int) for comp in buildings + ghes)
+
+    def test_two_pipe_horizontal_pipes_connect_outlet_to_downstream(self):
+        source_path = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
+        data = load_input_file(source_path)
+        data["central_loop"]["pipe_configuration"] = "TWOPIPE"
+
+        with TemporaryDirectory() as tmp_dir:
+            two_pipe_path = Path(tmp_dir) / "two_pipe_horizontal.json"
+            two_pipe_path.write_text(json.dumps(data))
+            system = GHEHPSystem(two_pipe_path)
+
+        horizontal_pipes = [
+            comp
+            for comp in system.components
+            if comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE)
+        ]
+        assert horizontal_pipes
+
+        for pipe in horizontal_pipes:
+            pipe.matrix_size = system.matrix_size
+            rows, _ = pipe.generate_matrix(
+                0.0,
+                1.0,
+                0.0,
+                1.0,
+                0.0,
+                1,
+                system.loop_config,
+                system.load_method,
+            )
+            topology_row = rows[0]
+            outlet_index = pipe.row_index + 3 * pipe.num_segments
+
+            assert pipe.inlet_index == pipe.row_index
+            assert topology_row[outlet_index] == 1.0
+            assert topology_row[pipe.downstream_index] == -1.0
+            assert np.count_nonzero(topology_row) == 2
+
+        system.num_timesteps = 2
+        system.solve_system_standard()
+        assert all(np.all(pipe.t_in[1:3] > 0.0) and np.all(pipe.t_out[1:3] > 0.0) for pipe in horizontal_pipes)
 
     def test_two_pipe_non_constant_cop_building_matrix_is_generated(self):
         f_path_json = self.demos_path / "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json"
