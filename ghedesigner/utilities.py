@@ -11,6 +11,8 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.optimize import brentq
 
+from ghedesigner.constants import SIMULATION_CONSTANT_COP_COOLING_OFFSET, SIMULATION_CONSTANT_COP_HEATING_OFFSET
+
 
 # Time functions
 # --------------
@@ -410,7 +412,7 @@ def load_input_file(f_path: Path) -> dict:
 
 
 class HPmodel:
-    def __init__(self, hp_id: str, hp_data: dict):
+    def __init__(self, hp_id: str, hp_data: dict, ugt):
         self.name = hp_id
 
         self.a_htg = hp_data["heating_performance"]["a"]
@@ -428,6 +430,20 @@ class HPmodel:
         self.c1_clg = hp_data["cooling_performance"]["c1"]
         self.c2_clg = hp_data["cooling_performance"]["c2"]
         self.c3_clg = hp_data["cooling_performance"]["c3"]
+
+        self.cooling_min_temp = hp_data["cooling_performance"].get(
+            "minimum_curve_temperature", ugt - SIMULATION_CONSTANT_COP_HEATING_OFFSET
+        )
+        self.cooling_max_temp = hp_data["cooling_performance"].get(
+            "maximum_curve_temperature", ugt + SIMULATION_CONSTANT_COP_COOLING_OFFSET
+        )
+
+        self.heating_min_temp = hp_data["heating_performance"].get(
+            "minimum_curve_temperature", ugt - SIMULATION_CONSTANT_COP_HEATING_OFFSET
+        )
+        self.heating_max_temp = hp_data["heating_performance"].get(
+            "maximum_curve_temperature", ugt + SIMULATION_CONSTANT_COP_COOLING_OFFSET
+        )
 
         self.m_flow_single_hp = hp_data["design_flow_rate"]
         self.design_pressure_loss = hp_data["design_pressure_loss"]

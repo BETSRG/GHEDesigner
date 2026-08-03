@@ -26,7 +26,9 @@ from ghedesigner.constants import (
     SEC_IN_DAY,
     SEC_IN_HR,
     SEC_IN_YEAR,
-    SIMULATION_CONSTANT_COP_OFFSET,
+    SIMULATION_CONSTANT_COP_COOLING_OFFSET,
+    SIMULATION_CONSTANT_COP_HEATING_OFFSET,
+    SIMULATION_OPERATING_TEMPERATURE_DIFFERENCE,
     TWO_PI,
 )
 from ghedesigner.enums import CentralLoopType, DesignGeomType, SimCompType, SourceSinkOpMode
@@ -1209,9 +1211,22 @@ class Building(BaseSimComp):
             else:
                 hp_htg_name = bldg_data["heating_load"]["heat_pump_name"]
                 hp_htg_data = hp_data[hp_htg_name]
-                self.hp_htg = HPmodel(hp_htg_name, hp_htg_data)
+                self.hp_htg = HPmodel(hp_htg_name, hp_htg_data, tg)
                 self.heating_mode = 2
-                self.heating_data = (self.hp_htg.c1_htg, self.hp_htg.c2_htg, self.hp_htg.c3_htg)
+                self.heating_data = (
+                    self.hp_htg.c1_htg,
+                    self.hp_htg.c2_htg,
+                    self.hp_htg.c3_htg,
+                    self.hp_htg.heating_min_temp,
+                    self.hp_htg.heating_max_temp,
+                )
+                self.heating_ratio_data = (
+                    self.hp_htg.a_htg,
+                    self.hp_htg.b_htg,
+                    self.hp_htg.c_htg,
+                    self.hp_htg.heating_min_temp,
+                    self.hp_htg.heating_max_temp,
+                )
                 self.heating_m_flow_single_hp = self.hp_htg.m_flow_single_hp
 
         self.cooling_fixed_cop: float | None = None
@@ -1225,9 +1240,22 @@ class Building(BaseSimComp):
             else:
                 hp_clg_name = bldg_data["cooling_load"]["heat_pump_name"]
                 hp_clg_data = hp_data[hp_clg_name]
-                self.hp_clg = HPmodel(hp_clg_name, hp_clg_data)
+                self.hp_clg = HPmodel(hp_clg_name, hp_clg_data, tg)
                 self.cooling_mode = 2
-                self.cooling_data = (self.hp_clg.c1_clg, self.hp_clg.c2_clg, self.hp_clg.c3_clg)
+                self.cooling_data = (
+                    self.hp_clg.c1_clg,
+                    self.hp_clg.c2_clg,
+                    self.hp_clg.c3_clg,
+                    self.hp_clg.cooling_min_temp,
+                    self.hp_clg.cooling_max_temp,
+                )
+                self.cooling_ratio_data = (
+                    self.hp_clg.a_clg,
+                    self.hp_clg.b_clg,
+                    self.hp_clg.c_clg,
+                    self.hp_clg.cooling_min_temp,
+                    self.hp_clg.cooling_max_temp,
+                )
                 self.cooling_m_flow_single_hp = self.hp_clg.m_flow_single_hp
 
         if load_method in ("hourly", "hourlyloadagg"):
@@ -1284,9 +1312,9 @@ class Building(BaseSimComp):
     def update_cp(self, new_cp):
         self.cp = new_cp
         if self.cooling_mode == 1:
-            self.cooling_cp_offset_reciprocal = 1 / (self.cp * SIMULATION_CONSTANT_COP_OFFSET)
+            self.cooling_cp_offset_reciprocal = 1 / (self.cp * SIMULATION_OPERATING_TEMPERATURE_DIFFERENCE)
         if self.heating_mode == 1:
-            self.heating_cp_offset_reciprocal = 1 / (self.cp * SIMULATION_CONSTANT_COP_OFFSET)
+            self.heating_cp_offset_reciprocal = 1 / (self.cp * SIMULATION_OPERATING_TEMPERATURE_DIFFERENCE)
 
     def get_excess_temperature(self):
         max_temp = np.max(self.t_in)
@@ -1305,8 +1333,14 @@ class Building(BaseSimComp):
             cap_htg = htg_val
             m_single_hp_htg = cap_htg * self.heating_cp_offset_reciprocal
         else:
-            c1, c2, c3 = self.heating_data
-            cap_htg = c1 * t_in * t_in + c2 * t_in + c3
+            c1, c2, c3, min_temp, max_temp = self.heating_data
+            if t_in < min_temp:
+                calc_temp = min_temp
+            elif t_in > max_temp:
+                calc_temp = max_temp
+            else:
+                calc_temp = t_in
+            cap_htg = c1 * calc_temp * calc_temp + c2 * calc_temp + c3
             m_single_hp_htg = self.heating_m_flow_single_hp
 
         cooling_mode = self.cooling_mode
@@ -1318,8 +1352,14 @@ class Building(BaseSimComp):
             cap_clg = clg_val
             m_single_hp_clg = cap_clg * self.cooling_cp_offset_reciprocal
         else:
-            c1, c2, c3 = self.cooling_data
-            cap_clg = c1 * t_in * t_in + c2 * t_in + c3
+            c1, c2, c3, min_temp, max_temp = self.cooling_data
+            if t_in < min_temp:
+                calc_temp = min_temp
+            elif t_in > max_temp:
+                calc_temp = max_temp
+            else:
+                calc_temp = t_in
+            cap_clg = c1 * calc_temp * calc_temp + c2 * calc_temp + c3
             m_single_hp_clg = self.cooling_m_flow_single_hp
 
         m_single_hp = m_single_hp_htg if m_single_hp_htg > m_single_hp_clg else m_single_hp_clg
@@ -1346,16 +1386,30 @@ class Building(BaseSimComp):
 
         # Heating calculations
         if self.heating_exists:
-            slope_htg = 2 * self.hp_htg.a_htg * t_in + self.hp_htg.b_htg
-            ratio_htg = self.hp_htg.a_htg * t_in**2 + self.hp_htg.b_htg * t_in + self.hp_htg.c_htg
-            u = ratio_htg - slope_htg * t_in
+            a, b, c, min_temp, max_temp = self.heating_ratio_data
+            if t_in < min_temp:
+                calc_temp = min_temp
+            elif t_in > max_temp:
+                calc_temp = max_temp
+            else:
+                calc_temp = t_in
+            slope_htg = 2 * a * calc_temp + b
+            ratio_htg = a * calc_temp * calc_temp + b * calc_temp + c
+            u = ratio_htg - slope_htg * calc_temp
             v = slope_htg
 
         # Cooling calculations
         if self.cooling_exists:
-            slope_clg = 2 * self.hp_clg.a_clg * t_in + self.hp_clg.b_clg
-            ratio_clg = self.hp_clg.a_clg * t_in**2 + self.hp_clg.b_clg * t_in + self.hp_clg.c_clg
-            a = ratio_clg - slope_clg * t_in
+            a, b, c, min_temp, max_temp = self.cooling_ratio_data
+            if t_in < min_temp:
+                calc_temp = min_temp
+            elif t_in > max_temp:
+                calc_temp = max_temp
+            else:
+                calc_temp = t_in
+            slope_clg = 2 * a * calc_temp + b
+            ratio_clg = a * calc_temp * calc_temp + b * t_in + c
+            a = ratio_clg - slope_clg * calc_temp
             b = slope_clg
 
         # Final arrays
@@ -1366,8 +1420,8 @@ class Building(BaseSimComp):
 
     def generate_constant_cop_loads(self, ugt, beta=0.1):
         if self.min_eft == 0.0 and self.max_eft == 0.0:
-            min_eft = ugt - SIMULATION_CONSTANT_COP_OFFSET
-            max_eft = ugt + SIMULATION_CONSTANT_COP_OFFSET
+            min_eft = ugt - SIMULATION_CONSTANT_COP_HEATING_OFFSET
+            max_eft = ugt + SIMULATION_CONSTANT_COP_COOLING_OFFSET
         else:
             min_eft = self.min_eft
             max_eft = self.max_eft
