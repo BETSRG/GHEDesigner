@@ -1375,8 +1375,8 @@ class Building(BaseSimComp):
         Calculate r1 and r2 for this building based on entering fluid temperature and HP coefficients.
         """
 
-        a = 0
-        b = 0
+        w = 0
+        z = 0
         u = 0
         v = 0
 
@@ -1386,35 +1386,35 @@ class Building(BaseSimComp):
 
         # Heating calculations
         if self.heating_exists:
-            a, b, c, min_temp, max_temp = self.heating_ratio_data
+            a1, b1, c1, min_temp, max_temp = self.heating_ratio_data
             if t_in < min_temp:
                 calc_temp = min_temp
             elif t_in > max_temp:
                 calc_temp = max_temp
             else:
                 calc_temp = t_in
-            slope_htg = 2 * a * calc_temp + b
-            ratio_htg = a * calc_temp * calc_temp + b * calc_temp + c
+            slope_htg = 2 * a1 * calc_temp + b1
+            ratio_htg = a1 * calc_temp * calc_temp + b1 * calc_temp + c1
             u = ratio_htg - slope_htg * calc_temp
             v = slope_htg
 
         # Cooling calculations
         if self.cooling_exists:
-            a, b, c, min_temp, max_temp = self.cooling_ratio_data
+            a2, b2, c2, min_temp, max_temp = self.cooling_ratio_data
             if t_in < min_temp:
                 calc_temp = min_temp
             elif t_in > max_temp:
                 calc_temp = max_temp
             else:
                 calc_temp = t_in
-            slope_clg = 2 * a * calc_temp + b
-            ratio_clg = a * calc_temp * calc_temp + b * t_in + c
-            a = ratio_clg - slope_clg * calc_temp
-            b = slope_clg
+            slope_clg = 2 * a2 * calc_temp + b2
+            ratio_clg = a2 * calc_temp * calc_temp + b2 * t_in + c2
+            w = ratio_clg - slope_clg * calc_temp
+            z = slope_clg
 
         # Final arrays
-        r1 = b * c - v * h
-        r2 = a * c - u * h
+        r1 = w * c - v * h
+        r2 = z * c - u * h
 
         return r1, r2
 
