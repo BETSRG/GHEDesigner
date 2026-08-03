@@ -31,7 +31,9 @@
         "c1": -0.393,
         "c2": -30.3,
         "c3": 6777.0,
-        "design_cap": 4396.0
+        "design_cap": 4396.0,
+        "minimum_curve_temperature": 10.0,
+        "maximum_curve_temperature": 35.0
       },
       "design_flow_rate": 0.296,
       "design_pressure_loss": 25000,
@@ -43,7 +45,9 @@
         "c1": -0.124,
         "c2": 112.0,
         "c3": 4114.0,
-        "design_cap": 4140.0
+        "design_cap": 4140.0,
+        "minimum_curve_temperature": 10.0,
+        "maximum_curve_temperature": 35.0
       }
     }
   },
@@ -98,6 +102,7 @@
     }
   },
   "simulation_control": {
-    "simulation_years": 1
+    "simulation_years": 1,
+    "constant_cop": false
   }
 }

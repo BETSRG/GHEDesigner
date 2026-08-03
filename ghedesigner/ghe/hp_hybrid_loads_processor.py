@@ -262,7 +262,7 @@ class ProcessLoads:
             elif "heating_load" in bldg_data and "heat_pump_name" in bldg_data["heating_load"]:
                 hp_htg_name = bldg_data["heating_load"]["heat_pump_name"]
                 hp_htg_data = self.hp_data[hp_htg_name]
-                hp_htg = HPmodel(hp_htg_name, hp_htg_data)
+                hp_htg = HPmodel(hp_htg_name, hp_htg_data, self.soil.ugt)
                 if "min_eft" in bldg_data:
                     heating_temp = (1 - beta) * bldg_data["min_eft"] + beta * self.soil.ugt
                 else:
@@ -279,7 +279,7 @@ class ProcessLoads:
             elif "cooling_load" in bldg_data and "heat_pump_name" in bldg_data["cooling_load"]:
                 hp_clg_name = bldg_data["cooling_load"]["heat_pump_name"]
                 hp_clg_data = self.hp_data[hp_clg_name]
-                hp_clg = HPmodel(hp_clg_name, hp_clg_data)
+                hp_clg = HPmodel(hp_clg_name, hp_clg_data, self.soil.ugt)
                 if "max_eft" in bldg_data:
                     cooling_temp = (1 - beta) * bldg_data["max_eft"] + beta * self.soil.ugt
                 else:
