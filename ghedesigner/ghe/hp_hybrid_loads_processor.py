@@ -11,6 +11,35 @@ from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.utilities import HPmodel, get_loads
 
+MIN_HYBRID_TIMESTEP_HOURS = 1.0
+
+
+def enforce_minimum_timestep(time_values, minimum_timestep=MIN_HYBRID_TIMESTEP_HOURS):
+    """Coarsen a time grid so every simulation interval meets the minimum."""
+    if minimum_timestep <= 0.0:
+        raise ValueError("minimum_timestep must be positive")
+
+    times = np.unique(np.asarray(time_values, dtype=float))
+    if times.size == 0 or times[0] != 0.0:
+        times = np.insert(times, 0, 0.0)
+    if times.size == 1:
+        return times
+    if times[-1] - times[0] < minimum_timestep:
+        raise ValueError("The hybrid simulation period is shorter than the minimum timestep.")
+
+    retained_times = [times[0]]
+    for current_time in times[1:]:
+        if current_time - retained_times[-1] >= minimum_timestep:
+            retained_times.append(current_time)
+
+    final_time = times[-1]
+    if retained_times[-1] != final_time:
+        if final_time - retained_times[-1] < minimum_timestep:
+            retained_times.pop()
+        retained_times.append(final_time)
+
+    return np.asarray(retained_times, dtype=float)
+
 
 class Zone:
     def __init__(self):
@@ -77,23 +106,37 @@ class Zone:
         self.q_rej_hybrid_time_array = rej_obj.hour[2:]
 
     def map_loads_to_common_time(self, common_time):
-
-        q_ext_time = self.q_ext_hybrid_time_array
-        q_rej_time = self.q_rej_hybrid_time_array
-
-        idx_ext = np.searchsorted(q_ext_time, common_time, side="left")
-        idx_ext = np.clip(idx_ext, 0, len(self.q_ext_hybrid) - 1)
-        self.q_ext_common = self.q_ext_hybrid[idx_ext]
-
-        idx_rej = np.searchsorted(q_rej_time, common_time, side="left")
-        idx_rej = np.clip(idx_rej, 0, len(self.q_rej_hybrid) - 1)
-        self.q_rej_common = self.q_rej_hybrid[idx_rej]
-
-        if len(common_time) > 0 and common_time[0] == 0.0:
-            self.q_ext_common[0] = 0.0
-            self.q_rej_common[0] = 0.0
+        self.q_ext_common = self.average_loads_on_time_grid(
+            self.q_ext_hybrid_time_array, self.q_ext_hybrid, common_time
+        )
+        self.q_rej_common = self.average_loads_on_time_grid(
+            self.q_rej_hybrid_time_array, self.q_rej_hybrid, common_time
+        )
 
         return self.q_rej_common, self.q_ext_common
+
+    @staticmethod
+    def average_loads_on_time_grid(source_time, source_load, target_time):
+        """Average a piecewise-constant load onto a coarser grid, conserving energy."""
+        source_time = np.asarray(source_time, dtype=float)
+        source_load = np.asarray(source_load, dtype=float)
+        target_time = np.asarray(target_time, dtype=float)
+
+        if source_time.size != source_load.size or source_time.size == 0:
+            raise ValueError("Hybrid load values and times must be non-empty and have equal lengths.")
+        if np.any(np.diff(source_time) <= 0.0):
+            raise ValueError("Hybrid load times must be strictly increasing.")
+        if target_time.size == 0 or target_time[0] != 0.0 or np.any(np.diff(target_time) <= 0.0):
+            raise ValueError("The target hybrid time grid must start at zero and be strictly increasing.")
+        if target_time[-1] > source_time[-1]:
+            raise ValueError("The target hybrid time grid cannot extend beyond the source loads.")
+
+        source_boundaries = np.insert(source_time, 0, 0.0)
+        cumulative_energy = np.insert(np.cumsum(source_load * np.diff(source_boundaries)), 0, 0.0)
+        target_energy = np.interp(target_time, source_boundaries, cumulative_energy)
+        average_loads = np.diff(target_energy) / np.diff(target_time)
+
+        return np.insert(average_loads, 0, 0.0)
 
     def convert_ground_hybrid_loads_to_hp_loads(self, common_time):
         self.q_htg_hybrid = self.q_ext_common / (1 - 1 / self.COP_htg) * (-1)
@@ -286,11 +329,7 @@ class ProcessLoads:
             [zone.q_ext_hybrid_time_array for zone in self.zones]
             + [zone.q_rej_hybrid_time_array for zone in self.zones]
         )
-        self.common_time = np.unique(all_times)
-        self.common_time.sort()
-
-        if len(self.common_time) == 0 or self.common_time[0] != 0.0:
-            self.common_time = np.insert(self.common_time, 0, 0.0)
+        self.common_time = enforce_minimum_timestep(all_times)
 
         return self.common_time
 

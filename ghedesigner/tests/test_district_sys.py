@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -10,13 +11,15 @@ from jsonschema.exceptions import ValidationError
 from pandas.testing import assert_frame_equal
 
 from ghedesigner.district_system import (
+    GHX,
     CoupledHorizontalPipe,
+    DynamicAggregator,
     GHEHPSystem,
     IsolatedHorizontalPipe,
     timestep_params_generator,
 )
 from ghedesigner.enums import DesignGeomType, SimCompType
-from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads
+from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads, Zone, enforce_minimum_timestep
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Soil
 from ghedesigner.tests.test_base_case import GHEBaseTest
@@ -24,6 +27,54 @@ from ghedesigner.validate import validate_input_file
 
 
 class TestDistrictSys(GHEBaseTest):
+    @staticmethod
+    def make_history_test_ghx(*, constant_time_step: bool) -> GHX:
+        ghx = object.__new__(GHX)
+        fixture = cast(Any, ghx)
+        fixture.load_method = "hourly"
+        fixture.dq = np.zeros(3, dtype=float)
+        fixture.q_ghe = np.array([1.0, 0.0, 0.0])
+        fixture.two_pi_k_recip = 1.0
+        fixture.constant_time_step = constant_time_step
+        fixture.total_values_ghe = np.zeros(4, dtype=float)
+        fixture.history_terms = np.zeros(5, dtype=float)
+        fixture.ghe_manager = SimpleNamespace(soil=SimpleNamespace(ugt=0.0))
+        fixture.ts = 3600.0
+        fixture.g = np.exp
+        return ghx
+
+    def test_constant_timestep_ghe_history_uses_full_elapsed_time(self):
+        ghx = self.make_history_test_ghx(constant_time_step=True)
+        ghx.gfunction_evals = np.array([3.0, 2.0, 1.0])
+        ghx.step_gfunction_evals = np.ones(3, dtype=float)
+
+        history_term = ghx.calc_history_term(2)
+
+        assert history_term == pytest.approx(-1.0)
+
+    def test_variable_timestep_ghe_history_uses_current_interval(self):
+        ghx = self.make_history_test_ghx(constant_time_step=False)
+        ghx.time_array = np.array([0.0, 1.0, 3.0, 6.0])
+        ghx.gfunction_evals = np.array([6.0, 5.0, 3.0])
+        ghx.step_gfunction_evals = np.array([1.0, 2.0, 3.0])
+
+        history_term = ghx.calc_history_term(2)
+
+        assert history_term == pytest.approx(-1.0)
+
+    def test_loadagg_ghe_history_uses_elapsed_response_age(self):
+        ghx = self.make_history_test_ghx(constant_time_step=True)
+        ghx.load_method = "hourlyloadagg"
+        ghx.time_array = np.array([0.0, 1.0, 2.0, 3.0])
+        ghx.aggregator = DynamicAggregator(3.0 * 3600.0)
+        ghx.g_agg = ghx.g(np.log(ghx.aggregator.response_ages / ghx.ts))
+        ghx.step_gfunction_evals = np.ones(3, dtype=float)
+
+        history_term = ghx.calc_history_term(2)
+
+        assert ghx.aggregator.response_ages[0] == pytest.approx(2.0 * 3600.0)
+        assert history_term == pytest.approx(-1.0)
+
     def assert_simulation_output_matches_baseline(self, system: GHEHPSystem, baseline_name: str):
         baseline_path = self.test_data_directory / baseline_name
         with TemporaryDirectory() as tmp_dir:
@@ -70,7 +121,7 @@ class TestDistrictSys(GHEBaseTest):
         fluid = Fluid(fluid_name="WATER", percent=0, temperature=70)
 
         def q_prime_interp(tau):
-            return np.zeros_like(np.asarray(tau, dtype=float))
+            return np.asarray(tau, dtype=float)
 
         horiz_pipe = IsolatedHorizontalPipe(
             name="subhourly_pipe",
@@ -95,6 +146,9 @@ class TestDistrictSys(GHEBaseTest):
 
         aggregator = horiz_pipe.aggregators[0]
         assert aggregator.base_dt_sec == pytest.approx(180.0)
+        assert horiz_pipe.y_agg_evals[0] == pytest.approx(
+            horiz_pipe.two_pi_k * 2.0 * aggregator.base_dt_sec / horiz_pipe.t_p
+        )
         aggregator.shift_and_add(2.0, 180.0, 1)
         assert aggregator.energy_bins[0] == pytest.approx(360.0)
 
@@ -112,7 +166,7 @@ class TestDistrictSys(GHEBaseTest):
         fluid = Fluid(fluid_name="WATER", percent=0, temperature=70)
 
         def q_prime_interp(tau):
-            return np.zeros_like(np.asarray(tau, dtype=float))
+            return np.asarray(tau, dtype=float)
 
         def make_pipe(name, ugt_avg):
             return CoupledHorizontalPipe(
@@ -139,6 +193,10 @@ class TestDistrictSys(GHEBaseTest):
 
         pipe_a = make_pipe("pipe_a", 10.0)
         pipe_b = make_pipe("pipe_b", 20.0)
+        assert pipe_a.y_self_agg_evals[0] == pytest.approx(
+            pipe_a.two_pi_k * 2.0 * pipe_a.aggregators[0].base_dt_sec / pipe_a.t_p
+        )
+        assert pipe_a.y_cross_agg_evals[0] == pytest.approx(0.0)
         pipe_a.coupled_pipe = pipe_b
         pipe_b.coupled_pipe = pipe_a
         pipe_a.t_mean_seg[0, 1] = 15.0
@@ -167,6 +225,25 @@ class TestDistrictSys(GHEBaseTest):
         np.testing.assert_array_equal(zone.q_clg_1yr, [3.0, 4.0])
         assert zone.COP_htg == pytest.approx(3.5)
         assert zone.COP_clg == pytest.approx(4.5)
+
+    def test_hybrid_grid_has_one_hour_minimum_timestep(self):
+        grid = enforce_minimum_timestep([0.2, 0.8, 1.2, 1.9, 2.4, 3.0])
+
+        assert grid[0] == 0.0
+        assert grid[-1] == 3.0
+        assert np.all(np.diff(grid) >= 1.0)
+
+    def test_hybrid_grid_resampling_conserves_energy(self):
+        source_time = np.array([0.5, 1.5, 3.0])
+        source_load = np.array([2.0, 4.0, 6.0])
+        target_time = np.array([0.0, 1.0, 2.0, 3.0])
+
+        mapped_load = Zone.average_loads_on_time_grid(source_time, source_load, target_time)
+
+        np.testing.assert_allclose(mapped_load, [0.0, 3.0, 5.0, 6.0])
+        source_energy = np.dot(source_load, np.diff(np.insert(source_time, 0, 0.0)))
+        mapped_energy = np.dot(mapped_load[1:], np.diff(target_time))
+        assert mapped_energy == pytest.approx(source_energy)
 
     def test_rowwise_spacing_bounds_use_constraint_intersection(self):
         def make_ghe(min_spacing, max_spacing):

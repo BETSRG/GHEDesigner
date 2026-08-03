@@ -76,6 +76,9 @@ class DynamicAggregator:
 
         # Pre-compute bin ages for evaluating response functions
         self.bin_ages = np.cumsum(self.dts)
+        # Loads are shifted into the aggregator after their timestep has elapsed,
+        # so each bin is one base interval older at the evaluation timestep.
+        self.response_ages = self.bin_ages + self.base_dt_sec
         self.last_idx = 0
         self.dts_reciprocal = 1.0 / self.dts
         if constant_time_step:
@@ -238,7 +241,7 @@ class IsolatedHorizontalPipe(BaseSimComp):
                 )
                 for _ in range(self.num_segments)
             ]
-            tau_agg = self.aggregators[0].bin_ages / self.t_p
+            tau_agg = self.aggregators[0].response_ages / self.t_p
             self.y_agg_evals = self.two_pi_k * self.q_prime_interp(tau_agg)
         elif self.constant_time_step:
             tau_vals = (self.time_array[-1] - self.time_array[0:-1]) * SEC_IN_HR / self.t_p
@@ -487,7 +490,7 @@ class CoupledHorizontalPipe(BaseSimComp):
                 )
                 for _ in range(self.num_segments)
             ]
-            tau_agg = self.aggregators[0].bin_ages / self.t_p
+            tau_agg = self.aggregators[0].response_ages / self.t_p
             y_even_agg = self.two_pi_k * self.q_prime_even_interp(tau_agg)
             y_odd_agg = self.two_pi_k * self.q_prime_odd_interp(tau_agg)
             self.y_self_agg_evals = (y_even_agg + y_odd_agg) / 2.0
@@ -861,6 +864,7 @@ class GHX(BaseSimComp):
         self.dq = None
         self.dim_less_time = None
         self.gfunction_evals = None
+        self.step_gfunction_evals = None
 
         self.load_method = load_method
 
@@ -964,11 +968,13 @@ class GHX(BaseSimComp):
         self.dq = np.zeros(self.num_timesteps, dtype=float)
         self.dim_less_time = np.log((self.time_array[-1] - self.time_array[0:-1]) / (self.ts / SEC_IN_HR))
         self.gfunction_evals = self.g(self.dim_less_time)
+        step_dim_less_time = np.log(self.time_differences / (self.ts / SEC_IN_HR))
+        self.step_gfunction_evals = self.g(step_dim_less_time)
         self.c_n = self.calc_cn_constant()
 
         if self.load_method == "hourlyloadagg":
             self.aggregator.clear_history()
-            lntts_agg = np.log(self.aggregator.bin_ages / self.ts)
+            lntts_agg = np.log(self.aggregator.response_ages / self.ts)
             self.g_agg = self.g(lntts_agg)
 
         self.t_in = np.full(self.num_timesteps, self.ghe_manager.soil.ugt, dtype=float)
@@ -982,9 +988,7 @@ class GHX(BaseSimComp):
 
         Cn = 1 / (2 * pi * K_s) * g((tn - tn-1) / t_s) + R_b
         """
-        g_vals = np.ones(self.num_timesteps, dtype=float)
-        g_vals *= self.gfunction_evals[-1]
-        c_n = g_vals * self.two_pi_k_recip + self.bh_effective_resist
+        c_n = self.step_gfunction_evals * self.two_pi_k_recip + self.bh_effective_resist
 
         return c_n
 
@@ -1012,11 +1016,11 @@ class GHX(BaseSimComp):
             if idx_timestep > IDX_COMPARISON_OFFSET_1:
                 self.dq[idx_timestep - 2] += self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip
                 if self.constant_time_step:  # Handles hourly (or other constant timesteps)
-                    values = np.dot(self.dq[0 : idx_timestep - 1], self.gfunction_evals[-idx_timestep + 1 :])
+                    values = np.dot(self.dq[0 : idx_timestep - 1], self.gfunction_evals[-idx_timestep:-1])
                 else:  # Handles hybrid (or other uneven timesteps)
                     gfunction_evals = self.g(
                         np.log(
-                            (self.time_array[idx_timestep - 1] - self.time_array[0 : idx_timestep - 1])
+                            (self.time_array[idx_timestep] - self.time_array[0 : idx_timestep - 1])
                             / (self.ts / SEC_IN_HR)
                         )
                     )
@@ -1030,7 +1034,7 @@ class GHX(BaseSimComp):
         self.history_terms[idx_timestep] = (
             self.ghe_manager.soil.ugt
             - self.total_values_ghe[idx_timestep - 1]
-            + (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.gfunction_evals[-1])
+            + (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])
         )
 
         return self.history_terms[idx_timestep]
