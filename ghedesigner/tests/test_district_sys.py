@@ -356,6 +356,38 @@ class TestDistrictSys(GHEBaseTest):
         assert len(rhs) == 2
         assert captured == {"t_in": 12.5, "idx_timestep": 1}
 
+    def test_heat_pump_curve_limits_apply_to_matrix_load_estimate_and_energy(self):
+        system = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
+        building = system.buildings[0]
+
+        building.htg_vals[0] = 1000.0
+        building.clg_vals[0] = 0.0
+        assert building.calc_r1_r2(0.0, 0) == pytest.approx(building.calc_r1_r2(9.0, 0))
+        assert building.calc_r1_r2(36.0, 0) == pytest.approx(building.calc_r1_r2(50.0, 0))
+
+        building.htg_vals[0] = 0.0
+        building.clg_vals[0] = 1000.0
+        assert building.calc_r1_r2(0.0, 0) == pytest.approx(building.calc_r1_r2(9.0, 0))
+        assert building.calc_r1_r2(36.0, 0) == pytest.approx(building.calc_r1_r2(50.0, 0))
+
+        building.min_eft = 0.0
+        building.max_eft = 50.0
+        building.generate_constant_cop_loads(ugt=20.0, beta=0.0)
+        expected_load = (
+            building.hp_htg.heating_ratio(0.0) * building.htg_vals
+            - building.hp_clg.cooling_ratio(50.0) * building.clg_vals
+        )
+        np.testing.assert_allclose(building.loads, expected_load)
+
+        building.t_in[:3] = [0.0, 20.0, 50.0]
+        building.htg_vals[:3] = 1000.0
+        building.clg_vals[:3] = 1000.0
+        building.calc_energy()
+        expected_heating_power = 1000.0 * (1.0 - building.hp_htg.heating_ratio(building.t_in[:3]))
+        expected_cooling_power = np.abs(1000.0 * (building.hp_clg.cooling_ratio(building.t_in[:3]) - 1.0))
+        np.testing.assert_allclose(building.power_hp_htg[:3], expected_heating_power)
+        np.testing.assert_allclose(building.power_hp_clg[:3], expected_cooling_power)
+
     def test_simulation_only_initializes_output_bookkeeping(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
         data = json.loads(f_path_json.read_text())

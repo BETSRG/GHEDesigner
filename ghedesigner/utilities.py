@@ -411,6 +411,25 @@ def load_input_file(f_path: Path) -> dict:
     return absolutize_file_paths(f_path, inplace=False)
 
 
+def bounded_quadratic_value(temperature, quadratic, linear, constant, minimum_temperature, maximum_temperature):
+    """Evaluate a quadratic while holding its value constant outside the fitted temperature range."""
+    bounded_temperature = np.clip(temperature, minimum_temperature, maximum_temperature)
+    return quadratic * bounded_temperature**2 + linear * bounded_temperature + constant
+
+
+def bounded_quadratic_slope(temperature, quadratic, linear, minimum_temperature, maximum_temperature):
+    """Evaluate the bounded quadratic derivative, which is zero outside the fitted range."""
+    temperature_array = np.asarray(temperature)
+    bounded_temperature = np.clip(temperature_array, minimum_temperature, maximum_temperature)
+    curve_slope = 2.0 * quadratic * bounded_temperature + linear
+    bounded_slope = np.where(
+        (temperature_array < minimum_temperature) | (temperature_array > maximum_temperature),
+        0.0,
+        curve_slope,
+    )
+    return float(bounded_slope) if np.isscalar(temperature) else bounded_slope
+
+
 class HPmodel:
     def __init__(self, hp_id: str, hp_data: dict, ugt):
         self.name = hp_id
@@ -445,8 +464,71 @@ class HPmodel:
             "maximum_curve_temperature", ugt + SIMULATION_CONSTANT_COP_COOLING_OFFSET
         )
 
+        if self.cooling_min_temp > self.cooling_max_temp:
+            raise ValueError("Cooling minimum curve temperature cannot exceed its maximum curve temperature.")
+        if self.heating_min_temp > self.heating_max_temp:
+            raise ValueError("Heating minimum curve temperature cannot exceed its maximum curve temperature.")
+
         self.m_flow_single_hp = hp_data["design_flow_rate"]
         self.design_pressure_loss = hp_data["design_pressure_loss"]
         self.pump_efficiency = hp_data["pump_efficiency"]
         self.design_htg_cap_single_hp = hp_data["heating_performance"]["design_cap"]
         self.design_clg_cap_single_hp = hp_data["cooling_performance"]["design_cap"]
+
+    def heating_ratio(self, temperature):
+        return bounded_quadratic_value(
+            temperature,
+            self.a_htg,
+            self.b_htg,
+            self.c_htg,
+            self.heating_min_temp,
+            self.heating_max_temp,
+        )
+
+    def cooling_ratio(self, temperature):
+        return bounded_quadratic_value(
+            temperature,
+            self.a_clg,
+            self.b_clg,
+            self.c_clg,
+            self.cooling_min_temp,
+            self.cooling_max_temp,
+        )
+
+    def heating_ratio_slope(self, temperature):
+        return bounded_quadratic_slope(
+            temperature,
+            self.a_htg,
+            self.b_htg,
+            self.heating_min_temp,
+            self.heating_max_temp,
+        )
+
+    def cooling_ratio_slope(self, temperature):
+        return bounded_quadratic_slope(
+            temperature,
+            self.a_clg,
+            self.b_clg,
+            self.cooling_min_temp,
+            self.cooling_max_temp,
+        )
+
+    def heating_capacity(self, temperature):
+        return bounded_quadratic_value(
+            temperature,
+            self.c1_htg,
+            self.c2_htg,
+            self.c3_htg,
+            self.heating_min_temp,
+            self.heating_max_temp,
+        )
+
+    def cooling_capacity(self, temperature):
+        return bounded_quadratic_value(
+            temperature,
+            self.c1_clg,
+            self.c2_clg,
+            self.c3_clg,
+            self.cooling_min_temp,
+            self.cooling_max_temp,
+        )

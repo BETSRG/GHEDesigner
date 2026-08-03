@@ -267,7 +267,7 @@ class ProcessLoads:
                     heating_temp = (1 - beta) * bldg_data["min_eft"] + beta * self.soil.ugt
                 else:
                     heating_temp = self.soil.ugt
-                q_extr_ratio = hp_htg.a_htg * heating_temp * heating_temp + hp_htg.b_htg * heating_temp + hp_htg.c_htg
+                q_extr_ratio = hp_htg.heating_ratio(heating_temp)
                 zone.COP_htg = 1.0 / (1.0 - q_extr_ratio)
             elif np.any(zone.q_htg_1yr != 0):
                 raise ValueError(f"Building '{bldg_id}' is missing 'heating_cop'.")
@@ -284,7 +284,7 @@ class ProcessLoads:
                     cooling_temp = (1 - beta) * bldg_data["max_eft"] + beta * self.soil.ugt
                 else:
                     cooling_temp = self.soil.ugt
-                q_rej_ratio = hp_clg.a_clg * cooling_temp * cooling_temp + hp_clg.b_clg * cooling_temp + hp_clg.c_clg
+                q_rej_ratio = hp_clg.cooling_ratio(cooling_temp)
                 zone.COP_clg = 1.0 / (q_rej_ratio - 1.0)
             elif np.any(zone.q_clg_1yr != 0):
                 raise ValueError(f"Building '{bldg_id}' is missing 'cooling_cop'.")
