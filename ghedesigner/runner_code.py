@@ -5,7 +5,6 @@ from ghedesigner.district_system import GHEHPSystem
 
 
 def main():
-
     input_file_path = Path(
         "..\\Documents\\research\\GHEDesigner csv results\\simple system\\simp_sys_const_COP_no_UGT.json"
     )

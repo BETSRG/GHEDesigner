@@ -173,7 +173,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             self.configure_design(ghe_dict["design"])
 
     def configure_geometry(self, geom: dict, is_pre_designed=False):
-
         if not is_pre_designed:
             geometry_map = {geom.name: geom for geom in DesignGeomType}
             self.geom_type = geometry_map.get(geom["method"].upper())
@@ -665,7 +664,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         return search, search_time, found_ghe
 
     def get_design_area(self) -> float:
-
         if not self.ghe_geometry_set:
             raise ValueError("A set of geometric constraints needs to be set before a design area can be defined.")
 

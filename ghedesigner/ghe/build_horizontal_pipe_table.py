@@ -2,6 +2,7 @@ import json
 import multiprocessing
 import time
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import numpy as np
 
@@ -33,6 +34,27 @@ class MockSoil:
 def table_contains_case(table: dict, key: tuple[float, ...]) -> bool:
     """Return whether a response table contains the serialized parameter tuple."""
     return float_tuple_to_string(key) in table
+
+
+def write_library_atomically(data: dict, output_path: Path) -> None:
+    """Serialize a library beside its destination and replace the destination only after success."""
+    temporary_path = None
+    try:
+        with NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=output_path.parent,
+            prefix=f".{output_path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temporary_file:
+            temporary_path = Path(temporary_file.name)
+            json.dump(data, temporary_file)
+        temporary_path.replace(output_path)
+    except Exception:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+        raise
 
 
 def worker_single(args):
@@ -274,8 +296,7 @@ def main():
         "table_parallel": table_parallel,
     }
 
-    with output_path.open("wb") as f:
-        json.dump(data, f)
+    write_library_atomically(data, output_path)
 
     print(f"Done. Saved updated library to '{output_path}' in {time.perf_counter() - t_start:.2f}s")
 
