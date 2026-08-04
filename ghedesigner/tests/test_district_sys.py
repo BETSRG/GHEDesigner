@@ -10,6 +10,7 @@ import pytest
 from jsonschema.exceptions import ValidationError
 from pandas.testing import assert_frame_equal
 
+from ghedesigner.constants import TWO_PI
 from ghedesigner.district_system import (
     GHX,
     CoupledHorizontalPipe,
@@ -19,6 +20,7 @@ from ghedesigner.district_system import (
     timestep_params_generator,
 )
 from ghedesigner.enums import DesignGeomType, SimCompType
+from ghedesigner.ghe.horizontal_pipe_heat_exchange import calc_pipe_wall_resistance
 from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads, Zone, enforce_minimum_timestep
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Soil
@@ -152,6 +154,36 @@ class TestDistrictSys(GHEBaseTest):
         )
         aggregator.shift_and_add(2.0, 180.0, 1)
         assert aggregator.energy_bins[0] == pytest.approx(360.0)
+
+    def test_horizontal_pipe_response_uses_configured_conductivity(self):
+        source_path = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
+        standard_system = GHEHPSystem(source_path)
+        modified_data = load_input_file(source_path)
+        pipe_name = "building1_building2_line"
+        modified_data["horizontal_piping"][pipe_name]["pipe"]["conductivity"] = 0.01
+
+        with TemporaryDirectory() as tmp_dir:
+            modified_path = Path(tmp_dir) / "low_conductivity_horizontal.json"
+            modified_path.write_text(json.dumps(modified_data))
+            low_conductivity_system = GHEHPSystem(modified_path)
+
+        standard_pipe = next(comp for comp in standard_system.components if comp.name == pipe_name)
+        low_conductivity_pipe = next(comp for comp in low_conductivity_system.components if comp.name == pipe_name)
+
+        standard_wall_resistance = calc_pipe_wall_resistance(
+            Pipe.init_single_u_tube(
+                inner_diameter=0.1016,
+                outer_diameter=0.1116,
+                shank_spacing=0.0,
+                roughness=1e-6,
+                conductivity=0.4,
+                rho_cp=1542000,
+            )
+        )
+        assert standard_pipe.beta == pytest.approx(TWO_PI * 2.0 * standard_wall_resistance)
+        assert low_conductivity_pipe.beta == pytest.approx(40.0 * standard_pipe.beta)
+        assert standard_pipe.q_prime_interp(0.0) == pytest.approx(1.0 / 0.344)
+        assert low_conductivity_pipe.q_prime_interp(0.0) == pytest.approx(1.0 / 12.0)
 
     def test_coupled_loadagg_uses_neighbor_ground_temperature(self):
         time_array = np.array([0.0, 1.0, 2.0])

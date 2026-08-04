@@ -33,11 +33,12 @@ from ghedesigner.constants import (
 )
 from ghedesigner.enums import CentralLoopType, DesignGeomType, SimCompType, SourceSinkOpMode
 from ghedesigner.ghe.domains import polygonal_land_constraint_multi_field
+from ghedesigner.ghe.horizontal_pipe_heat_exchange import calc_pipe_wall_resistance
 from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads
 from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Soil
-from ghedesigner.utilities import HPmodel, float_tuple_to_string, get_loads, load_input_file
+from ghedesigner.utilities import HPmodel, get_loads, load_input_file
 
 
 class DynamicAggregator:
@@ -1771,6 +1772,16 @@ class GHEHPSystem:
             # Cast the NumPy float back to a native Python float
             return float(array[idx])
 
+        def get_nearest_beta_key(table, beta, beta_index, fixed_parameters):
+            candidates = []
+            for key in table:
+                parameters = tuple(float(value) for value in key.split("_"))
+                if all(isclose(parameters[index], target) for index, target in fixed_parameters):
+                    candidates.append((abs(parameters[beta_index] - beta), key))
+            if not candidates:
+                raise ValueError("The horizontal response library has no case for the selected pipe parameters.")
+            return min(candidates)[1]
+
         isolated_pipes = []
         coupled_pipes_dict = {}
 
@@ -1793,17 +1804,22 @@ class GHEHPSystem:
                     rho_cp=h_data["pipe"]["rho_cp"],
                 )
 
-                r_pipe = 0.1  # TODO: Placeholder: update to actual resistance later
+                r_pipe = calc_pipe_wall_resistance(h_pipe)
                 beta = r_pipe * (TWO_PI * h_soil.k)
 
                 target_d = get_nearest(h_data["trench_depth"], np.array(horiz_axes["depths"], dtype=float))
-                target_beta = get_nearest(beta, np.array(horiz_axes["betas"], dtype=float))
                 target_r = get_nearest(h_pipe.r_out, np.array(horiz_axes["radii"], dtype=float))
                 target_k = get_nearest(h_soil.k, np.array(horiz_axes["soil_ks"], dtype=float))
 
                 this_horiz: IsolatedHorizontalPipe | CoupledHorizontalPipe
                 if is_isolated:
-                    q_prime_data = table_single[float_tuple_to_string((target_d, target_beta, target_r, target_k))]
+                    response_key = get_nearest_beta_key(
+                        table_single,
+                        beta,
+                        beta_index=1,
+                        fixed_parameters=((0, target_d), (2, target_r), (3, target_k)),
+                    )
+                    q_prime_data = table_single[response_key]
                     q_prime_interp = interpolate.interp1d(
                         q_prime_data["x"], q_prime_data["y"], kind="cubic", fill_value="extrapolate"
                     )
@@ -1833,9 +1849,13 @@ class GHEHPSystem:
 
                 elif is_coupled:
                     target_b = get_nearest(h_data["spacing"], np.array(horiz_axes["spacings"], dtype=float))
-                    q_prime_data = table_parallel[
-                        float_tuple_to_string((target_d, target_b, target_beta, target_r, target_k))
-                    ]
+                    response_key = get_nearest_beta_key(
+                        table_parallel,
+                        beta,
+                        beta_index=2,
+                        fixed_parameters=((0, target_d), (1, target_b), (3, target_r), (4, target_k)),
+                    )
+                    q_prime_data = table_parallel[response_key]
                     q_prime_even = interpolate.interp1d(
                         q_prime_data["x1"], q_prime_data["y1"], kind="cubic", fill_value="extrapolate"
                     )
