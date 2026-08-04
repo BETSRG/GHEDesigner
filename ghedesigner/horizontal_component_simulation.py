@@ -1,17 +1,19 @@
 import itertools
+import json
 import multiprocessing
-import pickle
 import time
 from importlib import resources
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy import interpolate
 
 from ghedesigner.district_system import CoupledHorizontalPipe, IsolatedHorizontalPipe
 from ghedesigner.enums import CentralLoopType
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Soil
+from ghedesigner.utilities import float_tuple_to_string
 
 # Global variable to hold the library data for each worker process
 global_lib_data = None
@@ -20,14 +22,16 @@ global_lib_data = None
 def init_worker():
     """Initializes the worker process by loading the interpolation library once into memory."""
     global global_lib_data  # noqa: PLW0603
-    with resources.files("ghedesigner.ghe").joinpath("unified_horizontal_library.pkl").open("rb") as f:
-        global_lib_data = pickle.load(f)  # noqa: S301
+    with resources.files("ghedesigner.ghe").joinpath("unified_horizontal_library.json").open("rb") as f:
+        global_lib_data = json.load(f)
 
 
 def get_nearest(value, array):
     """Helper function identical to the main system solver for snapping to grid keys."""
-    idx = (np.abs(array - value)).argmin()
-    return float(array[idx])
+    # Convert the JSON list back into a NumPy array for element-wise math
+    np_array = np.array(array, dtype=float)
+    idx = (np.abs(np_array - value)).argmin()
+    return float(np_array[idx])
 
 
 def run_horizontal_simulation(config):
@@ -43,6 +47,9 @@ def run_horizontal_simulation(config):
         # Create a fractional time array
         time_array = np.linspace(0, num_hours, total_steps, endpoint=False)
         num_timesteps = len(time_array)
+
+        base_dt_sec = float((time_array[1] - time_array[0]) * 3600.0) if num_timesteps > 1 else 3600.0
+        time_step_params = (base_dt_sec, True)
 
         step_hour = config.get("step_hour", 1)
         mass_flow = config.get("mass_flow", 22)
@@ -85,7 +92,11 @@ def run_horizontal_simulation(config):
         steel_cp = 500
 
         if not is_coupled:
-            q_prime_interp = table_single[(target_d, target_beta, target_r, target_k)]
+            q_prime_data = table_single[float_tuple_to_string((target_d, target_beta, target_r, target_k))]
+            q_prime_interp = interpolate.interp1d(
+                q_prime_data["x"], q_prime_data["y"], kind="cubic", fill_value="extrapolate"
+            )
+
             horiz_pipe = IsolatedHorizontalPipe(
                 name=f"{config['run_name']}_pipe",
                 length=config["length"],
@@ -103,12 +114,16 @@ def run_horizontal_simulation(config):
                 ugt_amp2=config.get("ugt_amp2", 0.0),
                 ugt_phase2=config.get("ugt_phase2", 0.0),
                 depth=config["depth"],
+                time_step_params=time_step_params,
                 load_method=load_method,
             )
 
+            cap_mult = config.get("capacitance_multiplier", 1.0)
             vol_steel_seg = np.pi * (r_out_steel**2 - r_in_steel**2) * horiz_pipe.L_seg
             c_steel_seg = vol_steel_seg * steel_density * steel_cp
-            horiz_pipe.C_f_seg += c_steel_seg
+            horiz_pipe.C_f_seg += c_steel_seg * cap_mult
+
+            # horiz_pipe.C_f_seg = 0
 
             horiz_pipe.row_index = 0
             horiz_pipe.matrix_size = 3 * horiz_pipe.num_segments + 1
@@ -121,7 +136,14 @@ def run_horizontal_simulation(config):
 
         else:
             target_b = get_nearest(config["spacing"], horiz_axes["spacings"])
-            q_prime_even, q_prime_odd = table_parallel[(target_d, target_b, target_beta, target_r, target_k)]
+            q_prime_data = table_parallel[float_tuple_to_string((target_d, target_b, target_beta, target_r, target_k))]
+
+            q_prime_even = interpolate.interp1d(
+                q_prime_data["x1"], q_prime_data["y1"], kind="cubic", fill_value="extrapolate"
+            )
+            q_prime_odd = interpolate.interp1d(
+                q_prime_data["x2"], q_prime_data["y2"], kind="cubic", fill_value="extrapolate"
+            )
 
             pipe1 = CoupledHorizontalPipe(
                 name=f"{config['run_name']}_branch_A",
@@ -141,6 +163,7 @@ def run_horizontal_simulation(config):
                 ugt_amp2=config.get("ugt_amp2_A", config.get("ugt_amp2", 0.0)),
                 ugt_phase2=config.get("ugt_phase2_A", config.get("ugt_phase2", 0.0)),
                 depth=config["depth"],
+                time_step_params=time_step_params,
                 load_method=load_method,
             )
             pipe2 = CoupledHorizontalPipe(
@@ -161,6 +184,7 @@ def run_horizontal_simulation(config):
                 ugt_amp2=config.get("ugt_amp2_B", config.get("ugt_amp2", 0.0)),
                 ugt_phase2=config.get("ugt_phase2_B", config.get("ugt_phase2", 0.0)),
                 depth=config["depth"],
+                time_step_params=time_step_params,
                 load_method=load_method,
             )
 
@@ -403,11 +427,11 @@ if __name__ == "__main__":
         single_out_dir.mkdir(parents=True, exist_ok=True)
 
         single_config = {
-            "run_name": "Vilnius_DH_Experiment_v4",
+            "run_name": "Vilnius_DH_Experiment_12_min_timestep_big_seg",
             "output_dir": str(single_out_dir),
             "type": "ISOLATED",
             "length": 470.0,
-            "segments": 47,
+            "segments": 120,
             "depth": 1.0,
             "inner_diameter": 0.300,
             "outer_diameter": 0.450,
@@ -415,6 +439,7 @@ if __name__ == "__main__":
             "soil_k": 1.5,
             "ugt_avg": 7.0,
             "mass_flow": 2.76,
+            "capacitance_multiplier": 1,
             "load_method": "hourlyloadagg",
             "t_in_csv_path": str(
                 base_dir
@@ -424,7 +449,7 @@ if __name__ == "__main__":
                 / "v2_inlet_temps.csv"
             ),
             "num_hours": 8760,
-            "steps_per_hour": 20,
+            "steps_per_hour": 5,
         }
 
         print("--- Running Single Horizontal Pipe Simulation ---")

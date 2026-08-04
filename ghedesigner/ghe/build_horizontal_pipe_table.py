@@ -1,5 +1,6 @@
 import json
 import multiprocessing
+import re
 import time
 from pathlib import Path
 
@@ -107,13 +108,13 @@ def main():
     output_path = Path(__file__).with_name(HORZ_LIBRARY_FILENAME)
 
     # Define the parameters
-    depths = np.array([1.0, 1.5, 5.0, 15.0])
+    depths = np.array([1.5, 5.0, 15.0])
     spacings = np.array([0.25, 0.5, 1.0])
-    betas = np.array([0.344, 12.0])  # add 12.0
+    betas = np.array([0.344, 12.0])  # add 1.2566
     soil_ks = np.array([1.0, 1.5, 2.0, 2.5])
 
     # Input as nominal diameters, then mathematically convert to radii for the solver grid
-    diameters = np.array([0.0762, 0.1016, 0.1524, 0.3])  # add 0.3
+    diameters = np.array([0.0762, 0.1016, 0.1524, 0.3])  # add 0.2032
     radii = diameters / 2.0
 
     table_single = {}
@@ -131,7 +132,8 @@ def main():
 
     # Single format: (depth, beta, radius, soil_k)
     force_recalc_single = [
-        # (1.0, 12.0, 0.3 / 2.0, 1.5),
+        # (1.5, 1.2566, 0.3 / 2.0, 2.0),
+        # (1.5, 12.0, 0.3 / 2.0, 2.0),
     ]
 
     # 1. Load file if it exists
@@ -190,7 +192,8 @@ def main():
             for beta in betas
             for r in radii
             for k_s in soil_ks
-            if (d, beta, r, k_s) not in table_single and (d, beta, r, k_s) not in force_recalc_single
+            if float_tuple_to_string((d, beta, r, k_s)) not in table_single
+            and (d, beta, r, k_s) not in force_recalc_single
         ]
     )
 
@@ -202,7 +205,8 @@ def main():
             for beta in betas
             for r in radii
             for k_s in soil_ks
-            if (d, b, beta, r, k_s) not in table_parallel and (d, b, beta, r, k_s) not in force_recalc_parallel
+            if float_tuple_to_string((d, b, beta, r, k_s)) not in table_parallel
+            and (d, b, beta, r, k_s) not in force_recalc_parallel
         ]
     )
 
@@ -263,10 +267,26 @@ def main():
         "table_parallel": table_parallel,
     }
 
-    with output_path.open("wb") as f:
-        json.dump(data, f)
+    raw_json = json.dumps(data, indent=2)
 
-    print(f"Done. Saved updated library to '{output_path}' in {time.perf_counter() - t_start:.2f}s")
+    def format_arrays(match):
+        items = [item.strip() for item in match.group(1).split(",") if item.strip()]
+
+        line_length_limit = 5
+
+        if len(items) <= line_length_limit:
+            return "[" + ", ".join(items) + "]"
+
+        lines = []
+        for i in range(0, len(items), line_length_limit):
+            lines.append("        " + ", ".join(items[i : i + line_length_limit]))
+
+        return "[\n" + ",\n".join(lines) + "\n      ]"
+
+    compact_json = re.sub(r"\[\s+([0-9.,\s\-eE]+)\s+\]", format_arrays, raw_json)
+
+    with output_path.open("w") as f:
+        f.write(compact_json)
 
 
 if __name__ == "__main__":
