@@ -2,7 +2,6 @@ from pathlib import Path
 from ghedesigner.district_system import GHEHPSystem
 from time import time
 
-
 def main():
 
     input_file_path = Path("..\\demos\\simulate_2_pipe_ring_1_ghe_2_bldg_district_HOURLY.json")
@@ -13,7 +12,7 @@ def main():
     system.solve_system()
     end_time = time()
 
-    #system.create_output(output_file_path)
+    system.create_output(output_file_path)
 
     print(f"Total time taken: {end_time - start_time:.2f} seconds")
 

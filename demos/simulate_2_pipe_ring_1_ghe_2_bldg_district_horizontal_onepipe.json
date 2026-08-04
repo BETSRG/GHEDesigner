@@ -16,29 +16,9 @@
     {
         "type": "isolated_horizontal_pipe",
         "name": "hp_pir1"
-    },
-    {
-        "type": "isolated_horizontal_pipe",
-        "name": "hp_pir2"
-    },
-    {
-        "type": "isolated_horizontal_pipe",
-        "name": "hp_pir7"
-    },
-    {
-        "type": "isolated_horizontal_pipe",
-        "name": "hp_por1"
-    },
-    {
-        "type": "isolated_horizontal_pipe",
-        "name": "hp_por2"
-    },
-    {
-        "type": "isolated_horizontal_pipe",
-        "name": "hp_por7"
     }
   ],
-  "ground_temperature_model":{
+  "ground_temperature_model": {
     "annual_average": 15.0,
     "amplitude_1": 10.0,
     "phase_lag_1": 30.0,
@@ -47,7 +27,7 @@
   },
   "horizontal_piping": {
   "hp_pir1": {
-    "length": 50.0,
+    "length": 10.0,
     "trench_depth": 1.5,
     "soil": {
       "conductivity": 2.0,
@@ -64,7 +44,7 @@
   },
 
   "hp_pir2": {
-    "length": 50.0,
+    "length": 10.0,
     "trench_depth": 1.5,
     "soil": {
       "conductivity": 2.0,
@@ -81,7 +61,7 @@
   },
 
   "hp_pir7": {
-    "length": 50.0,
+    "length": 10.0,
     "trench_depth": 1.5,
     "soil": {
       "conductivity": 2.0,
@@ -98,7 +78,7 @@
   },
 
   "hp_por1": {
-    "length": 50.0,
+    "length": 10.0,
     "trench_depth": 1.5,
     "soil": {
       "conductivity": 2.0,
@@ -115,7 +95,7 @@
   },
 
   "hp_por2": {
-    "length": 50.0,
+    "length": 10.0,
     "trench_depth": 1.5,
     "soil": {
       "conductivity": 2.0,
@@ -131,7 +111,7 @@
     }
   },
   "hp_por7": {
-    "length": 50.0,
+    "length": 10.0,
     "trench_depth": 1.5,
     "soil": {
       "conductivity": 2.0,
@@ -529,7 +509,7 @@
       "type": "main_ir",
       "node_in_name": "n4",
       "node_out_name": "n8",
-      "length": 50.0,
+      "length": 10.0,
       "nominal_mass_flow": 32.58,
       "diameter": 0.177,
       "horizontal_pipe": "hp_pir1"
@@ -539,7 +519,7 @@
       "type": "main_ir",
       "node_in_name": "n8",
       "node_out_name": "n9",
-      "length": 50.0,
+      "length": 10.0,
       "nominal_mass_flow": 32.58,
       "diameter": 0.177,
       "horizontal_pipe": "hp_pir2"
@@ -585,7 +565,7 @@
       "type": "main_ir",
       "node_in_name": "nf",
       "node_out_name": "n4",
-      "length": 50.0,
+      "length": 10.0,
       "nominal_mass_flow": 32.58,
       "diameter": 0.177,
       "horizontal_pipe": "hp_pir7"
@@ -595,7 +575,7 @@
       "type": "main_or",
       "node_in_name": "n1",
       "node_out_name": "n5",
-      "length": 50.0,
+      "length": 10.0,
       "nominal_mass_flow": 32.58,
       "diameter": 0.177,
       "horizontal_pipe": "hp_por1"
@@ -605,7 +585,7 @@
       "type": "main_or",
       "node_in_name": "n5",
       "node_out_name": "n12",
-      "length": 50.0,
+      "length": 10.0,
       "nominal_mass_flow": 32.58,
       "diameter": 0.177,
       "horizontal_pipe": "hp_por2"
@@ -651,7 +631,7 @@
       "type": "main_or",
       "node_in_name": "nb",
       "node_out_name": "n1",
-      "length": 50.0,
+      "length": 10.0,
       "nominal_mass_flow": 32.58,
       "diameter": 0.177,
       "horizontal_pipe": "hp_por7"
