@@ -1,5 +1,6 @@
 import json
 import multiprocessing
+import re
 import time
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -36,6 +37,26 @@ def table_contains_case(table: dict, key: tuple[float, ...]) -> bool:
     return float_tuple_to_string(key) in table
 
 
+def format_library_json(data: dict) -> str:
+    """Serialize library arrays compactly while keeping the surrounding JSON readable."""
+    raw_json = json.dumps(data, indent=2)
+
+    def format_arrays(match):
+        items = [item.strip() for item in match.group(1).split(",") if item.strip()]
+        line_length_limit = 5
+
+        if len(items) <= line_length_limit:
+            return "[" + ", ".join(items) + "]"
+
+        lines = []
+        for i in range(0, len(items), line_length_limit):
+            lines.append("        " + ", ".join(items[i : i + line_length_limit]))
+
+        return "[\n" + ",\n".join(lines) + "\n      ]"
+
+    return re.sub(r"\[\s+([0-9.,\s\-eE]+)\s+\]", format_arrays, raw_json)
+
+
 def write_library_atomically(data: dict, output_path: Path) -> None:
     """Serialize a library beside its destination and replace the destination only after success."""
     temporary_path = None
@@ -49,7 +70,7 @@ def write_library_atomically(data: dict, output_path: Path) -> None:
             delete=False,
         ) as temporary_file:
             temporary_path = Path(temporary_file.name)
-            json.dump(data, temporary_file)
+            temporary_file.write(format_library_json(data))
         temporary_path.replace(output_path)
     except Exception:
         if temporary_path is not None:
@@ -163,7 +184,8 @@ def main():
 
     # Single format: (depth, beta, radius, soil_k)
     force_recalc_single = [
-        # (1.0, 12.0, 0.3 / 2.0, 1.5),
+        # (1.5, 1.2566, 0.3 / 2.0, 2.0),
+        # (1.5, 12.0, 0.3 / 2.0, 2.0),
     ]
 
     # 1. Load file if it exists

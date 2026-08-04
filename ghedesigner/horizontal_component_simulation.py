@@ -118,9 +118,10 @@ def run_horizontal_simulation(config):
                 load_method=load_method,
             )
 
+            cap_mult = config.get("capacitance_multiplier", 1.0)
             vol_steel_seg = np.pi * (r_out_steel**2 - r_in_steel**2) * horiz_pipe.L_seg
             c_steel_seg = vol_steel_seg * steel_density * steel_cp
-            horiz_pipe.C_f_seg += c_steel_seg
+            horiz_pipe.C_f_seg += c_steel_seg * cap_mult
 
             horiz_pipe.row_index = 0
             horiz_pipe.matrix_size = 3 * horiz_pipe.num_segments + 1
@@ -413,11 +414,11 @@ def run_single_case(output_dir: Path, inlet_temperature_csv: Path | None = None)
     init_worker()
     output_dir.mkdir(parents=True, exist_ok=True)
     single_config = {
-        "run_name": "Vilnius_DH_Experiment_v4",
+        "run_name": "Vilnius_DH_Experiment_12_min_timestep_big_seg",
         "output_dir": str(output_dir),
         "type": "ISOLATED",
         "length": 470.0,
-        "segments": 47,
+        "segments": 120,
         "depth": 1.0,
         "inner_diameter": 0.300,
         "outer_diameter": 0.450,
@@ -425,9 +426,10 @@ def run_single_case(output_dir: Path, inlet_temperature_csv: Path | None = None)
         "soil_k": 1.5,
         "ugt_avg": 7.0,
         "mass_flow": 2.76,
+        "capacitance_multiplier": 1.0,
         "load_method": "hourlyloadagg",
         "num_hours": 8760,
-        "steps_per_hour": 20,
+        "steps_per_hour": 5,
     }
     if inlet_temperature_csv is not None:
         single_config["t_in_csv_path"] = str(inlet_temperature_csv)
