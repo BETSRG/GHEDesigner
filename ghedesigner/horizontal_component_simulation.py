@@ -214,8 +214,8 @@ def run_horizontal_simulation(config):
             if len(df_inlet) < num_hours:
                 raise ValueError(f"CSV only has {len(df_inlet)} rows, but simulation requires {num_hours}.")
 
-            # Interpolate the hourly CSV data to our new fractional timestep array
-            csv_hours = np.arange(len(df_inlet))
+            # Each hourly row supplies the temperature at the end of its solved interval.
+            csv_hours = np.arange(1, len(df_inlet) + 1)
             csv_temps = df_inlet["T_in"].to_numpy()
             t_in_array = np.interp(time_array, csv_hours, csv_temps)
 

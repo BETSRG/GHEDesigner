@@ -83,3 +83,41 @@ def test_horizontal_component_simulator_uses_json_library(tmp_path, case_type):
     output = pd.read_csv(tmp_path / f"{run_name}.csv")
     assert len(output) == 3
     assert output["Time [hr]"].tolist() == pytest.approx([1.0, 2.0, 3.0])
+
+
+@pytest.mark.parametrize(
+    ("steps_per_hour", "expected_inlet_temperatures"),
+    [
+        (1, [10.0, 20.0, 30.0]),
+        (2, [10.0, 10.0, 15.0, 20.0, 25.0, 30.0]),
+    ],
+)
+def test_horizontal_component_csv_rows_align_with_solved_intervals(
+    tmp_path, steps_per_hour, expected_inlet_temperatures
+):
+    init_worker()
+    run_name = f"csv_inlet_{steps_per_hour}"
+    inlet_path = tmp_path / "inlet.csv"
+    pd.DataFrame({"T_in": [10.0, 20.0, 30.0]}).to_csv(inlet_path, index=False)
+    config = {
+        "run_name": run_name,
+        "output_dir": str(tmp_path),
+        "type": "ISOLATED",
+        "length": 10.0,
+        "segments": 1,
+        "depth": 1.5,
+        "inner_diameter": 0.07,
+        "outer_diameter": 0.0762,
+        "beta": 0.344,
+        "soil_k": 1.5,
+        "mass_flow": 0.5,
+        "num_hours": 3,
+        "steps_per_hour": steps_per_hour,
+        "t_in_csv_path": str(inlet_path),
+    }
+
+    name, success, error = run_horizontal_simulation(config)
+
+    assert (name, success, error) == (run_name, True, None)
+    output = pd.read_csv(tmp_path / f"{run_name}.csv")
+    assert output[f"{run_name}_pipe_Inlet [C]"].tolist() == pytest.approx(expected_inlet_temperatures)
