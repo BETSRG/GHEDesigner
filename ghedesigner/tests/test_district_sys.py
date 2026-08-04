@@ -232,6 +232,31 @@ class TestDistrictSys(GHEBaseTest):
             with pytest.raises(ValidationError):
                 validate_input_file(legacy_path)
 
+    def test_disabled_horizontal_simulation_does_not_require_ground_temperature_model(self):
+        source_path = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
+        data = load_input_file(source_path)
+        data["simulation_control"]["horizontal_simulation_considered"] = False
+        del data["soil"]["ground_temperature_model"]
+
+        with TemporaryDirectory() as tmp_dir:
+            disabled_path = Path(tmp_dir) / "horizontal_disabled.json"
+            disabled_path.write_text(json.dumps(data))
+            validate_input_file(disabled_path)
+            system = GHEHPSystem(disabled_path)
+
+        horizontal_types = (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE)
+        assert all(component.comp_type not in horizontal_types for component in system.components)
+        expected_component_names = [
+            component["name"]
+            for component in data["topology"]
+            if SimCompType[component["type"].upper()] not in horizontal_types
+        ]
+        assert [component.name for component in system.components] == expected_component_names
+
+        system.num_timesteps = 2
+        system.solve_system_standard()
+        assert all(np.all(np.isfinite(component.t_in[:2])) for component in system.components)
+
     def test_coupled_loadagg_uses_neighbor_ground_temperature(self):
         time_array = np.array([0.0, 1.0, 2.0])
         pipe = Pipe.init_single_u_tube(

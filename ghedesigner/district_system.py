@@ -1630,7 +1630,7 @@ class GHEHPSystem:
 
         self.use_horizontal = json_data.get("simulation_control", {}).get("horizontal_simulation_considered", False)
 
-        if horiz_data and not ugt_data:
+        if self.use_horizontal and horiz_data and not ugt_data:
             raise ValueError("A 'soil.ground_temperature_model' block is required when simulating horizontal piping.")
 
         horiz_axes = {}
