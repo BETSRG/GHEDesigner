@@ -541,3 +541,59 @@ class TestDistrictSys(GHEBaseTest):
                         validate_input_file(invalid_path)
                     with pytest.raises(ValueError, match="horizontal_segments must be a positive integer"):
                         GHEHPSystem(invalid_path)
+
+    def test_coupled_horizontal_pipe_requires_complete_coupling_fields(self):
+        f_path_json = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
+        for missing_field in ("coupled_to", "spacing"):
+            with self.subTest(missing_field=missing_field):
+                data = load_input_file(f_path_json)
+                del data["horizontal_piping"]["horiz_supply_line"][missing_field]
+
+                with TemporaryDirectory() as tmp_dir:
+                    invalid_path = Path(tmp_dir) / "incomplete_coupled_pipe.json"
+                    invalid_path.write_text(json.dumps(data))
+
+                    with pytest.raises(ValidationError):
+                        validate_input_file(invalid_path)
+                    with pytest.raises(ValueError, match=rf"missing required field.*{missing_field}"):
+                        GHEHPSystem(invalid_path)
+
+    def test_coupled_horizontal_pipes_must_reference_each_other(self):
+        f_path_json = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
+        data = load_input_file(f_path_json)
+        data["horizontal_piping"]["horiz_return_line"]["coupled_to"] = "horiz_return_line"
+
+        with TemporaryDirectory() as tmp_dir:
+            invalid_path = Path(tmp_dir) / "nonreciprocal_coupled_pipe.json"
+            invalid_path.write_text(json.dumps(data))
+
+            with pytest.raises(ValueError, match="must reference each other"):
+                GHEHPSystem(invalid_path)
+
+    def test_coupled_horizontal_pipes_must_have_compatible_properties(self):
+        f_path_json = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
+        data = load_input_file(f_path_json)
+        data["horizontal_piping"]["horiz_return_line"]["spacing"] = 0.5
+
+        with TemporaryDirectory() as tmp_dir:
+            invalid_path = Path(tmp_dir) / "incompatible_coupled_pipe.json"
+            invalid_path.write_text(json.dumps(data))
+
+            with pytest.raises(ValueError, match="matching properties: spacing"):
+                GHEHPSystem(invalid_path)
+
+    def test_coupled_horizontal_partner_lookup_is_case_insensitive(self):
+        f_path_json = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
+        data = load_input_file(f_path_json)
+        data["horizontal_piping"]["horiz_supply_line"]["coupled_to"] = "HORIZ_RETURN_LINE"
+        data["horizontal_piping"]["horiz_return_line"]["coupled_to"] = "HORIZ_SUPPLY_LINE"
+
+        with TemporaryDirectory() as tmp_dir:
+            valid_path = Path(tmp_dir) / "case_insensitive_coupled_pipe.json"
+            valid_path.write_text(json.dumps(data))
+            system = GHEHPSystem(valid_path)
+
+        supply_pipe = next(comp for comp in system.components if comp.name == "horiz_supply_line")
+        return_pipe = next(comp for comp in system.components if comp.name == "horiz_return_line")
+        assert supply_pipe.coupled_pipe is return_pipe
+        assert return_pipe.coupled_pipe is supply_pipe

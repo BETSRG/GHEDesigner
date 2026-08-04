@@ -1796,6 +1796,18 @@ class GHEHPSystem:
                 if not is_isolated and not is_coupled:
                     continue
 
+                if is_coupled:
+                    missing_fields = [field for field in ("coupled_to", "spacing") if field not in h_data]
+                    if missing_fields:
+                        missing_list = ", ".join(missing_fields)
+                        raise ValueError(f"Coupled pipe '{h_id}' is missing required field(s): {missing_list}.")
+                    if (
+                        isinstance(h_data["spacing"], bool)
+                        or not isinstance(h_data["spacing"], (int, float))
+                        or h_data["spacing"] <= 0.0
+                    ):
+                        raise ValueError(f"Coupled pipe '{h_id}' spacing must be a positive number.")
+
                 h_soil = Soil(k=h_data["soil"]["conductivity"], rho_cp=h_data["soil"]["rho_cp"], ugt=0)
                 h_pipe = Pipe.init_single_u_tube(
                     inner_diameter=h_data["pipe"]["inner_diameter"],
@@ -1889,23 +1901,43 @@ class GHEHPSystem:
                     )
                     coupled_pipes_dict[h_id] = this_horiz
 
-            # PASS 2: Link the Coupled Pipes
+            # PASS 2: Validate and link the coupled pipes
+            coupled_pipe_names = {name.upper(): name for name in coupled_pipes_dict}
             for h_id, pipe in coupled_pipes_dict.items():
                 partner_id = horiz_data[h_id].get("coupled_to")
+                partner_key = coupled_pipe_names.get(str(partner_id).upper())
 
-                if not partner_id or partner_id not in coupled_pipes_dict:
+                if partner_key is None:
                     raise ValueError(
                         f"Coupled pipe '{h_id}' is missing a valid 'coupled_to' partner in the horizontal_piping block."
                     )
+                if partner_key == h_id:
+                    raise ValueError(f"Coupled pipe '{h_id}' cannot be coupled to itself.")
 
-                partner_pipe = coupled_pipes_dict[partner_id]
+                partner_data = horiz_data[partner_key]
+                reciprocal_partner = partner_data.get("coupled_to")
+                if not isinstance(reciprocal_partner, str) or reciprocal_partner.upper() != h_id.upper():
+                    raise ValueError(f"Coupled pipes '{h_id}' and '{partner_key}' must reference each other.")
 
-                if pipe.length != partner_pipe.length:
+                h_data = horiz_data[h_id]
+                incompatible_fields = []
+                for field in ("length", "trench_depth", "spacing"):
+                    if not isclose(h_data[field], partner_data[field]):
+                        incompatible_fields.append(field)
+                if h_data.get("counter_flow", False) != partner_data.get("counter_flow", False):
+                    incompatible_fields.append("counter_flow")
+                if h_data["soil"] != partner_data["soil"]:
+                    incompatible_fields.append("soil")
+                if h_data["pipe"] != partner_data["pipe"]:
+                    incompatible_fields.append("pipe")
+                if incompatible_fields:
+                    incompatible_list = ", ".join(incompatible_fields)
                     raise ValueError(
-                        f"Coupled pipes '{pipe.name}' and '{partner_pipe.name}' must have identical lengths."
+                        f"Coupled pipes '{h_id}' and '{partner_key}' must have matching properties:"
+                        f" {incompatible_list}."
                     )
 
-                pipe.coupled_pipe = partner_pipe
+                pipe.coupled_pipe = coupled_pipes_dict[partner_key]
 
         # Flatten into the master horizontal list
         horizontal_pipes = isolated_pipes + list(coupled_pipes_dict.values())

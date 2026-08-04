@@ -1477,14 +1477,15 @@
             "minimum": 0
           },
           "coupled_to": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "counter_flow": {
             "type": "boolean"
           },
           "spacing": {
             "type": "number",
-            "minimum": 0
+            "exclusiveMinimum": 0
           },
           "soil": {
             "type": "object",
@@ -1504,6 +1505,20 @@
           }
         },
         "required": ["length", "trench_depth", "soil", "pipe"],
+        "allOf": [
+          {
+            "if": {
+              "anyOf": [
+                { "required": ["coupled_to"] },
+                { "required": ["spacing"] },
+                { "required": ["counter_flow"] }
+              ]
+            },
+            "then": {
+              "required": ["coupled_to", "spacing"]
+            }
+          }
+        ],
         "additionalProperties": false
       }
     }
