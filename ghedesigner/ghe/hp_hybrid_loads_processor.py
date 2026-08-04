@@ -3,7 +3,7 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
-from ghedesigner.enums import BHType, SimCompType
+from ghedesigner.enums import BHType, FlowConfigType, SimCompType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.ground_loads import HybridLoad
@@ -162,7 +162,10 @@ class ProcessLoads:
         self.bhe_eq = None
 
         self.mass_flow_rate = None
+        self.mass_flow_borehole = None
         self.flow_type = None
+        self.bhe_type = None
+        self.num_boreholes = None
 
         self.common_time = None
 
@@ -193,22 +196,19 @@ class ProcessLoads:
         # Construct objects
         self.fluid = Fluid(fluid_data["fluid_name"], fluid_data["concentration_percent"], fluid_data["temperature"])
 
-        self.pipe = Pipe.init_single_u_tube(
-            inner_diameter=pipe_data["inner_diameter"],
-            outer_diameter=pipe_data["outer_diameter"],
-            shank_spacing=pipe_data["shank_spacing"],
-            roughness=pipe_data["roughness"],
-            conductivity=pipe_data["conductivity"],
-            rho_cp=pipe_data["rho_cp"],
-        )
+        self.bhe_type = BHType(pipe_data["arrangement"].upper())
+        self.pipe = Pipe.init_from_dict(self.bhe_type, pipe_data)
         self.soil = Soil(soil_data["conductivity"], soil_data["rho_cp"], soil_data["undisturbed_temp"])
         self.grout = Grout(grout_data["conductivity"], grout_data["rho_cp"])
+        self.num_boreholes = None
         if "pre_designed" in ghe_data:
+            pre_designed_data = ghe_data["pre_designed"]
             self.borehole = Borehole(
                 burial_depth=borehole_data["buried_depth"],
                 borehole_radius=borehole_data["diameter"] / 2.0,
-                borehole_height=ghe_data["pre_designed"]["H"],
+                borehole_height=pre_designed_data["H"],
             )
+            self.num_boreholes = self._pre_designed_borehole_count(pre_designed_data)
         elif "design" in ghe_data:
             self.borehole = Borehole(
                 burial_depth=borehole_data["buried_depth"],
@@ -219,9 +219,39 @@ class ProcessLoads:
             raise ValueError("Reference GHE contains neither a pre-designed GHE nor the definition to design one.")
         # mass flow rate
         self.mass_flow_rate = ghe_data["flow_rate"]
-        self.flow_type = ghe_data["flow_type"]
+        self.flow_type = FlowConfigType(ghe_data["flow_type"].upper())
 
         return self.fluid, self.pipe, self.grout, self.soil, self.borehole
+
+    @staticmethod
+    def _pre_designed_borehole_count(pre_designed_data):
+        arrangement = pre_designed_data["arrangement"].upper()
+        if arrangement == "MANUAL":
+            num_boreholes = len(pre_designed_data["x"])
+        elif arrangement == "RECTANGLE":
+            num_boreholes = (
+                pre_designed_data["boreholes_in_x_dimension"] * pre_designed_data["boreholes_in_y_dimension"]
+            )
+        else:
+            raise ValueError(f"Unsupported pre-designed GHE arrangement: {arrangement}")
+
+        if num_boreholes < 1:
+            raise ValueError("A pre-designed GHE must contain at least one borehole.")
+        return num_boreholes
+
+    def _get_mass_flow_borehole(self):
+        mass_flow = self.mass_flow_rate / 1000.0 * self.fluid.rho
+        if self.flow_type == FlowConfigType.BOREHOLE:
+            return mass_flow
+        if self.flow_type == FlowConfigType.SYSTEM:
+            if self.num_boreholes is None:
+                raise ValueError(
+                    "Hybrid preprocessing cannot convert SYSTEM flow to per-borehole flow for a sizable GHE "
+                    "because its borehole count is not known until after sizing. Use BOREHOLE flow or provide a "
+                    "pre-designed field."
+                )
+            return mass_flow / self.num_boreholes
+        raise ValueError(f"Unsupported GHE flow type: {self.flow_type}")
 
     def read_hp_load_from_json(self, json_data, beta=0.5):
         building_data = json_data["building"]
@@ -303,12 +333,11 @@ class ProcessLoads:
         # example: this assumes these objects are already assigned
         borehole = deepcopy(self.borehole)
 
-        bhe_type = BHType.SINGLEUTUBE
-        mass_flow_borehole = self.mass_flow_rate
+        self.mass_flow_borehole = self._get_mass_flow_borehole()
 
         self.bhe = get_bhe_object(
-            bhe_type,
-            mass_flow_borehole,
+            self.bhe_type,
+            self.mass_flow_borehole,
             self.fluid,
             borehole,
             self.pipe,

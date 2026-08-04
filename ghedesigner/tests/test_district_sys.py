@@ -3,6 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 from typing import Any, cast
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,7 @@ from ghedesigner.district_system import (
     IsolatedHorizontalPipe,
     timestep_params_generator,
 )
-from ghedesigner.enums import DesignGeomType, SimCompType
+from ghedesigner.enums import BHType, DesignGeomType, SimCompType
 from ghedesigner.ghe.horizontal_pipe_heat_exchange import calc_pipe_wall_resistance
 from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads, Zone, enforce_minimum_timestep
 from ghedesigner.ghe.pipe import Pipe
@@ -380,6 +381,98 @@ class TestDistrictSys(GHEBaseTest):
         assert reordered_processor.mass_flow_rate == pytest.approx(0.4)
         assert original_processor.soil.ugt == pytest.approx(original_data["soil"]["undisturbed_temp"])
         assert reordered_processor.soil.ugt == pytest.approx(original_data["soil"]["undisturbed_temp"])
+
+    def test_hybrid_reference_preserves_pipe_arrangement_and_converts_borehole_flow(self):
+        cases = [
+            ("Network_Sizing_3GHE_6HP_BUPCRS.json", BHType.SINGLEUTUBE),
+            ("find_design_bi_rectangle_double_u_tube_series.json", BHType.DOUBLEUTUBESERIES),
+            ("find_design_rectangle_double_u_tube.json", BHType.DOUBLEUTUBEPARALLEL),
+            ("find_design_rectangle_coaxial.json", BHType.COAXIAL),
+        ]
+
+        class FakeBhe:
+            def to_single(self):
+                return self
+
+            def calc_sts_g_functions(self):
+                pass
+
+        for pipe_demo, expected_type in cases:
+            with self.subTest(pipe_demo=pipe_demo):
+                data = load_input_file(self.demos_path / "Network_Sizing_3GHE_6HP_BUPCRS.json")
+                pipe_source = load_input_file(self.demos_path / pipe_demo)
+                pipe_data = next(iter(pipe_source["ground_heat_exchanger"].values()))["pipe"]
+                reference_ghe = data["ground_heat_exchanger"]["ghe_1"]
+                reference_ghe["pipe"] = pipe_data
+                reference_ghe["flow_rate"] = 0.8
+                captured = {}
+
+                def fake_get_bhe_object(bhe_type, mass_flow_borehole, *_args):
+                    captured["bhe_type"] = bhe_type
+                    captured["mass_flow_borehole"] = mass_flow_borehole
+                    return FakeBhe()
+
+                processor = ProcessLoads()
+                with patch(
+                    "ghedesigner.ghe.hp_hybrid_loads_processor.get_bhe_object",
+                    side_effect=fake_get_bhe_object,
+                ):
+                    processor.read_data_from_json_file(data)
+                    processor.prepare_bhe_for_hybrid()
+
+                assert processor.pipe.type == expected_type
+                assert captured["bhe_type"] == expected_type
+                assert captured["mass_flow_borehole"] == pytest.approx(0.8 / 1000.0 * processor.fluid.rho)
+
+    def test_hybrid_system_flow_uses_pre_designed_borehole_count(self):
+        data = load_input_file(self.demos_path / "Network_Sizing_3GHE_6HP_BUPCRS.json")
+        reference_ghe = data["ground_heat_exchanger"]["ghe_1"]
+        reference_ghe.pop("geometric_constraints")
+        reference_ghe.pop("design")
+        reference_ghe["pre_designed"] = {
+            "arrangement": "RECTANGLE",
+            "H": 100.0,
+            "boreholes_in_x_dimension": 2,
+            "boreholes_in_y_dimension": 3,
+            "spacing_in_x_dimension": 5.0,
+            "spacing_in_y_dimension": 5.0,
+        }
+        reference_ghe["flow_rate"] = 6.0
+        reference_ghe["flow_type"] = "SYSTEM"
+        captured = {}
+
+        class FakeBhe:
+            def to_single(self):
+                return self
+
+            def calc_sts_g_functions(self):
+                pass
+
+        def fake_get_bhe_object(_bhe_type, mass_flow_borehole, *_args):
+            captured["mass_flow_borehole"] = mass_flow_borehole
+            return FakeBhe()
+
+        processor = ProcessLoads()
+        with patch(
+            "ghedesigner.ghe.hp_hybrid_loads_processor.get_bhe_object",
+            side_effect=fake_get_bhe_object,
+        ):
+            processor.read_data_from_json_file(data)
+            processor.prepare_bhe_for_hybrid()
+
+        assert processor.num_boreholes == 6
+        expected_mass_flow = 6.0 / 6 / 1000.0 * processor.fluid.rho
+        assert captured["mass_flow_borehole"] == pytest.approx(expected_mass_flow)
+
+    def test_hybrid_system_flow_rejects_sizable_field_without_borehole_count(self):
+        data = load_input_file(self.demos_path / "Network_Sizing_3GHE_6HP_BUPCRS.json")
+        reference_ghe = data["ground_heat_exchanger"]["ghe_1"]
+        reference_ghe["flow_type"] = "SYSTEM"
+        processor = ProcessLoads()
+        processor.read_data_from_json_file(data)
+
+        with pytest.raises(ValueError, match="borehole count is not known until after sizing"):
+            processor.prepare_bhe_for_hybrid()
 
     def test_rowwise_spacing_bounds_use_constraint_intersection(self):
         def make_ghe(min_spacing, max_spacing):
