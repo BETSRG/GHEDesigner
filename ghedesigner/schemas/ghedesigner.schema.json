@@ -1359,8 +1359,8 @@
           "description": "Determines if the GHE design algorithm will perform an exhaustive search or a faster search (which depends on the search method type)."
         },
         "horizontal_segments": {
-          "type": "number",
-          "minimum": 0,
+          "type": "integer",
+          "minimum": 1,
           "format": "-",
           "default": 3,
           "description": "Number of segments for horizontal buried pipe simulations."

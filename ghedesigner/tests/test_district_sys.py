@@ -525,3 +525,19 @@ class TestDistrictSys(GHEBaseTest):
 
             with pytest.raises(ValidationError):
                 validate_input_file(invalid_path)
+
+    def test_horizontal_segments_must_be_a_positive_integer(self):
+        f_path_json = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
+        for horizontal_segments in (0, -1, 1.5, True):
+            with self.subTest(horizontal_segments=horizontal_segments):
+                data = json.loads(f_path_json.read_text())
+                data["simulation_control"]["horizontal_segments"] = horizontal_segments
+
+                with TemporaryDirectory() as tmp_dir:
+                    invalid_path = Path(tmp_dir) / "invalid_horizontal_segments.json"
+                    invalid_path.write_text(json.dumps(data))
+
+                    with pytest.raises(ValidationError):
+                        validate_input_file(invalid_path)
+                    with pytest.raises(ValueError, match="horizontal_segments must be a positive integer"):
+                        GHEHPSystem(invalid_path)

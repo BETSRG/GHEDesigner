@@ -1657,6 +1657,8 @@ class GHEHPSystem:
         self.load_method = json_data["simulation_control"].get("load_method", "hourly").lower()
 
         self.horiz_segments = json_data["simulation_control"].get("horizontal_segments", 3)
+        if isinstance(self.horiz_segments, bool) or not isinstance(self.horiz_segments, int) or self.horiz_segments < 1:
+            raise ValueError("horizontal_segments must be a positive integer.")
 
         self.hybrid_load_data: dict[str, dict[str, list[float]]] = {}
 
