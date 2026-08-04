@@ -11,6 +11,11 @@
     "concentration_percent": 25,
     "temperature": 20
   },
+  "soil": {
+    "conductivity": 3,
+    "rho_cp": 2200000,
+    "undisturbed_temp": 10
+  },
   "ground_heat_exchanger": {
     "ghe1": {
       "flow_rate": 0.5,
@@ -44,11 +49,6 @@
         "rho_cp": 1542000,
         "roughness": 0.000001,
         "shank_spacing": 0.0604
-      },
-      "soil": {
-        "conductivity": 3,
-        "rho_cp": 2200000,
-        "undisturbed_temp": 10
       },
       "loads": {
         "load_values": [

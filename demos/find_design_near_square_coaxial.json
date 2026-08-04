@@ -11,6 +11,11 @@
     "concentration_percent": 0,
     "temperature": 20
   },
+  "soil": {
+    "conductivity": 2,
+    "rho_cp": 2343493,
+    "undisturbed_temp": 18.3
+  },
   "ground_heat_exchanger": {
     "ghe1": {
       "flow_rate": 0.8,
@@ -18,11 +23,6 @@
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
-      },
-      "soil": {
-        "conductivity": 2,
-        "rho_cp": 2343493,
-        "undisturbed_temp": 18.3
       },
       "pipe": {
         "inner_pipe_d_in": 0.0442,

@@ -65,6 +65,11 @@
       }
     }
   },
+  "soil": {
+    "conductivity": 2,
+    "rho_cp": 2343493,
+    "undisturbed_temp": 20
+  },
   "ground_heat_exchanger": {
     "ghe1": {
       "flow_rate": 0.5,
@@ -72,11 +77,6 @@
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
-      },
-      "soil": {
-        "conductivity": 2,
-        "rho_cp": 2343493,
-        "undisturbed_temp": 20
       },
       "pipe": {
         "inner_diameter": 0.03404,

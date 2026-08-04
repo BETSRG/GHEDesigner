@@ -171,12 +171,18 @@ class ProcessLoads:
 
         # Extract input values
         fluid_data = json_data["fluid"]
-        first_ghe_key = next(iter(json_data["ground_heat_exchanger"]))
-        soil_data = json_data["ground_heat_exchanger"][first_ghe_key]["soil"]
-        grout_data = json_data["ground_heat_exchanger"][first_ghe_key]["grout"]
-        pipe_data = json_data["ground_heat_exchanger"][first_ghe_key]["pipe"]
-        borehole_data = json_data["ground_heat_exchanger"][first_ghe_key]["borehole"]
-        ghe_data = json_data["ground_heat_exchanger"][first_ghe_key]
+        topology_ghe_name = next(
+            component["name"]
+            for component in json_data["topology"]
+            if component["type"].upper() == SimCompType.GROUND_HEAT_EXCHANGER.name
+        )
+        ghe_name_lookup = {name.upper(): name for name in json_data["ground_heat_exchanger"]}
+        reference_ghe_name = ghe_name_lookup[topology_ghe_name.upper()]
+        ghe_data = json_data["ground_heat_exchanger"][reference_ghe_name]
+        soil_data = json_data["soil"]
+        grout_data = ghe_data["grout"]
+        pipe_data = ghe_data["pipe"]
+        borehole_data = ghe_data["borehole"]
         sim_data = json_data["simulation_control"]
         self.hp_data = json_data.get("heat_pump", {})
 
@@ -210,7 +216,7 @@ class ProcessLoads:
                 borehole_height=ghe_data["design"]["max_height"],
             )
         else:
-            raise ValueError("First GHE contains neither a pre-designed GHE or the definition to design one.")
+            raise ValueError("Reference GHE contains neither a pre-designed GHE nor the definition to design one.")
         # mass flow rate
         self.mass_flow_rate = ghe_data["flow_rate"]
         self.flow_type = ghe_data["flow_type"]

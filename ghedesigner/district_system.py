@@ -823,6 +823,7 @@ class GHX(BaseSimComp):
         self,
         ghe_id: str,
         ghe_data: dict,
+        soil_data: dict,
         fluid: Fluid,
         loop_config: CentralLoopType,
         num_timesteps: int,
@@ -851,6 +852,7 @@ class GHX(BaseSimComp):
                 "concentration_percent": fluid.concentration_percent,
                 "temperature": fluid.temperature,
             },
+            soil_inputs=soil_data,
         )
         self.ghe_manager.ghe_setup(ghe_data)
         self.ghe_manager.continue_if_design_unmet = True
@@ -1620,15 +1622,16 @@ class GHEHPSystem:
         heat_pump_data = json_data.get("heat_pump", {})
         building_data = json_data.get("building", {})
         ghe_data = json_data.get("ground_heat_exchanger", {})
+        soil_data = json_data["soil"]
         hx_data = json_data.get("source_sink_heat_exchanger", {})
 
         horiz_data = json_data.get("horizontal_piping", {})
-        ugt_data = json_data.get("ground_temperature_model", {})
+        ugt_data = soil_data.get("ground_temperature_model", {})
 
         self.use_horizontal = json_data.get("simulation_control", {}).get("horizontal_simulation_considered", False)
 
         if horiz_data and not ugt_data:
-            raise ValueError("A 'ground_temperature_model' block is required when simulating horizontal piping.")
+            raise ValueError("A 'soil.ground_temperature_model' block is required when simulating horizontal piping.")
 
         horiz_axes = {}
         if self.use_horizontal and horiz_data:
@@ -1650,8 +1653,7 @@ class GHEHPSystem:
             temperature=fluid_data["temperature"],
         )
         self.cp = self.fluid.cp
-        first_ghe_key = next(iter(json_data["ground_heat_exchanger"]))
-        tg = json_data["ground_heat_exchanger"][first_ghe_key]["soil"]["undisturbed_temp"]  # TODO: fix this
+        tg = soil_data["undisturbed_temp"]
 
         self.sim_years = json_data["simulation_control"]["simulation_years"]
         self.load_method = json_data["simulation_control"].get("load_method", "hourly").lower()
@@ -1739,6 +1741,7 @@ class GHEHPSystem:
                 this_ghx = GHX(
                     ghx_id,
                     ghx_item_data,
+                    soil_data,
                     self.fluid,
                     self.loop_config,
                     self.num_timesteps,
@@ -1808,7 +1811,11 @@ class GHEHPSystem:
                     ):
                         raise ValueError(f"Coupled pipe '{h_id}' spacing must be a positive number.")
 
-                h_soil = Soil(k=h_data["soil"]["conductivity"], rho_cp=h_data["soil"]["rho_cp"], ugt=0)
+                h_soil = Soil(
+                    k=soil_data["conductivity"],
+                    rho_cp=soil_data["rho_cp"],
+                    ugt=soil_data["undisturbed_temp"],
+                )
                 h_pipe = Pipe.init_single_u_tube(
                     inner_diameter=h_data["pipe"]["inner_diameter"],
                     outer_diameter=h_data["pipe"]["outer_diameter"],
@@ -1849,7 +1856,7 @@ class GHEHPSystem:
                         time_array=self.time_array,
                         q_prime_interp=q_prime_interp,
                         beta=beta,
-                        ugt_avg=ugt_data["annual_average"],
+                        ugt_avg=soil_data["undisturbed_temp"],
                         ugt_amp1=ugt_data["amplitude_1"],
                         ugt_phase1=ugt_data["phase_lag_1"],
                         ugt_amp2=ugt_data["amplitude_2"],
@@ -1889,7 +1896,7 @@ class GHEHPSystem:
                         q_prime_even_interp=q_prime_even,
                         q_prime_odd_interp=q_prime_odd,
                         beta=beta,
-                        ugt_avg=ugt_data["annual_average"],
+                        ugt_avg=soil_data["undisturbed_temp"],
                         ugt_amp1=ugt_data["amplitude_1"],
                         ugt_phase1=ugt_data["phase_lag_1"],
                         ugt_amp2=ugt_data["amplitude_2"],
@@ -1926,8 +1933,6 @@ class GHEHPSystem:
                         incompatible_fields.append(field)
                 if h_data.get("counter_flow", False) != partner_data.get("counter_flow", False):
                     incompatible_fields.append("counter_flow")
-                if h_data["soil"] != partner_data["soil"]:
-                    incompatible_fields.append("soil")
                 if h_data["pipe"] != partner_data["pipe"]:
                     incompatible_fields.append("pipe")
                 if incompatible_fields:

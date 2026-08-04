@@ -111,13 +111,18 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.is_sizable: bool = False
 
     @classmethod
-    def init_from_dictionary(cls, ghe_dict: dict, fluid_inputs: dict | None = None) -> "GroundHeatExchanger":
+    def init_from_dictionary(
+        cls,
+        ghe_dict: dict,
+        fluid_inputs: dict | None = None,
+        soil_inputs: dict | None = None,
+    ) -> "GroundHeatExchanger":
         """
         Initialize a GroundHeatExchanger object from input dictionaries, performing validation and ultimately calling
         the main object constructor.
-        :param ghe_dict: Dictionary of ground heat exchanger parameters, see the input schema specification for required
-                         inputs in the ground_heat_exchanger schema field.
+        :param ghe_dict: Dictionary of GHE-specific parameters from the ground_heat_exchanger schema field.
         :param fluid_inputs: Optional dictionary of fluid input parameters, see the input schema fluid spec for details.
+        :param soil_inputs: Top-level vertical-soil parameters shared by the GHEs in the input file.
         :return: GroundHeatExchanger object.
         # TODO: Add validation back in to the input fields
         """
@@ -125,7 +130,9 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         g_c: float = grout_parameters["conductivity"]
         g_rho_cp: float = grout_parameters["rho_cp"]
 
-        soil_parameters: dict = ghe_dict["soil"]
+        if soil_inputs is None:
+            raise ValueError("Top-level soil inputs are required to initialize a ground heat exchanger.")
+        soil_parameters = soil_inputs
         s_k: float = soil_parameters["conductivity"]
         s_rho_cp: float = soil_parameters["rho_cp"]
         s_temp: float = soil_parameters["undisturbed_temp"]

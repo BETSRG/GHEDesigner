@@ -185,6 +185,53 @@ class TestDistrictSys(GHEBaseTest):
         assert standard_pipe.q_prime_interp(0.0) == pytest.approx(1.0 / 0.344)
         assert low_conductivity_pipe.q_prime_interp(0.0) == pytest.approx(1.0 / 12.0)
 
+    def test_horizontal_ground_temperature_model_is_nested_under_soil(self):
+        source_path = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
+        data = load_input_file(source_path)
+        system = GHEHPSystem(source_path)
+        horizontal_pipes = [
+            component
+            for component in system.components
+            if component.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE)
+        ]
+
+        assert "ground_temperature_model" not in data
+        assert "annual_average" not in data["soil"]["ground_temperature_model"]
+        assert horizontal_pipes
+        assert all(pipe.ugt_avg == pytest.approx(data["soil"]["undisturbed_temp"]) for pipe in horizontal_pipes)
+        assert all(pipe.soil.k == pytest.approx(data["soil"]["conductivity"]) for pipe in horizontal_pipes)
+        assert all(pipe.soil.rho_cp == pytest.approx(data["soil"]["rho_cp"]) for pipe in horizontal_pipes)
+
+    def test_horizontal_component_soil_is_rejected(self):
+        source_path = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
+        data = load_input_file(source_path)
+        first_pipe = next(iter(data["horizontal_piping"].values()))
+        first_pipe["soil"] = {
+            "conductivity": data["soil"]["conductivity"],
+            "rho_cp": data["soil"]["rho_cp"],
+        }
+
+        with TemporaryDirectory() as tmp_dir:
+            legacy_path = Path(tmp_dir) / "component_soil.json"
+            legacy_path.write_text(json.dumps(data))
+
+            with pytest.raises(ValidationError):
+                validate_input_file(legacy_path)
+
+    def test_root_ground_temperature_model_is_rejected(self):
+        source_path = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
+        data = load_input_file(source_path)
+        ground_temperature_model = data["soil"].pop("ground_temperature_model")
+        ground_temperature_model["annual_average"] = data["soil"]["undisturbed_temp"]
+        data["ground_temperature_model"] = ground_temperature_model
+
+        with TemporaryDirectory() as tmp_dir:
+            legacy_path = Path(tmp_dir) / "root_ground_temperature_model.json"
+            legacy_path.write_text(json.dumps(data))
+
+            with pytest.raises(ValidationError):
+                validate_input_file(legacy_path)
+
     def test_coupled_loadagg_uses_neighbor_ground_temperature(self):
         time_array = np.array([0.0, 1.0, 2.0])
         pipe = Pipe.init_single_u_tube(
@@ -277,6 +324,37 @@ class TestDistrictSys(GHEBaseTest):
         source_energy = np.dot(source_load, np.diff(np.insert(source_time, 0, 0.0)))
         mapped_energy = np.dot(mapped_load[1:], np.diff(target_time))
         assert mapped_energy == pytest.approx(source_energy)
+
+    def test_vertical_soil_is_required_at_top_level(self):
+        source_path = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
+        data = load_input_file(source_path)
+        ghe_data = next(iter(data["ground_heat_exchanger"].values()))
+        ghe_data["soil"] = data.pop("soil")
+
+        with TemporaryDirectory() as tmp_dir:
+            legacy_path = Path(tmp_dir) / "nested_soil.json"
+            legacy_path.write_text(json.dumps(data))
+
+            with pytest.raises(ValidationError):
+                validate_input_file(legacy_path)
+
+    def test_hybrid_reference_properties_follow_topology_not_ghe_key_order(self):
+        source_path = self.demos_path / "Network_Sizing_3GHE_6HP_BUPCRS.json"
+        original_data = load_input_file(source_path)
+        original_data["ground_heat_exchanger"]["ghe_1"]["flow_rate"] = 0.4
+        original_data["ground_heat_exchanger"]["ghe_2"]["flow_rate"] = 0.8
+        reordered_data = json.loads(json.dumps(original_data))
+        reordered_data["ground_heat_exchanger"] = dict(reversed(list(reordered_data["ground_heat_exchanger"].items())))
+
+        original_processor = ProcessLoads()
+        reordered_processor = ProcessLoads()
+        original_processor.read_data_from_json_file(original_data)
+        reordered_processor.read_data_from_json_file(reordered_data)
+
+        assert original_processor.mass_flow_rate == pytest.approx(0.4)
+        assert reordered_processor.mass_flow_rate == pytest.approx(0.4)
+        assert original_processor.soil.ugt == pytest.approx(original_data["soil"]["undisturbed_temp"])
+        assert reordered_processor.soil.ugt == pytest.approx(original_data["soil"]["undisturbed_temp"])
 
     def test_rowwise_spacing_bounds_use_constraint_intersection(self):
         def make_ghe(min_spacing, max_spacing):

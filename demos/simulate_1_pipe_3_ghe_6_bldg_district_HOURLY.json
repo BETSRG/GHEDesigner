@@ -203,6 +203,11 @@
       }
     }
   },
+  "soil": {
+    "conductivity": 2,
+    "rho_cp": 2343493,
+    "undisturbed_temp": 6.1
+  },
   "ground_heat_exchanger": {
     "ghe1": {
       "flow_rate": 0.33753,
@@ -210,11 +215,6 @@
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
-      },
-      "soil": {
-        "conductivity": 2,
-        "rho_cp": 2343493,
-        "undisturbed_temp": 6.1
       },
       "pipe": {
         "inner_diameter": 0.03404,
@@ -245,11 +245,6 @@
         "conductivity": 1,
         "rho_cp": 3901000
       },
-      "soil": {
-        "conductivity": 2,
-        "rho_cp": 2343493,
-        "undisturbed_temp": 6.1
-      },
       "pipe": {
         "inner_diameter": 0.03404,
         "outer_diameter": 0.04216,
@@ -278,11 +273,6 @@
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
-      },
-      "soil": {
-        "conductivity": 2,
-        "rho_cp": 2343493,
-        "undisturbed_temp": 6.1
       },
       "pipe": {
         "inner_diameter": 0.03404,

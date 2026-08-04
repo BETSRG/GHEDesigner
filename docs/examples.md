@@ -43,7 +43,7 @@ ghe_name = next(
 ghe_dict = inputs["ground_heat_exchanger"][ghe_name]
 ghe_dict["name"] = ghe_name
 
-manager = GroundHeatExchanger.init_from_dictionary(ghe_dict, inputs["fluid"])
+manager = GroundHeatExchanger.init_from_dictionary(ghe_dict, inputs["fluid"], soil_inputs=inputs["soil"])
 end_month = inputs["simulation_control"]["sizing_years"] * MONTHS_IN_YEAR
 search, search_time, found_ghe = manager.design_and_size_ghe(end_month, ghe_dict=ghe_dict)
 
@@ -69,10 +69,14 @@ Input files use the JSON schema in `ghedesigner/schemas/ghedesigner.schema.json`
 
 - `simulation_control.load_method`: `HYBRID` aggregates loads for faster GHE calculations; `HOURLY` solves hourly loads
   directly.
+- `soil`: defines the ground conductivity, volumetric heat capacity, and undisturbed temperature shared by every
+  vertical GHE and horizontal pipe in the input. Horizontal simulations add a nested `soil.ground_temperature_model`
+  containing the seasonal amplitudes and phase lags; `soil.undisturbed_temp` is its annual-average temperature.
 - `simulation_control.search_method`: `GLOBAL_BUPCRS` and `NELDER-MEAD` size system GHEs; `SIMULATION_ONLY` simulates
   pre-designed GHEs.
 - `central_loop.pipe_configuration`: `ONEPIPE` and `TWOPIPE` district loop configurations are supported.
 - Building loads can reference a heat pump performance map with `heat_pump_name` or use fixed COP conversion with
   `heat_pump_cop`.
 - District simulations can include `isolated_horizontal_pipe` and `coupled_horizontal_pipe` topology components when
-  `horizontal_piping`, `ground_temperature_model`, and `simulation_control.horizontal_simulation_considered` are set.
+  `horizontal_piping`, `soil.ground_temperature_model`, and `simulation_control.horizontal_simulation_considered` are
+  set.

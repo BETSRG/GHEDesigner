@@ -398,6 +398,48 @@
       "format": "Joules/Meter^3-Kelvin",
       "description": "Volumetric heat capacity."
     },
+    "ground_temperature_model": {
+      "type": "object",
+      "description": "Two-harmonic undisturbed ground-temperature model used for horizontal pipe simulation.",
+      "properties": {
+        "amplitude_1": {
+          "type": "number"
+        },
+        "amplitude_2": {
+          "type": "number"
+        },
+        "phase_lag_1": {
+          "type": "number"
+        },
+        "phase_lag_2": {
+          "type": "number"
+        }
+      },
+      "required": ["amplitude_1", "amplitude_2", "phase_lag_1", "phase_lag_2"],
+      "additionalProperties": false
+    },
+    "soil": {
+      "type": "object",
+      "description": "Ground properties shared by every vertical ground heat exchanger and horizontal pipe in the system.",
+      "properties": {
+        "conductivity": {
+          "$ref": "#/$defs/conductivity"
+        },
+        "rho_cp": {
+          "$ref": "#/$defs/rho_cp"
+        },
+        "undisturbed_temp": {
+          "type": "number",
+          "format": "Centigrade",
+          "description": "Undisturbed, far-field soil temperature."
+        },
+        "ground_temperature_model": {
+          "$ref": "#/$defs/ground_temperature_model"
+        }
+      },
+      "required": ["conductivity", "rho_cp", "undisturbed_temp"],
+      "additionalProperties": false
+    },
     "roughness": {
       "type": "number",
       "minimum": 0,
@@ -732,6 +774,9 @@
       "required": ["fluid_name", "concentration_percent", "temperature"],
       "additionalProperties": false
     },
+    "soil": {
+      "$ref": "#/$defs/soil"
+    },
     "heat_pump": {
       "type": "object",
       "description": "A collection of data that define a heat pump.",
@@ -882,24 +927,6 @@
               }
             },
             "required": ["conductivity", "rho_cp"],
-            "additionalProperties": false
-          },
-          "soil": {
-            "type": "object",
-            "properties": {
-              "conductivity": {
-                "$ref": "#/$defs/conductivity"
-              },
-              "rho_cp": {
-                "$ref": "#/$defs/rho_cp"
-              },
-              "undisturbed_temp": {
-                "type": "number",
-                "format": "Centigrade",
-                "description": "Undisturbed, far-field soil temperature."
-              }
-            },
-            "required": ["conductivity", "rho_cp", "undisturbed_temp"],
             "additionalProperties": false
           },
           "pipe": {
@@ -1309,14 +1336,7 @@
             "required": ["geometric_constraints", "design"]
           }
         ],
-        "required": [
-          "soil",
-          "grout",
-          "pipe",
-          "borehole",
-          "flow_rate",
-          "flow_type"
-        ],
+        "required": ["grout", "pipe", "borehole", "flow_rate", "flow_type"],
         "additionalProperties": false
       }
     },
@@ -1368,7 +1388,7 @@
         "horizontal_simulation_considered": {
           "type": "boolean",
           "default": false,
-          "description": "Determines if the simulation accounts for thermal effects from horizontal_piping components using the ground_temperature_model."
+          "description": "Determines if the simulation accounts for thermal effects from horizontal_piping components using soil.ground_temperature_model."
         }
       },
       "oneOf": [
@@ -1432,35 +1452,6 @@
       "type": "integer",
       "description": "An integer version ID for this input structure, for future-proofing."
     },
-    "ground_temperature_model": {
-      "type": "object",
-      "description": "Type of undisturbed ground temperature model used in horizontal pipe simulation.",
-      "properties": {
-        "annual_average": {
-          "type": "number"
-        },
-        "amplitude_1": {
-          "type": "number"
-        },
-        "amplitude_2": {
-          "type": "number"
-        },
-        "phase_lag_1": {
-          "type": "number"
-        },
-        "phase_lag_2": {
-          "type": "number"
-        }
-      },
-      "required": [
-        "annual_average",
-        "amplitude_1",
-        "amplitude_2",
-        "phase_lag_1",
-        "phase_lag_2"
-      ],
-      "additionalProperties": false
-    },
     "horizontal_piping": {
       "type": "object",
       "description": "Collection of data for horizontal piping objects.",
@@ -1487,24 +1478,11 @@
             "type": "number",
             "exclusiveMinimum": 0
           },
-          "soil": {
-            "type": "object",
-            "properties": {
-              "conductivity": {
-                "$ref": "#/$defs/conductivity"
-              },
-              "rho_cp": {
-                "$ref": "#/$defs/rho_cp"
-              }
-            },
-            "required": ["conductivity", "rho_cp"],
-            "additionalProperties": false
-          },
           "pipe": {
             "$ref": "#/$defs/horizontal_pipe"
           }
         },
-        "required": ["length", "trench_depth", "soil", "pipe"],
+        "required": ["length", "trench_depth", "pipe"],
         "allOf": [
           {
             "if": {
@@ -1523,6 +1501,6 @@
       }
     }
   },
-  "required": ["topology", "fluid", "ground_heat_exchanger", "version"],
+  "required": ["topology", "fluid", "soil", "ground_heat_exchanger", "version"],
   "additionalProperties": false
 }

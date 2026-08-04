@@ -81,7 +81,11 @@ def run(input_file_path: Path, output_directory: Path) -> int:
 
                 ghe_dict["loads"]["column"] = column
 
-            ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, full_inputs["fluid"])
+            ghe = GroundHeatExchanger.init_from_dictionary(
+                ghe_dict,
+                full_inputs["fluid"],
+                soil_inputs=full_inputs["soil"],
+            )
             if "pre_designed" in ghe_dict:
                 log_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
                 results = OutputManager("GHEDesigner Run from CLI", "Just Calculate G", "", "")
@@ -98,7 +102,11 @@ def run(input_file_path: Path, output_directory: Path) -> int:
         # we have a GHE and a building, grab both
         ghe_dict = full_inputs["ground_heat_exchanger"][ghe_names[0]]
         ghe_dict["name"] = ghe_names[0]
-        ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, full_inputs["fluid"])
+        ghe = GroundHeatExchanger.init_from_dictionary(
+            ghe_dict,
+            full_inputs["fluid"],
+            soil_inputs=full_inputs["soil"],
+        )
         single_building_data = full_inputs["building"][building_names[0]]
         heat_pump = HeatPumpFixedCOP(building_names[0], single_building_data)
         ghe_loads = heat_pump.get_ground_loads()
