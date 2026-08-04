@@ -47,8 +47,8 @@ def run_horizontal_simulation(config):
         steps_per_hour = config.get("steps_per_hour", 1)
         total_steps = int(num_hours * steps_per_hour)
 
-        # Create a fractional time array
-        time_array = np.linspace(0, num_hours, total_steps, endpoint=False)
+        # Each simulated interval requires both a starting and ending time boundary.
+        time_array = np.linspace(0.0, num_hours, total_steps + 1)
         num_timesteps = len(time_array)
         time_step_params = timestep_params_generator(time_array)
 

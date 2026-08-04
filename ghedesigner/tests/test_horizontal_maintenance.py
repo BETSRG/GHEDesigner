@@ -81,4 +81,5 @@ def test_horizontal_component_simulator_uses_json_library(tmp_path, case_type):
 
     assert (name, success, error) == (run_name, True, None)
     output = pd.read_csv(tmp_path / f"{run_name}.csv")
-    assert len(output) == 2
+    assert len(output) == 3
+    assert output["Time [hr]"].tolist() == pytest.approx([1.0, 2.0, 3.0])
