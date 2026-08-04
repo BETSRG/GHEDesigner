@@ -349,6 +349,16 @@
           "type": "number",
           "format": "Watts",
           "description": "Design heating or cooling capacity used to develop performance coefficients."
+        },
+        "minimum_curve_temperature": {
+          "type": "number",
+          "format": "Degrees Celsius",
+          "description": "The minimum temperature where the given hp model is considered accurate."
+        },
+        "maximum_curve_temperature": {
+          "type": "number",
+          "format": "Degrees Celsius",
+          "description": "The maximum temperature where the given hp model is considered accurate."
         }
       },
       "required": ["a", "b", "c", "c1", "c2", "c3", "design_cap"],
