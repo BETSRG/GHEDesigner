@@ -127,13 +127,12 @@ def main():
 
     # Parallel format: (depth, spacing, beta, radius, soil_k)
     force_recalc_parallel = [
-        # (15.0, 0.053, 4.783, 0.0167 / 2.0, 1.5),
+        # (1.5, 1.0, 1.2566, 0.0762, 2.0),
     ]
 
     # Single format: (depth, beta, radius, soil_k)
     force_recalc_single = [
-        # (1.5, 1.2566, 0.3 / 2.0, 2.0),
-        # (1.5, 12.0, 0.3 / 2.0, 2.0),
+        (1.5, 1.2566, 0.0508, 2.0),
     ]
 
     # 1. Load file if it exists
