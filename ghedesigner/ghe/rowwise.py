@@ -661,10 +661,11 @@ def gen_borehole_config(
     if lowest_vert is None:
         raise ValueError("No borehole configuration found within the specified parameters")
 
-    # Determines the number of rows as well as the distance between the rows
-    num_rows = max(int((highest_vert_val - lowest_vert_val) // y_space), 1)
+    # Determine the number of row intervals and their actual spacing. A span smaller than the requested spacing has
+    # no row intervals and therefore produces a single row.
+    num_rows = int((highest_vert_val - lowest_vert_val) // y_space)
     d = highest_vert_val - lowest_vert_val
-    s = d / num_rows
+    s = d / num_rows if num_rows > 0 else y_space
     row_space = [-1 * s * cos(PI_OVER_2 - rotate), s * sin(PI_OVER_2 - rotate)]
 
     # Establishes the list object
