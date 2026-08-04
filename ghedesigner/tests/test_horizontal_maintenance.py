@@ -121,3 +121,67 @@ def test_horizontal_component_csv_rows_align_with_solved_intervals(
     assert (name, success, error) == (run_name, True, None)
     output = pd.read_csv(tmp_path / f"{run_name}.csv")
     assert output[f"{run_name}_pipe_Inlet [C]"].tolist() == pytest.approx(expected_inlet_temperatures)
+
+
+def test_horizontal_component_rejects_missing_inlet_csv(tmp_path):
+    init_worker()
+    config = {
+        "run_name": "missing_inlet",
+        "output_dir": str(tmp_path),
+        "type": "ISOLATED",
+        "length": 10.0,
+        "segments": 1,
+        "depth": 1.5,
+        "inner_diameter": 0.07,
+        "outer_diameter": 0.0762,
+        "beta": 0.344,
+        "soil_k": 1.5,
+        "mass_flow": 0.5,
+        "num_hours": 3,
+        "t_in_csv_path": str(tmp_path / "missing.csv"),
+    }
+
+    name, success, error = run_horizontal_simulation(config)
+
+    assert name == "missing_inlet"
+    assert not success
+    assert error is not None
+    assert "Inlet-temperature CSV does not exist" in error
+    assert not (tmp_path / "missing_inlet.csv").exists()
+
+
+@pytest.mark.parametrize(
+    ("csv_data", "expected_error"),
+    [
+        ({"wrong_column": [10.0, 20.0, 30.0]}, "must contain a 'T_in' column"),
+        ({"T_in": [10.0, "invalid", 30.0]}, "'T_in' values must be numeric"),
+        ({"T_in": [10.0, float("nan"), 30.0]}, "'T_in' values must be finite"),
+    ],
+)
+def test_horizontal_component_rejects_malformed_inlet_csv(tmp_path, csv_data, expected_error):
+    init_worker()
+    inlet_path = tmp_path / "malformed.csv"
+    pd.DataFrame(csv_data).to_csv(inlet_path, index=False)
+    config = {
+        "run_name": "malformed_inlet",
+        "output_dir": str(tmp_path),
+        "type": "ISOLATED",
+        "length": 10.0,
+        "segments": 1,
+        "depth": 1.5,
+        "inner_diameter": 0.07,
+        "outer_diameter": 0.0762,
+        "beta": 0.344,
+        "soil_k": 1.5,
+        "mass_flow": 0.5,
+        "num_hours": 3,
+        "t_in_csv_path": str(inlet_path),
+    }
+
+    name, success, error = run_horizontal_simulation(config)
+
+    assert name == "malformed_inlet"
+    assert not success
+    assert error is not None
+    assert expected_error in error
+    assert not (tmp_path / "malformed_inlet.csv").exists()

@@ -1450,6 +1450,7 @@
     },
     "version": {
       "type": "integer",
+      "const": 3,
       "description": "An integer version ID for this input structure, for future-proofing."
     },
     "horizontal_piping": {

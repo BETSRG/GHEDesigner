@@ -208,15 +208,26 @@ def run_horizontal_simulation(config):
 
         # --- Load Time-Varying Inlet Temperatures from CSV ---
         csv_path = config.get("t_in_csv_path")
-        if csv_path and Path(csv_path).exists():
+        if csv_path:
+            csv_path = Path(csv_path)
+            if not csv_path.is_file():
+                raise FileNotFoundError(f"Inlet-temperature CSV does not exist: {csv_path}")
+
             df_inlet = pd.read_csv(csv_path)
+            if "T_in" not in df_inlet.columns:
+                raise ValueError("Inlet-temperature CSV must contain a 'T_in' column.")
 
             if len(df_inlet) < num_hours:
                 raise ValueError(f"CSV only has {len(df_inlet)} rows, but simulation requires {num_hours}.")
 
             # Each hourly row supplies the temperature at the end of its solved interval.
             csv_hours = np.arange(1, len(df_inlet) + 1)
-            csv_temps = df_inlet["T_in"].to_numpy()
+            try:
+                csv_temps = pd.to_numeric(df_inlet["T_in"], errors="raise").to_numpy(dtype=float)
+            except (TypeError, ValueError) as exc:
+                raise ValueError("Inlet-temperature CSV 'T_in' values must be numeric.") from exc
+            if not np.all(np.isfinite(csv_temps)):
+                raise ValueError("Inlet-temperature CSV 'T_in' values must be finite.")
             t_in_array = np.interp(time_array, csv_hours, csv_temps)
 
             for p in pipes:
