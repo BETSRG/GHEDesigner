@@ -2,6 +2,7 @@ import csv
 from json import loads
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
@@ -26,6 +27,16 @@ limit_debug_file_count = 0
 def assert_timeseries_csv_matches_baseline(actual_path: Path, baseline_path: Path) -> None:
     actual = pd.read_csv(actual_path)
     expected = pd.read_csv(baseline_path)
+    numeric = actual.select_dtypes(include="number")
+    assert np.all(np.isfinite(numeric.to_numpy())), f"Non-finite simulation output in {actual_path.name}"
+
+    temperature_columns = [column for column in numeric if isinstance(column, str) and column.endswith("[C]")]
+    if temperature_columns:
+        max_abs_temperature = numeric[temperature_columns].abs().to_numpy().max()
+        assert max_abs_temperature < 100.0, (
+            f"Unbounded simulation temperature in {actual_path.name}: {max_abs_temperature:.3g} C"
+        )
+
     assert_frame_equal(actual, expected, check_dtype=False, check_exact=False, rtol=0.0, atol=1e-2)
 
 

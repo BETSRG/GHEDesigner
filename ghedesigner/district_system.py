@@ -1133,7 +1133,10 @@ class GHX(BaseSimComp):
 
                 row_3[self.inlet_index] = mass_flow_ghe * self.cp
                 row_3[self.row_index + 3] = -mass_flow_ghe * self.cp
-                row_3[self.row_index + 2] = -self.nbh * self.height
+                # q_ghe is positive when the borefield adds heat to the fluid,
+                # so m*cp*(T_in - T_out) + H_total*q_ghe = 0.  Keep this sign
+                # consistent with the one-pipe branch energy balance above.
+                row_3[self.row_index + 2] = self.nbh * self.height
 
                 row_4[self.inlet_index] = (mass_loop_ghe - mass_flow_ghe) * self.cp
                 row_4[self.row_index + 3] = mass_flow_ghe * self.cp

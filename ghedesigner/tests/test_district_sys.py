@@ -524,6 +524,28 @@ class TestDistrictSys(GHEBaseTest):
         assert {comp.inlet_index for comp in ghes} == {ghes[0].row_index}
         assert all(isinstance(comp.inlet_index, int) for comp in buildings + ghes)
 
+    def test_two_pipe_ghe_energy_balance_uses_consistent_heat_transfer_sign(self):
+        f_path_json = self.demos_path / "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json"
+        system = GHEHPSystem(f_path_json)
+        ghe = next(comp for comp in system.components if comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER)
+        ghe.matrix_size = system.matrix_size
+
+        rows, _ = ghe.generate_matrix(
+            0.0,
+            3.0,
+            0.0,
+            1.0,
+            1.0,
+            1,
+            system.loop_config,
+            system.load_method,
+        )
+
+        energy_balance = rows[2]
+        assert energy_balance[ghe.inlet_index] == pytest.approx(ghe.cp)
+        assert energy_balance[ghe.row_index + 3] == pytest.approx(-ghe.cp)
+        assert energy_balance[ghe.row_index + 2] == pytest.approx(ghe.nbh * ghe.height)
+
     def test_two_pipe_horizontal_pipes_connect_outlet_to_downstream(self):
         source_path = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
         data = load_input_file(source_path)
