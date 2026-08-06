@@ -382,6 +382,15 @@ class TestDistrictSys(GHEBaseTest):
         assert original_processor.soil.ugt == pytest.approx(original_data["soil"]["undisturbed_temp"])
         assert reordered_processor.soil.ugt == pytest.approx(original_data["soil"]["undisturbed_temp"])
 
+    def test_hybrid_reference_preserves_fluid_temperature_and_concentration(self):
+        data = load_input_file(self.demos_path / "Network_Sizing_3GHE_6HP_BUPCRS.json")
+
+        processor = ProcessLoads()
+        processor.read_data_from_json_file(data)
+
+        assert processor.fluid.temperature == pytest.approx(data["fluid"]["temperature"])
+        assert processor.fluid.concentration_percent == pytest.approx(data["fluid"]["concentration_percent"])
+
     def test_hybrid_reference_preserves_pipe_arrangement_and_converts_borehole_flow(self):
         cases = [
             ("Network_Sizing_3GHE_6HP_BUPCRS.json", BHType.SINGLEUTUBE),

@@ -194,7 +194,11 @@ class ProcessLoads:
         self.end_month = 12 * self.n_years
 
         # Construct objects
-        self.fluid = Fluid(fluid_data["fluid_name"], fluid_data["concentration_percent"], fluid_data["temperature"])
+        self.fluid = Fluid(
+            fluid_name=fluid_data["fluid_name"],
+            temperature=fluid_data["temperature"],
+            percent=fluid_data["concentration_percent"],
+        )
 
         self.bhe_type = BHType(pipe_data["arrangement"].upper())
         self.pipe = Pipe.init_from_dict(self.bhe_type, pipe_data)
