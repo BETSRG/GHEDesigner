@@ -20,6 +20,7 @@ class DeferredDuplicateCheckList:
         self.proximity_checks_found = False
         self.largest_index = 0
         self.bucket_keys = None
+        self.points_to_check_to_ignore: list[int] = []
 
     def _get_bucket_key(self, px: np.float64, py: np.float64) -> tuple[int, int]:
         return int(px // self.spacing), int(py // self.spacing)
@@ -39,6 +40,9 @@ class DeferredDuplicateCheckList:
         del self.buckets[key][index_to_delete]
         del self.points[point_index]
         del self.bucket_keys[bucket_keys_index]
+        for pair_index, pair in enumerate(self.points_to_check):
+            if point_index in pair:
+                self.points_to_check_to_ignore.append(pair_index)
 
     def index(self, ind):
         keys = list(self.points.keys())
@@ -72,7 +76,7 @@ class DeferredDuplicateCheckList:
                     self.points_to_check.append((key, j))
         self.proximity_checks_found = True
 
-    def append(self, element):
+    def reset_partition(self):
         # Since the spatial partitioning is done in bulk in "partition()", we have to reset the partitioning
         # when appending a new element.
         if self.partitioned:
@@ -83,6 +87,10 @@ class DeferredDuplicateCheckList:
         if self.proximity_checks_found:
             self.proximity_checks_found = False
             self.points_to_check = []
+            self.points_to_check_to_ignore = []
+
+    def append(self, element):
+        self.reset_partition()
         # Internally, points are contained in the self.points dictionary, but we want this classes usage
         # to be similar to a list/array. This can cause an issue when doing deletions (as we would
         # like to avoid readjusting the keys for all dict entries). In order to avoid generating an already
@@ -112,7 +120,9 @@ class DeferredDuplicateCheckList:
         duplicates = []
         keys_list = list(self.points.keys())
         squared_tolerance = tolerance * tolerance
-        for points_to_check in self.points_to_check:
+        for pair_index, points_to_check in enumerate(self.points_to_check):
+            if pair_index in self.points_to_check_to_ignore:
+                continue
             i, j = points_to_check
             p1 = self.points[i]
             p2 = self.points[j]
@@ -231,6 +241,7 @@ def field_optimization_wp_space_fr(
     rotate_stop=None,
     partition_ratio=1.0,
     duplicate_spacing_ratio=0.1,
+    sinter_spacing=None,
 ):
     """Optimizes a Field by iterating over input values w/o perimeter spacing
 
@@ -256,8 +267,8 @@ def field_optimization_wp_space_fr(
     space = space_start
     rt = rotate_start
 
-    y_s = space
-    x_s = y_s
+    y_s = sinter_spacing if sinter_spacing is not None else space
+    x_s = space
 
     max_l = 0
     max_hole: DeferredDuplicateCheckList | None = None
@@ -430,7 +441,6 @@ def remove_duplicates(borefield: DeferredDuplicateCheckList, space, disp=False):
         )  # keep a space between the function name
         n_duplicates = original_size - borefield.size()
         print(f"The number of duplicates removed: {n_duplicates}")
-
     return borefield
 
 
@@ -445,6 +455,7 @@ def two_space_gen_bhc(
     intersection_tolerance=1e-5,
     duplicate_spacing_ratio=0.1,
     partition_ratio=1.0,
+    check_for_outside_points=False,
 ) -> DeferredDuplicateCheckList:
     """Generates a borefield that has perimeter spacing
 
@@ -486,17 +497,17 @@ def two_space_gen_bhc(
         for ng in no_go:
             perimeter_distribute(ng, p_space, holes)
     holes.partition()
-    for i in range(holes.size() - 1, -1, -1):
-        point = holes.index(i)
-        if point_polygon_check(field.c, point, on_edge_tolerance=1e-3) == -1:
-            holes.delete(i)
-            continue
-        if no_go is not None:
-            for ng in no_go:
-                if point_polygon_check(ng.c, point, on_edge_tolerance=1e-3) == 1:
-                    holes.delete(i)
-                    break
-
+    if check_for_outside_points:
+        for i in range(holes.size() - 1, -1, -1):
+            point = holes.index(i)
+            if point_polygon_check(field.c, point, on_edge_tolerance=1e-3) == -1:
+                holes.delete(i)
+                continue
+            if no_go is not None:
+                for ng in no_go:
+                    if point_polygon_check(ng.c, point, on_edge_tolerance=1e-3) == 1:
+                        holes.delete(i)
+                        break
     return holes
 
 
@@ -650,10 +661,11 @@ def gen_borehole_config(
     if lowest_vert is None:
         raise ValueError("No borehole configuration found within the specified parameters")
 
-    # Determines the number of rows as well as the distance between the rows
+    # Determine the number of row intervals and their actual spacing. A span smaller than the requested spacing has
+    # no row intervals and therefore produces a single row.
     num_rows = int((highest_vert_val - lowest_vert_val) // y_space)
     d = highest_vert_val - lowest_vert_val
-    s = d / num_rows
+    s = d / num_rows if num_rows > 0 else y_space
     row_space = [-1 * s * cos(PI_OVER_2 - rotate), s * sin(PI_OVER_2 - rotate)]
 
     # Establishes the list object

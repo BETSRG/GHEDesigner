@@ -25,6 +25,12 @@
       "format": "Meters",
       "description": "Minimum borehole-to-borehole spacing."
     },
+    "borehole_removal_method": {
+      "type": "string",
+      "enum": ["RIGHT_TOP", "RADIAL", "LINE_SEGMENTS"],
+      "default": "RADIAL",
+      "description": "Defines the method used to remove boreholes from a borefield. This is planned to be an optional parameter for multiple borefield design methods."
+    },
     "column_name": {
       "type": "string"
     },
@@ -93,6 +99,26 @@
       "minimum": 0,
       "format": "Meters",
       "description": "Horizontal length of property boundary defining surface area available for ground heat exchanger."
+    },
+    "line_segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "format": "Meters",
+      "description": "(x, y) coordinate points defining a list of line segments."
     },
     "load_values": {
       "type": "array",
@@ -323,10 +349,34 @@
           "type": "number",
           "format": "Watts",
           "description": "Design heating or cooling capacity used to develop performance coefficients."
+        },
+        "minimum_curve_temperature": {
+          "type": "number",
+          "format": "Degrees Celsius",
+          "description": "The minimum temperature where the given hp model is considered accurate."
+        },
+        "maximum_curve_temperature": {
+          "type": "number",
+          "format": "Degrees Celsius",
+          "description": "The maximum temperature where the given hp model is considered accurate."
         }
       },
       "required": ["a", "b", "c", "c1", "c2", "c3", "design_cap"],
       "additionalProperties": false
+    },
+    "points": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "format": "Meters",
+      "description": "(x, y) coordinate points."
     },
     "property_boundary": {
       "type": "array",
@@ -348,6 +398,48 @@
       "format": "Joules/Meter^3-Kelvin",
       "description": "Volumetric heat capacity."
     },
+    "ground_temperature_model": {
+      "type": "object",
+      "description": "Two-harmonic undisturbed ground-temperature model used for horizontal pipe simulation.",
+      "properties": {
+        "amplitude_1": {
+          "type": "number"
+        },
+        "amplitude_2": {
+          "type": "number"
+        },
+        "phase_lag_1": {
+          "type": "number"
+        },
+        "phase_lag_2": {
+          "type": "number"
+        }
+      },
+      "required": ["amplitude_1", "amplitude_2", "phase_lag_1", "phase_lag_2"],
+      "additionalProperties": false
+    },
+    "soil": {
+      "type": "object",
+      "description": "Ground properties shared by every vertical ground heat exchanger and horizontal pipe in the system.",
+      "properties": {
+        "conductivity": {
+          "$ref": "#/$defs/conductivity"
+        },
+        "rho_cp": {
+          "$ref": "#/$defs/rho_cp"
+        },
+        "undisturbed_temp": {
+          "type": "number",
+          "format": "Centigrade",
+          "description": "Undisturbed, far-field soil temperature."
+        },
+        "ground_temperature_model": {
+          "$ref": "#/$defs/ground_temperature_model"
+        }
+      },
+      "required": ["conductivity", "rho_cp", "undisturbed_temp"],
+      "additionalProperties": false
+    },
     "roughness": {
       "type": "number",
       "minimum": 0,
@@ -355,13 +447,13 @@
       "description": "Surface roughness of pipe."
     },
     "simulation_years": {
-      "type": "number",
+      "type": "integer",
       "minimum": 1,
       "format": "Years",
       "description": "Number of years used in system simulation."
     },
     "sizing_years": {
-      "type": "number",
+      "type": "integer",
       "minimum": 1,
       "format": "Years",
       "description": "Number of years used in ground heat exchanger sizing."
@@ -682,6 +774,9 @@
       "required": ["fluid_name", "concentration_percent", "temperature"],
       "additionalProperties": false
     },
+    "soil": {
+      "$ref": "#/$defs/soil"
+    },
     "heat_pump": {
       "type": "object",
       "description": "A collection of data that define a heat pump.",
@@ -832,24 +927,6 @@
               }
             },
             "required": ["conductivity", "rho_cp"],
-            "additionalProperties": false
-          },
-          "soil": {
-            "type": "object",
-            "properties": {
-              "conductivity": {
-                "$ref": "#/$defs/conductivity"
-              },
-              "rho_cp": {
-                "$ref": "#/$defs/rho_cp"
-              },
-              "undisturbed_temp": {
-                "type": "number",
-                "format": "Centigrade",
-                "description": "Undisturbed, far-field soil temperature."
-              }
-            },
-            "required": ["conductivity", "rho_cp", "undisturbed_temp"],
             "additionalProperties": false
           },
           "pipe": {
@@ -1026,6 +1103,51 @@
                   },
                   "no_go_boundaries": {
                     "$ref": "#/$defs/no_go_boundaries"
+                  },
+                  "borehole_removal_options": {
+                    "properties": {
+                      "borehole_removal_method": {
+                        "$ref": "#/$defs/borehole_removal_method"
+                      }
+                    },
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "borehole_removal_method": {
+                            "const": "LINE_SEGMENTS"
+                          },
+                          "line_segments": {
+                            "$ref": "#/$defs/line_segments"
+                          },
+                          "points": {
+                            "$ref": "#/$defs/points"
+                          }
+                        },
+                        "required": [
+                          "borehole_removal_method",
+                          "line_segments"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "properties": {
+                          "borehole_removal_method": {
+                            "const": "RADIAL"
+                          }
+                        },
+                        "required": ["borehole_removal_method"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "properties": {
+                          "borehole_removal_method": {
+                            "const": "RIGHT_TOP"
+                          }
+                        },
+                        "required": ["borehole_removal_method"],
+                        "additionalProperties": false
+                      }
+                    ]
                   }
                 },
                 "required": ["b_min", "property_boundary", "method"],
@@ -1206,14 +1328,15 @@
             "$ref": "#/$defs/load_inputs"
           }
         },
-        "required": [
-          "soil",
-          "grout",
-          "pipe",
-          "borehole",
-          "flow_rate",
-          "flow_type"
+        "anyOf": [
+          {
+            "required": ["pre_designed"]
+          },
+          {
+            "required": ["geometric_constraints", "design"]
+          }
         ],
+        "required": ["grout", "pipe", "borehole", "flow_rate", "flow_type"],
         "additionalProperties": false
       }
     },
@@ -1229,14 +1352,20 @@
         },
         "load_method": {
           "type": "string",
-          "enum": ["HYBRID", "HOURLY"],
+          "enum": ["HYBRID", "HOURLY", "HOURLYLOADAGG"],
           "default": "HYBRID",
           "description": "Load method used for simulations and sizing. HYBRID aggregates loads before GHE calculations; HOURLY uses hourly loads directly."
         },
         "search_method": {
           "type": "string",
-          "enum": ["GLOBAL_BUPCRS", "NELDER-MEAD", "SIMULATION_ONLY"],
-          "default": "GLOBAL_BUPCRS",
+          "enum": [
+            "GLOBAL_BUPCRS",
+            "GLOBAL_BUPCRS_BR",
+            "GLOBAL_ROWWISE",
+            "NELDER-MEAD",
+            "SIMULATION_ONLY"
+          ],
+          "default": "GLOBAL_BUPCRS_BR",
           "description": "Defines the type of design method to be used for the system GHEs. Use \"SIMULATION_ONLY\" if you only want to simulate pre-designed GHEs."
         },
         "constant_cop": {
@@ -1244,19 +1373,14 @@
           "default": true,
           "description": "Determines if system heat pump loads are converted with fixed COP behavior instead of full heat pump performance calculations."
         },
-        "fixed_loads": {
-          "type": "boolean",
-          "default": false,
-          "description": "Determines if the system simulation pre-determines the ghe load distribution (based on nbh). This can be advantageous as the GHE heat transfer calculations are faster when using hourly timesteps."
-        },
         "exhaustive_search": {
           "type": "boolean",
           "default": false,
           "description": "Determines if the GHE design algorithm will perform an exhaustive search or a faster search (which depends on the search method type)."
         },
         "horizontal_segments": {
-          "type": "number",
-          "minimum": 0,
+          "type": "integer",
+          "minimum": 1,
           "format": "-",
           "default": 3,
           "description": "Number of segments for horizontal buried pipe simulations."
@@ -1264,7 +1388,7 @@
         "horizontal_simulation_considered": {
           "type": "boolean",
           "default": false,
-          "description": "Determines if the simulation accounts for thermal effects from horizontal_piping components using the ground_temperature_model."
+          "description": "Determines if the simulation accounts for thermal effects from horizontal_piping components using soil.ground_temperature_model."
         }
       },
       "oneOf": [
@@ -1286,7 +1410,8 @@
           "required": ["sizing_years"],
           "additionalProperties": true
         }
-      ]
+      ],
+      "additionalProperties": false
     },
     "source_sink_heat_exchanger": {
       "type": "object",
@@ -1325,28 +1450,8 @@
     },
     "version": {
       "type": "integer",
+      "const": 3,
       "description": "An integer version ID for this input structure, for future-proofing."
-    },
-    "ground_temperature_model": {
-      "type": "object",
-      "description": "Type of undisturbed ground temperature model used in horizontal pipe simulation.",
-      "properties": {
-        "annual_average": {
-          "type": "number"
-        },
-        "amplitude_1": {
-          "type": "number"
-        },
-        "amplitude_2": {
-          "type": "number"
-        },
-        "phase_lag_1": {
-          "type": "number"
-        },
-        "phase_lag_2": {
-          "type": "number"
-        }
-      }
     },
     "horizontal_piping": {
       "type": "object",
@@ -1364,37 +1469,39 @@
             "minimum": 0
           },
           "coupled_to": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "counter_flow": {
             "type": "boolean"
           },
           "spacing": {
             "type": "number",
-            "minimum": 0
-          },
-          "soil": {
-            "type": "object",
-            "properties": {
-              "conductivity": {
-                "$ref": "#/$defs/conductivity"
-              },
-              "rho_cp": {
-                "$ref": "#/$defs/rho_cp"
-              }
-            },
-            "required": ["conductivity", "rho_cp"],
-            "additionalProperties": false
+            "exclusiveMinimum": 0
           },
           "pipe": {
             "$ref": "#/$defs/horizontal_pipe"
           }
         },
-        "required": ["length", "trench_depth", "soil", "pipe"],
+        "required": ["length", "trench_depth", "pipe"],
+        "allOf": [
+          {
+            "if": {
+              "anyOf": [
+                { "required": ["coupled_to"] },
+                { "required": ["spacing"] },
+                { "required": ["counter_flow"] }
+              ]
+            },
+            "then": {
+              "required": ["coupled_to", "spacing"]
+            }
+          }
+        ],
         "additionalProperties": false
       }
     }
   },
-  "required": ["topology", "fluid", "ground_heat_exchanger", "version"],
+  "required": ["topology", "fluid", "soil", "ground_heat_exchanger", "version"],
   "additionalProperties": false
 }

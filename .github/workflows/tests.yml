@@ -28,10 +28,10 @@ jobs:
           if ("${{ matrix.os }}" -eq "windows-latest" -and "${{ matrix.python-version }}" -eq "3.14") {
             $pytestArgs = @("-v")
           }
-          if ("${{ matrix.os }}" -eq "ubuntu-latest" -and "${{ matrix.python-version }}" -eq "3.14") {
-            $pytestArgs += @("--cov-report=xml:coverage.xml")
-          }
           uv run pytest @pytestArgs
+      - name: Generate coverage XML
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14'
+        run: uv run coverage xml --include="ghedesigner/*" -o coverage.xml
       - name: Upload coverage to Coveralls
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14'
         uses: coverallsapp/github-action@v2

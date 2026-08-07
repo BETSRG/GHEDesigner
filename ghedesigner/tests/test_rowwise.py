@@ -1,4 +1,5 @@
-from math import pi
+from itertools import combinations
+from math import dist, pi
 
 import numpy as np
 import pandas as pd
@@ -9,6 +10,7 @@ from ghedesigner.ghe.rowwise import (
     gen_borehole_config,
     gen_shape,
 )
+from ghedesigner.ghe.shape import Shapes
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
@@ -141,6 +143,16 @@ class TestRowWise(GHEBaseTest):
         reference_values = self.reference_values["test_borehole_config_lengths"].to_list()
         for rv, nbh in zip(reference_values, num_bhs):
             self.assertAlmostEqual(rv, nbh, delta=0.001)
+
+    def test_borehole_config_preserves_spacing_when_property_is_narrower_than_row_spacing(self):
+        spacing = 5.0
+        narrow_property = Shapes([[0.0, 0.0], [20.0, 0.0], [20.0, 4.0], [0.0, 4.0]])
+
+        boreholes = gen_borehole_config(narrow_property, y_space=spacing, x_space=spacing).tolist()
+
+        assert len(boreholes) > 1
+        assert len({round(float(point[1]), 8) for point in boreholes}) == 1
+        assert all(dist(first, second) >= spacing for first, second in combinations(boreholes, 2))
 
     def test_normal_spacing(self):
         target_spacings = np.linspace(

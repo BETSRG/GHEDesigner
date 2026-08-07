@@ -111,13 +111,18 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.is_sizable: bool = False
 
     @classmethod
-    def init_from_dictionary(cls, ghe_dict: dict, fluid_inputs: dict | None = None) -> "GroundHeatExchanger":
+    def init_from_dictionary(
+        cls,
+        ghe_dict: dict,
+        fluid_inputs: dict | None = None,
+        soil_inputs: dict | None = None,
+    ) -> "GroundHeatExchanger":
         """
         Initialize a GroundHeatExchanger object from input dictionaries, performing validation and ultimately calling
         the main object constructor.
-        :param ghe_dict: Dictionary of ground heat exchanger parameters, see the input schema specification for required
-                         inputs in the ground_heat_exchanger schema field.
+        :param ghe_dict: Dictionary of GHE-specific parameters from the ground_heat_exchanger schema field.
         :param fluid_inputs: Optional dictionary of fluid input parameters, see the input schema fluid spec for details.
+        :param soil_inputs: Top-level vertical-soil parameters shared by the GHEs in the input file.
         :return: GroundHeatExchanger object.
         # TODO: Add validation back in to the input fields
         """
@@ -125,7 +130,9 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         g_c: float = grout_parameters["conductivity"]
         g_rho_cp: float = grout_parameters["rho_cp"]
 
-        soil_parameters: dict = ghe_dict["soil"]
+        if soil_inputs is None:
+            raise ValueError("Top-level soil inputs are required to initialize a ground heat exchanger.")
+        soil_parameters = soil_inputs
         s_k: float = soil_parameters["conductivity"]
         s_rho_cp: float = soil_parameters["rho_cp"]
         s_temp: float = soil_parameters["undisturbed_temp"]
@@ -173,7 +180,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             self.configure_design(ghe_dict["design"])
 
     def configure_geometry(self, geom: dict, is_pre_designed=False):
-
         if not is_pre_designed:
             geometry_map = {geom.name: geom for geom in DesignGeomType}
             self.geom_type = geometry_map.get(geom["method"].upper())
@@ -209,6 +215,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     )
                 case DesignGeomType.BIRECTANGLECONSTRAINED:
                     no_go_boundaries = geom.get("no_go_boundaries")
+                    removal_options = geom.get("borehole_removal_options", {"borehole_removal_method": "RADIAL"})
                     b_max_x = geom.get("b_max_x")
                     b_max_y = geom.get("b_max_y")
                     self.geometric_constraint = GeometricConstraintsBiRectangleConstrained(
@@ -217,6 +224,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                         b_max_x=b_max_x,
                         b_max_y=b_max_y,
                         no_go_boundaries=no_go_boundaries,
+                        borehole_removal_options=removal_options,
                     )
                 case DesignGeomType.ROWWISE:
                     # use perimeter calculations if present
@@ -427,10 +435,20 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.pre_designed_height = self.max_height
         self.initialize_pre_designed_ghe()
 
+    def new_ts_design(self, target_spacing):
+        if self.geom_type != DesignGeomType.ROWWISE:
+            raise ValueError('"new_ts_design" can only be used on GHEs which have RowWisegeometric constraints.')
+        new_coords = self.design.get_field_by_target_spacing(target_spacing)
+        self.pre_designed_locations = new_coords
+        self.pre_designed_height = self.max_height
+        self.initialize_pre_designed_ghe()
+
     def average_bound_nbh(self):
         return average(self.design.get_bounds())
 
-    def initialize_pre_designed_ghe(self, log_time=eskilson_log_times()):
+    def initialize_pre_designed_ghe(
+        self, log_time=eskilson_log_times(), start_month=0, end_month=0, hourly_extraction_ground_loads=[]
+    ):
         v_flow_system, m_flow_borehole = self.retrieve_flow(self.pre_designed_locations, self.fluid.rho)
         self.log_time = log_time
         self.pygfunction_borehole.H = self.pre_designed_height
@@ -468,9 +486,9 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             grout,
             soil,
             g_function,
-            0,
-            0,
-            [],
+            start_month,
+            end_month,
+            hourly_extraction_ground_loads,
         )
 
     def design_and_size_ghe(
@@ -653,7 +671,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         return search, search_time, found_ghe
 
     def get_design_area(self) -> float:
-
         if not self.ghe_geometry_set:
             raise ValueError("A set of geometric constraints needs to be set before a design area can be defined.")
 

@@ -5,7 +5,7 @@ from pathlib import Path
 import click
 from jsonschema.exceptions import ValidationError
 
-from ghedesigner.constants import MONTHS_IN_YEAR, VERSION
+from ghedesigner.constants import INPUT_VERSION, MONTHS_IN_YEAR, VERSION
 from ghedesigner.district_system import GHEHPSystem
 from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.manager import GroundHeatExchanger
@@ -35,8 +35,8 @@ def run(input_file_path: Path, output_directory: Path) -> int:
     # Read in all the inputs into small dicts
     # it is possible to define multiple fluids, GHEs, and boreholes in the inputs, I'm just taking the first for now
     input_file_version: int = full_inputs["version"]
-    if input_file_version != 2:  # noqa: PLR2004
-        print("Bad input file version, right now we support these versions: 1")
+    if input_file_version != INPUT_VERSION:
+        print(f"Bad input file version; supported version is: {INPUT_VERSION}")
         return 1
 
     # Validate the load source, it should be a building object or a GHE with loads specified
@@ -81,7 +81,11 @@ def run(input_file_path: Path, output_directory: Path) -> int:
 
                 ghe_dict["loads"]["column"] = column
 
-            ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, full_inputs["fluid"])
+            ghe = GroundHeatExchanger.init_from_dictionary(
+                ghe_dict,
+                full_inputs["fluid"],
+                soil_inputs=full_inputs["soil"],
+            )
             if "pre_designed" in ghe_dict:
                 log_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
                 results = OutputManager("GHEDesigner Run from CLI", "Just Calculate G", "", "")
@@ -98,7 +102,11 @@ def run(input_file_path: Path, output_directory: Path) -> int:
         # we have a GHE and a building, grab both
         ghe_dict = full_inputs["ground_heat_exchanger"][ghe_names[0]]
         ghe_dict["name"] = ghe_names[0]
-        ghe = GroundHeatExchanger.init_from_dictionary(ghe_dict, full_inputs["fluid"])
+        ghe = GroundHeatExchanger.init_from_dictionary(
+            ghe_dict,
+            full_inputs["fluid"],
+            soil_inputs=full_inputs["soil"],
+        )
         single_building_data = full_inputs["building"][building_names[0]]
         heat_pump = HeatPumpFixedCOP(building_names[0], single_building_data)
         ghe_loads = heat_pump.get_ground_loads()

@@ -120,9 +120,9 @@ def square_and_near_square_adjusted_nbh(lower: int, upper: int, b: float, desire
             return rectangle_adjusted_nbh(larger_side_length, larger_side_length, b, b, desired_nbh)
 
 
-def general_domain_nbh_adjustment(field_domain, field_sizes, min_nbh, max_nbh, desired_nbh):
+def general_domain_nbh_adjustment(field_domain, field_sizes, min_nbh, max_nbh, desired_nbh, removal_options):
     if desired_nbh < min_nbh:
-        return general_field_nbh_adjustment(field_domain[0], desired_nbh)
+        return general_field_nbh_adjustment(field_domain[0], desired_nbh, removal_options)
     elif desired_nbh > max_nbh:
         raise ValueError("Requested field size exceeds what exists within the field domain.")
     else:
@@ -142,7 +142,8 @@ def general_domain_nbh_adjustment(field_domain, field_sizes, min_nbh, max_nbh, d
                 x_l = x_m
             else:
                 x_r = x_m
-        return general_field_nbh_adjustment(field_domain[x_r], desired_nbh)
+        print(f"Removing {field_sizes[x_r] - desired_nbh} boreholes.")
+        return general_field_nbh_adjustment(field_domain[x_r], desired_nbh, removal_options)
 
 
 def rectangular(length_x: float, length_y: float, b_min: float, b_max: float, disp: bool = False):
@@ -557,37 +558,40 @@ def bi_rectangle_close_spacing(length_x, length_y, b_min, transpose=False, disp=
 
     n_min = ceil(n_1_min)
     n_max = floor(n_1_max)
+    previous_n2_max = 0
     for n_1 in range(n_min, n_max + 1):
         b_1 = length_1 / (n_1 - 1) if n_1 > 1 else DEFAULT_MINIMUM_BOREHOLE_SPACING
-        n_2 = floor(length_2 / b_1) + 1
-        b_2 = length_2 / (n_2 - 1) if n_2 > 1 else DEFAULT_MINIMUM_BOREHOLE_SPACING
+        n_2_max = floor(length_2 / b_1) + 1 if n_1 > 1 else 1
+        n2_set = [n_2_max] if n_2_max == previous_n2_max else [n_2_max - 1, n_2_max]
+        previous_n2_max = n_2_max
+        for n_2 in n2_set:
+            b_2 = length_2 / (n_2 - 1) if n_2 > 1 else DEFAULT_MINIMUM_BOREHOLE_SPACING
 
-        if _iter == 0:
-            for i in range(1, n_1):
-                coordinates = rectangle(i, 1, b_1, b_1)
-                if transpose:
-                    coordinates = transpose_coordinates(coordinates)
-                bi_rectangle_domain.append(coordinates)
-                field_descriptors.append(f"{i}X{1}_B1{b_1:0.2f}_B2{b_1:0.2f}")
-            for j in range(1, n_2):
-                b_j = length_2 / (j - 1) if j > 1 else DEFAULT_MINIMUM_BOREHOLE_SPACING
-                coordinates = rectangle(n_1, j, b_1, b_j)
-                if transpose:
-                    coordinates = transpose_coordinates(coordinates)
-                bi_rectangle_domain.append(coordinates)
-                field_descriptors.append(f"{n_1}X{j}_B1{b_1:0.2f}_B2{b_j:0.2f}")
+            if _iter == 0:
+                for i in range(1, n_1):
+                    coordinates = rectangle(i, 1, b_1, b_1)
+                    if transpose:
+                        coordinates = transpose_coordinates(coordinates)
+                    bi_rectangle_domain.append(coordinates)
+                    field_descriptors.append(f"{i}X{1}_B1{b_1:0.2f}_B2{b_1:0.2f}")
+                for j in range(1, n_2):
+                    b_j = length_2 / (j - 1) if j > 1 else DEFAULT_MINIMUM_BOREHOLE_SPACING
+                    coordinates = rectangle(n_1, j, b_1, b_j)
+                    if transpose:
+                        coordinates = transpose_coordinates(coordinates)
+                    bi_rectangle_domain.append(coordinates)
+                    field_descriptors.append(f"{n_1}X{j}_B1{b_1:0.2f}_B2{b_j:0.2f}")
 
-            _iter += 1
+                _iter += 1
 
-        if disp:
-            print(f"{n_1}x{n_2} with {b_1:0.1f}x{b_2:0.1f}")
+            if disp:
+                print(f"{n_1}x{n_2} with {b_1:0.1f}x{b_2:0.1f}")
 
-        coordinates = rectangle(n_1, n_2, b_1, b_2)
-        if transpose:
-            coordinates = transpose_coordinates(coordinates)
-        bi_rectangle_domain.append(coordinates)
-        field_descriptors.append(f"{n_1}X{n_2}_B1{b_1:0.2f}_B2{b_2:0.2f}")
-
+            coordinates = rectangle(n_1, n_2, b_1, b_2)
+            if transpose:
+                coordinates = transpose_coordinates(coordinates)
+            bi_rectangle_domain.append(coordinates)
+            field_descriptors.append(f"{n_1}X{n_2}_B1{b_1:0.2f}_B2{b_2:0.2f}")
     return bi_rectangle_domain, field_descriptors
 
 
@@ -596,21 +600,22 @@ def polygonal_land_constraint_multi_field(
     property_boundary: list[list[list[list[float]]]],
     no_go_boundaries: list[list[list[float]]] | None = None,
     keep_contour: tuple[bool, bool] | None = None,
-    on_edge_tolerance=0.001,
+    on_edge_tolerance=0.01,
     split_domains_by_property=True,
 ):
     if no_go_boundaries is None:
         no_go_boundaries = []
     if keep_contour is None:
-        keep_contour = cast(tuple[bool, bool], (True, False))
+        keep_contour = cast(tuple[bool, bool], (True, True))
 
     flattened_property_boundary = [prop_bound for prop_bounds in property_boundary for prop_bound in prop_bounds]
     outer_rectangle = determine_largest_rectangle(flattened_property_boundary)
 
     x, y = list(zip(*outer_rectangle))
-    length = max(x)
-    width = max(y)
+    length = max(x) - min(x)
+    width = max(y) - min(y)
     coordinates_domain, field_descriptors = bi_rectangle_close_spacing(length, width, b_min)
+    coordinates_domain = [[(c[0] + min(x), c[1] + min(y)) for c in cd] for cd in coordinates_domain]
 
     coordinates_domain_cutout = []
     field_descriptors_cutout = []

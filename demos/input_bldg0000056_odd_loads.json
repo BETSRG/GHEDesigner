@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "topology": [
     {
       "type": "ground_heat_exchanger",
@@ -11,6 +11,11 @@
     "concentration_percent": 0,
     "temperature": 20
   },
+  "soil": {
+    "conductivity": 1.73,
+    "rho_cp": 3225961.54,
+    "undisturbed_temp": 10.87
+  },
   "ground_heat_exchanger": {
     "ghe1": {
       "flow_rate": 0.58,
@@ -18,11 +23,6 @@
       "grout": {
         "conductivity": 0.692,
         "rho_cp": 3900000
-      },
-      "soil": {
-        "conductivity": 1.73,
-        "rho_cp": 3225961.54,
-        "undisturbed_temp": 10.87
       },
       "pipe": {
         "inner_diameter": 0.03404,

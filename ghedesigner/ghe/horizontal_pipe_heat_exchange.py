@@ -9,6 +9,18 @@ from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Soil
 
 
+def calc_pipe_wall_resistance(pipe: Pipe) -> float:
+    """Return cylindrical pipe-wall thermal resistance per unit length in m-K/W."""
+    if isinstance(pipe.r_in, list) or isinstance(pipe.r_out, list) or isinstance(pipe.k, tuple):
+        raise TypeError("Horizontal pipe resistance requires a single pipe radius and conductivity.")
+    if pipe.r_in <= 0.0 or pipe.r_out <= pipe.r_in:
+        raise ValueError("Horizontal pipe radii must satisfy 0 < inner radius < outer radius.")
+    if pipe.k <= 0.0:
+        raise ValueError("Horizontal pipe conductivity must be positive.")
+
+    return math.log(pipe.r_out / pipe.r_in) / (TWO_PI * pipe.k)
+
+
 class ParallelPipeSystem:
     def __init__(
         self,

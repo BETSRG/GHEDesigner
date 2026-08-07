@@ -1,3 +1,6 @@
+from ghedesigner.ghe.rowwise import dist_from_line, pts_dist
+
+
 def transpose_coordinates(coordinates) -> list[tuple[float, float]]:
     coordinates_transposed = []
     for x, y in coordinates:
@@ -40,8 +43,39 @@ def rectangle(
     return r
 
 
-def general_field_nbh_adjustment(coordinates, desired_nbh):
-    sorted_coordinates = sorted(coordinates)
+def general_field_nbh_adjustment(coordinates, desired_nbh, removal_options):
+    removal_method = removal_options["borehole_removal_method"]
+    if removal_method.upper() == "RIGHT_TOP":
+        sorted_coordinates = sorted(coordinates)
+    elif removal_method.upper() == "RADIAL":
+        number_of_coordinates = len(coordinates)
+        x_vals = [p[0] for p in coordinates]
+        y_vals = [p[1] for p in coordinates]
+        cx = sum(x_vals) / number_of_coordinates
+        cy = sum(y_vals) / number_of_coordinates
+        squared_distances = [((x_vals[i] - cx) ** 2 + (y_vals[i] - cy) ** 2) for i in range(number_of_coordinates)]
+        sorted_coordinates = [coord for _, coord in sorted(zip(squared_distances, coordinates), reverse=True)]
+    elif removal_method.upper() == "LINE_SEGMENTS":
+        if "line_segments" not in removal_options:
+            raise ValueError('A list of line segments is necessary to use the "LINE_SEGMENTS" removal option.')
+        line_segments = removal_options["line_segments"]
+        reference_points = removal_options.get("points", [[0.0, 0.0]])
+        line_distances = []
+        point_distances = []
+        for point in coordinates:
+            min_line_dist = float("inf")
+            for line_segment in line_segments:
+                min_line_dist = min(min_line_dist, dist_from_line(line_segment[0], line_segment[1], point))
+            line_distances.append(min_line_dist)
+            min_point_dist = float("inf")
+            for reference_point in reference_points:
+                min_point_dist = min(min_point_dist, pts_dist(point, reference_point))
+            point_distances.append(min_point_dist)
+        sorted_coordinates = [
+            coord for _, _, coord in sorted(zip(line_distances, point_distances, coordinates), reverse=True)
+        ]
+    else:
+        raise ValueError('Unrecognized removal method provided to "general_field_nbh_adjustment".')
     return sorted_coordinates[0:desired_nbh]
 
 
