@@ -35,27 +35,24 @@ def main():
     print("--- Starting GHE District Batch Simulation ---")
     start_total = time()
 
-    input_dir = Path("..\\GHEDesigner\\demos")
-    output_dir = Path("..\\Documents\\research\\GHEDesigner csv results\\TRT")
+    input_dir = Path("..\\Documents\\research\\GHEDesigner csv results\\horizontal report parametric studies")
+    output_dir = Path("..\\Documents\\research\\GHEDesigner csv results\\horizontal report parametric studies")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     target_files = [
-        "beier_trt_60_ft_1_segment.json",
-        "beier_trt_60_ft_10_segments.json",
-        "beier_trt_600_ft_1_segment.json",
-        "beier_trt_600_ft_2_segments.json",
-        "beier_trt_600_ft_3_segments.json",
-        "beier_trt_600_ft_4_segments.json",
-        "beier_trt_600_ft_5_segments.json",
-        "beier_trt_600_ft_7_segments.json",
-        "beier_trt_600_ft_9_segments.json",
-        "beier_trt_600_ft_10_segments.json",
+        "baltimore_low_flow.json",
+        "baltimore_high_flow.json",
+        "baltimore_normal_flow.json",
+        "baltimore_0.3diam_2xlength.json",
+        "baltimore_0.1524diam_.5xlength.json",
+        "baltimore_0.1016diam_.25xlength.json",
+        "baltimore_0.2032diam_1xlength.json",
     ]
 
     jobs = []
     for file_name in target_files:
         in_path = input_dir / file_name
-        out_path = output_dir / file_name.replace(".json", "_no_cap.csv")
+        out_path = output_dir / file_name.replace(".json", ".csv")
         jobs.append((in_path, out_path))
 
     print(f"Queued {len(jobs)} simulations.")
