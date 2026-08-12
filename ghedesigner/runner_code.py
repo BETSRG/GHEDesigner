@@ -4,7 +4,7 @@ from time import time
 
 def main():
 
-    input_file_path = Path("..\\demos\\simulate_2_pipe_ring_1_ghe_2_bldg_district_HOURLY.json")
+    input_file_path = Path("../demos/simulate_2_pipe_bidirectional_1_ghe_2_bldg_district_HOURLY.json")
     output_file_path = Path("..\\ghedesigner\\ghe\\nbast_results\\simulation_results.csv")
 
     start_time = time()

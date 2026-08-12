@@ -23,7 +23,7 @@
     },
     {
         "type": "isolated_horizontal_pipe",
-        "name": "hp_pir7"
+        "name": "hp_pir3"
     },
     {
         "type": "isolated_horizontal_pipe",
@@ -35,7 +35,7 @@
     },
     {
         "type": "isolated_horizontal_pipe",
-        "name": "hp_por7"
+        "name": "hp_por3"
     }
   ],
   "ground_temperature_model":{
@@ -47,7 +47,7 @@
   },
   "horizontal_piping": {
   "hp_pir1": {
-    "length": 50.0,
+    "length": 100.0,
     "trench_depth": 1.5,
     "soil": {
       "conductivity": 2.0,
@@ -64,7 +64,7 @@
   },
 
   "hp_pir2": {
-    "length": 50.0,
+    "length": 100.0,
     "trench_depth": 1.5,
     "soil": {
       "conductivity": 2.0,
@@ -80,8 +80,8 @@
     }
   },
 
-  "hp_pir7": {
-    "length": 50.0,
+  "hp_pir3": {
+    "length": 100.0,
     "trench_depth": 1.5,
     "soil": {
       "conductivity": 2.0,
@@ -98,7 +98,7 @@
   },
 
   "hp_por1": {
-    "length": 50.0,
+    "length": 100.0,
     "trench_depth": 1.5,
     "soil": {
       "conductivity": 2.0,
@@ -115,7 +115,7 @@
   },
 
   "hp_por2": {
-    "length": 50.0,
+    "length": 100.0,
     "trench_depth": 1.5,
     "soil": {
       "conductivity": 2.0,
@@ -130,8 +130,8 @@
       "arrangement": "SINGLEUTUBE"
     }
   },
-  "hp_por7": {
-    "length": 50.0,
+  "hp_por3": {
+    "length": 100.0,
     "trench_depth": 1.5,
     "soil": {
       "conductivity": 2.0,
@@ -395,78 +395,6 @@
       "z": "0",
       "connection": "ground_heat_exchanger",
       "connection_id": "ghe1"
-    },
-    "na": {
-      "id": "na",
-      "type": "simple",
-      "x": "150",
-      "y": "170",
-      "z": "0",
-      "connection": "None",
-      "connection_id": "None"
-    },
-    "nb": {
-      "id": "nb",
-      "type": "simple",
-      "x": "190",
-      "y": "170",
-      "z": "0",
-      "connection": "None",
-      "connection_id": "None"
-    },
-    "nc": {
-      "id": "nc",
-      "type": "simple",
-      "x": "190",
-      "y": "75",
-      "z": "0",
-      "connection": "None",
-      "connection_id": "None"
-    },
-    "nd": {
-      "id": "nd",
-      "type": "simple",
-      "x": "150",
-      "y": "75",
-      "z": "0",
-      "connection": "None",
-      "connection_id": "None"
-    },
-    "ne": {
-      "id": "ne",
-      "type": "simple",
-      "x": "160",
-      "y": "160",
-      "z": "0",
-      "connection": "None",
-      "connection_id": "None"
-    },
-    "nf": {
-      "id": "nf",
-      "type": "simple",
-      "x": "180",
-      "y": "160",
-      "z": "0",
-      "connection": "None",
-      "connection_id": "None"
-    },
-    "ng": {
-      "id": "ng",
-      "type": "simple",
-      "x": "180",
-      "y": "85",
-      "z": "0",
-      "connection": "None",
-      "connection_id": "None"
-    },
-    "nh": {
-      "id": "nh",
-      "type": "simple",
-      "x": "160",
-      "y": "85",
-      "z": "0",
-      "connection": "None",
-      "connection_id": "None"
     }
   },
   "pipe": {
@@ -529,7 +457,7 @@
       "type": "main_ir",
       "node_in_name": "n4",
       "node_out_name": "n8",
-      "length": 50.0,
+      "length": 100.0,
       "nominal_mass_flow": 32.58,
       "diameter": 0.177,
       "horizontal_pipe": "hp_pir1"
@@ -539,63 +467,27 @@
       "type": "main_ir",
       "node_in_name": "n8",
       "node_out_name": "n9",
-      "length": 50.0,
+      "length": 125.0,
       "nominal_mass_flow": 32.58,
       "diameter": 0.177,
       "horizontal_pipe": "hp_pir2"
     },
     "pir3": {
       "id": "pir3",
-      "type": "main_dir",
-      "node_in_name": "n9",
-      "node_out_name": "ng",
-      "length": 0,
-      "nominal_mass_flow": 32.58,
-      "diameter": 0.177
-    },
-    "pir4": {
-      "id": "pir4",
-      "type": "main_dir",
-      "node_in_name": "ng",
-      "node_out_name": "nh",
-      "length": 0,
-      "nominal_mass_flow": 32.58,
-      "diameter": 0.177
-    },
-    "pir5": {
-      "id": "pir5",
-      "type": "main_dir",
-      "node_in_name": "nh",
-      "node_out_name": "ne",
-      "length": 0,
-      "nominal_mass_flow": 32.58,
-      "diameter": 0.177
-    },
-    "pir6": {
-      "id": "pir6",
-      "type": "main_dir",
-      "node_in_name": "ne",
-      "node_out_name": "nf",
-      "length": 0,
-      "nominal_mass_flow": 32.58,
-      "diameter": 0.177
-    },
-    "pir7": {
-      "id": "pir7",
       "type": "main_ir",
-      "node_in_name": "nf",
+      "node_in_name": "n9",
       "node_out_name": "n4",
-      "length": 50.0,
+      "length": 100.0,
       "nominal_mass_flow": 32.58,
       "diameter": 0.177,
-      "horizontal_pipe": "hp_pir7"
+      "horizontal_pipe": "hp_pir3"
     },
     "por1": {
       "id": "por1",
       "type": "main_or",
       "node_in_name": "n1",
       "node_out_name": "n5",
-      "length": 50.0,
+      "length": 100.0,
       "nominal_mass_flow": 32.58,
       "diameter": 0.177,
       "horizontal_pipe": "hp_por1"
@@ -605,56 +497,20 @@
       "type": "main_or",
       "node_in_name": "n5",
       "node_out_name": "n12",
-      "length": 50.0,
+      "length": 100.0,
       "nominal_mass_flow": 32.58,
       "diameter": 0.177,
       "horizontal_pipe": "hp_por2"
     },
     "por3": {
       "id": "por3",
-      "type": "main_dor",
-      "node_in_name": "n12",
-      "node_out_name": "nc",
-      "length": 0,
-      "nominal_mass_flow": 32.58,
-      "diameter": 0.177
-    },
-    "por4": {
-      "id": "por4",
-      "type": "main_dor",
-      "node_in_name": "nc",
-      "node_out_name": "nd",
-      "length": 0,
-      "nominal_mass_flow": 32.58,
-      "diameter": 0.177
-    },
-    "por5": {
-      "id": "por5",
-      "type": "main_dor",
-      "node_in_name": "nd",
-      "node_out_name": "na",
-      "length": 0,
-      "nominal_mass_flow": 32.58,
-      "diameter": 0.177
-    },
-    "por6": {
-      "id": "por6",
-      "type": "main_dor",
-      "node_in_name": "na",
-      "node_out_name": "nb",
-      "length": 0,
-      "nominal_mass_flow": 32.58,
-      "diameter": 0.177
-    },
-    "por7": {
-      "id": "por7",
       "type": "main_or",
-      "node_in_name": "nb",
+      "node_in_name": "n12",
       "node_out_name": "n1",
-      "length": 50.0,
+      "length": 100.0,
       "nominal_mass_flow": 32.58,
       "diameter": 0.177,
-      "horizontal_pipe": "hp_por7"
+      "horizontal_pipe": "hp_por3"
     }
   },
    "pressure_drop": {

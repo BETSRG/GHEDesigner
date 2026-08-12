@@ -2538,7 +2538,6 @@ class GHEHPSystem:
             output_path.parent.mkdir(parents=True)
         output_data.to_csv(output_path, float_format="%0.4f")
 
-
     def UpdateConnections(self):
 
         for pipe in self.pipes:
@@ -2815,24 +2814,6 @@ class GHEHPSystem:
                     f"Invalid node flow pattern: "
                     f"{n_in} incoming, {n_out} outgoing."
                 )
-
-    def is_zero_flow_timestep(self):
-
-        for pipe in self.pipes:
-            if abs(pipe.mass_flow_rate) > 0:
-                return False
-
-        for bldg in self.buildings:
-            if abs(bldg.mass_bldg) > 0:
-                return False
-
-        for ghx in self.ground_heat_exchangers:
-            if abs(ghx.mass_flow_ghe) > 0:
-                return False
-
-        return True
-
-
 def FindItemByID(ID, objectlist):
     # search a list of objects to find one with a particular name
     # of course, the objects must have a "name" member
