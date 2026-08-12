@@ -408,7 +408,7 @@
     }
   },
   "central_loop": {
-    "pipe_configuration": "TWOPIPE_RING",
+    "pipe_configuration": "TWOPIPE_BIDIRECTIONAL",
     "flow_factor": 1.0,
     "pump_efficiency": 0.5,
     "loop_length": 200,
@@ -523,12 +523,12 @@
       "cooling_cop": 4.5,
       "heating_load": {
         "column_name": "B1Z1_HPHtgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_bidirectional_3GHE_6HP_Example_Loads.csv",
         "heat_pump_name": "hp1"
       },
       "cooling_load": {
         "column_name": "B1Z1_HPClgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_bidirectional_3GHE_6HP_Example_Loads.csv",
         "heat_pump_name": "hp1"
       }
     },
@@ -541,7 +541,7 @@
       "cooling_cop": 3.7,
       "heating_load": {
         "column_name": "B1Z2_HPHtgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_bidirectional_3GHE_6HP_Example_Loads.csv",
         "heat_pump_name": "hp4"
       }
     },
@@ -554,12 +554,12 @@
       "cooling_cop": 4.9,
       "heating_load": {
         "column_name": "B2Z1_HPHtgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_bidirectional_3GHE_6HP_Example_Loads.csv",
         "heat_pump_name": "hp2"
       },
       "cooling_load": {
         "column_name": "B2Z1_HPClgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_bidirectional_3GHE_6HP_Example_Loads.csv",
         "heat_pump_name": "hp2"
       }
     },
@@ -572,7 +572,7 @@
       "cooling_cop": 3.7,
       "heating_load": {
         "column_name": "B2Z2_HPHtgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_bidirectional_3GHE_6HP_Example_Loads.csv",
         "heat_pump_name": "hp4"
       }
     },
@@ -585,12 +585,12 @@
       "cooling_cop": 4.9,
       "heating_load": {
         "column_name": "B3Z1_HPHtgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_bidirectional_3GHE_6HP_Example_Loads.csv",
         "heat_pump_name": "hp2"
       },
       "cooling_load": {
         "column_name": "B3Z1_HPClgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_bidirectional_3GHE_6HP_Example_Loads.csv",
         "heat_pump_name": "hp3"
       }
     },
@@ -603,7 +603,7 @@
       "cooling_cop": 3.7,
       "heating_load": {
         "column_name": "B2Z2_HPHtgLd_W",
-        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_bidirectional_3GHE_6HP_Example_Loads.csv",
         "heat_pump_name": "hp4"
       }
     }

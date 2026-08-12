@@ -281,10 +281,10 @@ class IsolatedHorizontalPipe(BaseSimComp):
         idx_t_out_final = self.row_index + 3 * self.num_segments
 
         # for bidirectional flow
-        if configuration == CentralLoopType.TWOPIPE_RING:
+        if configuration == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
             if self.num_segments != 1:
                 raise NotImplementedError(
-                    "TWOPIPE_RING currently supports one "
+                    "TWOPIPE_BIDIRECTIONAL currently supports one "
                     "horizontal-pipe segment."
                 )
             if mass_flow_pipe >= 0.0:
@@ -309,7 +309,7 @@ class IsolatedHorizontalPipe(BaseSimComp):
         prev_ugt = self.calculate_current_ugt(prev_time_sec)
 
         for k in range(self.num_segments):
-            if configuration == CentralLoopType.TWOPIPE_RING:
+            if configuration == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
                 idx_t_m = self.temp_index_mean
                 idx_q = self.index_q
                 idx_t_in_seg = idx_t_in
@@ -347,7 +347,7 @@ class IsolatedHorizontalPipe(BaseSimComp):
         current_ugt = self.calculate_current_ugt(current_time_sec)
         prev_ugt = self.calculate_current_ugt(prev_time_sec)
 
-        if configuration == CentralLoopType.TWOPIPE_RING:
+        if configuration == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
             if self.network_pipe.mass_flow_rate >= 0.0:
                 idx_t_in = self.temp_index_one
                 idx_t_out = self.temp_index_two
@@ -1043,7 +1043,7 @@ class GHX(BaseSimComp):
             rows = [row1, row2, row3, row4]
             rhs = [rhs1, rhs2, rhs3, rhs4]
 
-        elif configuration == CentralLoopType.TWOPIPE_RING:
+        elif configuration == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
             row1[self.temp_index_one] = -1.0
             row1[self.temp_index_two] = -1.0
             row1[self.temp_index_mean] = 2.0
@@ -1268,7 +1268,7 @@ class Building(BaseSimComp):
             rows = [row1, row2]
             rhs_list = [rhs1, rhs2]
 
-        elif configuration == CentralLoopType.TWOPIPE_RING:
+        elif configuration == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
             row = np.zeros(self.matrix_size)
 
             if abs(mass_bldg) == 0:
@@ -1801,7 +1801,7 @@ class GHEHPSystem:
             GHX.MATRIX_ROWS = 1
             node_matrix_rows = 0
 
-        elif self.loop_config == CentralLoopType.TWOPIPE_RING:
+        elif self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
             Building.MATRIX_ROWS = 1
             GHX.MATRIX_ROWS = 3
             node_matrix_rows = sum(
@@ -1813,8 +1813,8 @@ class GHEHPSystem:
         else:
             raise ValueError("Invalid CentralLoopType")
 
-        # Horizontal pipes contribute one fewer unknown in TWO_PIPE_RING
-        if self.loop_config == CentralLoopType.TWOPIPE_RING:
+        # Horizontal pipes contribute one fewer unknown in TWOPIPE_BIDIRECTIONAL
+        if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
             horizontal_matrix_size = sum(
                 pipe.matrix_rows - 1
                 for pipe in horizontal_pipes
@@ -2105,7 +2105,7 @@ class GHEHPSystem:
             # for bidirectional flow
 
             # Calculating zone mass flow rates
-            if self.loop_config == CentralLoopType.TWOPIPE_RING:
+            if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
                 total_bldg_flow = 0.0
                 for bldg in self.buildings:
                     t_in = bldg.t_in[idx_timestep - 1]
@@ -2317,7 +2317,7 @@ class GHEHPSystem:
             for this_comp in self.components:
                 if isinstance(this_comp, Building):
                     t_in = this_comp.t_in[idx_timestep - 1]
-                    if self.loop_config == CentralLoopType.TWOPIPE_RING:
+                    if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
                         this_comp.mass_bldg = this_comp.mass_bldg
                     else:
                         this_comp.mass_bldg = this_comp.calc_mass_flow_rate(t_in, idx_timestep)
@@ -2329,7 +2329,7 @@ class GHEHPSystem:
 
             for this_comp in self.components:
                 if isinstance(this_comp, GHX):
-                    if self.loop_config != CentralLoopType.TWOPIPE_RING:
+                    if self.loop_config != CentralLoopType.TWOPIPE_BIDIRECTIONAL:
                         this_comp.mass_flow_ghe = (
                                 mass_loop * this_comp.split_ratio
                         )
@@ -2349,7 +2349,7 @@ class GHEHPSystem:
                 #rows, rhs = this_comp.generate_matrix(this_comp.mass_bldg, mass_loop, this_comp.mass_loop_bldg, this_comp.mass_flow_ghe, this_comp.mass_loop_ghe, idx_timestep, self.loop_config, self.load_method)
 
                 if (
-                        self.loop_config == CentralLoopType.TWOPIPE_RING
+                        self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL
                         and isinstance(this_comp, IsolatedHorizontalPipe)
                 ):
                     # Skip Drew's unused connection row; node equations provide the connection.
@@ -2361,7 +2361,7 @@ class GHEHPSystem:
 
             # Generating matrix for nodes
 
-            if self.loop_config == CentralLoopType.TWOPIPE_RING:
+            if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
                 bldg_lookup = {bldg.ID: bldg for bldg in self.buildings}
                 GHX_lookup = {ghx.ID: ghx for ghx in self.ground_heat_exchangers}
                 for node in self.nodes:
@@ -2387,7 +2387,7 @@ class GHEHPSystem:
                         this_comp.t_in[idx_timestep] = x_vector[this_comp.inlet_index]
                         this_comp.t_out[idx_timestep] = x_vector[row_index + 1]
 
-                    elif self.loop_config == CentralLoopType.TWOPIPE_RING:
+                    elif self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
 
                         if this_comp.mass_bldg >= 0.0:
                             this_comp.t_in[idx_timestep] = x_vector[this_comp.temp_index_one]
@@ -2408,7 +2408,7 @@ class GHEHPSystem:
                         this_comp.q_ghe[idx_timestep] = x_vector[row_index + 2]
                         this_comp.t_out[idx_timestep] = x_vector[row_index + 3]
 
-                    elif self.loop_config == CentralLoopType.TWOPIPE_RING:
+                    elif self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
 
                         if this_comp.mass_flow_ghe >= 0.0:
                             this_comp.t_in[idx_timestep] = x_vector[this_comp.temp_index_one]
@@ -2430,7 +2430,7 @@ class GHEHPSystem:
                     this_comp.dq_ghe[idx_timestep - 1] = (this_comp.q_ghe[idx_timestep] - this_comp.q_ghe[idx_timestep - 1]) / this_comp.two_pi_k
 
                 elif this_comp.comp_type == SimCompType.ISOLATED_HORIZONTAL_PIPE:
-                    if self.loop_config == CentralLoopType.TWOPIPE_RING:
+                    if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
                         if this_comp.network_pipe.mass_flow_rate >= 0.0:
                             this_comp.t_in[idx_timestep] = x_vector[this_comp.temp_index_one]
                             this_comp.t_out[idx_timestep] = x_vector[this_comp.temp_index_two]
@@ -2504,14 +2504,14 @@ class GHEHPSystem:
             if isinstance(this_comp, GHX):
                 output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
                 output_data[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
-                if self.loop_config != CentralLoopType.TWOPIPE_RING:
+                if self.loop_config != CentralLoopType.TWOPIPE_BIDIRECTIONAL:
                     output_data[f"{this_comp.name}:ExFT Mixed Loop [C]"] = this_comp.t_mix_out[1:]
                 output_data[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean[1:]
                 output_data[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe[1:]
                 output_data[f"{this_comp.name}:Q_tot [W]"] = (this_comp.q_ghe * this_comp.nbh * this_comp.height)[1:]
                 network_q_net_ghe_tot += (this_comp.q_ghe * this_comp.nbh * this_comp.height)
 
-        if self.loop_config == CentralLoopType.TWOPIPE_RING:
+        if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
             for this_comp in self.components:
                 if isinstance(this_comp, IsolatedHorizontalPipe):
                     output_data[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
@@ -2564,14 +2564,14 @@ class GHEHPSystem:
                 )
 
             bldg.input.output = bldg
-            if self.loop_config in (CentralLoopType.TWOPIPE, CentralLoopType.TWOPIPE_RING):
+            if self.loop_config in (CentralLoopType.TWOPIPE, CentralLoopType.TWOPIPE_BIDIRECTIONAL):
                 bldg.output = FindItemByID(bldg.outlet_nodeID, self.nodes)
                 bldg.output.input = bldg
 
         for ghx in self.ground_heat_exchangers:
             ghx.input = FindItemByID(ghx.inlet_nodeID, self.nodes)
             ghx.input.output = ghx
-            if self.loop_config in (CentralLoopType.TWOPIPE, CentralLoopType.TWOPIPE_RING):
+            if self.loop_config in (CentralLoopType.TWOPIPE, CentralLoopType.TWOPIPE_BIDIRECTIONAL):
                 ghx.output = FindItemByID(ghx.outlet_nodeID, self.nodes)
                 ghx.output.input = ghx
 
@@ -2584,7 +2584,7 @@ class GHEHPSystem:
             HX.input.output = HX
             HX.HP_output.input = HX
             HX.HP_input.output = HX
-            if self.loop_config in (CentralLoopType.TWOPIPE, CentralLoopType.TWOPIPE_RING):
+            if self.loop_config in (CentralLoopType.TWOPIPE, CentralLoopType.TWOPIPE_BIDIRECTIONAL):
                 HX.output.input = HX
 
         for HX in self.heat_exchangers:
