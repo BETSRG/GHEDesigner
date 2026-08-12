@@ -1,0 +1,1428 @@
+{
+  "version": 2,
+  "topology": [
+    {
+        "type": "building",
+        "name": "building1_htg_clg"
+    },
+    {
+        "type": "building",
+        "name": "building1_dhw"
+    },
+    {
+        "type": "building",
+        "name": "building2_htg_clg"
+    },
+    {
+        "type": "building",
+        "name": "building2_dhw"
+    },
+    {
+        "type": "building",
+        "name": "building3_htg_clg"
+    },
+    {
+        "type": "building",
+        "name": "building3_dhw"
+    },
+    {
+        "type": "ground_heat_exchanger",
+        "name": "ghe1"
+    },
+    {
+        "type": "ground_heat_exchanger",
+        "name": "ghe2"
+    },
+    {
+        "type": "ground_heat_exchanger",
+        "name": "ghe3"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_pir1"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_pir2"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_pir3"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_pir4"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_pir5"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_pir6"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_pir7"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_pir8"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_pir9"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_por1"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_por2"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_por3"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_por4"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_por5"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_por6"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_por7"
+    },
+    {
+        "type": "isolated_horizontal_pipe",
+        "name": "hp_por8"
+    },
+    {
+      "type": "isolated_horizontal_pipe",
+      "name": "hp_por9"
+    }
+  ],
+  "ground_temperature_model":{
+    "annual_average": 15.0,
+    "amplitude_1": 10.0,
+    "phase_lag_1": 30.0,
+    "amplitude_2": 2.0,
+    "phase_lag_2": 15.0
+  },
+  "horizontal_piping": {
+  "hp_pir1": {
+    "length": 30.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_pir2": {
+    "length": 35.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_pir3": {
+    "length": 80.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_pir4": {
+    "length": 20.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_pir5": {
+    "length": 25.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_pir6": {
+    "length": 85.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_pir7": {
+    "length": 20.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_pir8": {
+    "length": 10.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_pir9": {
+    "length": 315.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_por1": {
+    "length": 30.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_por2": {
+    "length": 45.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_por3": {
+    "length": 80.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_por4": {
+    "length": 20.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_por5": {
+    "length": 35.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_por6": {
+    "length": 75.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_por7": {
+    "length": 20.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_por8": {
+    "length": 20.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+    }
+  },
+  "hp_por9": {
+    "length": 365.0,
+    "trench_depth": 1.5,
+    "soil": {
+      "conductivity": 2.0,
+      "rho_cp": 2343493
+    },
+    "pipe": {
+      "inner_diameter": 0.1524,
+      "outer_diameter": 0.1624,
+      "conductivity": 0.4,
+      "rho_cp": 1542000,
+      "roughness": 0.000001,
+      "arrangement": "SINGLEUTUBE"
+      }
+    }
+  },
+  "central_loop": {
+    "pipe_configuration": "TWOPIPE_RING",
+    "flow_factor": 1.0,
+    "pump_efficiency": 0.5,
+    "loop_length": 200,
+    "design_pressure_loss": 200
+  },
+  "fluid": {
+    "fluid_name": "PROPYLENEGLYCOL",
+    "concentration_percent": 30,
+    "temperature": 20
+  },
+  "heat_pump": {
+    "hp1": {
+      "cooling_performance": {
+        "a": 0.0001,
+        "b": 0.00112,
+        "c": 1.13,
+        "c1": -0.393,
+        "c2": -30.3,
+        "c3": 6777.0,
+        "design_cap": 4396.0
+      },
+      "design_flow_rate": 0.296,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
+      "heating_performance": {
+        "a": -7.13e-5,
+        "b": 0.00534,
+        "c": 0.734,
+        "c1": -0.124,
+        "c2": 112.0,
+        "c3": 4114.0,
+        "design_cap": 4140.0
+      }
+    },
+    "hp2": {
+      "cooling_performance": {
+        "a": 0.0001,
+        "b": -0.00041,
+        "c": 1.15,
+        "c1": -1.2,
+        "c2": -4.72,
+        "c3": 9629.0,
+        "design_cap": 6709.0
+      },
+      "design_flow_rate": 0.495,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
+      "heating_performance": {
+        "a": -7.86e-5,
+        "b": 0.00539,
+        "c": 0.734,
+        "c1": 0.178,
+        "c2": 158.0,
+        "c3": 6712.0,
+        "design_cap": 6797.0
+      }
+    },
+     "hp3": {
+      "cooling_performance": {
+        "a": 0.0001,
+        "b": -0.00084,
+        "c": 1.16,
+        "c1": -2.16,
+        "c2": 46.8,
+        "c3": 12397.0,
+        "design_cap": 9752.0
+      },
+      "design_flow_rate": 0.693,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
+      "heating_performance": {
+        "a": -6.8e-5,
+        "b": 0.00497,
+        "c": 0.738,
+        "c1": 0.091,
+        "c2": 224.0,
+        "c3": 9422.0,
+        "design_cap": 9500.0
+      }
+    },
+    "hp4": {
+      "cooling_performance": {
+        "a": 0.0,
+        "b": 0.0,
+        "c": 0.0,
+        "c1": 0.0,
+        "c2": 0.0,
+        "c3": 0.0,
+        "design_cap": 0.0
+      },
+      "design_flow_rate": 0.425,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
+      "heating_performance": {
+        "a": -6.06e-5,
+        "b": 0.0051,
+        "c": 0.692,
+        "c1": -1.19,
+        "c2": 212.0,
+        "c3": 8932.0,
+        "design_cap": 9561.0
+      }
+    }
+  },
+  "building": {
+    "building1_htg_clg": {
+      "id": "b1z1",
+      "type": "bldg",
+      "inlet_nodeID": "n2",
+      "outlet_nodeID": "n3",
+      "heating_cop": 4.4,
+      "cooling_cop": 4.5,
+      "heating_load": {
+        "column_name": "B1Z1_HPHtgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "cooling_load": {
+        "column_name": "B1Z1_HPClgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp1"
+      }
+    },
+    "building1_dhw": {
+      "id": "b1z2",
+      "type": "bldg",
+      "inlet_nodeID": "n6",
+      "outlet_nodeID": "n7",
+      "heating_cop": 3.7,
+      "cooling_cop": 3.7,
+      "heating_load": {
+        "column_name": "B1Z2_HPHtgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp4"
+      }
+    },
+    "building2_htg_clg": {
+      "id": "b2z1",
+      "type": "bldg",
+      "inlet_nodeID": "n14",
+      "outlet_nodeID": "n15",
+      "heating_cop": 4.4,
+      "cooling_cop": 4.9,
+      "heating_load": {
+        "column_name": "B2Z1_HPHtgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp2"
+      },
+      "cooling_load": {
+        "column_name": "B2Z1_HPClgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp2"
+      }
+    },
+    "building2_dhw": {
+      "id": "b2z2",
+      "type": "bldg",
+      "inlet_nodeID": "n18",
+      "outlet_nodeID": "n19",
+      "heating_cop": 3.7,
+      "cooling_cop": 3.7,
+      "heating_load": {
+        "column_name": "B2Z2_HPHtgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp4"
+      }
+    },
+    "building3_htg_clg": {
+      "id": "b3z1",
+      "type": "bldg",
+      "inlet_nodeID": "n26",
+      "outlet_nodeID": "n27",
+      "heating_cop": 4.4,
+      "cooling_cop": 4.9,
+      "heating_load": {
+        "column_name": "B3Z1_HPHtgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp2"
+      },
+      "cooling_load": {
+        "column_name": "B3Z1_HPClgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp3"
+      }
+    },
+    "building3_dhw": {
+      "id": "b3z2",
+      "type": "bldg",
+      "inlet_nodeID": "n30",
+      "outlet_nodeID": "n31",
+      "heating_cop": 3.7,
+      "cooling_cop": 3.7,
+      "heating_load": {
+        "column_name": "B2Z2_HPHtgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/2-pipe_ring_3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp4"
+      }
+    }
+  },
+  "ground_heat_exchanger": {
+    "ghe1": {
+      "id": "ghe1",
+      "type": "GHX",
+      "inlet_nodeID": "n10",
+      "outlet_nodeID": "n11",
+      "flow_rate": 0.065,
+      "flow_type": "BOREHOLE",
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 14.3
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "pre_designed": {
+        "arrangement": "RECTANGLE",
+        "H": 135,
+        "max_height": 135,
+        "min_height": 60,
+        "spacing_in_x_dimension": 5,
+        "spacing_in_y_dimension": 5,
+        "boreholes_in_x_dimension": 20,
+        "boreholes_in_y_dimension": 15
+      }
+    },
+    "ghe2": {
+      "id": "ghe2",
+      "type": "GHX",
+      "inlet_nodeID": "n22",
+      "outlet_nodeID": "n23",
+      "flow_rate": 0.065,
+      "flow_type": "BOREHOLE",
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 14.3
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "pre_designed": {
+        "arrangement": "RECTANGLE",
+        "H": 150,
+        "max_height": 160,
+        "min_height": 60,
+        "spacing_in_x_dimension": 5,
+        "spacing_in_y_dimension": 5,
+        "boreholes_in_x_dimension": 16,
+        "boreholes_in_y_dimension": 10
+      }
+    },
+    "ghe3": {
+      "id": "ghe3",
+      "type": "GHX",
+      "inlet_nodeID": "n34",
+      "outlet_nodeID": "n35",
+      "flow_rate": 0.065,
+      "flow_type": "BOREHOLE",
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "soil": {
+        "conductivity": 2,
+        "rho_cp": 2343493,
+        "undisturbed_temp": 14.3
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 0.000001,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "pre_designed": {
+        "arrangement": "RECTANGLE",
+        "H": 150,
+        "max_height": 160,
+        "min_height": 60,
+        "spacing_in_x_dimension": 5,
+        "spacing_in_y_dimension": 5,
+        "boreholes_in_x_dimension": 14,
+        "boreholes_in_y_dimension": 10
+      }
+    }
+  },
+  "node": {
+    "n1": {
+      "id": "n1",
+      "type": "branching",
+      "x": "190",
+      "y": "160",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b1z1"
+    },
+    "n2": {
+      "id": "n2",
+      "type": "device_in",
+      "x": "210",
+      "y": "160",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b1z1"
+    },
+    "n3": {
+      "id": "n3",
+      "type": "device_out",
+      "x": "210",
+      "y": "155",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b1z1"
+    },
+    "n4": {
+      "id": "n4",
+      "type": "merging",
+      "x": "180",
+      "y": "155",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b1z1"
+    },
+    "n5": {
+      "id": "n5",
+      "type": "branching",
+      "x": "190",
+      "y": "130",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b1z2"
+    },
+    "n6": {
+      "id": "n6",
+      "type": "device_in",
+      "x": "210",
+      "y": "130",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b1z2"
+    },
+    "n7": {
+      "id": "n7",
+      "type": "device_out",
+      "x": "210",
+      "y": "125",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b1z2"
+    },
+    "n8": {
+      "id": "n8",
+      "type": "merging",
+      "x": "180",
+      "y": "125",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b1z2"
+    },
+    "n9": {
+      "id": "n9",
+      "type": "branching",
+      "x": "180",
+      "y": "90",
+      "z": "0",
+      "connection": "ground_heat_exchanger",
+      "connection_id": "ghe1"
+    },
+    "n10": {
+      "id": "n10",
+      "type": "device_in",
+      "x": "210",
+      "y": "90",
+      "z": "0",
+      "connection": "ground_heat_exchanger",
+      "connection_id": "ghe1"
+    },
+    "n11": {
+      "id": "n11",
+      "type": "device_out",
+      "x": "210",
+      "y": "85",
+      "z": "0",
+      "connection": "ground_heat_exchanger",
+      "connection_id": "ghe1"
+    },
+    "n12": {
+      "id": "n12",
+      "type": "merging",
+      "x": "190",
+      "y": "85",
+      "z": "0",
+      "connection": "ground_heat_exchanger",
+      "connection_id": "ghe1"
+    },
+    "n13": {
+      "id": "n13",
+      "type": "branching",
+      "x": "180",
+      "y": "15",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b2z1"
+    },
+    "n14": {
+      "id": "n14",
+      "type": "device_in",
+      "x": "180",
+      "y": "0",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b2z1"
+    },
+    "n15": {
+      "id": "n15",
+      "type": "device_out",
+      "x": "175",
+      "y": "0",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b2z1"
+    },
+    "n16": {
+      "id": "n16",
+      "type": "merging",
+      "x": "175",
+      "y": "25",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b2z1"
+    },
+    "n17": {
+      "id": "n17",
+      "type": "branching",
+      "x": "160",
+      "y": "15",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b2z2"
+    },
+    "n18": {
+      "id": "n18",
+      "type": "device_in",
+      "x": "160",
+      "y": "0",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b2z2"
+    },
+    "n19": {
+      "id": "n19",
+      "type": "device_out",
+      "x": "155",
+      "y": "0",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b2z2"
+    },
+    "n20": {
+      "id": "n20",
+      "type": "merging",
+      "x": "155",
+      "y": "25",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b2z2"
+    },
+    "n21": {
+      "id": "n21",
+      "type": "branching",
+      "x": "130",
+      "y": "25",
+      "z": "0",
+      "connection": "ground_heat_exchanger",
+      "connection_id": "ghe2"
+    },
+    "n22": {
+      "id": "n22",
+      "type": "device_in",
+      "x": "130",
+      "y": "5",
+      "z": "0",
+      "connection": "ground_heat_exchanger",
+      "connection_id": "ghe2"
+    },
+    "n23": {
+      "id": "n23",
+      "type": "device_out",
+      "x": "125",
+      "y": "5",
+      "z": "0",
+      "connection": "ground_heat_exchanger",
+      "connection_id": "ghe2"
+    },
+    "n24": {
+      "id": "n24",
+      "type": "merging",
+      "x": "125",
+      "y": "15",
+      "z": "0",
+      "connection": "ground_heat_exchanger",
+      "connection_id": "ghe2"
+    },
+    "n25": {
+      "id": "n25",
+      "type": "branching",
+      "x": "50",
+      "y": "15",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b3z1"
+    },
+    "n26": {
+      "id": "n26",
+      "type": "device_in",
+      "x": "50",
+      "y": "5",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b3z1"
+    },
+    "n27": {
+      "id": "n27",
+      "type": "device_out",
+      "x": "45",
+      "y": "5",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b3z1"
+    },
+    "n28": {
+      "id": "n28",
+      "type": "merging",
+      "x": "45",
+      "y": "25",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b3z1"
+    },
+    "n29": {
+      "id": "n29",
+      "type": "branching",
+      "x": "30",
+      "y": "15",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b3z2"
+    },
+    "n30": {
+      "id": "n30",
+      "type": "device_in",
+      "x": "30",
+      "y": "5",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b3z2"
+    },
+    "n31": {
+      "id": "n31",
+      "type": "device_out",
+      "x": "25",
+      "y": "5",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b3z2"
+    },
+    "n32": {
+      "id": "n32",
+      "type": "merging",
+      "x": "25",
+      "y": "25",
+      "z": "0",
+      "connection": "building",
+      "connection_id": "b3z2"
+    },
+    "n33": {
+      "id": "n33",
+      "type": "branching",
+      "x": "15",
+      "y": "25",
+      "z": "0",
+      "connection": "ground_heat_exchanger",
+      "connection_id": "ghe3"
+    },
+    "n34": {
+      "id": "n22",
+      "type": "device_in",
+      "x": "15",
+      "y": "0",
+      "z": "0",
+      "connection": "ground_heat_exchanger",
+      "connection_id": "ghe3"
+    },
+    "n35": {
+      "id": "n35",
+      "type": "device_out",
+      "x": "10",
+      "y": "0",
+      "z": "0",
+      "connection": "ground_heat_exchanger",
+      "connection_id": "ghe3"
+    },
+    "n36": {
+      "id": "n36",
+      "type": "merging",
+      "x": "10",
+      "y": "15",
+      "z": "0",
+      "connection": "ground_heat_exchanger",
+      "connection_id": "ghe3"
+    }
+  },
+  "pipe": {
+    "p1": {
+      "id": "p1",
+      "type": "branch",
+      "node_in_name": "n1",
+      "node_out_name": "n2",
+      "length": 20,
+      "nominal_mass_flow": 22.69,
+      "diameter": 0.0
+    },
+    "p2": {
+      "id": "p2",
+      "type": "merger",
+      "node_in_name": "n3",
+      "node_out_name": "n4",
+      "length": 30,
+      "nominal_mass_flow": 22.69,
+      "diameter": 0.0
+    },
+    "p3": {
+      "id": "p3",
+      "type": "branch",
+      "node_in_name": "n5",
+      "node_out_name": "n6",
+      "length": 20,
+      "nominal_mass_flow": 1.14,
+      "diameter": 0.0
+    },
+    "p4": {
+    "id":  "p4",
+    "type": "merger",
+    "node_in_name": "n7",
+    "node_out_name": "n8",
+    "length": 30,
+    "nominal_mass_flow": 1.14,
+    "diameter": 0.0
+    },
+    "p5": {
+      "id": "p5",
+      "type": "branch",
+      "node_in_name": "n9",
+      "node_out_name": "n10",
+      "length": 30,
+      "nominal_mass_flow": 19.18,
+      "diameter": 0.0
+    },
+    "p6": {
+      "id": "p6",
+      "type": "merger",
+      "node_in_name": "n11",
+      "node_out_name": "n12",
+      "length": 20,
+      "nominal_mass_flow": 19.18,
+      "diameter": 0.0
+    },
+    "p7": {
+      "id": "p7",
+      "type": "branch",
+      "node_in_name": "n13",
+      "node_out_name": "n14",
+      "length": 15,
+      "nominal_mass_flow": 9.89,
+      "diameter": 0.0
+    },
+    "p8": {
+      "id": "p8",
+      "type": "merger",
+      "node_in_name": "n15",
+      "node_out_name": "n16",
+      "length": 25,
+      "nominal_mass_flow": 9.89,
+      "diameter": 0.0
+    },
+    "p9": {
+      "id": "p9",
+      "type": "branch",
+      "node_in_name": "n17",
+      "node_out_name": "n18",
+      "length": 15,
+      "nominal_mass_flow": 0.08,
+      "diameter": 0.08
+    },
+    "p10": {
+      "id": "p10",
+      "type": "merger",
+      "node_in_name": "n19",
+      "node_out_name": "n20",
+      "length": 25,
+      "nominal_mass_flow": 0.08,
+      "diameter": 0.0
+    },
+    "p11": {
+      "id": "p11",
+      "type": "branch",
+      "node_in_name": "n21",
+      "node_out_name": "n22",
+      "length": 20,
+      "nominal_mass_flow": 10.23,
+      "diameter": 0.0
+    },
+    "p12": {
+      "id": "p12",
+      "type": "merger",
+      "node_in_name": "n23",
+      "node_out_name": "n24",
+      "length": 20,
+      "nominal_mass_flow": 10.23,
+      "diameter": 0.0
+    },
+    "p13": {
+      "id": "p13",
+      "type": "branch",
+      "node_in_name": "n25",
+      "node_out_name": "n26",
+      "length": 10,
+      "nominal_mass_flow": 4.09,
+      "diameter": 0.0
+    },
+    "p14": {
+      "id": "p14",
+      "type": "merger",
+      "node_in_name": "n27",
+      "node_out_name": "n28",
+      "length": 20,
+      "nominal_mass_flow": 4.09,
+      "diameter": 0.0
+    },
+    "p15": {
+      "id": "p15",
+      "type": "branch",
+      "node_in_name": "n29",
+      "node_out_name": "n30",
+      "length": 10,
+      "nominal_mass_flow": 0.47,
+      "diameter": 0.0
+    },
+    "p16": {
+      "id": "p16",
+      "type": "merger",
+      "node_in_name": "n31",
+      "node_out_name": "n32",
+      "length": 20,
+      "nominal_mass_flow": 0.47,
+      "diameter": 0.0
+    },
+    "p17": {
+      "id": "p17",
+      "type": "branch",
+      "node_in_name": "n33",
+      "node_out_name": "n34",
+      "length": 25,
+      "nominal_mass_flow": 8.95,
+      "diameter": 0.0
+    },
+    "p18": {
+      "id": "p18",
+      "type": "merger",
+      "node_in_name": "n35",
+      "node_out_name": "n36",
+      "length": 15,
+      "nominal_mass_flow": 8.95,
+      "diameter": 0.0
+    },
+    "pir1": {
+      "id": "pir1",
+      "type": "main_ir",
+      "node_in_name": "n4",
+      "node_out_name": "n8",
+      "length":30.0,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_pir1"
+    },
+    "pir2": {
+      "id": "pir2",
+      "type": "main_ir",
+      "node_in_name": "n8",
+      "node_out_name": "n9",
+      "length": 35.0,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_pir2"
+    },
+    "pir3": {
+      "id": "pir4",
+      "type": "main_ir",
+      "node_in_name": "n9",
+      "node_out_name": "n16",
+      "length": 80,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_pir3"
+    },
+    "pir4": {
+      "id": "pir4",
+      "type": "main_ir",
+      "node_in_name": "n16",
+      "node_out_name": "n20",
+      "length": 20,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_pir4"
+    },
+    "pir5": {
+      "id": "pir5",
+      "type": "main_ir",
+      "node_in_name": "n20",
+      "node_out_name": "n21",
+      "length": 25,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_pir5"
+    },
+    "pir6": {
+      "id": "pir6",
+      "type": "main_ir",
+      "node_in_name": "n21",
+      "node_out_name": "n28",
+      "length": 85.0,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_pir6"
+    },
+    "pir7": {
+      "id": "pir7",
+      "type": "main_ir",
+      "node_in_name": "n28",
+      "node_out_name": "n32",
+      "length": 20.0,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_pir7"
+    },
+    "pir8": {
+      "id": "pir8",
+      "type": "main_ir",
+      "node_in_name": "n32",
+      "node_out_name": "n33",
+      "length": 10.0,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_pir8"
+    },
+    "pir9": {
+      "id": "pir9",
+      "type": "main_ir",
+      "node_in_name": "n33",
+      "node_out_name": "n4",
+      "length": 315,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_pir9"
+    },
+    "por1": {
+      "id": "por1",
+      "type": "main_or",
+      "node_in_name": "n1",
+      "node_out_name": "n5",
+      "length": 30.0,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_por1"
+    },
+    "por2": {
+      "id": "por2",
+      "type": "main_or",
+      "node_in_name": "n5",
+      "node_out_name": "n12",
+      "length": 45.0,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_por2"
+    },
+    "por3": {
+      "id": "por3",
+      "type": "main_or",
+      "node_in_name": "n12",
+      "node_out_name": "n13",
+      "length": 80,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_por3"
+    },
+    "por4": {
+      "id": "por4",
+      "type": "main_or",
+      "node_in_name": "n13",
+      "node_out_name": "n17",
+      "length": 20,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_por4"
+    },
+    "por5": {
+      "id": "por5",
+      "type": "main_or",
+      "node_in_name": "n17",
+      "node_out_name": "n24",
+      "length": 35,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_por5"
+    },
+    "por6": {
+      "id": "por6",
+      "type": "main_or",
+      "node_in_name": "n24",
+      "node_out_name": "n25",
+      "length": 75.0,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_por6"
+    },
+    "por7": {
+      "id": "por7",
+      "type": "main_or",
+      "node_in_name": "n25",
+      "node_out_name": "n29",
+      "length": 20.0,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_por7"
+    },
+    "por8": {
+      "id": "por8",
+      "type": "main_or",
+      "node_in_name": "n29",
+      "node_out_name": "n36",
+      "length": 20.0,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_por8"
+    },
+    "por9": {
+      "id": "por9",
+      "type": "main_or",
+      "node_in_name": "n36",
+      "node_out_name": "n1",
+      "length": 365,
+      "nominal_mass_flow": 38.36,
+      "diameter": 0.184,
+      "horizontal_pipe": "hp_por9"
+    }
+  },
+   "pressure_drop": {
+    "CL_P_per_m": 100,
+    "delta_P_ref_ISHX": 50000,
+    "delta_P_ref_GHE": 76529
+  },
+  "beta": {
+    "CL_flow": 1.5,
+    "ISHX_HP_flow": 1.5,
+    "ISHX_N_flow": 1.0,
+    "HP_delta_P": 1.2,
+    "GHE_delta_P": 1.2,
+    "ISHX_delta_P": 1.2
+  },
+  "efficiency": {
+    "HP_cp_efficiency": 0.2,
+    "ISHX_cp_efficiency": 0.2,
+    "GHE_cp_efficiency": 0.2,
+    "CL_efficiency": 0.2
+  },
+  "simulation_control": {
+    "simulation_years": 1,
+    "load_method": "hourly",
+    "horizontal_segments": 1,
+    "horizontal_simulated_considered": true
+  }
+}
