@@ -467,7 +467,7 @@
       "type": "main_ir",
       "node_in_name": "n8",
       "node_out_name": "n9",
-      "length": 125.0,
+      "length": 100.0,
       "nominal_mass_flow": 32.58,
       "diameter": 0.177,
       "horizontal_pipe": "hp_pir2"
