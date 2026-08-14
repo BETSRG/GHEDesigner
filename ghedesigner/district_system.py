@@ -1,3 +1,5 @@
+"""District ground-loop components, sizing routines, and simulation orchestration."""
+
 import json
 import math
 import time
@@ -1540,6 +1542,11 @@ class Building(BaseSimComp):
 
 
 class GHEHPSystem:
+    """Size and simulate a schema-defined district ground-loop system.
+
+    :param f_path_json: Path to a validated GHEDesigner district-system input file.
+    """
+
     total_loads: np.ndarray[tuple[int], np.dtype[np.float64]]
     nbh_selections: list[str]
     excess_temperatures: list[float]
@@ -1553,6 +1560,8 @@ class GHEHPSystem:
     sample_rate: int
 
     def __init__(self, f_path_json: Path):
+        """Load topology, controls, components, and time-series inputs from JSON."""
+
         self.components: list = []  # Will hold Building, GHX, SourceSinkHeatExchanger, Isolated/CoupledHorizontalPipe
         self.matrix_size = 0
         self.number_of_simulations = 0
@@ -2054,6 +2063,8 @@ class GHEHPSystem:
                 pass
 
     def size_and_simulate(self):
+        """Run the selected design search, size GHEs, and complete the final simulation."""
+
         if np.any([ghe.ghe_manager.is_sizable for ghe in self.ground_heat_exchangers]):
             if self.search_method in ("GLOBAL_BUPCRS", "GLOBAL_BUPCRS_BR"):
                 self.design_system_single_bupcrs()
@@ -2072,6 +2083,8 @@ class GHEHPSystem:
         print("Number of simulations completed: ", self.number_of_simulations)
 
     def calculate_building_excess(self):
+        """Return the largest building-loop temperature constraint excess."""
+
         max_excess = None
         for building in self.buildings:
             current_excess = building.get_excess_temperature()
@@ -2080,6 +2093,8 @@ class GHEHPSystem:
         return max_excess
 
     def append_new_coordinates(self, iteration_name):
+        """Record the current GHE coordinates under a named design iteration."""
+
         new_index = len(self.coordinate_locations)
         self.coordinate_locations[new_index] = {}
         self.coordinate_locations[new_index]["name"] = iteration_name
@@ -2087,12 +2102,16 @@ class GHEHPSystem:
             self.coordinate_locations[new_index][ghe.name] = ghe.borefield_coordinates
 
     def set_ground_heat_exchanger_size(self, ratio):
+        """Scale every active GHE borehole height by a common ratio."""
+
         for ghe in self.sizable_ground_heat_exchangers:
             if not ghe.is_bypassed:
                 ghe.update_ghe_design_height(ratio * ghe.ghe_manager.max_height)
                 ghe.update_ghe_parameters()
 
     def size_ground_heat_exchangers(self, size_tolerance=1e-3):
+        """Iteratively size borehole heights until system constraints converge."""
+
         if len(self.sizable_ground_heat_exchangers) < 1:
             raise ValueError("In order to size ground heatexhangers, at least one must be sizable.")
         r_min = 0.0
@@ -2129,6 +2148,8 @@ class GHEHPSystem:
         return
 
     def initialize_system_ghes(self, need_penalty=False):
+        """Initialize all system GHE models for a candidate design."""
+
         # Get penalty multiplier based on the estimated number of maximum boreholes and maximum borehole height.
         if need_penalty:
             self.penalty_baseline = 0
@@ -2145,6 +2166,8 @@ class GHEHPSystem:
         self.guess_idx = -1
 
     def design_system_single_bupcrs(self):
+        """Select system GHE fields with the global BUPCRS search."""
+
         # Perform initial sizing of GHEs
         self.initialize_system_ghes(need_penalty=False)
 
@@ -2301,6 +2324,8 @@ class GHEHPSystem:
         return min_target_spacing, max_target_spacing
 
     def design_system_single_rowwise(self):
+        """Select system GHE fields with the global RowWise search."""
+
         min_target_spacing, max_target_spacing = self._get_rowwise_spacing_bounds(self.sizable_ground_heat_exchangers)
 
         # Perform initial sizing of GHEs
@@ -2374,6 +2399,8 @@ class GHEHPSystem:
     def design_system_optimizer(
         self,
     ):
+        """Optimize coupled system GHE design variables with Nelder-Mead."""
+
         # max_iter = self.max_iter
         number_of_restarts = self.number_of_restarts
         excess_temperature_tolerance = self.excess_temperature_tolerance
@@ -2559,6 +2586,8 @@ class GHEHPSystem:
             _ = objective(initial_guess)
 
     def get_nbh_and_td(self):
+        """Return the current total borehole count and drilling length."""
+
         nbh_val = 0
         total_drilling_val = 0.0
         for ghe in self.ground_heat_exchangers:
@@ -2567,10 +2596,14 @@ class GHEHPSystem:
         return nbh_val, total_drilling_val, total_drilling_val / nbh_val
 
     def solve_system(self, detailed=True):
+        """Dispatch the configured district system to the appropriate solver."""
+
         self.number_of_simulations += 1
         self.solve_system_standard(detailed=detailed)
 
     def solve_system_standard(self, detailed=True):
+        """Solve the district energy balance for every configured timestep."""
+
         t_start = time.perf_counter()
         self.nbh_total = sum([x.nbh for x in self.ground_heat_exchangers])
         average_ugt = 0.0
@@ -2666,6 +2699,8 @@ class GHEHPSystem:
         print(f"\n--- Solver finished in {time.perf_counter() - t_start:.2f} seconds! ---")
 
     def calc_energy(self):
+        """Calculate central-loop pumping power from flow and pressure loss."""
+
         self.pump_power_loop = (
             self.m_flow_loop
             / (self.fluid.rho * self.loop_pump_efficiency)
@@ -2679,6 +2714,13 @@ class GHEHPSystem:
         output_path_2: Path | None = None,
         output_path_coordinates: Path | None = None,
     ):
+        """Write district time-series results and optional search artifacts.
+
+        :param output_path: Destination CSV for simulation time-series results.
+        :param output_path_2: Optional destination for design-search summary rows.
+        :param output_path_coordinates: Optional destination for search coordinate snapshots.
+        """
+
         output_columns: dict[str, Any] = {}
 
         network_q_net_bldg_tot = np.zeros(self.num_timesteps, dtype=float)

@@ -3,6 +3,8 @@
 
 site_name: GHEDesigner
 repo_url: https://github.com/BETSRG/GHEDesigner
+site_url:
+  !ENV [READTHEDOCS_CANONICAL_URL, "https://ghedesigner.readthedocs.io/"]
 
 theme:
   name: material
@@ -21,9 +23,17 @@ plugins:
 
 nav:
   - Home: index.md
-  - Using the CLI: cli.md
-  - Examples: examples.md
-  - Design Manager: manager.md
+  - Getting started:
+      - Using the CLI: cli.md
+      - Examples: examples.md
+  - User guide:
+      - Standalone GHE design: manager.md
+      - District systems: district.md
+  - Python API: api.md
+  - Output contract:
+      - Contract inventory: output_contract_inventory.md
+      - Contract record API: output_api.md
+      - Design and simulation flow: output_flow_plan.md
 
 # Add these dirs/files to live updating during development (in addition to docs & this file)
 # https://www.mkdocs.org/user-guide/configuration/#watch

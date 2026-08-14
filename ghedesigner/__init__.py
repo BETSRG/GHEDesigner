@@ -1,3 +1,5 @@
+"""Public package namespace for GHEDesigner."""
+
 from ghedesigner import (
     constants,
     district_system,

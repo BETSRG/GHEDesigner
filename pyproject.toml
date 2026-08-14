@@ -21,7 +21,7 @@ dependencies = [
     "secondarycoolantprops>=1.4",
 ]
 repository = "https://github.com/BETSRG/GHEDesigner"
-documentation = "https://betsrg.github.io/GHEDesigner/"
+documentation = "https://ghedesigner.readthedocs.io/"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",

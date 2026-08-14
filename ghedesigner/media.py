@@ -1,3 +1,5 @@
+"""Thermophysical property models for fluids, grout, and soil."""
+
 from scp.ethyl_alcohol import EthylAlcohol
 from scp.ethylene_glycol import EthyleneGlycol
 from scp.methyl_alcohol import MethylAlcohol
@@ -8,7 +10,16 @@ from ghedesigner.enums import FluidType
 
 
 class Fluid:
+    """Temperature-dependent properties for a supported heat-transfer fluid.
+
+    :param fluid_name: Water or a supported antifreeze name or abbreviation.
+    :param temperature: Property evaluation temperature in degrees Celsius.
+    :param percent: Antifreeze concentration as a percentage by mass.
+    """
+
     def __init__(self, fluid_name: str, temperature: float = 20, percent: float = 0) -> None:
+        """Initialize the fluid and evaluate its properties."""
+
         self.name = fluid_name
         self.fluid_type = self.get_fluid_type(fluid_name)
         self.temperature = temperature
@@ -36,6 +47,13 @@ class Fluid:
 
     @staticmethod
     def get_fluid_type(fluid_name: str) -> FluidType:
+        """Resolve a user-facing fluid name to its canonical enumeration.
+
+        :param fluid_name: Fluid name or supported abbreviation.
+        :return: Canonical fluid type.
+        :raises ValueError: If the name is not supported.
+        """
+
         fluid_name_upper = fluid_name.upper()
         if fluid_name_upper in ["MEA", "ETHYLALCOHOL", "ETHYL ALCOHOL"]:
             return FluidType.ETHYLALCOHOL
@@ -51,6 +69,11 @@ class Fluid:
         raise ValueError(f'Unsupported fluid type "{fluid_name}"')
 
     def update_props_with_new_temp(self, temperature: float) -> None:
+        """Recalculate all fluid properties at a new temperature.
+
+        :param temperature: Property evaluation temperature in degrees Celsius.
+        """
+
         self.temperature = temperature
         self.cp = self._fluid.cp(self.temperature)
         self.k = self._fluid.k(self.temperature)
@@ -60,11 +83,21 @@ class Fluid:
 
 
 class ThermalProperty:
+    """Thermal conductivity and volumetric heat-capacity pair.
+
+    :param k: Thermal conductivity in W/(m·K).
+    :param rho_cp: Volumetric heat capacity in J/(m³·K).
+    """
+
     def __init__(self, k, rho_cp: float) -> None:
+        """Store thermal conductivity and volumetric heat capacity."""
+
         self.k = k  # Thermal conductivity (W/m.K)
         self.rho_cp = rho_cp  # Volumetric heat capacity (J/K.m3)
 
     def as_dict(self) -> dict:
+        """Return a result-oriented dictionary including units."""
+
         output = {
             "type": str(self.__class__),
             "thermal_conductivity": {"value": self.k, "units": "W/m-K"},
@@ -73,15 +106,26 @@ class ThermalProperty:
         return output
 
     def to_input(self) -> dict:
+        """Return the property values in GHEDesigner input-schema form."""
+
         return {"conductivity": self.k, "rho_cp": self.rho_cp}
 
 
 class Grout(ThermalProperty):
-    pass
+    """Borehole grout thermal properties."""
 
 
 class Soil(ThermalProperty):
+    """Soil properties used by vertical GHE calculations.
+
+    :param k: Thermal conductivity in W/(m·K).
+    :param rho_cp: Volumetric heat capacity in J/(m³·K).
+    :param ugt: Undisturbed ground temperature in degrees Celsius.
+    """
+
     def __init__(self, k: float, rho_cp: float, ugt: float) -> None:
+        """Store soil thermal properties and derive thermal diffusivity."""
+
         # Make variables from ThermalProperty available to Pipe
         super().__init__(k, rho_cp)
 
@@ -90,9 +134,13 @@ class Soil(ThermalProperty):
         self.alpha = k / rho_cp
 
     def as_dict(self) -> dict:
+        """Return a result-oriented dictionary including units."""
+
         output = super().as_dict()
         output["undisturbed_ground_temperature"] = {"value": self.ugt, "units": "C"}
         return output
 
     def to_input(self) -> dict:
+        """Return the soil values in GHEDesigner input-schema form."""
+
         return {"conductivity": self.k, "rho_cp": self.rho_cp, "undisturbed_temp": self.ugt}

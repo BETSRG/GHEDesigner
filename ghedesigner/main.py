@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+"""Command-line and file-based entry points for GHEDesigner workflows."""
+
 import sys
 from pathlib import Path
 
@@ -16,11 +18,11 @@ from ghedesigner.validate import validate_input_file
 
 
 def run(input_file_path: Path, output_directory: Path) -> int:
-    """
-    Worker function to run simulation.
+    """Run the design or simulation described by a validated JSON input file.
 
-    :param input_file_path: path to input file. Input file must exist.
-    :param output_directory: path to write output files. Output directory must be a valid path.
+    :param input_file_path: Existing GHEDesigner JSON input file.
+    :param output_directory: Directory in which result files will be written.
+    :return: Zero on success and one when validation or workflow selection fails.
     """
 
     # validate inputs against the schema before doing anything
@@ -145,6 +147,8 @@ def run(input_file_path: Path, output_directory: Path) -> int:
 @click.option("--validate-only", default=False, is_flag=True, show_default=False, help="Validate input file and exit.")
 @click.option("-c", "--convert", help="Convert output to specified format. Options supported: 'IDF'.")
 def run_manager_from_cli(input_path, output_directory, validate_only, convert):
+    """Run, validate, or convert a GHEDesigner input or result file."""
+
     # Note that since this is wrapped in click, it should use the exit(code) instead of return.
     # Click will absorb the return code and not return it.
     # If we use exit(code), it will return the code properly.

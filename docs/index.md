@@ -4,6 +4,7 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/ghedesigner?label=PyPI%20Downloads)
 ![Python Versions](https://img.shields.io/pypi/pyversions/ghedesigner)
 [![Tests](https://github.com/BETSRG/GHEDesigner/actions/workflows/tests.yml/badge.svg)](https://github.com/BETSRG/GHEDesigner/actions/workflows/tests.yml)
+[![Documentation Status](https://readthedocs.org/projects/ghedesigner/badge/?version=latest)](https://ghedesigner.readthedocs.io/en/latest/?badge=latest)
 
 ## Introduction
 
@@ -152,9 +153,11 @@ git clone git@github.com:BETSRG/GHEDesigner.git
 During development, we can [serve docs locally](https://squidfunk.github.io/mkdocs-material/creating-your-site/#previewing-as-you-write) and view updates with every save.
 
 1. Start a documentation update branch: `git checkout -b <branch_name>`
-2. Ensure that the environment variable `LANGUAGE` is set to `en_US` before running `mkdocs serve` to avoid babel errors
-3. `uv run mkdocs serve`
+2. Run `uv run --group docs mkdocs build --strict` to catch navigation, link, and rendering problems.
+3. Run `uv run --group docs mkdocs serve` for live preview.
 4. Point browser to [http://localhost:8000/](http://localhost:8000/)
+
+Read the Docs uses `.readthedocs.yaml` and the locked `docs` dependency group to build the same MkDocs site.
 
 ## Questions
 

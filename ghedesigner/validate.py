@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Validate GHEDesigner JSON input files and report actionable schema errors."""
+
 import argparse
 import json
 import re
@@ -51,6 +53,8 @@ def _extract_additional_properties_name(message: str) -> str | None:
 
 @dataclass(order=True)
 class RankedError:
+    """Validation error paired with its user-facing display priority."""
+
     # lower is better
     rank: tuple[int, int, int]
     # Do NOT include the ValidationError object in ordering comparisons.
@@ -162,8 +166,13 @@ def _suggest_fix(err: ValidationError) -> list[str]:
 
 
 def validate_input_file(input_file_path: Path) -> None:
-    """
-    Validate input file against the schema with clearer, structured error messages.
+    """Validate an input file against the packaged GHEDesigner schema.
+
+    Validation failures are printed with the relevant JSON path and a suggested
+    correction before the original :class:`jsonschema.ValidationError` is raised.
+
+    :param input_file_path: Path to the JSON document to validate.
+    :raises jsonschema.ValidationError: If the document does not satisfy the schema.
     """
     instance = json.loads(input_file_path.read_text())
     schema_path = Path(__file__).parent / "schemas" / "ghedesigner.schema.json"
@@ -210,6 +219,12 @@ def validate_input_file(input_file_path: Path) -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Run the standalone input-validation command.
+
+    :param argv: Optional command arguments excluding the executable name.
+    :return: Zero for a valid document and one for an invalid document.
+    """
+
     parser = argparse.ArgumentParser(description="Validate GHEDesigner input JSON against schema.")
     parser.add_argument("input_json", type=Path, help="Path to input JSON file")
     args = parser.parse_args(argv)

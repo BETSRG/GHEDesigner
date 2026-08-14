@@ -1,3 +1,5 @@
+"""High-level manager for standalone vertical GHE design workflows."""
+
 from collections.abc import Sequence
 from time import time
 from typing import cast
@@ -27,7 +29,13 @@ from ghedesigner.media import Fluid, Grout, Soil
 from ghedesigner.utilities import borehole_spacing, combine_sts_lts, eskilson_log_times, get_loads
 
 
-class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHEDesigner?
+class GroundHeatExchanger:
+    """Configure, design, and evaluate one vertical ground heat exchanger.
+
+    The dictionary constructor is the preferred public entry point because it
+    accepts the same validated structures as the JSON input schema.
+    """
+
     def __init__(
         self,
         grout_conductivity: float,
@@ -43,6 +51,22 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         fluid_concentration_percent: float = 0.0,
         fluid_temperature: float = 20.0,
     ) -> None:
+        """Initialize material, borehole, pipe, and fluid properties.
+
+        :param grout_conductivity: Grout conductivity in W/(m·K).
+        :param grout_rho_cp: Grout volumetric heat capacity in J/(m³·K).
+        :param soil_conductivity: Soil conductivity in W/(m·K).
+        :param soil_rho_cp: Soil volumetric heat capacity in J/(m³·K).
+        :param soil_undisturbed_temperature: Undisturbed soil temperature in degrees Celsius.
+        :param borehole_buried_depth: Depth from grade to the active borehole in metres.
+        :param borehole_radius: Borehole radius in metres.
+        :param pipe_arrangement_type: Borehole pipe arrangement.
+        :param pipe_parameters: Pipe dimensions and thermal properties.
+        :param fluid_name: Heat-transfer fluid name.
+        :param fluid_concentration_percent: Antifreeze concentration percentage.
+        :param fluid_temperature: Initial fluid-property temperature in degrees Celsius.
+        """
+
         self.fluid = Fluid(fluid_name, fluid_temperature, fluid_concentration_percent)
         self.grout = Grout(grout_conductivity, grout_rho_cp)
         self.soil = Soil(soil_conductivity, soil_rho_cp, soil_undisturbed_temperature)
@@ -117,14 +141,13 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         fluid_inputs: dict | None = None,
         soil_inputs: dict | None = None,
     ) -> "GroundHeatExchanger":
-        """
-        Initialize a GroundHeatExchanger object from input dictionaries, performing validation and ultimately calling
-        the main object constructor.
+        """Create a manager from input-schema dictionaries.
+
         :param ghe_dict: Dictionary of GHE-specific parameters from the ground_heat_exchanger schema field.
         :param fluid_inputs: Optional dictionary of fluid input parameters, see the input schema fluid spec for details.
         :param soil_inputs: Top-level vertical-soil parameters shared by the GHEs in the input file.
-        :return: GroundHeatExchanger object.
-        # TODO: Add validation back in to the input fields
+        :return: Configured ground heat exchanger manager.
+        :raises ValueError: If top-level soil inputs are not supplied.
         """
         grout_parameters: dict = ghe_dict["grout"]
         g_c: float = grout_parameters["conductivity"]
@@ -170,6 +193,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         return ghe
 
     def ghe_setup(self, ghe_dict):
+        """Configure flow, geometry, and design controls from one GHE dictionary."""
+
         self.configure_ghe_flow(ghe_dict)
         if "pre_designed" in ghe_dict:
             self.is_sizable = False
@@ -180,6 +205,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
             self.configure_design(ghe_dict["design"])
 
     def configure_geometry(self, geom: dict, is_pre_designed=False):
+        """Configure a search geometry or an explicitly supplied borefield."""
+
         if not is_pre_designed:
             geometry_map = {geom.name: geom for geom in DesignGeomType}
             self.geom_type = geometry_map.get(geom["method"].upper())
@@ -267,6 +294,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.ghe_geometry_set = True
 
     def configure_design(self, design_parameters):
+        """Configure temperature, depth, and borehole-count design constraints."""
+
         # grab some design conditions
         self.continue_if_design_unmet = design_parameters.get("continue_if_design_unmet", False)
         self.min_eft = design_parameters["min_eft"]
@@ -410,12 +439,16 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.design_parameters_set = True
 
     def configure_ghe_flow(self, ghe_dict: dict):
+        """Configure the volumetric flow rate and whether it applies per borehole or system."""
+
         flow_type_str = ghe_dict["flow_type"]
         self.flow_type = FlowConfigType(flow_type_str.upper())
         self.flow_rate = ghe_dict["flow_rate"]
         self.flow_parameters_set = True
 
     def retrieve_flow(self, coordinates, rho):
+        """Return system volumetric flow and per-borehole mass flow for a field."""
+
         if self.flow_type == FlowConfigType.BOREHOLE:
             v_flow_system = self.flow_rate * len(coordinates)
             # Total fluid mass flow rate per borehole (kg/s)
@@ -429,6 +462,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         return v_flow_system, m_flow_borehole
 
     def new_nbh_design(self, design_nbh):
+        """Initialize the closest available borefield to a requested borehole count."""
+
         design_nbh = clip(design_nbh, *self.design.get_bounds())
         new_coords = self.design.closest_nbh(design_nbh)
         self.pre_designed_locations = new_coords
@@ -436,6 +471,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.initialize_pre_designed_ghe()
 
     def new_ts_design(self, target_spacing):
+        """Initialize a RowWise borefield at a requested target spacing."""
+
         if self.geom_type != DesignGeomType.ROWWISE:
             raise ValueError('"new_ts_design" can only be used on GHEs which have RowWisegeometric constraints.')
         new_coords = self.design.get_field_by_target_spacing(target_spacing)
@@ -444,11 +481,15 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.initialize_pre_designed_ghe()
 
     def average_bound_nbh(self):
+        """Return the midpoint of the active design's borehole-count bounds."""
+
         return average(self.design.get_bounds())
 
     def initialize_pre_designed_ghe(
         self, log_time=eskilson_log_times(), start_month=0, end_month=0, hourly_extraction_ground_loads=[]
     ):
+        """Build the thermal model for the currently configured predesigned field."""
+
         v_flow_system, m_flow_borehole = self.retrieve_flow(self.pre_designed_locations, self.fluid.rho)
         self.log_time = log_time
         self.pygfunction_borehole.H = self.pre_designed_height
@@ -494,6 +535,15 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
     def design_and_size_ghe(
         self, end_month: int, loads_override: list[float] | None = None, ghe_dict: dict | None = None
     ):
+        """Search for a borefield and size its borehole depth.
+
+        :param end_month: Final simulation month; must represent a whole number of years.
+        :param loads_override: Optional hourly ground-load series in watts.
+        :param ghe_dict: GHE input dictionary used for loads and any missing configuration.
+        :return: Search object, elapsed search time in seconds, and selected GHE model.
+        :raises ValueError: If loads or required design configuration are missing.
+        """
+
         ghe_loads: list[float]
         if loads_override is not None:
             ghe_loads = loads_override
@@ -671,6 +721,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         return search, search_time, found_ghe
 
     def get_design_area(self) -> float:
+        """Return usable plan area inside the configured design boundary in square metres."""
+
         if not self.ghe_geometry_set:
             raise ValueError("A set of geometric constraints needs to be set before a design area can be defined.")
 
@@ -705,6 +757,8 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         return area
 
     def get_design_volume(self):
+        """Return design area times the configured borehole height in cubic metres."""
+
         area = self.get_design_area()
         if not self.design_parameters_set and self.pre_designed_height is None:
             raise ValueError("Design parameters must be known before the design volume can be determined.")
@@ -716,6 +770,13 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
     def get_g_function(
         self, ghe_dict: (dict | None) = None, boundary_condition="MIFT"
     ) -> tuple[ndarray, ndarray, ndarray]:
+        """Calculate combined short- and long-time-step g-functions.
+
+        :param ghe_dict: Optional dictionary defining a predesigned field and its flow.
+        :param boundary_condition: pygfunction boundary condition, normally ``MIFT``.
+        :return: Log time, fluid-to-ground g-function, and borehole-wall g-function arrays.
+        """
+
         # TODO: Create a SingleUTube class or something in order to get the STS stitched up
         if ghe_dict is not None:
             pre_designed = ghe_dict["pre_designed"]

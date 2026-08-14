@@ -8,6 +8,8 @@ produce output, an output directory.
 $ ghedesigner --help
 Usage: ghedesigner [OPTIONS] INPUT_PATH [OUTPUT_DIRECTORY]
 
+  Run, validate, or convert a GHEDesigner input or result file.
+
 Options:
   --version           Show the version and exit.
   --validate-only     Validate input file and exit.
