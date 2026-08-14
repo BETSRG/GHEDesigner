@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "run_id": "run-provided-fixture",
+  "design_id": "design-provided-fixture",
+  "status": "provided",
+  "workflow": "standalone_ghe",
+  "input_file": "demos/pre_designed_rectangle.json",
+  "input_sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+  "created_at_utc": "2026-01-01T00:00:00Z",
+  "design_criteria": {},
+  "governing_constraints": [],
+  "selected_evaluation_ids": [],
+  "components": [
+    {
+      "component_id": "ghe-1",
+      "component_type": "ground_heat_exchanger",
+      "design_method": "provided",
+      "method_version": "1",
+      "selected_evaluation_ids": [],
+      "status": "provided",
+      "governing_constraint": null,
+      "feasibility_margin": null,
+      "parameters": {
+        "borehole_count": 4,
+        "borehole_height_m": 100.0,
+        "borehole_spacing_m": 5.0,
+        "total_drilling_m": 400.0,
+        "design_flow_kg_s": null,
+        "field_type": "rectangle",
+        "field_specifier": "2x2"
+      }
+    }
+  ]
+}

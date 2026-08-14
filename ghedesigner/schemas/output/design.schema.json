@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ghedesigner.org/schemas/output/design.schema.json",
+  "title": "GHEDesigner selected system design",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "design_id",
+    "status",
+    "workflow",
+    "input_file",
+    "input_sha256",
+    "created_at_utc",
+    "design_criteria",
+    "governing_constraints",
+    "selected_evaluation_ids",
+    "components"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "design_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["completed", "infeasible", "failed", "provided"] },
+    "workflow": { "type": "string", "minLength": 1 },
+    "input_file": { "type": "string", "minLength": 1 },
+    "input_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "created_at_utc": { "type": "string", "format": "date-time" },
+    "design_criteria": { "type": "object" },
+    "governing_constraints": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "selected_evaluation_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/component" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "provided" } } },
+      "then": { "properties": { "selected_evaluation_ids": { "maxItems": 0 } } }
+    }
+  ],
+  "$defs": {
+    "nullableString": { "type": ["string", "null"] },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_id",
+        "component_type",
+        "design_method",
+        "method_version",
+        "selected_evaluation_ids",
+        "status",
+        "governing_constraint",
+        "feasibility_margin",
+        "parameters"
+      ],
+      "properties": {
+        "component_id": { "type": "string", "minLength": 1 },
+        "component_type": { "type": "string", "minLength": 1 },
+        "design_method": { "type": "string", "minLength": 1 },
+        "method_version": { "type": "string", "minLength": 1 },
+        "selected_evaluation_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "status": { "enum": ["completed", "infeasible", "failed", "provided"] },
+        "governing_constraint": { "$ref": "#/$defs/nullableString" },
+        "feasibility_margin": { "type": ["number", "null"] },
+        "parameters": { "type": "object" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "provided" } } },
+          "then": {
+            "properties": { "selected_evaluation_ids": { "maxItems": 0 } }
+          },
+          "else": {
+            "properties": { "selected_evaluation_ids": { "minItems": 1 } }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component_type": { "const": "ground_heat_exchanger" }
+            }
+          },
+          "then": {
+            "properties": { "parameters": { "$ref": "#/$defs/gheParameters" } }
+          }
+        },
+        {
+          "if": {
+            "properties": { "component_type": { "const": "network_pipe" } }
+          },
+          "then": {
+            "properties": {
+              "parameters": { "$ref": "#/$defs/networkPipeParameters" }
+            }
+          }
+        }
+      ]
+    },
+    "gheParameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "borehole_count",
+        "borehole_height_m",
+        "borehole_spacing_m",
+        "total_drilling_m"
+      ],
+      "properties": {
+        "borehole_count": { "type": "integer", "minimum": 1 },
+        "borehole_height_m": { "type": "number", "exclusiveMinimum": 0 },
+        "borehole_spacing_m": { "type": "number", "exclusiveMinimum": 0 },
+        "total_drilling_m": { "type": "number", "exclusiveMinimum": 0 },
+        "design_flow_kg_s": {
+          "type": ["number", "null"],
+          "exclusiveMinimum": 0
+        },
+        "field_type": { "$ref": "#/$defs/nullableString" },
+        "field_specifier": { "$ref": "#/$defs/nullableString" }
+      }
+    },
+    "networkPipeParameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nominal_diameter_m",
+        "inner_diameter_m",
+        "circuit_length_m",
+        "design_flow_kg_s",
+        "design_velocity_m_s",
+        "design_pressure_loss_pa"
+      ],
+      "properties": {
+        "nominal_diameter_m": { "type": "number", "exclusiveMinimum": 0 },
+        "inner_diameter_m": { "type": "number", "exclusiveMinimum": 0 },
+        "circuit_length_m": { "type": "number", "exclusiveMinimum": 0 },
+        "design_flow_kg_s": { "type": "number", "exclusiveMinimum": 0 },
+        "design_velocity_m_s": { "type": "number", "exclusiveMinimum": 0 },
+        "design_pressure_loss_pa": { "type": "number", "minimum": 0 },
+        "roughness_m": { "type": ["number", "null"], "minimum": 0 },
+        "pump_power_w": { "type": ["number", "null"], "minimum": 0 }
+      }
+    }
+  }
+}

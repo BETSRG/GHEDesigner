@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ghedesigner.org/schemas/output/design-evaluation-details.schema.json",
+  "title": "GHEDesigner method-specific design evaluation details",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "created_at_utc", "details"],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "created_at_utc": { "type": "string", "format": "date-time" },
+    "details": {
+      "type": "object",
+      "propertyNames": { "minLength": 1 },
+      "additionalProperties": {
+        "type": "object",
+        "description": "Method-owned payload keyed by evaluation_id."
+      }
+    }
+  }
+}

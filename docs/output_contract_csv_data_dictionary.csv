@@ -1,0 +1,23 @@
+artifact,column,type,units,required,description
+DesignEvaluations.csv,evaluation_id,string,,yes,Stable identifier for one evaluated candidate.
+DesignEvaluations.csv,sequence,integer,,yes,One-based evaluation order within the run.
+DesignEvaluations.csv,design_pass_id,string,,yes,Identifier grouping evaluations from one method invocation.
+DesignEvaluations.csv,parent_evaluation_id,string or empty,,no,Evaluation that supplied context for this nested evaluation.
+DesignEvaluations.csv,scope_type,enum,,yes,Evaluation scope: component; component_group; or system.
+DesignEvaluations.csv,scope_id,string,,yes,Identifier for the evaluated scope.
+DesignEvaluations.csv,component_type,string,,yes,Extensible component category such as ground_heat_exchanger or network_pipe.
+DesignEvaluations.csv,component_id,string or empty,,conditional,Required when scope_type is component.
+DesignEvaluations.csv,design_method,string,,yes,Method that produced the evaluation.
+DesignEvaluations.csv,candidate_summary,string,,yes,Compact human-readable candidate description.
+DesignEvaluations.csv,objective_name,string,,yes,Canonical name of the minimized or maximized quantity.
+DesignEvaluations.csv,objective_value,number or empty,method-defined,no,Objective value when the method defines one.
+DesignEvaluations.csv,constraint_excess,number or empty,method-defined,no,Signed violation; values at or below zero are feasible.
+DesignEvaluations.csv,feasible,boolean,,yes,Whether all applicable constraints passed.
+DesignEvaluations.csv,is_selected,boolean,,yes,Whether this evaluation contributed to the selected system design.
+DesignEvaluations.csv,detail_ref,string or empty,,no,JSON Pointer into DesignEvaluationDetails.json.
+BoreholeCoordinates.csv,design_id,string,,yes,Selected design containing the borehole.
+BoreholeCoordinates.csv,component_id,string,,yes,GHE component containing the borehole.
+BoreholeCoordinates.csv,borehole_id,string,,yes,Stable borehole identifier within the component.
+BoreholeCoordinates.csv,x_m,number,m,yes,Selected borehole x coordinate.
+BoreholeCoordinates.csv,y_m,number,m,yes,Selected borehole y coordinate.
+BoreholeCoordinates.csv,borehole_height_m,number,m,yes,Active borehole height used by the selected design.

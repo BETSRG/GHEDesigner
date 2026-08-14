@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "run_id": "run-multi-fixture",
+  "design_id": "design-multi-fixture",
+  "status": "completed",
+  "workflow": "district_system",
+  "input_file": "demos/Network_Sizing_3GHE_6HP_BUPCRS.json",
+  "input_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+  "created_at_utc": "2026-01-01T00:00:00Z",
+  "design_criteria": { "maximum_total_drilling_m": 1000.0 },
+  "governing_constraints": ["entering_fluid_temperature_c"],
+  "selected_evaluation_ids": ["eval-ghe-1", "eval-ghe-2", "eval-system"],
+  "components": [
+    {
+      "component_id": "ghe-1",
+      "component_type": "ground_heat_exchanger",
+      "design_method": "GLOBAL_BUPCRS",
+      "method_version": "1",
+      "selected_evaluation_ids": ["eval-ghe-1"],
+      "status": "completed",
+      "governing_constraint": "entering_fluid_temperature_c",
+      "feasibility_margin": 0.12,
+      "parameters": {
+        "borehole_count": 4,
+        "borehole_height_m": 100.0,
+        "borehole_spacing_m": 5.0,
+        "total_drilling_m": 400.0,
+        "design_flow_kg_s": 0.96,
+        "field_type": "rectangle",
+        "field_specifier": "2x2"
+      }
+    },
+    {
+      "component_id": "ghe-2",
+      "component_type": "ground_heat_exchanger",
+      "design_method": "GLOBAL_BUPCRS",
+      "method_version": "1",
+      "selected_evaluation_ids": ["eval-ghe-2"],
+      "status": "completed",
+      "governing_constraint": "entering_fluid_temperature_c",
+      "feasibility_margin": 0.08,
+      "parameters": {
+        "borehole_count": 5,
+        "borehole_height_m": 90.0,
+        "borehole_spacing_m": 5.0,
+        "total_drilling_m": 450.0,
+        "design_flow_kg_s": 1.2,
+        "field_type": "rectangle",
+        "field_specifier": "1x5"
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "run_id": "run-network-fixture",
+  "design_id": "design-network-fixture",
+  "status": "completed",
+  "workflow": "district_system",
+  "input_file": "demos/network_pipe_contract_fixture.json",
+  "input_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+  "created_at_utc": "2026-01-01T00:00:00Z",
+  "design_criteria": { "maximum_network_velocity_m_s": 1.5 },
+  "governing_constraints": ["maximum_network_velocity_m_s"],
+  "selected_evaluation_ids": ["eval-ghe", "eval-network"],
+  "components": [
+    {
+      "component_id": "ghe-1",
+      "component_type": "ground_heat_exchanger",
+      "design_method": "GLOBAL_ROWWISE",
+      "method_version": "1",
+      "selected_evaluation_ids": ["eval-ghe"],
+      "status": "completed",
+      "governing_constraint": "entering_fluid_temperature_c",
+      "feasibility_margin": 0.2,
+      "parameters": {
+        "borehole_count": 6,
+        "borehole_height_m": 95.0,
+        "borehole_spacing_m": 4.5,
+        "total_drilling_m": 570.0,
+        "design_flow_kg_s": 1.44,
+        "field_type": "rowwise",
+        "field_specifier": "selected-domain-4"
+      }
+    },
+    {
+      "component_id": "network-main-1",
+      "component_type": "network_pipe",
+      "design_method": "NETWORK_PIPE_PRESSURE_DROP",
+      "method_version": "1",
+      "selected_evaluation_ids": ["eval-network"],
+      "status": "completed",
+      "governing_constraint": "maximum_network_velocity_m_s",
+      "feasibility_margin": 0.31,
+      "parameters": {
+        "nominal_diameter_m": 0.05,
+        "inner_diameter_m": 0.0409,
+        "circuit_length_m": 120.0,
+        "design_flow_kg_s": 1.44,
+        "design_velocity_m_s": 1.19,
+        "design_pressure_loss_pa": 25000.0,
+        "roughness_m": 0.000001,
+        "pump_power_w": 52.3
+      }
+    }
+  ]
+}

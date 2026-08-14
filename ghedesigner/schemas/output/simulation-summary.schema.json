@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ghedesigner.org/schemas/output/simulation-summary.schema.json",
+  "title": "GHEDesigner simulation summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "design_id",
+    "status",
+    "workflow",
+    "created_at_utc",
+    "period_start_utc",
+    "period_end_utc",
+    "timestep_seconds",
+    "extrema",
+    "energy_totals",
+    "constraint_checks",
+    "constraints_passed"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "design_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["completed", "infeasible", "failed"] },
+    "workflow": { "type": "string", "minLength": 1 },
+    "created_at_utc": { "type": "string", "format": "date-time" },
+    "period_start_utc": { "type": "string", "format": "date-time" },
+    "period_end_utc": { "type": "string", "format": "date-time" },
+    "timestep_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "extrema": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["value", "units", "timestamp_utc"],
+        "properties": {
+          "value": { "type": "number" },
+          "units": { "type": "string" },
+          "timestamp_utc": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "energy_totals": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "constraint_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "limit", "observed", "margin", "units", "passed"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "limit": { "type": "number" },
+          "observed": { "type": "number" },
+          "margin": { "type": "number" },
+          "units": { "type": "string" },
+          "passed": { "type": "boolean" }
+        }
+      }
+    },
+    "constraints_passed": { "type": "boolean" }
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ghedesigner.org/schemas/output/run-summary.schema.json",
+  "title": "GHEDesigner run artifact manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "status",
+    "workflow",
+    "created_at_utc",
+    "input",
+    "design",
+    "simulation",
+    "timeseries_fields"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["completed", "infeasible", "failed"] },
+    "workflow": { "type": "string", "minLength": 1 },
+    "created_at_utc": { "type": "string", "format": "date-time" },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "design": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "design_id",
+        "methods",
+        "artifact",
+        "evaluations",
+        "evaluation_details",
+        "coordinates"
+      ],
+      "properties": {
+        "status": { "enum": ["completed", "infeasible", "failed", "provided"] },
+        "design_id": { "type": "string", "minLength": 1 },
+        "methods": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "artifact": { "type": "string", "minLength": 1 },
+        "evaluations": { "type": ["string", "null"] },
+        "evaluation_details": { "type": ["string", "null"] },
+        "coordinates": { "type": ["string", "null"] }
+      }
+    },
+    "simulation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "design_id",
+        "summary",
+        "timeseries",
+        "constraints_passed"
+      ],
+      "properties": {
+        "status": { "enum": ["completed", "infeasible", "failed", "not_run"] },
+        "design_id": { "type": "string", "minLength": 1 },
+        "summary": { "type": ["string", "null"] },
+        "timeseries": { "type": ["string", "null"] },
+        "constraints_passed": { "type": ["boolean", "null"] }
+      }
+    },
+    "timeseries_fields": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "type": "string" },
+        "required": ["quantity", "units"]
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "design": { "properties": { "status": { "const": "provided" } } }
+        }
+      },
+      "then": {
+        "properties": {
+          "design": {
+            "properties": {
+              "methods": { "maxItems": 0 },
+              "evaluations": { "const": null },
+              "evaluation_details": { "const": null }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "simulation": { "properties": { "status": { "const": "not_run" } } }
+        }
+      },
+      "then": {
+        "properties": {
+          "simulation": {
+            "properties": {
+              "summary": { "const": null },
+              "timeseries": { "const": null },
+              "constraints_passed": { "const": null }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "simulation": {
+            "properties": {
+              "summary": { "type": "string", "minLength": 1 },
+              "timeseries": { "type": "string", "minLength": 1 },
+              "constraints_passed": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

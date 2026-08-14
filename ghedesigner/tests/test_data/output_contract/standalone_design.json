@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "run_id": "run-standalone-fixture",
+  "design_id": "design-standalone-fixture",
+  "status": "completed",
+  "workflow": "standalone_ghe",
+  "input_file": "demos/find_design_rectangle_single_u_tube.json",
+  "input_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+  "created_at_utc": "2026-01-01T00:00:00Z",
+  "design_criteria": {
+    "minimum_entering_fluid_temperature_c": 5.0,
+    "maximum_entering_fluid_temperature_c": 35.0
+  },
+  "governing_constraints": ["maximum_entering_fluid_temperature_c"],
+  "selected_evaluation_ids": ["eval-standalone-selected"],
+  "components": [
+    {
+      "component_id": "ghe-1",
+      "component_type": "ground_heat_exchanger",
+      "design_method": "RECTANGLE",
+      "method_version": "1",
+      "selected_evaluation_ids": ["eval-standalone-selected"],
+      "status": "completed",
+      "governing_constraint": "maximum_entering_fluid_temperature_c",
+      "feasibility_margin": 0.01,
+      "parameters": {
+        "borehole_count": 88,
+        "borehole_height_m": 126.90579549671773,
+        "borehole_spacing_m": 5.0,
+        "total_drilling_m": 11167.71000371116,
+        "design_flow_kg_s": 21.12,
+        "field_type": "rectangle",
+        "field_specifier": "8x11"
+      }
+    }
+  ]
+}
