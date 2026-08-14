@@ -415,8 +415,8 @@ class IsolatedHorizontalPipe(BaseSimComp):
             rows[3 * k + 2][idx_t_out] = -1.0
 
             # Eq 3: Energy Bal w/ Capacitance
-            rows[3 * k + 3][idx_t_in_seg] = m_cp
-            rows[3 * k + 3][idx_t_out] = -m_cp
+            rows[3 * k + 3][idx_t_in_seg] = abs(m_cp)
+            rows[3 * k + 3][idx_t_out] = -abs(m_cp)
             rows[3 * k + 3][idx_q] = -self.L_seg
             rows[3 * k + 3][idx_t_m] = -cap_coeff
             rhs[3 * k + 3] = -cap_coeff * t_m_prev
@@ -424,8 +424,8 @@ class IsolatedHorizontalPipe(BaseSimComp):
         return rows, rhs
 
     def update_post_solve(self, x_vector, idx_timestep, configuration, detailed=True):
-        if detailed:
-            self.t_in[idx_timestep] = x_vector[self.row_index]
+        # if detailed:
+        #     self.t_in[idx_timestep] = x_vector[self.row_index]
 
         current_time_sec = self.time_array[idx_timestep] * SEC_IN_HR
         prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
@@ -442,21 +442,24 @@ class IsolatedHorizontalPipe(BaseSimComp):
 
             self.t_in[idx_timestep] = x_vector[idx_t_in]
             self.t_mean_seg[0, idx_timestep] = x_vector[self.temp_index_mean]
-            self.q_seg[0, idx_timestep] = x_vector[self.index_q]
-            self.t_out_seg[0, idx_timestep] = x_vector[idx_t_out]
+            if detailed:
+                self.q_seg[0, idx_timestep] = x_vector[self.index_q]
+                self.t_out_seg[0, idx_timestep] = x_vector[idx_t_out]
         else:
             self.t_in[idx_timestep] = x_vector[self.row_index]
 
+            for k in range(self.num_segments):
+                self.t_mean_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 1]
+
+                if detailed:
+                    self.q_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 2]
+                    self.t_out_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 3]
+
         for k in range(self.num_segments):
-            self.t_mean_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 1]
             # Calculate and store the discrete driving potential step (dtheta) that just occurred
             theta_n = self.t_mean_seg[k, idx_timestep] - current_ugt
             theta_n_minus_1 = self.t_mean_seg[k, idx_timestep - 1] - prev_ugt
             self.dtheta_seg[k, idx_timestep] = theta_n - theta_n_minus_1
-
-            if detailed:
-                self.q_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 2]
-                self.t_out_seg[k, idx_timestep] = x_vector[self.row_index + 3 * k + 3]
 
         if detailed:
             self.t_out[idx_timestep] = self.t_out_seg[-1, idx_timestep]
@@ -1127,6 +1130,14 @@ class GHX(BaseSimComp):
             + (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])
         )
 
+        if idx_timestep in [1, 1000, 2000, 3000, 3500, 4000, 4500, 5000, 6000, 7000, 8000]:
+            print(
+                f"timestep = {idx_timestep}, "
+                f"history = {self.history_terms[idx_timestep]:.6f}, "
+                f"total_values = {self.total_values_ghe[idx_timestep - 1]:.6f}, "
+                f"q_prev = {self.q_ghe[idx_timestep - 2]:.6f}"
+            )
+
         return self.history_terms[idx_timestep]
 
     def generate_matrix(
@@ -1202,7 +1213,7 @@ class GHX(BaseSimComp):
 
             elif configuration == CentralLoopType.TWOPIPE:
                 row_1[self.row_index + 1] = 1
-                row_1[self.row_index + 2] = self.c_n[idx_timestep - 1]
+                row_1[self.row_index + 2] = - self.c_n[idx_timestep - 1]  # NB T think this should be minus ???
 
                 row_2[self.row_index + 1] = 2
                 row_2[self.inlet_index] = -1
@@ -1253,7 +1264,8 @@ class GHX(BaseSimComp):
 
     def update_post_solve(self, x_vector, idx_timestep, configuration, detailed=True):
         row_index = self.row_index
-        self.q_ghe[idx_timestep - 1] = x_vector[row_index + 2]
+        if self.loop_config != CentralLoopType.TWOPIPE_BIDIRECTIONAL:
+            self.q_ghe[idx_timestep - 1] = x_vector[row_index + 2]
         if detailed:
             if self.loop_config == CentralLoopType.TWOPIPE:
                 self.t_in[idx_timestep - 1] = x_vector[self.inlet_index]
@@ -1270,21 +1282,21 @@ class GHX(BaseSimComp):
             elif self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
 
                 if self.mass_flow_ghe >= 0.0:
-                    self.t_in[idx_timestep] = x_vector[self.temp_index_one]
-                    self.t_out[idx_timestep] = x_vector[self.temp_index_two]
+                    self.t_in[idx_timestep-1] = x_vector[self.temp_index_one]
+                    self.t_out[idx_timestep-1] = x_vector[self.temp_index_two]
                 else:
-                    self.t_in[idx_timestep] = x_vector[self.temp_index_two]
-                    self.t_out[idx_timestep] = x_vector[self.temp_index_one]
+                    self.t_in[idx_timestep-1] = x_vector[self.temp_index_two]
+                    self.t_out[idx_timestep-1] = x_vector[self.temp_index_one]
 
-                self.t_mean[idx_timestep] = x_vector[self.temp_index_mean]
-                self.q_ghe[idx_timestep] = x_vector[self.heat_rejection_index]
+                self.t_mean[idx_timestep-1] = x_vector[self.temp_index_mean]
+                self.q_ghe[idx_timestep-1] = x_vector[self.heat_rejection_index]
 
             else:
-                self.t_in[idx_timestep] = x_vector[row_index]
-                self.t_mix_out[idx_timestep] = x_vector[self.downstream_index]
-                self.t_mean[idx_timestep] = x_vector[row_index + 1]
+                self.t_in[idx_timestep-1] = x_vector[row_index]
+                self.t_mix_out[idx_timestep-1] = x_vector[self.downstream_index]
+                self.t_mean[idx_timestep-1] = x_vector[row_index + 1]
                 #self.q_ghe[idx_timestep] = x_vector[row_index + 2]
-                self.t_out[idx_timestep] = x_vector[row_index + 3]
+                self.t_out[idx_timestep-1] = x_vector[row_index + 3]
 
 
 class Building(BaseSimComp):
@@ -1660,11 +1672,11 @@ class Building(BaseSimComp):
 
         elif self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
             if self.mass_bldg >= 0.0:
-                self.t_in[idx_timestep] = x_vector[self.temp_index_one]
-                self.t_out[idx_timestep] = x_vector[self.temp_index_two]
+                self.t_in[idx_timestep-1] = x_vector[self.temp_index_one]
+                self.t_out[idx_timestep-1] = x_vector[self.temp_index_two]
             else:
-                self.t_in[idx_timestep] = x_vector[self.temp_index_two]
-                self.t_out[idx_timestep] = x_vector[self.temp_index_one]
+                self.t_in[idx_timestep-1] = x_vector[self.temp_index_two]
+                self.t_out[idx_timestep-1] = x_vector[self.temp_index_one]
 
         else:
             self.t_in[idx_timestep - 1] = x_vector[self.row_index]
@@ -3117,10 +3129,11 @@ class GHEHPSystem:
             if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
                 total_bldg_flow = 0.0
                 for bldg in self.buildings:
-                    t_in = bldg.t_in[idx_timestep - 1]
-                    mass_bldg = bldg.calc_mass_flow_rate(t_in, idx_timestep)
+                    t_in_idx = 0 if idx_timestep == 1 else idx_timestep - 2
+                    t_in = bldg.t_in[t_in_idx]
+                    mass_bldg = bldg.calc_mass_flow_rate(t_in, idx_timestep - 1)
 
-                    if bldg.q_net_c[idx_timestep] > 0:
+                    if bldg.q_net_c[idx_timestep - 1] > 0:
                         bldg.mass_bldg = mass_bldg
                     else:
                         bldg.mass_bldg = -mass_bldg
@@ -3129,10 +3142,10 @@ class GHEHPSystem:
                     for comp in self.components:
                         if isinstance(comp, Building) and comp.ID == bldg.ID:
                             comp.mass_bldg = bldg.mass_bldg
-                            comp.mass_bldg_array[idx_timestep] = bldg.mass_bldg
+                            comp.mass_bldg_array[idx_timestep-1] = bldg.mass_bldg
                             break
 
-                    bldg.mass_bldg_array[idx_timestep] = bldg.mass_bldg
+                    bldg.mass_bldg_array[idx_timestep-1] = bldg.mass_bldg
 
                     # Add to total flow
                     total_bldg_flow += bldg.mass_bldg
@@ -3174,7 +3187,7 @@ class GHEHPSystem:
                     max_zone.mass_bldg *= 1.5
 
                     # Update stored zone flow for this timestep
-                    max_zone.mass_bldg_array[idx_timestep] = max_zone.mass_bldg
+                    max_zone.mass_bldg_array[idx_timestep-1] = max_zone.mass_bldg
 
                     # Update all zone connecting-pipe flows
                     for bldg in self.buildings:
@@ -3314,7 +3327,7 @@ class GHEHPSystem:
                         pipe.mass_flow_rate = current.output.mass_flow_rate
 
                 for pipe in self.pipes:
-                    pipe.mass_flow_rate_array[idx_timestep] = pipe.mass_flow_rate
+                    pipe.mass_flow_rate_array[idx_timestep-1] = pipe.mass_flow_rate
 
                 # solving node mass balance to find mass flow rate of GHE and assigning flows to GHE connecting pipes
                 for ghx in self.ground_heat_exchangers:
@@ -3322,7 +3335,7 @@ class GHEHPSystem:
                     ghx.mass_flow_ghe = node_upstream.input.mass_flow_rate - node_upstream.output.mass_flow_rate  # comment by NB: I may not need to do this as I already have GHE flow before building matrix, check and remove!!
                     ghx.input.input.mass_flow_rate = ghx.mass_flow_ghe
                     ghx.output.output.mass_flow_rate = ghx.mass_flow_ghe
-                    ghx.m_ghe_array[idx_timestep] = ghx.mass_flow_ghe
+                    ghx.m_ghe_array[idx_timestep-1] = ghx.mass_flow_ghe
 
                     # Copy the same value to the component copy
                     for comp in self.components:
@@ -3496,24 +3509,36 @@ class GHEHPSystem:
                     output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
                     output_columns[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean_seg[0, 1:]
                     output_columns[f"{this_comp.name}:Q [W/m]"] = this_comp.q_seg[0, 1:]
-                    output_columns[f"{this_comp.name}:M_flow [kg/s]"] = this_comp.network_pipe.mass_flow_rate_array[1:]
+                    output_columns[f"{this_comp.name}:M_flow [kg/s]"] = this_comp.network_pipe.mass_flow_rate_array
 
-        for this_comp in self.components:
-            if this_comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
-                # Add [1:] to slice off the 0th hour and match the DataFrame length
-                output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
+        else:
+            for this_comp in self.components:
+                if this_comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
+                    # Add [1:] to slice off the 0th hour and match the DataFrame length
+                    output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
 
-                # Loop through the dynamic array to print each segment's details
-                for k in range(this_comp.num_segments):
-                    output_columns[f"{this_comp.name}:Node{k + 1}_Out [C]"] = this_comp.t_out_seg[k, 1:]
-                    output_columns[f"{this_comp.name}:Q{k + 1} [W/m]"] = this_comp.q_seg[k, 1:]
+                    # Loop through the dynamic array to print each segment's details
+                    for k in range(this_comp.num_segments):
+                        output_columns[f"{this_comp.name}:Node{k + 1}_Out [C]"] = this_comp.t_out_seg[k, 1:]
+                        output_columns[f"{this_comp.name}:Q{k + 1} [W/m]"] = this_comp.q_seg[k, 1:]
 
-                output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
+                    output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
 
         output_columns["Network:M_flow [kg/s]"] = self.m_flow_loop
         output_columns["Network:P_pump [W]"] = self.pump_power_loop
         output_columns["Network:Q_net_bldg [W]"] = network_q_net_bldg_tot
         output_columns["Network:Q_net_ghe [W]"] = network_q_net_ghe_tot
+
+        # print("\n===== OUTPUT LENGTH CHECK =====")
+        # print("Index length =", len(self.time_array[1:]))
+        #
+        # for key, value in output_columns.items():
+        #     try:
+        #         print(key, "->", len(value))
+        #     except TypeError:
+        #         print(key, "-> scalar")
+        #
+        # print("===============================\n")
 
         output_data = pd.DataFrame(output_columns, index=self.time_array[1:])
         output_data.index.name = "Time [hr]"
