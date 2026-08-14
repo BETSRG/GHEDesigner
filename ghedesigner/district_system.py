@@ -3404,22 +3404,6 @@ class GHEHPSystem:
             # Solve the system = A * X = B
             a_matrix = np.array(matrix_rows, dtype=float)
             b_vector = np.array(matrix_rhs, dtype=float)
-
-            # print("idx_timestep =", idx_timestep)
-            # print("self.matrix_size =", self.matrix_size)
-            # print("number of matrix rows =", len(matrix_rows))
-            # print("number of RHS values =", len(matrix_rhs))
-            # print("A shape =", a_matrix.shape)
-            # print("B shape =", b_vector.shape)
-            #
-            # print("\nComponent equation counts:")
-            # for this_comp in self.components:
-            #     print(
-            #         this_comp.name,
-            #         type(this_comp).__name__,
-            #         getattr(this_comp, "matrix_rows", getattr(this_comp.__class__, "MATRIX_ROWS", None))
-            #     )
-
             x_vector = np.linalg.solve(a_matrix, b_vector)
 
             # save output data
