@@ -976,6 +976,7 @@ class GHX(BaseSimComp):
         self.type = "GHX"
         self.ID = ghe_data["id"]
         self.m_ghe_array = np.zeros(num_timesteps, dtype=float)
+        self.mass_flow_ghe_design = ghe_data["flow_rate"] * self.nbh
 
     def design_new_ghe(self, load_profile=None, max_eft=None, min_eft=None):
         if not self.ghe_manager.is_sizable:
@@ -2322,7 +2323,7 @@ class GHEHPSystem:
             ghx_matrix_rows * self.num_ghx
             + Building.MATRIX_ROWS * self.num_buildings
             + SourceSinkHeatExchanger.MATRIX_ROWS * self.num_heat_exchangers
-            + sum(pipe.matrix_rows for pipe in horizontal_pipes)
+            + horizontal_matrix_size + node_matrix_rows
         )
 
         self.m_flow_loop = np.zeros(self.num_timesteps)
@@ -3141,12 +3142,21 @@ class GHEHPSystem:
                     bldg.input.input.mass_flow_rate = bldg.mass_bldg
                     bldg.output.output.mass_flow_rate = bldg.mass_bldg
 
+                # # Calculating mass flow rate of GHE
+                # nbh_total = sum(GHE.nbh for GHE in self.ground_heat_exchangers)
+                # for GHE in self.ground_heat_exchangers:
+                #     GHE.nbh = len(GHE.gFunction.bore_locations)
+                #     split_ratio = GHE.nbh / nbh_total
+                #     GHE.mass_flow_ghe = total_bldg_flow * split_ratio
+
                 # Calculating mass flow rate of GHE
-                nbh_total = sum(GHE.nbh for GHE in self.ground_heat_exchangers)
-                for GHE in self.ground_heat_exchangers:
-                    GHE.nbh = len(GHE.gFunction.bore_locations)
-                    split_ratio = GHE.nbh / nbh_total
-                    GHE.mass_flow_ghe = total_bldg_flow * split_ratio
+                nbh_total = sum(
+                    ghe.nbh for ghe in self.ground_heat_exchangers
+                )
+
+                for ghe in self.ground_heat_exchangers:
+                    split_ratio = ghe.nbh / nbh_total
+                    ghe.mass_flow_ghe = total_bldg_flow * split_ratio
 
                 # Put check for mass flow rate of GHE going very low
 
@@ -3394,6 +3404,22 @@ class GHEHPSystem:
             # Solve the system = A * X = B
             a_matrix = np.array(matrix_rows, dtype=float)
             b_vector = np.array(matrix_rhs, dtype=float)
+
+            # print("idx_timestep =", idx_timestep)
+            # print("self.matrix_size =", self.matrix_size)
+            # print("number of matrix rows =", len(matrix_rows))
+            # print("number of RHS values =", len(matrix_rhs))
+            # print("A shape =", a_matrix.shape)
+            # print("B shape =", b_vector.shape)
+            #
+            # print("\nComponent equation counts:")
+            # for this_comp in self.components:
+            #     print(
+            #         this_comp.name,
+            #         type(this_comp).__name__,
+            #         getattr(this_comp, "matrix_rows", getattr(this_comp.__class__, "MATRIX_ROWS", None))
+            #     )
+
             x_vector = np.linalg.solve(a_matrix, b_vector)
 
             # save output data

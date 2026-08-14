@@ -38,12 +38,17 @@
         "name": "hp_por3"
     }
   ],
-  "ground_temperature_model":{
-    "annual_average": 15.0,
-    "amplitude_1": 10.0,
-    "phase_lag_1": 30.0,
-    "amplitude_2": 2.0,
-    "phase_lag_2": 15.0
+  "soil": {
+    "conductivity": 2,
+    "rho_cp": 2343493,
+    "undisturbed_temp": 14.3,
+    "ground_temperature_model": {
+      "annual_average": 15.0,
+      "amplitude_1": 10.0,
+      "phase_lag_1": 30.0,
+      "amplitude_2": 2.0,
+      "phase_lag_2": 15.0
+    }
   },
   "horizontal_piping": {
   "hp_pir1": {
@@ -62,7 +67,6 @@
       "arrangement": "SINGLEUTUBE"
     }
   },
-
   "hp_pir2": {
     "length": 100.0,
     "trench_depth": 1.5,
@@ -152,7 +156,7 @@
     "flow_factor": 1.0,
     "pump_efficiency": 0.5,
     "loop_length": 200,
-    "design_pressure_loss": 200
+    "design_pressure_loss_per_meter": 200
   },
   "fluid": {
     "fluid_name": "PROPYLENEGLYCOL",
@@ -536,6 +540,7 @@
     "simulation_years": 1,
     "load_method": "hourly",
     "horizontal_segments": 1,
-    "horizontal_simulated_considered": true
+    "horizontal_simulation_considered": true,
+    "constant_cop": false
   }
 }
