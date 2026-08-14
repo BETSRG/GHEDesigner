@@ -3410,7 +3410,7 @@ class GHEHPSystem:
             self.m_flow_loop[idx_timestep - 1] = mass_loop
 
             for this_comp in self.components:
-                this_comp.update_post_solve(x_vector, idx_timestep, detailed=detailed)
+                this_comp.update_post_solve(x_vector, idx_timestep, self.loop_config, detailed=detailed)
 
             # Update the console every 730 timesteps or on the very last step
             if (idx_timestep - 1) % 730 == 0 or idx_timestep == self.num_timesteps - 1:
