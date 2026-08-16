@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+from scp.base_fluid import BaseFluid
+
 from ghedesigner.media import Fluid
 
 
@@ -18,3 +20,18 @@ class TestMedia(TestCase):
         self.assertAlmostEqual(fluid.mu, 0.0007975, delta=1e-6)
         self.assertAlmostEqual(fluid.rho, 995.6, delta=1e-1)
         self.assertAlmostEqual(fluid.rho_cp, 4159624, delta=1e0)
+
+    def test_fluid_aliases_use_secondary_coolant_factory(self):
+        aliases = {
+            "MEA": "EthylAlcohol",
+            "MEG": "EthyleneGlycol",
+            "MMA": "MethylAlcohol",
+            "MPG": "PropyleneGlycol",
+            "Water": "Water",
+        }
+
+        for alias, expected_name in aliases.items():
+            with self.subTest(alias=alias):
+                fluid = Fluid(alias, percent=20)
+                self.assertIsInstance(fluid.scp_fluid, BaseFluid)
+                self.assertEqual(fluid.scp_fluid.fluid_name, expected_name)

@@ -52,14 +52,14 @@ wheels = [
 
 [[package]]
 name = "bhresist"
-version = "0.3"
+version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "secondarycoolantprops" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/49/ee/30676ba0ef614f63f00a4a51ba3094f3614d119d3ad3c10210206717634d/bhresist-0.3.tar.gz", hash = "sha256:e484387aed455254133e0d73553aa3ba28c804e959d6d31c338ec834f7ba1061", size = 12958, upload-time = "2026-01-09T20:12:06.375Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d6/f1/344d9d6247e51b4c56e21f9a9731de4581ed5a2094ae9b2810e4184e5a69/bhresist-0.4.0.tar.gz", hash = "sha256:5d03ce0ceddba1f581b93d0cfb581c3e32b0d092f1ce660b846ca8dac12e55e6", size = 15339, upload-time = "2026-08-14T18:47:59.158Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/65/dc/cfb5def50f9a6b6620eb2227bccd1d6a7be276f19a79ac618ce7fabe0cc1/bhresist-0.3-py3-none-any.whl", hash = "sha256:53bf55b53d1e73ab9a5665cc2dfd44f680b1d7f694b5968a20f1877bd98a243f", size = 18151, upload-time = "2026-01-09T20:12:05.348Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/3e/23da7f15e7c65d0e5e494586282735e1b73fe70fe3e3ca772ae10293e7e6/bhresist-0.4.0-py3-none-any.whl", hash = "sha256:c768524ad8d486c7d03498cf1a18054e57fa299cd4070387971a73d31c2b510c", size = 20697, upload-time = "2026-08-14T18:47:57.891Z" },
 ]
 
 [[package]]
@@ -384,13 +384,13 @@ docs = [
 
 [package.metadata]
 requires-dist = [
-    { name = "bhresist", specifier = ">=0.3" },
+    { name = "bhresist", specifier = ">=0.4.0" },
     { name = "click", specifier = ">=8.3.1" },
     { name = "jsonschema", specifier = ">=4.26.0" },
     { name = "numpy", specifier = "<2.4" },
     { name = "pygfunction", specifier = ">=2.3.1" },
     { name = "scipy", specifier = ">=1.15.3" },
-    { name = "secondarycoolantprops", specifier = ">=1.4" },
+    { name = "secondarycoolantprops", specifier = ">=1.5" },
 ]
 
 [package.metadata.requires-dev]
@@ -1526,14 +1526,14 @@ wheels = [
 
 [[package]]
 name = "secondarycoolantprops"
-version = "1.4"
+version = "1.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f2/6e/8c6ae405efb15c6957ef2898308fede474e914faa2a649dfad94c8b53602/secondarycoolantprops-1.4.tar.gz", hash = "sha256:0c9115d3dcc922aae814904ea04bd9317a2234eef787fb0c00be21352248efd2", size = 9601, upload-time = "2026-01-09T02:00:03.117Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/21/8a/6c18c2a9b827126363af0ade3b86693156dd0e2c822643da3eda1ffcfa8b/secondarycoolantprops-1.5.tar.gz", hash = "sha256:35928ac70bb1881c162790f06ad82c58801b535ef95a7c5f66480a2bf6d6a830", size = 12453, upload-time = "2026-07-29T21:29:24.007Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/46/3c/be9686363835fa6031cf111995c377df877a843af0d2888a4b691f75676e/secondarycoolantprops-1.4-py3-none-any.whl", hash = "sha256:5ebbe8da1f8f70b786cad505c77a30a0b5ba390c5d68d81ab118c2029c509986", size = 14027, upload-time = "2026-01-09T02:00:01.974Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/95/0cecfea9a7a45d32b64b1597b4a37d33c6690bf10eba5addca5c7b37e35b/secondarycoolantprops-1.5-py3-none-any.whl", hash = "sha256:08a6a2030653da1215d977d3f24e3a93043465ed85628bdf234e8befacaa7247", size = 17903, upload-time = "2026-07-29T21:29:23.002Z" },
 ]
 
 [[package]]
