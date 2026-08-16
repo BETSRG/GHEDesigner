@@ -1,8 +1,5 @@
-from scp.ethyl_alcohol import EthylAlcohol
-from scp.ethylene_glycol import EthyleneGlycol
-from scp.methyl_alcohol import MethylAlcohol
-from scp.propylene_glycol import PropyleneGlycol
-from scp.water import Water
+from scp import get_fluid
+from scp.base_fluid import BaseFluid
 
 from ghedesigner.enums import FluidType
 
@@ -14,17 +11,19 @@ class Fluid:
         self.temperature = temperature
         self.concentration_percent = percent
 
+        fluid_keys = {
+            FluidType.ETHYLALCOHOL: "ethyl_alcohol",
+            FluidType.ETHYLENEGLYCOL: "ethylene_glycol",
+            FluidType.METHYLALCOHOL: "methyl_alcohol",
+            FluidType.PROPYLENEGLYCOL: "propylene_glycol",
+            FluidType.WATER: "water",
+        }
+        fluid_key = fluid_keys[self.fluid_type]
         concentration_frac = self.concentration_percent / 100
-        if self.fluid_type == FluidType.ETHYLALCOHOL:
-            self._fluid = EthylAlcohol(concentration_frac)
-        elif self.fluid_type == FluidType.ETHYLENEGLYCOL:
-            self._fluid = EthyleneGlycol(concentration_frac)
-        elif self.fluid_type == FluidType.METHYLALCOHOL:
-            self._fluid = MethylAlcohol(concentration_frac)
-        elif self.fluid_type == FluidType.PROPYLENEGLYCOL:
-            self._fluid = PropyleneGlycol(concentration_frac)
-        elif self.fluid_type == FluidType.WATER:
-            self._fluid = Water()
+        if self.fluid_type == FluidType.WATER:
+            self._fluid = get_fluid(fluid_key)
+        else:
+            self._fluid = get_fluid(fluid_key, concentration=concentration_frac)
 
         # supported props
         self.cp: float = 0.0
@@ -33,6 +32,10 @@ class Fluid:
         self.rho: float = 0.0
         self.rho_cp: float = 0.0
         self.update_props_with_new_temp(temperature)
+
+    @property
+    def scp_fluid(self) -> BaseFluid:
+        return self._fluid
 
     @staticmethod
     def get_fluid_type(fluid_name: str) -> FluidType:
