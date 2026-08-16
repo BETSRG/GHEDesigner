@@ -1124,18 +1124,15 @@ class GHX(BaseSimComp):
         self.total_values_ghe[idx_timestep - 1] = values
 
         # Contribution from the last time step only
+        # self.history_terms[idx_timestep] = (
+        #     self.ghe_manager.soil.ugt
+        #     - self.total_values_ghe[idx_timestep - 1]
+        #     + (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])  # check this??
+
         self.history_terms[idx_timestep] = (
             self.ghe_manager.soil.ugt
-            - self.total_values_ghe[idx_timestep - 1]
-            + (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])
-        )
-
-        if idx_timestep in [1, 1000, 2000, 3000, 3500, 4000, 4500, 5000, 6000, 7000, 8000]:
-            print(
-                f"timestep = {idx_timestep}, "
-                f"history = {self.history_terms[idx_timestep]:.6f}, "
-                f"total_values = {self.total_values_ghe[idx_timestep - 1]:.6f}, "
-                f"q_prev = {self.q_ghe[idx_timestep - 2]:.6f}"
+            + self.total_values_ghe[idx_timestep - 1]
+            - (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])
             )
 
         return self.history_terms[idx_timestep]
@@ -1273,9 +1270,6 @@ class GHX(BaseSimComp):
                     self.t_mix_out[idx_timestep - 1] = x_vector[self.downstream_index]
                 else:
                     self.t_mix_out[idx_timestep - 1] = x_vector[self.downstream_device.inlet_index]
-            # else:
-            #     self.t_in[idx_timestep - 1] = x_vector[row_index]
-            #     self.t_mix_out[idx_timestep - 1] = x_vector[self.downstream_index]
                 self.t_mean[idx_timestep - 1] = x_vector[row_index + 1]
                 self.t_out[idx_timestep - 1] = x_vector[row_index + 3]
 
@@ -1295,7 +1289,6 @@ class GHX(BaseSimComp):
                 self.t_in[idx_timestep-1] = x_vector[row_index]
                 self.t_mix_out[idx_timestep-1] = x_vector[self.downstream_index]
                 self.t_mean[idx_timestep-1] = x_vector[row_index + 1]
-                #self.q_ghe[idx_timestep] = x_vector[row_index + 2]
                 self.t_out[idx_timestep-1] = x_vector[row_index + 3]
 
 
@@ -2378,15 +2371,6 @@ class GHEHPSystem:
                     if comp is not None:
                         self.components.append(comp)
 
-        # for this_comp in self.components:
-        #     this_comp.matrix_size = self.matrix_size
-        #     if isinstance(this_comp, GHX):
-        #         this_comp.split_ratio = this_comp.nbh / self.nbh_total
-        #     elif isinstance(
-        #         this_comp, (Building, SourceSinkHeatExchanger, IsolatedHorizontalPipe, CoupledHorizontalPipe)
-        #     ):
-        #         this_comp.cp = cp
-
         # Link each physical NetworkPipe to its horizontal thermal model
         for network_pipe in self.pipes:
             horizontal_pipe_name = network_pipe.horizontal_pipe_name
@@ -3154,13 +3138,6 @@ class GHEHPSystem:
 
                     bldg.input.input.mass_flow_rate = bldg.mass_bldg
                     bldg.output.output.mass_flow_rate = bldg.mass_bldg
-
-                # # Calculating mass flow rate of GHE
-                # nbh_total = sum(GHE.nbh for GHE in self.ground_heat_exchangers)
-                # for GHE in self.ground_heat_exchangers:
-                #     GHE.nbh = len(GHE.gFunction.bore_locations)
-                #     split_ratio = GHE.nbh / nbh_total
-                #     GHE.mass_flow_ghe = total_bldg_flow * split_ratio
 
                 # Calculating mass flow rate of GHE
                 nbh_total = sum(
