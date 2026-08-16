@@ -112,6 +112,9 @@
   "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district": {
     "skip_checks": true
   },
+  "simulate_1_pipe_1_ghe_1_sink_hx_1_bldg_district": {
+    "skip_checks": true
+  },
   "simulate_1_pipe_3_ghe_6_bldg_district": {
     "skip_checks": true
   },
