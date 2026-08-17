@@ -781,6 +781,7 @@ class SourceSinkHeatExchanger(BaseSimComp):
         self.cut_out_temp = hx_data["cut_out_temperature"]
         self.t_in = np.full(self.num_timesteps, tg, dtype=float)
         self.t_out = np.full(self.num_timesteps, tg, dtype=float)
+        self.control_t_in = np.full(self.num_timesteps, tg, dtype=float)
         self.op_mode = SourceSinkOpMode.SOURCE if self.cut_out_temp > self.cut_in_temp else SourceSinkOpMode.SINK
         self.was_running_last_time = False
         self.operating = np.full(self.num_timesteps, False, dtype=bool)
@@ -840,7 +841,8 @@ class SourceSinkHeatExchanger(BaseSimComp):
             raise ValueError("cp is uninitialized")
         if self.matrix_size is None:
             raise ValueError("matrix_size is uninitialized")
-        t_in = self.t_in[0] if idx_timestep == 1 else self.t_in[idx_timestep - 1]
+        t_in = self.t_in[0] if idx_timestep == 1 else self.t_in[idx_timestep - 2]
+        self.control_t_in[idx_timestep - 1] = t_in
         is_running = self.is_running(t_in)
         self.operating[idx_timestep - 1] = is_running
         m_flow_source: float = self.source_flow_rate if is_running else 0.0
@@ -3473,6 +3475,7 @@ class GHEHPSystem:
         for this_comp in self.components:
             if this_comp.comp_type == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
                 output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
+                output_columns[f"{this_comp.name}:Control EFT [C]"] = this_comp.control_t_in
                 output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
                 output_columns[f"{this_comp.name}:Operating [T/F]"] = this_comp.operating
                 output_columns[f"{this_comp.name}:Q [W]"] = (
