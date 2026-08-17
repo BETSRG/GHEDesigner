@@ -1124,16 +1124,16 @@ class GHX(BaseSimComp):
         self.total_values_ghe[idx_timestep - 1] = values
 
         # Contribution from the last time step only
-        # self.history_terms[idx_timestep] = (
-        #     self.ghe_manager.soil.ugt
-        #     - self.total_values_ghe[idx_timestep - 1]
-        #     + (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])  # check this??
-
         self.history_terms[idx_timestep] = (
             self.ghe_manager.soil.ugt
-            + self.total_values_ghe[idx_timestep - 1]
-            - (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])
+            - self.total_values_ghe[idx_timestep - 1]
+            + (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])  # check this??
             )
+        # self.history_terms[idx_timestep] = (
+        #     self.ghe_manager.soil.ugt
+        #     + self.total_values_ghe[idx_timestep - 1]
+        #     - (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])
+        #     )
 
         return self.history_terms[idx_timestep]
 
