@@ -58,6 +58,7 @@ class TestDistrictSys(GHEBaseTest):
         heat_exchanger.generate_matrix(0.0, 1.0, 0.0, 0.0, 0.0, 2, CentralLoopType.ONEPIPE, "hourly")
 
         # Regression test for https://github.com/BETSRG/GHEDesigner/issues/174.
+        assert heat_exchanger.control_t_in[1] == pytest.approx(30.0)
         assert heat_exchanger.operating[1]
 
     @staticmethod
