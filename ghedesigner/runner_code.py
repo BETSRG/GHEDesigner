@@ -12,7 +12,7 @@ def main():
     #     "..\\Documents\\research\\GHEDesigner csv results\\simple system\\simp_sys_const_COP_no_UGT.csv"
     # )
 
-    input_file_path = Path("../demos/simulate_2_pipe_bidirectional_1_ghe_2_bldg_district_HOURLY.json")
+    input_file_path = Path("../demos/simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.json")
     output_file_path = Path("..\\ghedesigner\\results\\simulation_results.csv")
 
     start_time = time()

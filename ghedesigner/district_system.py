@@ -1126,16 +1126,16 @@ class GHX(BaseSimComp):
         self.total_values_ghe[idx_timestep - 1] = values
 
         # Contribution from the last time step only
-        self.history_terms[idx_timestep] = (
-            self.ghe_manager.soil.ugt
-            - self.total_values_ghe[idx_timestep - 1]
-            + (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])  # check this??
-            )
         # self.history_terms[idx_timestep] = (
         #     self.ghe_manager.soil.ugt
-        #     + self.total_values_ghe[idx_timestep - 1]
-        #     - (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])
+        #     - self.total_values_ghe[idx_timestep - 1]
+        #     + (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])  # check this??
         #     )
+        self.history_terms[idx_timestep] = (
+            self.ghe_manager.soil.ugt
+            + self.total_values_ghe[idx_timestep - 1]
+            - (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])
+            )
 
         return self.history_terms[idx_timestep]
 
@@ -2325,14 +2325,6 @@ class GHEHPSystem:
                 for pipe in horizontal_pipes
             )
 
-        ghx_matrix_rows = GHX.MATRIX_ROWS
-        self.matrix_size = (
-            ghx_matrix_rows * self.num_ghx
-            + Building.MATRIX_ROWS * self.num_buildings
-            + SourceSinkHeatExchanger.MATRIX_ROWS * self.num_heat_exchangers
-            + horizontal_matrix_size + node_matrix_rows
-        )
-
         self.m_flow_loop = np.zeros(self.num_timesteps)
         self.pump_power_loop = np.zeros(self.num_timesteps)
 
@@ -2374,43 +2366,69 @@ class GHEHPSystem:
                         self.components.append(comp)
 
         # Link each physical NetworkPipe to its horizontal thermal model
-        for network_pipe in self.pipes:
-            horizontal_pipe_name = network_pipe.horizontal_pipe_name
+        if self.use_horizontal:
 
-            # Dummy or non-horizontal pipes have no thermal model
-            if horizontal_pipe_name is None:
-                continue
+            for network_pipe in self.pipes:
+                horizontal_pipe_name = network_pipe.horizontal_pipe_name
 
-            horizontal_pipe = next(
-                (
-                    comp
-                    for comp in self.components
-                    if isinstance(
-                    comp,
+                # Dummy or non-horizontal pipes have no thermal model
+                if horizontal_pipe_name is None:
+                    continue
+
+                horizontal_pipe = next(
                     (
-                        IsolatedHorizontalPipe,
-                        CoupledHorizontalPipe,
+                        comp
+                        for comp in self.components
+                        if isinstance(
+                        comp,
+                        (
+                            IsolatedHorizontalPipe,
+                            CoupledHorizontalPipe,
+                        ),
+                    )
+                           and comp.name
+                           and comp.name.upper()
+                           == horizontal_pipe_name.upper()
                     ),
-                )
-                       and comp.name
-                       and comp.name.upper()
-                       == horizontal_pipe_name.upper()
-                ),
-                None,
-            )
-
-            if horizontal_pipe is None:
-                raise ValueError(
-                    f"NetworkPipe '{network_pipe.ID}' references "
-                    f"horizontal pipe '{horizontal_pipe_name}', "
-                    "but that horizontal pipe was not found in "
-                    "self.components."
+                    None,
                 )
 
-            # Establish the two-way connection
-            network_pipe.horizontal_pipe = horizontal_pipe
-            horizontal_pipe.network_pipe = network_pipe
+                if horizontal_pipe is None:
+                    raise ValueError(
+                        f"NetworkPipe '{network_pipe.ID}' references "
+                        f"horizontal pipe '{horizontal_pipe_name}', "
+                        "but that horizontal pipe was not found in "
+                        "self.components."
+                    )
 
+                # Establish the two-way connection
+                network_pipe.horizontal_pipe = horizontal_pipe
+                horizontal_pipe.network_pipe = network_pipe
+
+        # Physical network pipes that do not have a horizontal thermal model
+        # Treat pipes without a horizontal model as adiabatic (T_in = T_out),
+        # allowing horizontal heat transfer to be applied only to selected pipes.
+
+        if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
+            self.bare_network_pipes = [
+                pipe
+                for pipe in self.pipes
+                if pipe.type in ("main_ir", "main_or") and (
+                            not self.use_horizontal or pipe.horizontal_pipe is None)
+            ]
+        else:
+            self.bare_network_pipes = []
+        bare_pipe_matrix_size = len(self.bare_network_pipes)
+
+        ghx_matrix_rows = GHX.MATRIX_ROWS
+        self.matrix_size = (
+            ghx_matrix_rows * self.num_ghx
+            + Building.MATRIX_ROWS * self.num_buildings
+            + SourceSinkHeatExchanger.MATRIX_ROWS * self.num_heat_exchangers
+            + horizontal_matrix_size
+            + bare_pipe_matrix_size
+            + node_matrix_rows
+        )
         # Assigning downstream device to each component
         for i in range(len(self.components)):
             self.components[i].downstream_device = self.components[(i + 1) % len(self.components)]
@@ -2550,6 +2568,15 @@ class GHEHPSystem:
                 network_pipe.temp_index_mean = idx_mean
                 network_pipe.heat_rejection_index = idx_q
                 network_pipe.temp_index_two = idx_two
+
+        # Assign temperature indices to physical NetworkPipes
+        # that do not have a horizontal thermal model
+        for network_pipe in self.bare_network_pipes:
+            network_pipe.temp_index_one = index
+            index += 1
+
+            network_pipe.temp_index_two = index
+            index += 1
 
     def size_and_simulate(self):
         if np.any([ghe.ghe_manager.is_sizable for ghe in self.ground_heat_exchangers]):
@@ -3380,6 +3407,17 @@ class GHEHPSystem:
                 else:
                     matrix_rows.extend(rows)
                     matrix_rhs.extend(rhs)
+
+            # NEW: bare pipe equations
+            if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
+                for pipe in self.bare_network_pipes:
+                    row = np.zeros(self.matrix_size, dtype=np.float64)
+
+                    row[pipe.temp_index_one] = 1.0
+                    row[pipe.temp_index_two] = -1.0
+
+                    matrix_rows.append(row)
+                    matrix_rhs.append(0.0)
 
             # Generating matrix for nodes
 
