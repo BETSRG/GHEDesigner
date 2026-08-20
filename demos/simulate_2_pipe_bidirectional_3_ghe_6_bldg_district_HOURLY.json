@@ -619,7 +619,7 @@
       "type": "GHX",
       "inlet_nodeID": "n10",
       "outlet_nodeID": "n11",
-      "flow_rate": 0.065,
+      "flow_rate": 0.0942,
       "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
@@ -645,7 +645,7 @@
       },
       "pre_designed": {
         "arrangement": "RECTANGLE",
-        "H": 135,
+        "H": 100,
         "max_height": 135,
         "min_height": 60,
         "spacing_in_x_dimension": 5,
@@ -659,7 +659,7 @@
       "type": "GHX",
       "inlet_nodeID": "n22",
       "outlet_nodeID": "n23",
-      "flow_rate": 0.065,
+      "flow_rate": 0.0942,
       "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
@@ -685,7 +685,7 @@
       },
       "pre_designed": {
         "arrangement": "RECTANGLE",
-        "H": 150,
+        "H": 100,
         "max_height": 160,
         "min_height": 60,
         "spacing_in_x_dimension": 5,
@@ -699,7 +699,7 @@
       "type": "GHX",
       "inlet_nodeID": "n34",
       "outlet_nodeID": "n35",
-      "flow_rate": 0.065,
+      "flow_rate": 0.0942,
       "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
@@ -725,7 +725,7 @@
       },
       "pre_designed": {
         "arrangement": "RECTANGLE",
-        "H": 150,
+        "H": 100,
         "max_height": 160,
         "min_height": 60,
         "spacing_in_x_dimension": 5,
@@ -1408,25 +1408,25 @@
   "pressure_drop": {
     "CL_P_per_m": 100,
     "delta_P_ref_ISHX": 50000,
-    "delta_P_ref_GHE": 76529
+    "delta_P_ref_GHX": 76529
   },
   "beta": {
     "CL_flow": 1.5,
     "ISHX_HP_flow": 1.5,
     "ISHX_N_flow": 1.0,
     "HP_delta_P": 1.2,
-    "GHE_delta_P": 1.2,
+    "beta_GHX_delta_P": 1.2,
     "ISHX_delta_P": 1.2
   },
   "efficiency": {
     "HP_cp_efficiency": 0.2,
     "ISHX_cp_efficiency": 0.2,
-    "GHE_cp_efficiency": 0.2,
+    "GHX_cp_efficiency": 0.2,
     "CL_efficiency": 0.2
   },
   "simulation_control": {
-    "simulation_years": 20,
-    "load_method": "hourlyloadagg",
+    "simulation_years": 1,
+    "load_method": "hourly",
     "horizontal_segments": 1,
     "horizontal_simulation_considered": true,
     "constant_cop": false

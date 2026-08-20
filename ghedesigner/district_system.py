@@ -975,13 +975,16 @@ class GHX(BaseSimComp):
         self.mass_flow_ghe = None
         self.input = None
         self.output = None
-        self.inlet_nodeID = ghe_data["inlet_nodeID"]
-        self.outlet_nodeID = ghe_data["outlet_nodeID"]
         self.m_ghe_array = None
         self.type = "GHX"
-        self.ID = ghe_data["id"]
         self.m_ghe_array = np.zeros(num_timesteps, dtype=float)
         self.mass_flow_ghe_design = ghe_data["flow_rate"] * self.nbh
+        self.P_ghe_cp = np.zeros(num_timesteps, dtype=float)
+
+        if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
+            self.ID = ghe_data["id"]
+            self.inlet_nodeID = ghe_data["inlet_nodeID"]
+            self.outlet_nodeID = ghe_data["outlet_nodeID"]
 
     def design_new_ghe(self, load_profile=None, max_eft=None, min_eft=None):
         if not self.ghe_manager.is_sizable:
@@ -1125,17 +1128,20 @@ class GHX(BaseSimComp):
 
         self.total_values_ghe[idx_timestep - 1] = values
 
-        # Contribution from the last time step only
-        # self.history_terms[idx_timestep] = (
-        #     self.ghe_manager.soil.ugt
-        #     - self.total_values_ghe[idx_timestep - 1]
-        #     + (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])  # check this??
-        #     )
-        self.history_terms[idx_timestep] = (
-            self.ghe_manager.soil.ugt
-            + self.total_values_ghe[idx_timestep - 1]
-            - (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])
-            )
+        if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:    # NB: this is reminder that I need to fix the sign of heat extraction/rejection in bidrectional application
+            self.history_terms[idx_timestep] = (
+                self.ghe_manager.soil.ugt
+                + self.total_values_ghe[idx_timestep - 1]
+                - (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])
+                )
+
+        else:
+            #Contribution from the last time step only
+            self.history_terms[idx_timestep] = (
+                self.ghe_manager.soil.ugt
+                - self.total_values_ghe[idx_timestep - 1]
+                + (self.q_ghe[idx_timestep - 2] * self.two_pi_k_recip * self.step_gfunction_evals[idx_timestep - 1])
+                )
 
         return self.history_terms[idx_timestep]
 
@@ -1293,7 +1299,6 @@ class GHX(BaseSimComp):
                 self.t_mean[idx_timestep-1] = x_vector[row_index + 1]
                 self.t_out[idx_timestep-1] = x_vector[row_index + 3]
 
-
 class Building(BaseSimComp):
     MATRIX_ROWS = 1
 
@@ -1440,23 +1445,24 @@ class Building(BaseSimComp):
         self.power_hp_tot = np.zeros(self.num_timesteps, dtype=float)
         self.power_circ_pump = np.zeros(self.num_timesteps, dtype=float)
 
-        # for bidirectional flow
-        self.inlet = None
-        self.outlet = None
-        self.loop = None
-        self.temp_index_one = None
-        self.temp_index_two = None
-        self.q_ext = None
-        self.q_rej = None
-        self.mass_bldg = None
-        self.q_net_c = self.clg_vals - self.htg_vals
-        self.mass_bldg_array = np.zeros(num_timesteps, dtype=float)
-        self.input = None
-        self.output = None
-        self.inlet_nodeID = bldg_data["inlet_nodeID"]
-        self.outlet_nodeID = bldg_data["outlet_nodeID"]
-        self.type = "bldg"
-        self.ID = bldg_data["id"]
+        if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
+            # for bidirectional flow
+            self.inlet = None
+            self.outlet = None
+            self.loop = None
+            self.temp_index_one = None
+            self.temp_index_two = None
+            self.q_ext = None
+            self.q_rej = None
+            self.mass_bldg = None
+            self.q_net_c = self.clg_vals - self.htg_vals
+            self.mass_bldg_array = np.zeros(num_timesteps, dtype=float)
+            self.input = None
+            self.output = None
+            self.inlet_nodeID = bldg_data["inlet_nodeID"]
+            self.outlet_nodeID = bldg_data["outlet_nodeID"]
+            self.type = "bldg"
+            self.ID = bldg_data["id"]
 
     def generate_ghe_load_estimate(self, ugt, beta=0.1):
         self.generate_constant_cop_loads(ugt, beta=beta)
@@ -1948,9 +1954,11 @@ class GHEHPSystem:
         soil_data = json_data["soil"]
         hx_data = json_data.get("source_sink_heat_exchanger", {})
 
-        # addition for bidirectional flow
-        node_data = json_data.get("node", {})
-        pipe_data = json_data.get("pipe", {})
+        if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
+            # addition for bidirectional flow
+            node_data = json_data.get("node", {})
+            pipe_data = json_data.get("pipe", {})
+
 
         horiz_data = json_data.get("horizontal_piping", {})
         ugt_data = soil_data.get("ground_temperature_model", {})
@@ -1984,6 +1992,9 @@ class GHEHPSystem:
 
         self.sim_years = json_data["simulation_control"]["simulation_years"]
         self.load_method = json_data["simulation_control"].get("load_method", "hourly").lower()
+        self.beta_GHX_delta_P = json_data["beta"]["beta_GHX_delta_P"]
+        self.GHX_cp_efficiency = json_data["efficiency"]["GHX_cp_efficiency"]
+        self.delta_P_ref_GHX = json_data["pressure_drop"]["delta_P_ref_GHX"]
 
         self.horiz_segments = json_data["simulation_control"].get("horizontal_segments", 3)
         if isinstance(self.horiz_segments, bool) or not isinstance(self.horiz_segments, int) or self.horiz_segments < 1:
@@ -2086,21 +2097,22 @@ class GHEHPSystem:
             if ghe.ghe_manager.is_sizable:
                 self.sizable_ground_heat_exchangers.append(ghe)
 
-        nodes: list[Node] = []
-        for node_id, node_data in node_data.items():
-            this_node = Node(node_id, node_data)
-            nodes.append(this_node)
+        if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
+            nodes: list[Node] = []
+            for node_id, node_data in node_data.items():
+                this_node = Node(node_id, node_data)
+                nodes.append(this_node)
 
-        self.nodes = nodes
-        self.num_nodes = len(nodes)
+            self.nodes = nodes
+            self.num_nodes = len(nodes)
 
-        pipes: list[NetworkPipe] = []
-        for pipe_id, pipe_data in pipe_data.items():
-            this_pipe = NetworkPipe(pipe_id, pipe_data, self.num_timesteps)
-            pipes.append(this_pipe)
+            pipes: list[NetworkPipe] = []
+            for pipe_id, pipe_data in pipe_data.items():
+                this_pipe = NetworkPipe(pipe_id, pipe_data, self.num_timesteps)
+                pipes.append(this_pipe)
 
-        self.pipes = pipes
-        self.num_pipes = len(pipes)
+            self.pipes = pipes
+            self.num_pipes = len(pipes)
 
         ghx_matrix_rows = GHX.MATRIX_ROWS
         self.matrix_size = (
@@ -2433,8 +2445,9 @@ class GHEHPSystem:
         for i in range(len(self.components)):
             self.components[i].downstream_device = self.components[(i + 1) % len(self.components)]
 
-        # Updating connections
-        self.UpdateConnections()
+        if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
+            # Updating connections
+            self.UpdateConnections()
 
         # Assigning row_indices
         idx_comp = 0
@@ -2472,111 +2485,113 @@ class GHEHPSystem:
             else:
                 pass
 
-        # Assign temperature/heat-transfer indices for bidirectional flow
-        index = 0
+        if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
 
-        bldg_lookup = {
-            bldg.ID: bldg
-            for bldg in self.buildings
-        }
+            # Assign temperature/heat-transfer indices for bidirectional flow
+            index = 0
 
-        ghx_lookup = {
-            ghx.ID: ghx
-            for ghx in self.ground_heat_exchangers
-        }
+            bldg_lookup = {
+                bldg.ID: bldg
+                for bldg in self.buildings
+            }
 
-        for this_comp in self.components:
+            ghx_lookup = {
+                ghx.ID: ghx
+                for ghx in self.ground_heat_exchangers
+            }
 
-            if isinstance(this_comp, Building):
-                idx_one = index
+            for this_comp in self.components:
+
+                if isinstance(this_comp, Building):
+                    idx_one = index
+                    index += 1
+
+                    idx_two = index
+                    index += 1
+
+                    # Component in topology
+                    this_comp.temp_index_one = idx_one
+                    this_comp.temp_index_two = idx_two
+
+                    # Original building object
+                    original_bldg = bldg_lookup[this_comp.ID]
+                    original_bldg.temp_index_one = idx_one
+                    original_bldg.temp_index_two = idx_two
+
+                elif isinstance(this_comp, GHX):
+                    idx_one = index
+                    index += 1
+
+                    idx_two = index
+                    index += 1
+
+                    idx_mean = index
+                    index += 1
+
+                    idx_q = index
+                    index += 1
+
+                    # Component in topology
+                    this_comp.temp_index_one = idx_one
+                    this_comp.temp_index_two = idx_two
+                    this_comp.temp_index_mean = idx_mean
+                    this_comp.heat_rejection_index = idx_q
+
+                    # Original GHX object
+                    original_ghx = ghx_lookup[this_comp.ID]
+                    original_ghx.temp_index_one = idx_one
+                    original_ghx.temp_index_two = idx_two
+                    original_ghx.temp_index_mean = idx_mean
+                    original_ghx.heat_rejection_index = idx_q
+
+                elif isinstance(this_comp, IsolatedHorizontalPipe):
+                    if this_comp.network_pipe is None:
+                        raise ValueError(
+                            f"Horizontal pipe '{this_comp.name}' "
+                            "is not linked to a NetworkPipe."
+                        )
+
+                    if this_comp.num_segments != 1:
+                        raise NotImplementedError(
+                            f"Horizontal pipe '{this_comp.name}' currently supports "
+                            "only num_segments = 1 in the integrated ring solver."
+                        )
+
+                    # Four unknowns for the physical horizontal pipe
+                    idx_one = index
+                    index += 1
+
+                    idx_mean = index
+                    index += 1
+
+                    idx_q = index
+                    index += 1
+
+                    idx_two = index
+                    index += 1
+
+                    # Thermal horizontal-pipe model
+                    this_comp.temp_index_one = idx_one
+                    this_comp.temp_index_mean = idx_mean
+                    this_comp.index_q = idx_q
+                    this_comp.temp_index_two = idx_two
+
+                    # Hydraulic NetworkPipe representing the same physical pipe
+                    network_pipe = this_comp.network_pipe
+
+                    network_pipe.temp_index_one = idx_one
+                    network_pipe.temp_index_mean = idx_mean
+                    network_pipe.heat_rejection_index = idx_q
+                    network_pipe.temp_index_two = idx_two
+
+            # Assign temperature indices to physical NetworkPipes
+            # that do not have a horizontal thermal model
+            for network_pipe in self.bare_network_pipes:
+                network_pipe.temp_index_one = index
                 index += 1
 
-                idx_two = index
+                network_pipe.temp_index_two = index
                 index += 1
-
-                # Component in topology
-                this_comp.temp_index_one = idx_one
-                this_comp.temp_index_two = idx_two
-
-                # Original building object
-                original_bldg = bldg_lookup[this_comp.ID]
-                original_bldg.temp_index_one = idx_one
-                original_bldg.temp_index_two = idx_two
-
-            elif isinstance(this_comp, GHX):
-                idx_one = index
-                index += 1
-
-                idx_two = index
-                index += 1
-
-                idx_mean = index
-                index += 1
-
-                idx_q = index
-                index += 1
-
-                # Component in topology
-                this_comp.temp_index_one = idx_one
-                this_comp.temp_index_two = idx_two
-                this_comp.temp_index_mean = idx_mean
-                this_comp.heat_rejection_index = idx_q
-
-                # Original GHX object
-                original_ghx = ghx_lookup[this_comp.ID]
-                original_ghx.temp_index_one = idx_one
-                original_ghx.temp_index_two = idx_two
-                original_ghx.temp_index_mean = idx_mean
-                original_ghx.heat_rejection_index = idx_q
-
-            elif isinstance(this_comp, IsolatedHorizontalPipe):
-                if this_comp.network_pipe is None:
-                    raise ValueError(
-                        f"Horizontal pipe '{this_comp.name}' "
-                        "is not linked to a NetworkPipe."
-                    )
-
-                if this_comp.num_segments != 1:
-                    raise NotImplementedError(
-                        f"Horizontal pipe '{this_comp.name}' currently supports "
-                        "only num_segments = 1 in the integrated ring solver."
-                    )
-
-                # Four unknowns for the physical horizontal pipe
-                idx_one = index
-                index += 1
-
-                idx_mean = index
-                index += 1
-
-                idx_q = index
-                index += 1
-
-                idx_two = index
-                index += 1
-
-                # Thermal horizontal-pipe model
-                this_comp.temp_index_one = idx_one
-                this_comp.temp_index_mean = idx_mean
-                this_comp.index_q = idx_q
-                this_comp.temp_index_two = idx_two
-
-                # Hydraulic NetworkPipe representing the same physical pipe
-                network_pipe = this_comp.network_pipe
-
-                network_pipe.temp_index_one = idx_one
-                network_pipe.temp_index_mean = idx_mean
-                network_pipe.heat_rejection_index = idx_q
-                network_pipe.temp_index_two = idx_two
-
-        # Assign temperature indices to physical NetworkPipes
-        # that do not have a horizontal thermal model
-        for network_pipe in self.bare_network_pipes:
-            network_pipe.temp_index_one = index
-            index += 1
-
-            network_pipe.temp_index_two = index
-            index += 1
 
     def size_and_simulate(self):
         if np.any([ghe.ghe_manager.is_sizable for ghe in self.ground_heat_exchangers]):
@@ -3113,13 +3128,14 @@ class GHEHPSystem:
                 building.generate_constant_cop_loads(average_ugt)
                 building.t_in = np.full(self.num_timesteps, average_ugt)
 
-        # for bidirectional flow - calculating fluid resistances
-        density = self.fluid.rho
-        kinematic_viscosity = self.fluid.mu / self.fluid.rho
+        if self.loop_config == CentralLoopType.TWOPIPE_BIDIRECTIONAL:
+            # for bidirectional flow - calculating fluid resistances
+            density = self.fluid.rho
+            kinematic_viscosity = self.fluid.mu / self.fluid.rho
 
-        for pipe in self.pipes:
-            if pipe.type in ("main_ir", "main_or"):
-                pipe.resistance = abs(pipe.calc_pipe_resistance(density, kinematic_viscosity))
+            for pipe in self.pipes:
+                if pipe.type in ("main_ir", "main_or"):
+                    pipe.resistance = abs(pipe.calc_pipe_resistance(density, kinematic_viscosity))
 
         for idx_timestep in range(1, self.num_timesteps + 1):  # loop over all timestep
             matrix_rows = []
@@ -3462,6 +3478,14 @@ class GHEHPSystem:
             * self.loop_length
         )
 
+    def calc_energy_ghe(self):
+        # CalcuLate pump energy for GHX
+        for this_comp in self.components:
+            if this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
+                this_comp.m_ref_GHX = max(abs(this_comp.m_ghe_array))
+                delta_P_GHX = (self.delta_P_ref_GHX / this_comp.m_ref_GHX ** 2) * (this_comp.m_ghe_array ** 2)
+                this_comp.P_ghe_cp[:] = abs((this_comp.m_ghe_array / (self.fluid.rho * self.GHX_cp_efficiency) * delta_P_GHX * self.beta_GHX_delta_P))
+
     def create_output(
         self,
         output_path: Path,
@@ -3474,6 +3498,7 @@ class GHEHPSystem:
         network_q_net_ghe_tot = np.zeros(self.num_timesteps, dtype=float)
 
         self.calc_energy()
+        self.calc_energy_ghe()
 
         for this_comp in self.components:
             this_comp.calc_energy()
@@ -3508,6 +3533,7 @@ class GHEHPSystem:
                 output_columns[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean
                 output_columns[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe
                 output_columns[f"{this_comp.name}:Q_tot [W]"] = this_comp.q_ghe * this_comp.nbh * this_comp.height
+                output_columns[f"{this_comp.name}:Pump Power [W]"] = this_comp.P_ghe_cp
                 network_q_net_ghe_tot += this_comp.q_ghe * this_comp.nbh * this_comp.height
 
         for this_comp in self.components:
