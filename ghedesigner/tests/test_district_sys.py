@@ -18,9 +18,10 @@ from ghedesigner.district_system import (
     DynamicAggregator,
     GHEHPSystem,
     IsolatedHorizontalPipe,
+    SourceSinkHeatExchanger,
     timestep_params_generator,
 )
-from ghedesigner.enums import BHType, DesignGeomType, SimCompType
+from ghedesigner.enums import BHType, CentralLoopType, DesignGeomType, SimCompType
 from ghedesigner.ghe.horizontal_pipe_heat_exchange import calc_pipe_wall_resistance
 from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads, Zone, enforce_minimum_timestep
 from ghedesigner.ghe.pipe import Pipe
@@ -31,6 +32,35 @@ from ghedesigner.validate import validate_input_file
 
 
 class TestDistrictSys(GHEBaseTest):
+    def test_source_sink_hx_uses_previous_timestep_inlet_temperature(self):
+        heat_exchanger = SourceSinkHeatExchanger(
+            "sink_hx",
+            {
+                "effectiveness": 0.8,
+                "source_temperature": 15.0,
+                "source_flow_rate": 1.0,
+                "cut_in_temperature": 25.0,
+                "cut_out_temperature": 20.0,
+            },
+            tg=20.0,
+            num_timesteps=2,
+        )
+        heat_exchanger.cp = 4180.0
+        heat_exchanger.matrix_size = 2
+        heat_exchanger.row_index = 0
+        heat_exchanger.downstream_index = 1
+
+        heat_exchanger.generate_matrix(0.0, 1.0, 0.0, 0.0, 0.0, 1, CentralLoopType.ONEPIPE, "hourly")
+        assert not heat_exchanger.operating[0]
+
+        # The first solve raises the inlet above the sink's cut-in temperature.
+        heat_exchanger.update_post_solve(np.array([30.0, 30.0]), 1)
+        heat_exchanger.generate_matrix(0.0, 1.0, 0.0, 0.0, 0.0, 2, CentralLoopType.ONEPIPE, "hourly")
+
+        # Regression test for https://github.com/BETSRG/GHEDesigner/issues/174.
+        assert heat_exchanger.control_t_in[1] == pytest.approx(30.0)
+        assert heat_exchanger.operating[1]
+
     @staticmethod
     def make_history_test_ghx(*, constant_time_step: bool) -> GHX:
         ghx = object.__new__(GHX)

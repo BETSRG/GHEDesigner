@@ -146,10 +146,9 @@ class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
             pipe_conductivity=pipe.k,
             grout_conductivity=grout.k,
             soil_conductivity=soil.k,
-            fluid_type=self.fluid.name,
-            fluid_concentration=self.fluid.concentration_percent / 100,
             boundary_condition="UNIFORM_BOREHOLE_WALL_TEMP",
             pipe_inlet_arrangement="ADJACENT",
+            fluid=self.fluid.scp_fluid,
         )
 
         self.calc_fluid_pipe_resistance()
