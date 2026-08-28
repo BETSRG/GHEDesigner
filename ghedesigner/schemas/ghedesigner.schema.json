@@ -1432,12 +1432,10 @@
             "minimum": 0
           },
           "cut_in_temperature": {
-            "type": "number",
-            "description": "Start threshold applied to the heat exchanger inlet temperature at the beginning of a timestep. A source starts below this value; a sink starts above it."
+            "type": "number"
           },
           "cut_out_temperature": {
-            "type": "number",
-            "description": "Stop threshold applied to the heat exchanger inlet temperature at the beginning of a timestep. A source stops above this value; a sink stops below it. A cut-out above cut-in defines a source; the reverse defines a sink."
+            "type": "number"
           }
         },
         "required": [

@@ -13,7 +13,7 @@ def main():
     # )
 
     input_file_path = Path(
-        "..\\demos\\simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
+        "..\\demos\\simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_withCT.json"
     )
     output_file_path = Path(
         "results\\simulation_results.csv"

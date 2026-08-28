@@ -731,7 +731,6 @@ class SourceSinkHeatExchanger(BaseSimComp):
         self.cut_out_temp = hx_data["cut_out_temperature"]
         self.t_in = np.full(self.num_timesteps, tg, dtype=float)
         self.t_out = np.full(self.num_timesteps, tg, dtype=float)
-        self.control_t_in = np.full(self.num_timesteps, tg, dtype=float)
         self.op_mode = SourceSinkOpMode.SOURCE if self.cut_out_temp > self.cut_in_temp else SourceSinkOpMode.SINK
         self.was_running_last_time = False
         self.operating = np.full(self.num_timesteps, False, dtype=bool)
@@ -791,8 +790,7 @@ class SourceSinkHeatExchanger(BaseSimComp):
             raise ValueError("cp is uninitialized")
         if self.matrix_size is None:
             raise ValueError("matrix_size is uninitialized")
-        t_in = self.t_in[0] if idx_timestep == 1 else self.t_in[idx_timestep - 2]
-        self.control_t_in[idx_timestep - 1] = t_in
+        t_in = self.t_in[0] if idx_timestep == 1 else self.t_in[idx_timestep - 1]
         is_running = self.is_running(t_in)
         self.operating[idx_timestep - 1] = is_running
         m_flow_source: float = self.source_flow_rate if is_running else 0.0
@@ -1541,6 +1539,201 @@ class Building(BaseSimComp):
                 )
 
 
+class CoolingTower:
+    MATRIX_ROWS = 4
+
+    def __init__(self, ct_id, ct_data, num_timesteps):
+        self.name = ct_id
+        self.comp_type = SimCompType.COOLING_TOWER
+        self.cp_fic_air = None
+        self.mass_flow_CT_air = None
+        self.mass_flow_CT_water = None
+        self.mass_flow_CT_loop = None
+        self.C_min = None
+        self.C_max = None
+        self.C_ratio = None
+        self.CT_effect = None
+        self.CT_hx_effect = ct_data["HX_effectiveness"]
+        self.loop_fraction = ct_data["loop_fraction"]
+        self.beta_loop_to_HX = ct_data["beta_loop_to_HX"]
+
+        self.water = Fluid(fluid_name="WATER", percent=0, temperature=20.0)
+        self.cp_water = self.water.cp
+        self.cp_moist_air = ct_data["cp_moist_air"]
+
+        # for calculating nominal UA for cooling tower rated conditions
+        self.cooling_tower_capacity = ct_data["nominal_capacity"]
+        self.mass_flow_water_nominal_per_TR = ct_data["nominal_mass_flow_water_per_TR"]
+        self.mass_flow_water_nominal = self.mass_flow_water_nominal_per_TR * self.cooling_tower_capacity
+        self.mass_flow_air_nominal = ct_data["nominal_mass_flow_air"]
+        self.t_water_in_nominal = ct_data["nominal_water_inlet_temperature"]
+        self.t_water_out_nominal = ct_data["nominal_water_outlet_temperature"]
+        self.t_wb_air_in_nominal = ct_data["nominal_WBT_air_inlet"]
+        self.CT_effectiveness_nominal = None
+        self.cp_fic_air_nominal = None
+        self.C_min_nominal = None
+        self.C_ratio_nominal = None
+
+        # for generating matrix
+        self.row_index = None
+        self.matrix_size = None
+        self.downstream_index = None
+        self.cp_fluid = None
+
+        self.UA_nominal = self.calc_UA_nominal()
+        self.t_wb_air_in = np.full(num_timesteps, self.t_wb_air_in_nominal)
+        self.t_wb_air_out = np.full(num_timesteps, self.t_wb_air_out_nominal)
+        self.h_air_out = np.full(num_timesteps, self.h_air_out_nominal)
+        self.h_air_in = np.full(num_timesteps, self.h_air_in_nominal)
+
+    def wbt_to_enthalpy(self, wbt: float) -> float:
+        atmospheric_pressure = 101.325  # kPa
+        saturation_pressure = 0.61078 * math.exp((17.2694 * wbt) / (wbt + 237.29))
+        saturation_humidity_ratio = (0.621945 * saturation_pressure / (atmospheric_pressure - saturation_pressure))
+        enthalpy = (1.006 * wbt + saturation_humidity_ratio * (2501 + 1.86 * wbt))
+        return enthalpy
+
+    def enthalpy_to_wbt(self, enthalpy):
+        """
+        Convert saturated-air enthalpy [kJ/kg dry air]
+        to wet-bulb temperature [°C].
+
+        Valid WBT range: 0–40 °C.
+        Assumes atmospheric pressure: 101.325 kPa.
+        """
+        pressure = 101.325
+        low, high = 0.0, 40.0
+
+        for _ in range(50):
+            wbt = (low + high) / 2.0
+
+            p_sat = 0.61078 * math.exp(
+                17.2694 * wbt / (wbt + 237.29)
+            )
+
+            humidity_ratio = (
+                    0.621945 * p_sat / (pressure - p_sat)
+            )
+
+            calculated_enthalpy = (
+                    1.006 * wbt
+                    + humidity_ratio * (2501.0 + 1.86 * wbt)
+            )
+
+            if calculated_enthalpy < enthalpy:
+                low = wbt
+            else:
+                high = wbt
+
+        return (low + high) / 2.0
+
+    def NTU_from_effectiveness(self, epsilon, capacity_ratio):
+        """
+        Calculate NTU for a counterflow heat exchanger.
+
+        effectiveness: ε
+        capacity_ratio: Cr = C_min / C_max
+        """
+
+        if not 0.0 <= epsilon < 1.0:
+            raise ValueError("Effectiveness must satisfy 0 <= ε < 1.")
+
+        if not 0.0 <= capacity_ratio <= 1.0:
+            raise ValueError("Capacity ratio must satisfy 0 <= Cr <= 1.")
+
+        # Special case when Cr = 1
+        if math.isclose(capacity_ratio, 1.0):
+            return epsilon / (1.0 - epsilon)
+
+        return math.log(
+            (1.0 - epsilon * capacity_ratio) / (1.0 - epsilon)
+        ) / (1.0 - capacity_ratio)
+
+    def calc_C_ratio(self, i):
+        self.cp_fic_air = 1000 * (self.h_air_out[i-1] - self.h_air_in[i-1])/(self.t_wb_air_out[i-1] - self.t_wb_air_in[i-1])
+        self.C_water = self.mass_flow_CT_water * self.cp_water
+        C_fic_air = self.mass_flow_CT_air * self.cp_fic_air
+        self.C_min = min(C_fic_air, self.C_water)
+        self.C_max = max(C_fic_air, self.C_water)
+        self.C_ratio = self.C_min/self.C_max
+
+    def calc_UA_nominal(self):
+        self.CT_effectiveness_nominal = (self.t_water_in_nominal - self.t_water_out_nominal)/(self.t_water_in_nominal - self.t_wb_air_in_nominal)
+
+        # calculating cp_fic_air_nominal
+        self.h_air_in_nominal = self.wbt_to_enthalpy(self.t_wb_air_in_nominal)
+        self.h_air_out_nominal = (self.h_air_in_nominal + (self.mass_flow_water_nominal * self.cp_water *
+                                                           (self.t_water_in_nominal - self.t_water_out_nominal))
+                                  / (self.mass_flow_air_nominal*1000))
+
+        self.t_wb_air_out_nominal = self.enthalpy_to_wbt(self.h_air_out_nominal)
+        self.cp_fic_air_nominal = (1000 * (self.h_air_out_nominal - self.h_air_in_nominal) /
+                                   (self.t_wb_air_out_nominal - self.t_wb_air_in_nominal))
+
+        # calculate value of nominal NTU
+        self.C_min_nominal = min((self.mass_flow_air_nominal * self.cp_fic_air_nominal),
+                             (self.mass_flow_water_nominal * self.cp_water))
+        self.C_max_nominal = max((self.mass_flow_air_nominal * self.cp_fic_air_nominal),
+                             (self.mass_flow_water_nominal * self.cp_water))
+        self.C_ratio_nominal = self.C_min_nominal/self.C_max_nominal
+        self.NTU_nominal = self.NTU_from_effectiveness(self.CT_effectiveness_nominal, self.C_ratio_nominal)
+
+        # calculating value of fixed UA for nominal capacity cooling tower
+        UA_fic_nominal = self.NTU_nominal * self.C_min_nominal
+        UA_nominal = UA_fic_nominal * self.cp_moist_air / self.cp_fic_air_nominal
+
+        return UA_nominal
+
+    def calc_CT_effectiveness(self):
+        UA = self.UA_nominal  # We assumed a fixed UA value obtained for rated conditions and use it to calcuLate NTU
+        NTU = UA / self.C_min
+        self.CT_effect = (1-np.exp(-NTU * (1-self.C_ratio)))/(1-self.C_ratio * np.exp(-NTU*(1-self.C_ratio)))
+
+        return self.CT_effect
+
+    def generate_matrix(self, i, m_loop):
+        # rows information
+        # row_index = T_fluid_in, row_index + 1 = T_w_in,  row_index + 2 = T_w_out,
+        # row_index + 3 = T_fluid_out (before mixing), downstream_index = T_f_loop (after mixing)
+
+        row1 = np.zeros(self.matrix_size, dtype=float)
+        row2 = np.zeros(self.matrix_size, dtype=float)
+        row3 = np.zeros(self.matrix_size, dtype=float)
+        row4 = np.zeros(self.matrix_size, dtype=float)
+
+        self.calc_C_ratio(i)
+        CT_effect = self.calc_CT_effectiveness()
+
+        # Effectiveness equation for cooling tower
+        row1[self.row_index + 1] = (CT_effect - 1)
+        row1[self.row_index + 2] = 1
+        rhs1 = CT_effect * self.t_wb_air_in[i-1]
+
+        # Effectiveness equation for cooling tower's heat exchanger
+        row2[self.row_index] = (self.CT_hx_effect - 1)
+        row2[self.row_index + 3] = 1
+        row2[self.row_index + 2] = - self.CT_hx_effect
+        rhs2 = 0.0
+
+        # Energy balance of heat exchanger
+        row3[self.row_index] = self.mass_flow_CT_loop * self.cp_fluid
+        row3[self.row_index + 1] = -self.C_water
+        row3[self.row_index + 2] = self.C_water
+        row3[self.row_index + 3] = - self.mass_flow_CT_loop * self.cp_fluid
+        rhs3 = 0.0
+
+        # Loop energy balance
+        row4[self.row_index] = (m_loop - self.mass_flow_CT_loop) * self.cp_fluid
+        row4[self.row_index + 3] = self.mass_flow_CT_loop * self.cp_fluid
+        row4[self.downstream_index] = - m_loop * self.cp_fluid
+        rhs4 = 0.0
+
+        rows = [row1, row2, row3, row4]
+        rhs = [rhs1, rhs2, rhs3, rhs4]
+
+        return rows, rhs
+
+
 class GHEHPSystem:
     total_loads: np.ndarray[tuple[int], np.dtype[np.float64]]
     nbh_selections: list[str]
@@ -1633,6 +1826,8 @@ class GHEHPSystem:
         horiz_data = json_data.get("horizontal_piping", {})
         ugt_data = soil_data.get("ground_temperature_model", {})
 
+        cooling_tower_data = json_data.get("cooling_tower", {})
+
         self.use_horizontal = json_data.get("simulation_control", {}).get("horizontal_simulation_considered", False)
 
         if self.use_horizontal and horiz_data and not ugt_data:
@@ -1703,6 +1898,7 @@ class GHEHPSystem:
         hx_names = get_comp_names(topology_data, hx_data, SimCompType.SOURCE_SINK_HEAT_EXCHANGER)
         isolated_names = get_comp_names(topology_data, horiz_data, SimCompType.ISOLATED_HORIZONTAL_PIPE)
         coupled_names = get_comp_names(topology_data, horiz_data, SimCompType.COUPLED_HORIZONTAL_PIPE)
+        cooling_tower_names = get_comp_names(topology_data, cooling_tower_data, SimCompType.COOLING_TOWER)
 
         # get needed buildings
         buildings = []
@@ -1952,6 +2148,20 @@ class GHEHPSystem:
         # Flatten into the master horizontal list
         horizontal_pipes = isolated_pipes + list(coupled_pipes_dict.values())
 
+        cooling_towers = []
+
+        for this_ct_id, this_ct_data in cooling_tower_data.items():
+            if this_ct_id.upper() in cooling_tower_names:
+                this_ct = CoolingTower(
+                    ct_id=this_ct_id,
+                    ct_data=this_ct_data,
+                    num_timesteps=self.num_timesteps,
+                )
+                cooling_towers.append(this_ct)
+
+        self.cooling_towers = cooling_towers
+        self.num_cooling_towers = len(cooling_towers)
+
         # Update MATRIX_ROWS handling
         if self.loop_config == CentralLoopType.ONEPIPE:
             Building.MATRIX_ROWS = 1
@@ -1964,6 +2174,7 @@ class GHEHPSystem:
             + Building.MATRIX_ROWS * self.num_buildings
             + SourceSinkHeatExchanger.MATRIX_ROWS * self.num_heat_exchangers
             + sum(pipe.matrix_rows for pipe in horizontal_pipes)
+            + CoolingTower.MATRIX_ROWS * self.num_cooling_towers
         )
 
         self.m_flow_loop = np.zeros(self.num_timesteps)
@@ -1980,6 +2191,9 @@ class GHEHPSystem:
 
         def get_horiz(name: str):
             return next((obj for obj in horizontal_pipes if obj.name and obj.name.upper() == name.upper()), None)
+
+        def get_ct(name):
+            return next((obj for obj in cooling_towers if obj.name.upper() == name.upper()),None)
 
         # Topology assembly
         comp: GHX | Building | SourceSinkHeatExchanger | IsolatedHorizontalPipe | CoupledHorizontalPipe | None
@@ -2005,6 +2219,10 @@ class GHEHPSystem:
                     comp = get_horiz(v["name"])
                     if comp is not None:
                         self.components.append(comp)
+            elif SimCompType[comp_type.upper()] == SimCompType.COOLING_TOWER:
+                comp = get_ct(v["name"])
+                if comp is not None:
+                    self.components.append(comp)
 
         # for this_comp in self.components:
         #     this_comp.matrix_size = self.matrix_size
@@ -2585,6 +2803,8 @@ class GHEHPSystem:
                 this_comp.cp = self.cp
             elif this_comp.comp_type == SimCompType.BUILDING:
                 this_comp.update_cp(self.cp)
+            elif this_comp.comp_type == SimCompType.COOLING_TOWER:
+                this_comp.cp_fluid = self.cp
         if self.constant_cop:
             for building in self.buildings:
                 building.generate_constant_cop_loads(average_ugt)
@@ -2625,28 +2845,43 @@ class GHEHPSystem:
 
                 this_comp.mass_loop_ghe = m_ghe_cum
 
+            for this_comp in self.components:
+                if this_comp.comp_type == SimCompType.COOLING_TOWER:
+                    this_comp.mass_flow_CT_loop = this_comp.loop_fraction * mass_loop
+                    this_comp.mass_flow_CT_water = this_comp.beta_loop_to_HX * this_comp.mass_flow_CT_loop
+                    this_comp.mass_flow_CT_air = this_comp.mass_flow_CT_water/this_comp.mass_flow_water_nominal * this_comp.mass_flow_air_nominal
+
+
                 # Note: We pass this_comp.mass_flow_pipe in the mass_flow_ghe slot for Horizontal pipes
                 if this_comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
                     flow_to_pass = this_comp.mass_flow_pipe
                 else:
                     flow_to_pass = getattr(this_comp, "mass_flow_ghe", 0.0)
 
-                rows, rhs = this_comp.generate_matrix(
-                    this_comp.mass_bldg,
-                    mass_loop,
-                    this_comp.mass_loop_bldg,
-                    flow_to_pass,
-                    this_comp.mass_loop_ghe,
-                    idx_timestep,
-                    self.loop_config,
-                    self.load_method,
-                )
+                if this_comp.comp_type == SimCompType.COOLING_TOWER:
+                    rows, rhs = this_comp.generate_matrix(
+                        idx_timestep,
+                        mass_loop,
+                    )
+                else:
+                    rows, rhs = this_comp.generate_matrix(
+                        this_comp.mass_bldg,
+                        mass_loop,
+                        this_comp.mass_loop_bldg,
+                        flow_to_pass,
+                        this_comp.mass_loop_ghe,
+                        idx_timestep,
+                        self.loop_config,
+                        self.load_method,
+                    )
+
                 matrix_rows.extend(rows)
                 matrix_rhs.extend(rhs)
 
             # Solve the system = A * X = B
             a_matrix = np.array(matrix_rows, dtype=float)
             b_vector = np.array(matrix_rhs, dtype=float)
+
             x_vector = np.linalg.solve(a_matrix, b_vector)
 
             # save output data
@@ -2725,7 +2960,6 @@ class GHEHPSystem:
         for this_comp in self.components:
             if this_comp.comp_type == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
                 output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
-                output_columns[f"{this_comp.name}:Control EFT [C]"] = this_comp.control_t_in
                 output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
                 output_columns[f"{this_comp.name}:Operating [T/F]"] = this_comp.operating
                 output_columns[f"{this_comp.name}:Q [W]"] = (

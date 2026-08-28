@@ -48,6 +48,7 @@ class SimCompType(Enum):
     HEAT_PUMP = auto()
     ISOLATED_HORIZONTAL_PIPE = auto()
     COUPLED_HORIZONTAL_PIPE = auto()
+    COOLING_TOWER = auto()
 
 
 class CentralLoopType(Enum):

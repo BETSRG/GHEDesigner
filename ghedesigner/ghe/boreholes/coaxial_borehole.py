@@ -44,8 +44,9 @@ class CoaxialPipe(GHEDesignerBoreholeWithMultiplePipes):
             length=borehole.H,
             grout_conductivity=grout.k,
             soil_conductivity=soil.k,
+            fluid_type=self.fluid.name,
+            fluid_concentration=self.fluid.concentration_percent / 100,
             boundary_condition="UNIFORM_BOREHOLE_WALL_TEMP",
-            fluid=self.fluid.scp_fluid,
         )
 
     def calc_effective_borehole_resistance(self) -> float:

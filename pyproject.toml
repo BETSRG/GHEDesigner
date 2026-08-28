@@ -12,13 +12,13 @@ license-files = ["LICENSE"]
 authors = [{ name = "Jeffrey D. Spitler", email = "spitler@okstate.edu" }]
 requires-python = ">=3.11"
 dependencies = [
-    "bhresist>=0.4.0",
+    "bhresist>=0.3",
     "click>=8.3.1",
     "jsonschema>=4.26.0",
     "numpy<2.4",
     "pygfunction>=2.3.1",
     "scipy>=1.15.3",
-    "secondarycoolantprops>=1.5",
+    "secondarycoolantprops>=1.4",
 ]
 repository = "https://github.com/BETSRG/GHEDesigner"
 documentation = "https://betsrg.github.io/GHEDesigner/"
