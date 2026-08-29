@@ -1556,6 +1556,8 @@ class CoolingTower:
         self.CT_hx_effect = ct_data["HX_effectiveness"]
         self.loop_fraction = ct_data["loop_fraction"]
         self.beta_loop_to_HX = ct_data["beta_loop_to_HX"]
+        self.fluid_temperature_setpoint = 15.0
+        self.operating = False
 
         self.water = Fluid(fluid_name="WATER", percent=0, temperature=20.0)
         self.cp_water = self.water.cp
@@ -1581,10 +1583,23 @@ class CoolingTower:
         self.cp_fluid = None
 
         self.UA_nominal = self.calc_UA_nominal()
-        self.t_wb_air_in = np.full(num_timesteps, self.t_wb_air_in_nominal)
-        self.t_wb_air_out = np.full(num_timesteps, self.t_wb_air_out_nominal)
-        self.h_air_out = np.full(num_timesteps, self.h_air_out_nominal)
-        self.h_air_in = np.full(num_timesteps, self.h_air_in_nominal)
+
+        # Air conditions are scalar values and are not stored
+        self.t_wb_air_in = 15.0
+        self.h_air_in = self.wbt_to_enthalpy(self.t_wb_air_in)
+
+        self.t_wb_air_out = 20.0
+        self.h_air_out = self.wbt_to_enthalpy(self.t_wb_air_out)
+
+        # Store air conditions at every timestep
+        self.t_wb_air_in_array = np.zeros(num_timesteps)
+        self.t_wb_air_out_array = np.zeros(num_timesteps)
+
+        # Store only these four temperatures for every timestep
+        self.t_water_in = np.zeros(num_timesteps)
+        self.t_water_out = np.zeros(num_timesteps)
+        self.t_fluid_in = np.zeros(num_timesteps)
+        self.t_fluid_out = np.zeros(num_timesteps)
 
     def wbt_to_enthalpy(self, wbt: float) -> float:
         atmospheric_pressure = 101.325  # kPa
@@ -1649,13 +1664,31 @@ class CoolingTower:
             (1.0 - epsilon * capacity_ratio) / (1.0 - epsilon)
         ) / (1.0 - capacity_ratio)
 
-    def calc_C_ratio(self, i):
-        self.cp_fic_air = 1000 * (self.h_air_out[i-1] - self.h_air_in[i-1])/(self.t_wb_air_out[i-1] - self.t_wb_air_in[i-1])
-        self.C_water = self.mass_flow_CT_water * self.cp_water
-        C_fic_air = self.mass_flow_CT_air * self.cp_fic_air
-        self.C_min = min(C_fic_air, self.C_water)
-        self.C_max = max(C_fic_air, self.C_water)
-        self.C_ratio = self.C_min/self.C_max
+    def calc_C_ratio(self):
+        delta_h = self.h_air_out - self.h_air_in
+        delta_t = self.t_wb_air_out - self.t_wb_air_in
+
+        if abs(delta_t) > 1.0e-8:
+            self.cp_fic_air = 1000.0 * delta_h / delta_t
+        else:
+            self.cp_fic_air = self.cp_fic_air_nominal
+
+        self.C_water = (self.mass_flow_CT_water * self.cp_water)
+        self.C_fic_air = (self.mass_flow_CT_air * self.cp_fic_air)
+        self.C_min = min(self.C_fic_air,self.C_water)
+        self.C_max = max(self.C_fic_air,self.C_water)
+
+        if self.C_max > 0.0:
+            self.C_ratio = self.C_min / self.C_max
+        else:
+            self.C_ratio = 0.0
+
+        # self.cp_fic_air = 1000 * (self.h_air_out - self.h_air_in)/(self.t_wb_air_out - self.t_wb_air_in)
+        # self.C_water = self.mass_flow_CT_water * self.cp_water
+        # self.C_fic_air = self.mass_flow_CT_air * self.cp_fic_air
+        # self.C_min = min(self.C_fic_air, self.C_water)
+        # self.C_max = max(self.C_fic_air, self.C_water)
+        # self.C_ratio = self.C_min/self.C_max
 
     def calc_UA_nominal(self):
         self.CT_effectiveness_nominal = (self.t_water_in_nominal - self.t_water_out_nominal)/(self.t_water_in_nominal - self.t_wb_air_in_nominal)
@@ -1701,13 +1734,48 @@ class CoolingTower:
         row3 = np.zeros(self.matrix_size, dtype=float)
         row4 = np.zeros(self.matrix_size, dtype=float)
 
-        self.calc_C_ratio(i)
+        # Determine cooling-tower operation using the previous hour
+        if i == 1:
+            self.operating = False
+        else:
+            previous_index = i - 2
+
+            previous_fluid_temperature = (self.t_fluid_in[previous_index])
+            self.operating = (previous_fluid_temperature >= self.fluid_temperature_setpoint)
+
+        if not self.operating:
+            # Assign water inlet temperature
+            row1[self.row_index + 1] = 1.0
+            row1[self.row_index] = -1.0
+            rhs1 = 0.0
+
+            # Assign water outlet temperature
+            row2[self.row_index + 2] = 1.0
+            row2[self.row_index] = -1.0
+            rhs2 = 0.0
+
+            # Fluid bypasses the cooling-tower HX
+            row3[self.row_index + 3] = 1.0
+            row3[self.row_index] = -1.0
+            rhs3 = 0.0
+
+            # Downstream loop temperature equals inlet temperature
+            row4[self.downstream_index] = 1.0
+            row4[self.row_index] = -1.0
+            rhs4 = 0.0
+
+            return (
+                [row1, row2, row3, row4],
+                [rhs1, rhs2, rhs3, rhs4],
+            )
+
+        self.calc_C_ratio()
         CT_effect = self.calc_CT_effectiveness()
 
         # Effectiveness equation for cooling tower
         row1[self.row_index + 1] = (CT_effect - 1)
         row1[self.row_index + 2] = 1
-        rhs1 = CT_effect * self.t_wb_air_in[i-1]
+        rhs1 = CT_effect * self.t_wb_air_in
 
         # Effectiveness equation for cooling tower's heat exchanger
         row2[self.row_index] = (self.CT_hx_effect - 1)
@@ -1732,6 +1800,61 @@ class CoolingTower:
         rhs = [rhs1, rhs2, rhs3, rhs4]
 
         return rows, rhs
+
+    def calc_energy(self):
+        """Placeholder for cooling-tower energy calculation."""
+        pass
+
+    def update_post_solve(self, x_vector, idx_timestep, detailed=True):
+        # Current-timestep temperatures from the solution vector
+        self.t_fluid_in[idx_timestep-1] = x_vector[self.row_index]
+        self.t_water_in[idx_timestep-1] = x_vector[self.row_index + 1]
+        self.t_water_out[idx_timestep-1] = x_vector[self.row_index + 2]
+        self.t_fluid_out[idx_timestep-1] = x_vector[self.row_index + 3]  # Before mixing
+
+        if self.operating:
+            self.h_air_out = (
+                    self.h_air_in
+                    + self.C_water * (self.t_water_in[idx_timestep-1] - self.t_water_out[idx_timestep-1])
+                    / (self.mass_flow_CT_air * 1000)
+            )
+            self.t_wb_air_out = self.enthalpy_to_wbt(self.h_air_out)
+        else:
+            # No air-side heat transfer when tower is bypassed
+            self.h_air_out = self.h_air_in
+            self.t_wb_air_out = self.t_wb_air_in
+
+            # Save current air conditions
+            self.t_wb_air_in_array[idx_timestep-1] = self.t_wb_air_in
+            self.t_wb_air_out_array[idx_timestep-1] = self.t_wb_air_out
+
+        # # Temporary result check
+        #
+        # # Current array index
+        # j = idx_timestep - 1
+        # if idx_timestep % 1000 == 0:
+        #     print(f"\nCooling tower results at hour {idx_timestep}:")
+        #     print(
+        #         f"  Fluid inlet temperature = "
+        #         f"{self.t_fluid_in[j]:.3f} °C"
+        #     )
+        #     print(
+        #         f"  Fluid outlet temperature = "
+        #         f"{self.t_fluid_out[j]:.3f} °C"
+        #     )
+        #     print(
+        #         f"  Water inlet temperature = "
+        #         f"{self.t_water_in[j]:.3f} °C"
+        #     )
+        #     print(
+        #         f"  Water outlet temperature = "
+        #         f"{self.t_water_out[j]:.3f} °C"
+        #     )
+        #     print(f"  Air WBT inlet = {self.t_wb_air_in:.3f} °C")
+        #     print(f"  Air WBT outlet = {self.t_wb_air_out:.3f} °C")
+        #     print(f"  Air enthalpy inlet = {self.h_air_in:.3f} kJ/kg")
+        #     print(f"  Air enthalpy outlet = {self.h_air_out:.3f} kJ/kg")
+        print(f"  Cooling tower operating = {self.operating}")
 
 
 class GHEHPSystem:
@@ -2851,7 +2974,6 @@ class GHEHPSystem:
                     this_comp.mass_flow_CT_water = this_comp.beta_loop_to_HX * this_comp.mass_flow_CT_loop
                     this_comp.mass_flow_CT_air = this_comp.mass_flow_CT_water/this_comp.mass_flow_water_nominal * this_comp.mass_flow_air_nominal
 
-
                 # Note: We pass this_comp.mass_flow_pipe in the mass_flow_ghe slot for Horizontal pipes
                 if this_comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
                     flow_to_pass = this_comp.mass_flow_pipe
@@ -2881,7 +3003,6 @@ class GHEHPSystem:
             # Solve the system = A * X = B
             a_matrix = np.array(matrix_rows, dtype=float)
             b_vector = np.array(matrix_rhs, dtype=float)
-
             x_vector = np.linalg.solve(a_matrix, b_vector)
 
             # save output data
@@ -2965,6 +3086,15 @@ class GHEHPSystem:
                 output_columns[f"{this_comp.name}:Q [W]"] = (
                     this_comp.operating * self.m_flow_loop * self.fluid.cp * (this_comp.t_out - this_comp.t_in)
                 )
+
+        for this_comp in self.components:
+            if this_comp.comp_type == SimCompType.COOLING_TOWER:
+                output_columns[f"{this_comp.name}:Fluid Inlet Temperature [C]"] = this_comp.t_fluid_in
+                output_columns[f"{this_comp.name}:Fluid Outlet Temperature [C]"] = this_comp.t_fluid_out
+                output_columns[f"{this_comp.name}:Water Inlet Temperature [C]"] = this_comp.t_water_in
+                output_columns[f"{this_comp.name}:Water Outlet Temperature [C]"] = this_comp.t_water_out
+                output_columns[f"{this_comp.name}:Air Inlet WBT [C]"] = this_comp.t_wb_air_in_array
+                output_columns[f"{this_comp.name}:Air Outlet WBT [C]"] = this_comp.t_wb_air_out_array
 
         for this_comp in self.components:
             if this_comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
