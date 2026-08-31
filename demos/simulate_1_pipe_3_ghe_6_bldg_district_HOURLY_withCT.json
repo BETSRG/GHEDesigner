@@ -312,11 +312,16 @@
     "nominal_WBT_air_inlet": 25.6,
       "cp_moist_air": 1025,
       "loop_fraction": 0.3,
-      "beta_loop_to_HX": 1.0
-  }
+      "beta_loop_to_HX": 1.0,
+      "fluid_temperature_setpoint": 20,
+      "weather_data": {
+        "column_name": "Wet_Bulb_C",
+        "file_path": "../ghedesigner/tests/test_data/Baltimore_weather_data.csv"
+      }
+    }
 },
   "simulation_control": {
-    "simulation_years": 1,
+    "simulation_years": 20,
     "load_method": "HOURLY",
     "horizontal_simulation_considered": false
   }

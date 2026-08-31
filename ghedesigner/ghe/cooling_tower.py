@@ -98,7 +98,7 @@ class WeatherProcessor:
 
 # little test code to demonstrate usage (should probably be removed in production)
 if __name__ == "__main__":
-    FILE_PATH = Path(r"C:\Users\drewm\Downloads\Abisko_Kiruna_102023_2025.csv")
+    FILE_PATH = Path("C:\\Users\\nbast\Desktop\\USA_MD_Baltimore-Washington.Intl-Marshall.AP.724060_TMYx.2004-2018.epw")
 
     print(f"Processing weather file: {FILE_PATH.name}...")
 
