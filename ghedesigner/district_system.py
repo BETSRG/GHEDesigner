@@ -1542,7 +1542,7 @@ class Building(BaseSimComp):
 class CoolingTower:
     MATRIX_ROWS = 4
 
-    def __init__(self, ct_id, ct_data, num_timesteps):
+    def __init__(self, ct_id, ct_data, fluid:Fluid, num_timesteps):
         self.name = ct_id
         self.comp_type = SimCompType.COOLING_TOWER
         self.cp_fic_air = None
@@ -1565,6 +1565,7 @@ class CoolingTower:
 
         self.water = Fluid(fluid_name="WATER", percent=0, temperature=20.0)
         self.cp_water = self.water.cp
+        self.rho_water = self.water.rho
         self.cp_moist_air = ct_data["cp_moist_air"]
 
         # for calculating nominal UA for cooling tower rated conditions
@@ -1580,6 +1581,16 @@ class CoolingTower:
         self.C_min_nominal = None
         self.C_ratio_nominal = None
         self.CT_heat_rejection = np.zeros(num_timesteps)
+
+        # for energy calculations
+        self.mass_flow_CT_loop_side_ref = None
+        self.delta_P_CT_HX_ref = ct_data["delta_P_CT_HX_ref"]
+        self.CT_HX_cp_efficiency = ct_data["CT_HX_cp_efficiency"]
+        self.mass_flow_CT_air_side_ref = None
+        self.delta_P_CT_ref = ct_data["delta_P_CT_ref"]
+        self.density_air = ct_data["air_density"]
+        self.CT_cp_efficiency = ct_data["CT_cp_efficiency"]
+        self.fluid = fluid
 
         # Read weather data
         weather_wbt = np.array(get_loads(self.name + "_weather", SimCompType.COOLING_TOWER.name,ct_data["weather_data"],),dtype=float,)
@@ -1867,8 +1878,19 @@ class CoolingTower:
         return rows, rhs
 
     def calc_energy(self):
-        """Placeholder for cooling-tower energy calculation."""
-        pass
+        # Energy consumed by cooling tower heat exchanger circulating pump (loop side)
+        delta_P_HX_loop_side = (self.mass_flow_CT_loop/self.mass_flow_CT_loop_side_ref)**2 * self.delta_P_CT_HX_ref
+        Power_HX_loop_side_cp = delta_P_HX_loop_side * self.mass_flow_CT_loop / self.fluid.rho * self.CT_HX_cp_efficiency
+
+        Power_HX_CT_side_cp = Power_HX_loop_side_cp  # I assume, cp of both sides of HX have same energy consumption
+
+        # Energy consumed by cooling tower air circulating fan
+        delta_P_CT_air_side = (self.mass_flow_CT_air/self.mass_flow_CT_air_side_ref)**2 * self.delta_P_CT_ref
+        Power_CT_air_side = delta_P_CT_air_side * self.mass_flow_CT_air / self.density_air * self.CT_cp_efficiency
+
+        total_energy = Power_HX_loop_side_cp + Power_HX_CT_side_cp + Power_CT_air_side
+
+        return total_energy
 
     def update_post_solve(self, x_vector, idx_timestep, detailed=True):
         # Current-timestep temperatures from the solution vector
