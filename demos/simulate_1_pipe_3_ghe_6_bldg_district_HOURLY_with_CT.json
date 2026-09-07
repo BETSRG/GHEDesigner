@@ -315,21 +315,25 @@
       "beta_loop_to_HX": 1.0,
       "fluid_temperature_off_setpoint": 24,
       "fluid_temperature_on_setpoint": 25,
-      "WBT_off_setpoint": 5,
-      "WBT_on_setpoint": 6,
-      "delta_P_CT_HX_ref": 50000,
-      "delta_P_CT_ref": 50000,
-      "CT_HX_cp_efficiency": 0.2,
-      "CT_cp_efficiency": 0.2,
-      "air_density": 1.28,
-      "weather_data": {
+      "DBT_off_setpoint": 5.0,
+      "DBT_on_setpoint": 7.0,
+      "delta_P_CT_HX_ref": 53540,
+      "delta_P_CT_ref": 530,
+      "CT_HX_cp_efficiency": 0.5,
+      "CT_cp_efficiency": 0.5,
+      "air_density": 1.204,
+      "WBT_weather_data": {
         "column_name": "Wet_Bulb_C",
+        "file_path": "../ghedesigner/tests/test_data/Baltimore_weather_data.csv"
+      },
+      "DBT_weather_data": {
+        "column_name": "Dry_Bulb_C",
         "file_path": "../ghedesigner/tests/test_data/Baltimore_weather_data.csv"
       }
     }
-},
+  },
   "simulation_control": {
-    "simulation_years": 1,
+    "simulation_years": 20,
     "load_method": "HOURLY",
     "horizontal_simulation_considered": false
   }
