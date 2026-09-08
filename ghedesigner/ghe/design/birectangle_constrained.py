@@ -3,7 +3,7 @@ from typing import TypeGuard, cast
 
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.enums import DesignGeomType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
 from ghedesigner.ghe.domains import (
     general_domain_nbh_adjustment,
@@ -16,7 +16,7 @@ from ghedesigner.media import Fluid, Grout, Soil
 
 
 def is_2d(property_boundary: list[list[float]] | list[list[list[float]]]) -> TypeGuard[list[list[float]]]:
-    return bool(property_boundary) and isinstance(property_boundary[0][0], float)
+    return bool(property_boundary) and isinstance(property_boundary[0][0], (int, float))
 
 
 @dataclass
@@ -82,7 +82,6 @@ class DesignBiRectangleConstrained(DesignBase):
         geometric_constraints: GeometricConstraintsBiRectangleConstrained,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
         keep_contour: tuple[bool, bool] | None = None,
     ) -> None:
@@ -104,7 +103,6 @@ class DesignBiRectangleConstrained(DesignBase):
             geometric_constraints,
             hourly_extraction_ground_loads,
             method,
-            flow_type,
             load_years,
         )
         if keep_contour is None:
@@ -160,7 +158,6 @@ class DesignBiRectangleConstrained(DesignBase):
                 self.max_EFT_allowable,
                 self.hourly_extraction_ground_loads,
                 method=self.method,
-                flow_type=self.flow_type,
                 disp=disp,
                 field_type="bi-rectangle_constrained",
                 load_years=self.load_years,
@@ -185,7 +182,6 @@ class DesignBiRectangleConstrained(DesignBase):
                 self.max_EFT_allowable,
                 self.hourly_extraction_ground_loads,
                 method=self.method,
-                flow_type=self.flow_type,
                 disp=disp,
                 field_type="bi-rectangle_constrained",
                 load_years=self.load_years,

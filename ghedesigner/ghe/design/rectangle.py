@@ -2,7 +2,7 @@ from dataclasses import asdict, dataclass, field
 
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.enums import DesignGeomType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
 from ghedesigner.ghe.domains import rectangular
 from ghedesigner.ghe.pipe import Pipe
@@ -49,7 +49,6 @@ class DesignRectangle(DesignBase):
         geometric_constraints: GeometricConstraintsRectangle,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
     ) -> None:
         super().__init__(
@@ -70,7 +69,6 @@ class DesignRectangle(DesignBase):
             geometric_constraints,
             hourly_extraction_ground_loads,
             method,
-            flow_type,
             load_years,
         )
         self.geometric_constraints = geometric_constraints
@@ -104,7 +102,6 @@ class DesignRectangle(DesignBase):
             self.max_EFT_allowable,
             self.hourly_extraction_ground_loads,
             method=self.method,
-            flow_type=self.flow_type,
             disp=disp,
             field_type="rectangle",
             load_years=self.load_years,

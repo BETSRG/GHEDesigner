@@ -11,6 +11,13 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+!ghedesigner/gui/frontend/dist/
+!ghedesigner/gui/frontend/dist/**
+.pnpm-store/
+node_modules
+*.tsbuildinfo
+ghedesigner/gui/frontend/vite.config.js
+ghedesigner/gui/frontend/vite.config.d.ts
 downloads/
 eggs/
 .eggs/
@@ -170,8 +177,12 @@ ghedesigner/tests/test_logs
 DesignExampleOutput/
 tmp/
 examples/
+!ghedesigner/gui/examples/
+!ghedesigner/gui/examples/**
 demo_outputs/
 .DS_Store
 notebooks/
 *.gli
 *.glo
+
+ghedesigner-output/

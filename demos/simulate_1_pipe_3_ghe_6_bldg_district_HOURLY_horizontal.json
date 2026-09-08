@@ -1,67 +1,5 @@
 {
-  "version": 3,
-  "topology": [
-    {
-      "type": "building",
-      "name": "building1_htg_clg"
-    },
-    {
-      "type": "building",
-      "name": "building1_dhw"
-    },
-    {
-      "type": "isolated_horizontal_pipe",
-      "name": "building1_building2_line"
-    },
-    {
-      "type": "building",
-      "name": "building2_htg_clg"
-    },
-    {
-      "type": "building",
-      "name": "building2_dhw"
-    },
-    {
-      "type": "isolated_horizontal_pipe",
-      "name": "building2_building3_line"
-    },
-    {
-      "type": "building",
-      "name": "building3_htg_clg"
-    },
-    {
-      "type": "building",
-      "name": "building3_dhw"
-    },
-    {
-      "type": "coupled_horizontal_pipe",
-      "name": "horiz_return_line"
-    },
-    {
-      "type": "ground_heat_exchanger",
-      "name": "ghe1"
-    },
-    {
-      "type": "isolated_horizontal_pipe",
-      "name": "ghe1_ghe2_line"
-    },
-    {
-      "type": "ground_heat_exchanger",
-      "name": "ghe2"
-    },
-    {
-      "type": "isolated_horizontal_pipe",
-      "name": "ghe2_ghe3_line"
-    },
-    {
-      "type": "ground_heat_exchanger",
-      "name": "ghe3"
-    },
-    {
-      "type": "coupled_horizontal_pipe",
-      "name": "horiz_supply_line"
-    }
-  ],
+  "version": 4,
   "horizontal_piping": {
     "horiz_supply_line": {
       "length": 50.0,
@@ -74,7 +12,7 @@
         "outer_diameter": 0.1624,
         "conductivity": 0.4,
         "rho_cp": 1542000,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "arrangement": "SINGLEUTUBE"
       }
     },
@@ -89,7 +27,7 @@
         "outer_diameter": 0.1624,
         "conductivity": 0.4,
         "rho_cp": 1542000,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "arrangement": "SINGLEUTUBE"
       }
     },
@@ -101,7 +39,7 @@
         "outer_diameter": 0.1116,
         "conductivity": 0.4,
         "rho_cp": 1542000,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "arrangement": "SINGLEUTUBE"
       }
     },
@@ -113,7 +51,7 @@
         "outer_diameter": 0.1116,
         "conductivity": 0.4,
         "rho_cp": 1542000,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "arrangement": "SINGLEUTUBE"
       }
     },
@@ -125,7 +63,7 @@
         "outer_diameter": 0.1116,
         "conductivity": 0.4,
         "rho_cp": 1542000,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "arrangement": "SINGLEUTUBE"
       }
     },
@@ -137,17 +75,10 @@
         "outer_diameter": 0.1116,
         "conductivity": 0.4,
         "rho_cp": 1542000,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "arrangement": "SINGLEUTUBE"
       }
     }
-  },
-  "central_loop": {
-    "pipe_configuration": "ONEPIPE",
-    "flow_factor": 1.5,
-    "pump_efficiency": 0.5,
-    "loop_length": 200,
-    "design_pressure_loss_per_meter": 200
   },
   "fluid": {
     "fluid_name": "PROPYLENEGLYCOL",
@@ -321,7 +252,6 @@
   "ground_heat_exchanger": {
     "ghe1": {
       "flow_rate": 0.33753,
-      "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
@@ -330,7 +260,7 @@
         "inner_diameter": 0.03404,
         "outer_diameter": 0.04216,
         "shank_spacing": 0.01856,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "arrangement": "SINGLEUTUBE"
@@ -350,7 +280,6 @@
     },
     "ghe2": {
       "flow_rate": 0.3375,
-      "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
@@ -359,7 +288,7 @@
         "inner_diameter": 0.03404,
         "outer_diameter": 0.04216,
         "shank_spacing": 0.01856,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "arrangement": "SINGLEUTUBE"
@@ -379,7 +308,6 @@
     },
     "ghe3": {
       "flow_rate": 0.33757,
-      "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
@@ -388,7 +316,7 @@
         "inner_diameter": 0.03404,
         "outer_diameter": 0.04216,
         "shank_spacing": 0.01856,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "arrangement": "SINGLEUTUBE"
@@ -412,5 +340,142 @@
     "load_method": "HOURLY",
     "horizontal_segments": 3,
     "horizontal_simulation_considered": true
+  },
+  "network": {
+    "type": "one_pipe",
+    "stations": [
+      {
+        "component": "building1_htg_clg"
+      },
+      {
+        "component": "building1_dhw"
+      },
+      {
+        "component": "building2_htg_clg"
+      },
+      {
+        "component": "building2_dhw"
+      },
+      {
+        "component": "building3_htg_clg"
+      },
+      {
+        "component": "building3_dhw"
+      },
+      {
+        "component": "ghe1"
+      },
+      {
+        "component": "ghe2"
+      },
+      {
+        "component": "ghe3"
+      }
+    ],
+    "pipe_defaults": {
+      "diameter": 0.13743427243553197,
+      "roughness": 1e-6
+    },
+    "segments": [
+      {
+        "id": "network_segment_1",
+        "from": "building1_htg_clg",
+        "to": "building1_dhw",
+        "length": 22.22222222222222
+      },
+      {
+        "id": "network_segment_2",
+        "from": "building1_dhw",
+        "to": "building2_htg_clg",
+        "length": 25.0,
+        "thermal_model": "building1_building2_line"
+      },
+      {
+        "id": "network_segment_3",
+        "from": "building2_htg_clg",
+        "to": "building2_dhw",
+        "length": 22.22222222222222
+      },
+      {
+        "id": "network_segment_4",
+        "from": "building2_dhw",
+        "to": "building3_htg_clg",
+        "length": 25.0,
+        "thermal_model": "building2_building3_line"
+      },
+      {
+        "id": "network_segment_5",
+        "from": "building3_htg_clg",
+        "to": "building3_dhw",
+        "length": 22.22222222222222
+      },
+      {
+        "id": "network_segment_6",
+        "from": "building3_dhw",
+        "to": "ghe1",
+        "length": 50.0,
+        "thermal_model": "horiz_return_line"
+      },
+      {
+        "id": "network_segment_7",
+        "from": "ghe1",
+        "to": "ghe2",
+        "length": 25.0,
+        "thermal_model": "ghe1_ghe2_line"
+      },
+      {
+        "id": "network_segment_8",
+        "from": "ghe2",
+        "to": "ghe3",
+        "length": 25.0,
+        "thermal_model": "ghe2_ghe3_line"
+      },
+      {
+        "id": "network_segment_9",
+        "from": "ghe3",
+        "to": "building1_htg_clg",
+        "length": 50.0,
+        "thermal_model": "horiz_supply_line"
+      }
+    ],
+    "pumps": {
+      "network_pump_building1_htg_clg": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_building1_dhw": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_building2_htg_clg": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_building2_dhw": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_building3_htg_clg": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_building3_dhw": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_distribution_pump": {
+        "wire_to_water_efficiency": 0.5
+      }
+    },
+    "component_pumps": {
+      "building1_htg_clg": "network_pump_building1_htg_clg",
+      "building1_dhw": "network_pump_building1_dhw",
+      "building2_htg_clg": "network_pump_building2_htg_clg",
+      "building2_dhw": "network_pump_building2_dhw",
+      "building3_htg_clg": "network_pump_building3_htg_clg",
+      "building3_dhw": "network_pump_building3_dhw"
+    },
+    "distribution_pump": {
+      "type": "pump",
+      "pump": "network_distribution_pump"
+    },
+    "mass_flow_control": {
+      "distribution_flow_multiplier": 1.5,
+      "minimum_distribution_mass_flow": 0.1
+    }
   }
 }

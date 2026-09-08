@@ -1,70 +1,5 @@
 {
-  "version": 3,
-  "topology": [
-    {
-      "type": "building",
-      "name": "bldg_1_zone_1"
-    },
-    {
-      "type": "building",
-      "name": "bldg_1_zone_2"
-    },
-    {
-      "type": "ground_heat_exchanger",
-      "name": "ghe_1"
-    },
-    {
-      "type": "building",
-      "name": "bldg_2_zone_1"
-    },
-    {
-      "type": "building",
-      "name": "bldg_3_zone_1"
-    },
-    {
-      "type": "building",
-      "name": "bldg_3_zone_2"
-    },
-    {
-      "type": "ground_heat_exchanger",
-      "name": "ghe_2"
-    },
-    {
-      "type": "building",
-      "name": "bldg_4_zone_1"
-    },
-    {
-      "type": "ground_heat_exchanger",
-      "name": "ghe_3"
-    },
-    {
-      "type": "building",
-      "name": "bldg_5_zone_1"
-    },
-    {
-      "type": "building",
-      "name": "bldg_6_zone_1"
-    },
-    {
-      "type": "ground_heat_exchanger",
-      "name": "ghe_4"
-    },
-    {
-      "type": "building",
-      "name": "bldg_7_zone_1"
-    },
-    {
-      "type": "building",
-      "name": "bldg_7_zone_2"
-    }
-  ],
-  "central_loop": {
-    "pipe_configuration": "ONEPIPE",
-    "flow_factor": 1.5,
-    "pump_efficiency": 0.5,
-    "loop_length": 200,
-    "design_pressure_loss_per_meter": 1
-  },
+  "version": 4,
   "fluid": {
     "fluid_name": "WATER",
     "concentration_percent": 0,
@@ -85,7 +20,7 @@
       "design_pressure_loss": 25000,
       "pump_efficiency": 0.5,
       "heating_performance": {
-        "a": -0.0000713,
+        "a": -7.13e-5,
         "b": 0.00534,
         "c": 0.734,
         "c1": -0.124,
@@ -299,7 +234,6 @@
   "ground_heat_exchanger": {
     "ghe_1": {
       "flow_rate": 0.5,
-      "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
@@ -308,7 +242,7 @@
         "inner_diameter": 0.03404,
         "outer_diameter": 0.04216,
         "shank_spacing": 0.01856,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "arrangement": "SINGLEUTUBE"
@@ -343,7 +277,6 @@
     },
     "ghe_2": {
       "flow_rate": 0.5,
-      "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
@@ -352,7 +285,7 @@
         "inner_diameter": 0.03404,
         "outer_diameter": 0.04216,
         "shank_spacing": 0.01856,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "arrangement": "SINGLEUTUBE"
@@ -389,7 +322,6 @@
     },
     "ghe_3": {
       "flow_rate": 0.5,
-      "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
@@ -398,7 +330,7 @@
         "inner_diameter": 0.03404,
         "outer_diameter": 0.04216,
         "shank_spacing": 0.01856,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "arrangement": "SINGLEUTUBE"
@@ -439,7 +371,6 @@
     },
     "ghe_4": {
       "flow_rate": 0.5,
-      "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
@@ -448,7 +379,7 @@
         "inner_diameter": 0.03404,
         "outer_diameter": 0.04216,
         "shank_spacing": 0.01856,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "arrangement": "SINGLEUTUBE"
@@ -485,5 +416,197 @@
     "search_method": "GLOBAL_ROWWISE",
     "exhaustive_search": false,
     "load_method": "HYBRID"
+  },
+  "network": {
+    "type": "one_pipe",
+    "stations": [
+      {
+        "component": "bldg_1_zone_1"
+      },
+      {
+        "component": "bldg_1_zone_2"
+      },
+      {
+        "component": "ghe_1"
+      },
+      {
+        "component": "bldg_2_zone_1"
+      },
+      {
+        "component": "bldg_3_zone_1"
+      },
+      {
+        "component": "bldg_3_zone_2"
+      },
+      {
+        "component": "ghe_2"
+      },
+      {
+        "component": "bldg_4_zone_1"
+      },
+      {
+        "component": "ghe_3"
+      },
+      {
+        "component": "bldg_5_zone_1"
+      },
+      {
+        "component": "bldg_6_zone_1"
+      },
+      {
+        "component": "ghe_4"
+      },
+      {
+        "component": "bldg_7_zone_1"
+      },
+      {
+        "component": "bldg_7_zone_2"
+      }
+    ],
+    "pipe_defaults": {
+      "diameter": 0.7790541825010795,
+      "roughness": 1e-6
+    },
+    "segments": [
+      {
+        "id": "network_segment_1",
+        "from": "bldg_1_zone_1",
+        "to": "bldg_1_zone_2",
+        "length": 14.285714285714286
+      },
+      {
+        "id": "network_segment_2",
+        "from": "bldg_1_zone_2",
+        "to": "ghe_1",
+        "length": 14.285714285714286
+      },
+      {
+        "id": "network_segment_3",
+        "from": "ghe_1",
+        "to": "bldg_2_zone_1",
+        "length": 14.285714285714286
+      },
+      {
+        "id": "network_segment_4",
+        "from": "bldg_2_zone_1",
+        "to": "bldg_3_zone_1",
+        "length": 14.285714285714286
+      },
+      {
+        "id": "network_segment_5",
+        "from": "bldg_3_zone_1",
+        "to": "bldg_3_zone_2",
+        "length": 14.285714285714286
+      },
+      {
+        "id": "network_segment_6",
+        "from": "bldg_3_zone_2",
+        "to": "ghe_2",
+        "length": 14.285714285714286
+      },
+      {
+        "id": "network_segment_7",
+        "from": "ghe_2",
+        "to": "bldg_4_zone_1",
+        "length": 14.285714285714286
+      },
+      {
+        "id": "network_segment_8",
+        "from": "bldg_4_zone_1",
+        "to": "ghe_3",
+        "length": 14.285714285714286
+      },
+      {
+        "id": "network_segment_9",
+        "from": "ghe_3",
+        "to": "bldg_5_zone_1",
+        "length": 14.285714285714286
+      },
+      {
+        "id": "network_segment_10",
+        "from": "bldg_5_zone_1",
+        "to": "bldg_6_zone_1",
+        "length": 14.285714285714286
+      },
+      {
+        "id": "network_segment_11",
+        "from": "bldg_6_zone_1",
+        "to": "ghe_4",
+        "length": 14.285714285714286
+      },
+      {
+        "id": "network_segment_12",
+        "from": "ghe_4",
+        "to": "bldg_7_zone_1",
+        "length": 14.285714285714286
+      },
+      {
+        "id": "network_segment_13",
+        "from": "bldg_7_zone_1",
+        "to": "bldg_7_zone_2",
+        "length": 14.285714285714286
+      },
+      {
+        "id": "network_segment_14",
+        "from": "bldg_7_zone_2",
+        "to": "bldg_1_zone_1",
+        "length": 14.285714285714286
+      }
+    ],
+    "pumps": {
+      "network_pump_bldg_1_zone_1": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_bldg_1_zone_2": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_bldg_2_zone_1": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_bldg_3_zone_1": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_bldg_3_zone_2": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_bldg_4_zone_1": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_bldg_5_zone_1": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_bldg_6_zone_1": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_bldg_7_zone_1": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_bldg_7_zone_2": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_distribution_pump": {
+        "wire_to_water_efficiency": 0.5
+      }
+    },
+    "component_pumps": {
+      "bldg_1_zone_1": "network_pump_bldg_1_zone_1",
+      "bldg_1_zone_2": "network_pump_bldg_1_zone_2",
+      "bldg_2_zone_1": "network_pump_bldg_2_zone_1",
+      "bldg_3_zone_1": "network_pump_bldg_3_zone_1",
+      "bldg_3_zone_2": "network_pump_bldg_3_zone_2",
+      "bldg_4_zone_1": "network_pump_bldg_4_zone_1",
+      "bldg_5_zone_1": "network_pump_bldg_5_zone_1",
+      "bldg_6_zone_1": "network_pump_bldg_6_zone_1",
+      "bldg_7_zone_1": "network_pump_bldg_7_zone_1",
+      "bldg_7_zone_2": "network_pump_bldg_7_zone_2"
+    },
+    "distribution_pump": {
+      "type": "pump",
+      "pump": "network_distribution_pump"
+    },
+    "mass_flow_control": {
+      "distribution_flow_multiplier": 1.5,
+      "minimum_distribution_mass_flow": 0.1
+    }
   }
 }

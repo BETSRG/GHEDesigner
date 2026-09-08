@@ -1,11 +1,5 @@
 {
-  "version": 3,
-  "topology": [
-    {
-      "type": "ground_heat_exchanger",
-      "name": "ghe1"
-    }
-  ],
+  "version": 4,
   "fluid": {
     "fluid_name": "ETHYLENEGLYCOL",
     "concentration_percent": 25,
@@ -19,7 +13,6 @@
   "ground_heat_exchanger": {
     "ghe1": {
       "flow_rate": 0.5,
-      "flow_type": "BOREHOLE",
       "borehole": {
         "buried_depth": 2,
         "diameter": 0.1524
@@ -47,7 +40,7 @@
         "inner_diameter": 0.026,
         "outer_diameter": 0.032,
         "rho_cp": 1542000,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "shank_spacing": 0.0604
       },
       "loads": {

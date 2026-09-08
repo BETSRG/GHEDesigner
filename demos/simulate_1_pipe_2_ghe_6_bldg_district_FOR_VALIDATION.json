@@ -1,0 +1,319 @@
+{
+  "version": 4,
+  "fluid": {
+    "fluid_name": "PROPYLENEGLYCOL",
+    "concentration_percent": 30,
+    "temperature": 20
+  },
+  "heat_pump": {
+    "hp1": {
+      "cooling_performance": {
+        "a": 0.0001,
+        "b": 0.00112,
+        "c": 1.13,
+        "c1": -0.393,
+        "c2": -30.3,
+        "c3": 6777.0,
+        "design_cap": 4396.0
+      },
+      "design_flow_rate": 0.296,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
+      "heating_performance": {
+        "a": -7.13e-5,
+        "b": 0.00534,
+        "c": 0.734,
+        "c1": -0.124,
+        "c2": 112.0,
+        "c3": 4114.0,
+        "design_cap": 4140.0
+      }
+    },
+    "hp2": {
+      "cooling_performance": {
+        "a": 0.0001,
+        "b": -0.00041,
+        "c": 1.15,
+        "c1": -1.2,
+        "c2": -4.72,
+        "c3": 9629.0,
+        "design_cap": 6709.0
+      },
+      "design_flow_rate": 0.495,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
+      "heating_performance": {
+        "a": -7.86e-5,
+        "b": 0.00539,
+        "c": 0.734,
+        "c1": 0.178,
+        "c2": 158.0,
+        "c3": 6712.0,
+        "design_cap": 6797.0
+      }
+    }
+  },
+  "building": {
+    "building1_htg_clg": {
+      "heating_load": {
+        "column_name": "B1Z1_HPHtgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "cooling_load": {
+        "column_name": "B1Z1_HPClgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp1"
+      }
+    },
+    "building2_htg_clg": {
+      "heating_load": {
+        "column_name": "B2Z1_HPHtgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp2"
+      },
+      "cooling_load": {
+        "column_name": "B2Z1_HPClgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp2"
+      }
+    },
+    "building3_htg_clg": {
+      "heating_load": {
+        "column_name": "B3Z1_HPHtgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp2"
+      },
+      "cooling_load": {
+        "column_name": "B3Z1_HPClgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp2"
+      }
+    },
+    "building4_htg_clg": {
+      "heating_load": {
+        "column_name": "B1Z1_HPHtgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp2"
+      },
+      "cooling_load": {
+        "column_name": "B1Z1_HPClgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp2"
+      }
+    },
+    "building5_htg_clg": {
+      "heating_load": {
+        "column_name": "B2Z1_HPHtgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "cooling_load": {
+        "column_name": "B2Z1_HPClgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp1"
+      }
+    },
+    "building6_htg_clg": {
+      "heating_load": {
+        "column_name": "B3Z1_HPHtgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp1"
+      },
+      "cooling_load": {
+        "column_name": "B3Z1_HPClgLd_W",
+        "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
+        "heat_pump_name": "hp1"
+      }
+    }
+  },
+  "soil": {
+    "conductivity": 1.7,
+    "rho_cp": 1900000,
+    "undisturbed_temp": 15.6
+  },
+  "ground_heat_exchanger": {
+    "ghe1": {
+      "flow_rate": 0.25,
+      "grout": {
+        "conductivity": 0.8,
+        "rho_cp": 4500000
+      },
+      "pipe": {
+        "inner_diameter": 0.018,
+        "outer_diameter": 0.0254,
+        "shank_spacing": 0.0462,
+        "roughness": 1e-6,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.127
+      },
+      "pre_designed": {
+        "arrangement": "RECTANGLE",
+        "H": 137,
+        "spacing_in_x_dimension": 7.62,
+        "spacing_in_y_dimension": 7.62,
+        "boreholes_in_x_dimension": 7,
+        "boreholes_in_y_dimension": 5
+      }
+    },
+    "ghe2": {
+      "flow_rate": 0.25,
+      "grout": {
+        "conductivity": 0.74,
+        "rho_cp": 5400000
+      },
+      "pipe": {
+        "inner_diameter": 0.0346,
+        "outer_diameter": 0.042,
+        "shank_spacing": 0.0462,
+        "roughness": 1e-6,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "pre_designed": {
+        "arrangement": "RECTANGLE",
+        "H": 150,
+        "spacing_in_x_dimension": 15.24,
+        "spacing_in_y_dimension": 15.24,
+        "boreholes_in_x_dimension": 24,
+        "boreholes_in_y_dimension": 4
+      }
+    }
+  },
+  "simulation_control": {
+    "simulation_years": 1,
+    "load_method": "HOURLY"
+  },
+  "network": {
+    "type": "one_pipe",
+    "stations": [
+      {
+        "component": "building1_htg_clg"
+      },
+      {
+        "component": "building2_htg_clg"
+      },
+      {
+        "component": "building3_htg_clg"
+      },
+      {
+        "component": "building4_htg_clg"
+      },
+      {
+        "component": "ghe2"
+      },
+      {
+        "component": "building5_htg_clg"
+      },
+      {
+        "component": "building6_htg_clg"
+      },
+      {
+        "component": "ghe1"
+      }
+    ],
+    "pipe_defaults": {
+      "diameter": 0.2643759073834153,
+      "roughness": 1e-6
+    },
+    "segments": [
+      {
+        "id": "network_segment_1",
+        "from": "building1_htg_clg",
+        "to": "building2_htg_clg",
+        "length": 25.0
+      },
+      {
+        "id": "network_segment_2",
+        "from": "building2_htg_clg",
+        "to": "building3_htg_clg",
+        "length": 25.0
+      },
+      {
+        "id": "network_segment_3",
+        "from": "building3_htg_clg",
+        "to": "building4_htg_clg",
+        "length": 25.0
+      },
+      {
+        "id": "network_segment_4",
+        "from": "building4_htg_clg",
+        "to": "ghe2",
+        "length": 25.0
+      },
+      {
+        "id": "network_segment_5",
+        "from": "ghe2",
+        "to": "building5_htg_clg",
+        "length": 25.0
+      },
+      {
+        "id": "network_segment_6",
+        "from": "building5_htg_clg",
+        "to": "building6_htg_clg",
+        "length": 25.0
+      },
+      {
+        "id": "network_segment_7",
+        "from": "building6_htg_clg",
+        "to": "ghe1",
+        "length": 25.0
+      },
+      {
+        "id": "network_segment_8",
+        "from": "ghe1",
+        "to": "building1_htg_clg",
+        "length": 25.0
+      }
+    ],
+    "pumps": {
+      "network_pump_building1_htg_clg": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_building2_htg_clg": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_building3_htg_clg": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_building4_htg_clg": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_building5_htg_clg": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_pump_building6_htg_clg": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_distribution_pump": {
+        "wire_to_water_efficiency": 0.5
+      }
+    },
+    "component_pumps": {
+      "building1_htg_clg": "network_pump_building1_htg_clg",
+      "building2_htg_clg": "network_pump_building2_htg_clg",
+      "building3_htg_clg": "network_pump_building3_htg_clg",
+      "building4_htg_clg": "network_pump_building4_htg_clg",
+      "building5_htg_clg": "network_pump_building5_htg_clg",
+      "building6_htg_clg": "network_pump_building6_htg_clg"
+    },
+    "distribution_pump": {
+      "type": "pump",
+      "pump": "network_distribution_pump"
+    },
+    "mass_flow_control": {
+      "distribution_flow_multiplier": 1.5,
+      "minimum_distribution_mass_flow": 0.1
+    }
+  }
+}
