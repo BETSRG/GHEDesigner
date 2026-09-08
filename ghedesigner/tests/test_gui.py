@@ -295,10 +295,12 @@ def test_packaged_gui_has_pre_module_startup_diagnostics() -> None:
 def test_gui_disables_browser_caching_for_frontend_assets(tmp_path: Path) -> None:
     (tmp_path / "index.html").write_text("<main>Editor</main>")
     (tmp_path / "application.js").write_text("console.log('loaded');")
+    (tmp_path / "asset.unknown").write_text("uncategorized asset")
     client = create_app(tmp_path).test_client()
 
     assert client.get("/").headers["Cache-Control"] == "no-store"
     assert client.get("/application.js").headers["Cache-Control"] == "no-store"
+    assert client.get("/asset.unknown").headers["Cache-Control"] == "no-store"
 
 
 def test_gui_validation_reports_bad_request() -> None:

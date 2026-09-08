@@ -171,7 +171,9 @@ def create_app(
         request_id = getattr(g, "request_id", "unknown")
         duration_ms = (time.perf_counter() - started) * 1000
         response.headers["X-GHEDesigner-Request-ID"] = request_id
-        if request.path.startswith("/api/") or response.mimetype in {"text/html", "text/javascript", "text/css"}:
+        # Route identity is stable across platforms, while MIME type detection is not.
+        # In particular, Windows may report JavaScript files as ``text/plain``.
+        if request.path.startswith("/api/") or request.endpoint in {"index", "assets"}:
             response.headers["Cache-Control"] = "no-store"
         LOGGER.info(
             "request_finished id=%s method=%s path=%s status=%s duration_ms=%.1f response_length=%s",
