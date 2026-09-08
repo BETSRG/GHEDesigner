@@ -22,7 +22,8 @@ const stationIds = (network: JsonObject) =>
 export function CompactNetworkEditor({ document, onChange }: CompactNetworkEditorProps) {
   const network = document.network ?? {};
   const stations = stationIds(network);
-  const available = allComponentIds(document).filter((id) => !stations.includes(id));
+  const components = allComponentIds(document);
+  const available = components.filter((id) => !stations.includes(id));
   const segments = Array.isArray(network.segments) ? network.segments.filter(isJsonObject) : [];
 
   const setNetworkField = (field: string, value: unknown) => {
@@ -128,10 +129,22 @@ export function CompactNetworkEditor({ document, onChange }: CompactNetworkEdito
               <span className="eyebrow">Physical Order</span>
               <h2>Stations</h2>
             </div>
-            <button type="button" className="button secondary compact" onClick={addStation} disabled={!available.length}>
-              <Plus size={15} /> Add Station
-            </button>
+            {available.length ? (
+              <button type="button" className="button secondary compact" onClick={addStation}>
+                <Plus size={15} /> Add Station
+              </button>
+            ) : (
+              <span className="station-assignment-status">
+                {components.length ? "All Components Assigned" : "No Components Available"}
+              </span>
+            )}
           </div>
+          <p className="station-help">
+            Stations reference existing buildings, GHEs, or heat exchangers. Each physical component can appear only once.
+            {!available.length && components.length
+              ? " Add another physical component before extending the network."
+              : ""}
+          </p>
           <div className="station-list">
             {stations.map((id, index) => (
               <div className="station-row" key={id}>

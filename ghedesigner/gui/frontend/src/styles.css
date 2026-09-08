@@ -1356,6 +1356,24 @@ textarea:focus {
   margin-bottom: 17px;
 }
 
+.station-assignment-status {
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: var(--brand-dark);
+  background: var(--brand-pale);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.station-help {
+  margin: -7px 0 14px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .station-list,
 .segment-list {
   display: grid;
