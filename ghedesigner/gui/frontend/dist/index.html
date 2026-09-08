@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#123d39" />
+    <title>GHEDesigner Input Editor</title>
+    <script>
+      (function () {
+        var reported = false;
+
+        function reportStartupFailure(message, details) {
+          if (reported || document.documentElement.getAttribute("data-ghedesigner-started") === "true") return;
+          reported = true;
+
+          function showFailure() {
+            var root = document.getElementById("root");
+            if (!root || root.childNodes.length > 0) return;
+            root.innerHTML =
+              '<main class="fatal-screen" style="min-height:100vh;padding:32px;text-align:center">' +
+              "<div>" +
+              "<h1>Unable to start the GHEDesigner editor</h1>" +
+              '<p id="startup-error-message"></p>' +
+              "<p>Restart the GUI after rebuilding or reinstalling its frontend assets. " +
+              "Details were written to the diagnostic log.</p>" +
+              "</div>" +
+              "</main>";
+            document.getElementById("startup-error-message").textContent = message;
+          }
+
+          if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", showFailure, { once: true });
+          } else {
+            showFailure();
+          }
+
+          try {
+            var request = new XMLHttpRequest();
+            request.open("POST", "/api/client-log", true);
+            request.setRequestHeader("Content-Type", "application/json");
+            request.send(
+              JSON.stringify({
+                level: "error",
+                event: "browser_startup_failed",
+                details: {
+                  message: message,
+                  source: details && details.source,
+                  line: details && details.line,
+                  column: details && details.column,
+                  userAgent: window.navigator ? window.navigator.userAgent : "unknown",
+                },
+              }),
+            );
+          } catch (_) {
+            // The visible startup failure remains useful if diagnostic reporting also fails.
+          }
+        }
+
+        window.addEventListener("error", function (event) {
+          reportStartupFailure(event.message || "The application bundle could not be loaded.", {
+            source: event.filename,
+            line: event.lineno,
+            column: event.colno,
+          });
+        });
+        window.addEventListener("unhandledrejection", function (event) {
+          var reason = event.reason;
+          reportStartupFailure(reason && reason.message ? reason.message : String(reason), {});
+        });
+        window.setTimeout(function () {
+          reportStartupFailure("The application did not finish starting within five seconds.", {});
+        }, 5000);
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-Bw8Fu4Mw.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BDvdPQbW.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

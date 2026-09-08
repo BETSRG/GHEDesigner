@@ -35,11 +35,7 @@ from ghedesigner.ghe.manager import GroundHeatExchanger
 from ghedesigner.utilities import load_input_file
 
 inputs = load_input_file(Path("demos/find_design_rectangle_single_u_tube.json"))
-ghe_name = next(
-    item["name"]
-    for item in inputs["topology"]
-    if item["type"] == "ground_heat_exchanger"
-)
+ghe_name = next(iter(inputs["ground_heat_exchanger"]))
 ghe_dict = inputs["ground_heat_exchanger"][ghe_name]
 ghe_dict["name"] = ghe_name
 
@@ -61,11 +57,12 @@ For district systems, use the same JSON files through the CLI or create a `GHEHP
 | `find_design_rectangle_single_u_tube_bldg_loads.json`          | Single-building sizing with fixed COP conversion from building loads to GHE loads.    |
 | `simulate_1_pipe_1_ghe_1_bldg_district.json`                   | One-pipe district simulation using heat pump performance data and a pre-designed GHE. |
 | `simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json`            | Two-pipe district simulation using hourly loads and fixed COP conversion.             |
-| `simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json` | District simulation with isolated and coupled buried horizontal piping.               |
+| `simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json` | Canonical-network schema example with isolated and coupled buried horizontal piping.  |
 
 ## Input Features
 
-Input files use the JSON schema in `ghedesigner/schemas/ghedesigner.schema.json`. Common feature switches include:
+Version 4 input files use the JSON schema in `ghedesigner/schemas/ghedesigner.schema.json`. Common feature switches
+include:
 
 - `simulation_control.load_method`: `HYBRID` aggregates loads for faster GHE calculations; `HOURLY` solves hourly loads
   directly.
@@ -74,9 +71,16 @@ Input files use the JSON schema in `ghedesigner/schemas/ghedesigner.schema.json`
   containing the seasonal amplitudes and phase lags; `soil.undisturbed_temp` is its annual-average temperature.
 - `simulation_control.search_method`: `GLOBAL_BUPCRS` and `NELDER-MEAD` size system GHEs; `SIMULATION_ONLY` simulates
   pre-designed GHEs.
-- `central_loop.pipe_configuration`: `ONEPIPE` and `TWOPIPE` district loop configurations are supported.
+- `network.type`: `one_pipe` and `two_pipe` select an ordered, unidirectional district-loop topology.
+- Network flow is prescribed from building loads. GHEDesigner allocates GHE flow in proportion to each GHE's total
+  design flow and evaluates Darcy-Weisbach pressure losses afterward for reporting and pump-energy calculations.
+  Pressure loss does not allocate network flow.
+- A one-pipe network uses `network.mass_flow_control` to set the distribution-flow multiplier and
+  minimum circulation rate.
+- Compact one-pipe bypass branches are generated automatically for every station and are treated as zero-loss paths.
+  Distribution-segment losses are calculated from pipe geometry. A GHE's `circulation_pump` data describes only its
+  local borefield and header pressure loss.
 - Building loads can reference a heat pump performance map with `heat_pump_name` or use fixed COP conversion with
   `heat_pump_cop`.
-- District simulations can include `isolated_horizontal_pipe` and `coupled_horizontal_pipe` topology components when
-  `horizontal_piping`, `soil.ground_temperature_model`, and `simulation_control.horizontal_simulation_considered` are
-  set.
+- Ordered distribution segments can reference an isolated model in `horizontal_piping` when
+  `soil.ground_temperature_model` and `simulation_control.horizontal_simulation_considered` are set.

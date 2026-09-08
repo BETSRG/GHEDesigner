@@ -39,32 +39,32 @@ def run(input_file_path: Path, output_directory: Path) -> int:
         print(f"Bad input file version; supported version is: {INPUT_VERSION}")
         return 1
 
-    # Validate the load source, it should be a building object or a GHE with loads specified
-    # any GHE instances found with pre_designed will just be ignored since they don't need anything added
-    unsized_ghe_contains_loads = []
-    for _, ghe_dict in full_inputs["ground_heat_exchanger"].items():
-        if "loads" in ghe_dict:
-            unsized_ghe_contains_loads.append(True)
-        else:
-            unsized_ghe_contains_loads.append(False)
-    all_ghe_has_loads = all(unsized_ghe_contains_loads)
-    no_ghe_has_loads = not any(unsized_ghe_contains_loads)
-    building_input = "building" in full_inputs
-    valid_load_source = all_ghe_has_loads ^ (building_input and no_ghe_has_loads)  # XOR because we don't want both
-    if not valid_load_source:
-        print("Bad load specified, need exactly one of: loads in each ghe, or building object")
+    # Pre-designed GHEs only need a g-function calculation, so they do not require a load source.
+    ghes_requiring_loads = [
+        ghe_dict for ghe_dict in full_inputs["ground_heat_exchanger"].values() if "pre_designed" not in ghe_dict
+    ]
+    if ghes_requiring_loads:
+        ghe_load_flags = ["loads" in ghe_dict for ghe_dict in ghes_requiring_loads]
+        all_ghe_has_loads = all(ghe_load_flags)
+        no_ghe_has_loads = not any(ghe_load_flags)
+        building_input = bool(full_inputs.get("building"))
+        valid_load_source = all_ghe_has_loads ^ (building_input and no_ghe_has_loads)
+        if not valid_load_source:
+            print("Bad load specified, need exactly one of: loads in each unsized GHE, or building object")
 
-    # Loop over the topology and init the found objects, for now just the GHE or a GHE with an HP
-    topology_props: list[dict] = full_inputs["topology"]
-    ghe_names = []
-    building_names = []
-    central_loop = "central_loop" in full_inputs
-    for component in topology_props:
-        if component["type"] == "building":
-            building_names.append(component["name"])
-        elif component["type"] == "ground_heat_exchanger":
-            ghe_names.append(component["name"])
-
+    network_data = full_inputs.get("network")
+    has_network = network_data is not None
+    if network_data is None:
+        ghe_names = list(full_inputs["ground_heat_exchanger"])
+        building_names = list(full_inputs.get("building", {}))
+    else:
+        station_ids = [station["component"] for station in network_data["stations"]]
+        ghe_names = [
+            component_id for component_id in station_ids if component_id in full_inputs["ground_heat_exchanger"]
+        ]
+        building_names = [
+            component_id for component_id in station_ids if component_id in full_inputs.get("building", {})
+        ]
     # do actions depending on what is provided in input
     if len(ghe_names) >= 1 and len(building_names) == 0:
         # we are just doing a GHE design/sizing/simulation alone
@@ -98,7 +98,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
                 results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
                 results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
                 results.write_all_output_files(output_directory=output_directory, file_suffix="")
-    elif len(ghe_names) == 1 and len(building_names) == 1 and not central_loop:
+    elif len(ghe_names) == 1 and len(building_names) == 1 and not has_network:
         # we have a GHE and a building, grab both
         ghe_dict = full_inputs["ground_heat_exchanger"][ghe_names[0]]
         ghe_dict["name"] = ghe_names[0]
@@ -119,7 +119,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
             results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
             results.write_all_output_files(output_directory=output_directory, file_suffix="")
-    elif central_loop:
+    elif has_network:
         system = GHEHPSystem(input_file_path)
         system.size_and_simulate()
 

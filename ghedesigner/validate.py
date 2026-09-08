@@ -1,15 +1,26 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import logging
 import re
 import sys
+import time
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
+from functools import cache
+from itertools import islice
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import ValidationError
+
+from ghedesigner.network import validate_network_data
+
+LOGGER = logging.getLogger("ghedesigner.gui.validation")
+MAX_GUI_SCHEMA_ERRORS = 100
+MAX_ONE_OF_SUGGESTIONS = 8
+SLOW_VALIDATION_MS = 1_000
 
 # Note: JSON schema does not currently have a good way to handle case-insensitive enums.
 #       I think we should enforce case sensitivity. The validation script should clearly alert the user.
@@ -58,6 +69,30 @@ class RankedError:
     # instances and raise: TypeError: '<' not supported between instances of
     # 'ValidationError' and 'ValidationError'.
     error: ValidationError = field(compare=False)
+
+
+@dataclass(frozen=True)
+class InputDiagnostic:
+    """A structured input problem suitable for CLI and graphical clients."""
+
+    severity: str
+    message: str
+    pointer: str
+    location: str
+    validator: str
+    suggestions: tuple[str, ...] = ()
+    source: str = "schema"
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "severity": self.severity,
+            "message": self.message,
+            "pointer": self.pointer,
+            "location": self.location,
+            "validator": self.validator,
+            "suggestions": list(self.suggestions),
+            "source": self.source,
+        }
 
 
 def _rank_error(err: ValidationError) -> RankedError:
@@ -110,9 +145,12 @@ def _summarize_oneof(err: ValidationError) -> list[str]:
         return lines
 
     # Group suberrors by which branch they came from (best-effort: keep in order)
-    for i, sub in enumerate(err.context, start=1):
+    for i, sub in enumerate(err.context[:MAX_ONE_OF_SUGGESTIONS], start=1):
         p = _format_path([sub.path])
         lines.append(f"Variant {i} failed at {p}: {sub.message}")
+    omitted = len(err.context) - MAX_ONE_OF_SUGGESTIONS
+    if omitted > 0:
+        lines.append(f"{omitted} additional variant errors were omitted.")
     lines.append("Tip: adjust the object so it matches exactly one variant.")
     return lines
 
@@ -156,9 +194,78 @@ def _suggest_fix(err: ValidationError) -> list[str]:
         return fix
 
     # generic fallback
-    if "type" in err.schema:
+    if isinstance(err.schema, dict) and "type" in err.schema:
         fix.append(f"Ensure the value is of type: {err.schema['type']}")
     return fix
+
+
+@cache
+def load_input_schema() -> dict[str, Any]:
+    """Load the packaged GHEDesigner input schema."""
+    schema_path = Path(__file__).parent / "schemas" / "ghedesigner.schema.json"
+    return json.loads(schema_path.read_text())
+
+
+@cache
+def _input_validator() -> Draft7Validator:
+    return Draft7Validator(load_input_schema())
+
+
+def _diagnostic_from_error(error: ValidationError, source: str = "schema") -> InputDiagnostic:
+    path = list(error.path)
+    return InputDiagnostic(
+        severity="error",
+        message=error.message,
+        pointer=_format_json_pointer(path),
+        location=_format_path(path),
+        validator=str(error.validator or "semantic"),
+        suggestions=tuple(_suggest_fix(error)),
+        source=source,
+    )
+
+
+def validate_input_data(instance: dict[str, Any]) -> list[InputDiagnostic]:
+    """Return all input diagnostics without printing or raising."""
+    started = time.perf_counter()
+    errors = list(islice(_input_validator().iter_errors(instance), MAX_GUI_SCHEMA_ERRORS + 1))
+    truncated = len(errors) > MAX_GUI_SCHEMA_ERRORS
+    errors = errors[:MAX_GUI_SCHEMA_ERRORS]
+    if errors:
+        diagnostics = [_diagnostic_from_error(item.error) for item in sorted(_rank_error(error) for error in errors)]
+        if truncated:
+            diagnostics.append(
+                InputDiagnostic(
+                    severity="error",
+                    message=f"Validation stopped after {MAX_GUI_SCHEMA_ERRORS} schema errors.",
+                    pointer="/",
+                    location="Root",
+                    validator="errorLimit",
+                    suggestions=("Correct the reported structural errors, then validate again.",),
+                )
+            )
+        LOGGER.debug(
+            "schema_validation_complete duration_ms=%.1f diagnostics=%s truncated=%s",
+            (time.perf_counter() - started) * 1000,
+            len(diagnostics),
+            truncated,
+        )
+        return diagnostics
+
+    try:
+        validate_network_data(instance)
+    except ValueError as error:
+        semantic_error = ValidationError(str(error))
+        diagnostics = [_diagnostic_from_error(semantic_error, source="semantic")]
+    else:
+        diagnostics = []
+    duration_ms = (time.perf_counter() - started) * 1000
+    log_method = LOGGER.warning if duration_ms >= SLOW_VALIDATION_MS else LOGGER.debug
+    log_method(
+        "input_validation_complete duration_ms=%.1f diagnostics=%s",
+        duration_ms,
+        len(diagnostics),
+    )
+    return diagnostics
 
 
 def validate_input_file(input_file_path: Path) -> None:
@@ -166,13 +273,17 @@ def validate_input_file(input_file_path: Path) -> None:
     Validate input file against the schema with clearer, structured error messages.
     """
     instance = json.loads(input_file_path.read_text())
-    schema_path = Path(__file__).parent / "schemas" / "ghedesigner.schema.json"
-    schema = json.loads(schema_path.read_text())
+    schema = load_input_schema()
 
     validator = Draft7Validator(schema)
     errors = list(validator.iter_errors(instance))
     if not errors:
-        return
+        try:
+            validate_network_data(instance)
+        except ValueError as error:
+            errors = [ValidationError(str(error))]
+        else:
+            return
 
     err = _best_error(errors)
 

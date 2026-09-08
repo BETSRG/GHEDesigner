@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.enums import DesignGeomType, TimestepType
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_1d import Bisection1D
 from ghedesigner.ghe.search.bisection_2d import Bisection2D
@@ -44,7 +44,6 @@ class DesignBase:
         geometric_constraints: GeometricConstraints,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
     ) -> None:
         if load_years is None:
@@ -59,7 +58,6 @@ class DesignBase:
         self.geometric_constraints = geometric_constraints
         self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
         self.method = method
-        self.flow_type = flow_type
         self.start_month = start_month
         self.end_month = end_month
         self.max_EFT_allowable = max_eft
@@ -87,4 +85,4 @@ class DesignBase:
         pass
 
     def to_input(self) -> dict:
-        return {"flow_rate": self.v_flow, "flow_type": self.flow_type.name}
+        return {"flow_rate": self.v_flow}

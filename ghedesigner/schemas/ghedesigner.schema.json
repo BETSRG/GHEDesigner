@@ -1,106 +1,132 @@
 {
+  "title": "GHEDesigner input file",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$defs": {
     "b_max": {
+      "title": "Maximum borehole spacing",
       "type": "number",
       "minimum": 0,
       "format": "Meters",
-      "description": "Maximum borehole-to-borehole spacing."
+      "description": "Maximum borehole-to-borehole spacing. Units: meters (m)."
     },
     "b_max_x": {
+      "title": "Maximum borehole spacing in the x direction",
       "type": "number",
       "minimum": 0,
       "format": "Meters",
-      "description": "Maximum borehole-to-borehole spacing in x-direction."
+      "description": "Maximum borehole-to-borehole spacing in x-direction. Units: meters (m)."
     },
     "b_max_y": {
+      "title": "Maximum borehole spacing in the y direction",
       "type": "number",
       "minimum": 0,
       "format": "Meters",
-      "description": "Maximum borehole-to-borehole spacing in y-direction."
+      "description": "Maximum borehole-to-borehole spacing in y-direction. Units: meters (m)."
     },
     "b_min": {
+      "title": "Minimum borehole spacing",
       "type": "number",
       "minimum": 0,
       "format": "Meters",
-      "description": "Minimum borehole-to-borehole spacing."
+      "description": "Minimum borehole-to-borehole spacing. Units: meters (m)."
     },
     "borehole_removal_method": {
+      "title": "Borehole removal method",
       "type": "string",
       "enum": ["RIGHT_TOP", "RADIAL", "LINE_SEGMENTS"],
       "default": "RADIAL",
       "description": "Defines the method used to remove boreholes from a borefield. This is planned to be an optional parameter for multiple borefield design methods."
     },
     "column_name": {
+      "title": "CSV column name",
       "type": "string"
     },
     "column_number": {
-      "type": "integer"
+      "title": "CSV column number",
+      "type": "integer",
+      "description": "Units: dimensionless."
     },
     "conductivity": {
+      "title": "Thermal conductivity",
       "type": "number",
       "minimum": 0,
       "format": "Watts/Meter-Kelvin",
-      "description": "Thermal conductivity."
+      "description": "Thermal conductivity. Units: watts per meter-kelvin (W/m\u00b7K)."
     },
     "design_flow_rate": {
+      "title": "Design mass flow rate",
       "type": "number",
       "format": "Kilograms/Second",
-      "description": "Design flow rate."
+      "description": "Design flow rate. Units: kilograms per second (kg/s)."
     },
     "design_pressure_loss": {
+      "title": "Design pressure loss",
       "type": "number",
       "format": "Pascals",
-      "description": "Design pressure loss."
-    },
-    "design_pressure_loss_per_meter": {
-      "type": "number",
-      "format": "Pascals/Meter",
-      "description": "Design pressure loss per meter."
+      "description": "Design pressure loss. Units: pascals (Pa)."
     },
     "file_path": {
-      "type": "string"
-    },
-    "flow_factor": {
-      "type": "number",
-      "minimum": 0,
-      "description": "Scaling factor for loop flow rate, dimensionless."
+      "title": "Load file path",
+      "type": "string",
+      "format": "file-path",
+      "description": "Path to a load data file on the computer running GHEDesigner."
     },
     "H": {
+      "title": "Borehole active length",
       "type": "number",
       "minimum": 0,
       "format": "Meters",
-      "description": "Length of each borehole."
+      "description": "Length of each borehole. Units: meters (m)."
     },
     "heat_pump_name": {
+      "title": "Heat pump performance map",
       "type": "string"
     },
     "heat_pump_cop": {
-      "type": "number"
+      "title": "Heat pump COP",
+      "type": "number",
+      "description": "Units: watts per watt (W/W)."
     },
     "inner_diameter": {
+      "title": "Pipe inner diameter",
       "type": "number",
       "minimum": 0,
       "format": "Meters",
-      "description": "Inner diameter of pipe."
+      "description": "Inner diameter of pipe. Units: meters (m)."
     },
     "max_eft": {
+      "title": "Maximum Allowable Entering Fluid Temperature",
       "type": "number",
       "format": "Centigrade",
-      "description": "Maximum heat pump entering fluid temperature."
+      "description": "Maximum allowable heat pump entering fluid temperature used as a design constraint. Units: degrees Celsius (\u00b0C)."
     },
     "min_eft": {
+      "title": "Minimum Allowable Entering Fluid Temperature",
       "type": "number",
       "format": "Centigrade",
-      "description": "Minimum heat pump entering fluid temperature."
+      "description": "Minimum allowable heat pump entering fluid temperature used as a design constraint. Units: degrees Celsius (\u00b0C)."
+    },
+    "heating_cop_evaluation_temperature": {
+      "title": "Heating COP Evaluation Temperature",
+      "type": "number",
+      "format": "Centigrade",
+      "description": "Heat pump entering fluid temperature used to evaluate heating performance when loads are approximated from a performance map. If omitted, GHEDesigner estimates an evaluation temperature from the undisturbed ground temperature. Units: degrees Celsius (\u00b0C)."
+    },
+    "cooling_cop_evaluation_temperature": {
+      "title": "Cooling COP Evaluation Temperature",
+      "type": "number",
+      "format": "Centigrade",
+      "description": "Heat pump entering fluid temperature used to evaluate cooling performance when loads are approximated from a performance map. If omitted, GHEDesigner estimates an evaluation temperature from the undisturbed ground temperature. Units: degrees Celsius (\u00b0C)."
     },
     "length": {
+      "title": "Length",
       "type": "number",
       "minimum": 0,
       "format": "Meters",
-      "description": "Horizontal length of property boundary defining surface area available for ground heat exchanger."
+      "description": "Horizontal length of property boundary defining surface area available for ground heat exchanger. Units: meters (m)."
     },
     "line_segments": {
+      "title": "Borehole removal line segments",
       "type": "array",
       "minItems": 1,
       "items": {
@@ -118,9 +144,10 @@
         }
       },
       "format": "Meters",
-      "description": "(x, y) coordinate points defining a list of line segments."
+      "description": "(x, y) coordinate points defining a list of line segments. Units: meters (m)."
     },
     "load_values": {
+      "title": "Hourly load values",
       "type": "array",
       "items": {
         "type": "number"
@@ -128,34 +155,44 @@
       "format": "Watts",
       "minItems": 8760,
       "maxItems": 8760,
-      "description": "Annual, hourly loads of the object. Positive value indicate heating/heat extraction, negative values indicate cooling/heat rejection."
+      "description": "Annual, hourly loads of the object. Positive value indicate heating/heat extraction, negative values indicate cooling/heat rejection. Units: watts (W)."
     },
     "load_inputs": {
+      "title": "Load inputs",
       "type": "object",
       "properties": {
         "column_name": {
+          "title": "CSV column name",
           "$ref": "#/$defs/column_name"
         },
         "column_number": {
+          "title": "CSV column number",
           "$ref": "#/$defs/column_number"
         },
         "file_path": {
+          "title": "Load file path",
           "$ref": "#/$defs/file_path"
         },
         "load_values": {
+          "title": "Hourly load values",
           "$ref": "#/$defs/load_values"
         },
         "heat_pump_name": {
+          "title": "Heat pump performance map",
           "$ref": "#/$defs/heat_pump_name"
         },
         "heat_pump_cop": {
-          "$ref": "#/$defs/heat_pump_cop"
+          "title": "Heat pump COP",
+          "$ref": "#/$defs/heat_pump_cop",
+          "description": "Units: watts per watt (W/W)."
         }
       },
       "oneOf": [
         {
+          "title": "Enter hourly values",
           "properties": {
             "load_values": {
+              "title": "Hourly load values",
               "$ref": "#/$defs/load_values"
             }
           },
@@ -163,11 +200,14 @@
           "additionalProperties": false
         },
         {
+          "title": "Read a CSV column by name",
           "properties": {
             "column_name": {
+              "title": "CSV column name",
               "$ref": "#/$defs/column_name"
             },
             "file_path": {
+              "title": "Load file path",
               "$ref": "#/$defs/file_path"
             }
           },
@@ -175,11 +215,14 @@
           "additionalProperties": false
         },
         {
+          "title": "Read a CSV column by number",
           "properties": {
             "column_number": {
+              "title": "CSV column number",
               "$ref": "#/$defs/column_number"
             },
             "file_path": {
+              "title": "Load file path",
               "$ref": "#/$defs/file_path"
             }
           },
@@ -187,11 +230,14 @@
           "additionalProperties": false
         },
         {
+          "title": "Hourly values with a heat pump map",
           "properties": {
             "load_values": {
+              "title": "Hourly load values",
               "$ref": "#/$defs/load_values"
             },
             "heat_pump_name": {
+              "title": "Heat pump performance map",
               "$ref": "#/$defs/heat_pump_name"
             }
           },
@@ -199,14 +245,18 @@
           "additionalProperties": false
         },
         {
+          "title": "CSV column name with a heat pump map",
           "properties": {
             "column_name": {
+              "title": "CSV column name",
               "$ref": "#/$defs/column_name"
             },
             "file_path": {
+              "title": "Load file path",
               "$ref": "#/$defs/file_path"
             },
             "heat_pump_name": {
+              "title": "Heat pump performance map",
               "$ref": "#/$defs/heat_pump_name"
             }
           },
@@ -214,14 +264,18 @@
           "additionalProperties": false
         },
         {
+          "title": "CSV column number with a heat pump map",
           "properties": {
             "column_number": {
+              "title": "CSV column number",
               "$ref": "#/$defs/column_number"
             },
             "file_path": {
+              "title": "Load file path",
               "$ref": "#/$defs/file_path"
             },
             "heat_pump_name": {
+              "title": "Heat pump performance map",
               "$ref": "#/$defs/heat_pump_name"
             }
           },
@@ -229,42 +283,56 @@
           "additionalProperties": false
         },
         {
+          "title": "Hourly values with a fixed COP",
           "properties": {
             "load_values": {
+              "title": "Hourly load values",
               "$ref": "#/$defs/load_values"
             },
             "heat_pump_cop": {
-              "$ref": "#/$defs/heat_pump_cop"
+              "title": "Heat pump COP",
+              "$ref": "#/$defs/heat_pump_cop",
+              "description": "Units: watts per watt (W/W)."
             }
           },
           "required": ["load_values", "heat_pump_cop"],
           "additionalProperties": false
         },
         {
+          "title": "CSV column name with a fixed COP",
           "properties": {
             "column_name": {
+              "title": "CSV column name",
               "$ref": "#/$defs/column_name"
             },
             "file_path": {
+              "title": "Load file path",
               "$ref": "#/$defs/file_path"
             },
             "heat_pump_cop": {
-              "$ref": "#/$defs/heat_pump_cop"
+              "title": "Heat pump COP",
+              "$ref": "#/$defs/heat_pump_cop",
+              "description": "Units: watts per watt (W/W)."
             }
           },
           "required": ["file_path", "column_name", "heat_pump_cop"],
           "additionalProperties": false
         },
         {
+          "title": "CSV column number with a fixed COP",
           "properties": {
             "column_number": {
+              "title": "CSV column number",
               "$ref": "#/$defs/column_number"
             },
             "file_path": {
+              "title": "Load file path",
               "$ref": "#/$defs/file_path"
             },
             "heat_pump_cop": {
-              "$ref": "#/$defs/heat_pump_cop"
+              "title": "Heat pump COP",
+              "$ref": "#/$defs/heat_pump_cop",
+              "description": "Units: watts per watt (W/W)."
             }
           },
           "required": ["file_path", "column_number", "heat_pump_cop"],
@@ -273,13 +341,8 @@
       ],
       "additionalProperties": false
     },
-    "loop_length": {
-      "type": "number",
-      "minimum": 0,
-      "format": "Meters",
-      "description": "Length of loop in meters."
-    },
     "no_go_boundaries": {
+      "title": "No-go zone boundaries",
       "type": "array",
       "items": {
         "type": "array",
@@ -294,77 +357,86 @@
         }
       },
       "format": "Meters",
-      "description": "(x, y) coordinate points of closed polygon defining go/no-go boundaries. Go/no-go zones must lie within the area defined in 'property_boundary'. Points should be entered in a counter-clockwise fashion."
+      "description": "Closed polygons that exclude areas from the usable go zone. Each no-go zone must lie within the go zone boundary. Enter points in counter-clockwise order. Units: meters (m)."
     },
     "outer_diameter": {
+      "title": "Pipe outer diameter",
       "type": "number",
       "minimum": 0,
       "format": "Meters",
-      "description": "Outer diameter of pipe."
-    },
-    "pipe_configuration": {
-      "type": "string",
-      "enum": ["ONEPIPE", "TWOPIPE"]
+      "description": "Outer diameter of pipe. Units: meters (m)."
     },
     "pump_efficiency": {
+      "title": "Pump efficiency",
       "type": "number",
       "minimum": 0,
       "maximum": 1,
-      "description": "Pump efficiency as a decimal fraction (0-1)."
+      "description": "Pump efficiency as a decimal fraction (0-1). Units: dimensionless."
     },
     "performance_data": {
+      "title": "Performance data",
       "type": "object",
       "properties": {
         "a": {
+          "title": "Coefficient a",
           "type": "number",
           "format": "Watts/Watts",
-          "description": "Performance coefficient for the ratio of heat extraction to heating capacity, or the ratio of heat rejection to cooling capacity."
+          "description": "Performance coefficient for the ratio of heat extraction to heating capacity, or the ratio of heat rejection to cooling capacity. Units: watts per watt (W/W)."
         },
         "b": {
+          "title": "Coefficient b",
           "type": "number",
           "format": "Watts/Watts-Celsius",
-          "description": "Performance coefficient for the ratio of heat extraction to heating capacity, or the ratio of heat rejection to cooling capacity."
+          "description": "Performance coefficient for the ratio of heat extraction to heating capacity, or the ratio of heat rejection to cooling capacity. Units: watts per watt-degree Celsius (W/(W\u00b7\u00b0C))."
         },
         "c": {
+          "title": "Coefficient c",
           "type": "number",
           "format": "Watts/Watts-Celsius^2",
-          "description": "Performance coefficient for the ratio of heat extraction to heating capacity, or the ratio of heat rejection to cooling capacity."
+          "description": "Performance coefficient for the ratio of heat extraction to heating capacity, or the ratio of heat rejection to cooling capacity. Units: watts per watt-square-degree Celsius (W/(W\u00b7\u00b0C\u00b2))."
         },
         "c1": {
+          "title": "Coefficient c1",
           "type": "number",
           "format": "Watts",
-          "description": "Performance coefficient for the heating or cooling capacity."
+          "description": "Performance coefficient for the heating or cooling capacity. Units: watts (W)."
         },
         "c2": {
+          "title": "Coefficient c2",
           "type": "number",
           "format": "Watts/Celsius",
-          "description": "Performance coefficient for the heating or cooling capacity."
+          "description": "Performance coefficient for the heating or cooling capacity. Units: watts per degree Celsius (W/\u00b0C)."
         },
         "c3": {
+          "title": "Coefficient c3",
           "type": "number",
           "format": "Watts/Celsius^2",
-          "description": "Performance coefficient for the heating or cooling capacity."
+          "description": "Performance coefficient for the heating or cooling capacity. Units: watts per squared degree Celsius (W/\u00b0C\u00b2)."
         },
         "design_cap": {
+          "title": "Design capacity",
           "type": "number",
           "format": "Watts",
-          "description": "Design heating or cooling capacity used to develop performance coefficients."
+          "description": "Design heating or cooling capacity used to develop performance coefficients. Units: watts (W)."
         },
         "minimum_curve_temperature": {
+          "title": "Minimum performance-curve temperature",
           "type": "number",
           "format": "Degrees Celsius",
-          "description": "The minimum temperature where the given hp model is considered accurate."
+          "description": "The minimum temperature where the given hp model is considered accurate. Units: degrees Celsius (\u00b0C)."
         },
         "maximum_curve_temperature": {
+          "title": "Maximum performance-curve temperature",
           "type": "number",
           "format": "Degrees Celsius",
-          "description": "The maximum temperature where the given hp model is considered accurate."
+          "description": "The maximum temperature where the given hp model is considered accurate. Units: degrees Celsius (\u00b0C)."
         }
       },
       "required": ["a", "b", "c", "c1", "c2", "c3", "design_cap"],
       "additionalProperties": false
     },
     "points": {
+      "title": "Borehole removal points",
       "type": "array",
       "items": {
         "type": "array",
@@ -376,9 +448,10 @@
         }
       },
       "format": "Meters",
-      "description": "(x, y) coordinate points."
+      "description": "(x, y) coordinate points. Units: meters (m)."
     },
     "property_boundary": {
+      "title": "Property boundary",
       "type": "array",
       "items": {
         "type": "array",
@@ -390,50 +463,65 @@
         }
       },
       "format": "Meters",
-      "description": "(x, y) coordinate points of closed polygon defining property boundary. Points should be entered in a counter-clockwise fashion."
+      "description": "Closed polygon defining the usable go zone and property boundary. Enter points in counter-clockwise order. Units: meters (m)."
     },
     "rho_cp": {
+      "title": "Volumetric heat capacity",
       "type": "number",
       "minimum": 0,
       "format": "Joules/Meter^3-Kelvin",
-      "description": "Volumetric heat capacity."
+      "description": "Volumetric heat capacity. Units: joules per cubic meter-kelvin (J/m\u00b3\u00b7K)."
     },
     "ground_temperature_model": {
+      "title": "Seasonal ground temperature model",
       "type": "object",
       "description": "Two-harmonic undisturbed ground-temperature model used for horizontal pipe simulation.",
       "properties": {
         "amplitude_1": {
-          "type": "number"
+          "title": "Annual ground temperature amplitude",
+          "type": "number",
+          "description": "Units: degrees Celsius (\u00b0C)."
         },
         "amplitude_2": {
-          "type": "number"
+          "title": "Semiannual ground temperature amplitude",
+          "type": "number",
+          "description": "Units: degrees Celsius (\u00b0C)."
         },
         "phase_lag_1": {
-          "type": "number"
+          "title": "Annual ground temperature phase lag",
+          "type": "number",
+          "description": "Units: days."
         },
         "phase_lag_2": {
-          "type": "number"
+          "title": "Semiannual ground temperature phase lag",
+          "type": "number",
+          "description": "Units: days."
         }
       },
       "required": ["amplitude_1", "amplitude_2", "phase_lag_1", "phase_lag_2"],
       "additionalProperties": false
     },
     "soil": {
+      "title": "Ground properties",
       "type": "object",
       "description": "Ground properties shared by every vertical ground heat exchanger and horizontal pipe in the system.",
       "properties": {
         "conductivity": {
+          "title": "Thermal conductivity",
           "$ref": "#/$defs/conductivity"
         },
         "rho_cp": {
+          "title": "Volumetric heat capacity",
           "$ref": "#/$defs/rho_cp"
         },
         "undisturbed_temp": {
+          "title": "Undisturbed ground temperature",
           "type": "number",
           "format": "Centigrade",
-          "description": "Undisturbed, far-field soil temperature."
+          "description": "Undisturbed, far-field soil temperature. Units: degrees Celsius (\u00b0C)."
         },
         "ground_temperature_model": {
+          "title": "Seasonal ground temperature model",
           "$ref": "#/$defs/ground_temperature_model"
         }
       },
@@ -441,55 +529,67 @@
       "additionalProperties": false
     },
     "roughness": {
+      "title": "Pipe surface roughness",
       "type": "number",
       "minimum": 0,
       "format": "Meters",
-      "description": "Surface roughness of pipe."
+      "description": "Surface roughness of pipe. Units: meters (m)."
     },
     "simulation_years": {
+      "title": "System simulation duration",
       "type": "integer",
       "minimum": 1,
       "format": "Years",
-      "description": "Number of years used in system simulation."
+      "description": "Number of years used in system simulation. Units: years."
     },
     "sizing_years": {
+      "title": "GHE sizing duration",
       "type": "integer",
       "minimum": 1,
       "format": "Years",
-      "description": "Number of years used in ground heat exchanger sizing."
+      "description": "Number of years used in ground heat exchanger sizing. Units: years."
     },
     "shank_spacing": {
+      "title": "U-tube shank spacing",
       "type": "number",
       "minimum": 0,
       "format": "Meters",
-      "description": "Spacing between up/down legs of u-tube pipe, as measured from nearest outer surfaces of each pipe (o<-- s -->o)."
+      "description": "Spacing between up/down legs of u-tube pipe, as measured from nearest outer surfaces of each pipe (o<-- s -->o). Units: meters (m)."
     },
     "width": {
+      "title": "Property width",
       "type": "number",
       "minimum": 0,
       "format": "Meters",
-      "description": "Horizontal width of property boundary defining surface area available for ground heat exchanger."
+      "description": "Horizontal width of property boundary defining surface area available for ground heat exchanger. Units: meters (m)."
     },
     "horizontal_pipe": {
+      "title": "Horizontal pipe",
       "type": "object",
       "properties": {
         "arrangement": {
+          "title": "Arrangement",
           "const": "SINGLEUTUBE",
           "description": "Horizontal pipe arrangement specified."
         },
         "inner_diameter": {
+          "title": "Pipe inner diameter",
           "$ref": "#/$defs/inner_diameter"
         },
         "outer_diameter": {
+          "title": "Pipe outer diameter",
           "$ref": "#/$defs/outer_diameter"
         },
         "roughness": {
+          "title": "Pipe surface roughness",
           "$ref": "#/$defs/roughness"
         },
         "conductivity": {
+          "title": "Thermal conductivity",
           "$ref": "#/$defs/conductivity"
         },
         "rho_cp": {
+          "title": "Volumetric heat capacity",
           "$ref": "#/$defs/rho_cp"
         }
       },
@@ -504,9 +604,11 @@
       "additionalProperties": false
     },
     "pipe": {
+      "title": "Pipe construction",
       "type": "object",
       "properties": {
         "arrangement": {
+          "title": "Arrangement",
           "type": "string",
           "enum": [
             "SINGLEUTUBE",
@@ -519,33 +621,35 @@
       },
       "oneOf": [
         {
+          "title": "Single U-tube",
           "properties": {
             "arrangement": {
+              "title": "Arrangement",
               "const": "SINGLEUTUBE"
             },
             "inner_diameter": {
+              "title": "Pipe inner diameter",
               "$ref": "#/$defs/inner_diameter"
             },
             "outer_diameter": {
+              "title": "Pipe outer diameter",
               "$ref": "#/$defs/outer_diameter"
             },
             "shank_spacing": {
+              "title": "U-tube shank spacing",
               "$ref": "#/$defs/shank_spacing"
             },
             "roughness": {
+              "title": "Pipe surface roughness",
               "$ref": "#/$defs/roughness"
             },
             "conductivity": {
+              "title": "Thermal conductivity",
               "$ref": "#/$defs/conductivity"
             },
             "rho_cp": {
+              "title": "Volumetric heat capacity",
               "$ref": "#/$defs/rho_cp"
-            },
-            "num_pipes": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 1,
-              "description": "Number of single U-tube pipes in the borehole. Default is 1."
             }
           },
           "required": [
@@ -560,26 +664,34 @@
           "additionalProperties": false
         },
         {
+          "title": "Double U-tube in series",
           "properties": {
             "arrangement": {
+              "title": "Arrangement",
               "const": "DOUBLEUTUBESERIES"
             },
             "inner_diameter": {
+              "title": "Pipe inner diameter",
               "$ref": "#/$defs/inner_diameter"
             },
             "outer_diameter": {
+              "title": "Pipe outer diameter",
               "$ref": "#/$defs/outer_diameter"
             },
             "shank_spacing": {
+              "title": "U-tube shank spacing",
               "$ref": "#/$defs/shank_spacing"
             },
             "roughness": {
+              "title": "Pipe surface roughness",
               "$ref": "#/$defs/roughness"
             },
             "conductivity": {
+              "title": "Thermal conductivity",
               "$ref": "#/$defs/conductivity"
             },
             "rho_cp": {
+              "title": "Volumetric heat capacity",
               "$ref": "#/$defs/rho_cp"
             }
           },
@@ -595,26 +707,34 @@
           "additionalProperties": false
         },
         {
+          "title": "Double U-tube in parallel",
           "properties": {
             "arrangement": {
+              "title": "Arrangement",
               "const": "DOUBLEUTUBEPARALLEL"
             },
             "inner_diameter": {
+              "title": "Pipe inner diameter",
               "$ref": "#/$defs/inner_diameter"
             },
             "outer_diameter": {
+              "title": "Pipe outer diameter",
               "$ref": "#/$defs/outer_diameter"
             },
             "shank_spacing": {
+              "title": "U-tube shank spacing",
               "$ref": "#/$defs/shank_spacing"
             },
             "roughness": {
+              "title": "Pipe surface roughness",
               "$ref": "#/$defs/roughness"
             },
             "conductivity": {
+              "title": "Thermal conductivity",
               "$ref": "#/$defs/conductivity"
             },
             "rho_cp": {
+              "title": "Volumetric heat capacity",
               "$ref": "#/$defs/rho_cp"
             }
           },
@@ -630,50 +750,60 @@
           "additionalProperties": false
         },
         {
+          "title": "Coaxial pipe",
           "properties": {
             "arrangement": {
+              "title": "Arrangement",
               "const": "COAXIAL"
             },
             "inner_pipe_d_in": {
+              "title": "Inner pipe inside diameter",
               "type": "number",
               "minimum": 0,
               "format": "Meters",
-              "description": "Inner pipe inner diameter."
+              "description": "Inner pipe inner diameter. Units: meters (m)."
             },
             "inner_pipe_d_out": {
+              "title": "Inner pipe outside diameter",
               "type": "number",
               "minimum": 0,
               "format": "Meters",
-              "description": "Inner pipe outer diameter."
+              "description": "Inner pipe outer diameter. Units: meters (m)."
             },
             "outer_pipe_d_in": {
+              "title": "Outer pipe inside diameter",
               "type": "number",
               "minimum": 0,
               "format": "Meters",
-              "description": "Outer pipe inner diameter."
+              "description": "Outer pipe inner diameter. Units: meters (m)."
             },
             "outer_pipe_d_out": {
+              "title": "Outer pipe outside diameter",
               "type": "number",
               "minimum": 0,
               "format": "Meters",
-              "description": "Outer pipe outer diameter."
+              "description": "Outer pipe outer diameter. Units: meters (m)."
             },
             "roughness": {
+              "title": "Pipe surface roughness",
               "$ref": "#/$defs/roughness"
             },
             "conductivity_inner": {
+              "title": "Inner-pipe thermal conductivity",
               "type": "number",
               "minimum": 0,
               "format": "Watts/Meter-Kelvin",
-              "description": "Thermal conductivity of inner pipe."
+              "description": "Thermal conductivity of inner pipe. Units: watts per meter-kelvin (W/m\u00b7K)."
             },
             "conductivity_outer": {
+              "title": "Outer-pipe thermal conductivity",
               "type": "number",
               "minimum": 0,
               "format": "Watts/Meter-Kelvin",
-              "description": "Thermal conductivity of outer pipe."
+              "description": "Thermal conductivity of outer pipe. Units: watts per meter-kelvin (W/m\u00b7K)."
             },
             "rho_cp": {
+              "title": "Volumetric heat capacity",
               "$ref": "#/$defs/rho_cp"
             }
           },
@@ -691,63 +821,270 @@
           "additionalProperties": false
         }
       ]
-    }
-  },
-  "type": "object",
-  "properties": {
-    "central_loop": {
+    },
+    "network_pump": {
+      "title": "Network pump",
       "type": "object",
-      "description": "A collection of central loop properties.",
       "properties": {
-        "pipe_configuration": {
-          "$ref": "#/$defs/pipe_configuration"
-        },
-        "flow_factor": {
-          "$ref": "#/$defs/flow_factor"
-        },
-        "pump_efficiency": {
-          "$ref": "#/$defs/pump_efficiency"
-        },
-        "loop_length": {
-          "$ref": "#/$defs/loop_length"
-        },
-        "design_pressure_loss_per_meter": {
-          "$ref": "#/$defs/design_pressure_loss_per_meter"
+        "wire_to_water_efficiency": {
+          "title": "Wire-to-water efficiency",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "description": "Units: dimensionless."
         }
       },
-      "required": [
-        "pipe_configuration",
-        "flow_factor",
-        "pump_efficiency",
-        "loop_length",
-        "design_pressure_loss_per_meter"
-      ],
+      "required": ["wire_to_water_efficiency"],
       "additionalProperties": false
     },
-    "topology": {
-      "type": "array",
-      "description": "A list of name/type map objects that define the system topology.",
-      "items": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
+    "passive_hydraulics": {
+      "title": "Passive hydraulics",
+      "type": "object",
+      "description": "Passive pressure loss. A paired reference design point defines a quadratic loss curve when physical pipe geometry is not applicable.",
+      "properties": {
+        "type": {
+          "title": "Type",
+          "const": "passive"
+        },
+        "reference_mass_flow": {
+          "title": "Reference mass flow rate",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "format": "Kilograms/Second",
+          "description": "Units: kilograms per second (kg/s)."
+        },
+        "reference_pressure_drop": {
+          "title": "Reference pressure drop",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "format": "Pascals",
+          "description": "Units: pascals (Pa)."
+        }
+      },
+      "dependencies": {
+        "reference_mass_flow": ["reference_pressure_drop"],
+        "reference_pressure_drop": ["reference_mass_flow"]
+      },
+      "required": ["type"],
+      "additionalProperties": false
+    },
+    "pump_hydraulics": {
+      "title": "Pump hydraulics",
+      "type": "object",
+      "properties": {
+        "type": {
+          "title": "Type",
+          "const": "pump"
+        },
+        "pump": {
+          "title": "Pump model",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": ["type", "pump"],
+      "additionalProperties": false
+    },
+    "network_segment": {
+      "title": "Network segment",
+      "type": "object",
+      "description": "A physical distribution segment between consecutive compact-network stations.",
+      "properties": {
+        "id": {
+          "title": "Component ID",
+          "type": "string",
+          "minLength": 1
+        },
+        "from": {
+          "title": "Upstream component",
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "title": "Downstream component",
+          "type": "string",
+          "minLength": 1
+        },
+        "length": {
+          "title": "Length",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "format": "Meters",
+          "description": "Units: meters (m)."
+        },
+        "diameter": {
+          "title": "Diameter",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "format": "Meters",
+          "description": "Units: meters (m)."
+        },
+        "roughness": {
+          "title": "Pipe surface roughness",
+          "type": "number",
+          "minimum": 0,
+          "format": "Meters",
+          "description": "Units: meters (m)."
+        },
+        "minor_loss_coefficient": {
+          "title": "Minor-loss coefficient",
+          "type": "number",
+          "minimum": 0,
+          "description": "Units: dimensionless."
+        },
+        "thermal_model": {
+          "title": "Horizontal thermal model",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": ["id", "from", "to", "length"],
+      "additionalProperties": false
+    },
+    "compact_network": {
+      "title": "Compact network",
+      "type": "object",
+      "properties": {
+        "type": {
+          "title": "Type",
+          "enum": ["one_pipe", "two_pipe"]
+        },
+        "mass_flow_control": {
+          "title": "Mass-flow control",
+          "type": "object",
+          "description": "One-pipe distribution-flow control used to prescribe circulation independently of pressure loss.",
+          "properties": {
+            "distribution_flow_multiplier": {
+              "title": "Distribution flow multiplier",
+              "type": "number",
+              "minimum": 0,
+              "description": "Units: dimensionless."
+            },
+            "minimum_distribution_mass_flow": {
+              "title": "Minimum distribution mass flow rate",
+              "type": "number",
+              "minimum": 0,
+              "format": "Kilograms/Second",
+              "default": 0.1,
+              "description": "Units: kilograms per second (kg/s)."
+            }
           },
-          "type": {
+          "required": ["distribution_flow_multiplier"],
+          "additionalProperties": false
+        },
+        "stations": {
+          "title": "Ordered physical components",
+          "type": "array",
+          "description": "Components in physical distribution order. Each network component must appear exactly once.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "component": {
+                "title": "Physical component",
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["component"],
+            "additionalProperties": false
+          }
+        },
+        "pipe_defaults": {
+          "title": "Network pipe defaults",
+          "type": "object",
+          "properties": {
+            "diameter": {
+              "title": "Diameter",
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "format": "Meters",
+              "description": "Units: meters (m)."
+            },
+            "roughness": {
+              "title": "Pipe surface roughness",
+              "type": "number",
+              "minimum": 0,
+              "format": "Meters",
+              "description": "Units: meters (m)."
+            },
+            "minor_loss_coefficient": {
+              "title": "Minor-loss coefficient",
+              "type": "number",
+              "minimum": 0,
+              "description": "Units: dimensionless."
+            }
+          },
+          "required": ["diameter"],
+          "additionalProperties": false
+        },
+        "segments": {
+          "title": "Distribution pipe segments",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/network_segment"
+          }
+        },
+        "pumps": {
+          "title": "Pump model library",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/network_pump"
+          }
+        },
+        "component_pumps": {
+          "title": "Component pump assignments",
+          "type": "object",
+          "additionalProperties": {
             "type": "string",
             "minLength": 1
           }
         },
-        "required": ["name", "type"],
-        "additionalProperties": false
-      }
+        "distribution_pump": {
+          "title": "Distribution pump",
+          "$ref": "#/$defs/pump_hydraulics"
+        }
+      },
+      "required": [
+        "type",
+        "stations",
+        "pipe_defaults",
+        "segments",
+        "pumps",
+        "component_pumps"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "title": "Type",
+                "const": "one_pipe"
+              }
+            }
+          },
+          "then": {
+            "required": ["distribution_pump", "mass_flow_control"]
+          }
+        }
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "network": {
+      "title": "Distribution network",
+      "description": "A one-pipe or two-pipe unidirectional district distribution network.",
+      "$ref": "#/$defs/compact_network"
     },
     "fluid": {
+      "title": "Loop fluid",
       "type": "object",
       "description": "A fluid definition object.",
       "properties": {
         "fluid_name": {
+          "title": "Fluid type",
           "type": "string",
           "enum": [
             "WATER",
@@ -759,43 +1096,52 @@
           "description": "Circulation fluid type."
         },
         "concentration_percent": {
+          "title": "Antifreeze concentration",
           "type": "number",
           "maximum": 60,
           "minimum": 0,
           "format": "Percent",
-          "description": "Mass fraction concentration percent of circulation fluid. e.g.: '0' indicates pure water; '20' indicates 20% antifreeze, 80% pure water."
+          "description": "Mass fraction concentration percent of circulation fluid. e.g.: '0' indicates pure water; '20' indicates 20% antifreeze, 80% pure water. Units: percent by mass (%)."
         },
         "temperature": {
+          "title": "Fluid property temperature",
           "type": "number",
           "format": "Centigrade",
-          "description": "Average design fluid temperature at peak conditions."
+          "description": "Average design fluid temperature at peak conditions. Units: degrees Celsius (\u00b0C)."
         }
       },
       "required": ["fluid_name", "concentration_percent", "temperature"],
       "additionalProperties": false
     },
     "soil": {
+      "title": "Ground properties",
       "$ref": "#/$defs/soil"
     },
     "heat_pump": {
+      "title": "Heat pump performance maps",
       "type": "object",
       "description": "A collection of data that define a heat pump.",
       "additionalProperties": {
         "type": "object",
         "properties": {
           "cooling_performance": {
+            "title": "Cooling performance coefficients",
             "$ref": "#/$defs/performance_data"
           },
           "heating_performance": {
+            "title": "Heating performance coefficients",
             "$ref": "#/$defs/performance_data"
           },
           "design_flow_rate": {
+            "title": "Design mass flow rate",
             "$ref": "#/$defs/design_flow_rate"
           },
           "design_pressure_loss": {
+            "title": "Design pressure loss",
             "$ref": "#/$defs/design_pressure_loss"
           },
           "pump_efficiency": {
+            "title": "Pump efficiency",
             "$ref": "#/$defs/pump_efficiency"
           }
         },
@@ -810,119 +1156,196 @@
       }
     },
     "building": {
+      "title": "Buildings and heat pump loads",
       "type": "object",
-      "description": "A collection of objects that define a building.",
+      "description": "Installed heat pump and building-load components referenced by the ordered district network.",
       "additionalProperties": {
         "type": "object",
         "properties": {
           "max_eft": {
+            "title": "Maximum Allowable Heat Pump Entering Fluid Temperature",
             "$ref": "#/$defs/max_eft"
           },
           "min_eft": {
+            "title": "Minimum Allowable Heat Pump Entering Fluid Temperature",
             "$ref": "#/$defs/min_eft"
           },
+          "heating_cop_evaluation_temperature": {
+            "title": "Heating COP Evaluation Temperature",
+            "$ref": "#/$defs/heating_cop_evaluation_temperature"
+          },
+          "cooling_cop_evaluation_temperature": {
+            "title": "Cooling COP Evaluation Temperature",
+            "$ref": "#/$defs/cooling_cop_evaluation_temperature"
+          },
           "cooling_load": {
+            "title": "Cooling load",
             "$ref": "#/$defs/load_inputs"
           },
           "heating_load": {
+            "title": "Heating load",
             "$ref": "#/$defs/load_inputs"
           },
           "total_load": {
+            "title": "Combined building load",
             "$ref": "#/$defs/load_inputs"
           }
         },
-        "oneOf": [
+        "anyOf": [
           {
+            "title": "Separate heating and cooling loads",
             "properties": {
               "cooling_load": {
+                "title": "Cooling load",
                 "$ref": "#/$defs/load_inputs"
               },
               "heating_load": {
+                "title": "Heating load",
                 "$ref": "#/$defs/load_inputs"
               },
               "max_eft": {
+                "title": "Maximum Allowable Heat Pump Entering Fluid Temperature",
                 "$ref": "#/$defs/max_eft"
               },
               "min_eft": {
+                "title": "Minimum Allowable Heat Pump Entering Fluid Temperature",
                 "$ref": "#/$defs/min_eft"
               }
             },
             "required": ["cooling_load", "heating_load"],
-            "additionalProperties": false
+            "additionalProperties": true
           },
           {
+            "title": "Combined building load",
             "properties": {
               "total_load": {
+                "title": "Combined building load",
                 "$ref": "#/$defs/load_inputs"
               },
               "max_eft": {
+                "title": "Maximum Allowable Heat Pump Entering Fluid Temperature",
                 "$ref": "#/$defs/max_eft"
               },
               "min_eft": {
+                "title": "Minimum Allowable Heat Pump Entering Fluid Temperature",
                 "$ref": "#/$defs/min_eft"
               }
             },
             "required": ["total_load"],
-            "additionalProperties": false
+            "additionalProperties": true
           },
           {
+            "title": "Cooling load only",
             "properties": {
               "cooling_load": {
+                "title": "Cooling load",
                 "$ref": "#/$defs/load_inputs"
               },
               "max_eft": {
+                "title": "Maximum Allowable Heat Pump Entering Fluid Temperature",
                 "$ref": "#/$defs/max_eft"
               },
               "min_eft": {
+                "title": "Minimum Allowable Heat Pump Entering Fluid Temperature",
                 "$ref": "#/$defs/min_eft"
               }
             },
             "required": ["cooling_load"],
-            "additionalProperties": false
+            "additionalProperties": true
           },
           {
+            "title": "Heating load only",
             "properties": {
               "heating_load": {
+                "title": "Heating load",
                 "$ref": "#/$defs/load_inputs"
               },
               "max_eft": {
+                "title": "Maximum Allowable Heat Pump Entering Fluid Temperature",
                 "$ref": "#/$defs/max_eft"
               },
               "min_eft": {
+                "title": "Minimum Allowable Heat Pump Entering Fluid Temperature",
                 "$ref": "#/$defs/min_eft"
               }
             },
             "required": ["heating_load"],
-            "additionalProperties": false
+            "additionalProperties": true
           }
         ],
-        "additionalProperties": true
+        "additionalProperties": false,
+        "description": ""
       }
     },
     "ground_heat_exchanger": {
+      "title": "Ground heat exchangers",
       "type": "object",
-      "description": "A collection of objects that define a ground heat exchanger system.",
+      "description": "Ground heat exchanger components. Optional hydraulics define a component-level pressure loss.",
       "additionalProperties": {
         "type": "object",
         "properties": {
+          "hydraulics": {
+            "title": "Component hydraulics",
+            "$ref": "#/$defs/passive_hydraulics"
+          },
           "flow_rate": {
+            "title": "Design flow per borehole",
             "type": "number",
             "minimum": 0,
             "format": "Liters/Second",
-            "description": "Volumetric design flow rate. Value specified will be either the system or per-borehole flow rate depending on the 'flow_type' set."
+            "description": "Volumetric design flow rate per borehole. Units: liters per second (L/s)."
           },
-          "flow_type": {
-            "type": "string",
-            "enum": ["BOREHOLE", "SYSTEM"],
-            "description": "Indicates whether the design volumetric flow rate set on on a per-borehole or system basis."
+          "circulation_pump": {
+            "title": "Circulation pump",
+            "type": "object",
+            "description": "Optional GHE-internal circulation pump, hydraulically separate from network flow.",
+            "properties": {
+              "reference_pressure_drop": {
+                "title": "Reference pressure drop",
+                "type": "number",
+                "minimum": 0,
+                "format": "Pascals",
+                "description": "Pressure loss at the GHE design flow for the borefield and its local headers only; distribution piping is excluded. Units: pascals (Pa)."
+              },
+              "wire_to_water_efficiency": {
+                "title": "Wire-to-water efficiency",
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 1,
+                "description": "Units: dimensionless."
+              },
+              "pressure_drop_multiplier": {
+                "title": "Pressure-drop multiplier",
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "description": "Multiplicative factor applied to the reference pressure drop. Units: dimensionless."
+              },
+              "minimum_flow_fraction": {
+                "title": "Minimum GHE flow fraction",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.05,
+                "description": "Units: dimensionless."
+              }
+            },
+            "required": [
+              "reference_pressure_drop",
+              "wire_to_water_efficiency",
+              "pressure_drop_multiplier"
+            ],
+            "additionalProperties": false
           },
           "grout": {
+            "title": "Borehole grout",
             "type": "object",
             "properties": {
               "conductivity": {
+                "title": "Thermal conductivity",
                 "$ref": "#/$defs/conductivity"
               },
               "rho_cp": {
+                "title": "Volumetric heat capacity",
                 "$ref": "#/$defs/rho_cp"
               }
             },
@@ -930,31 +1353,37 @@
             "additionalProperties": false
           },
           "pipe": {
+            "title": "Pipe construction",
             "$ref": "#/$defs/pipe"
           },
           "borehole": {
+            "title": "Borehole",
             "type": "object",
             "properties": {
               "buried_depth": {
+                "title": "Borehole burial depth",
                 "type": "number",
                 "minimum": 0,
                 "format": "Meters",
-                "description": "Depth of top of borehole below the ground surface."
+                "description": "Depth of top of borehole below the ground surface. Units: meters (m)."
               },
               "diameter": {
+                "title": "Diameter",
                 "type": "number",
                 "format": "Meters",
-                "description": "Diameter of borehole."
+                "description": "Diameter of borehole. Units: meters (m)."
               }
             },
             "required": ["buried_depth", "diameter"],
             "additionalProperties": false
           },
           "pre_designed": {
+            "title": "Pre-designed borefield",
             "type": "object",
             "description": "Data related to a pre-designed borehole field, used in cases where the field arrangement is known ahead of time. GHEDesigner will provide a g-function calculation for the specified field.",
             "properties": {
               "arrangement": {
+                "title": "Arrangement",
                 "type": "string",
                 "enum": ["MANUAL", "RECTANGLE"],
                 "description": "Pipe arrangement specified."
@@ -962,29 +1391,35 @@
             },
             "oneOf": [
               {
+                "title": "Manual borefield coordinates",
                 "properties": {
                   "arrangement": {
+                    "title": "Arrangement",
                     "const": "MANUAL"
                   },
                   "area": {
+                    "title": "Borefield plan area",
                     "type": "number",
                     "minimum": 0,
                     "format": "Square Meters",
-                    "description": "The top-down area that can be associated with this manual placement of boreholes. This will be used for load splitting (between GHEs) during system simulations."
+                    "description": "Effective top-down area associated with this manual borefield. Used only by the penalty baseline in specialized multi-GHE sizing; it does not affect g-function generation or normal district simulation. Units: square meters (m\u00b2)."
                   },
                   "H": {
+                    "title": "Borehole active length",
                     "$ref": "#/$defs/H"
                   },
                   "x": {
+                    "title": "Borehole x coordinates",
                     "type": "array",
-                    "description": "For MANUAL arrangement, this provides an array of x coordinate positions, one for each borehole in the field.",
+                    "description": "For MANUAL arrangement, this provides an array of x coordinate positions, one for each borehole in the field. Units: meters (m).",
                     "items": {
                       "type": "number"
                     }
                   },
                   "y": {
+                    "title": "Borehole y coordinates",
                     "type": "array",
-                    "description": "For MANUAL arrangement, this provides an array of y coordinate positions, one for each borehole in the field.",
+                    "description": "For MANUAL arrangement, this provides an array of y coordinate positions, one for each borehole in the field. Units: meters (m).",
                     "items": {
                       "type": "number"
                     }
@@ -994,34 +1429,41 @@
                 "additionalProperties": false
               },
               {
+                "title": "Rectangular borefield",
                 "properties": {
                   "arrangement": {
+                    "title": "Arrangement",
                     "const": "RECTANGLE"
                   },
                   "H": {
+                    "title": "Borehole active length",
                     "$ref": "#/$defs/H"
                   },
                   "boreholes_in_x_dimension": {
+                    "title": "Number of boreholes in the x direction",
                     "type": "integer",
                     "minimum": 0,
-                    "description": "Number of boreholes in the x direction of the field, dimensionless."
+                    "description": "Number of boreholes in the x direction of the field. Units: dimensionless."
                   },
                   "boreholes_in_y_dimension": {
+                    "title": "Number of boreholes in the y direction",
                     "type": "integer",
                     "minimum": 0,
-                    "description": "Number of boreholes in the y direction of the field, dimensionless."
+                    "description": "Number of boreholes in the y direction of the field. Units: dimensionless."
                   },
                   "spacing_in_x_dimension": {
+                    "title": "Borehole spacing in the x direction",
                     "type": "number",
                     "minimum": 0,
                     "format": "Meters",
-                    "description": "Borehole spacing in the x direction of the field, in meters (ignored if boreholes_in_x_dimension = 1)."
+                    "description": "Borehole spacing in the x direction of the field, in meters (ignored if boreholes_in_x_dimension = 1). Units: meters (m)."
                   },
                   "spacing_in_y_dimension": {
+                    "title": "Borehole spacing in the y direction",
                     "type": "number",
                     "minimum": 0,
                     "format": "Meters",
-                    "description": "Borehole spacing in the y direction of the field, in meters (ignored if boreholes_in_y_dimension = 1)."
+                    "description": "Borehole spacing in the y direction of the field, in meters (ignored if boreholes_in_y_dimension = 1). Units: meters (m)."
                   }
                 },
                 "required": [
@@ -1037,9 +1479,11 @@
             ]
           },
           "geometric_constraints": {
+            "title": "Borefield geometric constraints",
             "type": "object",
             "properties": {
               "method": {
+                "title": "Borefield layout method",
                 "type": "string",
                 "enum": [
                   "BIRECTANGLE",
@@ -1054,23 +1498,31 @@
             },
             "oneOf": [
               {
+                "title": "Bi-rectangle",
                 "properties": {
                   "method": {
+                    "title": "Borefield layout method",
                     "const": "BIRECTANGLE"
                   },
                   "length": {
-                    "$ref": "#/$defs/length"
+                    "title": "Length",
+                    "$ref": "#/$defs/length",
+                    "description": "Units: meters (m)."
                   },
                   "width": {
+                    "title": "Property width",
                     "$ref": "#/$defs/width"
                   },
                   "b_min": {
+                    "title": "Minimum borehole spacing",
                     "$ref": "#/$defs/b_min"
                   },
                   "b_max_x": {
+                    "title": "Maximum borehole spacing in the x direction",
                     "$ref": "#/$defs/b_max_x"
                   },
                   "b_max_y": {
+                    "title": "Maximum borehole spacing in the y direction",
                     "$ref": "#/$defs/b_max_y"
                   }
                 },
@@ -1085,41 +1537,54 @@
                 "additionalProperties": false
               },
               {
+                "title": "Constrained bi-rectangle",
                 "properties": {
                   "method": {
+                    "title": "Borefield layout method",
                     "const": "BIRECTANGLECONSTRAINED"
                   },
                   "b_min": {
+                    "title": "Minimum borehole spacing",
                     "$ref": "#/$defs/b_min"
                   },
                   "b_max_x": {
+                    "title": "Maximum borehole spacing in the x direction",
                     "$ref": "#/$defs/b_max_x"
                   },
                   "b_max_y": {
+                    "title": "Maximum borehole spacing in the y direction",
                     "$ref": "#/$defs/b_max_y"
                   },
                   "property_boundary": {
+                    "title": "Property boundary",
                     "$ref": "#/$defs/property_boundary"
                   },
                   "no_go_boundaries": {
+                    "title": "No-go zone boundaries",
                     "$ref": "#/$defs/no_go_boundaries"
                   },
                   "borehole_removal_options": {
+                    "title": "Borehole removal options",
                     "properties": {
                       "borehole_removal_method": {
+                        "title": "Borehole removal method",
                         "$ref": "#/$defs/borehole_removal_method"
                       }
                     },
                     "oneOf": [
                       {
+                        "title": "Remove using line segments",
                         "properties": {
                           "borehole_removal_method": {
+                            "title": "Borehole removal method",
                             "const": "LINE_SEGMENTS"
                           },
                           "line_segments": {
+                            "title": "Borehole removal line segments",
                             "$ref": "#/$defs/line_segments"
                           },
                           "points": {
+                            "title": "Borehole removal points",
                             "$ref": "#/$defs/points"
                           }
                         },
@@ -1130,8 +1595,10 @@
                         "additionalProperties": false
                       },
                       {
+                        "title": "Radial removal",
                         "properties": {
                           "borehole_removal_method": {
+                            "title": "Borehole removal method",
                             "const": "RADIAL"
                           }
                         },
@@ -1139,8 +1606,10 @@
                         "additionalProperties": false
                       },
                       {
+                        "title": "Right-and-top removal",
                         "properties": {
                           "borehole_removal_method": {
+                            "title": "Borehole removal method",
                             "const": "RIGHT_TOP"
                           }
                         },
@@ -1154,23 +1623,31 @@
                 "additionalProperties": false
               },
               {
+                "title": "Bi-zoned rectangle",
                 "properties": {
                   "method": {
+                    "title": "Borefield layout method",
                     "const": "BIZONEDRECTANGLE"
                   },
                   "length": {
-                    "$ref": "#/$defs/length"
+                    "title": "Length",
+                    "$ref": "#/$defs/length",
+                    "description": "Units: meters (m)."
                   },
                   "width": {
+                    "title": "Property width",
                     "$ref": "#/$defs/width"
                   },
                   "b_min": {
+                    "title": "Minimum borehole spacing",
                     "$ref": "#/$defs/b_min"
                   },
                   "b_max_x": {
+                    "title": "Maximum borehole spacing in the x direction",
                     "$ref": "#/$defs/b_max_x"
                   },
                   "b_max_y": {
+                    "title": "Maximum borehole spacing in the y direction",
                     "$ref": "#/$defs/b_max_y"
                   }
                 },
@@ -1185,38 +1662,50 @@
                 "additionalProperties": false
               },
               {
+                "title": "Near-square",
                 "properties": {
                   "method": {
+                    "title": "Borefield layout method",
                     "const": "NEARSQUARE"
                   },
                   "length": {
-                    "$ref": "#/$defs/length"
+                    "title": "Length",
+                    "$ref": "#/$defs/length",
+                    "description": "Units: meters (m)."
                   },
                   "b": {
+                    "title": "Coefficient b",
                     "type": "number",
                     "minimum": 0,
                     "format": "Meters",
-                    "description": "Borehole-to-borehole spacing."
+                    "description": "Borehole-to-borehole spacing. Units: meters (m)."
                   }
                 },
                 "required": ["length", "b", "method"],
                 "additionalProperties": false
               },
               {
+                "title": "Rectangular borefield",
                 "properties": {
                   "method": {
+                    "title": "Borefield layout method",
                     "const": "RECTANGLE"
                   },
                   "length": {
-                    "$ref": "#/$defs/length"
+                    "title": "Length",
+                    "$ref": "#/$defs/length",
+                    "description": "Units: meters (m)."
                   },
                   "width": {
+                    "title": "Property width",
                     "$ref": "#/$defs/width"
                   },
                   "b_min": {
+                    "title": "Minimum borehole spacing",
                     "$ref": "#/$defs/b_min"
                   },
                   "b_max": {
+                    "title": "Maximum borehole spacing",
                     "$ref": "#/$defs/b_max"
                   }
                 },
@@ -1224,57 +1713,68 @@
                 "additionalProperties": false
               },
               {
+                "title": "Row-wise",
                 "properties": {
                   "method": {
+                    "title": "Borefield layout method",
                     "const": "ROWWISE"
                   },
                   "min_spacing": {
+                    "title": "Minimum row spacing",
                     "type": "number",
                     "minimum": 0,
                     "format": "Meters",
-                    "description": "The smallest minimum spacing that will be used to generate a RowWise field."
+                    "description": "The smallest minimum spacing that will be used to generate a RowWise field. Units: meters (m)."
                   },
                   "max_spacing": {
+                    "title": "Maximum row spacing",
                     "type": "number",
                     "minimum": 0,
                     "format": "Meters",
-                    "description": "The largest minimum spacing that will be used to generate a RowWise field."
+                    "description": "The largest minimum spacing that will be used to generate a RowWise field. Units: meters (m)."
                   },
                   "spacing_step": {
+                    "title": "Row spacing increment",
                     "type": "number",
                     "minimum": 0,
                     "format": "Meters",
-                    "description": "The distance in spacing from the design found in the first part of first search to exhaustively check in the second part."
+                    "description": "The distance in spacing from the design found in the first part of first search to exhaustively check in the second part. Units: meters (m)."
                   },
                   "min_rotation": {
+                    "title": "Minimum row rotation",
                     "type": "number",
                     "format": "Degrees",
                     "maximum": 90,
                     "minimum": -90,
-                    "description": "The minimum rotation of the rows of each field relative to horizontal that will be used in the search."
+                    "description": "The minimum rotation of the rows of each field relative to horizontal that will be used in the search. Units: degrees (\u00b0)."
                   },
                   "max_rotation": {
+                    "title": "Maximum row rotation",
                     "type": "number",
                     "format": "Degrees",
                     "maximum": 90,
                     "minimum": -90,
-                    "description": "The maximum rotation of the rows of each field relative to horizontal that will be used in the search."
+                    "description": "The maximum rotation of the rows of each field relative to horizontal that will be used in the search. Units: degrees (\u00b0)."
                   },
                   "rotate_step": {
+                    "title": "Row rotation increment",
                     "type": "number",
                     "format": "Degrees",
-                    "description": "Step size for field rotation search."
+                    "description": "Step size for field rotation search. Units: degrees (\u00b0)."
                   },
                   "property_boundary": {
+                    "title": "Property boundary",
                     "$ref": "#/$defs/property_boundary"
                   },
                   "no_go_boundaries": {
+                    "title": "No-go zone boundaries",
                     "$ref": "#/$defs/no_go_boundaries"
                   },
                   "perimeter_spacing_ratio": {
+                    "title": "Perimeter spacing ratio",
                     "type": "number",
                     "minimum": 0,
-                    "description": "The ratio between the minimum spacing between boreholes placed along the property and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes, dimensionless."
+                    "description": "The ratio between the minimum spacing between boreholes placed along the property and no-go zones and the standard borehole-to-borehole spacing used for internal boreholes. Units: dimensionless."
                   }
                 },
                 "required": [
@@ -1291,72 +1791,88 @@
             ]
           },
           "design": {
+            "title": "GHE design limits",
             "type": "object",
             "properties": {
               "max_eft": {
+                "title": "Maximum entering fluid temperature",
                 "$ref": "#/$defs/max_eft"
               },
               "min_eft": {
+                "title": "Minimum entering fluid temperature",
                 "$ref": "#/$defs/min_eft"
               },
               "max_boreholes": {
+                "title": "Maximum number of boreholes",
                 "type": "number",
-                "description": "Maximum number of boreholes in search. Optional. Applies to rectangular and near-square design algorithms. If unspecified, the search space will be bounded by the size of the GHE boundary."
+                "description": "Maximum number of boreholes in search. Optional. Applies to rectangular and near-square design algorithms. If unspecified, the search space will be bounded by the size of the GHE boundary. Units: dimensionless."
               },
               "continue_if_design_unmet": {
+                "title": "Continue when design limits are unmet",
                 "type": "boolean",
                 "default": false,
                 "description": "Causes to return the best available borehole field configuration rather than fail if design conditions are unmet. Optional. Default False."
               },
               "max_height": {
+                "title": "Maximum borehole active length",
                 "type": "number",
                 "minimum": 0,
                 "format": "Meters",
-                "description": "Maximum height, or active length, of each borehole heat exchanger."
+                "description": "Maximum height, or active length, of each borehole heat exchanger. Units: meters (m)."
               },
               "min_height": {
+                "title": "Minimum borehole active length",
                 "type": "number",
                 "minimum": 0,
                 "format": "Meters",
-                "description": "Minimum height, or active length, of each borehole heat exchanger."
+                "description": "Minimum height, or active length, of each borehole heat exchanger. Units: meters (m)."
               }
             },
             "required": ["max_eft", "min_eft", "max_height", "min_height"],
             "additionalProperties": false
           },
           "loads": {
+            "title": "Ground loads",
             "$ref": "#/$defs/load_inputs"
           }
         },
         "anyOf": [
           {
+            "title": "Ground heat exchangers option 1",
             "required": ["pre_designed"]
           },
           {
+            "title": "Ground heat exchangers option 2",
             "required": ["geometric_constraints", "design"]
           }
         ],
-        "required": ["grout", "pipe", "borehole", "flow_rate", "flow_type"],
-        "additionalProperties": false
+        "required": ["grout", "pipe", "borehole", "flow_rate"],
+        "additionalProperties": false,
+        "description": ""
       }
     },
     "simulation_control": {
+      "title": "Simulation controls",
       "type": "object",
       "description": "",
       "properties": {
         "simulation_years": {
+          "title": "System simulation duration",
           "$ref": "#/$defs/simulation_years"
         },
         "sizing_years": {
+          "title": "GHE sizing duration",
           "$ref": "#/$defs/sizing_years"
         },
         "load_method": {
+          "title": "Load time-step method",
           "type": "string",
           "enum": ["HYBRID", "HOURLY", "HOURLYLOADAGG"],
           "default": "HYBRID",
           "description": "Load method used for simulations and sizing. HYBRID aggregates loads before GHE calculations; HOURLY uses hourly loads directly."
         },
         "search_method": {
+          "title": "System GHE search method",
           "type": "string",
           "enum": [
             "GLOBAL_BUPCRS",
@@ -1369,23 +1885,27 @@
           "description": "Defines the type of design method to be used for the system GHEs. Use \"SIMULATION_ONLY\" if you only want to simulate pre-designed GHEs."
         },
         "constant_cop": {
+          "title": "Use constant COP",
           "type": "boolean",
           "default": true,
           "description": "Determines if system heat pump loads are converted with fixed COP behavior instead of full heat pump performance calculations."
         },
         "exhaustive_search": {
+          "title": "Use exhaustive search",
           "type": "boolean",
           "default": false,
           "description": "Determines if the GHE design algorithm will perform an exhaustive search or a faster search (which depends on the search method type)."
         },
         "horizontal_segments": {
+          "title": "Horizontal pipe segments",
           "type": "integer",
           "minimum": 1,
           "format": "-",
           "default": 3,
-          "description": "Number of segments for horizontal buried pipe simulations."
+          "description": "Number of segments for horizontal buried pipe simulations. Units: dimensionless."
         },
         "horizontal_simulation_considered": {
+          "title": "Include horizontal pipe heat transfer",
           "type": "boolean",
           "default": false,
           "description": "Determines if the simulation accounts for thermal effects from horizontal_piping components using soil.ground_temperature_model."
@@ -1393,8 +1913,10 @@
       },
       "oneOf": [
         {
+          "title": "Simulation controls option 1",
           "properties": {
             "simulation_years": {
+              "title": "System simulation duration",
               "$ref": "#/$defs/simulation_years"
             }
           },
@@ -1402,8 +1924,10 @@
           "additionalProperties": true
         },
         {
+          "title": "Simulation controls option 2",
           "properties": {
             "sizing_years": {
+              "title": "GHE sizing duration",
               "$ref": "#/$defs/sizing_years"
             }
           },
@@ -1414,30 +1938,43 @@
       "additionalProperties": false
     },
     "source_sink_heat_exchanger": {
+      "title": "Source and sink heat exchangers",
       "type": "object",
-      "description": "A collection of data that define a source-sink heat exchanger.",
+      "description": "Source/sink heat exchanger components. Optional hydraulics define a component-level pressure loss.",
       "additionalProperties": {
         "type": "object",
         "properties": {
+          "hydraulics": {
+            "title": "Component hydraulics",
+            "$ref": "#/$defs/passive_hydraulics"
+          },
           "effectiveness": {
+            "title": "Heat-exchanger effectiveness",
             "type": "number",
             "minimum": 0,
-            "maximum": 1
+            "maximum": 1,
+            "description": "Units: dimensionless."
           },
           "source_temperature": {
-            "type": "number"
+            "title": "Source-side temperature",
+            "type": "number",
+            "description": "Units: degrees Celsius (\u00b0C)."
           },
           "source_flow_rate": {
+            "title": "Source-side flow rate",
             "type": "number",
-            "minimum": 0
+            "minimum": 0,
+            "description": "Units: kilograms per second (kg/s)."
           },
           "cut_in_temperature": {
+            "title": "Cut-in temperature",
             "type": "number",
-            "description": "Start threshold applied to the heat exchanger inlet temperature at the beginning of a timestep. A source starts below this value; a sink starts above it."
+            "description": "Start threshold applied to the heat exchanger inlet temperature at the beginning of a timestep. A source starts below this value; a sink starts above it. Units: degrees Celsius (\u00b0C)."
           },
           "cut_out_temperature": {
+            "title": "Cut-out temperature",
             "type": "number",
-            "description": "Stop threshold applied to the heat exchanger inlet temperature at the beginning of a timestep. A source stops above this value; a sink stops below it. A cut-out above cut-in defines a source; the reverse defines a sink."
+            "description": "Stop threshold applied to the heat exchanger inlet temperature at the beginning of a timestep. A source stops above this value; a sink stops below it. A cut-out above cut-in defines a source; the reverse defines a sink. Units: degrees Celsius (\u00b0C)."
           }
         },
         "required": [
@@ -1447,15 +1984,18 @@
           "cut_in_temperature",
           "cut_out_temperature"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": ""
       }
     },
     "version": {
+      "title": "Input schema version",
       "type": "integer",
-      "const": 3,
-      "description": "An integer version ID for this input structure, for future-proofing."
+      "const": 4,
+      "description": "An integer version ID for this input structure, for future-proofing. Units: dimensionless."
     },
     "horizontal_piping": {
+      "title": "Horizontal piping models",
       "type": "object",
       "description": "Collection of data for horizontal piping objects.",
       "additionalProperties": {
@@ -1463,25 +2003,34 @@
         "description": "Horizontal pipe object.",
         "properties": {
           "length": {
+            "title": "Length",
             "type": "number",
-            "minimum": 0
+            "minimum": 0,
+            "description": "Units: meters (m)."
           },
           "trench_depth": {
+            "title": "Buried pipe depth",
             "type": "number",
-            "minimum": 0
+            "minimum": 0,
+            "description": "Units: meters (m)."
           },
           "coupled_to": {
+            "title": "Coupled horizontal pipe",
             "type": "string",
             "minLength": 1
           },
           "counter_flow": {
+            "title": "Counterflow arrangement",
             "type": "boolean"
           },
           "spacing": {
+            "title": "Horizontal pipe spacing",
             "type": "number",
-            "exclusiveMinimum": 0
+            "exclusiveMinimum": 0,
+            "description": "Units: meters (m)."
           },
           "pipe": {
+            "title": "Pipe construction",
             "$ref": "#/$defs/horizontal_pipe"
           }
         },
@@ -1490,9 +2039,18 @@
           {
             "if": {
               "anyOf": [
-                { "required": ["coupled_to"] },
-                { "required": ["spacing"] },
-                { "required": ["counter_flow"] }
+                {
+                  "title": "Horizontal piping models option 1",
+                  "required": ["coupled_to"]
+                },
+                {
+                  "title": "Horizontal piping models option 2",
+                  "required": ["spacing"]
+                },
+                {
+                  "title": "Horizontal piping models option 3",
+                  "required": ["counter_flow"]
+                }
               ]
             },
             "then": {
@@ -1504,6 +2062,6 @@
       }
     }
   },
-  "required": ["topology", "fluid", "soil", "ground_heat_exchanger", "version"],
+  "required": ["fluid", "soil", "ground_heat_exchanger", "version"],
   "additionalProperties": false
 }

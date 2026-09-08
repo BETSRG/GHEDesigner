@@ -1,11 +1,12 @@
 """
 Run with:
-    pip install dash plotly pandas plotly
+    pip install dash plotly pandas
     python app.py
 
 Features
 --------
 - Any number of panes (subplots), any number of series per pane.
+- Native file-browser selection or manual path entry for results CSVs.
 - Fixed plot-area sizing: legend outside, fixed right margin.
 - Live CSV polling + manual reload; zoom/pan preserved.
 - Linked x-axis: zoom/pan any pane keeps all panes aligned.
@@ -21,11 +22,7 @@ import plotly.graph_objects as go
 from dash import ALL, Dash, Input, Output, State, dcc, html, no_update
 from plotly.subplots import make_subplots
 
-# ----------------------------------------------------------------------
-# Data sources (edit paths as needed)
-# ----------------------------------------------------------------------
-# Defaults to the example CSVs placed next to this app.py.
-HERE = Path(__file__).resolve().parent
+from ghedesigner.gui.file_picker import PathChooserError, choose_path
 
 
 def dataset_label(path: Path) -> str:
@@ -34,14 +31,6 @@ def dataset_label(path: Path) -> str:
     label = label.replace("ghe", "GHE")
     return label.replace("_", " ")
 
-
-def discover_data_files() -> dict[str, Path]:
-    test_data = HERE / "test_data"
-    files = sorted(test_data.glob("simulate*.csv"), key=lambda p: p.stem)
-    return {dataset_label(path): path for path in files}
-
-
-DATA_FILES: dict[str, Path] = discover_data_files()
 
 X_COL = "Time [hr]"
 
@@ -70,6 +59,14 @@ def load_dataset(path: str | Path) -> pd.DataFrame:
     if X_COL not in df.columns:
         raise ValueError(f"Missing required column '{X_COL}' in {p}")
     return df
+
+
+def register_data_file(selected_path: str | Path) -> tuple[dict[str, str], str]:
+    """Validate a results CSV and return it as the only registered file."""
+    path = Path(selected_path).expanduser().resolve()
+    load_dataset(path)
+    label = dataset_label(path)
+    return {label: str(path)}, label
 
 
 # ----------------------------------------------------------------------
@@ -249,33 +246,63 @@ app.title = "District Time-Series Dashboard"
 app.layout = html.Div(
     style={"fontFamily": "system-ui, sans-serif", "margin": "20px"},
     children=[
+        dcc.Store(id="data-files-store", data={}),
+        dcc.Store(id="selected-dataset-store"),
         dcc.Store(id="datasets-store"),
         dcc.Store(id="columns-store"),
         dcc.Store(id="panes-store"),
         dcc.Store(id="axis-store"),
-        dcc.Interval(id="poll-interval", interval=300000, n_intervals=0),  # 2s polling
+        dcc.Interval(id="poll-interval", interval=300000, n_intervals=0),  # 5-minute polling
         html.H1("District Time-Series Dashboard", style={"marginBottom": "0.25rem"}),
         html.P("Multi-pane time-series explorer (linked x-axis, live reload).", style={"color": "#555"}),
         html.Div(
             style={
+                "border": "1px solid #ddd",
+                "borderRadius": "8px",
+                "padding": "0.75rem",
+                "marginBottom": "1rem",
+            },
+            children=[
+                html.Label("Results File", htmlFor="results-file-path", style=CONTROL_LABEL_STYLE),
+                html.Div(
+                    style={
+                        "display": "grid",
+                        "gridTemplateColumns": "minmax(0, 1fr) auto auto",
+                        "gap": "0.5rem",
+                        "alignItems": "center",
+                    },
+                    children=[
+                        dcc.Input(
+                            id="results-file-path",
+                            type="text",
+                            placeholder="Choose or enter a results CSV path",
+                            style={"width": "100%", "height": "2.4rem", "boxSizing": "border-box"},
+                        ),
+                        html.Button("Browse…", id="browse-results", n_clicks=0, style={"height": "2.4rem"}),
+                        html.Button(
+                            "Load Results File",
+                            id="load-results-path",
+                            n_clicks=0,
+                            style={"height": "2.4rem"},
+                        ),
+                    ],
+                ),
+                html.Div(
+                    "Browse opens the file explorer on the computer running this app.",
+                    id="file-selection-status",
+                    style={"color": "#666", "fontSize": "0.9rem", "marginTop": "0.4rem"},
+                ),
+            ],
+        ),
+        html.Div(
+            style={
                 "display": "grid",
-                "gridTemplateColumns": "repeat(4, minmax(240px, 1fr))",
+                "gridTemplateColumns": "repeat(auto-fit, minmax(220px, 1fr))",
                 "gap": "1rem",
                 "alignItems": "end",
                 "marginBottom": "0.75rem",
             },
             children=[
-                html.Div(
-                    children=[
-                        html.Label("Dataset", style={"fontWeight": "600"}),
-                        dcc.Dropdown(
-                            id="dataset-dropdown",
-                            options=[{"label": name, "value": name} for name in DATA_FILES],
-                            value=next(iter(DATA_FILES.keys())),
-                            clearable=False,
-                        ),
-                    ]
-                ),
                 html.Div(
                     style=CONTROL_CARD_STYLE,
                     children=[
@@ -289,7 +316,7 @@ app.layout = html.Div(
                     style=CONTROL_CARD_STYLE,
                     children=[
                         html.Label("Data", style=CONTROL_LABEL_STYLE),
-                        html.Button("Reload CSV files now", id="reload-button", n_clicks=0, style=CONTROL_BUTTON_STYLE),
+                        html.Button("Reload Results File", id="reload-button", n_clicks=0, style=CONTROL_BUTTON_STYLE),
                         html.Div(
                             "Polled every 300 seconds.",
                             style={"color": "#666", "fontSize": "0.9rem", "minHeight": "1.1rem"},
@@ -316,6 +343,52 @@ app.layout = html.Div(
 
 
 # ----------------------------------------------------------------------
+# Results-file selection
+# ----------------------------------------------------------------------
+@app.callback(
+    Output("results-file-path", "value"),
+    Output("data-files-store", "data"),
+    Output("selected-dataset-store", "data"),
+    Output("file-selection-status", "children"),
+    Input("browse-results", "n_clicks"),
+    Input("load-results-path", "n_clicks"),
+    State("results-file-path", "value"),
+    prevent_initial_call=True,
+)
+def select_results_file(
+    _browse_clicks: int,
+    _load_clicks: int,
+    path_value: str | None,
+):
+    trigger = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+    candidate = path_value
+
+    if trigger == "browse-results":
+        try:
+            candidate = choose_path("file", path_value)
+        except PathChooserError as exc:
+            return no_update, no_update, no_update, f"Could not open the file explorer: {exc}"
+        if candidate is None:
+            return no_update, no_update, no_update, "File selection canceled."
+
+    if not candidate or not candidate.strip():
+        return no_update, no_update, no_update, "Choose a results CSV file first."
+
+    try:
+        selected_file, selected_dataset = register_data_file(candidate)
+    except (FileNotFoundError, OSError, ValueError, pd.errors.ParserError) as exc:
+        return candidate, no_update, no_update, f"Could not load results file: {exc}"
+
+    selected_path = selected_file[selected_dataset]
+    return (
+        selected_path,
+        selected_file,
+        selected_dataset,
+        f"Selected {selected_path}",
+    )
+
+
+# ----------------------------------------------------------------------
 # Data loading (poll + manual reload)
 # ----------------------------------------------------------------------
 @app.callback(
@@ -324,13 +397,16 @@ app.layout = html.Div(
     Output("reload-status", "children"),
     Input("poll-interval", "n_intervals"),
     Input("reload-button", "n_clicks"),
+    Input("data-files-store", "data"),
     prevent_initial_call=False,
 )
-def load_all(_n_intervals: int, _n_clicks: int):
+def load_all(_n_intervals: int, _n_clicks: int, data_files: dict[str, str] | None):
     datasets: dict[str, list[dict[str, Any]]] = {}
     columns: dict[str, list[str]] = {}
+    if not data_files:
+        return datasets, columns, "Choose a results CSV file to begin."
     try:
-        for name, path in DATA_FILES.items():
+        for name, path in (data_files or {}).items():
             df = load_dataset(path)
             datasets[name] = [{str(k): v for k, v in record.items()} for record in df.to_dict("records")]
             columns[name] = [c for c in df.columns if c != X_COL]
@@ -339,7 +415,7 @@ def load_all(_n_intervals: int, _n_clicks: int):
         return no_update, no_update, f"Reload failed at {ts}: {exc}"
 
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return datasets, columns, f"Loaded/updated datasets at {ts}."
+    return datasets, columns, f"Loaded/updated results file at {ts}."
 
 
 # ----------------------------------------------------------------------
@@ -347,18 +423,20 @@ def load_all(_n_intervals: int, _n_clicks: int):
 # ----------------------------------------------------------------------
 @app.callback(
     Output("panes-store", "data"),
-    Input("dataset-dropdown", "value"),
+    Input("selected-dataset-store", "data"),
     Input("datasets-store", "data"),
     State("panes-store", "data"),
     prevent_initial_call=False,
 )
-def init_or_sanitize_panes(dataset: str, ds_store: dict[str, Any] | None, panes_state: Any):
+def init_or_sanitize_panes(dataset: str | None, ds_store: dict[str, Any] | None, panes_state: Any):
     if not ds_store or dataset not in ds_store:
         return panes_state or [{"title": "Pane 1", "columns": []}]
     df = pd.DataFrame(ds_store[dataset])
     avail = [c for c in df.columns if c != X_COL]
 
     if isinstance(panes_state, list) and panes_state:
+        if panes_state == [{"title": "Pane 1", "columns": []}]:
+            return default_panes(df)
         return sanitize_panes(panes_state, avail)
 
     return default_panes(df)
@@ -391,13 +469,13 @@ def edit_panes(_add: int, _remove: int, panes: list[dict[str, Any]] | None):
 # ----------------------------------------------------------------------
 @app.callback(
     Output("pane-controls", "children"),
-    Input("dataset-dropdown", "value"),
+    Input("selected-dataset-store", "data"),
     Input("panes-store", "data"),
     Input("columns-store", "data"),
 )
-def render_controls(dataset: str, panes: list[dict[str, Any]] | None, col_store: dict[str, Any] | None):
+def render_controls(dataset: str | None, panes: list[dict[str, Any]] | None, col_store: dict[str, Any] | None):
     panes = panes or [{"title": "Pane 1", "columns": []}]
-    cols = (col_store or {}).get(dataset, []) or []
+    cols = (col_store or {}).get(dataset or "", []) or []
     options = [{"label": c, "value": c} for c in cols]
 
     children: list[Any] = []
@@ -515,13 +593,16 @@ def sync_axes(relayout: dict[str, Any] | None, _reset: int, axis: dict[str, Any]
 # ----------------------------------------------------------------------
 @app.callback(
     Output("main-graph", "figure"),
-    Input("dataset-dropdown", "value"),
+    Input("selected-dataset-store", "data"),
     Input("datasets-store", "data"),
     Input("panes-store", "data"),
     Input("axis-store", "data"),
 )
 def update_figure(
-    dataset: str, ds_store: dict[str, Any] | None, panes: list[dict[str, Any]] | None, axis: dict[str, Any] | None
+    dataset: str | None,
+    ds_store: dict[str, Any] | None,
+    panes: list[dict[str, Any]] | None,
+    axis: dict[str, Any] | None,
 ):
     if not ds_store or dataset not in ds_store:
         fig = go.Figure()

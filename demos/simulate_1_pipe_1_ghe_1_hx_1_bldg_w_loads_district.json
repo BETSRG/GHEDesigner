@@ -1,26 +1,5 @@
 {
-  "version": 3,
-  "topology": [
-    {
-      "type": "building",
-      "name": "building1_htg_clg"
-    },
-    {
-      "type": "ground_heat_exchanger",
-      "name": "ghe1"
-    },
-    {
-      "type": "source_sink_heat_exchanger",
-      "name": "hx1"
-    }
-  ],
-  "central_loop": {
-    "pipe_configuration": "ONEPIPE",
-    "flow_factor": 1.5,
-    "pump_efficiency": 0.5,
-    "loop_length": 200,
-    "design_pressure_loss_per_meter": 200
-  },
+  "version": 4,
   "fluid": {
     "fluid_name": "PROPYLENEGLYCOL",
     "concentration_percent": 20,
@@ -82,7 +61,6 @@
   "ground_heat_exchanger": {
     "ghe1": {
       "flow_rate": 0.5,
-      "flow_type": "BOREHOLE",
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
@@ -91,7 +69,7 @@
         "inner_diameter": 0.03404,
         "outer_diameter": 0.04216,
         "shank_spacing": 0.01856,
-        "roughness": 0.000001,
+        "roughness": 1e-6,
         "conductivity": 0.4,
         "rho_cp": 1542000,
         "arrangement": "SINGLEUTUBE"
@@ -112,5 +90,62 @@
   },
   "simulation_control": {
     "simulation_years": 1
+  },
+  "network": {
+    "type": "one_pipe",
+    "stations": [
+      {
+        "component": "building1_htg_clg"
+      },
+      {
+        "component": "ghe1"
+      },
+      {
+        "component": "hx1"
+      }
+    ],
+    "pipe_defaults": {
+      "diameter": 0.16385485922409404,
+      "roughness": 1e-6
+    },
+    "segments": [
+      {
+        "id": "network_segment_1",
+        "from": "building1_htg_clg",
+        "to": "ghe1",
+        "length": 66.66666666666667
+      },
+      {
+        "id": "network_segment_2",
+        "from": "ghe1",
+        "to": "hx1",
+        "length": 66.66666666666667
+      },
+      {
+        "id": "network_segment_3",
+        "from": "hx1",
+        "to": "building1_htg_clg",
+        "length": 66.66666666666667
+      }
+    ],
+    "pumps": {
+      "network_pump_building1_htg_clg": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_distribution_pump": {
+        "wire_to_water_efficiency": 0.5
+      }
+    },
+    "component_pumps": {
+      "building1_htg_clg": "network_pump_building1_htg_clg"
+    },
+    "distribution_pump": {
+      "type": "pump",
+      "pump": "network_distribution_pump"
+    },
+    "mass_flow_control": {
+      "distribution_flow_multiplier": 1.5,
+      "minimum_distribution_mass_flow": 0.1
+    }
   }
 }

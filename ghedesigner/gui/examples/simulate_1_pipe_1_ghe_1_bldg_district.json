@@ -1,0 +1,138 @@
+{
+  "version": 4,
+  "fluid": {
+    "fluid_name": "PROPYLENEGLYCOL",
+    "concentration_percent": 20,
+    "temperature": 20
+  },
+  "heat_pump": {
+    "hp1": {
+      "cooling_performance": {
+        "a": 0.0001,
+        "b": 0.00112,
+        "c": 1.13,
+        "c1": -0.393,
+        "c2": -30.3,
+        "c3": 6777.0,
+        "design_cap": 4396.0,
+        "minimum_curve_temperature": 10.0,
+        "maximum_curve_temperature": 35.0
+      },
+      "design_flow_rate": 0.296,
+      "design_pressure_loss": 25000,
+      "pump_efficiency": 0.5,
+      "heating_performance": {
+        "a": -7.13e-5,
+        "b": 0.00534,
+        "c": 0.734,
+        "c1": -0.124,
+        "c2": 112.0,
+        "c3": 4114.0,
+        "design_cap": 4140.0,
+        "minimum_curve_temperature": 10.0,
+        "maximum_curve_temperature": 35.0
+      }
+    }
+  },
+  "building": {
+    "building1": {
+      "heating_load": {
+        "column_name": "Small",
+        "file_path": "data/Simple_Load_Data.csv",
+        "heat_pump_name": "hp1"
+      },
+      "cooling_load": {
+        "column_name": "Zero",
+        "file_path": "data/Simple_Load_Data.csv",
+        "heat_pump_name": "hp1"
+      }
+    }
+  },
+  "soil": {
+    "conductivity": 2,
+    "rho_cp": 2343493,
+    "undisturbed_temp": 20
+  },
+  "ground_heat_exchanger": {
+    "ghe1": {
+      "flow_rate": 0.5,
+      "grout": {
+        "conductivity": 1,
+        "rho_cp": 3901000
+      },
+      "pipe": {
+        "inner_diameter": 0.03404,
+        "outer_diameter": 0.04216,
+        "shank_spacing": 0.01856,
+        "roughness": 1e-6,
+        "conductivity": 0.4,
+        "rho_cp": 1542000,
+        "arrangement": "SINGLEUTUBE"
+      },
+      "borehole": {
+        "buried_depth": 2,
+        "diameter": 0.14
+      },
+      "pre_designed": {
+        "arrangement": "RECTANGLE",
+        "H": 100,
+        "spacing_in_x_dimension": 5,
+        "spacing_in_y_dimension": 5,
+        "boreholes_in_x_dimension": 2,
+        "boreholes_in_y_dimension": 2
+      }
+    }
+  },
+  "simulation_control": {
+    "simulation_years": 1,
+    "constant_cop": false
+  },
+  "network": {
+    "type": "one_pipe",
+    "stations": [
+      {
+        "component": "building1"
+      },
+      {
+        "component": "ghe1"
+      }
+    ],
+    "pipe_defaults": {
+      "diameter": 0.030958871654506136,
+      "roughness": 1e-6
+    },
+    "segments": [
+      {
+        "id": "network_segment_1",
+        "from": "building1",
+        "to": "ghe1",
+        "length": 100.0
+      },
+      {
+        "id": "network_segment_2",
+        "from": "ghe1",
+        "to": "building1",
+        "length": 100.0
+      }
+    ],
+    "pumps": {
+      "network_pump_building1": {
+        "wire_to_water_efficiency": 0.5
+      },
+      "network_distribution_pump": {
+        "wire_to_water_efficiency": 0.5
+      }
+    },
+    "component_pumps": {
+      "building1": "network_pump_building1"
+    },
+    "distribution_pump": {
+      "type": "pump",
+      "pump": "network_distribution_pump"
+    },
+    "mass_flow_control": {
+      "distribution_flow_multiplier": 1.5,
+      "minimum_distribution_mass_flow": 0.1
+    }
+  }
+}
