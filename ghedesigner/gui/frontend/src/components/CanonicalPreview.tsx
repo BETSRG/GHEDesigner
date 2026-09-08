@@ -1,92 +1,115 @@
-import { useEffect, useMemo, useState } from "react";
-import { Background, Controls, MarkerType, ReactFlow, type Edge, type Node } from "@xyflow/react";
+import { ArrowDown, ArrowUp, CornerDownLeft } from "lucide-react";
 
-import { api } from "../api";
-import type { InputDocument, NetworkPreview } from "../types";
+import { componentType } from "../networkUtils";
+import type { InputDocument, JsonObject } from "../types";
+import { isJsonObject } from "../types";
 
-const branchColor: Record<string, string> = {
-  pipe: "#547d78",
-  building: "#cf6f47",
-  ground_heat_exchanger: "#2f8177",
-  source_sink_heat_exchanger: "#7d66a6",
-  pump: "#d3a12d",
-  bypass: "#9aabb0",
+interface DisplayStation {
+  id: string;
+  type: string;
+}
+
+const componentTypeLabel: Record<string, string> = {
+  building: "Building",
+  ground_heat_exchanger: "GHE",
+  source_sink_heat_exchanger: "Heat Exchanger",
 };
 
-const flowElements = (preview: NetworkPreview): { nodes: Node[]; edges: Edge[] } => {
-  const nodes = preview.nodes.map((node, index) => ({
-    id: node.id,
-    position: { x: (index % 5) * 180, y: Math.floor(index / 5) * 120 },
-    data: { label: node.id.replace(/^__/, "") },
-    className: "preview-node",
-  }));
-  const edges = preview.branches.map((branch) => ({
-    id: branch.id,
-    source: branch.node_a,
-    target: branch.node_b,
-    label: branch.component ?? branch.id.replace(/^__/, ""),
-    type: "smoothstep",
-    markerEnd: { type: MarkerType.ArrowClosed, color: branchColor[branch.type] ?? "#547d78" },
-    style: {
-      stroke: branchColor[branch.type] ?? "#547d78",
-      strokeWidth: 2,
-    },
-  }));
-  return { nodes, edges };
+const stationIds = (network: JsonObject): string[] =>
+  Array.isArray(network.stations)
+    ? network.stations
+        .filter(isJsonObject)
+        .map((station) => station.component)
+        .filter((id): id is string => typeof id === "string")
+    : [];
+
+const networkSegments = (network: JsonObject): JsonObject[] =>
+  Array.isArray(network.segments) ? network.segments.filter(isJsonObject) : [];
+
+const segmentLength = (segment: JsonObject | undefined): string => {
+  if (!segment || typeof segment.length !== "number") return "Length Not Set";
+  return `${segment.length.toLocaleString(undefined, { maximumFractionDigits: 2 })} m`;
 };
 
 export function CanonicalPreview({ document }: { document: InputDocument }) {
-  const [preview, setPreview] = useState<NetworkPreview | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const network = document.network ?? {};
+  const type = network.type === "two_pipe" ? "two_pipe" : "one_pipe";
+  const ids = stationIds(network);
+  const segments = networkSegments(network);
+  const stations: DisplayStation[] = ids.map((id) => ({
+    id,
+    type: componentType(document, id) ?? "unknown",
+  }));
 
-  useEffect(() => {
-    if (!document.network) {
-      setPreview(null);
-      return;
-    }
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      api
-        .compileNetwork(document, controller.signal)
-        .then((result) => {
-          setPreview(result);
-          setError(null);
-        })
-        .catch((caught: unknown) => {
-          if (controller.signal.aborted) return;
-          setPreview(null);
-          const message = caught instanceof Error ? caught.message : "Unable to compile the network.";
-          api.clientLog("error", "network_preview_failed", { message });
-          setError(message);
-        });
-    }, 250);
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [document]);
-
-  const elements = useMemo(() => (preview ? flowElements(preview) : { nodes: [], edges: [] }), [preview]);
+  const segmentBetween = (index: number, closeLoop = false) => {
+    const from = ids[index];
+    const to = closeLoop ? ids[0] : ids[index + 1];
+    return segments.find((segment) => segment.from === from && segment.to === to);
+  };
 
   return (
     <div className="canonical-preview">
       <div className="panel-heading compact-heading">
         <div>
-          <span className="eyebrow">Solver Projection</span>
-          <h2>Canonical Network Preview</h2>
+          <span className="eyebrow">Topology Summary</span>
+          <h2>Network Layout</h2>
         </div>
+        <span className="network-type-chip">{type === "one_pipe" ? "One-Pipe Loop" : "Two-Pipe Network"}</span>
       </div>
-      {error ? (
-        <div className="canvas-message error">{error}</div>
-      ) : preview ? (
-        <div className="network-canvas preview-canvas">
-          <ReactFlow nodes={elements.nodes} edges={elements.edges} fitView nodesDraggable={false} nodesConnectable={false}>
-            <Background gap={24} size={1} />
-            <Controls showInteractive={false} />
-          </ReactFlow>
+      <p className="network-preview-help">
+        Shows physical components and distribution order. Solver-only nodes, bypasses, and pump branches are hidden.
+      </p>
+      {stations.length ? (
+        <div className="topology-summary">
+          <div className={`topology-direction ${type}`}>
+            <span>
+              <ArrowDown size={14} /> {type === "one_pipe" ? "Loop Flow" : "Supply Flow"}
+            </span>
+            {type === "two_pipe" && (
+              <span>
+                <ArrowUp size={14} /> Return Flow
+              </span>
+            )}
+          </div>
+          <ol className="topology-stations">
+            {stations.map((station, index) => {
+              const nextSegment = index < stations.length - 1 ? segmentBetween(index) : undefined;
+              return (
+                <li key={station.id}>
+                  <div className={`topology-station ${station.type}`}>
+                    <span className="topology-station-number">{index + 1}</span>
+                    <div>
+                      <strong>{station.id}</strong>
+                      <small>{componentTypeLabel[station.type] ?? "Physical Component"}</small>
+                    </div>
+                  </div>
+                  {index < stations.length - 1 && (
+                    <div
+                      className="topology-connection"
+                      title={typeof nextSegment?.id === "string" ? nextSegment.id : undefined}
+                    >
+                      <span className="topology-connection-line" />
+                      <small>{segmentLength(nextSegment)}</small>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+          {type === "one_pipe" ? (
+            <div className="topology-loop-return">
+              <CornerDownLeft size={17} />
+              <span>
+                Return To Station 1
+                <small>{segmentLength(segmentBetween(stations.length - 1, true))}</small>
+              </span>
+            </div>
+          ) : (
+            <p className="topology-return-note">The return line follows the same connections in reverse.</p>
+          )}
         </div>
       ) : (
-        <div className="canvas-message">Complete the network fields to generate a preview.</div>
+        <div className="canvas-message">Add physical components to generate a network layout.</div>
       )}
     </div>
   );

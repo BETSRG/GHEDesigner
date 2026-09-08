@@ -14,7 +14,6 @@
     "@rjsf/core": "^6.1.2",
     "@rjsf/utils": "^6.1.2",
     "@rjsf/validator-ajv8": "^6.1.2",
-    "@xyflow/react": "^12.8.6",
     "lucide-react": "^0.468.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"

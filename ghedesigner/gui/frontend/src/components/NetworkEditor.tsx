@@ -44,7 +44,7 @@ export function NetworkEditor({ document, onChange }: NetworkEditorProps) {
         <div>
           <span className="eyebrow">Topology Editor</span>
           <h1>{`${type === "one_pipe" ? "One" : "Two"}-Pipe Network`}</h1>
-          <p>Edit the physical order while previewing the internal network used by the solver.</p>
+          <p>Edit the physical order while previewing the user-defined distribution layout.</p>
         </div>
         <button
           type="button"
