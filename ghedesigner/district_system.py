@@ -1555,9 +1555,8 @@ class CoolingTower:
         self.beta_loop_to_HX = ct_data["beta_loop_to_HX"]
         self.fluid_temperature_on_setpoint = ct_data["fluid_temperature_on_setpoint"]
         self.fluid_temperature_off_setpoint = ct_data["fluid_temperature_off_setpoint"]
-        self.DBT_on_setpoint = ct_data["DBT_on_setpoint"]
         self.DBT_off_setpoint = ct_data["DBT_off_setpoint"]
-
+        self.DBT_on_setpoint = ct_data["DBT_off_setpoint"]
         self.operating = False
 
         self.water = Fluid(fluid_name="WATER", percent=0, temperature=20.0)
@@ -1809,8 +1808,7 @@ class CoolingTower:
             # Fluid temperature from the previous solved timestep
             previous_fluid_temperature = self.t_fluid_in[previous_index]
 
-            # Current-hour WBT is already available from weather data
-            # current_wbt = self.t_wb_air_in
+            # Current-hour DBT is already available from weather data
             current_dbt = self.t_db_air_in
 
             if self.operating:
@@ -3080,11 +3078,16 @@ class GHEHPSystem:
             for this_comp in self.components:
                 if this_comp.comp_type == SimCompType.COOLING_TOWER:
 
-                    # Current-timestep scalar values used by the matrix
-                    this_comp.mass_flow_CT_loop = this_comp.loop_fraction * mass_loop
-                    this_comp.mass_flow_CT_water = this_comp.beta_loop_to_HX * this_comp.mass_flow_CT_loop
-                    this_comp.mass_flow_CT_air = (this_comp.mass_flow_CT_water / this_comp.mass_flow_water_nominal *
-                                                  this_comp.mass_flow_air_nominal)
+                    # # Current-timestep scalar values used by the matrix
+                    # this_comp.mass_flow_CT_loop = this_comp.loop_fraction * mass_loop
+                    # this_comp.mass_flow_CT_water = this_comp.beta_loop_to_HX * this_comp.mass_flow_CT_loop
+                    # this_comp.mass_flow_CT_air = (this_comp.mass_flow_CT_water / this_comp.mass_flow_water_nominal *
+                    #                               this_comp.mass_flow_air_nominal)
+
+                    # this is for using constant flow (nominal flow) in CT air and water side
+                    this_comp.mass_flow_CT_air = this_comp.mass_flow_air_nominal
+                    this_comp.mass_flow_CT_water = this_comp.mass_flow_water_nominal
+                    this_comp.mass_flow_CT_loop = min(this_comp.mass_flow_water_nominal * this_comp.beta_loop_to_HX, mass_loop)
 
                     # Store the scalar values in hourly arrays
                     this_comp.mass_flow_CT_loop_array[idx_timestep - 1] = this_comp.mass_flow_CT_loop

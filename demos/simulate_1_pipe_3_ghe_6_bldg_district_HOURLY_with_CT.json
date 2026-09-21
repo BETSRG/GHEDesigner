@@ -316,7 +316,7 @@
       "fluid_temperature_off_setpoint": 24,
       "fluid_temperature_on_setpoint": 25,
       "DBT_off_setpoint": 5.0,
-      "DBT_on_setpoint": 7.0,
+      "DBT_on_setpoint": 5.0,
       "delta_P_CT_HX_ref": 53540,
       "delta_P_CT_ref": 530,
       "CT_HX_cp_efficiency": 0.5,
