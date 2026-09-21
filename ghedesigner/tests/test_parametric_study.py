@@ -12,23 +12,23 @@ from ghedesigner.district_parametric_study import SystemParametricStudySuperviso
 from ghedesigner.enums import ParametricStudyParameters
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DEMOS_DIRECTORY = PROJECT_ROOT / "demos"
+SCHEMA_FILE = PROJECT_ROOT / "ghedesigner" / "schemas" / "ghedesigner.schema.json"
+
 
 class TestParametricStudy(GHEBaseTest):
     def setUp(self) -> None:
         super().setUp()
         # Reference Values
         reference_data_file = self.test_data_directory / "parametric_study_reference_values.csv"
-        self.reference_values = pd.read_csv(str(reference_data_file))
+        self.reference_values = pd.read_csv(reference_data_file)
 
         # Load Combinatorial File
-        combinatorial_file = (
-            self.test_data_directory / "../../../demos/Network_Sizing_Study_3GHE_6HP_BUPCRS_Combinatorial.json"
-        )
+        combinatorial_file = DEMOS_DIRECTORY / "Network_Sizing_Study_3GHE_6HP_BUPCRS_Combinatorial.json"
 
         # Load Enumerated File
-        enumerated_file = (
-            self.test_data_directory / "../../../demos/Network_Sizing_Study_3GHE_6HP_BUPCRS_Enumerated.json"
-        )
+        enumerated_file = DEMOS_DIRECTORY / "Network_Sizing_Study_3GHE_6HP_BUPCRS_Enumerated.json"
 
         # Establish Properties
         self.combinatorial_supervisor = SystemParametricStudySupervisor(combinatorial_file)
@@ -176,10 +176,9 @@ class TestParametricStudyInputs(TestCase):
             supervisor.prepare_design_dict(supervisor.iterator[0])
 
     def test_schema_rejects_non_array_pipe_sizes(self):
-        project_root = Path(__file__).parents[2]
-        schema = json.loads((project_root / "ghedesigner/schemas/ghedesigner.schema.json").read_text())
+        schema = json.loads(SCHEMA_FILE.read_text())
         input_data = json.loads(
-            (project_root / "demos/Network_Sizing_Study_3GHE_6HP_BUPCRS_Combinatorial.json").read_text()
+            (DEMOS_DIRECTORY / "Network_Sizing_Study_3GHE_6HP_BUPCRS_Combinatorial.json").read_text()
         )
         input_data["parametric_study"]["pipe_sizes"] = "bad"
 
