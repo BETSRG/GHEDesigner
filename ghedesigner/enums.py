@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import Enum, StrEnum, auto
 
 
 class BHType(Enum):
@@ -58,3 +58,12 @@ class CentralLoopType(Enum):
 class SourceSinkOpMode(Enum):
     SOURCE = auto()
     SINK = auto()
+
+
+class ParametricStudyParameters(StrEnum):
+    MAX_EFT_MODIFICATION = auto()
+    MIN_EFT_MODIFICATION = auto()
+    GROUT_CONDUCTIVITIES = auto()
+    PIPE_SIZES = auto()
+    BOREHOLE_HEIGHTS = auto()
+    UPDATED_TOPOLOGY = auto()
