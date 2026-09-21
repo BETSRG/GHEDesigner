@@ -376,6 +376,7 @@
             "values": {
               "title": "Range definition",
               "type": "array",
+              "description": "Start value, stop value, and sample count. Units: start and stop use the units of the parameter being varied; sample count is dimensionless.",
               "minItems": 3,
               "maxItems": 3,
               "items": [
@@ -407,6 +408,7 @@
             "values": {
               "title": "Study values",
               "type": "array",
+              "description": "Explicit values to evaluate. Units: defined by the parameter being varied.",
               "minItems": 1,
               "items": {
                 "type": "number"
