@@ -302,6 +302,54 @@
       "format": "Meters",
       "description": "Outer diameter of pipe."
     },
+    "parameter_list": {
+      "type": "object",
+      "anyOf": [
+        {
+          "properties": {
+            "values": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              ],
+              "additionalItems": false
+            },
+            "parameter_range": {
+              "type": "boolean",
+              "enum": [true]
+            }
+          },
+          "required": ["parameter_range", "values"]
+        },
+        {
+          "properties": {
+            "values": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "number"
+              }
+            },
+            "parameter_range": {
+              "type": "boolean",
+              "enum": [false]
+            }
+          },
+          "required": ["values"]
+        }
+      ]
+    },
     "pipe_configuration": {
       "type": "string",
       "enum": ["ONEPIPE", "TWOPIPE"]
@@ -1338,6 +1386,80 @@
         ],
         "required": ["grout", "pipe", "borehole", "flow_rate", "flow_type"],
         "additionalProperties": false
+      }
+    },
+    "parametric_study": {
+      "type": "object",
+      "description": "Contains controls related to running parametric studies on network design.",
+      "properties": {
+        "study_type": {
+          "type": "string",
+          "enum": ["combination", "enumerate"]
+        },
+        "ghes_to_modify": {
+          "type": "array",
+          "minItems": 1,
+          "description": "List of GHEs to use in study. Not including this will assume that all GHEs are to be modified.",
+          "items": {
+            "type": "string",
+            "description": "Name of GHE (in topology) that is to have its properties changed during the study."
+          }
+        },
+        "min_eft_modifications": {
+          "description": "The amount that buildings' minimum design temperature is modified in the study.",
+          "format": "°C",
+          "$ref": "#/$defs/parameter_list"
+        },
+        "max_eft_modifications": {
+          "description": "The amount that buildings' maximum design temperature is modified in the study.",
+          "format": "°C",
+          "$ref": "#/$defs/parameter_list"
+        },
+        "grout_conductivities": {
+          "description": "The grout conductivities to be explored in the study.",
+          "format": "W/mK",
+          "$ref": "#/$defs/parameter_list"
+        },
+        "pipe_sizes": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "The ghe pipe sizes to use during the study. The internal and external diameters must be specified.",
+          "format": "m",
+          "items": [
+            {
+              "description": "Inner Diameter",
+              "$ref": "#/$defs/parameter_list"
+            },
+            {
+              "description": "Outer Diameter",
+              "$ref": "#/$defs/parameter_list"
+            }
+          ],
+          "additionalItems": false
+        },
+        "borehole_heights": {
+          "description": "The GHE borehole heights to be explored during the study.",
+          "format": "m",
+          "$ref": "#/$defs/parameter_list"
+        },
+        "updated_topology": {
+          "type": "array",
+          "minItems": 1,
+          "description": "A list of potential changes to make to the system's default topology.",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "Pairs of strings describing which element to move and where to move it based on the names in reference to the default topology: (element_to_move, new_preceding_element).",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     },
     "simulation_control": {

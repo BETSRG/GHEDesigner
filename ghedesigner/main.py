@@ -6,6 +6,7 @@ import click
 from jsonschema.exceptions import ValidationError
 
 from ghedesigner.constants import INPUT_VERSION, MONTHS_IN_YEAR, VERSION
+from ghedesigner.district_parametric_study import SystemParametricStudySupervisor
 from ghedesigner.district_system import GHEHPSystem
 from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.manager import GroundHeatExchanger
@@ -64,6 +65,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             building_names.append(component["name"])
         elif component["type"] == "ground_heat_exchanger":
             ghe_names.append(component["name"])
+    parametric_study = "parametric_study" in full_inputs
 
     # do actions depending on what is provided in input
     if len(ghe_names) >= 1 and len(building_names) == 0:
@@ -119,7 +121,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
             results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
             results.write_all_output_files(output_directory=output_directory, file_suffix="")
-    elif central_loop:
+    elif central_loop and not parametric_study:
         system = GHEHPSystem(input_file_path)
         system.size_and_simulate()
 
@@ -131,6 +133,12 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             )
         else:
             system.create_output(output_directory / f"{input_file_path.stem}.csv")
+    elif central_loop and parametric_study:
+        studier = SystemParametricStudySupervisor(input_file_path)
+        studier.generate_study_iterator()
+        studier.get_study_results()
+        studier.get_best_design(output_directory)
+        studier.output_study_results(output_directory / f"{input_file_path.stem}.csv")
     else:
         print("Bad input file, for now only the following configurations are available:")
         print("1 GHE; 1 GHE + 1 Building; or N GHE + M Buildings + 1 Central Loop")
