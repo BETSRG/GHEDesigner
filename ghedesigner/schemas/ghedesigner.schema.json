@@ -1421,9 +1421,12 @@
           "$ref": "#/$defs/parameter_list"
         },
         "pipe_sizes": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
           "description": "The ghe pipe sizes to use during the study. The internal and external diameters must be specified.",
           "format": "m",
-          "prefixItems": [
+          "items": [
             {
               "description": "Inner Diameter",
               "$ref": "#/$defs/parameter_list"
@@ -1432,7 +1435,8 @@
               "description": "Outer Diameter",
               "$ref": "#/$defs/parameter_list"
             }
-          ]
+          ],
+          "additionalItems": false
         },
         "borehole_heights": {
           "description": "The GHE borehole heights to be explored during the study.",

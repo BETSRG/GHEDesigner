@@ -19,6 +19,11 @@ STUDY_OUTPUT_HEADER = [
     "Total Energy Consumption (MWhr)",
 ]
 
+PARAMETER_INPUT_KEYS = {
+    ParametricStudyParameters.MAX_EFT_MODIFICATION: "max_eft_modifications",
+    ParametricStudyParameters.MIN_EFT_MODIFICATION: "min_eft_modifications",
+}
+
 
 class SystemParametricStudySupervisor:
     def __init__(self, f_path_json: Path):
@@ -49,25 +54,30 @@ class SystemParametricStudySupervisor:
         # Get parametric study data
         self.study_type = parametric_dict.get("study_type", "combination")
         self.parameter_ranges: dict[str, Any] = {}
+        self.parameters_to_modify: set[ParametricStudyParameters] = set()
         for parameter_key in ParametricStudyParameters:
+            input_key = PARAMETER_INPUT_KEYS.get(parameter_key, parameter_key.value)
             if parameter_key == ParametricStudyParameters.UPDATED_TOPOLOGY:
-                self.parameter_ranges[parameter_key] = parametric_dict.get(parameter_key, [[]])
-            elif parameter_key in parametric_dict:
+                self.parameter_ranges[parameter_key] = parametric_dict.get(input_key, [[]])
+                if input_key in parametric_dict:
+                    self.parameters_to_modify.add(parameter_key)
+            elif input_key in parametric_dict:
+                self.parameters_to_modify.add(parameter_key)
                 if parameter_key == ParametricStudyParameters.PIPE_SIZES:
                     self.parameter_ranges[parameter_key] = {
                         "inner_diameter": {
-                            "values": parametric_dict[parameter_key][0]["values"],
-                            "parameter_range": parametric_dict[parameter_key][0].get("parameter_range", False),
+                            "values": parametric_dict[input_key][0]["values"],
+                            "parameter_range": parametric_dict[input_key][0].get("parameter_range", False),
                         },
                         "outer_diameter": {
-                            "values": parametric_dict[parameter_key][1]["values"],
-                            "parameter_range": parametric_dict[parameter_key][1].get("parameter_range", False),
+                            "values": parametric_dict[input_key][1]["values"],
+                            "parameter_range": parametric_dict[input_key][1].get("parameter_range", False),
                         },
                     }
                 else:
                     self.parameter_ranges[parameter_key] = {
-                        "values": parametric_dict[parameter_key]["values"],
-                        "parameter_range": parametric_dict[parameter_key].get("parameter_range", False),
+                        "values": parametric_dict[input_key]["values"],
+                        "parameter_range": parametric_dict[input_key].get("parameter_range", False),
                     }
             else:
                 self.parameter_ranges[parameter_key] = {"parameter_range": False}
@@ -95,11 +105,7 @@ class SystemParametricStudySupervisor:
         self.system = GHEHPSystem(Path(""), initialization_dict=self.system_dict)
         self.study_input_values: list[list[str | int | float]] = []
         self.study_output_values: list[list[int | float]] = []
-        self.component_topology_locations = {"": -1}
-        self.component_types = {}
-        for idx, component in enumerate(self.initial_dict["topology"]):
-            self.component_topology_locations[component["name"]] = idx
-            self.component_types[component["name"]] = component["type"]
+        self.component_types = {component["name"]: component["type"] for component in self.initial_dict["topology"]}
         self.minimum_total_drilling = float("inf")
         self.minimum_td_system = self.system
 
@@ -116,7 +122,7 @@ class SystemParametricStudySupervisor:
 
                 p_range = p_entry["outer_diameter"]["values"]
                 is_range = p_entry["outer_diameter"]["parameter_range"]
-                outer_diameter_list = np.linspce(*p_range) if is_range else p_range
+                outer_diameter_list = np.linspace(*p_range) if is_range else p_range
 
                 parameter_arrays[parameter] = list(zip(inner_diameter_list, outer_diameter_list))
             else:
@@ -202,6 +208,8 @@ class SystemParametricStudySupervisor:
         design_dict = deepcopy(self.initial_dict)
         initial_dict = self.initial_dict
         for parameter in design_parameters:
+            if parameter not in self.parameters_to_modify:
+                continue
             match parameter:
                 case ParametricStudyParameters.MIN_EFT_MODIFICATION:
                     for building_key in self.building_keys:
@@ -230,37 +238,61 @@ class SystemParametricStudySupervisor:
                         ][1]
                 case ParametricStudyParameters.BOREHOLE_HEIGHTS:
                     for ghe_key in self.ghe_keys:
-                        design_dict["ground_heat_exchanger"][ghe_key]["design"]["max_height"] = design_parameters[
-                            ParametricStudyParameters.BOREHOLE_HEIGHTS
-                        ]
-                case ParametricStudyParameters.UPDATED_TOPOLOGY:
-                    if len(design_parameters["updated_topology"]) == 0:
-                        continue
-                    indices_to_modify = []
-                    for idx, (component_key, component_previous_element) in enumerate(
-                        design_parameters[ParametricStudyParameters.UPDATED_TOPOLOGY]
-                    ):
-                        indices_to_modify.append(
-                            (
-                                self.component_topology_locations[component_previous_element] + 1,
-                                (idx, component_key, self.component_types[component_key]),
-                            )
-                        )
-                        indices_to_modify.append((self.component_topology_locations[component_key], (idx, "", "")))
-                    indices_to_modify = sorted(indices_to_modify, reverse=True)
-                    previous_index = None
-                    for index, (_, component_name, component_type) in indices_to_modify:
-                        if component_name == "":
-                            if previous_index == index:
-                                raise ValueError(
-                                    f"A duplicate deletion index was found in 'prepare_design_dict'."
-                                    f" This likely means that a component was inserted after "
-                                    f" another component which is being moved in the topology. This should"
-                                    f" be avoided. The problematic index is: {index!s}"
-                                )
-                            del design_dict["topology"][index]
+                        ghe_data = design_dict["ground_heat_exchanger"][ghe_key]
+                        new_height = design_parameters[ParametricStudyParameters.BOREHOLE_HEIGHTS]
+                        if "pre_designed" in ghe_data:
+                            ghe_data["pre_designed"]["H"] = new_height
                         else:
-                            design_dict["topology"].insert(index, {"type": component_type, "name": component_name})
+                            ghe_data["design"]["max_height"] = new_height
+                case ParametricStudyParameters.UPDATED_TOPOLOGY:
+                    topology_updates = design_parameters[ParametricStudyParameters.UPDATED_TOPOLOGY]
+                    if len(topology_updates) == 0:
+                        continue
+                    moved_components = [component_key for component_key, _ in topology_updates]
+                    if len(moved_components) != len(set(moved_components)):
+                        raise ValueError("Each component can only be moved once in an updated topology.")
+
+                    known_components = set(self.component_types)
+                    for component_key, component_previous_element in topology_updates:
+                        if component_key not in known_components:
+                            raise ValueError(f"Unknown topology component to move: {component_key}")
+                        if component_previous_element and component_previous_element not in known_components:
+                            raise ValueError(f"Unknown preceding topology component: {component_previous_element}")
+                        if component_key == component_previous_element:
+                            raise ValueError(f"A topology component cannot be moved after itself: {component_key}")
+
+                    children: dict[str, list[str]] = {}
+                    for component_key, component_previous_element in topology_updates:
+                        children.setdefault(component_previous_element, []).append(component_key)
+
+                    moved_component_set = set(moved_components)
+                    original_topology = design_dict["topology"]
+                    component_data = {component["name"]: component for component in original_topology}
+                    updated_topology = []
+                    emitted: set[str] = set()
+                    active_path: set[str] = set()
+
+                    def emit_component(component_name: str):
+                        if component_name in active_path:
+                            raise ValueError("A cycle was found in the updated topology.")
+                        if component_name in emitted:
+                            return
+                        active_path.add(component_name)
+                        updated_topology.append(deepcopy(component_data[component_name]))
+                        emitted.add(component_name)
+                        for child_name in children.get(component_name, []):
+                            emit_component(child_name)
+                        active_path.remove(component_name)
+
+                    for component_name in children.get("", []):
+                        emit_component(component_name)
+                    for component in original_topology:
+                        if component["name"] not in moved_component_set:
+                            emit_component(component["name"])
+
+                    if len(emitted) != len(original_topology):
+                        raise ValueError("The updated topology contains a cycle or an unreachable component.")
+                    design_dict["topology"] = updated_topology
                 case _:
                     raise ValueError("Invalid keyword given to 'prepare_design_dict'.")
         self.system_dict = design_dict

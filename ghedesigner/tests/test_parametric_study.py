@@ -1,6 +1,15 @@
+import json
+from copy import deepcopy
+from pathlib import Path
+from unittest import TestCase
+from unittest.mock import patch
+
 import pandas as pd
+import pytest
+from jsonschema import Draft7Validator
 
 from ghedesigner.district_parametric_study import SystemParametricStudySupervisor
+from ghedesigner.enums import ParametricStudyParameters
 from ghedesigner.tests.test_base_case import GHEBaseTest
 
 
@@ -59,3 +68,119 @@ class TestParametricStudy(GHEBaseTest):
             float(reference_values["test_minimum_drilling_enumerated"][0]),
             delta=0.001,
         )
+
+
+class TestParametricStudyInputs(TestCase):
+    @staticmethod
+    def input_data(parametric_study=None):
+        return {
+            "building": {"A": {"min_eft": 5.0, "max_eft": 30.0}},
+            "ground_heat_exchanger": {
+                "g1": {
+                    "grout": {"conductivity": 1.0},
+                    "pipe": {"inner_diameter": 0.03, "outer_diameter": 0.04},
+                    "design": {"max_height": 100.0},
+                }
+            },
+            "topology": [
+                {"type": "building", "name": "A"},
+                {"type": "ground_heat_exchanger", "name": "g1"},
+            ],
+            "parametric_study": parametric_study or {},
+        }
+
+    @staticmethod
+    def create_supervisor(input_data):
+        with (
+            patch(
+                "ghedesigner.district_parametric_study.load_input_file",
+                return_value=deepcopy(input_data),
+            ),
+            patch("ghedesigner.district_parametric_study.GHEHPSystem"),
+        ):
+            return SystemParametricStudySupervisor(Path("unused.json"))
+
+    def test_plural_eft_input_keys_are_applied(self):
+        input_data = self.input_data(
+            {
+                "min_eft_modifications": {"values": [-1.0]},
+                "max_eft_modifications": {"values": [2.0]},
+            }
+        )
+        supervisor = self.create_supervisor(input_data)
+        supervisor.generate_study_iterator()
+        supervisor.prepare_design_dict(supervisor.iterator[0])
+
+        self.assertEqual(supervisor.system_dict["building"]["A"]["min_eft"], 4.0)
+        self.assertEqual(supervisor.system_dict["building"]["A"]["max_eft"], 32.0)
+
+    def test_omitted_ghe_parameters_preserve_each_ghe(self):
+        input_data = self.input_data()
+        input_data["ground_heat_exchanger"]["g2"] = {
+            "grout": {"conductivity": 2.0},
+            "pipe": {"inner_diameter": 0.05, "outer_diameter": 0.06},
+            "design": {"max_height": 120.0},
+        }
+        input_data["topology"].append({"type": "ground_heat_exchanger", "name": "g2"})
+        supervisor = self.create_supervisor(input_data)
+        supervisor.generate_study_iterator()
+        supervisor.prepare_design_dict(supervisor.iterator[0])
+
+        g2 = supervisor.system_dict["ground_heat_exchanger"]["g2"]
+        self.assertEqual(g2["grout"]["conductivity"], 2.0)
+        self.assertEqual(g2["pipe"], {"inner_diameter": 0.05, "outer_diameter": 0.06})
+        self.assertEqual(g2["design"]["max_height"], 120.0)
+
+    def test_ranged_pipe_sizes_generate_paired_values(self):
+        input_data = self.input_data(
+            {
+                "pipe_sizes": [
+                    {"values": [0.03, 0.05, 3], "parameter_range": True},
+                    {"values": [0.04, 0.06, 3], "parameter_range": True},
+                ]
+            }
+        )
+        supervisor = self.create_supervisor(input_data)
+        supervisor.generate_study_iterator()
+
+        pipe_sizes = [entry[ParametricStudyParameters.PIPE_SIZES] for entry in supervisor.iterator]
+        self.assertEqual(pipe_sizes, [(0.03, 0.04), (0.04, 0.05), (0.05, 0.06)])
+
+    def test_borehole_height_updates_predesigned_ghe(self):
+        input_data = self.input_data({"borehole_heights": {"values": [80.0]}})
+        ghe_data = input_data["ground_heat_exchanger"]["g1"]
+        ghe_data["pre_designed"] = {"H": 100.0}
+        del ghe_data["design"]
+        supervisor = self.create_supervisor(input_data)
+        supervisor.generate_study_iterator()
+        supervisor.prepare_design_dict(supervisor.iterator[0])
+
+        self.assertEqual(supervisor.system_dict["ground_heat_exchanger"]["g1"]["pre_designed"]["H"], 80.0)
+
+    def test_dependent_topology_moves_use_updated_positions(self):
+        input_data = self.input_data({"updated_topology": [[["C", "A"], ["D", "C"]]]})
+        input_data["building"] = {name: {"min_eft": 5.0, "max_eft": 30.0} for name in ("A", "B", "C", "D")}
+        input_data["topology"] = [{"type": "building", "name": name} for name in ("A", "B", "C", "D")]
+        supervisor = self.create_supervisor(input_data)
+        supervisor.generate_study_iterator()
+        supervisor.prepare_design_dict(supervisor.iterator[0])
+
+        self.assertEqual([component["name"] for component in supervisor.system_dict["topology"]], list("ACDB"))
+
+    def test_duplicate_topology_moves_are_rejected(self):
+        input_data = self.input_data({"updated_topology": [[["A", "g1"], ["A", "g1"]]]})
+        supervisor = self.create_supervisor(input_data)
+        supervisor.generate_study_iterator()
+
+        with pytest.raises(ValueError, match="only be moved once"):
+            supervisor.prepare_design_dict(supervisor.iterator[0])
+
+    def test_schema_rejects_non_array_pipe_sizes(self):
+        project_root = Path(__file__).parents[2]
+        schema = json.loads((project_root / "ghedesigner/schemas/ghedesigner.schema.json").read_text())
+        input_data = json.loads(
+            (project_root / "demos/Network_Sizing_Study_3GHE_6HP_BUPCRS_Combinatorial.json").read_text()
+        )
+        input_data["parametric_study"]["pipe_sizes"] = "bad"
+
+        self.assertFalse(Draft7Validator(schema).is_valid(input_data))
