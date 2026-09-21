@@ -305,6 +305,10 @@ class IsolatedHorizontalPipe(BaseSimComp):
                     dtheta_b = self.aggregators[k].get_step_changes()
                     self.history_term_seg[k, idx_timestep] = np.dot(dtheta_b, self.y_agg_evals)
 
+            else:
+                for k in range(self.num_segments):
+                    self.aggregators[k].clear_history()
+
             current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
             current_tau = current_dt_sec / self.t_p
             self.y_n[idx_timestep] = self.two_pi_k * self.q_prime_interp(current_tau)
@@ -579,6 +583,9 @@ class CoupledHorizontalPipe(BaseSimComp):
                     sum_cross = np.dot(dtheta_b_cross, self.y_cross_agg_evals)
 
                     self.history_term_seg[k, idx_timestep] = sum_self + sum_cross
+            else:
+                for k in range(self.num_segments):
+                    self.aggregators[k].clear_history()
 
             current_dt_sec = (self.time_array[idx_timestep] - self.time_array[idx_timestep - 1]) * SEC_IN_HR
             current_tau = current_dt_sec / self.t_p
@@ -1670,12 +1677,12 @@ class GHEHPSystem:
     guess_idx: int
     sample_rate: int
 
-    def __init__(self, f_path_json: Path):
+    def __init__(self, f_path_json: Path, initialization_dict: (dict | None) = None):
         self.components: list = []  # Will hold Building, GHX, SourceSinkHeatExchanger, Isolated/CoupledHorizontalPipe
         self.matrix_size = 0
         self.number_of_simulations = 0
 
-        json_data = load_input_file(f_path_json)
+        json_data = load_input_file(f_path_json) if initialization_dict is None else initialization_dict
         network_data = json_data["network"]
         self.network_type = NetworkType(network_data["type"])
         self.network_mass_flow_control = network_data.get("mass_flow_control", {})
@@ -3182,6 +3189,20 @@ class GHEHPSystem:
         for this_comp in self.components:
             if this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
                 this_comp.calc_pump_power()
+
+    def get_total_energy_consumption(self):
+        self.calc_energy()
+        self.calc_energy_ghe()
+        time_differences = np.diff(self.time_array)
+        total_energy = np.sum(self.pump_power_loop * time_differences)
+        for this_comp in self.components:
+            this_comp.calc_energy()
+            if this_comp.comp_type == SimCompType.BUILDING:
+                total_energy += np.sum(this_comp.power_hp_tot * time_differences)
+                total_energy += np.sum(this_comp.power_circ_pump * time_differences)
+            elif this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
+                total_energy += np.sum(this_comp.P_ghe_cp * time_differences)
+        return total_energy
 
     def create_output(
         self,

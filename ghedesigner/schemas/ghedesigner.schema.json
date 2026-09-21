@@ -366,6 +366,63 @@
       "format": "Meters",
       "description": "Outer diameter of pipe. Units: meters (m)."
     },
+    "parameter_list": {
+      "title": "Parametric study values",
+      "type": "object",
+      "anyOf": [
+        {
+          "title": "Evenly spaced range",
+          "properties": {
+            "values": {
+              "title": "Range definition",
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              ],
+              "additionalItems": false
+            },
+            "parameter_range": {
+              "title": "Interpret values as a range",
+              "type": "boolean",
+              "enum": [true]
+            }
+          },
+          "required": ["parameter_range", "values"],
+          "additionalProperties": false
+        },
+        {
+          "title": "Explicit values",
+          "properties": {
+            "values": {
+              "title": "Study values",
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "number"
+              }
+            },
+            "parameter_range": {
+              "title": "Interpret values as a range",
+              "type": "boolean",
+              "enum": [false]
+            }
+          },
+          "required": ["values"],
+          "additionalProperties": false
+        }
+      ]
+    },
     "pump_efficiency": {
       "title": "Pump efficiency",
       "type": "number",
@@ -1850,6 +1907,90 @@
         "additionalProperties": false,
         "description": ""
       }
+    },
+    "parametric_study": {
+      "title": "Parametric study",
+      "type": "object",
+      "description": "Contains controls related to running parametric studies on network design.",
+      "properties": {
+        "study_type": {
+          "title": "Study type",
+          "type": "string",
+          "enum": ["combination", "enumerate"]
+        },
+        "ghes_to_modify": {
+          "title": "Ground heat exchangers to modify",
+          "type": "array",
+          "minItems": 1,
+          "description": "List of GHEs to use in study. Not including this will assume that all GHEs are to be modified.",
+          "items": {
+            "type": "string",
+            "description": "Name of a network GHE whose properties are changed during the study."
+          }
+        },
+        "min_eft_modifications": {
+          "title": "Minimum entering-fluid temperature modifications",
+          "description": "The amount that buildings' minimum design temperature is modified in the study.",
+          "format": "°C",
+          "$ref": "#/$defs/parameter_list"
+        },
+        "max_eft_modifications": {
+          "title": "Maximum entering-fluid temperature modifications",
+          "description": "The amount that buildings' maximum design temperature is modified in the study.",
+          "format": "°C",
+          "$ref": "#/$defs/parameter_list"
+        },
+        "grout_conductivities": {
+          "title": "Grout conductivities",
+          "description": "The grout conductivities to be explored in the study.",
+          "format": "W/mK",
+          "$ref": "#/$defs/parameter_list"
+        },
+        "pipe_sizes": {
+          "title": "Pipe sizes",
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "The ghe pipe sizes to use during the study. The internal and external diameters must be specified.",
+          "format": "m",
+          "items": [
+            {
+              "description": "Inner Diameter",
+              "$ref": "#/$defs/parameter_list"
+            },
+            {
+              "description": "Outer Diameter",
+              "$ref": "#/$defs/parameter_list"
+            }
+          ],
+          "additionalItems": false
+        },
+        "borehole_heights": {
+          "title": "Borehole heights",
+          "description": "The GHE borehole heights to be explored during the study.",
+          "format": "m",
+          "$ref": "#/$defs/parameter_list"
+        },
+        "updated_topology": {
+          "title": "Updated network station order",
+          "type": "array",
+          "minItems": 1,
+          "description": "A list of potential changes to make to the system's network station order.",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "Pairs of strings describing which station to move and which station should precede it: (element_to_move, new_preceding_element).",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
     },
     "simulation_control": {
       "title": "Simulation controls",

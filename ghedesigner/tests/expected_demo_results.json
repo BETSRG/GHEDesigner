@@ -141,5 +141,11 @@
   },
   "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY": {
     "skip_checks": true
+  },
+  "Network_Sizing_Study_3GHE_6HP_BUPCRS_Enumerated": {
+    "skip_checks": true
+  },
+  "Network_Sizing_Study_3GHE_6HP_BUPCRS_Combinatorial": {
+    "skip_checks": true
   }
 }

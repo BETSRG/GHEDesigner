@@ -6,6 +6,7 @@ import click
 from jsonschema.exceptions import ValidationError
 
 from ghedesigner.constants import INPUT_VERSION, MONTHS_IN_YEAR, VERSION
+from ghedesigner.district_parametric_study import SystemParametricStudySupervisor
 from ghedesigner.district_system import GHEHPSystem
 from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.manager import GroundHeatExchanger
@@ -51,6 +52,8 @@ def run(input_file_path: Path, output_directory: Path) -> int:
         valid_load_source = all_ghe_has_loads ^ (building_input and no_ghe_has_loads)
         if not valid_load_source:
             print("Bad load specified, need exactly one of: loads in each unsized GHE, or building object")
+            return 1
+    parametric_study = "parametric_study" in full_inputs
 
     network_data = full_inputs.get("network")
     has_network = network_data is not None
@@ -119,7 +122,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
             results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
             results.write_all_output_files(output_directory=output_directory, file_suffix="")
-    elif has_network:
+    elif has_network and not parametric_study:
         system = GHEHPSystem(input_file_path)
         system.size_and_simulate()
 
@@ -131,9 +134,15 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             )
         else:
             system.create_output(output_directory / f"{input_file_path.stem}.csv")
+    elif has_network and parametric_study:
+        studier = SystemParametricStudySupervisor(input_file_path)
+        studier.generate_study_iterator()
+        studier.get_study_results()
+        studier.get_best_design(output_directory)
+        studier.output_study_results(output_directory / f"{input_file_path.stem}.csv")
     else:
         print("Bad input file, for now only the following configurations are available:")
-        print("1 GHE; 1 GHE + 1 Building; or N GHE + M Buildings + 1 Central Loop")
+        print("1 GHE; 1 GHE + 1 Building; or N GHE + M Buildings + 1 distribution network")
         return 1
     return 0
 
