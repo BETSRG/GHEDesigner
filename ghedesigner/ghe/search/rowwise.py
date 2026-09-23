@@ -378,10 +378,11 @@ class RowWiseModifiedBisectionSearch:
                     )
 
                 distances = map(dist, other_points)
+                distance_points = zip(distances, other_points)
                 if method == "ascending":
-                    return [x for _, x in sorted(zip(distances, other_points))]
+                    return [x for _, x in sorted(distance_points, key=lambda pair: pair[0])]
                 elif method == "descending":
-                    return [x for _, x in sorted(zip(distances, other_points), reverse=True)]
+                    return [x for _, x in sorted(distance_points, key=lambda pair: pair[0], reverse=True)]
 
             # TODO: b_r_removal_method was an argument but it was never used
             # if b_r_removal_method == "CloseToCorner":
