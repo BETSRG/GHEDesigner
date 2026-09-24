@@ -3077,13 +3077,6 @@ class GHEHPSystem:
 
             for this_comp in self.components:
                 if this_comp.comp_type == SimCompType.COOLING_TOWER:
-
-                    # # Current-timestep scalar values used by the matrix
-                    # this_comp.mass_flow_CT_loop = this_comp.loop_fraction * mass_loop
-                    # this_comp.mass_flow_CT_water = this_comp.beta_loop_to_HX * this_comp.mass_flow_CT_loop
-                    # this_comp.mass_flow_CT_air = (this_comp.mass_flow_CT_water / this_comp.mass_flow_water_nominal *
-                    #                               this_comp.mass_flow_air_nominal)
-
                     # this is for using constant flow (nominal flow) in CT air and water side
                     this_comp.mass_flow_CT_air = this_comp.mass_flow_air_nominal
                     this_comp.mass_flow_CT_water = this_comp.mass_flow_water_nominal
