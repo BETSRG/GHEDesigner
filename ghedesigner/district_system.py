@@ -51,7 +51,7 @@ from ghedesigner.network import (
     compile_network,
     component_type_map,
 )
-from ghedesigner.utilities import HPmodel, get_loads, load_input_file
+from ghedesigner.utilities import HPmodel, get_loads, load_input_file, validate_nonnegative_loads
 
 
 class DynamicAggregator:
@@ -1388,18 +1388,20 @@ class Building(BaseSimComp):
 
         if load_method in ("hourly", "hourlyloadagg"):
             if self.heating_exists:
-                one_yr_htg_vals = np.array(
+                one_yr_htg_vals = validate_nonnegative_loads(
                     get_loads(self.name + "_htg", SimCompType.HEAT_PUMP.name, bldg_data["heating_load"]),
-                    dtype=float,
+                    "heating",
+                    self.name,
                 )
                 hourly_htg = np.tile(one_yr_htg_vals, self.sim_years)
                 self.htg_vals = hourly_htg
                 # self.htg_vals = np.insert(hourly_htg, 0, 0.0)
 
             if self.cooling_exists:
-                one_yr_clg_vals = np.array(
+                one_yr_clg_vals = validate_nonnegative_loads(
                     get_loads(self.name + "_clg", SimCompType.HEAT_PUMP.name, bldg_data["cooling_load"]),
-                    dtype=float,
+                    "cooling",
+                    self.name,
                 )
                 hourly_clg = np.tile(one_yr_clg_vals, self.sim_years)
                 self.clg_vals = hourly_clg

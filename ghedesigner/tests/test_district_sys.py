@@ -378,6 +378,22 @@ class TestDistrictSys(GHEBaseTest):
         assert zone.COP_htg == pytest.approx(3.5)
         assert zone.COP_clg == pytest.approx(4.5)
 
+    def test_hybrid_building_loads_must_be_nonnegative(self):
+        for load_type in ("heating", "cooling"):
+            with self.subTest(load_type=load_type):
+                processor = ProcessLoads()
+                building_data = {
+                    "heating_load": {"load_values": [1.0, 2.0], "heat_pump_cop": 3.5},
+                    "cooling_load": {"load_values": [3.0, 4.0], "heat_pump_cop": 4.5},
+                }
+                building_data[f"{load_type}_load"]["load_values"][1] = -2.0
+
+                with pytest.raises(
+                    ValueError,
+                    match=rf"{load_type.capitalize()} loads for building 'building' must be non-negative",
+                ):
+                    processor.read_hp_load_from_json({"building": {"building": building_data}})
+
     def test_hybrid_grid_has_one_hour_minimum_timestep(self):
         grid = enforce_minimum_timestep([0.2, 0.8, 1.2, 1.9, 2.4, 3.0])
 

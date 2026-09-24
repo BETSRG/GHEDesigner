@@ -1,4 +1,5 @@
 import json
+from ast import literal_eval
 from copy import deepcopy
 from pathlib import Path
 from unittest import TestCase
@@ -53,10 +54,10 @@ class TestParametricStudy(GHEBaseTest):
         self.enumerated_supervisor.get_study_results()
 
         for i, entry in enumerate(self.combinatorial_supervisor.study_output_values):
-            self.assertEqual(str(entry), reference_values["test_study_methods_combinatorial"][i])
+            self.assert_study_output_matches(entry, reference_values["test_study_methods_combinatorial"][i])
 
         for i, entry in enumerate(self.enumerated_supervisor.study_output_values):
-            self.assertEqual(str(entry), reference_values["test_study_methods_enumerated"][i])
+            self.assert_study_output_matches(entry, reference_values["test_study_methods_enumerated"][i])
 
         self.assertAlmostEqual(
             self.combinatorial_supervisor.minimum_total_drilling,
@@ -67,6 +68,20 @@ class TestParametricStudy(GHEBaseTest):
             self.enumerated_supervisor.minimum_total_drilling,
             float(reference_values["test_minimum_drilling_enumerated"][0]),
             delta=0.001,
+        )
+
+    def assert_study_output_matches(self, actual, expected_text):
+        expected = literal_eval(expected_text)
+
+        # Preserve exact sizing checks while allowing the small solver-dependent
+        # energy drift observed across the supported Linux/Python matrix.
+        self.assertEqual(actual[:-1], expected[:-1])
+        self.assertAlmostEqual(float(actual[-1]), float(expected[-1]), delta=0.025)
+
+    def test_study_output_allows_platform_energy_drift(self):
+        self.assert_study_output_matches(
+            ["142", "88.96", "12633.01", "-0.01", "568.98"],
+            "['142', '88.96', '12633.01', '-0.01', '569.0']",
         )
 
 

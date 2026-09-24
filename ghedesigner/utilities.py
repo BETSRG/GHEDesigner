@@ -361,6 +361,20 @@ def get_loads(name, comp_type: str, data: dict) -> list[float]:
         return read_csv_column(data["file_path"], column)
 
 
+def validate_nonnegative_loads(loads, load_type: str, building_name: str) -> np.ndarray:
+    """Return building loads as floats after checking that none are negative."""
+    values = np.asarray(loads, dtype=float)
+    negative_indices = np.flatnonzero(values < 0.0)
+    if negative_indices.size:
+        first_index = int(negative_indices[0])
+        raise ValueError(
+            f"{load_type.capitalize()} loads for building '{building_name}' must be non-negative; "
+            f"found {negative_indices.size} negative value(s), first at position {first_index + 1} "
+            f"({values[first_index]:g} W), minimum {values[negative_indices].min():g} W."
+        )
+    return values
+
+
 def absolutize_file_paths(json_path: Path, inplace: bool = False) -> dict:
     """
     Read a JSON file, traverse all nested structures, and convert any

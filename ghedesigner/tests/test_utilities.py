@@ -4,10 +4,22 @@ import numpy as np
 import pytest
 
 from ghedesigner.tests.test_base_case import GHEBaseTest
-from ghedesigner.utilities import HPmodel, read_csv_column
+from ghedesigner.utilities import HPmodel, read_csv_column, validate_nonnegative_loads
 
 
 class TestUtilities(GHEBaseTest):
+    def test_validate_nonnegative_loads_reports_negative_values(self):
+        with pytest.raises(
+            ValueError,
+            match=r"Heating loads for building 'building_a'.*first at position 2.*minimum -4 W",
+        ):
+            validate_nonnegative_loads([1.0, -2.0, 3.0, -4.0], "heating", "building_a")
+
+    def test_validate_nonnegative_loads_accepts_zero_and_positive_values(self):
+        loads = validate_nonnegative_loads([0.0, 1.0, 2.0], "cooling", "building_a")
+
+        np.testing.assert_array_equal(loads, [0.0, 1.0, 2.0])
+
     def test_heat_pump_quadratics_hold_boundary_values_outside_curve_range(self):
         demo = json.loads((self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json").read_text())
         heat_pump = HPmodel("hp1", demo["heat_pump"]["hp1"], ugt=20.0)

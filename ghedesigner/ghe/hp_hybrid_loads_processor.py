@@ -9,7 +9,7 @@ from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.ground_loads import HybridLoad
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Grout, Soil
-from ghedesigner.utilities import HPmodel, get_loads
+from ghedesigner.utilities import HPmodel, get_loads, validate_nonnegative_loads
 
 MIN_HYBRID_TIMESTEP_HOURS = 1.0
 
@@ -261,24 +261,26 @@ class ProcessLoads:
 
             if "heating_load" in bldg_data:
                 heating_load = bldg_data["heating_load"]
-                zone.q_htg_1yr = np.array(
+                zone.q_htg_1yr = validate_nonnegative_loads(
                     get_loads(
                         heating_load.get("heat_pump_name", f"{bldg_id}_heating"),
                         SimCompType.HEAT_PUMP.name,
                         heating_load,
                     ),
-                    dtype=float,
+                    "heating",
+                    bldg_id,
                 )
 
             if "cooling_load" in bldg_data:
                 cooling_load = bldg_data["cooling_load"]
-                zone.q_clg_1yr = np.array(
+                zone.q_clg_1yr = validate_nonnegative_loads(
                     get_loads(
                         cooling_load.get("heat_pump_name", f"{bldg_id}_cooling"),
                         SimCompType.HEAT_PUMP.name,
                         cooling_load,
                     ),
-                    dtype=float,
+                    "cooling",
+                    bldg_id,
                 )
 
             if zone.q_htg_1yr is None and zone.q_clg_1yr is None:
