@@ -1357,7 +1357,7 @@
           "circulation_pump": {
             "title": "Circulation pump",
             "type": "object",
-            "description": "Optional GHE-internal circulation pump, hydraulically separate from network flow.",
+            "description": "GHE-internal circulation pump, hydraulically separate from network flow. Required for every GHE in a one-pipe network.",
             "properties": {
               "reference_pressure_drop": {
                 "title": "Reference pressure drop",

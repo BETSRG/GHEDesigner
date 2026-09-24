@@ -134,3 +134,19 @@ def test_semantic_validation_rejects_duplicate_ghe_pressure_loss() -> None:
 
     with pytest.raises(ValueError, match="cannot define both component hydraulic loss"):
         validate_network_data(data)
+
+
+def test_semantic_validation_requires_ghe_circulation_pumps_for_one_pipe() -> None:
+    data = {
+        "network": {"type": "one_pipe"},
+        "ground_heat_exchanger": {
+            "ghe_1": {"circulation_pump": {"reference_pressure_drop": 50_000.0}},
+            "ghe_2": {},
+        },
+    }
+
+    with pytest.raises(
+        ValueError,
+        match=r"one_pipe network requires 'circulation_pump'.*missing for: ghe_2",
+    ):
+        validate_network_data(data)

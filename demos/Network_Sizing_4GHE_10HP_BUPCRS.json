@@ -234,6 +234,12 @@
   "ground_heat_exchanger": {
     "ghe_1": {
       "flow_rate": 0.5,
+      "circulation_pump": {
+        "reference_pressure_drop": 50000,
+        "wire_to_water_efficiency": 0.5,
+        "pressure_drop_multiplier": 1.0,
+        "minimum_flow_fraction": 0.05
+      },
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
@@ -286,6 +292,12 @@
     },
     "ghe_2": {
       "flow_rate": 0.5,
+      "circulation_pump": {
+        "reference_pressure_drop": 50000,
+        "wire_to_water_efficiency": 0.5,
+        "pressure_drop_multiplier": 1.0,
+        "minimum_flow_fraction": 0.05
+      },
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
@@ -326,6 +338,12 @@
     },
     "ghe_3": {
       "flow_rate": 0.5,
+      "circulation_pump": {
+        "reference_pressure_drop": 50000,
+        "wire_to_water_efficiency": 0.5,
+        "pressure_drop_multiplier": 1.0,
+        "minimum_flow_fraction": 0.05
+      },
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000
@@ -370,6 +388,12 @@
     },
     "ghe_4": {
       "flow_rate": 0.5,
+      "circulation_pump": {
+        "reference_pressure_drop": 50000,
+        "wire_to_water_efficiency": 0.5,
+        "pressure_drop_multiplier": 1.0,
+        "minimum_flow_fraction": 0.05
+      },
       "grout": {
         "conductivity": 1,
         "rho_cp": 3901000

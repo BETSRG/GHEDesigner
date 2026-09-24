@@ -422,9 +422,9 @@ class TestDistrictSys(GHEBaseTest):
             with pytest.raises(ValidationError):
                 validate_input_file(invalid_path)
 
-    def test_compact_network_allows_ghe_without_internal_circulation_pump(self):
+    def test_compact_one_pipe_network_requires_ghe_internal_circulation_pump(self):
         system = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
-        assert system.ground_heat_exchangers[0].circulation_pump is None
+        assert system.ground_heat_exchangers[0].circulation_pump is not None
 
     def test_ghe_circulation_pump_uses_per_borehole_design_flow(self):
         ghx = cast(Any, object.__new__(GHX))
@@ -484,6 +484,7 @@ class TestDistrictSys(GHEBaseTest):
             configured.solve_system_standard()
 
         unconfigured = GHEHPSystem(source_path)
+        unconfigured.ground_heat_exchangers[0].circulation_pump = None
         unconfigured.solve_system_standard()
 
         with TemporaryDirectory() as tmp_dir:

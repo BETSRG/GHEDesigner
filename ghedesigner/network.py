@@ -573,7 +573,18 @@ def validate_network_data(data: dict[str, Any]) -> None:
     for segment in network_data.get("segments", []):
         register_id(segment["id"], "segment")
 
-    for ghe_id, ghe_data in data.get("ground_heat_exchanger", {}).items():
+    ground_heat_exchangers = data.get("ground_heat_exchanger", {})
+    if network_data["type"] == NetworkType.ONE_PIPE.value:
+        missing_pumps = sorted(
+            ghe_id for ghe_id, ghe_data in ground_heat_exchangers.items() if ghe_data.get("circulation_pump") is None
+        )
+        if missing_pumps:
+            raise ValueError(
+                "A one_pipe network requires 'circulation_pump' for every ground heat exchanger; "
+                f"missing for: {', '.join(missing_pumps)}."
+            )
+
+    for ghe_id, ghe_data in ground_heat_exchangers.items():
         hydraulics = ghe_data.get("hydraulics", {})
         has_component_loss = "reference_mass_flow" in hydraulics or "reference_pressure_drop" in hydraulics
         if ghe_data.get("circulation_pump") is not None and has_component_loss:

@@ -78,8 +78,8 @@ include:
 - A one-pipe network uses `network.mass_flow_control` to set the distribution-flow multiplier and
   minimum circulation rate.
 - Compact one-pipe bypass branches are generated automatically for every station and are treated as zero-loss paths.
-  Distribution-segment losses are calculated from pipe geometry. A GHE's `circulation_pump` data describes only its
-  local borefield and header pressure loss.
+  Distribution-segment losses are calculated from pipe geometry. Every GHE in a one-pipe network requires
+  `circulation_pump` data describing only its local borefield and header pressure loss.
 - Building loads can reference a heat pump performance map with `heat_pump_name` or use fixed COP conversion with
   `heat_pump_cop`.
 - Ordered distribution segments can reference an isolated model in `horizontal_piping` when
