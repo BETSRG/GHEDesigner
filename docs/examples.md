@@ -72,9 +72,10 @@ include:
 - `simulation_control.search_method`: `GLOBAL_BUPCRS` and `NELDER-MEAD` size system GHEs; `SIMULATION_ONLY` simulates
   pre-designed GHEs.
 - `network.type`: `one_pipe` and `two_pipe` select an ordered, unidirectional district-loop topology.
-- Network flow is prescribed from building loads. GHEDesigner allocates GHE flow in proportion to each GHE's total
-  design flow and evaluates Darcy-Weisbach pressure losses afterward for reporting and pump-energy calculations.
-  Pressure loss does not allocate network flow.
+- Network flow is prescribed from building loads. In a two-pipe network, GHEDesigner allocates GHE flow in proportion
+  to each GHE's total design flow. In a one-pipe network, each GHE branch is capped at its total design flow and excess
+  distribution flow passes through the station bypass. Pressure loss does not allocate network flow; it is evaluated
+  afterward for reporting and pump-energy calculations.
 - A one-pipe network uses `network.mass_flow_control` to set the distribution-flow multiplier and
   minimum circulation rate.
 - Compact one-pipe bypass branches are generated automatically for every station and are treated as zero-loss paths.

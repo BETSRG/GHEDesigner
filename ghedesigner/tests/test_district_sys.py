@@ -26,6 +26,7 @@ from ghedesigner.ghe.horizontal_pipe_heat_exchange import calc_pipe_wall_resista
 from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads, Zone, enforce_minimum_timestep
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Soil
+from ghedesigner.network import BranchType
 from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.utilities import load_input_file
 from ghedesigner.validate import validate_input_file
@@ -469,6 +470,49 @@ class TestDistrictSys(GHEBaseTest):
         assert ghx.local_recirculation_flow[0] == pytest.approx(0.25)
         with pytest.raises(ValueError, match="reverse flow"):
             ghx.update_effective_mass_flow(-0.1, 1)
+
+    def test_one_pipe_ghe_branch_flow_is_capped_at_design_flow(self):
+        system = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
+        building = system.buildings[0]
+        ghe = system.ground_heat_exchangers[0]
+        building_branch = system.network_branch_by_component[building.ID]
+        ghe_branch = system.network_branch_by_component[ghe.ID]
+        ghe_bypass = next(
+            branch
+            for branch in system.network_graph.branches.values()
+            if branch.branch_type == BranchType.BYPASS
+            and branch.node_a == ghe_branch.node_a
+            and branch.node_b == ghe_branch.node_b
+        )
+
+        prescribed_flows, distribution_flow = system._mass_flow_driven_prescriptions({building_branch.id: 10.0})
+
+        assert distribution_flow == pytest.approx(15.0)
+        assert prescribed_flows[ghe_branch.id] == pytest.approx(ghe.mass_flow_ghe_design)
+        assert prescribed_flows[ghe_bypass.id] == pytest.approx(distribution_flow - ghe.mass_flow_ghe_design)
+
+    def test_one_pipe_ghe_branch_flow_follows_distribution_below_design_flow(self):
+        system = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
+        building = system.buildings[0]
+        ghe = system.ground_heat_exchangers[0]
+        building_branch = system.network_branch_by_component[building.ID]
+        ghe_branch = system.network_branch_by_component[ghe.ID]
+        ghe_bypass = next(
+            branch
+            for branch in system.network_graph.branches.values()
+            if branch.branch_type == BranchType.BYPASS
+            and branch.node_a == ghe_branch.node_a
+            and branch.node_b == ghe_branch.node_b
+        )
+        building_flow = ghe.mass_flow_ghe_design / 3.0
+
+        prescribed_flows, distribution_flow = system._mass_flow_driven_prescriptions(
+            {building_branch.id: building_flow}
+        )
+
+        assert distribution_flow == pytest.approx(1.5 * building_flow)
+        assert prescribed_flows[ghe_branch.id] == pytest.approx(distribution_flow)
+        assert prescribed_flows[ghe_bypass.id] == pytest.approx(0.0)
 
     def test_canonical_network_feature_gates_deferred_components(self):
         source_sink_path = self.demos_path / "simulate_1_pipe_1_ghe_1_hx_1_bldg_district.json"

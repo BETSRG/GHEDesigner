@@ -6,20 +6,20 @@
     "skip_checks": true
   },
   "Network_Sizing_3GHE_6HP_BUPCRS": {
-    "active_borehole_length": 31509.7656,
+    "active_borehole_length": 31974.6094,
     "number_of_boreholes": 340
   },
   "Network_Sizing_3GHE_6HP_RowWise": {
-    "active_borehole_length": 28943.3594,
-    "number_of_boreholes": 292
+    "active_borehole_length": 29612.9883,
+    "number_of_boreholes": 297
   },
   "Network_Sizing_4GHE_10HP_BUPCRS": {
-    "active_borehole_length": 49827.1484,
-    "number_of_boreholes": 296
+    "active_borehole_length": 55827.9053,
+    "number_of_boreholes": 333
   },
   "Network_Sizing_4GHE_10HP_RowWise": {
-    "active_borehole_length": 49680.1758,
-    "number_of_boreholes": 300
+    "active_borehole_length": 55420.8252,
+    "number_of_boreholes": 317
   },
   "find_design_bi_rectangle_constrained_single_u_tube": {
     "active_borehole_length": 134.3916010670856,

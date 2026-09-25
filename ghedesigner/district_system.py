@@ -3086,12 +3086,14 @@ class GHEHPSystem:
             distribution_flow = max(multiplier * aggregate_building_flow, minimum_flow)
             for branch in self.network_graph.branches.values():
                 if branch.branch_type in (
-                    BranchType.GROUND_HEAT_EXCHANGER,
                     BranchType.SOURCE_SINK_HEAT_EXCHANGER,
                     BranchType.PIPE,
                     BranchType.PUMP,
                 ):
                     prescribed_flows[branch.id] = distribution_flow
+            for ghe in self.ground_heat_exchangers:
+                branch = self.network_branch_by_component[ghe.ID]
+                prescribed_flows[branch.id] = min(distribution_flow, ghe.mass_flow_ghe_design)
             for bypass in (
                 branch for branch in self.network_graph.branches.values() if branch.branch_type == BranchType.BYPASS
             ):
