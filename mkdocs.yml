@@ -22,6 +22,7 @@ plugins:
 nav:
   - Home: index.md
   - Using the CLI: cli.md
+  - Graphical input editor: gui.md
   - Examples: examples.md
   - Design Manager: manager.md
 

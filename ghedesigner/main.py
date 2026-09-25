@@ -40,33 +40,34 @@ def run(input_file_path: Path, output_directory: Path) -> int:
         print(f"Bad input file version; supported version is: {INPUT_VERSION}")
         return 1
 
-    # Validate the load source, it should be a building object or a GHE with loads specified
-    # any GHE instances found with pre_designed will just be ignored since they don't need anything added
-    unsized_ghe_contains_loads = []
-    for _, ghe_dict in full_inputs["ground_heat_exchanger"].items():
-        if "loads" in ghe_dict:
-            unsized_ghe_contains_loads.append(True)
-        else:
-            unsized_ghe_contains_loads.append(False)
-    all_ghe_has_loads = all(unsized_ghe_contains_loads)
-    no_ghe_has_loads = not any(unsized_ghe_contains_loads)
-    building_input = "building" in full_inputs
-    valid_load_source = all_ghe_has_loads ^ (building_input and no_ghe_has_loads)  # XOR because we don't want both
-    if not valid_load_source:
-        print("Bad load specified, need exactly one of: loads in each ghe, or building object")
-
-    # Loop over the topology and init the found objects, for now just the GHE or a GHE with an HP
-    topology_props: list[dict] = full_inputs["topology"]
-    ghe_names = []
-    building_names = []
-    central_loop = "central_loop" in full_inputs
-    for component in topology_props:
-        if component["type"] == "building":
-            building_names.append(component["name"])
-        elif component["type"] == "ground_heat_exchanger":
-            ghe_names.append(component["name"])
+    # Pre-designed GHEs only need a g-function calculation, so they do not require a load source.
+    ghes_requiring_loads = [
+        ghe_dict for ghe_dict in full_inputs["ground_heat_exchanger"].values() if "pre_designed" not in ghe_dict
+    ]
+    if ghes_requiring_loads:
+        ghe_load_flags = ["loads" in ghe_dict for ghe_dict in ghes_requiring_loads]
+        all_ghe_has_loads = all(ghe_load_flags)
+        no_ghe_has_loads = not any(ghe_load_flags)
+        building_input = bool(full_inputs.get("building"))
+        valid_load_source = all_ghe_has_loads ^ (building_input and no_ghe_has_loads)
+        if not valid_load_source:
+            print("Bad load specified, need exactly one of: loads in each unsized GHE, or building object")
+            return 1
     parametric_study = "parametric_study" in full_inputs
 
+    network_data = full_inputs.get("network")
+    has_network = network_data is not None
+    if network_data is None:
+        ghe_names = list(full_inputs["ground_heat_exchanger"])
+        building_names = list(full_inputs.get("building", {}))
+    else:
+        station_ids = [station["component"] for station in network_data["stations"]]
+        ghe_names = [
+            component_id for component_id in station_ids if component_id in full_inputs["ground_heat_exchanger"]
+        ]
+        building_names = [
+            component_id for component_id in station_ids if component_id in full_inputs.get("building", {})
+        ]
     # do actions depending on what is provided in input
     if len(ghe_names) >= 1 and len(building_names) == 0:
         # we are just doing a GHE design/sizing/simulation alone
@@ -90,17 +91,19 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             )
             if "pre_designed" in ghe_dict:
                 log_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
-                results = OutputManager("GHEDesigner Run from CLI", "Just Calculate G", "", "")
-                results.just_write_g_function(output_directory, log_time, g_values, g_bhw_values)
+                results = OutputManager("GHEDesigner Run from CLI", "Just Calculate G", "", "", object_name=ghe_name)
+                results.just_write_g_function(output_directory, log_time, g_values, g_bhw_values, ghe_name)
             else:
                 # TODO: Assert that "design" data is in the ghe object
                 ghe_dict["name"] = ghe_name
                 end_month = full_inputs["simulation_control"]["sizing_years"] * MONTHS_IN_YEAR
                 search, search_time, _ = ghe.design_and_size_ghe(end_month, ghe_dict=ghe_dict)
-                results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
+                results = OutputManager(
+                    "GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name", object_name=ghe_name
+                )
                 results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
                 results.write_all_output_files(output_directory=output_directory, file_suffix="")
-    elif len(ghe_names) == 1 and len(building_names) == 1 and not central_loop:
+    elif len(ghe_names) == 1 and len(building_names) == 1 and not has_network:
         # we have a GHE and a building, grab both
         ghe_dict = full_inputs["ground_heat_exchanger"][ghe_names[0]]
         ghe_dict["name"] = ghe_names[0]
@@ -118,10 +121,12 @@ def run(input_file_path: Path, output_directory: Path) -> int:
         else:
             end_month = full_inputs["simulation_control"]["sizing_years"] * MONTHS_IN_YEAR
             search, search_time, _ = ghe.design_and_size_ghe(end_month, loads_override=ghe_loads, ghe_dict=ghe_dict)
-            results = OutputManager("GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name")
+            results = OutputManager(
+                "GHEDesigner Run from CLI", "Notes", "Author", "Iteration Name", object_name=ghe_names[0]
+            )
             results.set_design_data(search, search_time, load_method=TimestepType.HYBRID)
             results.write_all_output_files(output_directory=output_directory, file_suffix="")
-    elif central_loop and not parametric_study:
+    elif has_network and not parametric_study:
         system = GHEHPSystem(input_file_path)
         system.size_and_simulate()
 
@@ -133,7 +138,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
             )
         else:
             system.create_output(output_directory / f"{input_file_path.stem}.csv")
-    elif central_loop and parametric_study:
+    elif has_network and parametric_study:
         studier = SystemParametricStudySupervisor(input_file_path)
         studier.generate_study_iterator()
         studier.get_study_results()
@@ -141,7 +146,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
         studier.output_study_results(output_directory / f"{input_file_path.stem}.csv")
     else:
         print("Bad input file, for now only the following configurations are available:")
-        print("1 GHE; 1 GHE + 1 Building; or N GHE + M Buildings + 1 Central Loop")
+        print("1 GHE; 1 GHE + 1 Building; or N GHE + M Buildings + 1 distribution network")
         return 1
     return 0
 

@@ -1,4 +1,5 @@
 import json
+from ast import literal_eval
 from copy import deepcopy
 from pathlib import Path
 from unittest import TestCase
@@ -53,10 +54,10 @@ class TestParametricStudy(GHEBaseTest):
         self.enumerated_supervisor.get_study_results()
 
         for i, entry in enumerate(self.combinatorial_supervisor.study_output_values):
-            self.assertEqual(str(entry), reference_values["test_study_methods_combinatorial"][i])
+            self.assert_study_output_matches(entry, reference_values["test_study_methods_combinatorial"][i])
 
         for i, entry in enumerate(self.enumerated_supervisor.study_output_values):
-            self.assertEqual(str(entry), reference_values["test_study_methods_enumerated"][i])
+            self.assert_study_output_matches(entry, reference_values["test_study_methods_enumerated"][i])
 
         self.assertAlmostEqual(
             self.combinatorial_supervisor.minimum_total_drilling,
@@ -67,6 +68,20 @@ class TestParametricStudy(GHEBaseTest):
             self.enumerated_supervisor.minimum_total_drilling,
             float(reference_values["test_minimum_drilling_enumerated"][0]),
             delta=0.001,
+        )
+
+    def assert_study_output_matches(self, actual, expected_text):
+        expected = literal_eval(expected_text)
+
+        # Preserve exact sizing checks while allowing the small solver-dependent
+        # energy drift observed across the supported Linux/Python matrix.
+        self.assertEqual(actual[:-1], expected[:-1])
+        self.assertAlmostEqual(float(actual[-1]), float(expected[-1]), delta=0.025)
+
+    def test_study_output_allows_platform_energy_drift(self):
+        self.assert_study_output_matches(
+            ["142", "88.96", "12633.01", "-0.01", "568.98"],
+            "['142', '88.96', '12633.01', '-0.01', '569.0']",
         )
 
 
@@ -82,10 +97,14 @@ class TestParametricStudyInputs(TestCase):
                     "design": {"max_height": 100.0},
                 }
             },
-            "topology": [
-                {"type": "building", "name": "A"},
-                {"type": "ground_heat_exchanger", "name": "g1"},
-            ],
+            "network": {
+                "type": "one_pipe",
+                "stations": [{"component": "A"}, {"component": "g1"}],
+                "segments": [
+                    {"id": "segment_1", "from": "A", "to": "g1", "length": 1.0},
+                    {"id": "segment_2", "from": "g1", "to": "A", "length": 1.0},
+                ],
+            },
             "parametric_study": parametric_study or {},
         }
 
@@ -121,7 +140,12 @@ class TestParametricStudyInputs(TestCase):
             "pipe": {"inner_diameter": 0.05, "outer_diameter": 0.06},
             "design": {"max_height": 120.0},
         }
-        input_data["topology"].append({"type": "ground_heat_exchanger", "name": "g2"})
+        input_data["network"]["stations"].append({"component": "g2"})
+        input_data["network"]["segments"] = [
+            {"id": "segment_1", "from": "A", "to": "g1", "length": 1.0},
+            {"id": "segment_2", "from": "g1", "to": "g2", "length": 1.0},
+            {"id": "segment_3", "from": "g2", "to": "A", "length": 1.0},
+        ]
         supervisor = self.create_supervisor(input_data)
         supervisor.generate_study_iterator()
         supervisor.prepare_design_dict(supervisor.iterator[0])
@@ -146,6 +170,20 @@ class TestParametricStudyInputs(TestCase):
         pipe_sizes = [entry[ParametricStudyParameters.PIPE_SIZES] for entry in supervisor.iterator]
         self.assertEqual(pipe_sizes, [(0.03, 0.04), (0.04, 0.05), (0.05, 0.06)])
 
+    def test_mismatched_pipe_size_lists_are_rejected(self):
+        input_data = self.input_data(
+            {
+                "pipe_sizes": [
+                    {"values": [0.03, 0.04]},
+                    {"values": [0.04]},
+                ]
+            }
+        )
+        supervisor = self.create_supervisor(input_data)
+
+        with pytest.raises(ValueError, match="must have the same length"):
+            supervisor.generate_study_iterator()
+
     def test_borehole_height_updates_predesigned_ghe(self):
         input_data = self.input_data({"borehole_heights": {"values": [80.0]}})
         ghe_data = input_data["ground_heat_exchanger"]["g1"]
@@ -160,12 +198,21 @@ class TestParametricStudyInputs(TestCase):
     def test_dependent_topology_moves_use_updated_positions(self):
         input_data = self.input_data({"updated_topology": [[["C", "A"], ["D", "C"]]]})
         input_data["building"] = {name: {"min_eft": 5.0, "max_eft": 30.0} for name in ("A", "B", "C", "D")}
-        input_data["topology"] = [{"type": "building", "name": name} for name in ("A", "B", "C", "D")]
+        input_data["network"]["stations"] = [{"component": name} for name in ("A", "B", "C", "D")]
+        input_data["network"]["segments"] = [
+            {"id": f"segment_{index + 1}", "from": name, "to": list("ABCD")[(index + 1) % 4], "length": 1.0}
+            for index, name in enumerate("ABCD")
+        ]
         supervisor = self.create_supervisor(input_data)
         supervisor.generate_study_iterator()
         supervisor.prepare_design_dict(supervisor.iterator[0])
 
-        self.assertEqual([component["name"] for component in supervisor.system_dict["topology"]], list("ACDB"))
+        network = supervisor.system_dict["network"]
+        self.assertEqual([station["component"] for station in network["stations"]], list("ACDB"))
+        self.assertEqual(
+            [(segment["from"], segment["to"]) for segment in network["segments"]],
+            [("A", "C"), ("C", "D"), ("D", "B"), ("B", "A")],
+        )
 
     def test_duplicate_topology_moves_are_rejected(self):
         input_data = self.input_data({"updated_topology": [[["A", "g1"], ["A", "g1"]]]})

@@ -6,7 +6,7 @@ from numpy import array, average, clip, exp, ndarray
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import DEG_TO_RAD, MONTHS_IN_YEAR
-from ghedesigner.enums import BHType, DesignGeomType, FlowConfigType, SimCompType, TimestepType
+from ghedesigner.enums import BHType, DesignGeomType, SimCompType, TimestepType
 from ghedesigner.ghe.boreholes.single_u_borehole import SingleUTube
 from ghedesigner.ghe.coordinates import rectangle
 from ghedesigner.ghe.design.base import DesignBase
@@ -106,7 +106,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.max_height: float = 150.0
         self.min_height: float = 20.0
         self.max_boreholes: int = 200
-        self.flow_type: FlowConfigType = FlowConfigType.BOREHOLE
         self.flow_rate: float = 0.0
         self.is_sizable: bool = False
 
@@ -296,7 +295,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     self.max_boreholes,
                     self.geometric_constraint,
                     ghe_loads,
-                    flow_type=self.flow_type,
                     method=TimestepType.HYBRID,
                 )
             case GeometricConstraintsNearSquare():
@@ -317,7 +315,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     self.max_boreholes,
                     self.geometric_constraint,
                     ghe_loads,
-                    flow_type=self.flow_type,
                     method=TimestepType.HYBRID,
                 )
             case GeometricConstraintsBiZoned():
@@ -338,7 +335,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     self.max_boreholes,
                     self.geometric_constraint,
                     ghe_loads,
-                    flow_type=self.flow_type,
                     method=TimestepType.HYBRID,
                 )
             case GeometricConstraintsBiRectangle():
@@ -359,7 +355,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     self.max_boreholes,
                     self.geometric_constraint,
                     ghe_loads,
-                    flow_type=self.flow_type,
                     method=TimestepType.HYBRID,
                 )
             case GeometricConstraintsBiRectangleConstrained():
@@ -380,7 +375,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     self.max_boreholes,
                     self.geometric_constraint,
                     ghe_loads,
-                    flow_type=self.flow_type,
                     method=TimestepType.HYBRID,
                 )
             case GeometricConstraintsRowWise():
@@ -401,7 +395,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     self.max_boreholes,
                     self.geometric_constraint,
                     ghe_loads,
-                    flow_type=self.flow_type,
                     method=TimestepType.HYBRID,
                 )
             case _:
@@ -410,22 +403,13 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         self.design_parameters_set = True
 
     def configure_ghe_flow(self, ghe_dict: dict):
-        flow_type_str = ghe_dict["flow_type"]
-        self.flow_type = FlowConfigType(flow_type_str.upper())
         self.flow_rate = ghe_dict["flow_rate"]
         self.flow_parameters_set = True
 
     def retrieve_flow(self, coordinates, rho):
-        if self.flow_type == FlowConfigType.BOREHOLE:
-            v_flow_system = self.flow_rate * len(coordinates)
-            # Total fluid mass flow rate per borehole (kg/s)
-            m_flow_borehole = self.flow_rate / 1000.0 * rho
-        elif self.flow_type == FlowConfigType.SYSTEM:
-            v_flow_system = self.flow_rate
-            v_flow_borehole = self.flow_rate / len(coordinates)
-            m_flow_borehole = v_flow_borehole / 1000.0 * rho
-        else:
-            raise ValueError("The flow argument should be either `borehole` or `system`.")
+        v_flow_system = self.flow_rate * len(coordinates)
+        # Input flow is L/s per borehole; convert to kg/s per borehole.
+        m_flow_borehole = self.flow_rate / 1000.0 * rho
         return v_flow_system, m_flow_borehole
 
     def new_nbh_design(self, design_nbh):
@@ -548,7 +532,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     self.max_boreholes,
                     self.geometric_constraint,
                     ghe_loads,
-                    flow_type=self.flow_type,
                     method=TimestepType.HYBRID,
                 )
             case GeometricConstraintsNearSquare():
@@ -569,7 +552,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     self.max_boreholes,
                     self.geometric_constraint,
                     ghe_loads,
-                    flow_type=self.flow_type,
                     method=TimestepType.HYBRID,
                 )
             case GeometricConstraintsBiZoned():
@@ -590,7 +572,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     self.max_boreholes,
                     self.geometric_constraint,
                     ghe_loads,
-                    flow_type=self.flow_type,
                     method=TimestepType.HYBRID,
                 )
             case GeometricConstraintsBiRectangle():
@@ -611,7 +592,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     self.max_boreholes,
                     self.geometric_constraint,
                     ghe_loads,
-                    flow_type=self.flow_type,
                     method=TimestepType.HYBRID,
                 )
             case GeometricConstraintsBiRectangleConstrained():
@@ -632,7 +612,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     self.max_boreholes,
                     self.geometric_constraint,
                     ghe_loads,
-                    flow_type=self.flow_type,
                     method=TimestepType.HYBRID,
                 )
             case GeometricConstraintsRowWise():
@@ -653,7 +632,6 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     self.max_boreholes,
                     self.geometric_constraint,
                     ghe_loads,
-                    flow_type=self.flow_type,
                     method=TimestepType.HYBRID,
                 )
             case _:
@@ -735,14 +713,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                 "Flow parameters either need to be set before calling this function or provided in a GHE dictionary."
             )
 
-        nbh = len(self.pre_designed_locations)
-        if self.flow_type == FlowConfigType.BOREHOLE:
-            m_flow_borehole = self.flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
-        elif self.flow_type == FlowConfigType.SYSTEM:
-            m_flow_ghe = self.flow_rate * self.fluid.rho / 1000  # conv lps to m3s to kgs
-            m_flow_borehole = m_flow_ghe / nbh
-        else:
-            raise NotImplementedError(f"FlowConfigType {self.flow_type} not implemented.")
+        m_flow_borehole = self.flow_rate * self.fluid.rho / 1000  # L/s per borehole to kg/s
 
         self.pygfunction_borehole.H = self.pre_designed_height
         ts = self.pre_designed_height**2 / (9 * self.soil.alpha)

@@ -28,11 +28,6 @@ class DesignGeomType(Enum):
     NONE = auto()  # TODO: Check this won't break anything
 
 
-class FlowConfigType(Enum):
-    BOREHOLE = "BOREHOLE"
-    SYSTEM = "SYSTEM"
-
-
 class FluidType(Enum):
     ETHYLALCOHOL = auto()
     ETHYLENEGLYCOL = auto()
@@ -53,6 +48,7 @@ class SimCompType(Enum):
 class CentralLoopType(Enum):
     ONEPIPE = auto()
     TWOPIPE = auto()
+    NETWORK = auto()
 
 
 class SourceSinkOpMode(Enum):

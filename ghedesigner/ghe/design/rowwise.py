@@ -3,7 +3,7 @@ from dataclasses import asdict, dataclass, field
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import RAD_TO_DEG
-from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.enums import DesignGeomType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
@@ -57,7 +57,6 @@ class DesignRowWise(DesignBase):
         geometric_constraints: GeometricConstraintsRowWise,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
     ) -> None:
         super().__init__(
@@ -78,7 +77,6 @@ class DesignRowWise(DesignBase):
             geometric_constraints,
             hourly_extraction_ground_loads,
             method,
-            flow_type,
             load_years,
         )
         self.geometric_constraints = geometric_constraints
@@ -112,7 +110,6 @@ class DesignRowWise(DesignBase):
             self.hourly_extraction_ground_loads,
             self.geometric_constraints,
             method=self.method,
-            flow_type=self.flow_type,
             disp=disp,
             field_type="row-wise",
             load_years=self.load_years,

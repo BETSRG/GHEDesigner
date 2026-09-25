@@ -66,6 +66,13 @@ no_go_zones_multiple_bf_outlines = [
 
 
 class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
+    def test_integer_coordinates_are_normalized_as_a_single_boundary(self):
+        boundary = [[0, 0], [20, 0], [20, 20], [0, 20]]
+
+        geometry = GeometricConstraintsBiRectangleConstrained(b_min=5.0, property_boundary=boundary)
+
+        assert geometry.property_boundary == [boundary]
+
     def get_design(
         self,
         pipe: Pipe,
