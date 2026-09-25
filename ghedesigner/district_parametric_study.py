@@ -8,21 +8,59 @@ import numpy as np
 
 from ghedesigner.district_system import GHEHPSystem
 from ghedesigner.enums import ParametricStudyParameters
+from ghedesigner.output import columns as csv_columns
 from ghedesigner.utilities import load_input_file
 
 NUMBER_OF_LENGTHS_ALLOWED_IN_ENUMERATED_STUDY = 2
 STUDY_OUTPUT_HEADER = [
-    "NBH (-)",
-    "Design Height (m)",
-    "Total Drilling (m)",
-    "Excess Temperature (°C)",
-    "Total Energy Consumption (MWhr)",
+    csv_columns.output_column(csv_columns.SYSTEM, "Borehole Count", "-"),
+    csv_columns.output_column(csv_columns.SYSTEM, "Design Borehole Height", "m"),
+    csv_columns.output_column(csv_columns.SYSTEM, "Total Drilling Length", "m"),
+    csv_columns.output_column(csv_columns.SYSTEM, "Excess Temperature", "C"),
+    csv_columns.output_column(csv_columns.SYSTEM, "Total Energy Consumption", "MWh"),
 ]
+
+STUDY_INPUT_HEADERS = {
+    ParametricStudyParameters.MAX_EFT_MODIFICATION: [
+        csv_columns.output_column(csv_columns.PARAMETRIC_STUDY, "Maximum EFT Modification", "C")
+    ],
+    ParametricStudyParameters.MIN_EFT_MODIFICATION: [
+        csv_columns.output_column(csv_columns.PARAMETRIC_STUDY, "Minimum EFT Modification", "C")
+    ],
+    ParametricStudyParameters.GROUT_CONDUCTIVITIES: [
+        csv_columns.output_column(csv_columns.PARAMETRIC_STUDY, "Grout Conductivity", "W/m-K")
+    ],
+    ParametricStudyParameters.PIPE_SIZES: [
+        csv_columns.output_column(csv_columns.PARAMETRIC_STUDY, "Pipe Inner Diameter", "m"),
+        csv_columns.output_column(csv_columns.PARAMETRIC_STUDY, "Pipe Outer Diameter", "m"),
+    ],
+    ParametricStudyParameters.BOREHOLE_HEIGHTS: [
+        csv_columns.output_column(csv_columns.PARAMETRIC_STUDY, "Borehole Height", "m")
+    ],
+    ParametricStudyParameters.UPDATED_TOPOLOGY: [
+        csv_columns.output_column(csv_columns.PARAMETRIC_STUDY, "Updated Topology", "-")
+    ],
+}
 
 PARAMETER_INPUT_KEYS = {
     ParametricStudyParameters.MAX_EFT_MODIFICATION: "max_eft_modifications",
     ParametricStudyParameters.MIN_EFT_MODIFICATION: "min_eft_modifications",
 }
+
+
+def _format_study_input_values(parameters: dict[ParametricStudyParameters, Any]) -> list[str]:
+    values: list[str] = []
+    for parameter, value in parameters.items():
+        if parameter == ParametricStudyParameters.UPDATED_TOPOLOGY:
+            if value is None:
+                values.append("None")
+            else:
+                values.append(" | ".join("_".join(update) for update in value))
+        elif parameter == ParametricStudyParameters.PIPE_SIZES:
+            values.extend(str(diameter) for diameter in value)
+        else:
+            values.append(str(value))
+    return values
 
 
 class SystemParametricStudySupervisor:
@@ -51,7 +89,7 @@ class SystemParametricStudySupervisor:
 
         # Get parametric study data
         self.study_type = parametric_dict.get("study_type", "combination")
-        self.parameter_ranges: dict[str, Any] = {}
+        self.parameter_ranges: dict[ParametricStudyParameters, Any] = {}
         self.parameters_to_modify: set[ParametricStudyParameters] = set()
         for parameter_key in ParametricStudyParameters:
             input_key = PARAMETER_INPUT_KEYS.get(parameter_key, parameter_key.value)
@@ -99,10 +137,10 @@ class SystemParametricStudySupervisor:
                     self.parameter_ranges[parameter_key]["values"] = [original_borehole_height]
 
         # Finish initialization
-        self.iterator: list[dict[str | int | float, str | int | float]] = []
+        self.iterator: list[dict[ParametricStudyParameters, Any]] = []
         self.system = GHEHPSystem(Path(""), initialization_dict=self.system_dict)
-        self.study_input_values: list[list[str | int | float]] = []
-        self.study_output_values: list[list[int | float]] = []
+        self.study_input_values: list[list[str]] = []
+        self.study_output_values: list[list[str]] = []
         self.component_ids = {station["component"] for station in self.initial_dict["network"]["stations"]}
         self.minimum_total_drilling = float("inf")
         self.minimum_td_system = self.system
@@ -171,23 +209,7 @@ class SystemParametricStudySupervisor:
         for parameters in self.iterator:
             self.prepare_design_dict(parameters)
             self.design_single_system()
-            input_vals = []
-            for parameter_key in parameters:
-                if parameter_key == ParametricStudyParameters.UPDATED_TOPOLOGY:
-                    if parameters[parameter_key] is not None:
-                        input_vals.append(
-                            " | ".join(
-                                [
-                                    "_".join(parameters[parameter_key][ind])
-                                    for ind in range(len(parameters[parameter_key]))
-                                ]
-                            )
-                        )
-                    else:
-                        input_vals.append("None")
-                else:
-                    input_vals.append(str(parameters[parameter_key]))
-            self.study_input_values.append(input_vals)
+            self.study_input_values.append(_format_study_input_values(parameters))
             nbh, td, height = self.system.get_nbh_and_td()
             output_vals = [
                 str(nbh),
@@ -319,7 +341,9 @@ class SystemParametricStudySupervisor:
             )
 
     def output_study_results(self, output_path: Path):
-        input_parameter_header = list(self.parameter_ranges.keys())
+        input_parameter_header = list(
+            chain.from_iterable(STUDY_INPUT_HEADERS[parameter] for parameter in self.parameter_ranges)
+        )
         if not output_path.parent.exists():
             output_path.parent.mkdir(parents=True)
         with output_path.open("w", newline="") as output_file:

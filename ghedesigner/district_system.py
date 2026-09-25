@@ -51,6 +51,7 @@ from ghedesigner.network import (
     compile_network,
     component_type_map,
 )
+from ghedesigner.output import columns as csv_columns
 from ghedesigner.utilities import HPmodel, get_loads, load_input_file, validate_nonnegative_loads
 
 
@@ -3227,69 +3228,99 @@ class GHEHPSystem:
 
         for this_comp in self.components:
             if this_comp.comp_type == SimCompType.BUILDING:
-                output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
-                output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
-                output_columns[f"{this_comp.name}:Q_htg [W]"] = this_comp.htg_vals
-                output_columns[f"{this_comp.name}:Q_clg [W]"] = this_comp.clg_vals
-                output_columns[f"{this_comp.name}:Q_net [W]"] = this_comp.q_net
-                output_columns[f"{this_comp.name}:M_flow [kg/s]"] = this_comp.m_flow
+                output_columns[csv_columns.ENTERING_FLUID_TEMPERATURE.for_object(this_comp.name)] = this_comp.t_in
+                output_columns[csv_columns.EXITING_FLUID_TEMPERATURE.for_object(this_comp.name)] = this_comp.t_out
+                output_columns[csv_columns.HEATING_LOAD.for_object(this_comp.name)] = this_comp.htg_vals
+                output_columns[csv_columns.COOLING_LOAD.for_object(this_comp.name)] = this_comp.clg_vals
+                output_columns[csv_columns.NET_BUILDING_LOAD.for_object(this_comp.name)] = this_comp.q_net
+                output_columns[csv_columns.MASS_FLOW_RATE.for_object(this_comp.name)] = this_comp.m_flow
                 network_q_net_bldg_tot += this_comp.q_net
-                output_columns[f"{this_comp.name}:P_hp_htg [W]"] = this_comp.power_hp_htg
-                output_columns[f"{this_comp.name}:P_hp_clg [W]"] = this_comp.power_hp_clg
-                output_columns[f"{this_comp.name}:P_hp_tot [W]"] = this_comp.power_hp_tot
-                output_columns[f"{this_comp.name}:P_pump [W]"] = this_comp.power_circ_pump
+                output_columns[csv_columns.HEATING_HEAT_PUMP_POWER.for_object(this_comp.name)] = this_comp.power_hp_htg
+                output_columns[csv_columns.COOLING_HEAT_PUMP_POWER.for_object(this_comp.name)] = this_comp.power_hp_clg
+                output_columns[csv_columns.TOTAL_HEAT_PUMP_POWER.for_object(this_comp.name)] = this_comp.power_hp_tot
+                output_columns[csv_columns.CIRCULATION_PUMP_POWER.for_object(this_comp.name)] = (
+                    this_comp.power_circ_pump
+                )
 
                 q_src_clg = this_comp.clg_vals + this_comp.power_hp_clg
                 q_src_htg = this_comp.htg_vals - this_comp.power_hp_htg
 
-                output_columns[f"{this_comp.name}:Q_src_clg [W]"] = q_src_clg
-                output_columns[f"{this_comp.name}:Q_src_htg [W]"] = q_src_htg
-                output_columns[f"{this_comp.name}:Q_src_het [W]"] = q_src_htg - q_src_clg
+                output_columns[csv_columns.SOURCE_SIDE_COOLING_HEAT_TRANSFER_RATE.for_object(this_comp.name)] = (
+                    q_src_clg
+                )
+                output_columns[csv_columns.SOURCE_SIDE_HEATING_HEAT_TRANSFER_RATE.for_object(this_comp.name)] = (
+                    q_src_htg
+                )
+                output_columns[csv_columns.SOURCE_SIDE_NET_HEAT_TRANSFER_RATE.for_object(this_comp.name)] = (
+                    q_src_htg - q_src_clg
+                )
 
         for this_comp in self.components:
             if this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
-                output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
-                output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
+                output_columns[csv_columns.ENTERING_FLUID_TEMPERATURE.for_object(this_comp.name)] = this_comp.t_in
+                output_columns[csv_columns.EXITING_FLUID_TEMPERATURE.for_object(this_comp.name)] = this_comp.t_out
                 if self.loop_config in (CentralLoopType.ONEPIPE, CentralLoopType.TWOPIPE):
-                    output_columns[f"{this_comp.name}:ExFT Mixed Loop [C]"] = this_comp.t_mix_out
-                output_columns[f"{this_comp.name}:MFT [C]"] = this_comp.t_mean
-                output_columns[f"{this_comp.name}:Q [W/m]"] = this_comp.q_ghe
-                output_columns[f"{this_comp.name}:Q_tot [W]"] = this_comp.q_ghe * this_comp.nbh * this_comp.height
-                output_columns[f"{this_comp.name}:M_flow [kg/s]"] = this_comp.m_ghe_array
+                    output_columns[csv_columns.MIXED_LOOP_EXITING_FLUID_TEMPERATURE.for_object(this_comp.name)] = (
+                        this_comp.t_mix_out
+                    )
+                output_columns[csv_columns.MEAN_FLUID_TEMPERATURE.for_object(this_comp.name)] = this_comp.t_mean
+                output_columns[csv_columns.HEAT_TRANSFER_RATE_PER_LENGTH.for_object(this_comp.name)] = this_comp.q_ghe
+                output_columns[csv_columns.HEAT_TRANSFER_RATE.for_object(this_comp.name)] = (
+                    this_comp.q_ghe * this_comp.nbh * this_comp.height
+                )
+                output_columns[csv_columns.MASS_FLOW_RATE.for_object(this_comp.name)] = this_comp.m_ghe_array
                 if this_comp.circulation_pump is not None:
-                    output_columns[f"{this_comp.name}:Pump M_flow [kg/s]"] = this_comp.pump_mass_flow
-                    output_columns[f"{this_comp.name}:Local Recirculation [kg/s]"] = this_comp.local_recirculation_flow
-                    output_columns[f"{this_comp.name}:Pump Power [W]"] = this_comp.P_ghe_cp
+                    output_columns[csv_columns.PUMP_MASS_FLOW_RATE.for_object(this_comp.name)] = (
+                        this_comp.pump_mass_flow
+                    )
+                    output_columns[csv_columns.LOCAL_RECIRCULATION_FLOW_RATE.for_object(this_comp.name)] = (
+                        this_comp.local_recirculation_flow
+                    )
+                    output_columns[csv_columns.CIRCULATION_PUMP_POWER.for_object(this_comp.name)] = this_comp.P_ghe_cp
                     configured_ghe_pump_power += this_comp.P_ghe_cp
                     has_configured_ghe_pump = True
                 network_q_net_ghe_tot += this_comp.q_ghe * this_comp.nbh * this_comp.height
 
         for this_comp in self.components:
             if this_comp.comp_type == SimCompType.SOURCE_SINK_HEAT_EXCHANGER:
-                output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in
-                output_columns[f"{this_comp.name}:Control EFT [C]"] = this_comp.control_t_in
-                output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out
-                output_columns[f"{this_comp.name}:Operating [T/F]"] = this_comp.operating
-                output_columns[f"{this_comp.name}:Q [W]"] = (
+                output_columns[csv_columns.ENTERING_FLUID_TEMPERATURE.for_object(this_comp.name)] = this_comp.t_in
+                output_columns[csv_columns.CONTROL_ENTERING_FLUID_TEMPERATURE.for_object(this_comp.name)] = (
+                    this_comp.control_t_in
+                )
+                output_columns[csv_columns.EXITING_FLUID_TEMPERATURE.for_object(this_comp.name)] = this_comp.t_out
+                output_columns[csv_columns.OPERATING_STATUS.for_object(this_comp.name)] = this_comp.operating
+                output_columns[csv_columns.HEAT_TRANSFER_RATE.for_object(this_comp.name)] = (
                     this_comp.operating * self.m_flow_loop * self.fluid.cp * (this_comp.t_out - this_comp.t_in)
                 )
 
         for this_comp in self.components:
             if this_comp.comp_type in (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE):
                 # Add [1:] to slice off the 0th hour and match the DataFrame length
-                output_columns[f"{this_comp.name}:EFT [C]"] = this_comp.t_in[1:]
+                output_columns[csv_columns.ENTERING_FLUID_TEMPERATURE.for_object(this_comp.name)] = this_comp.t_in[1:]
 
                 # Loop through the dynamic array to print each segment's details
                 for k in range(this_comp.num_segments):
-                    output_columns[f"{this_comp.name}:Node{k + 1}_Out [C]"] = this_comp.t_out_seg[k, 1:]
-                    output_columns[f"{this_comp.name}:Q{k + 1} [W/m]"] = this_comp.q_seg[k, 1:]
+                    output_columns[csv_columns.segment_exiting_fluid_temperature(k + 1).for_object(this_comp.name)] = (
+                        this_comp.t_out_seg[k, 1:]
+                    )
+                    output_columns[csv_columns.segment_heat_transfer_rate(k + 1).for_object(this_comp.name)] = (
+                        this_comp.q_seg[k, 1:]
+                    )
 
-                output_columns[f"{this_comp.name}:ExFT [C]"] = this_comp.t_out[1:]
-        output_columns["Network:P_pump [W]"] = self.pump_power_loop
-        output_columns["Network:Q_net_bldg [W]"] = network_q_net_bldg_tot
-        output_columns["Network:Q_net_ghe [W]"] = network_q_net_ghe_tot
+                output_columns[csv_columns.EXITING_FLUID_TEMPERATURE.for_object(this_comp.name)] = this_comp.t_out[1:]
+        output_columns[csv_columns.output_column(csv_columns.NETWORK, "Distribution Pump Power", "W")] = (
+            self.pump_power_loop
+        )
+        output_columns[csv_columns.output_column(csv_columns.NETWORK, "Total Building Net Heat Transfer Rate", "W")] = (
+            network_q_net_bldg_tot
+        )
+        output_columns[csv_columns.output_column(csv_columns.NETWORK, "Total GHE Heat Transfer Rate", "W")] = (
+            network_q_net_ghe_tot
+        )
         if has_configured_ghe_pump:
-            output_columns["Network:GHE Pump Power [W]"] = configured_ghe_pump_power
+            output_columns[csv_columns.output_column(csv_columns.NETWORK, "Total GHE Circulation Pump Power", "W")] = (
+                configured_ghe_pump_power
+            )
 
         # print("\n===== OUTPUT LENGTH CHECK =====")
         # print("Index length =", len(self.time_array[1:]))
@@ -3303,23 +3334,33 @@ class GHEHPSystem:
         # print("===============================\n")
 
         output_data = pd.DataFrame(output_columns, index=self.time_array[1:])
-        output_data.index.name = "Time [hr]"
+        output_data.index.name = csv_columns.ELAPSED_TIME.for_object(csv_columns.SIMULATION)
 
         if not output_path.parent.exists():
             output_path.parent.mkdir(parents=True)
         output_data.to_csv(output_path, float_format="%0.4f")
         if output_path_2 is not None:
             output_data = pd.DataFrame()
-            output_data.index.name = "Iteration"
-            output_data["NBH Selections (-)"] = self.nbh_selections
-            output_data["Excess Temperature (°C)"] = self.excess_temperatures
-            output_data["NBH Total (-)"] = self.nbh_values
-            output_data["Total Drilling (m)"] = self.total_drilling_values
-            output_data["Objective Function Value (m)"] = self.objective_function_values
-            output_data["Borehole Height (m)"] = self.borehole_heights
+            output_data.index.name = csv_columns.output_column(csv_columns.SEARCH, "Iteration", "-")
+            output_data[csv_columns.output_column(csv_columns.SEARCH, "Borehole Count Selections", "-")] = (
+                self.nbh_selections
+            )
+            output_data[csv_columns.output_column(csv_columns.SEARCH, "Excess Temperature", "C")] = (
+                self.excess_temperatures
+            )
+            output_data[csv_columns.output_column(csv_columns.SEARCH, "Total Borehole Count", "-")] = self.nbh_values
+            output_data[csv_columns.output_column(csv_columns.SEARCH, "Total Drilling Length", "m")] = (
+                self.total_drilling_values
+            )
+            output_data[csv_columns.output_column(csv_columns.SEARCH, "Objective Function Value", "m")] = (
+                self.objective_function_values
+            )
+            output_data[csv_columns.output_column(csv_columns.SEARCH, "Borehole Height", "m")] = self.borehole_heights
             if self.search_method == "NELDER-MEAD":
-                output_data["Angles (RAD)"] = self.angles
-                output_data["NBH Vectors"] = self.nbh_vectors
+                output_data[csv_columns.output_column(csv_columns.SEARCH, "Angles", "rad")] = self.angles
+                output_data[csv_columns.output_column(csv_columns.SEARCH, "Borehole Count Vectors", "-")] = (
+                    self.nbh_vectors
+                )
             if not output_path_2.parent.exists():
                 output_path_2.parent.mkdir(parents=True)
             output_data.to_csv(output_path_2, float_format="%0.4f")

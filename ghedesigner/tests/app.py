@@ -23,6 +23,7 @@ from dash import ALL, Dash, Input, Output, State, dcc, html, no_update
 from plotly.subplots import make_subplots
 
 from ghedesigner.gui.file_picker import PathChooserError, choose_path
+from ghedesigner.output import columns as csv_columns
 
 
 def dataset_label(path: Path) -> str:
@@ -32,7 +33,7 @@ def dataset_label(path: Path) -> str:
     return label.replace("_", " ")
 
 
-X_COL = "Time [hr]"
+X_COL = csv_columns.ELAPSED_TIME.for_object(csv_columns.SIMULATION)
 
 CONTROL_CARD_STYLE = {
     "display": "flex",
@@ -76,7 +77,7 @@ def _category(col: str) -> str:
     """
     Heuristic grouping used ONLY for the initial default panes.
     """
-    base = col.split(":", 1)[0] if ":" in col else col
+    base = col.partition(": ")[0]
     low = base.lower()
     if low.startswith("building"):
         return "Buildings"
@@ -88,7 +89,8 @@ def _category(col: str) -> str:
 
 
 def _metric(col: str) -> str:
-    return col.split(":", 1)[1] if ":" in col else col
+    _, separator, metric = col.partition(": ")
+    return metric if separator else col
 
 
 def default_panes(df: pd.DataFrame) -> list[dict[str, Any]]:

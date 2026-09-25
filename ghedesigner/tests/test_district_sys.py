@@ -511,17 +511,17 @@ class TestDistrictSys(GHEBaseTest):
             configured_columns = set(pd.read_csv(configured_path, nrows=0).columns)
             unconfigured_columns = set(pd.read_csv(unconfigured_path, nrows=0).columns)
 
-        assert "ghe1:Pump M_flow [kg/s]" in configured_columns
-        assert "ghe1:Local Recirculation [kg/s]" in configured_columns
-        assert "ghe1:Pump Power [W]" in configured_columns
-        assert "Network:GHE Pump Power [W]" in configured_columns
-        assert "ghe1:M_flow [kg/s]" in configured_columns
-        assert "ghe1:M_flow [kg/s]" in unconfigured_columns
-        assert "Network:M_flow [kg/s]" not in configured_columns | unconfigured_columns
-        assert "ghe1:ExFT Mixed Loop [C]" not in configured_columns | unconfigured_columns
-        assert all("Pump M_flow" not in column for column in unconfigured_columns)
-        assert all("Local Recirculation" not in column for column in unconfigured_columns)
-        assert all("GHE Pump Power" not in column for column in unconfigured_columns)
+        assert "ghe1: Pump Mass Flow Rate [kg/s]" in configured_columns
+        assert "ghe1: Local Recirculation Flow Rate [kg/s]" in configured_columns
+        assert "ghe1: Circulation Pump Power [W]" in configured_columns
+        assert "Network: Total GHE Circulation Pump Power [W]" in configured_columns
+        assert "ghe1: Mass Flow Rate [kg/s]" in configured_columns
+        assert "ghe1: Mass Flow Rate [kg/s]" in unconfigured_columns
+        assert "Network: Mass Flow Rate [kg/s]" not in configured_columns | unconfigured_columns
+        assert "ghe1: Mixed-Loop Exiting Fluid Temperature [C]" not in configured_columns | unconfigured_columns
+        assert all("Pump Mass Flow Rate" not in column for column in unconfigured_columns)
+        assert all("Local Recirculation Flow Rate" not in column for column in unconfigured_columns)
+        assert all("GHE Circulation Pump Power" not in column for column in unconfigured_columns)
 
     def test_hybrid_reference_properties_follow_topology_not_ghe_key_order(self):
         source_path = self.demos_path / "Network_Sizing_3GHE_6HP_BUPCRS.json"
