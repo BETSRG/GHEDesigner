@@ -533,11 +533,26 @@ class TestDistrictSys(GHEBaseTest):
         assert prescribed_flows[ghe_branch.id] == pytest.approx(distribution_flow)
         assert prescribed_flows[ghe_bypass.id] == pytest.approx(0.0)
 
-    def test_canonical_network_feature_gates_deferred_components(self):
+    def test_canonical_one_pipe_network_supports_source_sink_heat_exchangers(self):
         source_sink_path = self.demos_path / "simulate_1_pipe_1_ghe_1_hx_1_bldg_district.json"
         validate_input_file(source_sink_path)
-        with pytest.raises(ValueError, match="does not yet support source/sink"):
-            GHEHPSystem(source_sink_path)
+        system = GHEHPSystem(source_sink_path)
+        heat_exchanger = system.heat_exchangers[0]
+        heat_exchanger.cut_in_temp = 25.0
+        heat_exchanger.cut_out_temp = 30.0
+
+        system.size_and_simulate()
+
+        loop_capacity_rate = system.m_flow_loop[0] * system.fluid.cp
+        source_capacity_rate = heat_exchanger.source_flow_rate * system.fluid.cp
+        effectiveness_capacity_rate = heat_exchanger.effectiveness * min(source_capacity_rate, loop_capacity_rate)
+        expected_outlet = heat_exchanger.t_in[0] + effectiveness_capacity_rate / loop_capacity_rate * (
+            heat_exchanger.source_temp - heat_exchanger.t_in[0]
+        )
+
+        assert heat_exchanger.name == "hx1"
+        assert heat_exchanger.operating[0]
+        assert heat_exchanger.t_out[0] == pytest.approx(expected_outlet)
 
     def test_canonical_thermal_matrix_sizes_are_instance_local(self):
         one_pipe = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
@@ -684,13 +699,15 @@ class TestDistrictSys(GHEBaseTest):
 
     def test_simulate_1_pipe_1_ghe_1_hx_1_bldg_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_hx_1_bldg_district.json"
-        with pytest.raises(ValueError, match="does not yet support source/sink"):
-            GHEHPSystem(f_path_json)
+        system = GHEHPSystem(f_path_json)
+        system.size_and_simulate()
+        self.assert_simulation_output_matches_baseline(system, "simulate_1_pipe_1_ghe_1_hx_1_bldg_district.csv")
 
     def test_simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district.json"
-        with pytest.raises(ValueError, match="does not yet support source/sink"):
-            GHEHPSystem(f_path_json)
+        system = GHEHPSystem(f_path_json)
+        system.size_and_simulate()
+        self.assert_simulation_output_matches_baseline(system, "simulate_1_pipe_1_ghe_1_hx_1_bldg_w_loads_district.csv")
 
     def test_two_pipe_compiler_orients_component_branches(self):
         f_path_json = self.demos_path / "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json"

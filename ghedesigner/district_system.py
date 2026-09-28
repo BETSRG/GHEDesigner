@@ -1753,8 +1753,10 @@ class GHEHPSystem:
         ghe_data = json_data.get("ground_heat_exchangers", {})
         soil_data = json_data["soil"]
         hx_data = json_data.get("source_sink_heat_exchangers", {})
-        if hx_data:
-            raise ValueError("The canonical network solver does not yet support source/sink heat exchangers.")
+        if hx_data and self.network_type != NetworkType.ONE_PIPE:
+            raise ValueError(
+                "The canonical network solver only supports source/sink heat exchangers in one-pipe networks."
+            )
 
         ordered_components: list[dict[str, str]] = []
         for station in network_data["stations"]:
@@ -1882,6 +1884,7 @@ class GHEHPSystem:
         for this_hx_id, this_hx_data in hx_data.items():
             if this_hx_id.upper() in hx_names:
                 this_hx = SourceSinkHeatExchanger(this_hx_id, this_hx_data, tg, self.num_timesteps)
+                this_hx.cp = self.cp
                 heat_exchangers.append(this_hx)
 
         self.num_heat_exchangers = len(heat_exchangers)
@@ -2898,6 +2901,41 @@ class GHEHPSystem:
             matrix_rows.append(row)
             matrix_rhs.append(rhs)
 
+    def _append_network_source_sink_heat_exchanger_equation(
+        self,
+        branch,
+        heat_exchanger: SourceSinkHeatExchanger,
+        upstream_index: int,
+        outlet_index: int,
+        idx_timestep: int,
+        matrix_rows: list[np.ndarray],
+        matrix_rhs: list[float],
+    ) -> None:
+        previous_inlet = heat_exchanger.t_in[0 if idx_timestep == 1 else idx_timestep - 2]
+        heat_exchanger.control_t_in[idx_timestep - 1] = previous_inlet
+        is_running = heat_exchanger.is_running(previous_inlet)
+        heat_exchanger.operating[idx_timestep - 1] = is_running
+
+        loop_capacity_rate = abs(branch.mass_flow) * self.fluid.cp
+        source_capacity_rate = heat_exchanger.source_flow_rate * self.fluid.cp if is_running else 0.0
+        minimum_capacity_rate = min(source_capacity_rate, loop_capacity_rate)
+        effective_capacity_rate = heat_exchanger.effectiveness * minimum_capacity_rate
+
+        row = np.zeros(self.network_matrix_size, dtype=float)
+        if loop_capacity_rate <= FLOW_TOLERANCE:
+            row[upstream_index] = 1.0
+            row[outlet_index] = -1.0
+            rhs = 0.0
+        else:
+            # (C_loop - effectiveness * C_min) * T_in - C_loop * T_out
+            #     = -(effectiveness * C_min) * T_source
+            row[upstream_index] = loop_capacity_rate - effective_capacity_rate
+            row[outlet_index] = -loop_capacity_rate
+            rhs = -effective_capacity_rate * heat_exchanger.source_temp
+
+        matrix_rows.append(row)
+        matrix_rhs.append(rhs)
+
     def _append_network_horizontal_equations(
         self,
         branch,
@@ -3004,6 +3042,17 @@ class GHEHPSystem:
                     matrix_rows,
                     matrix_rhs,
                 )
+            elif branch.branch_type == BranchType.SOURCE_SINK_HEAT_EXCHANGER:
+                heat_exchanger = cast(SourceSinkHeatExchanger, self.component_by_id[branch.component_id])
+                self._append_network_source_sink_heat_exchanger_equation(
+                    branch,
+                    heat_exchanger,
+                    upstream_index,
+                    outlet_index,
+                    idx_timestep,
+                    matrix_rows,
+                    matrix_rhs,
+                )
             elif self.use_horizontal and branch.thermal_model_id is not None:
                 horizontal = self.horizontal_by_id[branch.thermal_model_id]
                 self._append_network_horizontal_equations(
@@ -3053,6 +3102,10 @@ class GHEHPSystem:
                 ghe.t_out[result_index] = outlet_temperature
                 ghe.t_mean[result_index] = solution[mean_index]
                 ghe.q_ghe[result_index] = solution[heat_transfer_index]
+            elif branch.branch_type == BranchType.SOURCE_SINK_HEAT_EXCHANGER:
+                heat_exchanger = cast(SourceSinkHeatExchanger, self.component_by_id[branch.component_id])
+                heat_exchanger.t_in[result_index] = upstream_temperature
+                heat_exchanger.t_out[result_index] = outlet_temperature
             elif self.use_horizontal and branch.thermal_model_id is not None:
                 horizontal = cast(
                     IsolatedHorizontalPipe | CoupledHorizontalPipe,
