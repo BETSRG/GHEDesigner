@@ -17,8 +17,7 @@
           "quadratic_coefficient_w_per_c_squared": -0.393,
           "linear_coefficient_w_per_c": -30.3,
           "constant_coefficient_w": 6777.0
-        },
-        "reference_capacity_w": 4396.0
+        }
       },
       "heating_performance": {
         "heat_transfer_ratio_curve": {
@@ -30,8 +29,7 @@
           "quadratic_coefficient_w_per_c_squared": -0.124,
           "linear_coefficient_w_per_c": 112.0,
           "constant_coefficient_w": 4114.0
-        },
-        "reference_capacity_w": 4140.0
+        }
       },
       "design_mass_flow_rate_kg_per_s": 0.296,
       "design_pressure_drop_pa": 25000,
@@ -48,8 +46,7 @@
           "quadratic_coefficient_w_per_c_squared": -1.2,
           "linear_coefficient_w_per_c": -4.72,
           "constant_coefficient_w": 9629.0
-        },
-        "reference_capacity_w": 6709.0
+        }
       },
       "heating_performance": {
         "heat_transfer_ratio_curve": {
@@ -61,8 +58,7 @@
           "quadratic_coefficient_w_per_c_squared": 0.178,
           "linear_coefficient_w_per_c": 158.0,
           "constant_coefficient_w": 6712.0
-        },
-        "reference_capacity_w": 6797.0
+        }
       },
       "design_mass_flow_rate_kg_per_s": 0.495,
       "design_pressure_drop_pa": 25000,

@@ -287,6 +287,7 @@ def test_gui_classifies_examples_by_workflow() -> None:
     assert workflows["pre_designed_manual.json"] == "g_function"
     assert workflows["find_design_rectangle_single_u_tube.json"] == "standalone_design"
     assert workflows["simulate_1_pipe_1_ghe_1_bldg_district.json"] == "district_simulation"
+    assert workflows["simulate_1_pipe_1_ghe_1_bldg_medium_constant_load_district.json"] == "district_simulation"
 
 
 def test_packaged_gui_has_pre_module_startup_diagnostics() -> None:

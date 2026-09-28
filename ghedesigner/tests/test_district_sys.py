@@ -697,6 +697,23 @@ class TestDistrictSys(GHEBaseTest):
         system.size_and_simulate()
         self.assert_simulation_output_matches_baseline(system, "simulate_1_pipe_1_ghe_1_bldg_district.csv")
 
+    def test_simulate_1_pipe_1_ghe_1_bldg_medium_constant_load_district(self):
+        f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_medium_constant_load_district.json"
+        system = GHEHPSystem(f_path_json)
+
+        system.size_and_simulate()
+
+        building = system.buildings[0]
+        assert system.search_method == "simulation_only"
+        assert system.load_method == "hourly"
+        assert system.num_buildings == 1
+        assert system.num_ghx == 1
+        assert system.num_timesteps == 8760
+        assert np.all(building.htg_vals == 10_000.0)
+        assert np.all(building.clg_vals == 0.0)
+        assert np.all(np.isfinite(building.t_in))
+        assert np.all(np.isfinite(system.ground_heat_exchangers[0].t_in))
+
     def test_simulate_1_pipe_1_ghe_1_hx_1_bldg_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_hx_1_bldg_district.json"
         system = GHEHPSystem(f_path_json)

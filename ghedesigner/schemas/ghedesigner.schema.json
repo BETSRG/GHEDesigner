@@ -582,12 +582,6 @@
           ],
           "additionalProperties": false
         },
-        "reference_capacity_w": {
-          "title": "Reference capacity",
-          "type": "number",
-          "x-unit": "W",
-          "description": "Optional reference capacity metadata. Units: watts (W)."
-        },
         "minimum_curve_temperature_c": {
           "title": "Minimum curve temperature",
           "type": "number",

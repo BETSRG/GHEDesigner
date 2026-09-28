@@ -18,7 +18,6 @@
           "linear_coefficient_w_per_c": -30.3,
           "constant_coefficient_w": 6777.0
         },
-        "reference_capacity_w": 4396.0,
         "minimum_curve_temperature_c": 10.0,
         "maximum_curve_temperature_c": 35.0
       },
@@ -33,7 +32,6 @@
           "linear_coefficient_w_per_c": 112.0,
           "constant_coefficient_w": 4114.0
         },
-        "reference_capacity_w": 4140.0,
         "minimum_curve_temperature_c": 10.0,
         "maximum_curve_temperature_c": 35.0
       },

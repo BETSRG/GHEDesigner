@@ -43,7 +43,7 @@
   "buildings": {
     "building1": {
       "heating_load_source": {
-        "column_name": "Small",
+        "column_name": "Medium",
         "file_path": "../ghedesigner/tests/test_data/Simple_Load_Data.csv",
         "heat_pump_id": "hp1",
         "value_units": "W"
@@ -99,7 +99,11 @@
   },
   "simulation_control": {
     "simulation_years": 1,
-    "constant_cop": false
+    "load_method": "hourly",
+    "search_method": "simulation_only",
+    "constant_cop": false,
+    "horizontal_segments": 3,
+    "horizontal_simulation_considered": false
   },
   "network": {
     "type": "one_pipe",
