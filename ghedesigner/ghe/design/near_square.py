@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from math import floor
 
 from pygfunction.boreholes import Borehole
@@ -23,8 +23,9 @@ class GeometricConstraintsNearSquare(GeometricConstraints):
 
     def to_input(self) -> dict:
         return {
-            **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k != "type"}),
-            "method": self.type.name,
+            "method": "near_square",
+            "borehole_spacing_m": self.b,
+            "length_m": self.length,
         }
 
 

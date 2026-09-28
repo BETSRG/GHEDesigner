@@ -23,15 +23,15 @@ export function Overview({ document, workflow, onWorkflowChange, onOpenExamples,
   const selected = workflowDefinition(workflow);
   const networkType = typeof document.network?.type === "string" ? document.network.type : "not configured";
   const counts = {
-    buildings: Object.keys(document.building ?? {}).length,
-    ghes: Object.keys(document.ground_heat_exchanger ?? {}).length,
+    buildings: Object.keys(document.buildings ?? {}).length,
+    ghes: Object.keys(document.ground_heat_exchangers ?? {}).length,
   };
 
   return (
     <section className="editor-page overview-page">
       <div className="hero-card">
         <div>
-          <span className="eyebrow">Selected Workflow · Version {String(document.version ?? 4)}</span>
+          <span className="eyebrow">Selected Workflow · Version {String(document.schema_version ?? 3)}</span>
           <h1>{selected.label}</h1>
           <p>{selected.description}</p>
           <div className="button-row">

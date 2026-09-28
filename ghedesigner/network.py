@@ -320,7 +320,7 @@ def _pump_models(network_data: dict[str, Any]) -> dict[str, PumpModel]:
     for pump_id, pump_data in network_data.get("pumps", {}).items():
         pumps[pump_id] = PumpModel(
             id=pump_id,
-            wire_to_water_efficiency=float(pump_data["wire_to_water_efficiency"]),
+            wire_to_water_efficiency=float(pump_data["wire_to_water_efficiency_fraction"]),
         )
     return pumps
 
@@ -329,9 +329,9 @@ def _hydraulic_fields(branch_data: dict[str, Any]) -> dict[str, Any]:
     hydraulic_data = branch_data.get("hydraulics", {"type": "passive"})
     return {
         "hydraulic_type": HydraulicType(hydraulic_data["type"]),
-        "reference_mass_flow": hydraulic_data.get("reference_mass_flow"),
-        "reference_pressure_drop": hydraulic_data.get("reference_pressure_drop"),
-        "pump_id": hydraulic_data.get("pump"),
+        "reference_mass_flow": hydraulic_data.get("reference_mass_flow_rate_kg_per_s"),
+        "reference_pressure_drop": hydraulic_data.get("reference_pressure_drop_pa"),
+        "pump_id": hydraulic_data.get("pump_id"),
     }
 
 
@@ -351,7 +351,7 @@ def _compile_compact_network(
     network_type: NetworkType,
     component_data: dict[str, Any],
 ) -> NetworkGraph:
-    station_ids = [station["component"] for station in network_data["stations"]]
+    station_ids = [station["component_id"] for station in network_data["stations"]]
     if network_type == NetworkType.TWO_PIPE and len(station_ids) < MINIMUM_TWO_PIPE_STATIONS:
         raise ValueError("A compact two_pipe network requires at least two stations.")
     if len(set(station_ids)) != len(station_ids):
@@ -370,9 +370,9 @@ def _compile_compact_network(
         )
 
     collection_by_type = {
-        BranchType.BUILDING: "building",
-        BranchType.GROUND_HEAT_EXCHANGER: "ground_heat_exchanger",
-        BranchType.SOURCE_SINK_HEAT_EXCHANGER: "source_sink_heat_exchanger",
+        BranchType.BUILDING: "buildings",
+        BranchType.GROUND_HEAT_EXCHANGER: "ground_heat_exchangers",
+        BranchType.SOURCE_SINK_HEAT_EXCHANGER: "source_sink_heat_exchangers",
     }
 
     def component_hydraulic_fields(component_id: str) -> dict[str, Any]:
@@ -388,11 +388,11 @@ def _compile_compact_network(
             raise ValueError(f"Compact network component '{component_id}' must use passive component-owned hydraulics.")
         return {
             "hydraulic_type": HydraulicType.PASSIVE,
-            "reference_mass_flow": hydraulics.get("reference_mass_flow"),
-            "reference_pressure_drop": hydraulics.get("reference_pressure_drop"),
+            "reference_mass_flow": hydraulics.get("reference_mass_flow_rate_kg_per_s"),
+            "reference_pressure_drop": hydraulics.get("reference_pressure_drop_pa"),
         }
 
-    defaults = network_data.get("pipe_defaults", {})
+    defaults = network_data.get("distribution_pipe_defaults", {})
     segment_lookup = {segment["id"]: segment for segment in network_data["segments"]}
     branches: dict[str, NetworkBranch] = {}
     nodes: dict[str, NetworkNode] = {}
@@ -449,7 +449,7 @@ def _compile_compact_network(
     expected_pairs = [
         (station_ids[index], station_ids[(index + 1) % len(station_ids)]) for index in range(expected_segments)
     ]
-    actual_pairs = [(segment["from"], segment["to"]) for segment in segment_lookup.values()]
+    actual_pairs = [(segment["from_component_id"], segment["to_component_id"]) for segment in segment_lookup.values()]
     if actual_pairs != expected_pairs:
         raise ValueError(
             f"{network_type.value} segments must connect consecutive stations in station order; "
@@ -457,8 +457,8 @@ def _compile_compact_network(
         )
 
     for segment in segment_lookup.values():
-        from_component = segment["from"]
-        to_component = segment["to"]
+        from_component = segment["from_component_id"]
+        to_component = segment["to_component_id"]
         if from_component not in station_ids or to_component not in station_ids:
             raise ValueError(f"Segment '{segment['id']}' references a component outside the station list.")
         properties = {**defaults, **segment}
@@ -477,11 +477,11 @@ def _compile_compact_network(
                 branch_type=BranchType.PIPE,
                 node_a=node_a,
                 node_b=node_b,
-                length=float(properties["length"]),
-                diameter=float(properties["diameter"]),
-                roughness=float(properties.get("roughness", 1.0e-6)),
+                length=float(properties["length_m"]),
+                diameter=float(properties["diameter_m"]),
+                roughness=float(properties.get("surface_roughness_m", 1.0e-6)),
                 minor_loss_coefficient=float(properties.get("minor_loss_coefficient", 0.0)),
-                thermal_model_id=properties.get("thermal_model"),
+                thermal_model_id=properties.get("thermal_model_id"),
             )
 
     if network_type == NetworkType.ONE_PIPE:
@@ -501,11 +501,11 @@ def _compile_compact_network(
 
 def component_type_map(data: dict[str, Any]) -> dict[str, BranchType]:
     result: dict[str, BranchType] = {}
-    for component_id in data.get("building", {}):
+    for component_id in data.get("buildings", {}):
         result[component_id] = BranchType.BUILDING
-    for component_id in data.get("ground_heat_exchanger", {}):
+    for component_id in data.get("ground_heat_exchangers", {}):
         result[component_id] = BranchType.GROUND_HEAT_EXCHANGER
-    for component_id in data.get("source_sink_heat_exchanger", {}):
+    for component_id in data.get("source_sink_heat_exchangers", {}):
         result[component_id] = BranchType.SOURCE_SINK_HEAT_EXCHANGER
     return result
 
@@ -551,9 +551,9 @@ def validate_network_data(data: dict[str, Any]) -> None:
 
     id_locations: dict[str, str] = {}
     collections = {
-        "building": data.get("building", {}),
-        "ground_heat_exchanger": data.get("ground_heat_exchanger", {}),
-        "source_sink_heat_exchanger": data.get("source_sink_heat_exchanger", {}),
+        "buildings": data.get("buildings", {}),
+        "ground_heat_exchangers": data.get("ground_heat_exchangers", {}),
+        "source_sink_heat_exchangers": data.get("source_sink_heat_exchangers", {}),
         "horizontal_piping": data.get("horizontal_piping", {}),
         "pump": network_data.get("pumps", {}),
     }
@@ -573,7 +573,7 @@ def validate_network_data(data: dict[str, Any]) -> None:
     for segment in network_data.get("segments", []):
         register_id(segment["id"], "segment")
 
-    ground_heat_exchangers = data.get("ground_heat_exchanger", {})
+    ground_heat_exchangers = data.get("ground_heat_exchangers", {})
     if network_data["type"] == NetworkType.ONE_PIPE.value:
         missing_pumps = sorted(
             ghe_id for ghe_id, ghe_data in ground_heat_exchangers.items() if ghe_data.get("circulation_pump") is None
@@ -586,7 +586,9 @@ def validate_network_data(data: dict[str, Any]) -> None:
 
     for ghe_id, ghe_data in ground_heat_exchangers.items():
         hydraulics = ghe_data.get("hydraulics", {})
-        has_component_loss = "reference_mass_flow" in hydraulics or "reference_pressure_drop" in hydraulics
+        has_component_loss = (
+            "reference_mass_flow_rate_kg_per_s" in hydraulics or "reference_pressure_drop_pa" in hydraulics
+        )
         if ghe_data.get("circulation_pump") is not None and has_component_loss:
             raise ValueError(
                 f"Ground heat exchanger '{ghe_id}' cannot define both component hydraulic loss and "

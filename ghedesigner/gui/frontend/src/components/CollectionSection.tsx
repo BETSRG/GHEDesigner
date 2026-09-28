@@ -44,9 +44,9 @@ export function CollectionSection({
   const selectedValue = selected && isJsonObject(collection[selected]) ? collection[selected] : null;
   const [formData, setFormData] = useState<JsonObject>(() => deepClone(selectedValue ?? {}));
   const manualPreDesigned =
-    property === "ground_heat_exchanger" &&
-    isJsonObject(formData.pre_designed) &&
-    formData.pre_designed.arrangement === "MANUAL";
+    property === "ground_heat_exchangers" &&
+    isJsonObject(formData.fixed_borefield) &&
+    formData.fixed_borefield.arrangement === "manual";
 
   useEffect(() => {
     if (selected && selected in collection) return;
@@ -71,18 +71,19 @@ export function CollectionSection({
           )
         : sourceSchema.properties;
     const workflowAnyOf =
-      property === "building" && workflow === "building_design"
+      property === "buildings" && workflow === "building_design"
         ? (sourceSchema.anyOf ?? [])
             .filter((option) => {
               if (!isJsonObject(option) || !Array.isArray(option.required)) return false;
               const required = new Set(option.required);
-              return required.has("total_load") || (required.has("heating_load") && required.has("cooling_load"));
+              return required.has("total_load_source") ||
+                (required.has("heating_load_source") && required.has("cooling_load_source"));
             })
             .map((option) => {
               if (!isJsonObject(option) || !Array.isArray(option.required)) return option;
               return {
                 ...option,
-                title: option.required.includes("total_load")
+                title: option.required.includes("total_load_source")
                   ? "Combined Building Load"
                   : "Separate Heating and Cooling Loads",
               };
@@ -110,27 +111,27 @@ export function CollectionSection({
       else delete filteredSchema.anyOf;
     }
     const displaySchema = deduplicateVariantProperties(filteredSchema);
-    if (property === "ground_heat_exchanger") {
+    if (property === "ground_heat_exchangers") {
       const displayDefinitions = displaySchema.$defs as Record<string, RJSFSchema> | undefined;
-      const loadInputs = displayDefinitions?.load_inputs;
+      const loadInputs = displayDefinitions?.load_source;
       if (loadInputs && Array.isArray(loadInputs.oneOf)) {
         loadInputs.oneOf = loadInputs.oneOf.filter(
           (option) =>
             isJsonObject(option) &&
             isJsonObject(option.properties) &&
-            !("heat_pump_name" in option.properties) &&
+            !("heat_pump_id" in option.properties) &&
             !("heat_pump_cop" in option.properties),
         );
       }
       const displayProperties = displaySchema.properties as Record<string, RJSFSchema> | undefined;
-      const preDesigned = displayProperties?.pre_designed;
+      const preDesigned = displayProperties?.fixed_borefield;
       if (manualPreDesigned && preDesigned && Array.isArray(preDesigned.oneOf)) {
         const manualOption = preDesigned.oneOf.find(
           (option) =>
             isJsonObject(option) &&
             isJsonObject(option.properties) &&
             isJsonObject(option.properties.arrangement) &&
-            option.properties.arrangement.const === "MANUAL",
+            option.properties.arrangement.const === "manual",
         );
         if (isJsonObject(manualOption)) {
           const commonProperties = isJsonObject(preDesigned.properties)
@@ -145,7 +146,7 @@ export function CollectionSection({
             properties: { ...commonProperties, ...manualProperties },
           };
           delete collapsed.oneOf;
-          displayProperties.pre_designed = collapsed;
+          displayProperties.fixed_borefield = collapsed;
         }
       }
     }
@@ -158,28 +159,37 @@ export function CollectionSection({
       ? variantDiscriminatorUiSchema(itemSchema, isJsonObject(rootSchema.$defs) ? rootSchema.$defs : undefined)
       : {};
     const variantField = (name: string) => (isJsonObject(variantSelectors[name]) ? variantSelectors[name] : {});
-    if (property === "building") {
+    if (property === "buildings") {
       return {
         ...variantSelectors,
         "ui:classNames": "variant-section building-load-variant",
-        cooling_load: { ...variantField("cooling_load"), load_values: numericSeries },
-        heating_load: { ...variantField("heating_load"), load_values: numericSeries },
-        total_load: { ...variantField("total_load"), load_values: numericSeries },
+        cooling_load_source: {
+          ...variantField("cooling_load_source"),
+          heat_transfer_rate_values_w: numericSeries,
+        },
+        heating_load_source: {
+          ...variantField("heating_load_source"),
+          heat_transfer_rate_values_w: numericSeries,
+        },
+        total_load_source: {
+          ...variantField("total_load_source"),
+          heat_transfer_rate_values_w: numericSeries,
+        },
         "ui:submitButtonOptions": { norender: true },
       };
     }
-    if (property === "ground_heat_exchanger") {
+    if (property === "ground_heat_exchangers") {
       return {
         ...variantSelectors,
-        loads: { ...variantField("loads"), load_values: numericSeries },
-        geometric_constraints: {
-          ...variantField("geometric_constraints"),
-          property_boundary: { "ui:field": "propertyBoundary" },
-          no_go_boundaries: { "ui:field": "noGoBoundaries" },
+        loads: { ...variantField("loads"), heat_transfer_rate_values_w: numericSeries },
+        borefield_layout_constraints: {
+          ...variantField("borefield_layout_constraints"),
+          property_boundary_coordinates_m: { "ui:field": "propertyBoundary" },
+          no_go_boundary_coordinates_m: { "ui:field": "noGoBoundaries" },
         },
-        pre_designed: manualPreDesigned
+        fixed_borefield: manualPreDesigned
           ? { "ui:field": "manualBorefield" }
-          : variantField("pre_designed"),
+          : variantField("fixed_borefield"),
         "ui:submitButtonOptions": { norender: true },
       };
     }
@@ -276,7 +286,7 @@ export function CollectionSection({
               <p className="collection-help">Every schema entry is available as a labeled field. Changes are staged until applied.</p>
               {itemSchema ? (
               <div className="schema-form component-schema-form">
-                {property === "building" && (
+                {property === "buildings" && (
                   <label className="building-load-mode-label" htmlFor="root__XxxOf">
                     Load Input Format
                   </label>

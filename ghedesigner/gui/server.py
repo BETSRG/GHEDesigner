@@ -70,9 +70,9 @@ def _document_summary(document: dict[str, Any]) -> str:
         for key, value in document.items()
         if key
         in {
-            "building",
-            "ground_heat_exchanger",
-            "source_sink_heat_exchanger",
+            "buildings",
+            "ground_heat_exchangers",
+            "source_sink_heat_exchangers",
         }
         and isinstance(value, dict)
     )
@@ -81,20 +81,20 @@ def _document_summary(document: dict[str, Any]) -> str:
 
 def _workflow_mode(document: dict[str, Any]) -> str:
     """Classify an input using the same execution-path distinctions shown by the GUI."""
-    ghes = document.get("ground_heat_exchanger", {})
+    ghes = document.get("ground_heat_exchangers", {})
     ghe_values = list(ghes.values()) if isinstance(ghes, dict) else []
     if isinstance(document.get("network"), dict):
         if ghe_values and all(
-            isinstance(ghe, dict) and isinstance(ghe.get("pre_designed"), dict) for ghe in ghe_values
+            isinstance(ghe, dict) and isinstance(ghe.get("fixed_borefield"), dict) for ghe in ghe_values
         ):
             return "district_simulation"
         controls = document.get("simulation_control", {})
-        if isinstance(controls, dict) and controls.get("search_method") == "SIMULATION_ONLY":
+        if isinstance(controls, dict) and controls.get("search_method") == "simulation_only":
             return "district_simulation"
         return "district_design"
-    if document.get("building"):
+    if document.get("buildings"):
         return "building_design"
-    if ghe_values and all(isinstance(ghe, dict) and isinstance(ghe.get("pre_designed"), dict) for ghe in ghe_values):
+    if ghe_values and all(isinstance(ghe, dict) and isinstance(ghe.get("fixed_borefield"), dict) for ghe in ghe_values):
         return "g_function"
     return "standalone_design"
 
@@ -291,7 +291,7 @@ def create_app(
                     "name": name,
                     "label": path.stem.replace("_", " "),
                     "network_type": document.get("network", {}).get("type"),
-                    "has_buildings": bool(document.get("building")),
+                    "has_buildings": bool(document.get("buildings")),
                     "workflow_mode": _workflow_mode(document),
                 }
             )

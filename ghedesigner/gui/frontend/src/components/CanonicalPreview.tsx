@@ -19,7 +19,7 @@ const stationIds = (network: JsonObject): string[] =>
   Array.isArray(network.stations)
     ? network.stations
         .filter(isJsonObject)
-        .map((station) => station.component)
+        .map((station) => station.component_id)
         .filter((id): id is string => typeof id === "string")
     : [];
 
@@ -27,8 +27,8 @@ const networkSegments = (network: JsonObject): JsonObject[] =>
   Array.isArray(network.segments) ? network.segments.filter(isJsonObject) : [];
 
 const segmentLength = (segment: JsonObject | undefined): string => {
-  if (!segment || typeof segment.length !== "number") return "Length Not Set";
-  return `${segment.length.toLocaleString(undefined, { maximumFractionDigits: 2 })} m`;
+  if (!segment || typeof segment.length_m !== "number") return "Length Not Set";
+  return `${segment.length_m.toLocaleString(undefined, { maximumFractionDigits: 2 })} m`;
 };
 
 export function CanonicalPreview({ document }: { document: InputDocument }) {
@@ -44,7 +44,9 @@ export function CanonicalPreview({ document }: { document: InputDocument }) {
   const segmentBetween = (index: number, closeLoop = false) => {
     const from = ids[index];
     const to = closeLoop ? ids[0] : ids[index + 1];
-    return segments.find((segment) => segment.from === from && segment.to === to);
+    return segments.find(
+      (segment) => segment.from_component_id === from && segment.to_component_id === to,
+    );
   };
 
   return (

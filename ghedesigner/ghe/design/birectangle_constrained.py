@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from typing import TypeGuard, cast
 
 from pygfunction.boreholes import Borehole
@@ -13,6 +13,9 @@ from ghedesigner.ghe.domains import (
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_zd import Bisection1D, BisectionZD
 from ghedesigner.media import Fluid, Grout, Soil
+
+Coordinate = tuple[float, float]
+BoreholeRemovalValue = str | list[Coordinate] | list[list[Coordinate]]
 
 
 def is_2d(property_boundary: list[list[float]] | list[list[list[float]]]) -> TypeGuard[list[list[float]]]:
@@ -30,9 +33,7 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
     b_max_y: float | None = None
     property_boundary: list[list[list[float]]] = field(init=False)
     no_go_boundaries: list[list[list[float]]] | None = None
-    borehole_removal_options: dict[str, list[tuple[float, float]] | list[list[tuple[float, float]]]] = field(
-        default_factory=dict
-    )
+    borehole_removal_options: dict[str, BoreholeRemovalValue] = field(default_factory=dict)
     type: DesignGeomType = field(default=DesignGeomType.BIRECTANGLECONSTRAINED, init=False, repr=False)
 
     def __init__(
@@ -42,24 +43,51 @@ class GeometricConstraintsBiRectangleConstrained(GeometricConstraints):
         b_max_x: float | None = None,
         b_max_y: float | None = None,
         no_go_boundaries: list[list[list[float]]] | None = None,
-        borehole_removal_options={},
+        borehole_removal_options: dict[str, BoreholeRemovalValue] | None = None,
     ) -> None:
         self.b_min = b_min
         self.b_max_x = b_max_x
         self.b_max_y = b_max_y
         self.no_go_boundaries = no_go_boundaries
-        self.borehole_removal_options = borehole_removal_options
+        self.borehole_removal_options = borehole_removal_options or {}
 
         if is_2d(property_boundary):
             self.property_boundary = [property_boundary]
         else:
             self.property_boundary = cast(list[list[list[float]]], property_boundary)
 
-    def to_input(self) -> dict:
-        return {
-            **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k != "type"}),
-            "method": self.type.name,
+    def to_input(self) -> dict[str, object]:
+        result: dict[str, object] = {
+            "method": "bi_rectangle_constrained",
+            "minimum_borehole_spacing_m": self.b_min,
+            "property_boundary_coordinates_m": [{"x": x, "y": y} for x, y in self.property_boundary[0]],
         }
+        if self.b_max_x is not None:
+            result["maximum_borehole_spacing_x_m"] = self.b_max_x
+        if self.b_max_y is not None:
+            result["maximum_borehole_spacing_y_m"] = self.b_max_y
+        if self.no_go_boundaries is not None:
+            result["no_go_boundary_coordinates_m"] = [
+                [{"x": x, "y": y} for x, y in boundary] for boundary in self.no_go_boundaries
+            ]
+        if self.borehole_removal_options:
+            options = dict(self.borehole_removal_options)
+            method = str(options.pop("borehole_removal_method", "radial")).lower()
+            if method == "linesegments":
+                method = "line_segments"
+            elif method == "righttop":
+                method = "right_top"
+            serialized_options: dict[str, object] = {"borehole_removal_method": method}
+            if "points" in options:
+                points = cast(list[Coordinate], options["points"])
+                serialized_options["borehole_removal_points_m"] = [{"x": x, "y": y} for x, y in points]
+            if "line_segments" in options:
+                line_segments = cast(list[list[Coordinate]], options["line_segments"])
+                serialized_options["borehole_removal_line_segments_m"] = [
+                    [{"x": x, "y": y} for x, y in segment] for segment in line_segments
+                ]
+            result["borehole_removal_options"] = serialized_options
+        return result
 
 
 class DesignBiRectangleConstrained(DesignBase):

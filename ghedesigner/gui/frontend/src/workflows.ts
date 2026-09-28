@@ -59,10 +59,10 @@ export const workflowDefinition = (mode: WorkflowMode) =>
   workflowDefinitions.find((definition) => definition.id === mode) ?? workflowDefinitions[0];
 
 const gheEntries = (document: InputDocument): JsonObject[] =>
-  Object.values(document.ground_heat_exchanger ?? {}).filter(isJsonObject);
+  Object.values(document.ground_heat_exchangers ?? {}).filter(isJsonObject);
 
 const buildingEntries = (document: InputDocument): JsonObject[] =>
-  Object.values(document.building ?? {}).filter(isJsonObject);
+  Object.values(document.buildings ?? {}).filter(isJsonObject);
 
 export const copEvaluationTemperaturesRelevant = (document: InputDocument, mode: WorkflowMode): boolean => {
   if (!mode.startsWith("district_")) return false;
@@ -75,16 +75,16 @@ export const inferWorkflow = (document: InputDocument): WorkflowMode => {
   const ghes = gheEntries(document);
   const controls = document.simulation_control;
   if (isJsonObject(document.network)) {
-    if (ghes.length > 0 && ghes.every((ghe) => isJsonObject(ghe.pre_designed))) return "district_simulation";
-    return document.simulation_control?.search_method === "SIMULATION_ONLY"
+    if (ghes.length > 0 && ghes.every((ghe) => isJsonObject(ghe.fixed_borefield))) return "district_simulation";
+    return document.simulation_control?.search_method === "simulation_only"
       ? "district_simulation"
       : "district_design";
   }
   if (typeof controls?.simulation_years === "number") {
-    return controls.search_method === "SIMULATION_ONLY" ? "district_simulation" : "district_design";
+    return controls.search_method === "simulation_only" ? "district_simulation" : "district_design";
   }
-  if (Object.keys(document.building ?? {}).length > 0) return "building_design";
-  if (ghes.length > 0 && ghes.every((ghe) => isJsonObject(ghe.pre_designed))) return "g_function";
+  if (Object.keys(document.buildings ?? {}).length > 0) return "building_design";
+  if (ghes.length > 0 && ghes.every((ghe) => isJsonObject(ghe.fixed_borefield))) return "g_function";
   return "standalone_design";
 };
 
@@ -94,9 +94,9 @@ const deleteKeys = (object: JsonObject, keys: string[]) => {
 
 export const applyWorkflow = (source: InputDocument, mode: WorkflowMode): InputDocument => {
   const document = deepClone(source);
-  document.version ??= 4;
-  document.building ??= {};
-  document.ground_heat_exchanger ??= {};
+  document.schema_version ??= 3;
+  document.buildings ??= {};
+  document.ground_heat_exchangers ??= {};
 
   const previousControls = isJsonObject(document.simulation_control) ? document.simulation_control : {};
   const duration =
@@ -115,12 +115,12 @@ export const applyWorkflow = (source: InputDocument, mode: WorkflowMode): InputD
   } else {
     document.simulation_control = {
       simulation_years: duration,
-      load_method: typeof previousControls.load_method === "string" ? previousControls.load_method : "HYBRID",
+      load_method: typeof previousControls.load_method === "string" ? previousControls.load_method : "hybrid",
       search_method:
         mode === "district_simulation"
-          ? "SIMULATION_ONLY"
-          : previousControls.search_method === "SIMULATION_ONLY" || typeof previousControls.search_method !== "string"
-            ? "GLOBAL_BUPCRS_BR"
+          ? "simulation_only"
+          : previousControls.search_method === "simulation_only" || typeof previousControls.search_method !== "string"
+            ? "global_bupcrs_br"
             : previousControls.search_method,
       constant_cop: typeof previousControls.constant_cop === "boolean" ? previousControls.constant_cop : true,
       horizontal_segments:
@@ -136,16 +136,18 @@ export const applyWorkflow = (source: InputDocument, mode: WorkflowMode): InputD
     deleteKeys(document, [
       "network",
       "horizontal_piping",
-      "source_sink_heat_exchanger",
-      "heat_pump",
+      "source_sink_heat_exchangers",
+      "heat_pumps",
     ]);
     for (const ghe of gheEntries(document)) delete ghe.circulation_pump;
   }
-  if (mode === "standalone_design" || mode === "g_function") document.building = {};
+  if (mode === "standalone_design" || mode === "g_function") document.buildings = {};
   for (const building of buildingEntries(document)) {
-    if (mode !== "district_design") deleteKeys(building, ["max_eft", "min_eft"]);
+    if (mode !== "district_design") {
+      deleteKeys(building, ["maximum_entering_fluid_temperature_c", "minimum_entering_fluid_temperature_c"]);
+    }
     if (!copEvaluationTemperaturesRelevant(document, mode)) {
-      deleteKeys(building, ["heating_cop_evaluation_temperature", "cooling_cop_evaluation_temperature"]);
+      deleteKeys(building, ["heating_cop_evaluation_temperature_c", "cooling_cop_evaluation_temperature_c"]);
     }
   }
 
@@ -154,20 +156,20 @@ export const applyWorkflow = (source: InputDocument, mode: WorkflowMode): InputD
 
 export const workflowSections = (document: InputDocument, mode: WorkflowMode): string[] => {
   const common = ["overview", "fluid", "soil"];
-  if (mode === "g_function") return [...common, "ground_heat_exchanger", "review"];
-  if (mode === "standalone_design") return [...common, "simulation_control", "ground_heat_exchanger", "review"];
+  if (mode === "g_function") return [...common, "ground_heat_exchangers", "review"];
+  if (mode === "standalone_design") return [...common, "simulation_control", "ground_heat_exchangers", "review"];
   if (mode === "building_design") {
-    return [...common, "simulation_control", "building", "ground_heat_exchanger", "review"];
+    return [...common, "simulation_control", "buildings", "ground_heat_exchangers", "review"];
   }
 
   const sections = [...common, "simulation_control"];
-  if (document.simulation_control?.constant_cop === false) sections.push("heat_pump");
-  sections.push("building", "ground_heat_exchanger");
+  if (document.simulation_control?.constant_cop === false) sections.push("heat_pumps");
+  sections.push("buildings", "ground_heat_exchangers");
   if (
     document.simulation_control?.horizontal_simulation_considered === true ||
     Object.keys(isJsonObject(document.horizontal_piping) ? document.horizontal_piping : {}).length > 0
   ) sections.push("horizontal_piping");
-  if (Object.keys(document.source_sink_heat_exchanger ?? {}).length > 0) sections.push("source_sink_heat_exchanger");
+  if (Object.keys(document.source_sink_heat_exchangers ?? {}).length > 0) sections.push("source_sink_heat_exchangers");
   sections.push("network", "review");
   return sections;
 };
@@ -202,9 +204,9 @@ export const seasonalGroundTemperatureRequired = (document: InputDocument): bool
   Object.keys(isJsonObject(document.horizontal_piping) ? document.horizontal_piping : {}).length > 0;
 
 export const soilFields = (document: InputDocument): string[] => [
-  "conductivity",
-  "rho_cp",
-  "undisturbed_temp",
+  "thermal_conductivity_w_per_m_k",
+  "volumetric_heat_capacity_j_per_m3_k",
+  "undisturbed_ground_temperature_c",
   ...(seasonalGroundTemperatureRequired(document) ? ["ground_temperature_model"] : []),
 ];
 
@@ -213,27 +215,29 @@ export const collectionFields = (
   document: InputDocument,
   mode: WorkflowMode,
 ): string[] | undefined => {
-  if (property === "ground_heat_exchanger") {
+  if (property === "ground_heat_exchangers") {
     const fields = [
-      "flow_rate",
+      "design_volumetric_flow_rate_per_borehole_l_per_s",
       ...(mode.startsWith("district_") ? ["circulation_pump"] : []),
       "grout",
       "pipe",
       "borehole",
     ];
-    if (mode === "g_function" || mode === "district_simulation") fields.push("pre_designed");
-    else fields.push("geometric_constraints", "design");
+    if (mode === "g_function" || mode === "district_simulation") fields.push("fixed_borefield");
+    else fields.push("borefield_layout_constraints", "design");
     if (mode === "standalone_design") fields.push("loads");
     return fields;
   }
-  if (property === "building") {
+  if (property === "buildings") {
     return [
-      "heating_load",
-      "cooling_load",
-      "total_load",
-      ...(mode === "district_design" ? ["max_eft", "min_eft"] : []),
+      "heating_load_source",
+      "cooling_load_source",
+      "total_load_source",
+      ...(mode === "district_design"
+        ? ["maximum_entering_fluid_temperature_c", "minimum_entering_fluid_temperature_c"]
+        : []),
       ...(copEvaluationTemperaturesRelevant(document, mode)
-        ? ["heating_cop_evaluation_temperature", "cooling_cop_evaluation_temperature"]
+        ? ["heating_cop_evaluation_temperature_c", "cooling_cop_evaluation_temperature_c"]
         : []),
     ];
   }
@@ -253,17 +257,17 @@ const workflowDiagnostic = (message: string, pointer: string, location: string):
 export const workflowDiagnostics = (document: InputDocument, mode: WorkflowMode): Diagnostic[] => {
   const diagnostics: Diagnostic[] = [];
   const ghes = gheEntries(document);
-  const buildingCount = Object.keys(document.building ?? {}).length;
+  const buildingCount = Object.keys(document.buildings ?? {}).length;
   const hasNetwork = isJsonObject(document.network);
 
   if (ghes.length === 0) {
     diagnostics.push(
-      workflowDiagnostic("This workflow requires at least one ground heat exchanger.", "/ground_heat_exchanger", "GHEs"),
+      workflowDiagnostic("This workflow requires at least one ground heat exchanger.", "/ground_heat_exchangers", "GHEs"),
     );
   }
   if (mode === "building_design" && buildingCount !== 1) {
     diagnostics.push(
-      workflowDiagnostic("Building + GHE design requires exactly one building.", "/building", "Heat pump loads"),
+      workflowDiagnostic("Building + GHE design requires exactly one building.", "/buildings", "Heat pump loads"),
     );
   }
   if (
@@ -280,7 +284,7 @@ export const workflowDiagnostics = (document: InputDocument, mode: WorkflowMode)
   }
   if (mode === "building_design" && ghes.length !== 1) {
     diagnostics.push(
-      workflowDiagnostic("Building + GHE design requires exactly one GHE.", "/ground_heat_exchanger", "GHEs"),
+      workflowDiagnostic("Building + GHE design requires exactly one GHE.", "/ground_heat_exchangers", "GHEs"),
     );
   }
   if (mode.startsWith("district_") && !hasNetwork) {
@@ -290,19 +294,19 @@ export const workflowDiagnostics = (document: InputDocument, mode: WorkflowMode)
   }
   if (mode.startsWith("district_") && buildingCount === 0) {
     diagnostics.push(
-      workflowDiagnostic("A district workflow requires at least one building load component.", "/building", "Heat pump loads"),
+      workflowDiagnostic("A district workflow requires at least one building load component.", "/buildings", "Heat pump loads"),
     );
   }
 
   const requiresPredesigned = mode === "g_function" || mode === "district_simulation";
   ghes.forEach((ghe, index) => {
-    const isPredesigned = isJsonObject(ghe.pre_designed);
-    const isSizable = isJsonObject(ghe.geometric_constraints) && isJsonObject(ghe.design);
+    const isPredesigned = isJsonObject(ghe.fixed_borefield);
+    const isSizable = isJsonObject(ghe.borefield_layout_constraints) && isJsonObject(ghe.design);
     if (requiresPredesigned && !isPredesigned) {
       diagnostics.push(
         workflowDiagnostic(
           "This workflow requires pre-designed borefield coordinates and borehole height for every GHE.",
-          "/ground_heat_exchanger",
+          "/ground_heat_exchangers",
           `GHE ${index + 1}`,
         ),
       );
@@ -311,7 +315,7 @@ export const workflowDiagnostics = (document: InputDocument, mode: WorkflowMode)
       diagnostics.push(
         workflowDiagnostic(
           "This workflow requires geometric constraints and design limits for every GHE.",
-          "/ground_heat_exchanger",
+          "/ground_heat_exchangers",
           `GHE ${index + 1}`,
         ),
       );
@@ -320,7 +324,7 @@ export const workflowDiagnostics = (document: InputDocument, mode: WorkflowMode)
       diagnostics.push(
         workflowDiagnostic(
           "Standalone GHE design requires a load source on every GHE.",
-          "/ground_heat_exchanger",
+          "/ground_heat_exchangers",
           `GHE ${index + 1}`,
         ),
       );

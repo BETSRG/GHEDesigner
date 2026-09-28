@@ -80,27 +80,27 @@ def test_mass_flow_driven_solver_requires_a_controller_for_each_cycle() -> None:
 
 def test_compact_one_pipe_generates_zero_loss_station_bypasses() -> None:
     pump = {
-        "wire_to_water_efficiency": 0.7,
+        "wire_to_water_efficiency_fraction": 0.7,
     }
     network_data = {
         "type": "one_pipe",
-        "stations": [{"component": "building_1"}, {"component": "ghe_1"}],
-        "pipe_defaults": {"diameter": 0.1},
+        "stations": [{"component_id": "building_1"}, {"component_id": "ghe_1"}],
+        "distribution_pipe_defaults": {"diameter_m": 0.1},
         "segments": [
-            {"id": "segment_1", "from": "building_1", "to": "ghe_1", "length": 10.0},
-            {"id": "segment_2", "from": "ghe_1", "to": "building_1", "length": 10.0},
+            {"id": "segment_1", "from_component_id": "building_1", "to_component_id": "ghe_1", "length_m": 10.0},
+            {"id": "segment_2", "from_component_id": "ghe_1", "to_component_id": "building_1", "length_m": 10.0},
         ],
         "pumps": {"building_pump": pump, "distribution_pump": pump},
         "component_pumps": {"building_1": "building_pump"},
-        "distribution_pump": {"type": "pump", "pump": "distribution_pump"},
+        "distribution_pump": {"type": "pump", "pump_id": "distribution_pump"},
         "mass_flow_control": {
             "distribution_flow_multiplier": 1.5,
-            "minimum_distribution_mass_flow": 0.1,
+            "minimum_distribution_mass_flow_rate_kg_per_s": 0.1,
         },
     }
     component_data = {
-        "building": {"building_1": {}},
-        "ground_heat_exchanger": {"ghe_1": {"circulation_pump": {"reference_pressure_drop": 50_000.0}}},
+        "buildings": {"building_1": {}},
+        "ground_heat_exchangers": {"ghe_1": {"circulation_pump": {"reference_pressure_drop_pa": 50_000.0}}},
     }
 
     graph = compile_network(
@@ -120,13 +120,13 @@ def test_compact_one_pipe_generates_zero_loss_station_bypasses() -> None:
 def test_semantic_validation_rejects_duplicate_ghe_pressure_loss() -> None:
     data = {
         "network": {"type": "one_pipe"},
-        "ground_heat_exchanger": {
+        "ground_heat_exchangers": {
             "ghe_1": {
-                "circulation_pump": {"reference_pressure_drop": 50_000.0},
+                "circulation_pump": {"reference_pressure_drop_pa": 50_000.0},
                 "hydraulics": {
                     "type": "passive",
-                    "reference_mass_flow": 1.0,
-                    "reference_pressure_drop": 10_000.0,
+                    "reference_mass_flow_rate_kg_per_s": 1.0,
+                    "reference_pressure_drop_pa": 10_000.0,
                 },
             }
         },
@@ -139,8 +139,8 @@ def test_semantic_validation_rejects_duplicate_ghe_pressure_loss() -> None:
 def test_semantic_validation_requires_ghe_circulation_pumps_for_one_pipe() -> None:
     data = {
         "network": {"type": "one_pipe"},
-        "ground_heat_exchanger": {
-            "ghe_1": {"circulation_pump": {"reference_pressure_drop": 50_000.0}},
+        "ground_heat_exchangers": {
+            "ghe_1": {"circulation_pump": {"reference_pressure_drop_pa": 50_000.0}},
             "ghe_2": {},
         },
     }

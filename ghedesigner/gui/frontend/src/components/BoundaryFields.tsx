@@ -1,14 +1,20 @@
 import type { FieldProps } from "@rjsf/utils";
 import { Plus, Trash2 } from "lucide-react";
 
+import { isJsonObject } from "../types";
+
 export type Coordinate = [number, number];
 
 const asCoordinate = (value: unknown): Coordinate => {
+  if (isJsonObject(value)) {
+    return [typeof value.x === "number" ? value.x : 0, typeof value.y === "number" ? value.y : 0];
+  }
   const values = Array.isArray(value) ? value : [];
   return [typeof values[0] === "number" ? values[0] : 0, typeof values[1] === "number" ? values[1] : 0];
 };
 
 const asBoundary = (value: unknown): Coordinate[] => (Array.isArray(value) ? value.map(asCoordinate) : []);
+const toCoordinateObjects = (points: Coordinate[]) => points.map(([x, y]) => ({ x, y }));
 
 interface CoordinateRowsProps {
   idPrefix: string;
@@ -106,7 +112,7 @@ export function PropertyBoundaryField({ fieldPathId, formData, onChange, require
         idPrefix={idPrefix}
         points={points}
         minimum={0}
-        onChange={(next) => onChange(next, fieldPathId.path)}
+        onChange={(next) => onChange(toCoordinateObjects(next), fieldPathId.path)}
       />
     </fieldset>
   );
@@ -119,7 +125,7 @@ export function NoGoBoundariesField({ fieldPathId, formData, onChange, required,
   const updateBoundary = (boundaryIndex: number, points: Coordinate[]) => {
     const next = boundaries.map((boundary) => boundary.map((point) => [...point] as Coordinate));
     next[boundaryIndex] = points;
-    onChange(next, fieldPathId.path);
+    onChange(next.map(toCoordinateObjects), fieldPathId.path);
   };
 
   return (
@@ -135,7 +141,12 @@ export function NoGoBoundariesField({ fieldPathId, formData, onChange, required,
                 type="button"
                 className="button danger compact"
                 aria-label={`Remove No-Go Zone ${boundaryIndex + 1}`}
-                onClick={() => onChange(boundaries.filter((_, index) => index !== boundaryIndex), fieldPathId.path)}
+                onClick={() =>
+                  onChange(
+                    boundaries.filter((_, index) => index !== boundaryIndex).map(toCoordinateObjects),
+                    fieldPathId.path,
+                  )
+                }
               >
                 <Trash2 size={14} /> Remove Zone
               </button>
@@ -152,7 +163,7 @@ export function NoGoBoundariesField({ fieldPathId, formData, onChange, required,
         <button
           type="button"
           className="button secondary compact boundary-add"
-          onClick={() => onChange([...boundaries, []], fieldPathId.path)}
+          onClick={() => onChange([...boundaries, []].map(toCoordinateObjects), fieldPathId.path)}
         >
           <Plus size={14} /> Add No-Go Zone
         </button>

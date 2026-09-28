@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 from pygfunction.boreholes import Borehole
 
@@ -26,8 +26,12 @@ class GeometricConstraintsBiZoned(GeometricConstraintsBiRectangle):
 
     def to_input(self) -> dict:
         return {
-            **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k != "type"}),
-            "method": self.type.name,
+            "method": "bi_zoned_rectangle",
+            "length_m": self.length,
+            "width_m": self.width,
+            "minimum_borehole_spacing_m": self.b_min,
+            "maximum_borehole_spacing_x_m": self.b_max_x,
+            "maximum_borehole_spacing_y_m": self.b_max_y,
         }
 
 

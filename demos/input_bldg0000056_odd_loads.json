@@ -1,48 +1,42 @@
 {
-  "version": 4,
+  "schema_version": 3,
   "fluid": {
-    "fluid_name": "WATER",
     "concentration_percent": 0,
-    "temperature": 20
+    "fluid_type": "water",
+    "property_evaluation_temperature_c": 20
   },
   "soil": {
-    "conductivity": 1.73,
-    "rho_cp": 3225961.54,
-    "undisturbed_temp": 10.87
+    "thermal_conductivity_w_per_m_k": 1.73,
+    "volumetric_heat_capacity_j_per_m3_k": 3225961.54,
+    "undisturbed_ground_temperature_c": 10.87
   },
-  "ground_heat_exchanger": {
+  "ground_heat_exchangers": {
     "ghe1": {
-      "flow_rate": 0.58,
       "grout": {
-        "conductivity": 0.692,
-        "rho_cp": 3900000
+        "thermal_conductivity_w_per_m_k": 0.692,
+        "volumetric_heat_capacity_j_per_m3_k": 3900000
       },
       "pipe": {
-        "inner_diameter": 0.03404,
-        "outer_diameter": 0.04216,
-        "shank_spacing": 0.01856,
-        "roughness": 1e-6,
-        "conductivity": 0.398,
-        "rho_cp": 1542000,
-        "arrangement": "SINGLEUTUBE"
+        "arrangement": "single_u_tube",
+        "thermal_conductivity_w_per_m_k": 0.398,
+        "volumetric_heat_capacity_j_per_m3_k": 1542000,
+        "inner_diameter_m": 0.03404,
+        "outer_diameter_m": 0.04216,
+        "shank_spacing_m": 0.01856,
+        "surface_roughness_m": 1e-6
       },
       "borehole": {
-        "buried_depth": 1,
-        "diameter": 0.14
-      },
-      "geometric_constraints": {
-        "length": 100,
-        "b": 6.096,
-        "method": "NEARSQUARE"
+        "top_depth_below_grade_m": 1,
+        "diameter_m": 0.14
       },
       "design": {
-        "max_eft": 35,
-        "min_eft": 5,
-        "max_height": 105.156,
-        "min_height": 60
+        "minimum_entering_fluid_temperature_c": 5,
+        "maximum_entering_fluid_temperature_c": 35,
+        "maximum_active_borehole_length_m": 105.156,
+        "minimum_active_borehole_length_m": 60
       },
       "loads": {
-        "load_values": [
+        "heat_transfer_rate_values_w": [
           -126.59812476814562, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
           -324.56392322745535, -580.5516482280779, -987.4434530700498,
           -1491.215508253027, -2047.9645475879875, -2435.9291217622404,
@@ -2569,7 +2563,14 @@
           -2541.4465263645307, -2423.6000880508955, -2816.174424305803,
           -2462.032170573392, -2335.7222771906477, -2125.596537974943,
           -1846.9154659651344, -1402.4305874867289
-        ]
+        ],
+        "value_units": "W"
+      },
+      "design_volumetric_flow_rate_per_borehole_l_per_s": 0.58,
+      "borefield_layout_constraints": {
+        "method": "near_square",
+        "length_m": 100,
+        "borehole_spacing_m": 6.096
       }
     }
   },

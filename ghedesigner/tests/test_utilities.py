@@ -22,7 +22,7 @@ class TestUtilities(GHEBaseTest):
 
     def test_heat_pump_quadratics_hold_boundary_values_outside_curve_range(self):
         demo = json.loads((self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json").read_text())
-        heat_pump = HPmodel("hp1", demo["heat_pump"]["hp1"], ugt=20.0)
+        heat_pump = HPmodel("hp1", demo["heat_pumps"]["hp1"], ugt=20.0)
         temperatures = np.array([0.0, 10.0, 20.0, 35.0, 50.0])
 
         heating_ratios = heat_pump.heating_ratio(temperatures)
@@ -48,9 +48,9 @@ class TestUtilities(GHEBaseTest):
 
     def test_heat_pump_rejects_reversed_curve_temperature_limits(self):
         demo = json.loads((self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json").read_text())
-        heat_pump_data = demo["heat_pump"]["hp1"]
-        heat_pump_data["cooling_performance"]["minimum_curve_temperature"] = 40.0
-        heat_pump_data["cooling_performance"]["maximum_curve_temperature"] = 30.0
+        heat_pump_data = demo["heat_pumps"]["hp1"]
+        heat_pump_data["cooling_performance"]["minimum_curve_temperature_c"] = 40.0
+        heat_pump_data["cooling_performance"]["maximum_curve_temperature_c"] = 30.0
 
         with pytest.raises(ValueError, match="Cooling minimum curve temperature"):
             HPmodel("hp1", heat_pump_data, ugt=20.0)

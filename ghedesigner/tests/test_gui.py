@@ -103,9 +103,11 @@ def test_gui_schema_gives_every_field_a_natural_language_title() -> None:
     assert missing == []
     assert untitled_variants == []
     assert all("_" not in title for title in titles)
-    assert schema["$defs"]["rho_cp"]["title"] == "Volumetric heat capacity"
+    assert schema["$defs"]["volumetric_heat_capacity_j_per_m3_k"]["title"] == "Volumetric heat capacity"
     assert (
-        schema["properties"]["ground_heat_exchanger"]["additionalProperties"]["properties"]["flow_rate"]["title"]
+        schema["properties"]["ground_heat_exchangers"]["additionalProperties"]["properties"][
+            "design_volumetric_flow_rate_per_borehole_l_per_s"
+        ]["title"]
         == "Design flow per borehole"
     )
     assert schema["properties"]["fluid"]["properties"]["concentration_percent"]["title"] == ("Antifreeze concentration")
@@ -138,11 +140,13 @@ def test_gui_schema_gives_every_numeric_field_units() -> None:
     inspect(schema)
 
     assert missing == []
-    assert schema["$defs"]["rho_cp"]["description"].endswith("Units: joules per cubic meter-kelvin (J/m³·K).")
-    assert schema["$defs"]["ground_temperature_model"]["properties"]["phase_lag_1"]["description"].endswith(
+    assert schema["$defs"]["volumetric_heat_capacity_j_per_m3_k"]["description"].endswith(
+        "Units: joules per cubic meter-kelvin (J/m³·K)."
+    )
+    assert schema["$defs"]["ground_temperature_model"]["properties"]["annual_phase_lag_days"]["description"].endswith(
         "Units: days."
     )
-    assert schema["$defs"]["network_pump"]["required"] == ["wire_to_water_efficiency"]
+    assert schema["$defs"]["network_pump"]["required"] == ["wire_to_water_efficiency_fraction"]
 
 
 def test_gui_schema_exposes_only_prescribed_flow_network_inputs() -> None:
@@ -167,7 +171,7 @@ def test_single_u_tube_schema_omits_redundant_pipe_count() -> None:
     single_u_tube = next(
         option
         for option in schema["$defs"]["pipe"]["oneOf"]
-        if option["properties"]["arrangement"].get("const") == "SINGLEUTUBE"
+        if option["properties"]["arrangement"].get("const") == "single_u_tube"
     )
 
     assert "num_pipes" not in single_u_tube["properties"]
@@ -239,7 +243,7 @@ def test_gui_includes_packaged_examples() -> None:
     response = client.get("/api/examples/pre_designed_manual.json")
 
     assert response.status_code == 200
-    assert response.get_json()["version"] == 4
+    assert response.get_json()["schema_version"] == 3
 
 
 def test_packaged_examples_resolve_to_packaged_load_files(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -253,8 +257,8 @@ def test_packaged_examples_resolve_to_packaged_load_files(monkeypatch: pytest.Mo
         response = client.get(f"/api/examples/{name}")
 
         assert response.status_code == 200
-        first_building = next(iter(response.get_json()["building"].values()))
-        load_path = Path(first_building["heating_load"]["file_path"])
+        first_building = next(iter(response.get_json()["buildings"].values()))
+        load_path = Path(first_building["heating_load_source"]["file_path"])
         assert load_path.is_absolute()
         assert load_path.is_file()
 
@@ -266,11 +270,11 @@ def test_gui_resolves_example_load_paths_before_returning_document() -> None:
 
     assert response.status_code == 200
     document = response.get_json()
-    load_path = Path(document["building"]["bldg_1_zone_1"]["heating_load"]["file_path"])
+    load_path = Path(document["buildings"]["bldg_1_zone_1"]["heating_load_source"]["file_path"])
     assert load_path.is_absolute()
     assert load_path == (DEMOS_DIRECTORY / "../ghedesigner/tests/test_data/Test_Case_1_Loads.csv").resolve()
     assert load_path.is_file()
-    stored_path = _demo("Network_Sizing_3GHE_6HP_RowWise.json")["building"]["bldg_1_zone_1"]["heating_load"][
+    stored_path = _demo("Network_Sizing_3GHE_6HP_RowWise.json")["buildings"]["bldg_1_zone_1"]["heating_load_source"][
         "file_path"
     ]
     assert not Path(stored_path).is_absolute()

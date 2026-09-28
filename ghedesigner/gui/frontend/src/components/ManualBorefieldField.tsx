@@ -3,24 +3,24 @@ import type { FieldProps } from "@rjsf/utils";
 import { isJsonObject } from "../types";
 import { CoordinateRows, type Coordinate } from "./BoundaryFields";
 
-export const pairBoreholeCoordinates = (xValue: unknown, yValue: unknown): Coordinate[] => {
-  const xCoordinates = Array.isArray(xValue) ? xValue : [];
-  const yCoordinates = Array.isArray(yValue) ? yValue : [];
-  return Array.from({ length: Math.max(xCoordinates.length, yCoordinates.length) }, (_, index) => [
-    typeof xCoordinates[index] === "number" ? xCoordinates[index] : 0,
-    typeof yCoordinates[index] === "number" ? yCoordinates[index] : 0,
-  ]);
+export const boreholeCoordinates = (value: unknown): Coordinate[] => {
+  const coordinates = Array.isArray(value) ? value : [];
+  return coordinates.map((coordinate) => {
+    if (!isJsonObject(coordinate)) return [0, 0];
+    return [
+      typeof coordinate.x === "number" ? coordinate.x : 0,
+      typeof coordinate.y === "number" ? coordinate.y : 0,
+    ];
+  });
 };
 
-export const splitBoreholeCoordinates = (coordinates: Coordinate[]) => ({
-  x: coordinates.map(([x]) => x),
-  y: coordinates.map(([, y]) => y),
-});
+export const serializeBoreholeCoordinates = (coordinates: Coordinate[]) =>
+  coordinates.map(([x, y]) => ({ x, y }));
 
 export function ManualBorefieldField({ fieldPathId, formData, onChange, required }: FieldProps) {
   const data = isJsonObject(formData) ? formData : {};
-  const coordinates = pairBoreholeCoordinates(data.x, data.y);
-  const activeLength = typeof data.H === "number" ? data.H : "";
+  const coordinates = boreholeCoordinates(data.borehole_coordinates_m);
+  const activeLength = typeof data.active_borehole_length_m === "number" ? data.active_borehole_length_m : "";
   const idPrefix = fieldPathId.name ?? "manual-borefield";
 
   return (
@@ -31,18 +31,23 @@ export function ManualBorefieldField({ fieldPathId, formData, onChange, required
           Borefield Arrangement
           <select
             id={`${idPrefix}-arrangement`}
-            value="MANUAL"
+            value="manual"
             onChange={(event) => {
-              if (event.currentTarget.value === "RECTANGLE") {
+              if (event.currentTarget.value === "rectangle") {
                 onChange(
-                  { arrangement: "RECTANGLE", ...(typeof data.H === "number" ? { H: data.H } : {}) },
+                  {
+                    arrangement: "rectangle",
+                    ...(typeof data.active_borehole_length_m === "number"
+                      ? { active_borehole_length_m: data.active_borehole_length_m }
+                      : {}),
+                  },
                   fieldPathId.path,
                 );
               }
             }}
           >
-            <option value="MANUAL">Manual Borefield Coordinates</option>
-            <option value="RECTANGLE">Rectangular Borefield</option>
+            <option value="manual">Manual Borefield Coordinates</option>
+            <option value="rectangle">Rectangular Borefield</option>
           </select>
         </label>
         <label htmlFor={`${idPrefix}-active-length`}>
@@ -55,7 +60,10 @@ export function ManualBorefieldField({ fieldPathId, formData, onChange, required
             value={activeLength}
             onChange={(event) => {
               if (Number.isFinite(event.currentTarget.valueAsNumber)) {
-                onChange({ ...data, H: event.currentTarget.valueAsNumber }, fieldPathId.path);
+                onChange(
+                  { ...data, active_borehole_length_m: event.currentTarget.valueAsNumber },
+                  fieldPathId.path,
+                );
               }
             }}
           />
@@ -74,7 +82,10 @@ export function ManualBorefieldField({ fieldPathId, formData, onChange, required
           removeLabel="Remove Borehole"
           emptyMessage="No borehole coordinates are defined."
           onChange={(next) => {
-            onChange({ ...data, arrangement: "MANUAL", ...splitBoreholeCoordinates(next) }, fieldPathId.path);
+            onChange(
+              { ...data, arrangement: "manual", borehole_coordinates_m: serializeBoreholeCoordinates(next) },
+              fieldPathId.path,
+            );
           }}
         />
       </div>

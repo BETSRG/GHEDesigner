@@ -10,11 +10,11 @@ export type WorkflowMode =
   | "district_simulation";
 
 export type InputDocument = JsonObject & {
-  version?: number;
+  schema_version?: number;
   network?: JsonObject;
-  building?: JsonObject;
-  ground_heat_exchanger?: JsonObject;
-  source_sink_heat_exchanger?: JsonObject;
+  buildings?: JsonObject;
+  ground_heat_exchangers?: JsonObject;
+  source_sink_heat_exchangers?: JsonObject;
   simulation_control?: JsonObject;
 };
 
@@ -89,20 +89,20 @@ export const deepClone = <T,>(value: T): T =>
   value === undefined ? value : (JSON.parse(JSON.stringify(value)) as T);
 
 export const blankDocument = (): InputDocument => ({
-  version: 4,
+  schema_version: 3,
   fluid: {
-    fluid_name: "WATER",
+    fluid_type: "water",
     concentration_percent: 0,
-    temperature: 20,
+    property_evaluation_temperature_c: 20,
   },
   soil: {
-    conductivity: 2.0,
-    rho_cp: 2343000,
-    undisturbed_temp: 12,
+    thermal_conductivity_w_per_m_k: 2.0,
+    volumetric_heat_capacity_j_per_m3_k: 2343000,
+    undisturbed_ground_temperature_c: 12,
   },
   simulation_control: {
     sizing_years: 20,
   },
-  building: {},
-  ground_heat_exchanger: {},
+  buildings: {},
+  ground_heat_exchangers: {},
 });

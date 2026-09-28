@@ -37,11 +37,11 @@ class TestDistrictSys(GHEBaseTest):
         heat_exchanger = SourceSinkHeatExchanger(
             "sink_hx",
             {
-                "effectiveness": 0.8,
-                "source_temperature": 15.0,
-                "source_flow_rate": 1.0,
-                "cut_in_temperature": 25.0,
-                "cut_out_temperature": 20.0,
+                "effectiveness_fraction": 0.8,
+                "source_temperature_c": 15.0,
+                "source_mass_flow_rate_kg_per_s": 1.0,
+                "cut_in_temperature_c": 25.0,
+                "cut_out_temperature_c": 20.0,
             },
             tg=20.0,
             num_timesteps=2,
@@ -99,7 +99,7 @@ class TestDistrictSys(GHEBaseTest):
 
     def test_loadagg_ghe_history_uses_elapsed_response_age(self):
         ghx = self.make_history_test_ghx(constant_time_step=True)
-        ghx.load_method = "hourlyloadagg"
+        ghx.load_method = "load_aggregation_hourly"
         ghx.time_array = np.array([0.0, 1.0, 2.0, 3.0])
         ghx.aggregator = DynamicAggregator(3.0 * 3600.0)
         ghx.g_agg = ghx.g(np.log(ghx.aggregator.response_ages / ghx.ts))
@@ -123,13 +123,13 @@ class TestDistrictSys(GHEBaseTest):
     @staticmethod
     def write_isolated_horizontal_input(source_path: Path, output_path: Path, data: dict | None = None) -> None:
         data = load_input_file(source_path) if data is None else data
-        coupled_models = {model_id for model_id, model in data["horizontal_piping"].items() if "coupled_to" in model}
+        coupled_models = {model_id for model_id, model in data["horizontal_piping"].items() if "coupled_to_id" in model}
         for segment in data["network"]["segments"]:
-            if segment.get("thermal_model") in coupled_models:
-                segment.pop("thermal_model")
+            if segment.get("thermal_model_id") in coupled_models:
+                segment.pop("thermal_model_id")
         for model_id in coupled_models:
             data["horizontal_piping"].pop(model_id)
-        for building in data["building"].values():
+        for building in data["buildings"].values():
             for load in building.values():
                 if isinstance(load, dict) and "file_path" in load:
                     load["file_path"] = str((source_path.parent / load["file_path"]).resolve())
@@ -191,7 +191,7 @@ class TestDistrictSys(GHEBaseTest):
             ugt_phase2=0.0,
             depth=1.0,
             time_step_params=timestep_params_generator(time_array),
-            load_method="hourlyloadagg",
+            load_method="load_aggregation_hourly",
         )
 
         aggregator = horiz_pipe.aggregators[0]
@@ -206,7 +206,7 @@ class TestDistrictSys(GHEBaseTest):
         source_path = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
         modified_data = load_input_file(source_path)
         pipe_name = "building1_building2_line"
-        modified_data["horizontal_piping"][pipe_name]["pipe"]["conductivity"] = 0.01
+        modified_data["horizontal_piping"][pipe_name]["pipe"]["thermal_conductivity_w_per_m_k"] = 0.01
 
         with TemporaryDirectory() as tmp_dir:
             standard_path = Path(tmp_dir) / "standard_isolated_horizontal.json"
@@ -250,17 +250,24 @@ class TestDistrictSys(GHEBaseTest):
         assert "ground_temperature_model" not in data
         assert "annual_average" not in data["soil"]["ground_temperature_model"]
         assert horizontal_pipes
-        assert all(pipe.ugt_avg == pytest.approx(data["soil"]["undisturbed_temp"]) for pipe in horizontal_pipes)
-        assert all(pipe.soil.k == pytest.approx(data["soil"]["conductivity"]) for pipe in horizontal_pipes)
-        assert all(pipe.soil.rho_cp == pytest.approx(data["soil"]["rho_cp"]) for pipe in horizontal_pipes)
+        assert all(
+            pipe.ugt_avg == pytest.approx(data["soil"]["undisturbed_ground_temperature_c"]) for pipe in horizontal_pipes
+        )
+        assert all(
+            pipe.soil.k == pytest.approx(data["soil"]["thermal_conductivity_w_per_m_k"]) for pipe in horizontal_pipes
+        )
+        assert all(
+            pipe.soil.rho_cp == pytest.approx(data["soil"]["volumetric_heat_capacity_j_per_m3_k"])
+            for pipe in horizontal_pipes
+        )
 
     def test_horizontal_component_soil_is_rejected(self):
         source_path = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
         data = load_input_file(source_path)
         first_pipe = next(iter(data["horizontal_piping"].values()))
         first_pipe["soil"] = {
-            "conductivity": data["soil"]["conductivity"],
-            "rho_cp": data["soil"]["rho_cp"],
+            "thermal_conductivity_w_per_m_k": data["soil"]["thermal_conductivity_w_per_m_k"],
+            "volumetric_heat_capacity_j_per_m3_k": data["soil"]["volumetric_heat_capacity_j_per_m3_k"],
         }
 
         with TemporaryDirectory() as tmp_dir:
@@ -274,7 +281,7 @@ class TestDistrictSys(GHEBaseTest):
         source_path = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
         data = load_input_file(source_path)
         ground_temperature_model = data["soil"].pop("ground_temperature_model")
-        ground_temperature_model["annual_average"] = data["soil"]["undisturbed_temp"]
+        ground_temperature_model["annual_average"] = data["soil"]["undisturbed_ground_temperature_c"]
         data["ground_temperature_model"] = ground_temperature_model
 
         with TemporaryDirectory() as tmp_dir:
@@ -298,7 +305,7 @@ class TestDistrictSys(GHEBaseTest):
 
         horizontal_types = (SimCompType.ISOLATED_HORIZONTAL_PIPE, SimCompType.COUPLED_HORIZONTAL_PIPE)
         assert all(component.comp_type not in horizontal_types for component in system.components)
-        expected_component_names = [station["component"] for station in data["network"]["stations"]]
+        expected_component_names = [station["component_id"] for station in data["network"]["stations"]]
         assert [component.name for component in system.components] == expected_component_names
 
         system.num_timesteps = 2
@@ -341,7 +348,7 @@ class TestDistrictSys(GHEBaseTest):
                 ugt_phase2=0.0,
                 depth=1.0,
                 time_step_params=timestep_params_generator(time_array),
-                load_method="hourlyloadagg",
+                load_method="load_aggregation_hourly",
             )
 
         pipe_a = make_pipe("pipe_a", 10.0)
@@ -364,10 +371,16 @@ class TestDistrictSys(GHEBaseTest):
         processor = ProcessLoads()
         processor.read_hp_load_from_json(
             {
-                "building": {
+                "buildings": {
                     "building": {
-                        "heating_load": {"load_values": [1.0, 2.0], "heat_pump_cop": 3.5},
-                        "cooling_load": {"load_values": [3.0, 4.0], "heat_pump_cop": 4.5},
+                        "heating_load_source": {
+                            "heat_transfer_rate_values_w": [1.0, 2.0],
+                            "heat_pump_cop": 3.5,
+                        },
+                        "cooling_load_source": {
+                            "heat_transfer_rate_values_w": [3.0, 4.0],
+                            "heat_pump_cop": 4.5,
+                        },
                     }
                 }
             }
@@ -384,16 +397,22 @@ class TestDistrictSys(GHEBaseTest):
             with self.subTest(load_type=load_type):
                 processor = ProcessLoads()
                 building_data = {
-                    "heating_load": {"load_values": [1.0, 2.0], "heat_pump_cop": 3.5},
-                    "cooling_load": {"load_values": [3.0, 4.0], "heat_pump_cop": 4.5},
+                    "heating_load_source": {
+                        "heat_transfer_rate_values_w": [1.0, 2.0],
+                        "heat_pump_cop": 3.5,
+                    },
+                    "cooling_load_source": {
+                        "heat_transfer_rate_values_w": [3.0, 4.0],
+                        "heat_pump_cop": 4.5,
+                    },
                 }
-                building_data[f"{load_type}_load"]["load_values"][1] = -2.0
+                building_data[f"{load_type}_load_source"]["heat_transfer_rate_values_w"][1] = -2.0
 
                 with pytest.raises(
                     ValueError,
                     match=rf"{load_type.capitalize()} loads for building 'building' must be non-negative",
                 ):
-                    processor.read_hp_load_from_json({"building": {"building": building_data}})
+                    processor.read_hp_load_from_json({"buildings": {"building": building_data}})
 
     def test_hybrid_grid_has_one_hour_minimum_timestep(self):
         grid = enforce_minimum_timestep([0.2, 0.8, 1.2, 1.9, 2.4, 3.0])
@@ -417,7 +436,7 @@ class TestDistrictSys(GHEBaseTest):
     def test_vertical_soil_is_required_at_top_level(self):
         source_path = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
         data = load_input_file(source_path)
-        ghe_data = next(iter(data["ground_heat_exchanger"].values()))
+        ghe_data = next(iter(data["ground_heat_exchangers"].values()))
         ghe_data["soil"] = data.pop("soil")
 
         with TemporaryDirectory() as tmp_dir:
@@ -430,7 +449,7 @@ class TestDistrictSys(GHEBaseTest):
     def test_legacy_flow_type_is_rejected(self):
         source_path = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
         data = load_input_file(source_path)
-        next(iter(data["ground_heat_exchanger"].values()))["flow_type"] = "BOREHOLE"
+        next(iter(data["ground_heat_exchangers"].values()))["flow_type"] = "BOREHOLE"
 
         with TemporaryDirectory() as tmp_dir:
             invalid_path = Path(tmp_dir) / "legacy_flow_type.json"
@@ -531,9 +550,9 @@ class TestDistrictSys(GHEBaseTest):
     def test_ghe_pump_output_columns_follow_configuration(self):
         source_path = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
         data = load_input_file(source_path)
-        data["ground_heat_exchanger"]["ghe1"]["circulation_pump"] = {
-            "reference_pressure_drop": 50_000.0,
-            "wire_to_water_efficiency": 0.5,
+        data["ground_heat_exchangers"]["ghe1"]["circulation_pump"] = {
+            "reference_pressure_drop_pa": 50_000.0,
+            "wire_to_water_efficiency_fraction": 0.5,
             "pressure_drop_multiplier": 1.0,
             "minimum_flow_fraction": 0.05,
         }
@@ -570,10 +589,12 @@ class TestDistrictSys(GHEBaseTest):
     def test_hybrid_reference_properties_follow_topology_not_ghe_key_order(self):
         source_path = self.demos_path / "Network_Sizing_3GHE_6HP_BUPCRS.json"
         original_data = load_input_file(source_path)
-        original_data["ground_heat_exchanger"]["ghe_1"]["flow_rate"] = 0.4
-        original_data["ground_heat_exchanger"]["ghe_2"]["flow_rate"] = 0.8
+        original_data["ground_heat_exchangers"]["ghe_1"]["design_volumetric_flow_rate_per_borehole_l_per_s"] = 0.4
+        original_data["ground_heat_exchangers"]["ghe_2"]["design_volumetric_flow_rate_per_borehole_l_per_s"] = 0.8
         reordered_data = json.loads(json.dumps(original_data))
-        reordered_data["ground_heat_exchanger"] = dict(reversed(list(reordered_data["ground_heat_exchanger"].items())))
+        reordered_data["ground_heat_exchangers"] = dict(
+            reversed(list(reordered_data["ground_heat_exchangers"].items()))
+        )
 
         original_processor = ProcessLoads()
         reordered_processor = ProcessLoads()
@@ -582,8 +603,8 @@ class TestDistrictSys(GHEBaseTest):
 
         assert original_processor.mass_flow_rate == pytest.approx(0.4)
         assert reordered_processor.mass_flow_rate == pytest.approx(0.4)
-        assert original_processor.soil.ugt == pytest.approx(original_data["soil"]["undisturbed_temp"])
-        assert reordered_processor.soil.ugt == pytest.approx(original_data["soil"]["undisturbed_temp"])
+        assert original_processor.soil.ugt == pytest.approx(original_data["soil"]["undisturbed_ground_temperature_c"])
+        assert reordered_processor.soil.ugt == pytest.approx(original_data["soil"]["undisturbed_ground_temperature_c"])
 
     def test_hybrid_reference_preserves_fluid_temperature_and_concentration(self):
         data = load_input_file(self.demos_path / "Network_Sizing_3GHE_6HP_BUPCRS.json")
@@ -591,7 +612,7 @@ class TestDistrictSys(GHEBaseTest):
         processor = ProcessLoads()
         processor.read_data_from_json_file(data)
 
-        assert processor.fluid.temperature == pytest.approx(data["fluid"]["temperature"])
+        assert processor.fluid.temperature == pytest.approx(data["fluid"]["property_evaluation_temperature_c"])
         assert processor.fluid.concentration_percent == pytest.approx(data["fluid"]["concentration_percent"])
 
     def test_hybrid_reference_preserves_pipe_arrangement_and_converts_borehole_flow(self):
@@ -613,10 +634,10 @@ class TestDistrictSys(GHEBaseTest):
             with self.subTest(pipe_demo=pipe_demo):
                 data = load_input_file(self.demos_path / "Network_Sizing_3GHE_6HP_BUPCRS.json")
                 pipe_source = load_input_file(self.demos_path / pipe_demo)
-                pipe_data = next(iter(pipe_source["ground_heat_exchanger"].values()))["pipe"]
-                reference_ghe = data["ground_heat_exchanger"]["ghe_1"]
+                pipe_data = next(iter(pipe_source["ground_heat_exchangers"].values()))["pipe"]
+                reference_ghe = data["ground_heat_exchangers"]["ghe_1"]
                 reference_ghe["pipe"] = pipe_data
-                reference_ghe["flow_rate"] = 0.8
+                reference_ghe["design_volumetric_flow_rate_per_borehole_l_per_s"] = 0.8
                 captured = {}
 
                 def fake_get_bhe_object(bhe_type, mass_flow_borehole, *_args):
@@ -700,12 +721,12 @@ class TestDistrictSys(GHEBaseTest):
         f_path_json = self.demos_path / "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json"
         data = json.loads(f_path_json.read_text())
         data["simulation_control"]["constant_cop"] = False
-        heat_pump_name = next(iter(data["heat_pump"]))
-        for building_data in data["building"].values():
+        heat_pump_name = next(iter(data["heat_pumps"]))
+        for building_data in data["buildings"].values():
             for load_data in building_data.values():
                 if isinstance(load_data, dict) and "file_path" in load_data:
                     load_data["file_path"] = str((f_path_json.parent / load_data["file_path"]).resolve())
-                    load_data["heat_pump_name"] = heat_pump_name
+                    load_data["heat_pump_id"] = heat_pump_name
 
         with TemporaryDirectory() as tmp_dir:
             two_pipe_path = Path(tmp_dir) / "two_pipe_non_constant_cop.json"
@@ -801,8 +822,8 @@ class TestDistrictSys(GHEBaseTest):
     def test_simulation_only_initializes_output_bookkeeping(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
         data = json.loads(f_path_json.read_text())
-        data["simulation_control"]["search_method"] = "SIMULATION_ONLY"
-        for building_data in data["building"].values():
+        data["simulation_control"]["search_method"] = "simulation_only"
+        for building_data in data["buildings"].values():
             for load_data in building_data.values():
                 if isinstance(load_data, dict) and "file_path" in load_data:
                     load_data["file_path"] = str((f_path_json.parent / load_data["file_path"]).resolve())
@@ -822,7 +843,7 @@ class TestDistrictSys(GHEBaseTest):
         data = json.loads(f_path_json.read_text())
         data["simulation_control"]["fixed_loads"] = True
         data["simulation_control"]["constant_cop"] = True
-        for building_data in data["building"].values():
+        for building_data in data["buildings"].values():
             for load_data in building_data.values():
                 if isinstance(load_data, dict) and "file_path" in load_data:
                     load_data["file_path"] = str((f_path_json.parent / load_data["file_path"]).resolve())
@@ -868,7 +889,7 @@ class TestDistrictSys(GHEBaseTest):
 
     def test_coupled_horizontal_pipe_requires_complete_coupling_fields(self):
         f_path_json = self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json"
-        for missing_field in ("coupled_to", "spacing"):
+        for missing_field in ("coupled_to_id", "spacing_m"):
             with self.subTest(missing_field=missing_field):
                 data = load_input_file(f_path_json)
                 del data["horizontal_piping"]["horiz_supply_line"][missing_field]

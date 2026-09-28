@@ -4,16 +4,16 @@ import { createCompactNetwork, rebuildSegments, updateCompactStations } from "./
 import type { InputDocument } from "./types";
 
 const document: InputDocument = {
-  version: 4,
-  building: { building_1: {} },
-  ground_heat_exchanger: { ghe_1: {} },
+  schema_version: 3,
+  buildings: { building_1: {} },
+  ground_heat_exchangers: { ghe_1: {} },
 };
 
 describe("compact network editing", () => {
   it("builds a closed one-pipe ring", () => {
     const network = createCompactNetwork(document, "one_pipe");
 
-    expect(network.stations).toEqual([{ component: "building_1" }, { component: "ghe_1" }]);
+    expect(network.stations).toEqual([{ component_id: "building_1" }, { component_id: "ghe_1" }]);
     expect(network.segments).toHaveLength(2);
     expect(network.component_pumps).toEqual({ building_1: "pump_building_1" });
     expect(network).not.toHaveProperty("passive_components");
@@ -23,12 +23,26 @@ describe("compact network editing", () => {
   it("preserves segment properties when station order is unchanged", () => {
     const network = rebuildSegments({
       type: "two_pipe",
-      stations: [{ component: "building_1" }, { component: "ghe_1" }],
-      segments: [{ id: "supply", from: "building_1", to: "ghe_1", length: 44, diameter: 0.08 }],
+      stations: [{ component_id: "building_1" }, { component_id: "ghe_1" }],
+      segments: [
+        {
+          id: "supply",
+          from_component_id: "building_1",
+          to_component_id: "ghe_1",
+          length_m: 44,
+          diameter_m: 0.08,
+        },
+      ],
     });
 
     expect(network.segments).toEqual([
-      { id: "supply", from: "building_1", to: "ghe_1", length: 44, diameter: 0.08 },
+      {
+        id: "supply",
+        from_component_id: "building_1",
+        to_component_id: "ghe_1",
+        length_m: 44,
+        diameter_m: 0.08,
+      },
     ]);
   });
 
@@ -37,6 +51,6 @@ describe("compact network editing", () => {
     const updated = updateCompactStations(withNetwork, ["ghe_1"]);
 
     expect(updated.network?.component_pumps).toEqual({});
-    expect(updated.network?.stations).toEqual([{ component: "ghe_1" }]);
+    expect(updated.network?.stations).toEqual([{ component_id: "ghe_1" }]);
   });
 });

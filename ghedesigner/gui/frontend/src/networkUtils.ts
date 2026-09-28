@@ -4,27 +4,27 @@ import { deepClone, isJsonObject } from "./types";
 export type CompactNetworkType = "one_pipe" | "two_pipe";
 
 const componentIds = (document: InputDocument) => [
-  ...Object.keys(document.building ?? {}),
-  ...Object.keys(document.ground_heat_exchanger ?? {}),
-  ...Object.keys(document.source_sink_heat_exchanger ?? {}),
+  ...Object.keys(document.buildings ?? {}),
+  ...Object.keys(document.ground_heat_exchangers ?? {}),
+  ...Object.keys(document.source_sink_heat_exchangers ?? {}),
 ];
 
 export const componentType = (document: InputDocument, id: string) => {
-  if (id in (document.building ?? {})) return "building";
-  if (id in (document.ground_heat_exchanger ?? {})) return "ground_heat_exchanger";
-  if (id in (document.source_sink_heat_exchanger ?? {})) return "source_sink_heat_exchanger";
+  if (id in (document.buildings ?? {})) return "building";
+  if (id in (document.ground_heat_exchangers ?? {})) return "ground_heat_exchanger";
+  if (id in (document.source_sink_heat_exchangers ?? {})) return "source_sink_heat_exchanger";
   return null;
 };
 
 const pumpDefinition = (): JsonObject => ({
-  wire_to_water_efficiency: 0.7,
+  wire_to_water_efficiency_fraction: 0.7,
 });
 
 export const rebuildSegments = (network: JsonObject): JsonObject => {
   const stations = Array.isArray(network.stations)
     ? network.stations
         .filter(isJsonObject)
-        .map((station) => station.component)
+        .map((station) => station.component_id)
         .filter((id): id is string => typeof id === "string")
     : [];
   const type = network.type === "one_pipe" ? "one_pipe" : "two_pipe";
@@ -42,22 +42,24 @@ export const rebuildSegments = (network: JsonObject): JsonObject => {
   for (let index = 0; index < count; index += 1) {
     const from = stations[index];
     const to = stations[(index + 1) % stations.length];
-    const previous = existing.find((segment) => segment.from === from && segment.to === to);
+    const previous = existing.find(
+      (segment) => segment.from_component_id === from && segment.to_component_id === to,
+    );
     const id = typeof previous?.id === "string" && !usedIds.has(previous.id) ? previous.id : nextId();
     usedIds.add(id);
     segments.push({
       ...(previous ?? {}),
       id,
-      from,
-      to,
-      length: typeof previous?.length === "number" ? previous.length : 10,
+      from_component_id: from,
+      to_component_id: to,
+      length_m: typeof previous?.length_m === "number" ? previous.length_m : 10,
     });
   }
   return { ...network, segments };
 };
 
 export const createCompactNetwork = (document: InputDocument, type: CompactNetworkType): JsonObject => {
-  const stations = componentIds(document).map((component) => ({ component }));
+  const stations = componentIds(document).map((component_id) => ({ component_id }));
   const pumps: JsonObject = {};
   const componentPumps: JsonObject = {};
 
@@ -72,7 +74,7 @@ export const createCompactNetwork = (document: InputDocument, type: CompactNetwo
   const network: JsonObject = {
     type,
     stations,
-    pipe_defaults: { diameter: 0.1, roughness: 0.000001 },
+    distribution_pipe_defaults: { diameter_m: 0.1, surface_roughness_m: 0.000001 },
     segments: [],
     pumps,
     component_pumps: componentPumps,
@@ -82,11 +84,11 @@ export const createCompactNetwork = (document: InputDocument, type: CompactNetwo
     pumps[pumpId] = pumpDefinition();
     network.mass_flow_control = {
       distribution_flow_multiplier: 1.5,
-      minimum_distribution_mass_flow: 0.1,
+      minimum_distribution_mass_flow_rate_kg_per_s: 0.1,
     };
     network.distribution_pump = {
       type: "pump",
-      pump: pumpId,
+      pump_id: pumpId,
     };
   }
   return rebuildSegments(network);
@@ -98,7 +100,7 @@ export const updateCompactStations = (
 ): InputDocument => {
   const next = deepClone(document);
   const network = isJsonObject(next.network) ? next.network : {};
-  network.stations = stationIds.map((component) => ({ component }));
+  network.stations = stationIds.map((component_id) => ({ component_id }));
 
   const pumps = isJsonObject(network.pumps) ? network.pumps : {};
   const componentPumps = isJsonObject(network.component_pumps) ? network.component_pumps : {};

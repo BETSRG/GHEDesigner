@@ -43,8 +43,11 @@ STUDY_INPUT_HEADERS = {
 }
 
 PARAMETER_INPUT_KEYS = {
-    ParametricStudyParameters.MAX_EFT_MODIFICATION: "max_eft_modifications",
-    ParametricStudyParameters.MIN_EFT_MODIFICATION: "min_eft_modifications",
+    ParametricStudyParameters.MAX_EFT_MODIFICATION: "maximum_entering_fluid_temperature_modifications_c",
+    ParametricStudyParameters.MIN_EFT_MODIFICATION: "minimum_entering_fluid_temperature_modifications_c",
+    ParametricStudyParameters.GROUT_CONDUCTIVITIES: "grout_thermal_conductivities_w_per_m_k",
+    ParametricStudyParameters.PIPE_SIZES: "pipe_inner_outer_diameters_m",
+    ParametricStudyParameters.BOREHOLE_HEIGHTS: "borehole_active_lengths_m",
 }
 
 
@@ -70,19 +73,27 @@ class SystemParametricStudySupervisor:
         self.initial_dict = json_data
 
         # Get original system data
-        building_keys = list(json_data["building"])
+        building_keys = list(json_data["buildings"])
         parametric_dict = self.initial_dict.pop("parametric_study")
         self.system_dict = deepcopy(json_data)
-        ghe_keys = parametric_dict.get("ghes_to_modify", list(json_data["ground_heat_exchanger"]))
-        original_pipe_inner_diameter = json_data["ground_heat_exchanger"][ghe_keys[0]]["pipe"]["inner_diameter"]
-        original_pipe_outer_diameter = json_data["ground_heat_exchanger"][ghe_keys[0]]["pipe"]["outer_diameter"]
-        original_grout_conductivity = json_data["ground_heat_exchanger"][ghe_keys[0]]["grout"]["conductivity"]
-        self.original_min_efts = [json_data["building"][building_key]["min_eft"] for building_key in building_keys]
-        self.original_max_efts = [json_data["building"][building_key]["max_eft"] for building_key in building_keys]
+        ghe_keys = parametric_dict.get("ground_heat_exchanger_ids_to_modify", list(json_data["ground_heat_exchangers"]))
+        original_pipe_inner_diameter = json_data["ground_heat_exchangers"][ghe_keys[0]]["pipe"]["inner_diameter_m"]
+        original_pipe_outer_diameter = json_data["ground_heat_exchangers"][ghe_keys[0]]["pipe"]["outer_diameter_m"]
+        original_grout_conductivity = json_data["ground_heat_exchangers"][ghe_keys[0]]["grout"][
+            "thermal_conductivity_w_per_m_k"
+        ]
+        self.original_min_efts = [
+            json_data["buildings"][building_key]["minimum_entering_fluid_temperature_c"]
+            for building_key in building_keys
+        ]
+        self.original_max_efts = [
+            json_data["buildings"][building_key]["maximum_entering_fluid_temperature_c"]
+            for building_key in building_keys
+        ]
         original_borehole_height = (
-            json_data["ground_heat_exchanger"][ghe_keys[0]]["pre_designed"]["H"]
-            if "pre_designed" in json_data["ground_heat_exchanger"][ghe_keys[0]]
-            else json_data["ground_heat_exchanger"][ghe_keys[0]]["design"]["max_height"]
+            json_data["ground_heat_exchangers"][ghe_keys[0]]["fixed_borefield"]["active_borehole_length_m"]
+            if "fixed_borefield" in json_data["ground_heat_exchangers"][ghe_keys[0]]
+            else json_data["ground_heat_exchangers"][ghe_keys[0]]["design"]["maximum_active_borehole_length_m"]
         )
         self.ghe_keys = ghe_keys
         self.building_keys = building_keys
@@ -141,7 +152,7 @@ class SystemParametricStudySupervisor:
         self.system = GHEHPSystem(Path(""), initialization_dict=self.system_dict)
         self.study_input_values: list[list[str]] = []
         self.study_output_values: list[list[str]] = []
-        self.component_ids = {station["component"] for station in self.initial_dict["network"]["stations"]}
+        self.component_ids = {station["component_id"] for station in self.initial_dict["network"]["stations"]}
         self.minimum_total_drilling = float("inf")
         self.minimum_td_system = self.system
 
@@ -150,7 +161,7 @@ class SystemParametricStudySupervisor:
         for parameter, p_entry in self.parameter_ranges.items():
             if parameter == ParametricStudyParameters.UPDATED_TOPOLOGY:
                 parameter_arrays[parameter] = p_entry
-            elif parameter == "pipe_sizes":
+            elif parameter == ParametricStudyParameters.PIPE_SIZES:
                 p_range = p_entry["inner_diameter"]["values"]
                 is_range = p_entry["inner_diameter"]["parameter_range"]
                 inner_diameter_list = np.linspace(*p_range) if is_range else p_range
@@ -234,37 +245,37 @@ class SystemParametricStudySupervisor:
             match parameter:
                 case ParametricStudyParameters.MIN_EFT_MODIFICATION:
                     for building_key in self.building_keys:
-                        design_dict["building"][building_key]["min_eft"] = (
-                            initial_dict["building"][building_key]["min_eft"]
+                        design_dict["buildings"][building_key]["minimum_entering_fluid_temperature_c"] = (
+                            initial_dict["buildings"][building_key]["minimum_entering_fluid_temperature_c"]
                             + design_parameters[ParametricStudyParameters.MIN_EFT_MODIFICATION]
                         )
                 case ParametricStudyParameters.MAX_EFT_MODIFICATION:
                     for building_key in self.building_keys:
-                        design_dict["building"][building_key]["max_eft"] = (
-                            initial_dict["building"][building_key]["max_eft"]
+                        design_dict["buildings"][building_key]["maximum_entering_fluid_temperature_c"] = (
+                            initial_dict["buildings"][building_key]["maximum_entering_fluid_temperature_c"]
                             + design_parameters[ParametricStudyParameters.MAX_EFT_MODIFICATION]
                         )
                 case ParametricStudyParameters.GROUT_CONDUCTIVITIES:
                     for ghe_key in self.ghe_keys:
-                        design_dict["ground_heat_exchanger"][ghe_key]["grout"]["conductivity"] = design_parameters[
-                            ParametricStudyParameters.GROUT_CONDUCTIVITIES
-                        ]
+                        design_dict["ground_heat_exchangers"][ghe_key]["grout"]["thermal_conductivity_w_per_m_k"] = (
+                            design_parameters[ParametricStudyParameters.GROUT_CONDUCTIVITIES]
+                        )
                 case ParametricStudyParameters.PIPE_SIZES:
                     for ghe_key in self.ghe_keys:
-                        design_dict["ground_heat_exchanger"][ghe_key]["pipe"]["inner_diameter"] = design_parameters[
+                        design_dict["ground_heat_exchangers"][ghe_key]["pipe"]["inner_diameter_m"] = design_parameters[
                             ParametricStudyParameters.PIPE_SIZES
                         ][0]
-                        design_dict["ground_heat_exchanger"][ghe_key]["pipe"]["outer_diameter"] = design_parameters[
+                        design_dict["ground_heat_exchangers"][ghe_key]["pipe"]["outer_diameter_m"] = design_parameters[
                             ParametricStudyParameters.PIPE_SIZES
                         ][1]
                 case ParametricStudyParameters.BOREHOLE_HEIGHTS:
                     for ghe_key in self.ghe_keys:
-                        ghe_data = design_dict["ground_heat_exchanger"][ghe_key]
+                        ghe_data = design_dict["ground_heat_exchangers"][ghe_key]
                         new_height = design_parameters[ParametricStudyParameters.BOREHOLE_HEIGHTS]
-                        if "pre_designed" in ghe_data:
-                            ghe_data["pre_designed"]["H"] = new_height
+                        if "fixed_borefield" in ghe_data:
+                            ghe_data["fixed_borefield"]["active_borehole_length_m"] = new_height
                         else:
-                            ghe_data["design"]["max_height"] = new_height
+                            ghe_data["design"]["maximum_active_borehole_length_m"] = new_height
                 case ParametricStudyParameters.UPDATED_TOPOLOGY:
                     topology_updates = design_parameters[ParametricStudyParameters.UPDATED_TOPOLOGY]
                     if len(topology_updates) == 0:
@@ -288,7 +299,7 @@ class SystemParametricStudySupervisor:
 
                     moved_component_set = set(moved_components)
                     network = design_dict["network"]
-                    original_order = [station["component"] for station in network["stations"]]
+                    original_order = [station["component_id"] for station in network["stations"]]
                     updated_order = []
                     emitted: set[str] = set()
                     active_path: set[str] = set()
@@ -314,15 +325,15 @@ class SystemParametricStudySupervisor:
                     if len(emitted) != len(original_order):
                         raise ValueError("The updated topology contains a cycle or an unreachable component.")
 
-                    network["stations"] = [{"component": component_name} for component_name in updated_order]
+                    network["stations"] = [{"component_id": component_name} for component_name in updated_order]
                     segment_count = len(updated_order) if network["type"] == "one_pipe" else len(updated_order) - 1
                     if len(network["segments"]) != segment_count:
                         raise ValueError(
                             "Updated topology requires one ordered network segment between each pair of stations."
                         )
                     for index, segment in enumerate(network["segments"]):
-                        segment["from"] = updated_order[index]
-                        segment["to"] = updated_order[(index + 1) % len(updated_order)]
+                        segment["from_component_id"] = updated_order[index]
+                        segment["to_component_id"] = updated_order[(index + 1) % len(updated_order)]
                 case _:
                     raise ValueError("Invalid keyword given to 'prepare_design_dict'.")
         self.system_dict = design_dict

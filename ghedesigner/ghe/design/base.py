@@ -49,7 +49,7 @@ class DesignBase:
         if load_years is None:
             load_years = [2019]
         self.load_years = load_years
-        self.v_flow = v_flow  # volumetric flow rate, m3/s
+        self.v_flow = v_flow  # volumetric flow rate per borehole, L/s
         self.borehole = borehole
         self.fluid = fluid  # a fluid object
         self.pipe = pipe
@@ -85,4 +85,4 @@ class DesignBase:
         pass
 
     def to_input(self) -> dict:
-        return {"flow_rate": self.v_flow}
+        return {"design_volumetric_flow_rate_per_borehole_l_per_s": self.v_flow}

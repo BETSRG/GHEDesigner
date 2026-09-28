@@ -15,7 +15,7 @@ const stationIds = (network: JsonObject) =>
   Array.isArray(network.stations)
     ? network.stations
         .filter(isJsonObject)
-        .map((station) => station.component)
+        .map((station) => station.component_id)
         .filter((id): id is string => typeof id === "string")
     : [];
 
@@ -70,14 +70,15 @@ export function CompactNetworkEditor({ document, onChange }: CompactNetworkEdito
                 min="0"
                 step="0.001"
                 value={
-                  isJsonObject(network.pipe_defaults) && typeof network.pipe_defaults.diameter === "number"
-                    ? network.pipe_defaults.diameter
+                  isJsonObject(network.distribution_pipe_defaults) &&
+                  typeof network.distribution_pipe_defaults.diameter_m === "number"
+                    ? network.distribution_pipe_defaults.diameter_m
                     : 0.1
                 }
                 onChange={(event) =>
-                  setNetworkField("pipe_defaults", {
-                    ...(isJsonObject(network.pipe_defaults) ? network.pipe_defaults : {}),
-                    diameter: Number(event.target.value),
+                  setNetworkField("distribution_pipe_defaults", {
+                    ...(isJsonObject(network.distribution_pipe_defaults) ? network.distribution_pipe_defaults : {}),
+                    diameter_m: Number(event.target.value),
                   })
                 }
               />
@@ -107,14 +108,14 @@ export function CompactNetworkEditor({ document, onChange }: CompactNetworkEdito
                   min="0"
                   step="0.01"
                   value={
-                    typeof massControl.minimum_distribution_mass_flow === "number"
-                      ? massControl.minimum_distribution_mass_flow
+                    typeof massControl.minimum_distribution_mass_flow_rate_kg_per_s === "number"
+                      ? massControl.minimum_distribution_mass_flow_rate_kg_per_s
                       : 0.1
                   }
                   onChange={(event) =>
                     setNetworkField("mass_flow_control", {
                       ...massControl,
-                      minimum_distribution_mass_flow: Number(event.target.value),
+                      minimum_distribution_mass_flow_rate_kg_per_s: Number(event.target.value),
                     })
                   }
                 />
@@ -195,7 +196,7 @@ export function CompactNetworkEditor({ document, onChange }: CompactNetworkEdito
             {segments.map((segment, index) => (
               <div className="segment-row" key={String(segment.id)}>
                 <div>
-                  <strong>{String(segment.from)} → {String(segment.to)}</strong>
+                  <strong>{String(segment.from_component_id)} → {String(segment.to_component_id)}</strong>
                   <small>{String(segment.id)}</small>
                 </div>
                 <label>
@@ -204,8 +205,8 @@ export function CompactNetworkEditor({ document, onChange }: CompactNetworkEdito
                     type="number"
                     min="0"
                     step="0.1"
-                    value={typeof segment.length === "number" ? segment.length : 10}
-                    onChange={(event) => replaceSegment(index, { ...segment, length: Number(event.target.value) })}
+                    value={typeof segment.length_m === "number" ? segment.length_m : 10}
+                    onChange={(event) => replaceSegment(index, { ...segment, length_m: Number(event.target.value) })}
                   />
                 </label>
                 <label>
@@ -215,11 +216,11 @@ export function CompactNetworkEditor({ document, onChange }: CompactNetworkEdito
                     min="0"
                     step="0.001"
                     placeholder="Use default"
-                    value={typeof segment.diameter === "number" ? segment.diameter : ""}
+                    value={typeof segment.diameter_m === "number" ? segment.diameter_m : ""}
                     onChange={(event) => {
                       const copy = { ...segment };
-                      if (event.target.value === "") delete copy.diameter;
-                      else copy.diameter = Number(event.target.value);
+                      if (event.target.value === "") delete copy.diameter_m;
+                      else copy.diameter_m = Number(event.target.value);
                       replaceSegment(index, copy);
                     }}
                   />

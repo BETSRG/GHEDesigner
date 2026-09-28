@@ -1,40 +1,44 @@
 {
-  "version": 4,
+  "schema_version": 3,
   "fluid": {
-    "fluid_name": "WATER",
     "concentration_percent": 0,
-    "temperature": 20
+    "fluid_type": "water",
+    "property_evaluation_temperature_c": 20
   },
   "soil": {
-    "conductivity": 2,
-    "rho_cp": 2343493,
-    "undisturbed_temp": 18.3
+    "thermal_conductivity_w_per_m_k": 2,
+    "volumetric_heat_capacity_j_per_m3_k": 2343493,
+    "undisturbed_ground_temperature_c": 18.3
   },
-  "ground_heat_exchanger": {
+  "ground_heat_exchangers": {
     "ghe1": {
-      "flow_rate": 0.5,
       "grout": {
-        "conductivity": 1,
-        "rho_cp": 3901000
+        "thermal_conductivity_w_per_m_k": 1,
+        "volumetric_heat_capacity_j_per_m3_k": 3901000
       },
       "pipe": {
-        "inner_diameter": 0.03404,
-        "outer_diameter": 0.04216,
-        "shank_spacing": 0.01856,
-        "roughness": 1e-6,
-        "conductivity": 0.4,
-        "rho_cp": 1542000,
-        "arrangement": "SINGLEUTUBE"
+        "arrangement": "single_u_tube",
+        "thermal_conductivity_w_per_m_k": 0.4,
+        "volumetric_heat_capacity_j_per_m3_k": 1542000,
+        "inner_diameter_m": 0.03404,
+        "outer_diameter_m": 0.04216,
+        "shank_spacing_m": 0.01856,
+        "surface_roughness_m": 1e-6
       },
       "borehole": {
-        "buried_depth": 2,
-        "diameter": 0.14
+        "top_depth_below_grade_m": 2,
+        "diameter_m": 0.14
       },
-      "pre_designed": {
-        "arrangement": "MANUAL",
-        "H": 150,
-        "x": [0],
-        "y": [0]
+      "design_volumetric_flow_rate_per_borehole_l_per_s": 0.5,
+      "fixed_borefield": {
+        "arrangement": "manual",
+        "active_borehole_length_m": 150,
+        "borehole_coordinates_m": [
+          {
+            "x": 0.0,
+            "y": 0.0
+          }
+        ]
       }
     }
   }

@@ -35,20 +35,20 @@ def run(input_file_path: Path, output_directory: Path) -> int:
 
     # Read in all the inputs into small dicts
     # it is possible to define multiple fluids, GHEs, and boreholes in the inputs, I'm just taking the first for now
-    input_file_version: int = full_inputs["version"]
+    input_file_version: int = full_inputs["schema_version"]
     if input_file_version != INPUT_VERSION:
         print(f"Bad input file version; supported version is: {INPUT_VERSION}")
         return 1
 
     # Pre-designed GHEs only need a g-function calculation, so they do not require a load source.
     ghes_requiring_loads = [
-        ghe_dict for ghe_dict in full_inputs["ground_heat_exchanger"].values() if "pre_designed" not in ghe_dict
+        ghe_dict for ghe_dict in full_inputs["ground_heat_exchangers"].values() if "fixed_borefield" not in ghe_dict
     ]
     if ghes_requiring_loads:
         ghe_load_flags = ["loads" in ghe_dict for ghe_dict in ghes_requiring_loads]
         all_ghe_has_loads = all(ghe_load_flags)
         no_ghe_has_loads = not any(ghe_load_flags)
-        building_input = bool(full_inputs.get("building"))
+        building_input = bool(full_inputs.get("buildings"))
         valid_load_source = all_ghe_has_loads ^ (building_input and no_ghe_has_loads)
         if not valid_load_source:
             print("Bad load specified, need exactly one of: loads in each unsized GHE, or building object")
@@ -58,21 +58,21 @@ def run(input_file_path: Path, output_directory: Path) -> int:
     network_data = full_inputs.get("network")
     has_network = network_data is not None
     if network_data is None:
-        ghe_names = list(full_inputs["ground_heat_exchanger"])
-        building_names = list(full_inputs.get("building", {}))
+        ghe_names = list(full_inputs["ground_heat_exchangers"])
+        building_names = list(full_inputs.get("buildings", {}))
     else:
-        station_ids = [station["component"] for station in network_data["stations"]]
+        station_ids = [station["component_id"] for station in network_data["stations"]]
         ghe_names = [
-            component_id for component_id in station_ids if component_id in full_inputs["ground_heat_exchanger"]
+            component_id for component_id in station_ids if component_id in full_inputs["ground_heat_exchangers"]
         ]
         building_names = [
-            component_id for component_id in station_ids if component_id in full_inputs.get("building", {})
+            component_id for component_id in station_ids if component_id in full_inputs.get("buildings", {})
         ]
     # do actions depending on what is provided in input
     if len(ghe_names) >= 1 and len(building_names) == 0:
         # we are just doing a GHE design/sizing/simulation alone
         for ghe_name in ghe_names:
-            ghe_dict = full_inputs["ground_heat_exchanger"][ghe_name]
+            ghe_dict = full_inputs["ground_heat_exchangers"][ghe_name]
 
             if "loads" in ghe_dict and "file_path" in ghe_dict["loads"]:
                 if "column_name" in ghe_dict["loads"]:
@@ -89,7 +89,7 @@ def run(input_file_path: Path, output_directory: Path) -> int:
                 full_inputs["fluid"],
                 soil_inputs=full_inputs["soil"],
             )
-            if "pre_designed" in ghe_dict:
+            if "fixed_borefield" in ghe_dict:
                 log_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
                 results = OutputManager("GHEDesigner Run from CLI", "Just Calculate G", "", "", object_name=ghe_name)
                 results.just_write_g_function(output_directory, log_time, g_values, g_bhw_values, ghe_name)
@@ -105,17 +105,17 @@ def run(input_file_path: Path, output_directory: Path) -> int:
                 results.write_all_output_files(output_directory=output_directory, file_suffix="")
     elif len(ghe_names) == 1 and len(building_names) == 1 and not has_network:
         # we have a GHE and a building, grab both
-        ghe_dict = full_inputs["ground_heat_exchanger"][ghe_names[0]]
+        ghe_dict = full_inputs["ground_heat_exchangers"][ghe_names[0]]
         ghe_dict["name"] = ghe_names[0]
         ghe = GroundHeatExchanger.init_from_dictionary(
             ghe_dict,
             full_inputs["fluid"],
             soil_inputs=full_inputs["soil"],
         )
-        single_building_data = full_inputs["building"][building_names[0]]
+        single_building_data = full_inputs["buildings"][building_names[0]]
         heat_pump = HeatPumpFixedCOP(building_names[0], single_building_data)
         ghe_loads = heat_pump.get_ground_loads()
-        if "pre_designed" in ghe_dict:
+        if "fixed_borefield" in ghe_dict:
             log_time, g_values, g_bhw_values = ghe.get_g_function(ghe_dict)
             print(g_values, g_bhw_values)
         else:

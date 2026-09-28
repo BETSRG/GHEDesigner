@@ -254,7 +254,7 @@ class IsolatedHorizontalPipe(BaseSimComp):
 
         # Initialize load aggregation if specified
         self.load_method = load_method
-        if self.load_method == "hourlyloadagg":
+        if self.load_method == "load_aggregation_hourly":
             total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
             self.aggregators = [
                 DynamicAggregator(
@@ -294,7 +294,7 @@ class IsolatedHorizontalPipe(BaseSimComp):
         return self.ugt_avg - term1 - term2
 
     def compute_history_terms(self, idx_timestep: int):
-        if getattr(self, "load_method", "hourly") == "hourlyloadagg":
+        if getattr(self, "load_method", "hourly") == "load_aggregation_hourly":
             if idx_timestep > IDX_COMPARISON_OFFSET_1:
                 dt_sec = (self.time_array[idx_timestep - 1] - self.time_array[idx_timestep - 2]) * SEC_IN_HR
                 prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
@@ -514,7 +514,7 @@ class CoupledHorizontalPipe(BaseSimComp):
         self.y_cross = np.zeros(num_timesteps, dtype=float)
 
         self.load_method = load_method
-        if self.load_method == "hourlyloadagg":
+        if self.load_method == "load_aggregation_hourly":
             total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
             self.aggregators = [
                 DynamicAggregator(
@@ -560,7 +560,7 @@ class CoupledHorizontalPipe(BaseSimComp):
         if self.coupled_pipe is None:
             raise ValueError("History terms cannot be computed without a defined coupled pipe.")
 
-        if getattr(self, "load_method", "hourly") == "hourlyloadagg":
+        if getattr(self, "load_method", "hourly") == "load_aggregation_hourly":
             if idx_timestep > IDX_COMPARISON_OFFSET_1:
                 dt_sec = (self.time_array[idx_timestep - 1] - self.time_array[idx_timestep - 2]) * SEC_IN_HR
                 prev_time_sec = self.time_array[idx_timestep - 1] * SEC_IN_HR
@@ -749,11 +749,11 @@ class SourceSinkHeatExchanger(BaseSimComp):
         self.cp: float | None = None
         self.num_timesteps = num_timesteps
 
-        self.effectiveness = hx_data["effectiveness"]
-        self.source_temp = hx_data["source_temperature"]
-        self.source_flow_rate = hx_data["source_flow_rate"]
-        self.cut_in_temp = hx_data["cut_in_temperature"]
-        self.cut_out_temp = hx_data["cut_out_temperature"]
+        self.effectiveness = hx_data["effectiveness_fraction"]
+        self.source_temp = hx_data["source_temperature_c"]
+        self.source_flow_rate = hx_data["source_mass_flow_rate_kg_per_s"]
+        self.cut_in_temp = hx_data["cut_in_temperature_c"]
+        self.cut_out_temp = hx_data["cut_out_temperature_c"]
         self.t_in = np.full(self.num_timesteps, tg, dtype=float)
         self.t_out = np.full(self.num_timesteps, tg, dtype=float)
         self.control_t_in = np.full(self.num_timesteps, tg, dtype=float)
@@ -877,9 +877,9 @@ class GHX(BaseSimComp):
         self.ghe_manager = GroundHeatExchanger.init_from_dictionary(
             ghe_data,
             {
-                "fluid_name": fluid.name,
+                "fluid_type": fluid.name,
                 "concentration_percent": fluid.concentration_percent,
-                "temperature": fluid.temperature,
+                "property_evaluation_temperature_c": fluid.temperature,
             },
             soil_inputs=soil_data,
         )
@@ -922,7 +922,7 @@ class GHX(BaseSimComp):
 
         self.load_method = load_method
 
-        if load_method == "hourlyloadagg":
+        if load_method == "load_aggregation_hourly":
             total_sim_time_sec = (self.time_array[-1] - self.time_array[0]) * SEC_IN_HR
             self.aggregator = DynamicAggregator(
                 total_sim_time_sec,
@@ -947,13 +947,13 @@ class GHX(BaseSimComp):
         self.pump_mass_flow = np.zeros(num_timesteps, dtype=float)
         self.local_recirculation_flow = np.zeros(num_timesteps, dtype=float)
         self.P_ghe_cp = np.zeros(num_timesteps, dtype=float)
-        self.flow_rate_per_borehole = float(ghe_data["flow_rate"])
+        self.flow_rate_per_borehole = float(ghe_data["design_volumetric_flow_rate_per_borehole_l_per_s"])
 
         pump_data = ghe_data.get("circulation_pump")
         self.circulation_pump = pump_data
         if pump_data is not None:
-            self.pump_reference_pressure_drop = float(pump_data["reference_pressure_drop"])
-            self.pump_efficiency = float(pump_data["wire_to_water_efficiency"])
+            self.pump_reference_pressure_drop = float(pump_data["reference_pressure_drop_pa"])
+            self.pump_efficiency = float(pump_data["wire_to_water_efficiency_fraction"])
             self.pump_pressure_drop_multiplier = float(pump_data["pressure_drop_multiplier"])
             self.minimum_flow_fraction = float(pump_data.get("minimum_flow_fraction", 0.05))
         else:
@@ -1085,7 +1085,7 @@ class GHX(BaseSimComp):
         self.step_gfunction_evals = self.g(step_dim_less_time)
         self.c_n = self.calc_cn_constant()
 
-        if self.load_method == "hourlyloadagg":
+        if self.load_method == "load_aggregation_hourly":
             self.aggregator.clear_history()
             lntts_agg = np.log(self.aggregator.response_ages / self.ts)
             self.g_agg = self.g(lntts_agg)
@@ -1114,7 +1114,7 @@ class GHX(BaseSimComp):
             raise IndexError("Timestep index error")
         # Compute contributions from all previous steps
 
-        if getattr(self, "load_method", "hourly") == "hourlyloadagg":
+        if getattr(self, "load_method", "hourly") == "load_aggregation_hourly":
             if idx_timestep > IDX_COMPARISON_OFFSET_1:
                 dt_sec = (self.time_array[idx_timestep - 1] - self.time_array[idx_timestep - 2]) * SEC_IN_HR
                 self.aggregator.shift_and_add(self.q_ghe[idx_timestep - 2], dt_sec, idx_timestep)
@@ -1313,32 +1313,32 @@ class Building(BaseSimComp):
         self.fluid = fluid
         self.loop_config = loop_config
         self.matrix_rows = 2 if loop_config == CentralLoopType.TWOPIPE else 1
-        self.heating_exists = bool("heating_load" in bldg_data)
-        self.cooling_exists = bool("cooling_load" in bldg_data)
+        self.heating_exists = bool("heating_load_source" in bldg_data)
+        self.cooling_exists = bool("cooling_load_source" in bldg_data)
         self.num_timesteps = num_timesteps
         self.sim_years = num_timesteps // HOURS_IN_YEAR
 
         self.htg_vals: np.ndarray = np.zeros(self.num_timesteps, dtype=float)
         self.clg_vals: np.ndarray = np.zeros(self.num_timesteps, dtype=float)
-        if "max_eft" in bldg_data and "min_eft" in bldg_data:
-            self.max_eft = bldg_data["max_eft"]
-            self.min_eft = bldg_data["min_eft"]
+        if "maximum_entering_fluid_temperature_c" in bldg_data and "minimum_entering_fluid_temperature_c" in bldg_data:
+            self.max_eft = bldg_data["maximum_entering_fluid_temperature_c"]
+            self.min_eft = bldg_data["minimum_entering_fluid_temperature_c"]
         else:
             self.max_eft = 0.0
             self.min_eft = 0.0
-        self.heating_cop_evaluation_temperature = bldg_data.get("heating_cop_evaluation_temperature")
-        self.cooling_cop_evaluation_temperature = bldg_data.get("cooling_cop_evaluation_temperature")
+        self.heating_cop_evaluation_temperature = bldg_data.get("heating_cop_evaluation_temperature_c")
+        self.cooling_cop_evaluation_temperature = bldg_data.get("cooling_cop_evaluation_temperature_c")
 
         self.heating_fixed_cop: float | None = None
         self.hp_htg: HPmodel
         self.heating_mode = 0
         if self.heating_exists:
-            if self.constant_cop and "heat_pump_cop" in bldg_data["heating_load"]:
-                self.heating_fixed_cop = bldg_data["heating_load"]["heat_pump_cop"]
+            if self.constant_cop and "heat_pump_cop" in bldg_data["heating_load_source"]:
+                self.heating_fixed_cop = bldg_data["heating_load_source"]["heat_pump_cop"]
                 self.heating_mode = 1
                 self.heating_cp_offset_reciprocal = None
             else:
-                hp_htg_name = bldg_data["heating_load"]["heat_pump_name"]
+                hp_htg_name = bldg_data["heating_load_source"]["heat_pump_id"]
                 hp_htg_data = hp_data[hp_htg_name]
                 self.hp_htg = HPmodel(hp_htg_name, hp_htg_data, tg)
                 self.heating_mode = 2
@@ -1362,12 +1362,12 @@ class Building(BaseSimComp):
         self.hp_clg: HPmodel
         self.cooling_mode = 0
         if self.cooling_exists:
-            if self.constant_cop and "heat_pump_cop" in bldg_data["cooling_load"]:
-                self.cooling_fixed_cop = bldg_data["cooling_load"]["heat_pump_cop"]
+            if self.constant_cop and "heat_pump_cop" in bldg_data["cooling_load_source"]:
+                self.cooling_fixed_cop = bldg_data["cooling_load_source"]["heat_pump_cop"]
                 self.cooling_mode = 1
                 self.cooling_cp_offset_reciprocal = None
             else:
-                hp_clg_name = bldg_data["cooling_load"]["heat_pump_name"]
+                hp_clg_name = bldg_data["cooling_load_source"]["heat_pump_id"]
                 hp_clg_data = hp_data[hp_clg_name]
                 self.hp_clg = HPmodel(hp_clg_name, hp_clg_data, tg)
                 self.cooling_mode = 2
@@ -1387,10 +1387,10 @@ class Building(BaseSimComp):
                 )
                 self.cooling_m_flow_single_hp = self.hp_clg.m_flow_single_hp
 
-        if load_method in ("hourly", "hourlyloadagg"):
+        if load_method in ("hourly", "load_aggregation_hourly"):
             if self.heating_exists:
                 one_yr_htg_vals = validate_nonnegative_loads(
-                    get_loads(self.name + "_htg", SimCompType.HEAT_PUMP.name, bldg_data["heating_load"]),
+                    get_loads(self.name + "_htg", SimCompType.HEAT_PUMP.name, bldg_data["heating_load_source"]),
                     "heating",
                     self.name,
                 )
@@ -1400,7 +1400,7 @@ class Building(BaseSimComp):
 
             if self.cooling_exists:
                 one_yr_clg_vals = validate_nonnegative_loads(
-                    get_loads(self.name + "_clg", SimCompType.HEAT_PUMP.name, bldg_data["cooling_load"]),
+                    get_loads(self.name + "_clg", SimCompType.HEAT_PUMP.name, bldg_data["cooling_load_source"]),
                     "cooling",
                     self.name,
                 )
@@ -1696,7 +1696,7 @@ class GHEHPSystem:
         if "search_method" in sim_controls:
             self.search_method = sim_controls["search_method"]
         else:
-            self.search_method = "GLOBAL_BUPCRS"
+            self.search_method = "global_bupcrs"
         if "constant_cop" in sim_controls:
             self.constant_cop = sim_controls["constant_cop"]
         else:
@@ -1718,19 +1718,19 @@ class GHEHPSystem:
         self.previous_objective_function_evaluations = {}
         self.guess_idx = -1
 
-        if self.search_method in ("GLOBAL_BUPCRS", "GLOBAL_BUPCRS_BR"):
+        if self.search_method in ("global_bupcrs", "global_bupcrs_br"):
             self.domain: list[list[list[tuple[float, float]]]] = [[[]]]
             self.field_descriptors: list[str] = []
             if self.exhaustive_search:
                 self.sample_rate = 100
-            if self.search_method == "GLOBAL_BUPCRS":
+            if self.search_method == "global_bupcrs":
                 self.remove_boreholes = False
             else:
                 self.remove_boreholes = True
-        elif self.search_method == "GLOBAL_ROWWISE":
+        elif self.search_method == "global_rowwise":
             if self.exhaustive_search:
                 self.sample_rate = 100
-        elif self.search_method == "NELDER-MEAD":
+        elif self.search_method == "nelder_mead":
             self.penalty_baseline: float = 0.0
             self.number_of_restarts: int = 1
             self.excess_temperature_tolerance: float = 1e-1
@@ -1739,30 +1739,30 @@ class GHEHPSystem:
             self.nbh_vectors: list[str] = []
             if self.exhaustive_search:
                 self.sample_rate = 5
-        elif self.search_method == "SIMULATION_ONLY":
+        elif self.search_method == "simulation_only":
             pass
         else:
             raise ValueError("Given search method not recognized.")
 
-        if self.search_method in ("GLOBAL_ROWWISE", "NELDER-MEAD"):
+        if self.search_method in ("global_rowwise", "nelder_mead"):
             self.max_iter: int = 50
 
         fluid_data = json_data["fluid"]
-        heat_pump_data = json_data.get("heat_pump", {})
-        building_data = json_data.get("building", {})
-        ghe_data = json_data.get("ground_heat_exchanger", {})
+        heat_pump_data = json_data.get("heat_pumps", {})
+        building_data = json_data.get("buildings", {})
+        ghe_data = json_data.get("ground_heat_exchangers", {})
         soil_data = json_data["soil"]
-        hx_data = json_data.get("source_sink_heat_exchanger", {})
+        hx_data = json_data.get("source_sink_heat_exchangers", {})
         if hx_data:
             raise ValueError("The canonical network solver does not yet support source/sink heat exchangers.")
 
         ordered_components: list[dict[str, str]] = []
         for station in network_data["stations"]:
-            component_id = station["component"]
+            component_id = station["component_id"]
             branch_type = component_type_map(json_data)[component_id]
             ordered_components.append({"name": component_id, "type": branch_type.value})
         for segment in network_data["segments"]:
-            thermal_model = segment.get("thermal_model")
+            thermal_model = segment.get("thermal_model_id")
             if thermal_model is not None:
                 ordered_components.append({"name": thermal_model, "type": "isolated_horizontal_pipe"})
 
@@ -1789,12 +1789,12 @@ class GHEHPSystem:
                 )
 
         self.fluid = Fluid(
-            fluid_name=fluid_data["fluid_name"],
+            fluid_name=fluid_data["fluid_type"],
             percent=fluid_data["concentration_percent"],
-            temperature=fluid_data["temperature"],
+            temperature=fluid_data["property_evaluation_temperature_c"],
         )
         self.cp = self.fluid.cp
-        tg = soil_data["undisturbed_temp"]
+        tg = soil_data["undisturbed_ground_temperature_c"]
 
         self.sim_years = json_data["simulation_control"]["simulation_years"]
         self.load_method = json_data["simulation_control"].get("load_method", "hourly").lower()
@@ -1805,7 +1805,7 @@ class GHEHPSystem:
 
         self.hybrid_load_data: dict[str, dict[str, list[float]]] = {}
 
-        if self.load_method in ("hourly", "hourlyloadagg"):
+        if self.load_method in ("hourly", "load_aggregation_hourly"):
             self.time_array = np.arange(self.sim_years * HOURS_IN_YEAR + 1, dtype=float)
             self.num_timesteps = len(self.time_array) - 1
         elif self.load_method == "hybrid":
@@ -1848,8 +1848,10 @@ class GHEHPSystem:
             for branch in self.network_graph.branches.values()
             if branch.thermal_model_id is not None
         ]
-        isolated_names = [name.upper() for name in referenced_horizontal_names if "coupled_to" not in horiz_data[name]]
-        coupled_names = [name.upper() for name in referenced_horizontal_names if "coupled_to" in horiz_data[name]]
+        isolated_names = [
+            name.upper() for name in referenced_horizontal_names if "coupled_to_id" not in horiz_data[name]
+        ]
+        coupled_names = [name.upper() for name in referenced_horizontal_names if "coupled_to_id" in horiz_data[name]]
 
         # get needed buildings
         buildings = []
@@ -1949,35 +1951,35 @@ class GHEHPSystem:
                     continue
 
                 if is_coupled:
-                    missing_fields = [field for field in ("coupled_to", "spacing") if field not in h_data]
+                    missing_fields = [field for field in ("coupled_to_id", "spacing_m") if field not in h_data]
                     if missing_fields:
                         missing_list = ", ".join(missing_fields)
                         raise ValueError(f"Coupled pipe '{h_id}' is missing required field(s): {missing_list}.")
                     if (
-                        isinstance(h_data["spacing"], bool)
-                        or not isinstance(h_data["spacing"], (int, float))
-                        or h_data["spacing"] <= 0.0
+                        isinstance(h_data["spacing_m"], bool)
+                        or not isinstance(h_data["spacing_m"], (int, float))
+                        or h_data["spacing_m"] <= 0.0
                     ):
                         raise ValueError(f"Coupled pipe '{h_id}' spacing must be a positive number.")
 
                 h_soil = Soil(
-                    k=soil_data["conductivity"],
-                    rho_cp=soil_data["rho_cp"],
-                    ugt=soil_data["undisturbed_temp"],
+                    k=soil_data["thermal_conductivity_w_per_m_k"],
+                    rho_cp=soil_data["volumetric_heat_capacity_j_per_m3_k"],
+                    ugt=soil_data["undisturbed_ground_temperature_c"],
                 )
                 h_pipe = Pipe.init_single_u_tube(
-                    inner_diameter=h_data["pipe"]["inner_diameter"],
-                    outer_diameter=h_data["pipe"]["outer_diameter"],
+                    inner_diameter=h_data["pipe"]["inner_diameter_m"],
+                    outer_diameter=h_data["pipe"]["outer_diameter_m"],
                     shank_spacing=0.0,
-                    roughness=h_data["pipe"]["roughness"],
-                    conductivity=h_data["pipe"]["conductivity"],
-                    rho_cp=h_data["pipe"]["rho_cp"],
+                    roughness=h_data["pipe"]["surface_roughness_m"],
+                    conductivity=h_data["pipe"]["thermal_conductivity_w_per_m_k"],
+                    rho_cp=h_data["pipe"]["volumetric_heat_capacity_j_per_m3_k"],
                 )
 
                 r_pipe = calc_pipe_wall_resistance(h_pipe)
                 beta = r_pipe * (TWO_PI * h_soil.k)
 
-                target_d = get_nearest(h_data["trench_depth"], np.array(horiz_axes["depths"], dtype=float))
+                target_d = get_nearest(h_data["trench_depth_m"], np.array(horiz_axes["depths"], dtype=float))
                 target_r = get_nearest(h_pipe.r_out, np.array(horiz_axes["radii"], dtype=float))
                 target_k = get_nearest(h_soil.k, np.array(horiz_axes["soil_ks"], dtype=float))
 
@@ -1996,7 +1998,7 @@ class GHEHPSystem:
 
                     this_horiz = IsolatedHorizontalPipe(
                         name=h_id,
-                        length=h_data["length"],
+                        length=h_data["length_m"],
                         num_segments=self.horiz_segments,
                         pipe=h_pipe,
                         soil=h_soil,
@@ -2005,12 +2007,12 @@ class GHEHPSystem:
                         time_array=self.time_array,
                         q_prime_interp=q_prime_interp,
                         beta=beta,
-                        ugt_avg=soil_data["undisturbed_temp"],
-                        ugt_amp1=ugt_data["amplitude_1"],
-                        ugt_phase1=ugt_data["phase_lag_1"],
-                        ugt_amp2=ugt_data["amplitude_2"],
-                        ugt_phase2=ugt_data["phase_lag_2"],
-                        depth=h_data["trench_depth"],
+                        ugt_avg=soil_data["undisturbed_ground_temperature_c"],
+                        ugt_amp1=ugt_data["annual_temperature_amplitude_c"],
+                        ugt_phase1=ugt_data["annual_phase_lag_days"],
+                        ugt_amp2=ugt_data["semiannual_temperature_amplitude_c"],
+                        ugt_phase2=ugt_data["semiannual_phase_lag_days"],
+                        depth=h_data["trench_depth_m"],
                         time_step_params=self.time_step_params,
                         load_method=self.load_method,
                     )
@@ -2018,7 +2020,7 @@ class GHEHPSystem:
                     isolated_pipes.append(this_horiz)
 
                 elif is_coupled:
-                    target_b = get_nearest(h_data["spacing"], np.array(horiz_axes["spacings"], dtype=float))
+                    target_b = get_nearest(h_data["spacing_m"], np.array(horiz_axes["spacings"], dtype=float))
                     response_key = get_nearest_beta_key(
                         table_parallel,
                         beta,
@@ -2035,7 +2037,7 @@ class GHEHPSystem:
 
                     this_horiz = CoupledHorizontalPipe(
                         name=h_id,
-                        length=h_data["length"],
+                        length=h_data["length_m"],
                         num_segments=self.horiz_segments,
                         pipe=h_pipe,
                         soil=h_soil,
@@ -2045,12 +2047,12 @@ class GHEHPSystem:
                         q_prime_even_interp=q_prime_even,
                         q_prime_odd_interp=q_prime_odd,
                         beta=beta,
-                        ugt_avg=soil_data["undisturbed_temp"],
-                        ugt_amp1=ugt_data["amplitude_1"],
-                        ugt_phase1=ugt_data["phase_lag_1"],
-                        ugt_amp2=ugt_data["amplitude_2"],
-                        ugt_phase2=ugt_data["phase_lag_2"],
-                        depth=h_data["trench_depth"],
+                        ugt_avg=soil_data["undisturbed_ground_temperature_c"],
+                        ugt_amp1=ugt_data["annual_temperature_amplitude_c"],
+                        ugt_phase1=ugt_data["annual_phase_lag_days"],
+                        ugt_amp2=ugt_data["semiannual_temperature_amplitude_c"],
+                        ugt_phase2=ugt_data["semiannual_phase_lag_days"],
+                        depth=h_data["trench_depth_m"],
                         time_step_params=self.time_step_params,
                         counter_flow=h_data.get("counter_flow", False),
                         load_method=self.load_method,
@@ -2060,7 +2062,7 @@ class GHEHPSystem:
             # PASS 2: Validate and link the coupled pipes
             coupled_pipe_names = {name.upper(): name for name in coupled_pipes_dict}
             for h_id, pipe in coupled_pipes_dict.items():
-                partner_id = horiz_data[h_id].get("coupled_to")
+                partner_id = horiz_data[h_id].get("coupled_to_id")
                 partner_key = coupled_pipe_names.get(str(partner_id).upper())
 
                 if partner_key is None:
@@ -2071,13 +2073,13 @@ class GHEHPSystem:
                     raise ValueError(f"Coupled pipe '{h_id}' cannot be coupled to itself.")
 
                 partner_data = horiz_data[partner_key]
-                reciprocal_partner = partner_data.get("coupled_to")
+                reciprocal_partner = partner_data.get("coupled_to_id")
                 if not isinstance(reciprocal_partner, str) or reciprocal_partner.upper() != h_id.upper():
                     raise ValueError(f"Coupled pipes '{h_id}' and '{partner_key}' must reference each other.")
 
                 h_data = horiz_data[h_id]
                 incompatible_fields = []
-                for field in ("length", "trench_depth", "spacing"):
+                for field in ("length_m", "trench_depth_m", "spacing_m"):
                     if not isclose(h_data[field], partner_data[field]):
                         incompatible_fields.append(field)
                 if h_data.get("counter_flow", False) != partner_data.get("counter_flow", False):
@@ -2269,11 +2271,11 @@ class GHEHPSystem:
 
     def size_and_simulate(self):
         if np.any([ghe.ghe_manager.is_sizable for ghe in self.ground_heat_exchangers]):
-            if self.search_method in ("GLOBAL_BUPCRS", "GLOBAL_BUPCRS_BR"):
+            if self.search_method in ("global_bupcrs", "global_bupcrs_br"):
                 self.design_system_single_bupcrs()
-            elif self.search_method == "GLOBAL_ROWWISE":
+            elif self.search_method == "global_rowwise":
                 self.design_system_single_rowwise()
-            elif self.search_method == "NELDER-MEAD":
+            elif self.search_method == "nelder_mead":
                 self.design_system_optimizer()
             else:
                 raise ValueError("search_method does not match any implemented.")
@@ -2328,7 +2330,7 @@ class GHEHPSystem:
             self.total_drilling_values.append(td_val)
             self.borehole_heights.append(height_val)
             self.objective_function_values.append(0.0)
-            if self.search_method == "NELDER-MEAD":
+            if self.search_method == "nelder_mead":
                 self.angles.append(self.angles[-1])
                 self.nbh_vectors.append(self.nbh_vectors[-1])
             if mid_et > 0:
@@ -3082,7 +3084,9 @@ class GHEHPSystem:
 
         if self.network_type == NetworkType.ONE_PIPE:
             multiplier = float(self.network_mass_flow_control["distribution_flow_multiplier"])
-            minimum_flow = float(self.network_mass_flow_control.get("minimum_distribution_mass_flow", 0.0))
+            minimum_flow = float(
+                self.network_mass_flow_control.get("minimum_distribution_mass_flow_rate_kg_per_s", 0.0)
+            )
             distribution_flow = max(multiplier * aggregate_building_flow, minimum_flow)
             for branch in self.network_graph.branches.values():
                 if branch.branch_type in (
@@ -3358,7 +3362,7 @@ class GHEHPSystem:
                 self.objective_function_values
             )
             output_data[csv_columns.output_column(csv_columns.SEARCH, "Borehole Height", "m")] = self.borehole_heights
-            if self.search_method == "NELDER-MEAD":
+            if self.search_method == "nelder_mead":
                 output_data[csv_columns.output_column(csv_columns.SEARCH, "Angles", "rad")] = self.angles
                 output_data[csv_columns.output_column(csv_columns.SEARCH, "Borehole Count Vectors", "-")] = (
                     self.nbh_vectors

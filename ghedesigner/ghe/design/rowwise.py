@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 from pygfunction.boreholes import Borehole
 
@@ -29,12 +29,24 @@ class GeometricConstraintsRowWise(GeometricConstraints):
     type: DesignGeomType = field(default=DesignGeomType.ROWWISE, init=False, repr=False)
 
     def to_input(self) -> dict:
-        return {
-            **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k != "type"}),
-            "min_rotation": self.min_rotation * RAD_TO_DEG,
-            "max_rotation": self.max_rotation * RAD_TO_DEG,
-            "method": self.type.name,
+        result = {
+            "method": "rowwise",
+            "minimum_borehole_spacing_m": self.min_spacing,
+            "maximum_borehole_spacing_m": self.max_spacing,
+            "minimum_rotation_degrees": self.min_rotation * RAD_TO_DEG,
+            "maximum_rotation_degrees": self.max_rotation * RAD_TO_DEG,
+            "rotation_step_degrees": self.rotate_step * RAD_TO_DEG,
+            "property_boundary_coordinates_m": [{"x": x, "y": y} for x, y in self.property_boundary],
         }
+        if self.perimeter_spacing_ratio is not None:
+            result["perimeter_spacing_ratio"] = self.perimeter_spacing_ratio
+        if self.spacing_step is not None:
+            result["borehole_spacing_step_m"] = self.spacing_step
+        if self.no_go_boundaries is not None:
+            result["no_go_boundary_coordinates_m"] = [
+                [{"x": x, "y": y} for x, y in boundary] for boundary in self.no_go_boundaries
+            ]
+        return result
 
 
 class DesignRowWise(DesignBase):

@@ -60,11 +60,11 @@ const sectionDefinitions = [
   { id: "fluid", label: "Fluid", icon: Droplets },
   { id: "soil", label: "Soil", icon: Leaf },
   { id: "simulation_control", label: "Simulation", icon: Settings2 },
-  { id: "heat_pump", label: "HP Performance", icon: ThermometerSun },
-  { id: "building", label: "Heat Pump Loads", icon: Building2 },
-  { id: "ground_heat_exchanger", label: "GHEs", icon: Waves },
+  { id: "heat_pumps", label: "HP Performance", icon: ThermometerSun },
+  { id: "buildings", label: "Heat Pump Loads", icon: Building2 },
+  { id: "ground_heat_exchangers", label: "GHEs", icon: Waves },
   { id: "horizontal_piping", label: "Horizontal Piping", icon: GitFork },
-  { id: "source_sink_heat_exchanger", label: "Source / Sink", icon: Database },
+  { id: "source_sink_heat_exchangers", label: "Source / Sink", icon: Database },
   { id: "network", label: "Network", icon: GitFork },
   { id: "review", label: "Review & JSON", icon: Braces },
 ] as const;
@@ -85,15 +85,15 @@ const sectionCopy: Record<string, { title: string; description: string }> = {
     title: "Simulation Controls",
     description: "Choose sizing or simulation duration, load treatment, design search, and horizontal-pipe behavior.",
   },
-  heat_pump: {
+  heat_pumps: {
     title: "Heat Pump Performance Library",
     description: "Maintain reusable performance maps referenced by installed heat pump/load components.",
   },
-  building: {
+  buildings: {
     title: "Heat Pump and Load Components",
     description: "Define installed loads and heat pump behavior for each building connected to the district loop.",
   },
-  ground_heat_exchanger: {
+  ground_heat_exchangers: {
     title: "Ground Heat Exchangers",
     description: "Configure boreholes, pipes, grout, design flow per borehole, geometry, and local circulation pumps.",
   },
@@ -101,18 +101,18 @@ const sectionCopy: Record<string, { title: string; description: string }> = {
     title: "Horizontal Piping Models",
     description: "Define buried-pipe models used by the ordered distribution segments in the district loop.",
   },
-  source_sink_heat_exchanger: {
+  source_sink_heat_exchangers: {
     title: "Source and Sink Heat Exchangers",
     description: "Maintain optional controlled source or sink exchangers for supported district workflows.",
   },
 };
 
 const collectionSections = new Set([
-  "heat_pump",
-  "building",
-  "ground_heat_exchanger",
+  "heat_pumps",
+  "buildings",
+  "ground_heat_exchangers",
   "horizontal_piping",
-  "source_sink_heat_exchanger",
+  "source_sink_heat_exchangers",
 ]);
 
 const parseDraft = (): InputDocument => {
@@ -378,7 +378,7 @@ function App() {
     const leavingDistrict = workflow.startsWith("district_") && !nextWorkflow.startsWith("district_");
     const dropsBuildings =
       (nextWorkflow === "standalone_design" || nextWorkflow === "g_function") &&
-      Object.keys(history.document.building ?? {}).length > 0;
+      Object.keys(history.document.buildings ?? {}).length > 0;
     if (
       (leavingDistrict || dropsBuildings) &&
       !window.confirm(
@@ -506,7 +506,7 @@ function App() {
             property={section}
             title={copy.title}
             description={
-              section === "ground_heat_exchanger"
+              section === "ground_heat_exchangers"
                 ? workflow === "g_function" || workflow === "district_simulation"
                   ? "Enter each known borefield arrangement, borehole depth, construction, design flow, and component hydraulics."
                   : workflow === "standalone_design"
@@ -550,7 +550,7 @@ function App() {
           }
           enumExclusions={
             section === "simulation_control" && workflow === "district_design"
-              ? { search_method: ["SIMULATION_ONLY"] }
+              ? { search_method: ["simulation_only"] }
               : undefined
           }
           onChange={history.update}

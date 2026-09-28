@@ -2,7 +2,7 @@ import importlib.metadata
 from math import pi, tau
 
 VERSION = importlib.metadata.version("ghedesigner")
-INPUT_VERSION = 4
+INPUT_VERSION = 3
 
 PI = pi
 DEG_TO_RAD = pi / 180.0

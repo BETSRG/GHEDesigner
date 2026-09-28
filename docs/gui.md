@@ -15,7 +15,7 @@ and detected browser event-loop stalls. It retains three 5 MB backups. Use `--de
 and detailed validation timings, or `--log-file PATH` to select another location. When reporting an apparent hang,
 include the log section from `session_started` through the stalled interaction.
 
-The editor can open, validate, save, and export ordinary version 4 GHEDesigner JSON files. Guided forms cover fluid,
+The editor can open, validate, save, and export ordinary version 3 GHEDesigner JSON files. Guided forms cover fluid,
 soil, simulation controls, and every field of each physical component. Component collections are edited one item at a
 time so variant-heavy GHE schemas remain responsive; changes are staged until **Apply section** or **Apply component**
 is selected. A complete guarded raw JSON view remains available for final review.
