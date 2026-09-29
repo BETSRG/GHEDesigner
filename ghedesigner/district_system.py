@@ -947,6 +947,8 @@ class GHX(BaseSimComp):
         self.pump_mass_flow = np.zeros(num_timesteps, dtype=float)
         self.local_recirculation_flow = np.zeros(num_timesteps, dtype=float)
         self.P_ghe_cp = np.zeros(num_timesteps, dtype=float)
+        self.pressure_loss = np.zeros(num_timesteps, dtype=float)
+        self.pressure_loss_per_length = np.zeros(num_timesteps, dtype=float)
         self.flow_rate_per_borehole = float(ghe_data["design_volumetric_flow_rate_per_borehole_l_per_s"])
 
         pump_data = ghe_data.get("circulation_pump")
@@ -989,6 +991,28 @@ class GHX(BaseSimComp):
             * (self.pump_mass_flow / design_flow) ** 2
         )
         self.P_ghe_cp[:] = self.pump_mass_flow * pressure_drop / (self.fluid.rho * self.pump_efficiency)
+
+    def calc_pressure_loss(self) -> None:
+        """Calculate BHResist pressure loss through one complete borehole flow path."""
+        self.pressure_loss.fill(0.0)
+        self.pressure_loss_per_length.fill(0.0)
+        if self.nbh <= 0 or self.height is None or self.height <= 0.0:
+            return
+
+        total_flow = self.pump_mass_flow if self.circulation_pump is not None else np.abs(self.m_ghe_array)
+        borehole_flow = total_flow / self.nbh
+        current_ghe = self.ghe_manager.current_ghe
+        if current_ghe is None:
+            return
+        self.pressure_loss[:] = np.fromiter(
+            (
+                current_ghe.bhe.calc_pressure_loss(mass_flow, temperature)
+                for mass_flow, temperature in zip(borehole_flow, self.t_mean, strict=True)
+            ),
+            dtype=float,
+            count=self.num_timesteps,
+        )
+        self.pressure_loss_per_length[:] = self.pressure_loss / self.height
 
     def update_effective_mass_flow(self, network_flow: float, idx_timestep: int) -> float:
         """Apply local minimum recirculation without changing network flow."""
@@ -1443,6 +1467,7 @@ class Building(BaseSimComp):
         self.required_plr_hp_htg = np.zeros(self.num_timesteps, dtype=float)
         self.required_plr_hp_clg = np.zeros(self.num_timesteps, dtype=float)
         self.power_circ_pump = np.zeros(self.num_timesteps, dtype=float)
+        self.pressure_loss = np.zeros(self.num_timesteps, dtype=float)
         self.q_ext = None
         self.q_rej = None
         self.mass_bldg = 0.0
@@ -1673,25 +1698,31 @@ class Building(BaseSimComp):
             where=self.power_hp_clg != 0.0,
         )
 
+        heating_governs = (self.m_flow_htg >= self.m_flow_clg) & (self.m_flow_htg > 0.0)
+        cooling_governs = self.m_flow_clg > self.m_flow_htg
+        self.pressure_loss.fill(0.0)
+        if self.heating_exists and self.heating_fixed_cop is None:
+            self.pressure_loss[heating_governs] = self.hp_htg.design_pressure_loss
+        if self.cooling_exists and self.cooling_fixed_cop is None:
+            self.pressure_loss[cooling_governs] = self.hp_clg.design_pressure_loss
+
         # One-pipe buildings have local circulation pumps. Two-pipe building
         # flow is provided by the network pump and is accounted for separately.
         self.power_circ_pump.fill(0.0)
         if self.network_type != NetworkType.ONE_PIPE:
             return
 
-        heating_governs = (self.m_flow_htg >= self.m_flow_clg) & (self.m_flow_htg > 0.0)
-        cooling_governs = self.m_flow_clg > self.m_flow_htg
         if self.heating_exists and self.heating_fixed_cop is None:
             self.power_circ_pump[heating_governs] = (
                 self.m_flow[heating_governs]
                 / (self.fluid.rho * self.hp_htg.pump_efficiency)
-                * self.hp_htg.design_pressure_loss
+                * self.pressure_loss[heating_governs]
             )
         if self.cooling_exists and self.cooling_fixed_cop is None:
             self.power_circ_pump[cooling_governs] = (
                 self.m_flow[cooling_governs]
                 / (self.fluid.rho * self.hp_clg.pump_efficiency)
-                * self.hp_clg.design_pressure_loss
+                * self.pressure_loss[cooling_governs]
             )
 
 
@@ -2202,6 +2233,10 @@ class GHEHPSystem:
                         f"Horizontal model '{branch.thermal_model_id}' is assigned to more than one network branch."
                     )
                 self.network_branch_by_horizontal_id[branch.thermal_model_id] = branch
+        self.horizontal_pressure_losses = {
+            horizontal_id: np.zeros(self.num_timesteps, dtype=float)
+            for horizontal_id in self.network_branch_by_horizontal_id
+        }
 
         self.matrix_size = (
             sum(ghx.matrix_rows for ghx in ground_heat_exchangers)
@@ -3220,6 +3255,8 @@ class GHEHPSystem:
                 building.generate_constant_cop_loads(average_ugt)
 
         self.pump_power_loop.fill(0.0)
+        for pressure_loss in self.horizontal_pressure_losses.values():
+            pressure_loss.fill(0.0)
         for idx_timestep in range(1, self.num_timesteps + 1):
             controlled_flows: dict[str, float] = {}
             for building in self.buildings:
@@ -3242,6 +3279,10 @@ class GHEHPSystem:
                 )
             except ValueError as error:
                 raise ValueError(f"Hydraulic solve failed at timestep {idx_timestep}: {error}") from error
+            for horizontal_id, branch in self.network_branch_by_horizontal_id.items():
+                self.horizontal_pressure_losses[horizontal_id][idx_timestep - 1] = abs(
+                    branch.passive_pressure_drop(branch.mass_flow, self.fluid.rho, self.fluid.mu)
+                )
             for ghe in self.ground_heat_exchangers:
                 branch = self.network_branch_by_component[ghe.ID]
                 ghe.mass_flow_ghe = branch.mass_flow
@@ -3280,6 +3321,7 @@ class GHEHPSystem:
         for this_comp in self.components:
             if this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
                 this_comp.calc_pump_power()
+                this_comp.calc_pressure_loss()
 
     def get_total_energy_consumption(self):
         self.calc_energy()
@@ -3338,6 +3380,7 @@ class GHEHPSystem:
                 output_columns[csv_columns.CIRCULATION_PUMP_POWER.for_object(this_comp.name)] = (
                     this_comp.power_circ_pump
                 )
+                output_columns[csv_columns.TOTAL_PRESSURE_LOSS.for_object(this_comp.name)] = this_comp.pressure_loss
 
                 q_src_clg = this_comp.clg_vals + this_comp.power_hp_clg
                 q_src_htg = this_comp.htg_vals - this_comp.power_hp_htg
@@ -3367,6 +3410,10 @@ class GHEHPSystem:
                 )
                 output_columns[csv_columns.NETWORK_BRANCH_MASS_FLOW_RATE.for_object(this_comp.name)] = (
                     this_comp.m_ghe_array
+                )
+                output_columns[csv_columns.TOTAL_PRESSURE_LOSS.for_object(this_comp.name)] = this_comp.pressure_loss
+                output_columns[csv_columns.PRESSURE_LOSS_PER_LENGTH.for_object(this_comp.name)] = (
+                    this_comp.pressure_loss_per_length
                 )
                 if this_comp.circulation_pump is not None:
                     output_columns[csv_columns.PUMP_MASS_FLOW_RATE.for_object(this_comp.name)] = (
@@ -3407,6 +3454,12 @@ class GHEHPSystem:
                     )
 
                 output_columns[csv_columns.EXITING_FLUID_TEMPERATURE.for_object(this_comp.name)] = this_comp.t_out[1:]
+                horizontal_pressure_loss = self.horizontal_pressure_losses[this_comp.name]
+                horizontal_branch = self.network_branch_by_horizontal_id[this_comp.name]
+                output_columns[csv_columns.TOTAL_PRESSURE_LOSS.for_object(this_comp.name)] = horizontal_pressure_loss
+                output_columns[csv_columns.PRESSURE_LOSS_PER_LENGTH.for_object(this_comp.name)] = (
+                    horizontal_pressure_loss / horizontal_branch.length
+                )
         output_columns[csv_columns.output_column(csv_columns.NETWORK, "Distribution Pump Power", "W")] = (
             self.pump_power_loop
         )

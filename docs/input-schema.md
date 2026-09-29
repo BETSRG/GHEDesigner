@@ -142,6 +142,15 @@ Every GHE in a one-pipe network requires `circulation_pump` with:
 The GHE design mass flow is derived from `design_volumetric_flow_rate_per_borehole_l_per_s`, fluid density, and the
 number of boreholes. The circulation-pump reference pressure drop is applied at that total design flow.
 
+District simulation CSV files report `Total Pressure Loss [Pa]` for each building, GHE, and simulated horizontal pipe.
+GHE and horizontal-pipe objects also report `Pressure Loss [Pa/m]`. GHE pressure loss is calculated with BHResist's
+smooth-pipe friction model from the actual flow per borehole and the configured pipe geometry, with all boreholes
+treated as parallel branches. The total includes the complete down-and-back borehole flow path, and the per-length value
+is normalized by borehole depth.
+Horizontal-pipe loss uses the mapped network segment's Darcy-Weisbach pressure loss, including configured roughness and
+minor-loss coefficients, and is normalized by segment length. Building loss is the active heat pump's configured
+`design_pressure_drop_pa`.
+
 ## District network
 
 `network.type` is `one_pipe` or `two_pipe`. Both use an ordered compact representation:

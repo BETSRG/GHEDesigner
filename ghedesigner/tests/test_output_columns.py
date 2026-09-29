@@ -64,8 +64,11 @@ def test_district_result_fixture_headers_follow_canonical_format() -> None:
     assert "building1: Cooling Heat Pump Power [W]" in header
     assert "building1: Cooling Heat Pump COP [-]" in header
     assert "building1: Cooling Heat Pump Required Part Load Ratio [-]" in header
+    assert "building1: Total Pressure Loss [Pa]" in header
     assert "building1: Source-Side Net Heat Transfer Rate [W]" in header
     assert "ghe1: Network Branch Mass Flow Rate [kg/s]" in header
+    assert "ghe1: Total Pressure Loss [Pa]" in header
+    assert "ghe1: Pressure Loss [Pa/m]" in header
     assert "Network: Total Building Net Source Side Heat Transfer Rate [W]" in header
     assert all("°C" not in column for column in header)
 

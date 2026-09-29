@@ -3,7 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 from typing import Any, cast
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -488,6 +488,7 @@ class TestDistrictSys(GHEBaseTest):
         np.testing.assert_allclose(building.required_plr_hp_clg[:3], [0.0, 0.25, 0.25])
 
         building.calc_energy()
+        np.testing.assert_allclose(building.pressure_loss[:3], [10_000.0, 30_000.0, 30_000.0])
         expected_power = np.array(
             [
                 building.m_flow[0] * 10_000.0 / (building.fluid.rho * 0.5),
@@ -500,6 +501,7 @@ class TestDistrictSys(GHEBaseTest):
         building.network_type = NetworkType.TWO_PIPE
         building.calc_energy()
         np.testing.assert_array_equal(building.power_circ_pump, 0.0)
+        np.testing.assert_allclose(building.pressure_loss[:3], [10_000.0, 30_000.0, 30_000.0])
 
     def test_heat_pump_required_part_load_ratio_reports_capacity_exceedance(self):
         system = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
@@ -538,11 +540,38 @@ class TestDistrictSys(GHEBaseTest):
         np.testing.assert_allclose(ghx.pump_mass_flow, [0.25, 2.5, 5.0, 10.0, 2.5])
         expected_pressure_drop = 1.2 * 10_000.0 * (ghx.pump_mass_flow / 5.0) ** 2
         np.testing.assert_allclose(ghx.P_ghe_cp, ghx.pump_mass_flow * expected_pressure_drop / 500.0)
-
         assert ghx.update_effective_mass_flow(0.0, 0) == pytest.approx(0.25)
         assert ghx.local_recirculation_flow[0] == pytest.approx(0.25)
         with pytest.raises(ValueError, match="reverse flow"):
             ghx.update_effective_mass_flow(-0.1, 1)
+
+    def test_ghe_pressure_loss_uses_one_complete_parallel_borehole_path(self):
+        ghx = cast(Any, object.__new__(GHX))
+        ghx.num_timesteps = 2
+        ghx.nbh = 10
+        ghx.height = 100.0
+        calc_pressure_loss = Mock(side_effect=lambda mass_flow, _: mass_flow * 1000.0)
+        ghx.ghe_manager = SimpleNamespace(
+            current_ghe=SimpleNamespace(bhe=SimpleNamespace(calc_pressure_loss=calc_pressure_loss))
+        )
+        ghx.circulation_pump = None
+        ghx.m_ghe_array = np.array([5.0, 10.0])
+        ghx.pump_mass_flow = np.zeros(2)
+        ghx.t_mean = np.array([12.0, 18.0])
+        ghx.pressure_loss = np.zeros(2)
+        ghx.pressure_loss_per_length = np.zeros(2)
+
+        ghx.calc_pressure_loss()
+
+        np.testing.assert_allclose(ghx.pressure_loss, [500.0, 1000.0])
+        np.testing.assert_allclose(ghx.pressure_loss_per_length, [5.0, 10.0])
+        assert [call.args for call in calc_pressure_loss.call_args_list] == [(0.5, 12.0), (1.0, 18.0)]
+
+        ghx.circulation_pump = {}
+        ghx.pump_mass_flow[:] = [2.0, 4.0]
+        ghx.calc_pressure_loss()
+        np.testing.assert_allclose(ghx.pressure_loss, [200.0, 400.0])
+        assert [call.args for call in calc_pressure_loss.call_args_list[-2:]] == [(0.2, 12.0), (0.4, 18.0)]
 
     def test_one_pipe_ghe_branch_flow_is_capped_at_design_flow(self):
         system = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
@@ -775,6 +804,21 @@ class TestDistrictSys(GHEBaseTest):
         np.testing.assert_allclose(building.m_flow, np.maximum(building.m_flow_htg, building.m_flow_clg))
         assert np.all(np.isfinite(building.t_in))
         assert np.all(np.isfinite(system.ground_heat_exchangers[0].t_in))
+        with TemporaryDirectory() as tmp_dir:
+            output_path = Path(tmp_dir) / "medium_constant_load.csv"
+            system.create_output(output_path)
+            output = pd.read_csv(output_path)
+        for horizontal_id in system.horizontal_by_id:
+            total_column = f"{horizontal_id}: Total Pressure Loss [Pa]"
+            per_length_column = f"{horizontal_id}: Pressure Loss [Pa/m]"
+            assert np.all(output[total_column] > 0.0)
+            branch_length = system.network_branch_by_horizontal_id[horizontal_id].length
+            np.testing.assert_allclose(
+                output[per_length_column],
+                output[total_column] / branch_length,
+                rtol=0.0,
+                atol=1e-4,
+            )
 
     def test_simulate_1_pipe_1_ghe_1_hx_1_bldg_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_hx_1_bldg_district.json"
