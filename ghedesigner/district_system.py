@@ -1295,6 +1295,7 @@ class Building(BaseSimComp):
         tg,
         fluid: Fluid,
         loop_config: CentralLoopType,
+        network_type: NetworkType,
         num_timesteps: int,
         constant_cop=False,
         load_method: str = "hourly",
@@ -1312,6 +1313,7 @@ class Building(BaseSimComp):
 
         self.fluid = fluid
         self.loop_config = loop_config
+        self.network_type = network_type
         self.matrix_rows = 2 if loop_config == CentralLoopType.TWOPIPE else 1
         self.heating_exists = bool("heating_load_source" in bldg_data)
         self.cooling_exists = bool("cooling_load_source" in bldg_data)
@@ -1431,9 +1433,15 @@ class Building(BaseSimComp):
         self.t_in = np.full(self.num_timesteps, tg, dtype=float)
         self.t_out = np.full(self.num_timesteps, tg, dtype=float)
         self.m_flow = np.zeros(self.num_timesteps, dtype=float)
+        self.m_flow_htg = np.zeros(self.num_timesteps, dtype=float)
+        self.m_flow_clg = np.zeros(self.num_timesteps, dtype=float)
         self.power_hp_htg = np.zeros(self.num_timesteps, dtype=float)
         self.power_hp_clg = np.zeros(self.num_timesteps, dtype=float)
         self.power_hp_tot = np.zeros(self.num_timesteps, dtype=float)
+        self.cop_hp_htg = np.zeros(self.num_timesteps, dtype=float)
+        self.cop_hp_clg = np.zeros(self.num_timesteps, dtype=float)
+        self.rtf_hp_htg = np.zeros(self.num_timesteps, dtype=float)
+        self.rtf_hp_clg = np.zeros(self.num_timesteps, dtype=float)
         self.power_circ_pump = np.zeros(self.num_timesteps, dtype=float)
         self.q_ext = None
         self.q_rej = None
@@ -1484,11 +1492,14 @@ class Building(BaseSimComp):
             cap_clg = self.hp_clg.cooling_capacity(t_in)
             m_single_hp_clg = self.cooling_m_flow_single_hp
 
-        m_single_hp = m_single_hp_htg if m_single_hp_htg > m_single_hp_clg else m_single_hp_clg
         rtf_htg = htg_val / cap_htg if cap_htg != 0 else 0.0
         rtf_clg = clg_val / cap_clg if cap_clg != 0 else 0.0
 
-        mass_flow_bldg = (rtf_htg + rtf_clg) * m_single_hp
+        self.rtf_hp_htg[idx_timestep] = rtf_htg
+        self.rtf_hp_clg[idx_timestep] = rtf_clg
+        self.m_flow_htg[idx_timestep] = rtf_htg * m_single_hp_htg
+        self.m_flow_clg[idx_timestep] = rtf_clg * m_single_hp_clg
+        mass_flow_bldg = max(self.m_flow_htg[idx_timestep], self.m_flow_clg[idx_timestep])
         self.m_flow[idx_timestep] = mass_flow_bldg
         return mass_flow_bldg
 
@@ -1649,22 +1660,39 @@ class Building(BaseSimComp):
                 self.power_hp_htg = self.htg_vals * (1 - ratio_htg)
 
         self.power_hp_tot = self.power_hp_clg + self.power_hp_htg
+        self.cop_hp_htg = np.divide(
+            self.htg_vals,
+            self.power_hp_htg,
+            out=np.zeros_like(self.htg_vals),
+            where=self.power_hp_htg != 0.0,
+        )
+        self.cop_hp_clg = np.divide(
+            self.clg_vals,
+            self.power_hp_clg,
+            out=np.zeros_like(self.clg_vals),
+            where=self.power_hp_clg != 0.0,
+        )
 
-        # power consumed by circulating pump
-        if self.heating_exists:
-            if self.heating_fixed_cop is not None:
-                self.power_circ_pump = 0.0
-            else:
-                self.power_circ_pump = (
-                    self.m_flow / (self.fluid.rho * self.hp_htg.pump_efficiency) * self.hp_htg.design_pressure_loss
-                )
-        if self.cooling_exists:
-            if self.cooling_fixed_cop:
-                self.power_circ_pump = 0.0
-            else:
-                self.power_circ_pump = (
-                    self.m_flow / (self.fluid.rho * self.hp_clg.pump_efficiency) * self.hp_clg.design_pressure_loss
-                )
+        # One-pipe buildings have local circulation pumps. Two-pipe building
+        # flow is provided by the network pump and is accounted for separately.
+        self.power_circ_pump.fill(0.0)
+        if self.network_type != NetworkType.ONE_PIPE:
+            return
+
+        heating_governs = (self.m_flow_htg >= self.m_flow_clg) & (self.m_flow_htg > 0.0)
+        cooling_governs = self.m_flow_clg > self.m_flow_htg
+        if self.heating_exists and self.heating_fixed_cop is None:
+            self.power_circ_pump[heating_governs] = (
+                self.m_flow[heating_governs]
+                / (self.fluid.rho * self.hp_htg.pump_efficiency)
+                * self.hp_htg.design_pressure_loss
+            )
+        if self.cooling_exists and self.cooling_fixed_cop is None:
+            self.power_circ_pump[cooling_governs] = (
+                self.m_flow[cooling_governs]
+                / (self.fluid.rho * self.hp_clg.pump_efficiency)
+                * self.hp_clg.design_pressure_loss
+            )
 
 
 class GHEHPSystem:
@@ -1870,6 +1898,7 @@ class GHEHPSystem:
                     tg,
                     self.fluid,
                     self.loop_config,
+                    self.network_type,
                     self.num_timesteps,
                     constant_cop=self.constant_cop,
                     load_method=self.load_method,
@@ -3275,6 +3304,7 @@ class GHEHPSystem:
         output_columns: dict[str, Any] = {}
 
         network_q_net_bldg_tot = np.zeros(self.num_timesteps, dtype=float)
+        network_q_net_bldg_source_side_tot = np.zeros(self.num_timesteps, dtype=float)
         network_q_net_ghe_tot = np.zeros(self.num_timesteps, dtype=float)
         configured_ghe_pump_power = np.zeros(self.num_timesteps, dtype=float)
         has_configured_ghe_pump = False
@@ -3295,7 +3325,15 @@ class GHEHPSystem:
                 output_columns[csv_columns.MASS_FLOW_RATE.for_object(this_comp.name)] = this_comp.m_flow
                 network_q_net_bldg_tot += this_comp.q_net
                 output_columns[csv_columns.HEATING_HEAT_PUMP_POWER.for_object(this_comp.name)] = this_comp.power_hp_htg
+                output_columns[csv_columns.HEATING_HEAT_PUMP_COP.for_object(this_comp.name)] = this_comp.cop_hp_htg
+                output_columns[csv_columns.HEATING_HEAT_PUMP_RUNTIME_FRACTION.for_object(this_comp.name)] = (
+                    this_comp.rtf_hp_htg
+                )
                 output_columns[csv_columns.COOLING_HEAT_PUMP_POWER.for_object(this_comp.name)] = this_comp.power_hp_clg
+                output_columns[csv_columns.COOLING_HEAT_PUMP_COP.for_object(this_comp.name)] = this_comp.cop_hp_clg
+                output_columns[csv_columns.COOLING_HEAT_PUMP_RUNTIME_FRACTION.for_object(this_comp.name)] = (
+                    this_comp.rtf_hp_clg
+                )
                 output_columns[csv_columns.TOTAL_HEAT_PUMP_POWER.for_object(this_comp.name)] = this_comp.power_hp_tot
                 output_columns[csv_columns.CIRCULATION_PUMP_POWER.for_object(this_comp.name)] = (
                     this_comp.power_circ_pump
@@ -3303,6 +3341,7 @@ class GHEHPSystem:
 
                 q_src_clg = this_comp.clg_vals + this_comp.power_hp_clg
                 q_src_htg = this_comp.htg_vals - this_comp.power_hp_htg
+                q_src_net = q_src_htg - q_src_clg
 
                 output_columns[csv_columns.SOURCE_SIDE_COOLING_HEAT_TRANSFER_RATE.for_object(this_comp.name)] = (
                     q_src_clg
@@ -3310,9 +3349,8 @@ class GHEHPSystem:
                 output_columns[csv_columns.SOURCE_SIDE_HEATING_HEAT_TRANSFER_RATE.for_object(this_comp.name)] = (
                     q_src_htg
                 )
-                output_columns[csv_columns.SOURCE_SIDE_NET_HEAT_TRANSFER_RATE.for_object(this_comp.name)] = (
-                    q_src_htg - q_src_clg
-                )
+                output_columns[csv_columns.SOURCE_SIDE_NET_HEAT_TRANSFER_RATE.for_object(this_comp.name)] = q_src_net
+                network_q_net_bldg_source_side_tot += q_src_net
 
         for this_comp in self.components:
             if this_comp.comp_type == SimCompType.GROUND_HEAT_EXCHANGER:
@@ -3373,6 +3411,10 @@ class GHEHPSystem:
         output_columns[csv_columns.output_column(csv_columns.NETWORK, "Total Building Net Heat Transfer Rate", "W")] = (
             network_q_net_bldg_tot
         )
+        total_building_source_side_column = csv_columns.TOTAL_BUILDING_NET_SOURCE_SIDE_HEAT_TRANSFER_RATE.for_object(
+            csv_columns.NETWORK
+        )
+        output_columns[total_building_source_side_column] = network_q_net_bldg_source_side_tot
         output_columns[csv_columns.output_column(csv_columns.NETWORK, "Total GHE Heat Transfer Rate", "W")] = (
             network_q_net_ghe_tot
         )

@@ -26,7 +26,7 @@ from ghedesigner.ghe.horizontal_pipe_heat_exchange import calc_pipe_wall_resista
 from ghedesigner.ghe.hp_hybrid_loads_processor import ProcessLoads, Zone, enforce_minimum_timestep
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Soil
-from ghedesigner.network import BranchType
+from ghedesigner.network import BranchType, NetworkType
 from ghedesigner.tests.test_base_case import GHEBaseTest
 from ghedesigner.utilities import load_input_file
 from ghedesigner.validate import validate_input_file
@@ -462,6 +462,60 @@ class TestDistrictSys(GHEBaseTest):
         system = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
         assert system.ground_heat_exchangers[0].circulation_pump is not None
 
+    def test_building_flow_and_pump_power_use_active_mode_parameters(self):
+        system = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
+        building = system.buildings[0]
+        building.heating_m_flow_single_hp = 0.2
+        building.cooling_m_flow_single_hp = 0.6
+        building.hp_htg.design_pressure_loss = 10_000.0
+        building.hp_htg.pump_efficiency = 0.5
+        building.hp_clg.design_pressure_loss = 30_000.0
+        building.hp_clg.pump_efficiency = 0.75
+        building.htg_vals[:3] = [500.0, 0.0, 500.0]
+        building.clg_vals[:3] = [0.0, 250.0, 250.0]
+
+        with (
+            patch.object(building.hp_htg, "heating_capacity", return_value=1000.0),
+            patch.object(building.hp_clg, "cooling_capacity", return_value=1000.0),
+        ):
+            for index in range(3):
+                building.calc_mass_flow_rate(20.0, index)
+
+        np.testing.assert_allclose(building.m_flow_htg[:3], [0.1, 0.0, 0.1])
+        np.testing.assert_allclose(building.m_flow_clg[:3], [0.0, 0.15, 0.15])
+        np.testing.assert_allclose(building.m_flow[:3], [0.1, 0.15, 0.15])
+        np.testing.assert_allclose(building.rtf_hp_htg[:3], [0.5, 0.0, 0.5])
+        np.testing.assert_allclose(building.rtf_hp_clg[:3], [0.0, 0.25, 0.25])
+
+        building.calc_energy()
+        expected_power = np.array(
+            [
+                building.m_flow[0] * 10_000.0 / (building.fluid.rho * 0.5),
+                building.m_flow[1] * 30_000.0 / (building.fluid.rho * 0.75),
+                building.m_flow[2] * 30_000.0 / (building.fluid.rho * 0.75),
+            ]
+        )
+        np.testing.assert_allclose(building.power_circ_pump[:3], expected_power)
+
+        building.network_type = NetworkType.TWO_PIPE
+        building.calc_energy()
+        np.testing.assert_array_equal(building.power_circ_pump, 0.0)
+
+    def test_heat_pump_runtime_fraction_reports_capacity_exceedance(self):
+        system = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
+        building = system.buildings[0]
+        building.htg_vals[0] = 1500.0
+        building.clg_vals[0] = 1250.0
+
+        with (
+            patch.object(building.hp_htg, "heating_capacity", return_value=1000.0),
+            patch.object(building.hp_clg, "cooling_capacity", return_value=500.0),
+        ):
+            building.calc_mass_flow_rate(20.0, 0)
+
+        assert building.rtf_hp_htg[0] == pytest.approx(1.5)
+        assert building.rtf_hp_clg[0] == pytest.approx(2.5)
+
     def test_ghe_circulation_pump_uses_per_borehole_design_flow(self):
         ghx = cast(Any, object.__new__(GHX))
         ghx.ID = "test_ghe"
@@ -710,7 +764,8 @@ class TestDistrictSys(GHEBaseTest):
         assert system.num_ghx == 1
         assert system.num_timesteps == 8760
         assert np.all(building.htg_vals == 10_000.0)
-        assert np.all(building.clg_vals == 0.0)
+        assert np.all(building.clg_vals == 10_000.0)
+        np.testing.assert_allclose(building.m_flow, np.maximum(building.m_flow_htg, building.m_flow_clg))
         assert np.all(np.isfinite(building.t_in))
         assert np.all(np.isfinite(system.ground_heat_exchangers[0].t_in))
 
@@ -840,6 +895,27 @@ class TestDistrictSys(GHEBaseTest):
         expected_cooling_power = np.abs(1000.0 * (building.hp_clg.cooling_ratio(building.t_in[:3]) - 1.0))
         np.testing.assert_allclose(building.power_hp_htg[:3], expected_heating_power)
         np.testing.assert_allclose(building.power_hp_clg[:3], expected_cooling_power)
+        np.testing.assert_allclose(building.cop_hp_htg[:3], 1000.0 / expected_heating_power)
+        np.testing.assert_allclose(building.cop_hp_clg[:3], 1000.0 / expected_cooling_power)
+
+        building.htg_vals[:3] = 0.0
+        building.clg_vals[:3] = 0.0
+        building.calc_energy()
+        np.testing.assert_array_equal(building.cop_hp_htg[:3], 0.0)
+        np.testing.assert_array_equal(building.cop_hp_clg[:3], 0.0)
+
+    def test_fixed_heat_pump_cops_are_reported_for_active_modes(self):
+        system = GHEHPSystem(self.demos_path / "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json")
+        building = system.buildings[0]
+
+        assert building.heating_fixed_cop is not None
+        assert building.cooling_fixed_cop is not None
+        building.htg_vals[:3] = [0.0, 1000.0, 0.0]
+        building.clg_vals[:3] = [0.0, 0.0, 1000.0]
+        building.calc_energy()
+
+        np.testing.assert_allclose(building.cop_hp_htg[:3], [0.0, building.heating_fixed_cop, 0.0])
+        np.testing.assert_allclose(building.cop_hp_clg[:3], [0.0, 0.0, building.cooling_fixed_cop])
 
     def test_nonconstant_cop_matrix_terms_scale_with_cooling_load(self):
         system = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")

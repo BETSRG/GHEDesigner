@@ -59,6 +59,27 @@ def test_district_result_fixture_headers_follow_canonical_format() -> None:
 
     assert all(CANONICAL_HEADER.fullmatch(column) for column in header)
     assert "building1: Heating Heat Pump Power [W]" in header
+    assert "building1: Heating Heat Pump COP [-]" in header
+    assert "building1: Heating Heat Pump Runtime Fraction [-]" in header
     assert "building1: Cooling Heat Pump Power [W]" in header
+    assert "building1: Cooling Heat Pump COP [-]" in header
+    assert "building1: Cooling Heat Pump Runtime Fraction [-]" in header
     assert "building1: Source-Side Net Heat Transfer Rate [W]" in header
+    assert "Network: Total Building Net Source Side Heat Transfer Rate [W]" in header
     assert all("°C" not in column for column in header)
+
+
+def test_network_total_building_net_source_side_heat_transfer_rate_sums_buildings() -> None:
+    fixture = Path(__file__).parent / "test_data" / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.csv"
+    with fixture.open(newline="") as input_file:
+        rows = list(csv.DictReader(input_file))
+
+    building_columns = [column for column in rows[0] if column.endswith(": Source-Side Net Heat Transfer Rate [W]")]
+    network_column = "Network: Total Building Net Source Side Heat Transfer Rate [W]"
+    assert len(building_columns) == 6
+    np.testing.assert_allclose(
+        [float(row[network_column]) for row in rows],
+        [sum(float(row[column]) for column in building_columns) for row in rows],
+        rtol=0.0,
+        atol=4e-4,
+    )

@@ -49,7 +49,7 @@
         "value_units": "W"
       },
       "cooling_load_source": {
-        "column_name": "Zero",
+        "column_name": "Medium",
         "file_path": "../ghedesigner/tests/test_data/Simple_Load_Data.csv",
         "heat_pump_id": "hp1",
         "value_units": "W"
