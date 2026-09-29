@@ -57,7 +57,7 @@ For district systems, use the same JSON files through the CLI or create a `GHEHP
 | `find_design_rectangle_single_u_tube_bldg_loads.json`          | Single-building sizing with fixed COP conversion from building loads to GHE loads.    |
 | `simulate_1_pipe_1_ghe_1_bldg_district.json`                   | One-pipe district simulation using heat pump performance data and a pre-designed GHE. |
 | `simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json`            | Two-pipe district simulation using hourly loads and fixed COP conversion.             |
-| `simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json` | Canonical-network schema example with isolated and coupled buried horizontal piping.  |
+| `simulate_1_pipe_3_ghe_6_bldg_district_HOURLY_horizontal.json` | Compact network schema example with isolated and coupled buried horizontal piping.    |
 
 ## Input Features
 

@@ -97,8 +97,9 @@ GHEDesigner does not have every feature that is found in a tool like GLHEPRO. Cu
   computationally expensive than hybrid load aggregation.
 - Vertical borehole fields are the GHE technology sized by GHEDesigner. District simulations can include buried
   horizontal distribution piping, but horizontal ground heat exchanger fields are not sized as GHE fields.
-- GHEDesigner reports distribution-pipe pressure losses and configured local GHE pump energy, but does not yet warn
-  when the selected equipment has insufficient head.
+- GHEDesigner reports pressure losses for buildings, GHE borehole flow paths, and simulated horizontal pipes, along
+  with distribution and configured local GHE pump energy, but does not yet warn when the selected equipment has
+  insufficient head.
 
 ## Requirements
 

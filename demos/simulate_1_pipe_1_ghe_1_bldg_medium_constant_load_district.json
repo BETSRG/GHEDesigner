@@ -109,8 +109,8 @@
       "pipe": {
         "thermal_conductivity_w_per_m_k": 0.4,
         "volumetric_heat_capacity_j_per_m3_k": 1542000,
-        "inner_diameter_m": 0.030958871654506136,
-        "outer_diameter_m": 0.0381,
+        "inner_diameter_m": 0.0778,
+        "outer_diameter_m": 0.0889,
         "surface_roughness_m": 1e-6
       },
       "length_m": 100.0,
@@ -123,8 +123,8 @@
       "pipe": {
         "thermal_conductivity_w_per_m_k": 0.4,
         "volumetric_heat_capacity_j_per_m3_k": 1542000,
-        "inner_diameter_m": 0.030958871654506136,
-        "outer_diameter_m": 0.0381,
+        "inner_diameter_m": 0.0778,
+        "outer_diameter_m": 0.0889,
         "surface_roughness_m": 1e-6
       },
       "length_m": 100.0,

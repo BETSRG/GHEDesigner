@@ -110,6 +110,13 @@ For coefficients `a`, `b`, and `c`, GHEDesigner evaluates `a * T^2 + b * T + c`.
 directly; no separate reference-capacity input is used. Optional `minimum_curve_temperature_c` and
 `maximum_curve_temperature_c` fields hold a curve at its endpoint value outside the fitted temperature range.
 
+A performance map represents one heat pump, and a building is modeled as an equivalent bank of identical heat pumps
+operating in parallel. For each mode, **Required Part Load Ratio** is the building load divided by one heat pump's
+capacity at the entering fluid temperature. It is not capped at 1; a value greater than 1 means that the load exceeds
+the capacity of one heat pump. The mode-specific mass flow is the required part load ratio multiplied by
+`design_mass_flow_rate_kg_per_s`. When heating and cooling occur during the same timestep, building mass flow is the
+larger of the heating and cooling requirements, not their sum.
+
 ## Ground heat exchangers
 
 Each GHE requires these fields:
@@ -142,11 +149,23 @@ Every GHE in a one-pipe network requires `circulation_pump` with:
 The GHE design mass flow is derived from `design_volumetric_flow_rate_per_borehole_l_per_s`, fluid density, and the
 number of boreholes. The circulation-pump reference pressure drop is applied at that total design flow.
 
+The GHE flow columns distinguish flow provided by the district network from flow maintained locally:
+
+- `Network Branch Mass Flow Rate [kg/s]` is the flow delivered through the GHE station branch by the network.
+- `Pump Mass Flow Rate [kg/s]` is the total flow through the borefield after applying the local pump's minimum flow.
+- `Local Recirculation Flow Rate [kg/s]` is the additional local flow required when network branch flow is below that
+  minimum. It equals pump flow minus non-negative network branch flow and is otherwise zero.
+
+`Pump Mass Flow Rate` and `Local Recirculation Flow Rate` are reported only when the GHE has a configured
+`circulation_pump`.
+
 District simulation CSV files report `Total Pressure Loss [Pa]` for each building, GHE, and simulated horizontal pipe.
 GHE and horizontal-pipe objects also report `Pressure Loss [Pa/m]`. GHE pressure loss is calculated with BHResist's
 smooth-pipe friction model from the actual flow per borehole and the configured pipe geometry, with all boreholes
 treated as parallel branches. The total includes the complete down-and-back borehole flow path, and the per-length value
-is normalized by borehole depth.
+is normalized by borehole depth. This reported borehole-only loss excludes local headers and is separate from
+`circulation_pump.reference_pressure_drop_pa`, which represents the borefield and local headers and is used to calculate
+local pump power.
 Horizontal-pipe loss uses the mapped network segment's Darcy-Weisbach pressure loss, including configured roughness and
 minor-loss coefficients, and is normalized by segment length. Building loss is the active heat pump's configured
 `design_pressure_drop_pa`.
@@ -168,8 +187,9 @@ A segment may set `thermal_model_id` to an object in `horizontal_piping`. One-pi
 `mass_flow_control` requires `distribution_flow_multiplier` and may set
 `minimum_distribution_mass_flow_rate_kg_per_s`.
 
-The compact one-pipe representation automatically creates zero-loss station bypasses. Segment pressure losses and
-configured component pressure losses are evaluated for reporting and pump power; they do not allocate network flow.
+The compact one-pipe representation automatically creates zero-loss station bypasses. Network flow is prescribed from
+building demand rather than allocated from pressure loss. Configured pressure-loss models are used for pump power;
+component pressure-loss outputs may also use component-specific calculations described above.
 
 ## Horizontal piping and source/sink heat exchangers
 
@@ -179,3 +199,4 @@ pair also supplies `coupled_to_id` and `spacing_m`; `counter_flow` selects the p
 Each `source_sink_heat_exchangers` object requires `effectiveness_fraction`, `source_temperature_c`,
 `source_mass_flow_rate_kg_per_s`, `cut_in_temperature_c`, and `cut_out_temperature_c`. Optional component `hydraulics`
 uses `type: "passive"` and a paired `reference_mass_flow_rate_kg_per_s` and `reference_pressure_drop_pa` design point.
+Source/sink heat exchangers are supported only in one-pipe networks.
