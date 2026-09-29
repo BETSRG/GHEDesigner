@@ -164,7 +164,7 @@ configured component pressure losses are evaluated for reporting and pump power;
 
 ## Horizontal piping and source/sink heat exchangers
 
-Each `horizontal_piping` object requires `length_m`, `trench_depth_m`, and a single-U-tube `pipe` definition. A coupled
+Each `horizontal_piping` object requires `length_m`, `trench_depth_m`, and a `pipe` construction definition. A coupled
 pair also supplies `coupled_to_id` and `spacing_m`; `counter_flow` selects the paired-flow orientation.
 
 Each `source_sink_heat_exchangers` object requires `effectiveness_fraction`, `source_temperature_c`,

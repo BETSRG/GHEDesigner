@@ -740,11 +740,6 @@
       "title": "Horizontal pipe",
       "type": "object",
       "properties": {
-        "arrangement": {
-          "title": "Arrangement",
-          "const": "single_u_tube",
-          "description": "Horizontal pipe arrangement specified."
-        },
         "inner_diameter_m": {
           "title": "Pipe inner diameter",
           "$ref": "#/$defs/inner_diameter_m",
@@ -776,8 +771,7 @@
         "outer_diameter_m",
         "surface_roughness_m",
         "thermal_conductivity_w_per_m_k",
-        "volumetric_heat_capacity_j_per_m3_k",
-        "arrangement"
+        "volumetric_heat_capacity_j_per_m3_k"
       ],
       "additionalProperties": false
     },

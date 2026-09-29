@@ -484,8 +484,8 @@ class TestDistrictSys(GHEBaseTest):
         np.testing.assert_allclose(building.m_flow_htg[:3], [0.1, 0.0, 0.1])
         np.testing.assert_allclose(building.m_flow_clg[:3], [0.0, 0.15, 0.15])
         np.testing.assert_allclose(building.m_flow[:3], [0.1, 0.15, 0.15])
-        np.testing.assert_allclose(building.rtf_hp_htg[:3], [0.5, 0.0, 0.5])
-        np.testing.assert_allclose(building.rtf_hp_clg[:3], [0.0, 0.25, 0.25])
+        np.testing.assert_allclose(building.required_plr_hp_htg[:3], [0.5, 0.0, 0.5])
+        np.testing.assert_allclose(building.required_plr_hp_clg[:3], [0.0, 0.25, 0.25])
 
         building.calc_energy()
         expected_power = np.array(
@@ -501,7 +501,7 @@ class TestDistrictSys(GHEBaseTest):
         building.calc_energy()
         np.testing.assert_array_equal(building.power_circ_pump, 0.0)
 
-    def test_heat_pump_runtime_fraction_reports_capacity_exceedance(self):
+    def test_heat_pump_required_part_load_ratio_reports_capacity_exceedance(self):
         system = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
         building = system.buildings[0]
         building.htg_vals[0] = 1500.0
@@ -513,8 +513,8 @@ class TestDistrictSys(GHEBaseTest):
         ):
             building.calc_mass_flow_rate(20.0, 0)
 
-        assert building.rtf_hp_htg[0] == pytest.approx(1.5)
-        assert building.rtf_hp_clg[0] == pytest.approx(2.5)
+        assert building.required_plr_hp_htg[0] == pytest.approx(1.5)
+        assert building.required_plr_hp_clg[0] == pytest.approx(2.5)
 
     def test_ghe_circulation_pump_uses_per_borehole_design_flow(self):
         ghx = cast(Any, object.__new__(GHX))
@@ -764,6 +764,12 @@ class TestDistrictSys(GHEBaseTest):
         assert system.num_buildings == 1
         assert system.num_ghx == 1
         assert system.num_timesteps == 8760
+        assert set(system.horizontal_by_id) == {"building1_to_ghe1_line", "ghe1_to_building1_line"}
+        building_to_ghe = system.horizontal_by_id["building1_to_ghe1_line"]
+        ghe_to_building = system.horizontal_by_id["ghe1_to_building1_line"]
+        assert isinstance(building_to_ghe, CoupledHorizontalPipe)
+        assert building_to_ghe.coupled_pipe is ghe_to_building
+        assert ghe_to_building.coupled_pipe is building_to_ghe
         assert np.all(building.htg_vals == 10_000.0)
         assert np.all(building.clg_vals == 10_000.0)
         np.testing.assert_allclose(building.m_flow, np.maximum(building.m_flow_htg, building.m_flow_clg))
@@ -977,6 +983,19 @@ class TestDistrictSys(GHEBaseTest):
 
         with TemporaryDirectory() as tmp_dir:
             invalid_path = Path(tmp_dir) / "missing_horizontal_pipe.json"
+            invalid_path.write_text(json.dumps(data))
+
+            with pytest.raises(ValidationError):
+                validate_input_file(invalid_path)
+
+    def test_horizontal_piping_schema_rejects_vertical_pipe_arrangement(self):
+        f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_medium_constant_load_district.json"
+        data = json.loads(f_path_json.read_text())
+        first_pipe = next(iter(data["horizontal_piping"].values()))
+        first_pipe["pipe"]["arrangement"] = "single_u_tube"
+
+        with TemporaryDirectory() as tmp_dir:
+            invalid_path = Path(tmp_dir) / "horizontal_pipe_with_vertical_arrangement.json"
             invalid_path.write_text(json.dumps(data))
 
             with pytest.raises(ValidationError):

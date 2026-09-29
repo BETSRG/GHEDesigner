@@ -57,6 +57,12 @@
     }
   },
   "soil": {
+    "ground_temperature_model": {
+      "annual_temperature_amplitude_c": 10.0,
+      "semiannual_temperature_amplitude_c": 2.0,
+      "annual_phase_lag_days": 30.0,
+      "semiannual_phase_lag_days": 15.0
+    },
     "thermal_conductivity_w_per_m_k": 2,
     "volumetric_heat_capacity_j_per_m3_k": 2343493,
     "undisturbed_ground_temperature_c": 20
@@ -97,13 +103,43 @@
       }
     }
   },
+  "horizontal_piping": {
+    "building1_to_ghe1_line": {
+      "counter_flow": false,
+      "pipe": {
+        "thermal_conductivity_w_per_m_k": 0.4,
+        "volumetric_heat_capacity_j_per_m3_k": 1542000,
+        "inner_diameter_m": 0.030958871654506136,
+        "outer_diameter_m": 0.0381,
+        "surface_roughness_m": 1e-6
+      },
+      "length_m": 100.0,
+      "trench_depth_m": 1.5,
+      "spacing_m": 1.0,
+      "coupled_to_id": "ghe1_to_building1_line"
+    },
+    "ghe1_to_building1_line": {
+      "counter_flow": false,
+      "pipe": {
+        "thermal_conductivity_w_per_m_k": 0.4,
+        "volumetric_heat_capacity_j_per_m3_k": 1542000,
+        "inner_diameter_m": 0.030958871654506136,
+        "outer_diameter_m": 0.0381,
+        "surface_roughness_m": 1e-6
+      },
+      "length_m": 100.0,
+      "trench_depth_m": 1.5,
+      "spacing_m": 1.0,
+      "coupled_to_id": "building1_to_ghe1_line"
+    }
+  },
   "simulation_control": {
     "simulation_years": 1,
     "load_method": "hourly",
     "search_method": "simulation_only",
     "constant_cop": false,
     "horizontal_segments": 3,
-    "horizontal_simulation_considered": false
+    "horizontal_simulation_considered": true
   },
   "network": {
     "type": "one_pipe",
@@ -120,13 +156,15 @@
         "id": "network_segment_1",
         "from_component_id": "building1",
         "to_component_id": "ghe1",
-        "length_m": 100.0
+        "length_m": 100.0,
+        "thermal_model_id": "building1_to_ghe1_line"
       },
       {
         "id": "network_segment_2",
         "from_component_id": "ghe1",
         "to_component_id": "building1",
-        "length_m": 100.0
+        "length_m": 100.0,
+        "thermal_model_id": "ghe1_to_building1_line"
       }
     ],
     "pumps": {

@@ -1440,8 +1440,8 @@ class Building(BaseSimComp):
         self.power_hp_tot = np.zeros(self.num_timesteps, dtype=float)
         self.cop_hp_htg = np.zeros(self.num_timesteps, dtype=float)
         self.cop_hp_clg = np.zeros(self.num_timesteps, dtype=float)
-        self.rtf_hp_htg = np.zeros(self.num_timesteps, dtype=float)
-        self.rtf_hp_clg = np.zeros(self.num_timesteps, dtype=float)
+        self.required_plr_hp_htg = np.zeros(self.num_timesteps, dtype=float)
+        self.required_plr_hp_clg = np.zeros(self.num_timesteps, dtype=float)
         self.power_circ_pump = np.zeros(self.num_timesteps, dtype=float)
         self.q_ext = None
         self.q_rej = None
@@ -1492,13 +1492,13 @@ class Building(BaseSimComp):
             cap_clg = self.hp_clg.cooling_capacity(t_in)
             m_single_hp_clg = self.cooling_m_flow_single_hp
 
-        rtf_htg = htg_val / cap_htg if cap_htg != 0 else 0.0
-        rtf_clg = clg_val / cap_clg if cap_clg != 0 else 0.0
+        required_plr_htg = htg_val / cap_htg if cap_htg != 0 else 0.0
+        required_plr_clg = clg_val / cap_clg if cap_clg != 0 else 0.0
 
-        self.rtf_hp_htg[idx_timestep] = rtf_htg
-        self.rtf_hp_clg[idx_timestep] = rtf_clg
-        self.m_flow_htg[idx_timestep] = rtf_htg * m_single_hp_htg
-        self.m_flow_clg[idx_timestep] = rtf_clg * m_single_hp_clg
+        self.required_plr_hp_htg[idx_timestep] = required_plr_htg
+        self.required_plr_hp_clg[idx_timestep] = required_plr_clg
+        self.m_flow_htg[idx_timestep] = required_plr_htg * m_single_hp_htg
+        self.m_flow_clg[idx_timestep] = required_plr_clg * m_single_hp_clg
         mass_flow_bldg = max(self.m_flow_htg[idx_timestep], self.m_flow_clg[idx_timestep])
         self.m_flow[idx_timestep] = mass_flow_bldg
         return mass_flow_bldg
@@ -3326,13 +3326,13 @@ class GHEHPSystem:
                 network_q_net_bldg_tot += this_comp.q_net
                 output_columns[csv_columns.HEATING_HEAT_PUMP_POWER.for_object(this_comp.name)] = this_comp.power_hp_htg
                 output_columns[csv_columns.HEATING_HEAT_PUMP_COP.for_object(this_comp.name)] = this_comp.cop_hp_htg
-                output_columns[csv_columns.HEATING_HEAT_PUMP_RUNTIME_FRACTION.for_object(this_comp.name)] = (
-                    this_comp.rtf_hp_htg
+                output_columns[csv_columns.HEATING_HEAT_PUMP_REQUIRED_PART_LOAD_RATIO.for_object(this_comp.name)] = (
+                    this_comp.required_plr_hp_htg
                 )
                 output_columns[csv_columns.COOLING_HEAT_PUMP_POWER.for_object(this_comp.name)] = this_comp.power_hp_clg
                 output_columns[csv_columns.COOLING_HEAT_PUMP_COP.for_object(this_comp.name)] = this_comp.cop_hp_clg
-                output_columns[csv_columns.COOLING_HEAT_PUMP_RUNTIME_FRACTION.for_object(this_comp.name)] = (
-                    this_comp.rtf_hp_clg
+                output_columns[csv_columns.COOLING_HEAT_PUMP_REQUIRED_PART_LOAD_RATIO.for_object(this_comp.name)] = (
+                    this_comp.required_plr_hp_clg
                 )
                 output_columns[csv_columns.TOTAL_HEAT_PUMP_POWER.for_object(this_comp.name)] = this_comp.power_hp_tot
                 output_columns[csv_columns.CIRCULATION_PUMP_POWER.for_object(this_comp.name)] = (

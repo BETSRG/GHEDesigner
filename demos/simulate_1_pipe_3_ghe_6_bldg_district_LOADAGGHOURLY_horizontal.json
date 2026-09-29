@@ -310,7 +310,6 @@
     "horiz_supply_line": {
       "counter_flow": false,
       "pipe": {
-        "arrangement": "single_u_tube",
         "thermal_conductivity_w_per_m_k": 0.4,
         "volumetric_heat_capacity_j_per_m3_k": 1542000,
         "inner_diameter_m": 0.1524,
@@ -325,7 +324,6 @@
     "horiz_return_line": {
       "counter_flow": false,
       "pipe": {
-        "arrangement": "single_u_tube",
         "thermal_conductivity_w_per_m_k": 0.4,
         "volumetric_heat_capacity_j_per_m3_k": 1542000,
         "inner_diameter_m": 0.1524,
@@ -339,7 +337,6 @@
     },
     "building1_building2_line": {
       "pipe": {
-        "arrangement": "single_u_tube",
         "thermal_conductivity_w_per_m_k": 0.4,
         "volumetric_heat_capacity_j_per_m3_k": 1542000,
         "inner_diameter_m": 0.1016,
@@ -351,7 +348,6 @@
     },
     "building2_building3_line": {
       "pipe": {
-        "arrangement": "single_u_tube",
         "thermal_conductivity_w_per_m_k": 0.4,
         "volumetric_heat_capacity_j_per_m3_k": 1542000,
         "inner_diameter_m": 0.1016,
@@ -363,7 +359,6 @@
     },
     "ghe1_ghe2_line": {
       "pipe": {
-        "arrangement": "single_u_tube",
         "thermal_conductivity_w_per_m_k": 0.4,
         "volumetric_heat_capacity_j_per_m3_k": 1542000,
         "inner_diameter_m": 0.1016,
@@ -375,7 +370,6 @@
     },
     "ghe2_ghe3_line": {
       "pipe": {
-        "arrangement": "single_u_tube",
         "thermal_conductivity_w_per_m_k": 0.4,
         "volumetric_heat_capacity_j_per_m3_k": 1542000,
         "inner_diameter_m": 0.1016,
