@@ -7,9 +7,10 @@ import { CompactNetworkEditor } from "./CompactNetworkEditor";
 interface NetworkEditorProps {
   document: InputDocument;
   onChange: (document: InputDocument) => void;
+  onApply: (document: InputDocument) => void;
 }
 
-export function NetworkEditor({ document, onChange }: NetworkEditorProps) {
+export function NetworkEditor({ document, onChange, onApply }: NetworkEditorProps) {
   const type = document.network?.type;
 
   if (type !== "one_pipe" && type !== "two_pipe") {
@@ -60,7 +61,7 @@ export function NetworkEditor({ document, onChange }: NetworkEditorProps) {
           Change Topology
         </button>
       </div>
-      <CompactNetworkEditor document={document} onChange={onChange} />
+      <CompactNetworkEditor document={document} onChange={onChange} onApply={onApply} />
     </section>
   );
 }

@@ -9,6 +9,7 @@ import { ObjectJsonEditor } from "./ObjectJsonEditor";
 interface CompactNetworkEditorProps {
   document: InputDocument;
   onChange: (document: InputDocument) => void;
+  onApply: (document: InputDocument) => void;
 }
 
 const stationIds = (network: JsonObject) =>
@@ -19,7 +20,7 @@ const stationIds = (network: JsonObject) =>
         .filter((id): id is string => typeof id === "string")
     : [];
 
-export function CompactNetworkEditor({ document, onChange }: CompactNetworkEditorProps) {
+export function CompactNetworkEditor({ document, onChange, onApply }: CompactNetworkEditorProps) {
   const network = document.network ?? {};
   const stations = stationIds(network);
   const components = allComponentIds(document);
@@ -233,7 +234,7 @@ export function CompactNetworkEditor({ document, onChange }: CompactNetworkEdito
         <ObjectJsonEditor
           label="Advanced Compact-Network JSON"
           value={network}
-          onApply={(value) => onChange({ ...document, network: rebuildSegments(value) })}
+          onApply={(value) => onApply({ ...document, network: rebuildSegments(value) })}
         />
       </div>
       <CanonicalPreview document={document} />

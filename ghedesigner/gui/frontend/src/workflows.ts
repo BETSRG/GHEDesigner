@@ -174,6 +174,13 @@ export const workflowSections = (document: InputDocument, mode: WorkflowMode): s
   return sections;
 };
 
+export const nextWorkflowSection = (document: InputDocument, mode: WorkflowMode, currentSection: string): string => {
+  const sequence = workflowSections(document, mode);
+  const currentIndex = sequence.indexOf(currentSection);
+  if (currentIndex < 0) return "overview";
+  return sequence[currentIndex + 1] ?? "run";
+};
+
 export const simulationControlFields = (mode: WorkflowMode): string[] => {
   if (mode === "standalone_design" || mode === "building_design") return ["sizing_years"];
   if (mode === "district_design") {

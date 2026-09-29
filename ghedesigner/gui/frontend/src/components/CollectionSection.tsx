@@ -26,6 +26,7 @@ interface CollectionSectionProps {
   allowedProperties?: string[];
   workflow?: WorkflowMode;
   onChange: (document: InputDocument) => void;
+  onApply: (document: InputDocument) => void;
 }
 
 export function CollectionSection({
@@ -37,6 +38,7 @@ export function CollectionSection({
   allowedProperties,
   workflow,
   onChange,
+  onApply,
 }: CollectionSectionProps) {
   const collection = isJsonObject(document[property]) ? document[property] : {};
   const ids = useMemo(() => Object.keys(collection).sort(), [collection]);
@@ -330,7 +332,7 @@ export function CollectionSection({
                           for (const key of Object.keys(merged)) delete merged[key];
                         }
                         Object.assign(merged, deepClone(formData));
-                        updateCollection({ ...collection, [selected]: merged });
+                        onApply({ ...document, [property]: { ...collection, [selected]: merged } });
                         api.clientLog("info", "component_fields_applied", { section: property, id: selected });
                       }}
                     >

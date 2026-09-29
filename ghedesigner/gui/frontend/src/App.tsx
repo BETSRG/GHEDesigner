@@ -33,7 +33,6 @@ import { NetworkEditor } from "./components/NetworkEditor";
 import { Overview } from "./components/Overview";
 import { SchemaSection } from "./components/SchemaSection";
 import { RunSimulation } from "./components/RunSimulation";
-import { WorkflowBar } from "./components/WorkflowBar";
 import type { Diagnostic, ExampleSummary, InputDocument, JsonObject, WorkflowMode } from "./types";
 import { blankDocument, deepClone, isJsonObject } from "./types";
 import { useDocumentHistory } from "./useDocumentHistory";
@@ -41,6 +40,7 @@ import {
   applyWorkflow,
   collectionFields,
   inferWorkflow,
+  nextWorkflowSection,
   seasonalGroundTemperatureRequired,
   simulationControlFields,
   soilFields,
@@ -441,6 +441,15 @@ function App() {
     setSection(known ? root : "review");
   };
 
+  const applyAndAdvance = useCallback(
+    (document: InputDocument, appliedSection: string) => {
+      history.update(document);
+      setSection(nextWorkflowSection(document, workflow, appliedSection));
+      setStatus(`Applied ${appliedSection.replaceAll("_", " ")}`);
+    },
+    [history.update, workflow],
+  );
+
   const activeDefinition = visibleSectionDefinitions.find((item) => item.id === section);
   const content = useMemo(() => {
     if (!schema) return <div className="loading-screen">Loading the input schema…</div>;
@@ -467,7 +476,13 @@ function App() {
       );
     }
     if (section === "network") {
-      return <NetworkEditor document={history.document} onChange={history.update} />;
+      return (
+        <NetworkEditor
+          document={history.document}
+          onChange={history.update}
+          onApply={(document) => applyAndAdvance(document, "network")}
+        />
+      );
     }
     if (section === "review") {
       return (
@@ -492,7 +507,7 @@ function App() {
               </div>
               <DiagnosticsPanel diagnostics={diagnostics} validating={validating} onNavigate={navigatePointer} />
             </div>
-            <JsonEditor value={history.document} onApply={history.update} />
+            <JsonEditor value={history.document} onApply={(document) => applyAndAdvance(document, "review")} />
           </div>
         </section>
       );
@@ -518,6 +533,7 @@ function App() {
             allowedProperties={collectionFields(section, history.document, workflow)}
             workflow={workflow}
             onChange={history.update}
+            onApply={(document) => applyAndAdvance(document, section)}
           />
         );
       }
@@ -553,12 +569,12 @@ function App() {
               ? { search_method: ["simulation_only"] }
               : undefined
           }
-          onChange={history.update}
+          onChange={(document) => applyAndAdvance(document, section)}
         />
       );
     }
     return null;
-  }, [schema, section, history.document, history.update, diagnostics, validating, fileName, workflow]);
+  }, [schema, section, history.document, history.update, diagnostics, validating, fileName, workflow, applyAndAdvance]);
 
   if (fatalError) {
     return (
@@ -574,8 +590,16 @@ function App() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark"><Waves size={21} /></span>
-          <span><strong>GHE</strong>Designer</span>
+          <button
+            type="button"
+            className="brand-home"
+            title="Back to home"
+            aria-label="Back to GHEDesigner home"
+            onClick={() => setSection("overview")}
+          >
+            <span className="brand-mark" aria-hidden="true"><Waves size={21} /></span>
+            <span><strong>GHE</strong>Designer</span>
+          </button>
           <span className="product-label">Input Editor</span>
         </div>
         <div className="file-identity" title={fileName}>
@@ -594,8 +618,6 @@ function App() {
           </button>
         </div>
       </header>
-
-      <WorkflowBar mode={workflow} onChange={changeWorkflow} />
 
       <aside className="sidebar">
         <nav>

@@ -5,6 +5,7 @@ import {
   applyWorkflow,
   collectionFields,
   inferWorkflow,
+  nextWorkflowSection,
   seasonalGroundTemperatureRequired,
   soilFields,
   workflowDefinitions,
@@ -65,6 +66,17 @@ describe("workflow modes", () => {
       expect.arrayContaining(["network_pipe", "circulation_pump", "bypass"]),
     );
     expect(workflowSections(document, "standalone_design")).not.toContain("network");
+  });
+
+  it("advances applied sections through the visible workflow and then to run", () => {
+    const standalone = applyWorkflow(blankDocument(), "standalone_design");
+    expect(nextWorkflowSection(standalone, "standalone_design", "fluid")).toBe("soil");
+    expect(nextWorkflowSection(standalone, "standalone_design", "ground_heat_exchangers")).toBe("review");
+    expect(nextWorkflowSection(standalone, "standalone_design", "review")).toBe("run");
+
+    const district = applyWorkflow(blankDocument(), "district_simulation");
+    if (district.simulation_control) district.simulation_control.constant_cop = false;
+    expect(nextWorkflowSection(district, "district_simulation", "simulation_control")).toBe("heat_pumps");
   });
 
   it("only exposes per-GHE circulation pumps in district workflows", () => {

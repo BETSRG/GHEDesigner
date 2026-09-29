@@ -49,64 +49,10 @@ button {
 
 .app-shell {
   display: grid;
-  grid-template: 64px 54px minmax(0, 1fr) 28px / 224px minmax(0, 1fr);
+  grid-template: 64px minmax(0, 1fr) 28px / 224px minmax(0, 1fr);
   width: 100%;
   height: 100%;
   overflow: hidden;
-}
-
-.workflow-bar {
-  z-index: 15;
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid #d4e1de;
-  padding: 7px 18px;
-  background: #f8fbfa;
-  gap: 14px;
-}
-
-.workflow-bar-label {
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-.workflow-tabs {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 5px;
-}
-
-.workflow-tabs button {
-  display: inline-flex;
-  min-height: 36px;
-  align-items: center;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  padding: 7px 11px;
-  color: #5d706d;
-  background: transparent;
-  cursor: pointer;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.workflow-tabs button:hover {
-  border-color: #c9d9d5;
-  background: #eef5f2;
-}
-
-.workflow-tabs button.active {
-  border-color: #9fc5bc;
-  color: var(--brand-dark);
-  background: var(--brand-pale);
-  box-shadow: 0 3px 10px rgb(23 107 97 / 8%);
 }
 
 .topbar {
@@ -129,6 +75,20 @@ button {
   letter-spacing: -0.02em;
 }
 
+.brand-home {
+  display: flex;
+  align-items: center;
+  border: 0;
+  border-radius: 11px;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  gap: 9px;
+  font-size: inherit;
+  letter-spacing: inherit;
+}
+
 .brand-mark {
   display: grid;
   width: 36px;
@@ -138,6 +98,17 @@ button {
   color: white;
   background: linear-gradient(145deg, #1a786c, #104a45);
   box-shadow: 0 7px 18px rgb(23 107 97 / 22%);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.brand-home:hover .brand-mark {
+  box-shadow: 0 9px 22px rgb(23 107 97 / 30%);
+  transform: translateY(-1px);
+}
+
+.brand-home:focus-visible {
+  outline: 3px solid rgb(23 107 97 / 28%);
+  outline-offset: 2px;
 }
 
 .product-label {
@@ -1987,14 +1958,6 @@ textarea:focus {
 
   .segment-row {
     grid-template-columns: minmax(120px, 1fr) minmax(90px, 0.7fr) minmax(110px, 1fr);
-  }
-
-  .workflow-tabs button {
-    padding-inline: 8px;
-  }
-
-  .workflow-tabs button svg {
-    display: none;
   }
 
   .workflow-choice-grid {

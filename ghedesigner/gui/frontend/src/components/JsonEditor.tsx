@@ -11,13 +11,19 @@ interface JsonEditorProps {
 }
 
 export function JsonEditor({ value, onApply, title = "Raw JSON" }: JsonEditorProps) {
-  const [text, setText] = useState(() => JSON.stringify(value, null, 2));
+  const sourceText = JSON.stringify(value, null, 2);
+  const [text, setText] = useState(sourceText);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setText(JSON.stringify(value, null, 2));
+    setText(sourceText);
     setError(null);
-  }, [value]);
+  }, [sourceText]);
+
+  const reset = () => {
+    setText(sourceText);
+    setError(null);
+  };
 
   const apply = () => {
     try {
@@ -38,7 +44,12 @@ export function JsonEditor({ value, onApply, title = "Raw JSON" }: JsonEditorPro
           <h2>{title}</h2>
         </div>
         <div className="button-row">
-          <button type="button" className="button ghost" onClick={() => setText(JSON.stringify(value, null, 2))}>
+          <button
+            type="button"
+            className="button ghost"
+            disabled={text === sourceText && error === null}
+            onClick={reset}
+          >
             <RotateCcw size={15} /> Reset
           </button>
           <button type="button" className="button primary" onClick={apply}>
