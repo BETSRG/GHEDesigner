@@ -1,5 +1,6 @@
 import type { InputDocument, JsonObject, JsonValue } from "./types";
 import { deepClone, isJsonObject } from "./types";
+import guiDefaults from "./inputDefaults.schema-v3.json";
 
 export type CompactNetworkType = "one_pipe" | "two_pipe";
 
@@ -16,9 +17,7 @@ export const componentType = (document: InputDocument, id: string) => {
   return null;
 };
 
-const pumpDefinition = (): JsonObject => ({
-  wire_to_water_efficiency_fraction: 0.7,
-});
+const pumpDefinition = (): JsonObject => deepClone(guiDefaults.network.pump);
 
 export const rebuildSegments = (network: JsonObject): JsonObject => {
   const stations = Array.isArray(network.stations)
@@ -47,13 +46,18 @@ export const rebuildSegments = (network: JsonObject): JsonObject => {
     );
     const id = typeof previous?.id === "string" && !usedIds.has(previous.id) ? previous.id : nextId();
     usedIds.add(id);
-    segments.push({
+    const nextSegment: JsonObject = {
+      ...deepClone(guiDefaults.network.segment),
       ...(previous ?? {}),
       id,
       from_component_id: from,
       to_component_id: to,
-      length_m: typeof previous?.length_m === "number" ? previous.length_m : 10,
-    });
+    };
+    if (typeof nextSegment.thermal_model_id === "string") {
+      delete nextSegment.diameter_m;
+      delete nextSegment.surface_roughness_m;
+    }
+    segments.push(nextSegment);
   }
   return { ...network, segments };
 };
@@ -74,7 +78,6 @@ export const createCompactNetwork = (document: InputDocument, type: CompactNetwo
   const network: JsonObject = {
     type,
     stations,
-    distribution_pipe_defaults: { diameter_m: 0.1, surface_roughness_m: 0.000001 },
     segments: [],
     pumps,
     component_pumps: componentPumps,
@@ -82,10 +85,7 @@ export const createCompactNetwork = (document: InputDocument, type: CompactNetwo
   if (type === "one_pipe") {
     const pumpId = "distribution_pump";
     pumps[pumpId] = pumpDefinition();
-    network.mass_flow_control = {
-      distribution_flow_multiplier: 1.5,
-      minimum_distribution_mass_flow_rate_kg_per_s: 0.1,
-    };
+    network.mass_flow_control = deepClone(guiDefaults.network.one_pipe_mass_flow_control);
     network.distribution_pump = {
       type: "pump",
       pump_id: pumpId,

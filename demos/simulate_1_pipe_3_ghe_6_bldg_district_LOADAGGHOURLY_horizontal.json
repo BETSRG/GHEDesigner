@@ -316,7 +316,6 @@
         "outer_diameter_m": 0.1624,
         "surface_roughness_m": 1e-6
       },
-      "length_m": 50.0,
       "trench_depth_m": 1.5,
       "spacing_m": 1.0,
       "coupled_to_id": "horiz_return_line"
@@ -330,7 +329,6 @@
         "outer_diameter_m": 0.1624,
         "surface_roughness_m": 1e-6
       },
-      "length_m": 50.0,
       "trench_depth_m": 1.5,
       "spacing_m": 1.0,
       "coupled_to_id": "horiz_supply_line"
@@ -343,7 +341,6 @@
         "outer_diameter_m": 0.1116,
         "surface_roughness_m": 1e-6
       },
-      "length_m": 25.0,
       "trench_depth_m": 1.5
     },
     "building2_building3_line": {
@@ -354,7 +351,6 @@
         "outer_diameter_m": 0.1116,
         "surface_roughness_m": 1e-6
       },
-      "length_m": 25.0,
       "trench_depth_m": 1.5
     },
     "ghe1_ghe2_line": {
@@ -365,7 +361,6 @@
         "outer_diameter_m": 0.1116,
         "surface_roughness_m": 1e-6
       },
-      "length_m": 25.0,
       "trench_depth_m": 1.5
     },
     "ghe2_ghe3_line": {
@@ -376,7 +371,6 @@
         "outer_diameter_m": 0.1116,
         "surface_roughness_m": 1e-6
       },
-      "length_m": 25.0,
       "trench_depth_m": 1.5
     }
   },
@@ -384,7 +378,10 @@
     "simulation_years": 1,
     "load_method": "load_aggregation_hourly",
     "horizontal_segments": 3,
-    "horizontal_simulation_considered": true
+    "horizontal_simulation_considered": true,
+    "search_method": "simulation_only",
+    "constant_cop": true,
+    "exhaustive_search": false
   },
   "network": {
     "type": "one_pipe",
@@ -422,61 +419,76 @@
         "id": "network_segment_1",
         "from_component_id": "building1_htg_clg",
         "to_component_id": "building1_dhw",
-        "length_m": 22.22222222222222
+        "length_m": 22.22222222222222,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.13743427243553197,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_2",
         "from_component_id": "building1_dhw",
         "to_component_id": "building2_htg_clg",
         "length_m": 25.0,
-        "thermal_model_id": "building1_building2_line"
+        "thermal_model_id": "building1_building2_line",
+        "minor_loss_coefficient": 0.0
       },
       {
         "id": "network_segment_3",
         "from_component_id": "building2_htg_clg",
         "to_component_id": "building2_dhw",
-        "length_m": 22.22222222222222
+        "length_m": 22.22222222222222,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.13743427243553197,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_4",
         "from_component_id": "building2_dhw",
         "to_component_id": "building3_htg_clg",
         "length_m": 25.0,
-        "thermal_model_id": "building2_building3_line"
+        "thermal_model_id": "building2_building3_line",
+        "minor_loss_coefficient": 0.0
       },
       {
         "id": "network_segment_5",
         "from_component_id": "building3_htg_clg",
         "to_component_id": "building3_dhw",
-        "length_m": 22.22222222222222
+        "length_m": 22.22222222222222,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.13743427243553197,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_6",
         "from_component_id": "building3_dhw",
         "to_component_id": "ghe1",
         "length_m": 50.0,
-        "thermal_model_id": "horiz_return_line"
+        "thermal_model_id": "horiz_return_line",
+        "minor_loss_coefficient": 0.0
       },
       {
         "id": "network_segment_7",
         "from_component_id": "ghe1",
         "to_component_id": "ghe2",
         "length_m": 25.0,
-        "thermal_model_id": "ghe1_ghe2_line"
+        "thermal_model_id": "ghe1_ghe2_line",
+        "minor_loss_coefficient": 0.0
       },
       {
         "id": "network_segment_8",
         "from_component_id": "ghe2",
         "to_component_id": "ghe3",
         "length_m": 25.0,
-        "thermal_model_id": "ghe2_ghe3_line"
+        "thermal_model_id": "ghe2_ghe3_line",
+        "minor_loss_coefficient": 0.0
       },
       {
         "id": "network_segment_9",
         "from_component_id": "ghe3",
         "to_component_id": "building1_htg_clg",
         "length_m": 50.0,
-        "thermal_model_id": "horiz_supply_line"
+        "thermal_model_id": "horiz_supply_line",
+        "minor_loss_coefficient": 0.0
       }
     ],
     "pumps": {
@@ -517,10 +529,6 @@
     "mass_flow_control": {
       "distribution_flow_multiplier": 1.5,
       "minimum_distribution_mass_flow_rate_kg_per_s": 0.1
-    },
-    "distribution_pipe_defaults": {
-      "surface_roughness_m": 1e-6,
-      "diameter_m": 0.13743427243553197
     }
   }
 }

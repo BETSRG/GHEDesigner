@@ -125,7 +125,11 @@ class TestDistrictSys(GHEBaseTest):
         data = load_input_file(source_path) if data is None else data
         coupled_models = {model_id for model_id, model in data["horizontal_piping"].items() if "coupled_to_id" in model}
         for segment in data["network"]["segments"]:
-            if segment.get("thermal_model_id") in coupled_models:
+            thermal_model_id = segment.get("thermal_model_id")
+            if thermal_model_id in coupled_models:
+                pipe = data["horizontal_piping"][thermal_model_id]["pipe"]
+                segment["diameter_m"] = pipe["inner_diameter_m"]
+                segment["surface_roughness_m"] = pipe["surface_roughness_m"]
                 segment.pop("thermal_model_id")
         for model_id in coupled_models:
             data["horizontal_piping"].pop(model_id)
@@ -1029,6 +1033,51 @@ class TestDistrictSys(GHEBaseTest):
             invalid_path = Path(tmp_dir) / "missing_horizontal_pipe.json"
             invalid_path.write_text(json.dumps(data))
 
+            with pytest.raises(ValidationError):
+                validate_input_file(invalid_path)
+
+    def test_district_schema_requires_explicit_simulation_controls(self):
+        source_path = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
+        required_controls = (
+            "load_method",
+            "search_method",
+            "constant_cop",
+            "exhaustive_search",
+            "horizontal_segments",
+            "horizontal_simulation_considered",
+        )
+        for missing_control in required_controls:
+            with self.subTest(missing_control=missing_control):
+                data = load_input_file(source_path)
+                del data["simulation_control"][missing_control]
+
+                with TemporaryDirectory() as tmp_dir:
+                    invalid_path = Path(tmp_dir) / "missing_simulation_control.json"
+                    invalid_path.write_text(json.dumps(data))
+                    with pytest.raises(ValidationError):
+                        validate_input_file(invalid_path)
+
+    def test_network_schema_requires_explicit_unlinked_segment_hydraulics(self):
+        source_path = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
+        for missing_property in ("diameter_m", "surface_roughness_m", "minor_loss_coefficient"):
+            with self.subTest(missing_property=missing_property):
+                data = load_input_file(source_path)
+                del data["network"]["segments"][0][missing_property]
+
+                with TemporaryDirectory() as tmp_dir:
+                    invalid_path = Path(tmp_dir) / "missing_segment_hydraulics.json"
+                    invalid_path.write_text(json.dumps(data))
+                    with pytest.raises(ValidationError):
+                        validate_input_file(invalid_path)
+
+    def test_linked_horizontal_segment_rejects_duplicate_hydraulic_geometry(self):
+        source_path = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_medium_constant_load_district.json"
+        data = load_input_file(source_path)
+        data["network"]["segments"][0]["diameter_m"] = 0.08
+
+        with TemporaryDirectory() as tmp_dir:
+            invalid_path = Path(tmp_dir) / "duplicate_horizontal_hydraulics.json"
+            invalid_path.write_text(json.dumps(data))
             with pytest.raises(ValidationError):
                 validate_input_file(invalid_path)
 

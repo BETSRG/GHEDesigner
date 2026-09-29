@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from ghedesigner.network import (
@@ -85,10 +87,25 @@ def test_compact_one_pipe_generates_zero_loss_station_bypasses() -> None:
     network_data = {
         "type": "one_pipe",
         "stations": [{"component_id": "building_1"}, {"component_id": "ghe_1"}],
-        "distribution_pipe_defaults": {"diameter_m": 0.1},
         "segments": [
-            {"id": "segment_1", "from_component_id": "building_1", "to_component_id": "ghe_1", "length_m": 10.0},
-            {"id": "segment_2", "from_component_id": "ghe_1", "to_component_id": "building_1", "length_m": 10.0},
+            {
+                "id": "segment_1",
+                "from_component_id": "building_1",
+                "to_component_id": "ghe_1",
+                "length_m": 10.0,
+                "diameter_m": 0.1,
+                "surface_roughness_m": 1.0e-6,
+                "minor_loss_coefficient": 0.0,
+            },
+            {
+                "id": "segment_2",
+                "from_component_id": "ghe_1",
+                "to_component_id": "building_1",
+                "length_m": 10.0,
+                "diameter_m": 0.1,
+                "surface_roughness_m": 1.0e-6,
+                "minor_loss_coefficient": 0.0,
+            },
         ],
         "pumps": {"building_pump": pump, "distribution_pump": pump},
         "component_pumps": {"building_1": "building_pump"},
@@ -98,7 +115,7 @@ def test_compact_one_pipe_generates_zero_loss_station_bypasses() -> None:
             "minimum_distribution_mass_flow_rate_kg_per_s": 0.1,
         },
     }
-    component_data = {
+    component_data: dict[str, Any] = {
         "buildings": {"building_1": {}},
         "ground_heat_exchangers": {"ghe_1": {"circulation_pump": {"reference_pressure_drop_pa": 50_000.0}}},
     }
@@ -115,6 +132,73 @@ def test_compact_one_pipe_generates_zero_loss_station_bypasses() -> None:
     assert all(branch.reference_pressure_drop is None for branch in bypasses)
     assert all(branch.passive_pressure_drop(1.0, 1000.0, 0.001) == 0.0 for branch in bypasses)
     assert graph.branches["__ghe_1_device"].passive_pressure_drop(1.0, 1000.0, 0.001) == 0.0
+
+
+def test_linked_horizontal_model_supplies_segment_hydraulic_geometry() -> None:
+    pump = {"wire_to_water_efficiency_fraction": 0.7}
+    network_data = {
+        "type": "one_pipe",
+        "stations": [{"component_id": "building_1"}, {"component_id": "ghe_1"}],
+        "segments": [
+            {
+                "id": "horizontal_segment",
+                "from_component_id": "building_1",
+                "to_component_id": "ghe_1",
+                "length_m": 100.0,
+                "minor_loss_coefficient": 0.0,
+                "thermal_model_id": "horizontal_1",
+            },
+            {
+                "id": "return_segment",
+                "from_component_id": "ghe_1",
+                "to_component_id": "building_1",
+                "length_m": 100.0,
+                "diameter_m": 0.1,
+                "surface_roughness_m": 1.0e-6,
+                "minor_loss_coefficient": 0.0,
+            },
+        ],
+        "pumps": {"building_pump": pump, "distribution_pump": pump},
+        "component_pumps": {"building_1": "building_pump"},
+        "distribution_pump": {"type": "pump", "pump_id": "distribution_pump"},
+        "mass_flow_control": {
+            "distribution_flow_multiplier": 1.5,
+            "minimum_distribution_mass_flow_rate_kg_per_s": 0.1,
+        },
+    }
+    component_data: dict[str, Any] = {
+        "buildings": {"building_1": {}},
+        "ground_heat_exchangers": {"ghe_1": {}},
+        "horizontal_piping": {
+            "horizontal_1": {
+                "pipe": {
+                    "inner_diameter_m": 0.08,
+                    "surface_roughness_m": 2.0e-6,
+                }
+            }
+        },
+    }
+
+    graph = compile_network(
+        network_data,
+        {"building_1": BranchType.BUILDING, "ghe_1": BranchType.GROUND_HEAT_EXCHANGER},
+        component_data,
+    )
+    horizontal_branch = graph.branches["horizontal_segment"]
+    original_loss = horizontal_branch.passive_pressure_drop(1.0, 1000.0, 0.001)
+
+    component_data["horizontal_piping"]["horizontal_1"]["pipe"]["inner_diameter_m"] = 0.04
+    smaller_graph = compile_network(
+        network_data,
+        {"building_1": BranchType.BUILDING, "ghe_1": BranchType.GROUND_HEAT_EXCHANGER},
+        component_data,
+    )
+    smaller_branch = smaller_graph.branches["horizontal_segment"]
+
+    assert horizontal_branch.diameter == 0.08
+    assert horizontal_branch.roughness == 2.0e-6
+    assert smaller_branch.diameter == 0.04
+    assert smaller_branch.passive_pressure_drop(1.0, 1000.0, 0.001) > original_loss
 
 
 def test_semantic_validation_rejects_duplicate_ghe_pressure_loss() -> None:

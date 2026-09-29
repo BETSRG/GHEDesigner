@@ -957,7 +957,7 @@ class GHX(BaseSimComp):
             self.pump_reference_pressure_drop = float(pump_data["reference_pressure_drop_pa"])
             self.pump_efficiency = float(pump_data["wire_to_water_efficiency_fraction"])
             self.pump_pressure_drop_multiplier = float(pump_data["pressure_drop_multiplier"])
-            self.minimum_flow_fraction = float(pump_data.get("minimum_flow_fraction", 0.05))
+            self.minimum_flow_fraction = float(pump_data["minimum_flow_fraction"])
         else:
             self.pump_reference_pressure_drop = 0.0
             self.pump_efficiency = 0.0
@@ -1752,19 +1752,9 @@ class GHEHPSystem:
         self.network_graph: NetworkGraph = compile_network(network_data, component_type_map(json_data), json_data)
         sim_controls = json_data["simulation_control"]
         self.sim_years = sim_controls["simulation_years"]
-        if "search_method" in sim_controls:
-            self.search_method = sim_controls["search_method"]
-        else:
-            self.search_method = "global_bupcrs"
-        if "constant_cop" in sim_controls:
-            self.constant_cop = sim_controls["constant_cop"]
-        else:
-            self.constant_cop = True
-
-        if "exhaustive_search" in sim_controls:
-            self.exhaustive_search = sim_controls["exhaustive_search"]
-        else:
-            self.exhaustive_search = False
+        self.search_method = sim_controls["search_method"]
+        self.constant_cop = sim_controls["constant_cop"]
+        self.exhaustive_search = sim_controls["exhaustive_search"]
         self.num_timesteps = self.sim_years * HOURS_IN_YEAR
         self.total_loads = np.zeros(self.num_timesteps, dtype=float)
         self.nbh_selections = []
@@ -1830,7 +1820,7 @@ class GHEHPSystem:
         horiz_data = json_data.get("horizontal_piping", {})
         ugt_data = soil_data.get("ground_temperature_model", {})
 
-        self.use_horizontal = json_data.get("simulation_control", {}).get("horizontal_simulation_considered", False)
+        self.use_horizontal = json_data["simulation_control"]["horizontal_simulation_considered"]
 
         if self.use_horizontal and horiz_data and not ugt_data:
             raise ValueError("A 'soil.ground_temperature_model' block is required when simulating horizontal piping.")
@@ -1858,9 +1848,9 @@ class GHEHPSystem:
         tg = soil_data["undisturbed_ground_temperature_c"]
 
         self.sim_years = json_data["simulation_control"]["simulation_years"]
-        self.load_method = json_data["simulation_control"].get("load_method", "hourly").lower()
+        self.load_method = json_data["simulation_control"]["load_method"].lower()
 
-        self.horiz_segments = json_data["simulation_control"].get("horizontal_segments", 3)
+        self.horiz_segments = json_data["simulation_control"]["horizontal_segments"]
         if isinstance(self.horiz_segments, bool) or not isinstance(self.horiz_segments, int) or self.horiz_segments < 1:
             raise ValueError("horizontal_segments must be a positive integer.")
 
@@ -2001,6 +1991,14 @@ class GHEHPSystem:
                 raise ValueError("The horizontal response library has no case for the selected pipe parameters.")
             return min(candidates)[1]
 
+        horizontal_branch_data_by_id: dict[str, NetworkBranch] = {}
+        for branch in self.network_graph.branches.values():
+            if branch.thermal_model_id is None:
+                continue
+            if branch.thermal_model_id in horizontal_branch_data_by_id:
+                raise ValueError(f"Horizontal model '{branch.thermal_model_id}' is assigned to more than one branch.")
+            horizontal_branch_data_by_id[branch.thermal_model_id] = branch
+
         isolated_pipes = []
         coupled_pipes_dict = {}
 
@@ -2061,7 +2059,7 @@ class GHEHPSystem:
 
                     this_horiz = IsolatedHorizontalPipe(
                         name=h_id,
-                        length=h_data["length_m"],
+                        length=horizontal_branch_data_by_id[h_id].length,
                         num_segments=self.horiz_segments,
                         pipe=h_pipe,
                         soil=h_soil,
@@ -2100,7 +2098,7 @@ class GHEHPSystem:
 
                     this_horiz = CoupledHorizontalPipe(
                         name=h_id,
-                        length=h_data["length_m"],
+                        length=horizontal_branch_data_by_id[h_id].length,
                         num_segments=self.horiz_segments,
                         pipe=h_pipe,
                         soil=h_soil,
@@ -2117,7 +2115,7 @@ class GHEHPSystem:
                         ugt_phase2=ugt_data["semiannual_phase_lag_days"],
                         depth=h_data["trench_depth_m"],
                         time_step_params=self.time_step_params,
-                        counter_flow=h_data.get("counter_flow", False),
+                        counter_flow=h_data["counter_flow"],
                         load_method=self.load_method,
                     )
                     coupled_pipes_dict[h_id] = this_horiz
@@ -2142,10 +2140,15 @@ class GHEHPSystem:
 
                 h_data = horiz_data[h_id]
                 incompatible_fields = []
-                for field in ("length_m", "trench_depth_m", "spacing_m"):
+                for field in ("trench_depth_m", "spacing_m"):
                     if not isclose(h_data[field], partner_data[field]):
                         incompatible_fields.append(field)
-                if h_data.get("counter_flow", False) != partner_data.get("counter_flow", False):
+                if not isclose(
+                    horizontal_branch_data_by_id[h_id].length,
+                    horizontal_branch_data_by_id[partner_key].length,
+                ):
+                    incompatible_fields.append("network segment length_m")
+                if h_data["counter_flow"] != partner_data["counter_flow"]:
                     incompatible_fields.append("counter_flow")
                 if h_data["pipe"] != partner_data["pipe"]:
                     incompatible_fields.append("pipe")
@@ -3201,9 +3204,7 @@ class GHEHPSystem:
 
         if self.network_type == NetworkType.ONE_PIPE:
             multiplier = float(self.network_mass_flow_control["distribution_flow_multiplier"])
-            minimum_flow = float(
-                self.network_mass_flow_control.get("minimum_distribution_mass_flow_rate_kg_per_s", 0.0)
-            )
+            minimum_flow = float(self.network_mass_flow_control["minimum_distribution_mass_flow_rate_kg_per_s"])
             distribution_flow = max(multiplier * aggregate_building_flow, minimum_flow)
             for branch in self.network_graph.branches.values():
                 if branch.branch_type in (

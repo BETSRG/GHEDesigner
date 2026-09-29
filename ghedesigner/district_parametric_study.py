@@ -76,7 +76,7 @@ class SystemParametricStudySupervisor:
         building_keys = list(json_data["buildings"])
         parametric_dict = self.initial_dict.pop("parametric_study")
         self.system_dict = deepcopy(json_data)
-        ghe_keys = parametric_dict.get("ground_heat_exchanger_ids_to_modify", list(json_data["ground_heat_exchangers"]))
+        ghe_keys = parametric_dict["ground_heat_exchanger_ids_to_modify"]
         original_pipe_inner_diameter = json_data["ground_heat_exchangers"][ghe_keys[0]]["pipe"]["inner_diameter_m"]
         original_pipe_outer_diameter = json_data["ground_heat_exchangers"][ghe_keys[0]]["pipe"]["outer_diameter_m"]
         original_grout_conductivity = json_data["ground_heat_exchangers"][ghe_keys[0]]["grout"][
@@ -99,7 +99,7 @@ class SystemParametricStudySupervisor:
         self.building_keys = building_keys
 
         # Get parametric study data
-        self.study_type = parametric_dict.get("study_type", "combination")
+        self.study_type = parametric_dict["study_type"]
         self.parameter_ranges: dict[ParametricStudyParameters, Any] = {}
         self.parameters_to_modify: set[ParametricStudyParameters] = set()
         for parameter_key in ParametricStudyParameters:
@@ -114,17 +114,17 @@ class SystemParametricStudySupervisor:
                     self.parameter_ranges[parameter_key] = {
                         "inner_diameter": {
                             "values": parametric_dict[input_key][0]["values"],
-                            "parameter_range": parametric_dict[input_key][0].get("parameter_range", False),
+                            "parameter_range": parametric_dict[input_key][0]["parameter_range"],
                         },
                         "outer_diameter": {
                             "values": parametric_dict[input_key][1]["values"],
-                            "parameter_range": parametric_dict[input_key][1].get("parameter_range", False),
+                            "parameter_range": parametric_dict[input_key][1]["parameter_range"],
                         },
                     }
                 else:
                     self.parameter_ranges[parameter_key] = {
                         "values": parametric_dict[input_key]["values"],
-                        "parameter_range": parametric_dict[input_key].get("parameter_range", False),
+                        "parameter_range": parametric_dict[input_key]["parameter_range"],
                     }
             else:
                 self.parameter_ranges[parameter_key] = {"parameter_range": False}

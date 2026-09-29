@@ -38,7 +38,6 @@
       "title": "Borehole removal method",
       "type": "string",
       "enum": ["right_top", "radial", "line_segments"],
-      "default": "radial",
       "description": "Defines the method used to remove boreholes from a borefield. This is planned to be an optional parameter for multiple borefield design methods."
     },
     "column_name": {
@@ -505,7 +504,7 @@
               "enum": [false]
             }
           },
-          "required": ["values"],
+          "required": ["values", "parameter_range"],
           "additionalProperties": false
         }
       ]
@@ -1142,7 +1141,37 @@
           "minLength": 1
         }
       },
-      "required": ["id", "from_component_id", "to_component_id", "length_m"],
+      "required": [
+        "id",
+        "from_component_id",
+        "to_component_id",
+        "length_m",
+        "minor_loss_coefficient"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "required": ["thermal_model_id"]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "title": "Diameter is supplied by the horizontal model",
+                  "required": ["diameter_m"]
+                },
+                {
+                  "title": "Roughness is supplied by the horizontal model",
+                  "required": ["surface_roughness_m"]
+                }
+              ]
+            }
+          },
+          "else": {
+            "required": ["diameter_m", "surface_roughness_m"]
+          }
+        }
+      ],
       "additionalProperties": false
     },
     "compact_network": {
@@ -1169,12 +1198,14 @@
               "type": "number",
               "minimum": 0,
               "format": "Kilograms/Second",
-              "default": 0.1,
               "description": "Units: kilograms per second (kg/s).",
               "x-unit": "kg/s"
             }
           },
-          "required": ["distribution_flow_multiplier"],
+          "required": [
+            "distribution_flow_multiplier",
+            "minimum_distribution_mass_flow_rate_kg_per_s"
+          ],
           "additionalProperties": false
         },
         "stations": {
@@ -1194,36 +1225,6 @@
             "required": ["component_id"],
             "additionalProperties": false
           }
-        },
-        "distribution_pipe_defaults": {
-          "title": "Network pipe defaults",
-          "type": "object",
-          "properties": {
-            "diameter_m": {
-              "title": "Diameter",
-              "type": "number",
-              "exclusiveMinimum": 0,
-              "format": "Meters",
-              "description": "Units: meters (m).",
-              "x-unit": "m"
-            },
-            "surface_roughness_m": {
-              "title": "Pipe surface roughness",
-              "type": "number",
-              "minimum": 0,
-              "format": "Meters",
-              "description": "Units: meters (m).",
-              "x-unit": "m"
-            },
-            "minor_loss_coefficient": {
-              "title": "Minor-loss coefficient",
-              "type": "number",
-              "minimum": 0,
-              "description": "Units: dimensionless."
-            }
-          },
-          "required": ["diameter_m"],
-          "additionalProperties": false
         },
         "segments": {
           "title": "Distribution pipe segments",
@@ -1252,14 +1253,7 @@
           "$ref": "#/$defs/pump_hydraulics"
         }
       },
-      "required": [
-        "type",
-        "stations",
-        "distribution_pipe_defaults",
-        "segments",
-        "pumps",
-        "component_pumps"
-      ],
+      "required": ["type", "stations", "segments", "pumps", "component_pumps"],
       "allOf": [
         {
           "if": {
@@ -1577,7 +1571,6 @@
                 "type": "number",
                 "minimum": 0,
                 "maximum": 1,
-                "default": 0.05,
                 "description": "Units: dimensionless.",
                 "x-unit": "1"
               }
@@ -1585,7 +1578,8 @@
             "required": [
               "reference_pressure_drop_pa",
               "wire_to_water_efficiency_fraction",
-              "pressure_drop_multiplier"
+              "pressure_drop_multiplier",
+              "minimum_flow_fraction"
             ],
             "additionalProperties": false
           },
@@ -2087,6 +2081,7 @@
                   "minimum_rotation_degrees",
                   "maximum_rotation_degrees",
                   "rotation_step_degrees",
+                  "borehole_spacing_step_m",
                   "property_boundary_coordinates_m",
                   "method"
                 ],
@@ -2116,8 +2111,7 @@
               "continue_if_design_unmet": {
                 "title": "Continue when design limits are unmet",
                 "type": "boolean",
-                "default": false,
-                "description": "Causes to return the best available borehole field configuration rather than fail if design conditions are unmet. Optional. Default False."
+                "description": "Causes GHEDesigner to return the best available borehole field configuration rather than fail if design conditions are unmet."
               },
               "maximum_active_borehole_length_m": {
                 "title": "Maximum borehole active length",
@@ -2140,7 +2134,8 @@
               "maximum_entering_fluid_temperature_c",
               "minimum_entering_fluid_temperature_c",
               "maximum_active_borehole_length_m",
-              "minimum_active_borehole_length_m"
+              "minimum_active_borehole_length_m",
+              "continue_if_design_unmet"
             ],
             "additionalProperties": false
           },
@@ -2256,6 +2251,7 @@
           }
         }
       },
+      "required": ["study_type", "ground_heat_exchanger_ids_to_modify"],
       "additionalProperties": false
     },
     "simulation_control": {
@@ -2277,7 +2273,6 @@
           "title": "Load time-step method",
           "type": "string",
           "enum": ["hybrid", "hourly", "load_aggregation_hourly"],
-          "default": "hybrid",
           "description": "Load method used for simulations and sizing. HYBRID aggregates loads before GHE calculations; HOURLY uses hourly loads directly."
         },
         "search_method": {
@@ -2290,19 +2285,16 @@
             "nelder_mead",
             "simulation_only"
           ],
-          "default": "global_bupcrs_br",
           "description": "Defines the type of design method to be used for the system GHEs. Use \"SIMULATION_ONLY\" if you only want to simulate pre-designed GHEs."
         },
         "constant_cop": {
           "title": "Use constant COP",
           "type": "boolean",
-          "default": true,
           "description": "Determines if system heat pump loads are converted with fixed COP behavior instead of full heat pump performance calculations."
         },
         "exhaustive_search": {
           "title": "Use exhaustive search",
           "type": "boolean",
-          "default": false,
           "description": "Determines if the GHE design algorithm will perform an exhaustive search or a faster search (which depends on the search method type)."
         },
         "horizontal_segments": {
@@ -2310,13 +2302,11 @@
           "type": "integer",
           "minimum": 1,
           "format": "-",
-          "default": 3,
           "description": "Number of segments for horizontal buried pipe simulations. Units: dimensionless."
         },
         "horizontal_simulation_considered": {
           "title": "Include horizontal pipe heat transfer",
           "type": "boolean",
-          "default": false,
           "description": "Determines if the simulation accounts for thermal effects from horizontal_piping components using soil.ground_temperature_model."
         }
       },
@@ -2330,7 +2320,15 @@
               "x-unit": "year"
             }
           },
-          "required": ["simulation_years"],
+          "required": [
+            "simulation_years",
+            "load_method",
+            "search_method",
+            "constant_cop",
+            "exhaustive_search",
+            "horizontal_segments",
+            "horizontal_simulation_considered"
+          ],
           "additionalProperties": true
         },
         {
@@ -2418,13 +2416,6 @@
         "type": "object",
         "description": "Horizontal pipe object.",
         "properties": {
-          "length_m": {
-            "title": "Length",
-            "type": "number",
-            "minimum": 0,
-            "description": "Units: meters (m).",
-            "x-unit": "m"
-          },
           "trench_depth_m": {
             "title": "Buried pipe depth",
             "type": "number",
@@ -2453,7 +2444,7 @@
             "$ref": "#/$defs/horizontal_pipe"
           }
         },
-        "required": ["length_m", "trench_depth_m", "pipe"],
+        "required": ["trench_depth_m", "pipe"],
         "allOf": [
           {
             "if": {
@@ -2465,15 +2456,11 @@
                 {
                   "title": "Horizontal piping models option 2",
                   "required": ["spacing_m"]
-                },
-                {
-                  "title": "Horizontal piping models option 3",
-                  "required": ["counter_flow"]
                 }
               ]
             },
             "then": {
-              "required": ["coupled_to_id", "spacing_m"]
+              "required": ["coupled_to_id", "spacing_m", "counter_flow"]
             }
           }
         ],

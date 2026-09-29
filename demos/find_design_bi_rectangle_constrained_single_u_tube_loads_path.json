@@ -33,7 +33,8 @@
         "minimum_entering_fluid_temperature_c": 5,
         "maximum_entering_fluid_temperature_c": 35,
         "maximum_active_borehole_length_m": 135,
-        "minimum_active_borehole_length_m": 60
+        "minimum_active_borehole_length_m": 60,
+        "continue_if_design_unmet": false
       },
       "loads": {
         "column_name": "Hourly heat extraction (W)",

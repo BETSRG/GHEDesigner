@@ -22,6 +22,10 @@ remain responsive; changes are staged until **Apply section** or **Apply compone
 raw JSON view remains available for final review. **Apply section**, **Apply component**, and **Apply JSON** save the
 staged changes and advance to the next step in the selected workflow.
 
+Suggested starting values used when the GUI creates a document, workflow, component, or network segment are maintained
+in a GUI-only versioned defaults file. The GUI writes every selected value into the document. Exported JSON files do
+not depend on schema defaults or hidden runtime fallbacks.
+
 Guided forms display the schema's natural-language `title` for every field, including engineering-specific names such
 as **Design flow per borehole** and **Volumetric heat capacity**. Exported JSON and the raw JSON view continue to use
 the canonical machine-readable property names, so changing a display label never changes the input-file format.
@@ -47,9 +51,9 @@ cannot be run or exported.
 ## Network editing
 
 Compact one-pipe and two-pipe inputs use an ordered station editor. It controls station order, distribution segments,
-pipe defaults, and the one-pipe distribution flow rule. One-pipe station bypasses are generated automatically as
-zero-loss paths. A read-only topology preview shows the physical components and their distribution order. Solver-only
-nodes, bypasses, and pump branches are intentionally hidden from this view.
+explicit pipe properties, and the one-pipe distribution flow rule. One-pipe station bypasses are generated
+automatically as zero-loss paths. A read-only topology preview shows the physical components and their distribution
+order. Solver-only nodes, bypasses, and pump branches are intentionally hidden from this view.
 
 ## Validation and export
 

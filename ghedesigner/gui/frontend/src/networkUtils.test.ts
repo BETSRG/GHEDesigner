@@ -16,6 +16,16 @@ describe("compact network editing", () => {
     expect(network.stations).toEqual([{ component_id: "building_1" }, { component_id: "ghe_1" }]);
     expect(network.segments).toHaveLength(2);
     expect(network.component_pumps).toEqual({ building_1: "pump_building_1" });
+    expect(network).not.toHaveProperty("distribution_pipe_defaults");
+    expect(network.segments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          diameter_m: 0.1,
+          surface_roughness_m: 0.000001,
+          minor_loss_coefficient: 0,
+        }),
+      ]),
+    );
     expect(network).not.toHaveProperty("passive_components");
     expect(network).not.toHaveProperty("bypass_components");
   });
@@ -42,6 +52,8 @@ describe("compact network editing", () => {
         to_component_id: "ghe_1",
         length_m: 44,
         diameter_m: 0.08,
+        surface_roughness_m: 0.000001,
+        minor_loss_coefficient: 0,
       },
     ]);
   });

@@ -149,9 +149,9 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                 "property_evaluation_temperature_c": 20.0,
             }
         )
-        fluid_name = fluid_dict.get("fluid_type", "water")
-        concentration_percent = fluid_dict.get("concentration_percent", 0.0)
-        temperature = fluid_dict.get("property_evaluation_temperature_c", 20.0)
+        fluid_name = fluid_dict["fluid_type"]
+        concentration_percent = fluid_dict["concentration_percent"]
+        temperature = fluid_dict["property_evaluation_temperature_c"]
 
         pipe_data: dict = ghe_dict["pipe"]
         pipe_type = BHType(pipe_data["arrangement"].replace("_", "").upper())
@@ -256,7 +256,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                 case DesignGeomType.ROWWISE:
                     # use perimeter calculations if present
                     perimeter_spacing_ratio = geom.get("perimeter_spacing_ratio")
-                    spacing_step = geom.get("borehole_spacing_step_m", 0)
+                    spacing_step = geom["borehole_spacing_step_m"]
                     no_go_boundaries = self._boundary_list_collection(geom.get("no_go_boundary_coordinates_m"))
                     self.geometric_constraint = GeometricConstraintsRowWise(
                         perimeter_spacing_ratio=perimeter_spacing_ratio,
@@ -320,7 +320,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
 
     def configure_design(self, design_parameters):
         # grab some design conditions
-        self.continue_if_design_unmet = design_parameters.get("continue_if_design_unmet", False)
+        self.continue_if_design_unmet = design_parameters["continue_if_design_unmet"]
         self.min_eft = design_parameters["minimum_entering_fluid_temperature_c"]
         self.max_eft = design_parameters["maximum_entering_fluid_temperature_c"]
         self.max_height = design_parameters["maximum_active_borehole_length_m"]

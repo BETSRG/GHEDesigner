@@ -1,5 +1,6 @@
 import type { Diagnostic, InputDocument, JsonObject, WorkflowMode } from "./types";
 import { deepClone, isJsonObject } from "./types";
+import guiDefaults from "./inputDefaults.schema-v3.json";
 
 export type { WorkflowMode } from "./types";
 
@@ -94,41 +95,54 @@ const deleteKeys = (object: JsonObject, keys: string[]) => {
 
 export const applyWorkflow = (source: InputDocument, mode: WorkflowMode): InputDocument => {
   const document = deepClone(source);
-  document.schema_version ??= 3;
+  document.schema_version ??= guiDefaults.schema_version;
   document.buildings ??= {};
   document.ground_heat_exchangers ??= {};
 
   const previousControls = isJsonObject(document.simulation_control) ? document.simulation_control : {};
+  const workflowDefaults =
+    mode === "g_function"
+      ? guiDefaults.workflow_simulation_controls.standalone_design
+      : guiDefaults.workflow_simulation_controls[mode];
   const duration =
     typeof previousControls.simulation_years === "number"
       ? previousControls.simulation_years
       : typeof previousControls.sizing_years === "number"
         ? previousControls.sizing_years
-        : mode === "standalone_design" || mode === "building_design"
-          ? 20
-          : 1;
+        : "sizing_years" in workflowDefaults
+          ? workflowDefaults.sizing_years
+          : workflowDefaults.simulation_years;
 
   if (mode === "g_function") {
     delete document.simulation_control;
   } else if (mode === "standalone_design" || mode === "building_design") {
     document.simulation_control = { sizing_years: duration };
   } else {
+    const districtDefaults = guiDefaults.workflow_simulation_controls[mode];
     document.simulation_control = {
       simulation_years: duration,
-      load_method: typeof previousControls.load_method === "string" ? previousControls.load_method : "hybrid",
+      load_method:
+        typeof previousControls.load_method === "string" ? previousControls.load_method : districtDefaults.load_method,
       search_method:
         mode === "district_simulation"
-          ? "simulation_only"
+          ? districtDefaults.search_method
           : previousControls.search_method === "simulation_only" || typeof previousControls.search_method !== "string"
-            ? "global_bupcrs_br"
+            ? districtDefaults.search_method
             : previousControls.search_method,
-      constant_cop: typeof previousControls.constant_cop === "boolean" ? previousControls.constant_cop : true,
+      constant_cop:
+        typeof previousControls.constant_cop === "boolean" ? previousControls.constant_cop : districtDefaults.constant_cop,
+      exhaustive_search:
+        mode === "district_design" && typeof previousControls.exhaustive_search === "boolean"
+          ? previousControls.exhaustive_search
+          : districtDefaults.exhaustive_search,
       horizontal_segments:
-        typeof previousControls.horizontal_segments === "number" ? previousControls.horizontal_segments : 3,
-      horizontal_simulation_considered: previousControls.horizontal_simulation_considered === true,
-      ...(mode === "district_design"
-        ? { exhaustive_search: previousControls.exhaustive_search === true }
-        : {}),
+        typeof previousControls.horizontal_segments === "number"
+          ? previousControls.horizontal_segments
+          : districtDefaults.horizontal_segments,
+      horizontal_simulation_considered:
+        typeof previousControls.horizontal_simulation_considered === "boolean"
+          ? previousControls.horizontal_simulation_considered
+          : districtDefaults.horizontal_simulation_considered,
     };
   }
 

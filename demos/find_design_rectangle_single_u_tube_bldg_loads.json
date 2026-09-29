@@ -44,7 +44,8 @@
         "maximum_entering_fluid_temperature_c": 35,
         "maximum_active_borehole_length_m": 135,
         "minimum_active_borehole_length_m": 60,
-        "maximum_borehole_count": 200
+        "maximum_borehole_count": 200,
+        "continue_if_design_unmet": false
       },
       "design_volumetric_flow_rate_per_borehole_l_per_s": 0.5,
       "borefield_layout_constraints": {

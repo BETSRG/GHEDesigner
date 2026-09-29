@@ -33,7 +33,8 @@
         "minimum_entering_fluid_temperature_c": 5,
         "maximum_entering_fluid_temperature_c": 35,
         "maximum_active_borehole_length_m": 135,
-        "minimum_active_borehole_length_m": 60
+        "minimum_active_borehole_length_m": 60,
+        "continue_if_design_unmet": false
       },
       "loads": {
         "heat_transfer_rate_values_w": [
@@ -1858,7 +1859,8 @@
             "x": 53.19620253,
             "y": 112.3291139
           }
-        ]
+        ],
+        "borehole_spacing_step_m": 0.0
       }
     }
   },

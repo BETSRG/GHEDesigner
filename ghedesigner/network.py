@@ -392,8 +392,8 @@ def _compile_compact_network(
             "reference_pressure_drop": hydraulics.get("reference_pressure_drop_pa"),
         }
 
-    defaults = network_data.get("distribution_pipe_defaults", {})
     segment_lookup = {segment["id"]: segment for segment in network_data["segments"]}
+    horizontal_data = component_data.get("horizontal_piping", {})
     branches: dict[str, NetworkBranch] = {}
     nodes: dict[str, NetworkNode] = {}
 
@@ -461,7 +461,19 @@ def _compile_compact_network(
         to_component = segment["to_component_id"]
         if from_component not in station_ids or to_component not in station_ids:
             raise ValueError(f"Segment '{segment['id']}' references a component outside the station list.")
-        properties = {**defaults, **segment}
+        thermal_model_id = segment.get("thermal_model_id")
+        if thermal_model_id is None:
+            diameter = float(segment["diameter_m"])
+            roughness = float(segment["surface_roughness_m"])
+        else:
+            try:
+                horizontal_pipe = horizontal_data[thermal_model_id]["pipe"]
+            except KeyError as error:
+                raise ValueError(
+                    f"Segment '{segment['id']}' references unknown horizontal model '{thermal_model_id}'."
+                ) from error
+            diameter = float(horizontal_pipe["inner_diameter_m"])
+            roughness = float(horizontal_pipe["surface_roughness_m"])
         if network_type == NetworkType.ONE_PIPE:
             target_node = distribution_pump_node if to_component == station_ids[0] else f"__{to_component}_a"
             pairs = [("", f"__{from_component}_b", target_node)]
@@ -477,11 +489,11 @@ def _compile_compact_network(
                 branch_type=BranchType.PIPE,
                 node_a=node_a,
                 node_b=node_b,
-                length=float(properties["length_m"]),
-                diameter=float(properties["diameter_m"]),
-                roughness=float(properties.get("surface_roughness_m", 1.0e-6)),
-                minor_loss_coefficient=float(properties.get("minor_loss_coefficient", 0.0)),
-                thermal_model_id=properties.get("thermal_model_id"),
+                length=float(segment["length_m"]),
+                diameter=diameter,
+                roughness=roughness,
+                minor_loss_coefficient=float(segment["minor_loss_coefficient"]),
+                thermal_model_id=thermal_model_id,
             )
 
     if network_type == NetworkType.ONE_PIPE:

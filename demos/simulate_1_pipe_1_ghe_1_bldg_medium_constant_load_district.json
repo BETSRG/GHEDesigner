@@ -113,7 +113,6 @@
         "outer_diameter_m": 0.0889,
         "surface_roughness_m": 1e-6
       },
-      "length_m": 100.0,
       "trench_depth_m": 1.5,
       "spacing_m": 1.0,
       "coupled_to_id": "ghe1_to_building1_line"
@@ -127,7 +126,6 @@
         "outer_diameter_m": 0.0889,
         "surface_roughness_m": 1e-6
       },
-      "length_m": 100.0,
       "trench_depth_m": 1.5,
       "spacing_m": 1.0,
       "coupled_to_id": "building1_to_ghe1_line"
@@ -139,7 +137,8 @@
     "search_method": "simulation_only",
     "constant_cop": false,
     "horizontal_segments": 3,
-    "horizontal_simulation_considered": true
+    "horizontal_simulation_considered": true,
+    "exhaustive_search": false
   },
   "network": {
     "type": "one_pipe",
@@ -157,14 +156,16 @@
         "from_component_id": "building1",
         "to_component_id": "ghe1",
         "length_m": 100.0,
-        "thermal_model_id": "building1_to_ghe1_line"
+        "thermal_model_id": "building1_to_ghe1_line",
+        "minor_loss_coefficient": 0.0
       },
       {
         "id": "network_segment_2",
         "from_component_id": "ghe1",
         "to_component_id": "building1",
         "length_m": 100.0,
-        "thermal_model_id": "ghe1_to_building1_line"
+        "thermal_model_id": "ghe1_to_building1_line",
+        "minor_loss_coefficient": 0.0
       }
     ],
     "pumps": {
@@ -185,10 +186,6 @@
     "mass_flow_control": {
       "distribution_flow_multiplier": 1.5,
       "minimum_distribution_mass_flow_rate_kg_per_s": 0.1
-    },
-    "distribution_pipe_defaults": {
-      "surface_roughness_m": 1e-6,
-      "diameter_m": 0.030958871654506136
     }
   }
 }

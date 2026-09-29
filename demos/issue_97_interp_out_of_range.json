@@ -20,7 +20,8 @@
         "minimum_entering_fluid_temperature_c": 5,
         "maximum_entering_fluid_temperature_c": 35,
         "maximum_active_borehole_length_m": 200,
-        "minimum_active_borehole_length_m": 100
+        "minimum_active_borehole_length_m": 100,
+        "continue_if_design_unmet": false
       },
       "grout": {
         "thermal_conductivity_w_per_m_k": 1.6,

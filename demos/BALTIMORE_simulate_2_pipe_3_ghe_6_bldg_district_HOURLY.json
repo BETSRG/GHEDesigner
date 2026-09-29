@@ -304,7 +304,10 @@
     "simulation_years": 1,
     "horizontal_simulation_considered": false,
     "constant_cop": false,
-    "load_method": "hourly"
+    "load_method": "hourly",
+    "search_method": "simulation_only",
+    "exhaustive_search": false,
+    "horizontal_segments": 3
   },
   "network": {
     "type": "two_pipe",
@@ -342,49 +345,73 @@
         "id": "network_segment_1",
         "from_component_id": "building1_htg_clg",
         "to_component_id": "building1_dhw",
-        "length_m": 150.0
+        "length_m": 150.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.23403378034632988,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_2",
         "from_component_id": "building1_dhw",
         "to_component_id": "building2_htg_clg",
-        "length_m": 150.0
+        "length_m": 150.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.23403378034632988,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_3",
         "from_component_id": "building2_htg_clg",
         "to_component_id": "building2_dhw",
-        "length_m": 150.0
+        "length_m": 150.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.23403378034632988,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_4",
         "from_component_id": "building2_dhw",
         "to_component_id": "building3_htg_clg",
-        "length_m": 150.0
+        "length_m": 150.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.23403378034632988,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_5",
         "from_component_id": "building3_htg_clg",
         "to_component_id": "building3_dhw",
-        "length_m": 150.0
+        "length_m": 150.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.23403378034632988,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_6",
         "from_component_id": "building3_dhw",
         "to_component_id": "ghe1",
-        "length_m": 150.0
+        "length_m": 150.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.23403378034632988,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_7",
         "from_component_id": "ghe1",
         "to_component_id": "ghe2",
-        "length_m": 150.0
+        "length_m": 150.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.23403378034632988,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_8",
         "from_component_id": "ghe2",
         "to_component_id": "ghe3",
-        "length_m": 150.0
+        "length_m": 150.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.23403378034632988,
+        "surface_roughness_m": 1e-6
       }
     ],
     "pumps": {
@@ -414,10 +441,6 @@
       "building2_dhw": "network_pump_building2_dhw",
       "building3_htg_clg": "network_pump_building3_htg_clg",
       "building3_dhw": "network_pump_building3_dhw"
-    },
-    "distribution_pipe_defaults": {
-      "surface_roughness_m": 1e-6,
-      "diameter_m": 0.23403378034632988
     }
   }
 }

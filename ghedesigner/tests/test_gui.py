@@ -114,6 +114,25 @@ def test_gui_schema_gives_every_field_a_natural_language_title() -> None:
     assert schema["$defs"]["file_path"]["format"] == "file-path"
 
 
+def test_public_input_schema_does_not_define_defaults() -> None:
+    schema = create_app().test_client().get("/api/schema").get_json()
+    default_paths: list[str] = []
+
+    def inspect(value: object, path: str = "") -> None:
+        if isinstance(value, dict):
+            if "default" in value:
+                default_paths.append(path or "/")
+            for name, child in value.items():
+                inspect(child, f"{path}/{name}")
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                inspect(child, f"{path}/{index}")
+
+    inspect(schema)
+
+    assert default_paths == []
+
+
 def test_gui_schema_gives_every_numeric_field_units() -> None:
     schema = create_app().test_client().get("/api/schema").get_json()
     missing: list[str] = []

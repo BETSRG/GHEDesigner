@@ -2,7 +2,8 @@
 
 GHEDesigner accepts JSON input files that conform to schema version 3. The authoritative schema is
 `ghedesigner/schemas/ghedesigner.schema.json`; the documentation build also publishes a generated **Schema** reference
-containing every property, constraint, and default.
+containing every public property and constraint. Simulation inputs are fully explicit: the schema does not supply
+numerical or behavioral defaults.
 
 Validate an input without running a design or simulation:
 
@@ -67,7 +68,8 @@ Horizontal pipe heat transfer additionally uses `soil.ground_temperature_model`,
 | `horizontal_simulation_considered` | Include thermal effects from `horizontal_piping`.                                           |
 | `horizontal_segments`              | Positive integer number of calculation segments per horizontal pipe.                        |
 
-Provide exactly one of `simulation_years` or `sizing_years`, according to the workflow.
+Provide exactly one of `simulation_years` or `sizing_years`, according to the workflow. When `simulation_years` is
+used, every other control in the table is required, even when a feature is disabled.
 
 ## Loads and buildings
 
@@ -144,7 +146,7 @@ Every GHE in a one-pipe network requires `circulation_pump` with:
   Distribution piping is excluded.
 - `wire_to_water_efficiency_fraction`.
 - `pressure_drop_multiplier`.
-- Optional `minimum_flow_fraction`, which defaults to `0.05`.
+- `minimum_flow_fraction`.
 
 The GHE design mass flow is derived from `design_volumetric_flow_rate_per_borehole_l_per_s`, fluid density, and the
 number of boreholes. The circulation-pump reference pressure drop is applied at that total design flow.
@@ -175,26 +177,32 @@ minor-loss coefficients, and is normalized by segment length. Building loss is t
 `network.type` is `one_pipe` or `two_pipe`. Both use an ordered compact representation:
 
 - `stations`: each physical component exactly once, in distribution order, as a `component_id`.
-- `segments`: physical connections with `id`, `from_component_id`, `to_component_id`, and `length_m`. Optional overrides
-  are `diameter_m`, `surface_roughness_m`, and `minor_loss_coefficient`.
-- `distribution_pipe_defaults`: a required `diameter_m` plus optional `surface_roughness_m` and
-  `minor_loss_coefficient` defaults.
+- `segments`: physical connections with `id`, `from_component_id`, `to_component_id`, `length_m`, and
+  `minor_loss_coefficient`. Segments without a horizontal thermal model also require `diameter_m` and
+  `surface_roughness_m`.
 - `pumps`: pump models keyed by ID, each with `wire_to_water_efficiency_fraction`.
 - `component_pumps`: component IDs mapped to IDs in `pumps`.
 
-A segment may set `thermal_model_id` to an object in `horizontal_piping`. One-pipe networks additionally require
+A segment may set `thermal_model_id` to an object in `horizontal_piping`. That linked model's pipe is the authoritative
+source of hydraulic diameter and roughness as well as thermal construction; the segment must not duplicate
+`diameter_m` or `surface_roughness_m`. One-pipe networks additionally require
 `distribution_pump` and `mass_flow_control`. `distribution_pump` references a pump model through `pump_id`;
-`mass_flow_control` requires `distribution_flow_multiplier` and may set
+`mass_flow_control` requires `distribution_flow_multiplier` and
 `minimum_distribution_mass_flow_rate_kg_per_s`.
 
 The compact one-pipe representation automatically creates zero-loss station bypasses. Network flow is prescribed from
 building demand rather than allocated from pressure loss. Configured pressure-loss models are used for pump power;
 component pressure-loss outputs may also use component-specific calculations described above.
 
+When `parametric_study` is present, it explicitly requires `study_type` and
+`ground_heat_exchanger_ids_to_modify`. Parameter value specifications also require `parameter_range` to distinguish
+range expansion from a literal list of values.
+
 ## Horizontal piping and source/sink heat exchangers
 
-Each `horizontal_piping` object requires `length_m`, `trench_depth_m`, and a `pipe` construction definition. A coupled
-pair also supplies `coupled_to_id` and `spacing_m`; `counter_flow` selects the paired-flow orientation.
+Each `horizontal_piping` object requires `trench_depth_m` and a `pipe` construction definition. Its physical length is
+the `length_m` of the network segment that references it. A coupled pair also supplies `coupled_to_id`, `spacing_m`,
+and `counter_flow`.
 
 Each `source_sink_heat_exchangers` object requires `effectiveness_fraction`, `source_temperature_c`,
 `source_mass_flow_rate_kg_per_s`, `cut_in_temperature_c`, and `cut_out_temperature_c`. Optional component `hydraulics`

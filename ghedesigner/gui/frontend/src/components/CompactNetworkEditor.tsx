@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { allComponentIds, rebuildSegments, updateCompactStations } from "../networkUtils";
 import type { InputDocument, JsonObject } from "../types";
 import { deepClone, isJsonObject } from "../types";
+import guiDefaults from "../inputDefaults.schema-v3.json";
 import { CanonicalPreview } from "./CanonicalPreview";
 import { ObjectJsonEditor } from "./ObjectJsonEditor";
 
@@ -62,30 +63,8 @@ export function CompactNetworkEditor({ document, onChange, onApply }: CompactNet
   return (
     <div className="network-editor-grid">
       <div className="network-controls-column">
-        <div className="form-surface">
-          <div className="field-grid">
-            <label>
-              Default Pipe Diameter [m]
-              <input
-                type="number"
-                min="0"
-                step="0.001"
-                value={
-                  isJsonObject(network.distribution_pipe_defaults) &&
-                  typeof network.distribution_pipe_defaults.diameter_m === "number"
-                    ? network.distribution_pipe_defaults.diameter_m
-                    : 0.1
-                }
-                onChange={(event) =>
-                  setNetworkField("distribution_pipe_defaults", {
-                    ...(isJsonObject(network.distribution_pipe_defaults) ? network.distribution_pipe_defaults : {}),
-                    diameter_m: Number(event.target.value),
-                  })
-                }
-              />
-            </label>
-          </div>
-          {network.type === "one_pipe" && (
+        {network.type === "one_pipe" && (
+          <div className="form-surface">
             <div className="field-grid two-column inset-fields">
               <label>
                 Distribution-Flow Multiplier
@@ -93,7 +72,11 @@ export function CompactNetworkEditor({ document, onChange, onApply }: CompactNet
                   type="number"
                   min="0"
                   step="0.05"
-                  value={typeof massControl.distribution_flow_multiplier === "number" ? massControl.distribution_flow_multiplier : 1.5}
+                  value={
+                    typeof massControl.distribution_flow_multiplier === "number"
+                      ? massControl.distribution_flow_multiplier
+                      : guiDefaults.network.one_pipe_mass_flow_control.distribution_flow_multiplier
+                  }
                   onChange={(event) =>
                     setNetworkField("mass_flow_control", {
                       ...massControl,
@@ -111,7 +94,7 @@ export function CompactNetworkEditor({ document, onChange, onApply }: CompactNet
                   value={
                     typeof massControl.minimum_distribution_mass_flow_rate_kg_per_s === "number"
                       ? massControl.minimum_distribution_mass_flow_rate_kg_per_s
-                      : 0.1
+                      : guiDefaults.network.one_pipe_mass_flow_control.minimum_distribution_mass_flow_rate_kg_per_s
                   }
                   onChange={(event) =>
                     setNetworkField("mass_flow_control", {
@@ -122,8 +105,8 @@ export function CompactNetworkEditor({ document, onChange, onApply }: CompactNet
                 />
               </label>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <section className="form-surface">
           <div className="panel-heading compact-heading">
@@ -206,24 +189,69 @@ export function CompactNetworkEditor({ document, onChange, onApply }: CompactNet
                     type="number"
                     min="0"
                     step="0.1"
-                    value={typeof segment.length_m === "number" ? segment.length_m : 10}
+                    value={
+                      typeof segment.length_m === "number"
+                        ? segment.length_m
+                        : guiDefaults.network.segment.length_m
+                    }
                     onChange={(event) => replaceSegment(index, { ...segment, length_m: Number(event.target.value) })}
                   />
                 </label>
+                {typeof segment.thermal_model_id === "string" ? (
+                  <div>
+                    <strong>Hydraulic pipe</strong>
+                    <small>Uses {segment.thermal_model_id} pipe diameter and roughness.</small>
+                  </div>
+                ) : (
+                  <>
+                    <label>
+                      Diameter [m]
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.001"
+                        value={
+                          typeof segment.diameter_m === "number"
+                            ? segment.diameter_m
+                            : guiDefaults.network.segment.diameter_m
+                        }
+                        onChange={(event) =>
+                          replaceSegment(index, { ...segment, diameter_m: Number(event.target.value) })
+                        }
+                      />
+                    </label>
+                    <label>
+                      Surface Roughness [m]
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.000001"
+                        value={
+                          typeof segment.surface_roughness_m === "number"
+                            ? segment.surface_roughness_m
+                            : guiDefaults.network.segment.surface_roughness_m
+                        }
+                        onChange={(event) =>
+                          replaceSegment(index, { ...segment, surface_roughness_m: Number(event.target.value) })
+                        }
+                      />
+                    </label>
+                  </>
+                )}
                 <label>
-                  Diameter Override [m]
+                  Minor-Loss Coefficient [-]
                   <input
                     type="number"
                     min="0"
-                    step="0.001"
-                    placeholder="Use default"
-                    value={typeof segment.diameter_m === "number" ? segment.diameter_m : ""}
-                    onChange={(event) => {
-                      const copy = { ...segment };
-                      if (event.target.value === "") delete copy.diameter_m;
-                      else copy.diameter_m = Number(event.target.value);
-                      replaceSegment(index, copy);
-                    }}
+                    step="0.1"
+                    value={
+                      typeof segment.minor_loss_coefficient === "number"
+                        ? segment.minor_loss_coefficient
+                        : guiDefaults.network.segment.minor_loss_coefficient
+                    }
+                    onChange={(event) =>
+                      replaceSegment(index, { ...segment, minor_loss_coefficient: Number(event.target.value) })
+                    }
                   />
                 </label>
               </div>

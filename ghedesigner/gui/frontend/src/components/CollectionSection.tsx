@@ -4,6 +4,7 @@ import { FilePlus2, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api";
+import guiDefaults from "../inputDefaults.schema-v3.json";
 import {
   deduplicateVariantProperties,
   restrictVariantProperties,
@@ -209,7 +210,21 @@ export function CollectionSection({
       window.alert(`Component '${id}' already exists in this section.`);
       return;
     }
-    updateCollection({ ...collection, [id]: {} });
+    let initialValue: JsonObject = {};
+    if (
+      property === "ground_heat_exchangers" &&
+      (workflow === "standalone_design" || workflow === "building_design" || workflow === "district_design")
+    ) {
+      initialValue = { ...initialValue, ...deepClone(guiDefaults.component_fragments.ghe_design) };
+    }
+    if (
+      property === "ground_heat_exchangers" &&
+      workflow?.startsWith("district_") &&
+      document.network?.type === "one_pipe"
+    ) {
+      initialValue = { ...initialValue, ...deepClone(guiDefaults.component_fragments.one_pipe_ghe) };
+    }
+    updateCollection({ ...collection, [id]: initialValue });
     setSelected(id);
     api.clientLog("info", "component_added", { section: property, id });
   };

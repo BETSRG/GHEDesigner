@@ -103,7 +103,13 @@
     }
   },
   "simulation_control": {
-    "simulation_years": 1
+    "simulation_years": 1,
+    "load_method": "hourly",
+    "search_method": "simulation_only",
+    "constant_cop": true,
+    "exhaustive_search": false,
+    "horizontal_segments": 3,
+    "horizontal_simulation_considered": false
   },
   "network": {
     "type": "one_pipe",
@@ -123,19 +129,28 @@
         "id": "network_segment_1",
         "from_component_id": "building1_htg_clg",
         "to_component_id": "ghe1",
-        "length_m": 66.66666666666667
+        "length_m": 66.66666666666667,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.16385485922409404,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_2",
         "from_component_id": "ghe1",
         "to_component_id": "hx1",
-        "length_m": 66.66666666666667
+        "length_m": 66.66666666666667,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.16385485922409404,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_3",
         "from_component_id": "hx1",
         "to_component_id": "building1_htg_clg",
-        "length_m": 66.66666666666667
+        "length_m": 66.66666666666667,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.16385485922409404,
+        "surface_roughness_m": 1e-6
       }
     ],
     "pumps": {
@@ -156,10 +171,6 @@
     "mass_flow_control": {
       "distribution_flow_multiplier": 1.5,
       "minimum_distribution_mass_flow_rate_kg_per_s": 0.1
-    },
-    "distribution_pipe_defaults": {
-      "surface_roughness_m": 1e-6,
-      "diameter_m": 0.16385485922409404
     }
   }
 }

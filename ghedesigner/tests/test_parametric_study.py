@@ -88,6 +88,18 @@ class TestParametricStudy(GHEBaseTest):
 class TestParametricStudyInputs(TestCase):
     @staticmethod
     def input_data(parametric_study=None):
+        study = {
+            "study_type": "combination",
+            "ground_heat_exchanger_ids_to_modify": ["g1"],
+            **(parametric_study or {}),
+        }
+        for key, value in study.items():
+            if key in {"study_type", "ground_heat_exchanger_ids_to_modify", "updated_topology"}:
+                continue
+            entries = value if key == "pipe_inner_outer_diameters_m" else [value]
+            for entry in entries:
+                if isinstance(entry, dict) and "values" in entry:
+                    entry.setdefault("parameter_range", False)
         return {
             "buildings": {
                 "A": {
@@ -110,7 +122,7 @@ class TestParametricStudyInputs(TestCase):
                     {"id": "segment_2", "from_component_id": "g1", "to_component_id": "A", "length_m": 1.0},
                 ],
             },
-            "parametric_study": parametric_study or {},
+            "parametric_study": study,
         }
 
     @staticmethod
@@ -145,6 +157,7 @@ class TestParametricStudyInputs(TestCase):
             "pipe": {"inner_diameter_m": 0.05, "outer_diameter_m": 0.06},
             "design": {"maximum_active_borehole_length_m": 120.0},
         }
+        input_data["parametric_study"]["ground_heat_exchanger_ids_to_modify"] = ["g1", "g2"]
         input_data["network"]["stations"].append({"component_id": "g2"})
         input_data["network"]["segments"] = [
             {"id": "segment_1", "from_component_id": "A", "to_component_id": "g1", "length_m": 1.0},

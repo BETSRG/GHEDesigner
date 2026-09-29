@@ -1,3 +1,5 @@
+import guiDefaults from "./inputDefaults.schema-v3.json";
+
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
 export type JsonObject = { [key: string]: JsonValue };
@@ -88,21 +90,4 @@ export const isJsonObject = (value: unknown): value is JsonObject =>
 export const deepClone = <T,>(value: T): T =>
   value === undefined ? value : (JSON.parse(JSON.stringify(value)) as T);
 
-export const blankDocument = (): InputDocument => ({
-  schema_version: 3,
-  fluid: {
-    fluid_type: "water",
-    concentration_percent: 0,
-    property_evaluation_temperature_c: 20,
-  },
-  soil: {
-    thermal_conductivity_w_per_m_k: 2.0,
-    volumetric_heat_capacity_j_per_m3_k: 2343000,
-    undisturbed_ground_temperature_c: 12,
-  },
-  simulation_control: {
-    sizing_years: 20,
-  },
-  buildings: {},
-  ground_heat_exchangers: {},
-});
+export const blankDocument = (): InputDocument => deepClone(guiDefaults.blank_document as InputDocument);

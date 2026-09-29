@@ -301,7 +301,8 @@
         "minimum_entering_fluid_temperature_c": 3.0,
         "maximum_entering_fluid_temperature_c": 33.5,
         "maximum_active_borehole_length_m": 175,
-        "minimum_active_borehole_length_m": 60
+        "minimum_active_borehole_length_m": 60,
+        "continue_if_design_unmet": false
       },
       "design_volumetric_flow_rate_per_borehole_l_per_s": 0.5,
       "borefield_layout_constraints": {
@@ -337,7 +338,8 @@
             "x": 325.0,
             "y": 245.0
           }
-        ]
+        ],
+        "borehole_spacing_step_m": 0.0
       }
     },
     "ghe_2": {
@@ -368,7 +370,8 @@
         "minimum_entering_fluid_temperature_c": 3.0,
         "maximum_entering_fluid_temperature_c": 33.5,
         "maximum_active_borehole_length_m": 175,
-        "minimum_active_borehole_length_m": 60
+        "minimum_active_borehole_length_m": 60,
+        "continue_if_design_unmet": false
       },
       "design_volumetric_flow_rate_per_borehole_l_per_s": 0.5,
       "borefield_layout_constraints": {
@@ -412,7 +415,8 @@
             "x": 255.0,
             "y": 105.0
           }
-        ]
+        ],
+        "borehole_spacing_step_m": 0.0
       }
     },
     "ghe_3": {
@@ -443,7 +447,8 @@
         "minimum_entering_fluid_temperature_c": 3.0,
         "maximum_entering_fluid_temperature_c": 33.5,
         "maximum_active_borehole_length_m": 175,
-        "minimum_active_borehole_length_m": 60
+        "minimum_active_borehole_length_m": 60,
+        "continue_if_design_unmet": false
       },
       "design_volumetric_flow_rate_per_borehole_l_per_s": 0.5,
       "borefield_layout_constraints": {
@@ -491,7 +496,8 @@
               "y": 65.0
             }
           ]
-        ]
+        ],
+        "borehole_spacing_step_m": 0.0
       }
     },
     "ghe_4": {
@@ -522,7 +528,8 @@
         "minimum_entering_fluid_temperature_c": 3.0,
         "maximum_entering_fluid_temperature_c": 33.5,
         "maximum_active_borehole_length_m": 175,
-        "minimum_active_borehole_length_m": 60
+        "minimum_active_borehole_length_m": 60,
+        "continue_if_design_unmet": false
       },
       "design_volumetric_flow_rate_per_borehole_l_per_s": 0.5,
       "borefield_layout_constraints": {
@@ -550,7 +557,8 @@
             "x": 5.0,
             "y": 380.0
           }
-        ]
+        ],
+        "borehole_spacing_step_m": 0.0
       }
     }
   },
@@ -558,7 +566,10 @@
     "simulation_years": 20,
     "search_method": "global_rowwise",
     "exhaustive_search": false,
-    "load_method": "hybrid"
+    "load_method": "hybrid",
+    "constant_cop": true,
+    "horizontal_segments": 3,
+    "horizontal_simulation_considered": false
   },
   "network": {
     "type": "one_pipe",
@@ -611,85 +622,127 @@
         "id": "network_segment_1",
         "from_component_id": "bldg_1_zone_1",
         "to_component_id": "bldg_1_zone_2",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_2",
         "from_component_id": "bldg_1_zone_2",
         "to_component_id": "ghe_1",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_3",
         "from_component_id": "ghe_1",
         "to_component_id": "bldg_2_zone_1",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_4",
         "from_component_id": "bldg_2_zone_1",
         "to_component_id": "bldg_3_zone_1",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_5",
         "from_component_id": "bldg_3_zone_1",
         "to_component_id": "bldg_3_zone_2",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_6",
         "from_component_id": "bldg_3_zone_2",
         "to_component_id": "ghe_2",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_7",
         "from_component_id": "ghe_2",
         "to_component_id": "bldg_4_zone_1",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_8",
         "from_component_id": "bldg_4_zone_1",
         "to_component_id": "ghe_3",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_9",
         "from_component_id": "ghe_3",
         "to_component_id": "bldg_5_zone_1",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_10",
         "from_component_id": "bldg_5_zone_1",
         "to_component_id": "bldg_6_zone_1",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_11",
         "from_component_id": "bldg_6_zone_1",
         "to_component_id": "ghe_4",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_12",
         "from_component_id": "ghe_4",
         "to_component_id": "bldg_7_zone_1",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_13",
         "from_component_id": "bldg_7_zone_1",
         "to_component_id": "bldg_7_zone_2",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       },
       {
         "id": "network_segment_14",
         "from_component_id": "bldg_7_zone_2",
         "to_component_id": "bldg_1_zone_1",
-        "length_m": 14.285714285714286
+        "length_m": 14.285714285714286,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.7790541825010795,
+        "surface_roughness_m": 1e-6
       }
     ],
     "pumps": {
@@ -746,10 +799,6 @@
     "mass_flow_control": {
       "distribution_flow_multiplier": 1.5,
       "minimum_distribution_mass_flow_rate_kg_per_s": 0.1
-    },
-    "distribution_pipe_defaults": {
-      "surface_roughness_m": 1e-6,
-      "diameter_m": 0.7790541825010795
     }
   }
 }
