@@ -647,8 +647,9 @@ class TestDistrictSys(GHEBaseTest):
         assert "ghe1: Local Recirculation Flow Rate [kg/s]" in configured_columns
         assert "ghe1: Circulation Pump Power [W]" in configured_columns
         assert "Network: Total GHE Circulation Pump Power [W]" in configured_columns
-        assert "ghe1: Mass Flow Rate [kg/s]" in configured_columns
-        assert "ghe1: Mass Flow Rate [kg/s]" in unconfigured_columns
+        assert "ghe1: Network Branch Mass Flow Rate [kg/s]" in configured_columns
+        assert "ghe1: Network Branch Mass Flow Rate [kg/s]" in unconfigured_columns
+        assert "ghe1: Mass Flow Rate [kg/s]" not in configured_columns | unconfigured_columns
         assert "Network: Mass Flow Rate [kg/s]" not in configured_columns | unconfigured_columns
         assert "ghe1: Mixed-Loop Exiting Fluid Temperature [C]" not in configured_columns | unconfigured_columns
         assert all("Pump Mass Flow Rate" not in column for column in unconfigured_columns)

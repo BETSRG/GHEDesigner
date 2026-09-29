@@ -3365,7 +3365,9 @@ class GHEHPSystem:
                 output_columns[csv_columns.HEAT_TRANSFER_RATE.for_object(this_comp.name)] = (
                     this_comp.q_ghe * this_comp.nbh * this_comp.height
                 )
-                output_columns[csv_columns.MASS_FLOW_RATE.for_object(this_comp.name)] = this_comp.m_ghe_array
+                output_columns[csv_columns.NETWORK_BRANCH_MASS_FLOW_RATE.for_object(this_comp.name)] = (
+                    this_comp.m_ghe_array
+                )
                 if this_comp.circulation_pump is not None:
                     output_columns[csv_columns.PUMP_MASS_FLOW_RATE.for_object(this_comp.name)] = (
                         this_comp.pump_mass_flow

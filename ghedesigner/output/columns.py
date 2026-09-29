@@ -54,6 +54,7 @@ TOTAL_BUILDING_NET_SOURCE_SIDE_HEAT_TRANSFER_RATE = OutputVariable(
 )
 HEAT_TRANSFER_RATE_PER_LENGTH = OutputVariable("Heat Transfer Rate", "W/m")
 HEAT_TRANSFER_RATE = OutputVariable("Heat Transfer Rate", "W")
+NETWORK_BRANCH_MASS_FLOW_RATE = OutputVariable("Network Branch Mass Flow Rate", "kg/s")
 PUMP_MASS_FLOW_RATE = OutputVariable("Pump Mass Flow Rate", "kg/s")
 LOCAL_RECIRCULATION_FLOW_RATE = OutputVariable("Local Recirculation Flow Rate", "kg/s")
 OPERATING_STATUS = OutputVariable("Operating Status", "-")
