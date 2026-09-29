@@ -1,304 +1,428 @@
 {
-  "version": 3,
-  "topology": [
-    {
-      "type": "building",
-      "name": "building1_htg_clg"
-    },
-    {
-      "type": "building",
-      "name": "building1_dhw"
-    },
-    {
-      "type": "building",
-      "name": "building2_htg_clg"
-    },
-    {
-      "type": "building",
-      "name": "building2_dhw"
-    },
-    {
-      "type": "building",
-      "name": "building3_htg_clg"
-    },
-    {
-      "type": "building",
-      "name": "building3_dhw"
-    },
-    {
-      "type": "ground_heat_exchanger",
-      "name": "ghe1"
-    },
-    {
-      "type": "ground_heat_exchanger",
-      "name": "ghe2"
-    },
-    {
-      "type": "ground_heat_exchanger",
-      "name": "ghe3"
-    }
-  ],
-  "central_loop": {
-    "pipe_configuration": "TWOPIPE",
-    "flow_factor": 1.5,
-    "pump_efficiency": 0.5,
-    "loop_length": 200,
-    "design_pressure_loss_per_meter": 200
-  },
+  "schema_version": 3,
   "fluid": {
-    "fluid_name": "PROPYLENEGLYCOL",
     "concentration_percent": 30,
-    "temperature": 20
+    "fluid_type": "propylene_glycol",
+    "property_evaluation_temperature_c": 20
   },
-  "heat_pump": {
+  "heat_pumps": {
     "hp1": {
       "cooling_performance": {
-        "a": 0.0001,
-        "b": 0.00112,
-        "c": 1.13,
-        "c1": -0.393,
-        "c2": -30.3,
-        "c3": 6777.0,
-        "design_cap": 4396.0
+        "heat_transfer_ratio_curve": {
+          "quadratic_coefficient_per_c_squared": 0.0001,
+          "linear_coefficient_per_c": 0.00112,
+          "constant_coefficient": 1.13
+        },
+        "capacity_curve": {
+          "quadratic_coefficient_w_per_c_squared": -0.393,
+          "linear_coefficient_w_per_c": -30.3,
+          "constant_coefficient_w": 6777.0
+        }
       },
-      "design_flow_rate": 0.296,
-      "design_pressure_loss": 25000,
-      "pump_efficiency": 0.5,
       "heating_performance": {
-        "a": -7.13e-5,
-        "b": 0.00534,
-        "c": 0.734,
-        "c1": -0.124,
-        "c2": 112.0,
-        "c3": 4114.0,
-        "design_cap": 4140.0
-      }
+        "heat_transfer_ratio_curve": {
+          "quadratic_coefficient_per_c_squared": -7.13e-5,
+          "linear_coefficient_per_c": 0.00534,
+          "constant_coefficient": 0.734
+        },
+        "capacity_curve": {
+          "quadratic_coefficient_w_per_c_squared": -0.124,
+          "linear_coefficient_w_per_c": 112.0,
+          "constant_coefficient_w": 4114.0
+        }
+      },
+      "design_mass_flow_rate_kg_per_s": 0.296,
+      "design_pressure_drop_pa": 25000,
+      "pump_efficiency_fraction": 0.5
     },
     "hp2": {
       "cooling_performance": {
-        "a": 0.0001,
-        "b": -0.00041,
-        "c": 1.15,
-        "c1": -1.2,
-        "c2": -4.72,
-        "c3": 9629.0,
-        "design_cap": 6709.0
+        "heat_transfer_ratio_curve": {
+          "quadratic_coefficient_per_c_squared": 0.0001,
+          "linear_coefficient_per_c": -0.00041,
+          "constant_coefficient": 1.15
+        },
+        "capacity_curve": {
+          "quadratic_coefficient_w_per_c_squared": -1.2,
+          "linear_coefficient_w_per_c": -4.72,
+          "constant_coefficient_w": 9629.0
+        }
       },
-      "design_flow_rate": 0.495,
-      "design_pressure_loss": 25000,
-      "pump_efficiency": 0.5,
       "heating_performance": {
-        "a": -7.86e-5,
-        "b": 0.00539,
-        "c": 0.734,
-        "c1": 0.178,
-        "c2": 158.0,
-        "c3": 6712.0,
-        "design_cap": 6797.0
-      }
+        "heat_transfer_ratio_curve": {
+          "quadratic_coefficient_per_c_squared": -7.86e-5,
+          "linear_coefficient_per_c": 0.00539,
+          "constant_coefficient": 0.734
+        },
+        "capacity_curve": {
+          "quadratic_coefficient_w_per_c_squared": 0.178,
+          "linear_coefficient_w_per_c": 158.0,
+          "constant_coefficient_w": 6712.0
+        }
+      },
+      "design_mass_flow_rate_kg_per_s": 0.495,
+      "design_pressure_drop_pa": 25000,
+      "pump_efficiency_fraction": 0.5
     },
     "hp3": {
       "cooling_performance": {
-        "a": 0.0001,
-        "b": -0.00084,
-        "c": 1.16,
-        "c1": -2.16,
-        "c2": 46.8,
-        "c3": 12397.0,
-        "design_cap": 9752.0
+        "heat_transfer_ratio_curve": {
+          "quadratic_coefficient_per_c_squared": 0.0001,
+          "linear_coefficient_per_c": -0.00084,
+          "constant_coefficient": 1.16
+        },
+        "capacity_curve": {
+          "quadratic_coefficient_w_per_c_squared": -2.16,
+          "linear_coefficient_w_per_c": 46.8,
+          "constant_coefficient_w": 12397.0
+        }
       },
-      "design_flow_rate": 0.693,
-      "design_pressure_loss": 25000,
-      "pump_efficiency": 0.5,
       "heating_performance": {
-        "a": -6.8e-5,
-        "b": 0.00497,
-        "c": 0.738,
-        "c1": 0.091,
-        "c2": 224.0,
-        "c3": 9422.0,
-        "design_cap": 9500.0
-      }
+        "heat_transfer_ratio_curve": {
+          "quadratic_coefficient_per_c_squared": -6.8e-5,
+          "linear_coefficient_per_c": 0.00497,
+          "constant_coefficient": 0.738
+        },
+        "capacity_curve": {
+          "quadratic_coefficient_w_per_c_squared": 0.091,
+          "linear_coefficient_w_per_c": 224.0,
+          "constant_coefficient_w": 9422.0
+        }
+      },
+      "design_mass_flow_rate_kg_per_s": 0.693,
+      "design_pressure_drop_pa": 25000,
+      "pump_efficiency_fraction": 0.5
     },
     "hp4": {
       "cooling_performance": {
-        "a": 0.0,
-        "b": 0.0,
-        "c": 0.0,
-        "c1": 0.0,
-        "c2": 0.0,
-        "c3": 0.0,
-        "design_cap": 0.0
+        "heat_transfer_ratio_curve": {
+          "quadratic_coefficient_per_c_squared": 0.0,
+          "linear_coefficient_per_c": 0.0,
+          "constant_coefficient": 0.0
+        },
+        "capacity_curve": {
+          "quadratic_coefficient_w_per_c_squared": 0.0,
+          "linear_coefficient_w_per_c": 0.0,
+          "constant_coefficient_w": 0.0
+        }
       },
-      "design_flow_rate": 0.425,
-      "design_pressure_loss": 25000,
-      "pump_efficiency": 0.5,
       "heating_performance": {
-        "a": -6.06e-5,
-        "b": 0.0051,
-        "c": 0.692,
-        "c1": -1.19,
-        "c2": 212.0,
-        "c3": 8932.0,
-        "design_cap": 9561.0
-      }
+        "heat_transfer_ratio_curve": {
+          "quadratic_coefficient_per_c_squared": -6.06e-5,
+          "linear_coefficient_per_c": 0.0051,
+          "constant_coefficient": 0.692
+        },
+        "capacity_curve": {
+          "quadratic_coefficient_w_per_c_squared": -1.19,
+          "linear_coefficient_w_per_c": 212.0,
+          "constant_coefficient_w": 8932.0
+        }
+      },
+      "design_mass_flow_rate_kg_per_s": 0.425,
+      "design_pressure_drop_pa": 25000,
+      "pump_efficiency_fraction": 0.5
     }
   },
-  "building": {
+  "buildings": {
     "building1_htg_clg": {
-      "heating_load": {
+      "heating_load_source": {
         "column_name": "B1Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_cop": 4.4
+        "heat_pump_cop": 4.4,
+        "value_units": "W"
       },
-      "cooling_load": {
+      "cooling_load_source": {
         "column_name": "B1Z1_HPClgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_cop": 4.5
+        "heat_pump_cop": 4.5,
+        "value_units": "W"
       }
     },
     "building1_dhw": {
-      "heating_load": {
+      "heating_load_source": {
         "column_name": "B1Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_cop": 3.7
+        "heat_pump_cop": 3.7,
+        "value_units": "W"
       }
     },
     "building2_htg_clg": {
-      "heating_load": {
+      "heating_load_source": {
         "column_name": "B2Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_cop": 4.4
+        "heat_pump_cop": 4.4,
+        "value_units": "W"
       },
-      "cooling_load": {
+      "cooling_load_source": {
         "column_name": "B2Z1_HPClgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_cop": 4.9
+        "heat_pump_cop": 4.9,
+        "value_units": "W"
       }
     },
     "building2_dhw": {
-      "heating_load": {
+      "heating_load_source": {
         "column_name": "B2Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_cop": 3.7
+        "heat_pump_cop": 3.7,
+        "value_units": "W"
       }
     },
     "building3_htg_clg": {
-      "heating_load": {
+      "heating_load_source": {
         "column_name": "B3Z1_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_cop": 4.4
+        "heat_pump_cop": 4.4,
+        "value_units": "W"
       },
-      "cooling_load": {
+      "cooling_load_source": {
         "column_name": "B3Z1_HPClgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_cop": 4.9
+        "heat_pump_cop": 4.9,
+        "value_units": "W"
       }
     },
     "building3_dhw": {
-      "heating_load": {
+      "heating_load_source": {
         "column_name": "B3Z2_HPHtgLd_W",
         "file_path": "../ghedesigner/tests/test_data/3GHE_6HP_Example_Loads.csv",
-        "heat_pump_cop": 3.7
+        "heat_pump_cop": 3.7,
+        "value_units": "W"
       }
     }
   },
   "soil": {
-    "conductivity": 2,
-    "rho_cp": 2343493,
-    "undisturbed_temp": 6.1
+    "thermal_conductivity_w_per_m_k": 2,
+    "volumetric_heat_capacity_j_per_m3_k": 2343493,
+    "undisturbed_ground_temperature_c": 6.1
   },
-  "ground_heat_exchanger": {
+  "ground_heat_exchangers": {
     "ghe1": {
-      "flow_rate": 0.33753,
-      "flow_type": "BOREHOLE",
       "grout": {
-        "conductivity": 1,
-        "rho_cp": 3901000
+        "thermal_conductivity_w_per_m_k": 1,
+        "volumetric_heat_capacity_j_per_m3_k": 3901000
       },
       "pipe": {
-        "inner_diameter": 0.03404,
-        "outer_diameter": 0.04216,
-        "shank_spacing": 0.01856,
-        "roughness": 0.000001,
-        "conductivity": 0.4,
-        "rho_cp": 1542000,
-        "arrangement": "SINGLEUTUBE"
+        "arrangement": "single_u_tube",
+        "thermal_conductivity_w_per_m_k": 0.4,
+        "volumetric_heat_capacity_j_per_m3_k": 1542000,
+        "inner_diameter_m": 0.03404,
+        "outer_diameter_m": 0.04216,
+        "shank_spacing_m": 0.01856,
+        "surface_roughness_m": 1e-6
       },
       "borehole": {
-        "buried_depth": 2,
-        "diameter": 0.14
+        "top_depth_below_grade_m": 2,
+        "diameter_m": 0.14
       },
-      "pre_designed": {
-        "arrangement": "RECTANGLE",
-        "H": 100,
-        "spacing_in_x_dimension": 5,
-        "spacing_in_y_dimension": 5,
-        "boreholes_in_x_dimension": 15,
-        "boreholes_in_y_dimension": 10
+      "design_volumetric_flow_rate_per_borehole_l_per_s": 0.33753,
+      "fixed_borefield": {
+        "arrangement": "rectangle",
+        "active_borehole_length_m": 100,
+        "borehole_count_x": 15,
+        "borehole_count_y": 10,
+        "borehole_spacing_x_m": 5,
+        "borehole_spacing_y_m": 5
       }
     },
     "ghe2": {
-      "flow_rate": 0.3375,
-      "flow_type": "BOREHOLE",
       "grout": {
-        "conductivity": 1,
-        "rho_cp": 3901000
+        "thermal_conductivity_w_per_m_k": 1,
+        "volumetric_heat_capacity_j_per_m3_k": 3901000
       },
       "pipe": {
-        "inner_diameter": 0.03404,
-        "outer_diameter": 0.04216,
-        "shank_spacing": 0.01856,
-        "roughness": 0.000001,
-        "conductivity": 0.4,
-        "rho_cp": 1542000,
-        "arrangement": "SINGLEUTUBE"
+        "arrangement": "single_u_tube",
+        "thermal_conductivity_w_per_m_k": 0.4,
+        "volumetric_heat_capacity_j_per_m3_k": 1542000,
+        "inner_diameter_m": 0.03404,
+        "outer_diameter_m": 0.04216,
+        "shank_spacing_m": 0.01856,
+        "surface_roughness_m": 1e-6
       },
       "borehole": {
-        "buried_depth": 2,
-        "diameter": 0.14
+        "top_depth_below_grade_m": 2,
+        "diameter_m": 0.14
       },
-      "pre_designed": {
-        "arrangement": "RECTANGLE",
-        "H": 100,
-        "spacing_in_x_dimension": 5,
-        "spacing_in_y_dimension": 5,
-        "boreholes_in_x_dimension": 10,
-        "boreholes_in_y_dimension": 8
+      "design_volumetric_flow_rate_per_borehole_l_per_s": 0.3375,
+      "fixed_borefield": {
+        "arrangement": "rectangle",
+        "active_borehole_length_m": 100,
+        "borehole_count_x": 10,
+        "borehole_count_y": 8,
+        "borehole_spacing_x_m": 5,
+        "borehole_spacing_y_m": 5
       }
     },
     "ghe3": {
-      "flow_rate": 0.33757,
-      "flow_type": "BOREHOLE",
       "grout": {
-        "conductivity": 1,
-        "rho_cp": 3901000
+        "thermal_conductivity_w_per_m_k": 1,
+        "volumetric_heat_capacity_j_per_m3_k": 3901000
       },
       "pipe": {
-        "inner_diameter": 0.03404,
-        "outer_diameter": 0.04216,
-        "shank_spacing": 0.01856,
-        "roughness": 0.000001,
-        "conductivity": 0.4,
-        "rho_cp": 1542000,
-        "arrangement": "SINGLEUTUBE"
+        "arrangement": "single_u_tube",
+        "thermal_conductivity_w_per_m_k": 0.4,
+        "volumetric_heat_capacity_j_per_m3_k": 1542000,
+        "inner_diameter_m": 0.03404,
+        "outer_diameter_m": 0.04216,
+        "shank_spacing_m": 0.01856,
+        "surface_roughness_m": 1e-6
       },
       "borehole": {
-        "buried_depth": 2,
-        "diameter": 0.14
+        "top_depth_below_grade_m": 2,
+        "diameter_m": 0.14
       },
-      "pre_designed": {
-        "arrangement": "RECTANGLE",
-        "H": 100,
-        "spacing_in_x_dimension": 5,
-        "spacing_in_y_dimension": 5,
-        "boreholes_in_x_dimension": 10,
-        "boreholes_in_y_dimension": 7
+      "design_volumetric_flow_rate_per_borehole_l_per_s": 0.33757,
+      "fixed_borefield": {
+        "arrangement": "rectangle",
+        "active_borehole_length_m": 100,
+        "borehole_count_x": 10,
+        "borehole_count_y": 7,
+        "borehole_spacing_x_m": 5,
+        "borehole_spacing_y_m": 5
       }
     }
   },
   "simulation_control": {
     "simulation_years": 1,
-    "load_method": "HOURLY"
+    "load_method": "hourly",
+    "search_method": "simulation_only",
+    "constant_cop": true,
+    "exhaustive_search": false,
+    "horizontal_segments": 3,
+    "horizontal_simulation_considered": false
+  },
+  "network": {
+    "type": "two_pipe",
+    "stations": [
+      {
+        "component_id": "building1_htg_clg"
+      },
+      {
+        "component_id": "building1_dhw"
+      },
+      {
+        "component_id": "building2_htg_clg"
+      },
+      {
+        "component_id": "building2_dhw"
+      },
+      {
+        "component_id": "building3_htg_clg"
+      },
+      {
+        "component_id": "building3_dhw"
+      },
+      {
+        "component_id": "ghe1"
+      },
+      {
+        "component_id": "ghe2"
+      },
+      {
+        "component_id": "ghe3"
+      }
+    ],
+    "segments": [
+      {
+        "id": "network_segment_1",
+        "from_component_id": "building1_htg_clg",
+        "to_component_id": "building1_dhw",
+        "length_m": 25.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.14065869773960077,
+        "surface_roughness_m": 1e-6
+      },
+      {
+        "id": "network_segment_2",
+        "from_component_id": "building1_dhw",
+        "to_component_id": "building2_htg_clg",
+        "length_m": 25.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.14065869773960077,
+        "surface_roughness_m": 1e-6
+      },
+      {
+        "id": "network_segment_3",
+        "from_component_id": "building2_htg_clg",
+        "to_component_id": "building2_dhw",
+        "length_m": 25.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.14065869773960077,
+        "surface_roughness_m": 1e-6
+      },
+      {
+        "id": "network_segment_4",
+        "from_component_id": "building2_dhw",
+        "to_component_id": "building3_htg_clg",
+        "length_m": 25.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.14065869773960077,
+        "surface_roughness_m": 1e-6
+      },
+      {
+        "id": "network_segment_5",
+        "from_component_id": "building3_htg_clg",
+        "to_component_id": "building3_dhw",
+        "length_m": 25.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.14065869773960077,
+        "surface_roughness_m": 1e-6
+      },
+      {
+        "id": "network_segment_6",
+        "from_component_id": "building3_dhw",
+        "to_component_id": "ghe1",
+        "length_m": 25.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.14065869773960077,
+        "surface_roughness_m": 1e-6
+      },
+      {
+        "id": "network_segment_7",
+        "from_component_id": "ghe1",
+        "to_component_id": "ghe2",
+        "length_m": 25.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.14065869773960077,
+        "surface_roughness_m": 1e-6
+      },
+      {
+        "id": "network_segment_8",
+        "from_component_id": "ghe2",
+        "to_component_id": "ghe3",
+        "length_m": 25.0,
+        "minor_loss_coefficient": 0.0,
+        "diameter_m": 0.14065869773960077,
+        "surface_roughness_m": 1e-6
+      }
+    ],
+    "pumps": {
+      "network_pump_building1_htg_clg": {
+        "wire_to_water_efficiency_fraction": 0.5
+      },
+      "network_pump_building1_dhw": {
+        "wire_to_water_efficiency_fraction": 0.5
+      },
+      "network_pump_building2_htg_clg": {
+        "wire_to_water_efficiency_fraction": 0.5
+      },
+      "network_pump_building2_dhw": {
+        "wire_to_water_efficiency_fraction": 0.5
+      },
+      "network_pump_building3_htg_clg": {
+        "wire_to_water_efficiency_fraction": 0.5
+      },
+      "network_pump_building3_dhw": {
+        "wire_to_water_efficiency_fraction": 0.5
+      }
+    },
+    "component_pumps": {
+      "building1_htg_clg": "network_pump_building1_htg_clg",
+      "building1_dhw": "network_pump_building1_dhw",
+      "building2_htg_clg": "network_pump_building2_htg_clg",
+      "building2_dhw": "network_pump_building2_dhw",
+      "building3_htg_clg": "network_pump_building3_htg_clg",
+      "building3_dhw": "network_pump_building3_dhw"
+    }
   }
 }

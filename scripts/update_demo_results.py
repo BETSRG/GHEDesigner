@@ -26,11 +26,11 @@ def update_results(results_dir: Path, expected_results_path: Path):
         elif f_paths[1].is_file():
             f_path = f_paths[1]
             with open(f_path) as input_file:
-                csv_reader = list(csv.reader(input_file))
+                csv_reader = list(csv.DictReader(input_file))
                 last_row = csv_reader[-1]
                 d_expected[key] = {
-                    "active_borehole_length": float(last_row[4]),
-                    "number_of_boreholes": int(last_row[3]),
+                    "active_borehole_length": float(last_row["Search: Total Drilling Length [m]"]),
+                    "number_of_boreholes": int(last_row["Search: Total Borehole Count [-]"]),
                 }
 
     d_current.update(d_expected)

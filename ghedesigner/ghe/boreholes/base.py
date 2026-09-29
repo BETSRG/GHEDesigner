@@ -28,6 +28,10 @@ class GHEDesignerBoreholeBase:
     def calc_effective_borehole_resistance(self) -> float:
         pass
 
+    @abstractmethod
+    def calc_pressure_loss(self, mass_flow_rate: float, temperature: float) -> float:
+        """Return pressure loss through one complete borehole flow path in Pa."""
+
     @staticmethod
     def compute_fluid_resistance(h_conv: float, radius: float) -> float:
         return 1 / (h_conv * TWO_PI * radius)

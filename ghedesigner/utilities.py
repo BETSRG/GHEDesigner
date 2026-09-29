@@ -344,8 +344,8 @@ def read_csv_column(file_path: str | Path, column: int | str, try_convert_to_num
 
 
 def get_loads(name, comp_type: str, data: dict) -> list[float]:
-    if "load_values" in data:
-        return data["load_values"]
+    if "heat_transfer_rate_values_w" in data:
+        return data["heat_transfer_rate_values_w"]
     else:
         if "column_name" in data and "column_number" in data:
             raise ValueError(
@@ -359,6 +359,20 @@ def get_loads(name, comp_type: str, data: dict) -> list[float]:
             raise ValueError(f"column_name or column_number must be provided for loads in {comp_type}, '{name}'")
 
         return read_csv_column(data["file_path"], column)
+
+
+def validate_nonnegative_loads(loads, load_type: str, building_name: str) -> np.ndarray:
+    """Return building loads as floats after checking that none are negative."""
+    values = np.asarray(loads, dtype=float)
+    negative_indices = np.flatnonzero(values < 0.0)
+    if negative_indices.size:
+        first_index = int(negative_indices[0])
+        raise ValueError(
+            f"{load_type.capitalize()} loads for building '{building_name}' must be non-negative; "
+            f"found {negative_indices.size} negative value(s), first at position {first_index + 1} "
+            f"({values[first_index]:g} W), minimum {values[negative_indices].min():g} W."
+        )
+    return values
 
 
 def absolutize_file_paths(json_path: Path, inplace: bool = False) -> dict:
@@ -434,34 +448,39 @@ class HPmodel:
     def __init__(self, hp_id: str, hp_data: dict, ugt):
         self.name = hp_id
 
-        self.a_htg = hp_data["heating_performance"]["a"]
-        self.b_htg = hp_data["heating_performance"]["b"]
-        self.c_htg = hp_data["heating_performance"]["c"]
+        heating_ratio = hp_data["heating_performance"]["heat_transfer_ratio_curve"]
+        cooling_ratio = hp_data["cooling_performance"]["heat_transfer_ratio_curve"]
+        heating_capacity = hp_data["heating_performance"]["capacity_curve"]
+        cooling_capacity = hp_data["cooling_performance"]["capacity_curve"]
 
-        self.a_clg = hp_data["cooling_performance"]["a"]
-        self.b_clg = hp_data["cooling_performance"]["b"]
-        self.c_clg = hp_data["cooling_performance"]["c"]
+        self.a_htg = heating_ratio["quadratic_coefficient_per_c_squared"]
+        self.b_htg = heating_ratio["linear_coefficient_per_c"]
+        self.c_htg = heating_ratio["constant_coefficient"]
 
-        self.c1_htg = hp_data["heating_performance"]["c1"]
-        self.c2_htg = hp_data["heating_performance"]["c2"]
-        self.c3_htg = hp_data["heating_performance"]["c3"]
+        self.a_clg = cooling_ratio["quadratic_coefficient_per_c_squared"]
+        self.b_clg = cooling_ratio["linear_coefficient_per_c"]
+        self.c_clg = cooling_ratio["constant_coefficient"]
 
-        self.c1_clg = hp_data["cooling_performance"]["c1"]
-        self.c2_clg = hp_data["cooling_performance"]["c2"]
-        self.c3_clg = hp_data["cooling_performance"]["c3"]
+        self.c1_htg = heating_capacity["quadratic_coefficient_w_per_c_squared"]
+        self.c2_htg = heating_capacity["linear_coefficient_w_per_c"]
+        self.c3_htg = heating_capacity["constant_coefficient_w"]
+
+        self.c1_clg = cooling_capacity["quadratic_coefficient_w_per_c_squared"]
+        self.c2_clg = cooling_capacity["linear_coefficient_w_per_c"]
+        self.c3_clg = cooling_capacity["constant_coefficient_w"]
 
         self.cooling_min_temp = hp_data["cooling_performance"].get(
-            "minimum_curve_temperature", ugt - SIMULATION_CONSTANT_COP_HEATING_OFFSET
+            "minimum_curve_temperature_c", ugt - SIMULATION_CONSTANT_COP_HEATING_OFFSET
         )
         self.cooling_max_temp = hp_data["cooling_performance"].get(
-            "maximum_curve_temperature", ugt + SIMULATION_CONSTANT_COP_COOLING_OFFSET
+            "maximum_curve_temperature_c", ugt + SIMULATION_CONSTANT_COP_COOLING_OFFSET
         )
 
         self.heating_min_temp = hp_data["heating_performance"].get(
-            "minimum_curve_temperature", ugt - SIMULATION_CONSTANT_COP_HEATING_OFFSET
+            "minimum_curve_temperature_c", ugt - SIMULATION_CONSTANT_COP_HEATING_OFFSET
         )
         self.heating_max_temp = hp_data["heating_performance"].get(
-            "maximum_curve_temperature", ugt + SIMULATION_CONSTANT_COP_COOLING_OFFSET
+            "maximum_curve_temperature_c", ugt + SIMULATION_CONSTANT_COP_COOLING_OFFSET
         )
 
         if self.cooling_min_temp > self.cooling_max_temp:
@@ -469,11 +488,9 @@ class HPmodel:
         if self.heating_min_temp > self.heating_max_temp:
             raise ValueError("Heating minimum curve temperature cannot exceed its maximum curve temperature.")
 
-        self.m_flow_single_hp = hp_data["design_flow_rate"]
-        self.design_pressure_loss = hp_data["design_pressure_loss"]
-        self.pump_efficiency = hp_data["pump_efficiency"]
-        self.design_htg_cap_single_hp = hp_data["heating_performance"]["design_cap"]
-        self.design_clg_cap_single_hp = hp_data["cooling_performance"]["design_cap"]
+        self.m_flow_single_hp = hp_data["design_mass_flow_rate_kg_per_s"]
+        self.design_pressure_loss = hp_data["design_pressure_drop_pa"]
+        self.pump_efficiency = hp_data["pump_efficiency_fraction"]
 
     def heating_ratio(self, temperature):
         return bounded_quadratic_value(

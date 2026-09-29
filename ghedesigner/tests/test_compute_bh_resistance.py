@@ -1,3 +1,11 @@
+from math import pi
+from typing import cast
+
+import pytest
+from bhr.coaxial_borehole import Coaxial as BHRCoaxial
+from bhr.double_u_borehole import DoubleUTube as BHRDoubleUTube
+from bhr.single_u_borehole import SingleUBorehole as BHRSingleUBorehole
+
 from ghedesigner.enums import DoubleUTubeConnType
 from ghedesigner.ghe.boreholes.coaxial_borehole import CoaxialPipe
 from ghedesigner.ghe.boreholes.core import Borehole
@@ -65,6 +73,21 @@ class TestBHResistance(GHEBaseTest):
         r_b = coaxial.calc_effective_borehole_resistance()
 
         assert self.rel_error_within_tol(r_b, 0.1086, 0.01)
+        bhr_coaxial = cast(BHRCoaxial, coaxial.bhr_borehole._bh)
+        inner_loss = bhr_coaxial.inner_pipe.pressure_loss(m_flow_borehole, ugt)
+        density = bhr_coaxial.fluid.density(ugt)
+        annulus_area = pi * (coaxial.r_out_in**2 - coaxial.r_in_out**2)
+        annulus_velocity = m_flow_borehole / (density * annulus_area)
+        annulus_reynolds = bhr_coaxial.re_annulus(m_flow_borehole, ugt)
+        annulus_loss = (
+            bhr_coaxial.inner_pipe.friction_factor(annulus_reynolds)
+            * h
+            / bhr_coaxial.annular_hydraulic_diameter
+            * density
+            * annulus_velocity**2
+            / 2.0
+        )
+        assert coaxial.calc_pressure_loss(m_flow_borehole, ugt) == pytest.approx(inner_loss + annulus_loss)
 
     def test_bh_resistance_double_u_tube(self):
         # borehole
@@ -120,6 +143,10 @@ class TestBHResistance(GHEBaseTest):
         # test values pinned to current performance because GLHEPro doesn't offer a series connection
         assert self.rel_error_within_tol(re, 11744.0, 0.01)
         assert self.rel_error_within_tol(r_b_series, 0.1597, 0.01)
+        bhr_series = cast(BHRDoubleUTube, double_u_tube_series.bhr_borehole._bh)
+        assert double_u_tube_series.calc_pressure_loss(m_flow_borehole, ugt) == pytest.approx(
+            2.0 * bhr_series.pressure_loss(m_flow_borehole, ugt)
+        )
 
         # Parallel
         double_u_tube_parallel = MultipleUTube(
@@ -131,6 +158,10 @@ class TestBHResistance(GHEBaseTest):
         # test values from GLHEPro v5.1
         assert self.rel_error_within_tol(re, 5820.0, 0.01)
         assert self.rel_error_within_tol(r_b_parallel, 0.1591, 0.005)
+        bhr_parallel = cast(BHRDoubleUTube, double_u_tube_parallel.bhr_borehole._bh)
+        assert double_u_tube_parallel.calc_pressure_loss(m_flow_borehole, ugt) == pytest.approx(
+            bhr_parallel.pressure_loss(m_flow_borehole / 2.0, ugt)
+        )
 
     def test_bh_resistance_single_u_tube(self):
         # Borehole dimensions
@@ -193,6 +224,10 @@ class TestBHResistance(GHEBaseTest):
         # comparison values from GLHEPro v5.1
         assert self.rel_error_within_tol(re, 11748.0, 0.005)
         assert self.rel_error_within_tol(r_b, 0.2073, 0.005)
+        bhr_single = cast(BHRSingleUBorehole, single_u_tube.bhr_borehole._bh)
+        assert single_u_tube.calc_pressure_loss(m_flow_borehole, ugt) == pytest.approx(
+            bhr_single.pressure_loss(m_flow_borehole, ugt)
+        )
 
     def test_bh_resistance_validation(self):
         # Dictionary for storing PLAT variations

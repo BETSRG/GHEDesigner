@@ -1,57 +1,45 @@
 {
-  "version": 3,
-  "topology": [
-    {
-      "type": "ground_heat_exchanger",
-      "name": "ghe1"
-    }
-  ],
+  "schema_version": 3,
   "fluid": {
-    "fluid_name": "WATER",
     "concentration_percent": 0,
-    "temperature": 20
+    "fluid_type": "water",
+    "property_evaluation_temperature_c": 20
   },
   "soil": {
-    "conductivity": 2,
-    "rho_cp": 2343493,
-    "undisturbed_temp": 18.3
+    "thermal_conductivity_w_per_m_k": 2,
+    "volumetric_heat_capacity_j_per_m3_k": 2343493,
+    "undisturbed_ground_temperature_c": 18.3
   },
-  "ground_heat_exchanger": {
+  "ground_heat_exchangers": {
     "ghe1": {
-      "flow_rate": 0.8,
-      "flow_type": "BOREHOLE",
       "grout": {
-        "conductivity": 1,
-        "rho_cp": 3901000
+        "thermal_conductivity_w_per_m_k": 1,
+        "volumetric_heat_capacity_j_per_m3_k": 3901000
       },
       "pipe": {
-        "inner_pipe_d_in": 0.0442,
-        "inner_pipe_d_out": 0.05,
-        "outer_pipe_d_in": 0.0974,
-        "outer_pipe_d_out": 0.11,
-        "roughness": 0.000001,
-        "conductivity_inner": 0.4,
-        "conductivity_outer": 0.4,
-        "rho_cp": 1542000,
-        "arrangement": "COAXIAL"
+        "arrangement": "coaxial",
+        "volumetric_heat_capacity_j_per_m3_k": 1542000,
+        "surface_roughness_m": 1e-6,
+        "inner_pipe_inner_diameter_m": 0.0442,
+        "inner_pipe_outer_diameter_m": 0.05,
+        "outer_pipe_inner_diameter_m": 0.0974,
+        "outer_pipe_outer_diameter_m": 0.11,
+        "inner_pipe_thermal_conductivity_w_per_m_k": 0.4,
+        "outer_pipe_thermal_conductivity_w_per_m_k": 0.4
       },
       "borehole": {
-        "buried_depth": 2,
-        "diameter": 0.14
-      },
-      "geometric_constraints": {
-        "length": 100,
-        "b": 5,
-        "method": "NEARSQUARE"
+        "top_depth_below_grade_m": 2,
+        "diameter_m": 0.14
       },
       "design": {
-        "max_eft": 35,
-        "min_eft": 5,
-        "max_height": 135,
-        "min_height": 60
+        "minimum_entering_fluid_temperature_c": 5,
+        "maximum_entering_fluid_temperature_c": 35,
+        "maximum_active_borehole_length_m": 135,
+        "minimum_active_borehole_length_m": 60,
+        "continue_if_design_unmet": false
       },
       "loads": {
-        "load_values": [
+        "heat_transfer_rate_values_w": [
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
           0, 0, 0, 0, 0, 0, 0, 0, 88964.3734177778, 122073.202982222,
@@ -1788,7 +1776,14 @@
           10344.7947728889, 13405.4243075556, 18355.4246813333, 0, 0, 0, 0, 0,
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
           0, 0, 0
-        ]
+        ],
+        "value_units": "W"
+      },
+      "design_volumetric_flow_rate_per_borehole_l_per_s": 0.8,
+      "borefield_layout_constraints": {
+        "method": "near_square",
+        "length_m": 100,
+        "borehole_spacing_m": 5
       }
     }
   },

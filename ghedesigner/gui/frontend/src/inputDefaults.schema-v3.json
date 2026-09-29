@@ -1,0 +1,74 @@
+{
+  "schema_version": 3,
+  "blank_document": {
+    "schema_version": 3,
+    "fluid": {
+      "fluid_type": "water",
+      "concentration_percent": 0,
+      "property_evaluation_temperature_c": 20
+    },
+    "soil": {
+      "thermal_conductivity_w_per_m_k": 2.0,
+      "volumetric_heat_capacity_j_per_m3_k": 2343000,
+      "undisturbed_ground_temperature_c": 12
+    },
+    "simulation_control": {
+      "sizing_years": 20
+    },
+    "buildings": {},
+    "ground_heat_exchangers": {}
+  },
+  "workflow_simulation_controls": {
+    "standalone_design": {
+      "sizing_years": 20
+    },
+    "building_design": {
+      "sizing_years": 20
+    },
+    "district_design": {
+      "simulation_years": 1,
+      "load_method": "hybrid",
+      "search_method": "global_bupcrs_br",
+      "constant_cop": true,
+      "exhaustive_search": false,
+      "horizontal_segments": 3,
+      "horizontal_simulation_considered": false
+    },
+    "district_simulation": {
+      "simulation_years": 1,
+      "load_method": "hybrid",
+      "search_method": "simulation_only",
+      "constant_cop": true,
+      "exhaustive_search": false,
+      "horizontal_segments": 3,
+      "horizontal_simulation_considered": false
+    }
+  },
+  "network": {
+    "segment": {
+      "length_m": 10,
+      "diameter_m": 0.1,
+      "surface_roughness_m": 0.000001,
+      "minor_loss_coefficient": 0
+    },
+    "pump": {
+      "wire_to_water_efficiency_fraction": 0.7
+    },
+    "one_pipe_mass_flow_control": {
+      "distribution_flow_multiplier": 1.5,
+      "minimum_distribution_mass_flow_rate_kg_per_s": 0.1
+    }
+  },
+  "component_fragments": {
+    "ghe_design": {
+      "design": {
+        "continue_if_design_unmet": false
+      }
+    },
+    "one_pipe_ghe": {
+      "circulation_pump": {
+        "minimum_flow_fraction": 0.05
+      }
+    }
+  }
+}

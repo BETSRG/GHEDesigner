@@ -4,7 +4,7 @@
 # This search is described in section 4.3.2 of Cook (2021) from pages 123-129.
 from typing import cast
 
-from ghedesigner.enums import FlowConfigType, TimestepType
+from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.design.near_square import DesignNearSquare, GeometricConstraintsNearSquare
 from ghedesigner.ghe.pipe import Pipe
@@ -19,7 +19,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
         pipe: Pipe,
         flow_rate: float,
         length: float | None = None,
-        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
     ):
         soil = Soil(k=2.0, rho_cp=2343493.0, ugt=18.3)
         grout = Grout(k=1.0, rho_cp=3901000.0)
@@ -50,7 +49,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
             geometric_constraints=geometry,
             hourly_extraction_ground_loads=ground_loads,
             method=TimestepType.HYBRID,
-            flow_type=flow_type,
         )
         search = design.find_design()
         search.ghe.compute_g_functions(60, 135)
@@ -105,18 +103,6 @@ class TestFindNearSquareDesign(GHEBaseTest):
         )
         search = self.get_design(pipe, 0.8)
         self.assert_design_matches_any(search, [(123.14, 144), (125.39, 144)])
-
-    def test_design_selection_system(self):
-        pipe = Pipe.init_single_u_tube(
-            inner_diameter=0.03404,
-            outer_diameter=0.04216,
-            shank_spacing=0.01856,
-            roughness=1.0e-6,
-            conductivity=0.4,
-            rho_cp=1542000.0,
-        )
-        search = self.get_design(pipe, 31.2, length=155, flow_type=FlowConfigType.SYSTEM)
-        self.assert_design_matches_any(search, [(133.9, 144), (134.12, 144)])
 
     def test_design_selection_borehole(self):
         pipe = Pipe.init_single_u_tube(

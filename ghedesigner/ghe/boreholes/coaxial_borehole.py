@@ -1,6 +1,7 @@
 from typing import cast
 
 from bhr.borehole import Borehole as BHRBorehole
+from bhr.coaxial_borehole import Coaxial as BHRCoaxial
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import PI
@@ -51,6 +52,28 @@ class CoaxialPipe(GHEDesignerBoreholeWithMultiplePipes):
     def calc_effective_borehole_resistance(self) -> float:
         resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.soil.ugt)
         return resist_bh_effective
+
+    def calc_pressure_loss(self, mass_flow_rate: float, temperature: float) -> float:
+        """Use BHResist pipe and friction equations for the inner tube and annulus."""
+        if mass_flow_rate <= 0.0:
+            return 0.0
+        bhr_borehole = cast(BHRCoaxial, self.bhr_borehole._bh)
+        inner_pressure_loss = bhr_borehole.inner_pipe.pressure_loss(mass_flow_rate, temperature)
+
+        annulus_area = PI * (self.r_out_in**2 - self.r_in_out**2)
+        density = bhr_borehole.fluid.density(temperature)
+        annulus_velocity = mass_flow_rate / (density * annulus_area)
+        annulus_reynolds = bhr_borehole.re_annulus(mass_flow_rate, temperature)
+        annulus_friction_factor = bhr_borehole.inner_pipe.friction_factor(annulus_reynolds)
+        annulus_pressure_loss = (
+            annulus_friction_factor
+            * self.borehole.H
+            / bhr_borehole.annular_hydraulic_diameter
+            * density
+            * annulus_velocity**2
+            / 2.0
+        )
+        return inner_pressure_loss + annulus_pressure_loss
 
     def to_single(self) -> SingleUTube:
         # Find an equivalent single U-tube given a coaxial heat exchanger

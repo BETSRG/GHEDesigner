@@ -42,9 +42,12 @@ class TestPreDesignedGHE(TestCase):
 
         # case 1: "g-function_library_1.0/rectangle_5m_v1.0.json, 1_1, 5._192._0.08"
         get_g_func_inputs = {
-            "flow_rate": 0.5,
-            "flow_type": "BOREHOLE",
-            "pre_designed": {"arrangement": "MANUAL", "H": 192, "x": [0.0], "y": [0.0]},
+            "design_volumetric_flow_rate_per_borehole_l_per_s": 0.5,
+            "fixed_borefield": {
+                "arrangement": "manual",
+                "active_borehole_length_m": 192,
+                "borehole_coordinates_m": [{"x": 0.0, "y": 0.0}],
+            },
         }
         log_time_vals, g_vals, _g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")
         self.assertAlmostEqual(-49.769, float(log_time_vals[0]), delta=0.001)
@@ -58,13 +61,16 @@ class TestPreDesignedGHE(TestCase):
 
         # case 2: "g-function_library_1.0/rectangle_5m_v1.0.json, 2_2, 5._192._0.08"
         get_g_func_inputs = {
-            "flow_rate": 0.5,
-            "flow_type": "BOREHOLE",
-            "pre_designed": {
-                "arrangement": "MANUAL",
-                "H": 192,
-                "x": [0.0, 0.0, 5.0, 5.0],
-                "y": [0.0, 5.0, 0.0, 5.0],
+            "design_volumetric_flow_rate_per_borehole_l_per_s": 0.5,
+            "fixed_borefield": {
+                "arrangement": "manual",
+                "active_borehole_length_m": 192,
+                "borehole_coordinates_m": [
+                    {"x": 0.0, "y": 0.0},
+                    {"x": 0.0, "y": 5.0},
+                    {"x": 5.0, "y": 0.0},
+                    {"x": 5.0, "y": 5.0},
+                ],
             },
         }
         log_time_vals, g_vals, _g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")
@@ -73,13 +79,13 @@ class TestPreDesignedGHE(TestCase):
 
         # case 3: "g-function_library_1.0/rectangle_5m_v1.0.json, 4_4, 5._192._0.08"
         get_g_func_inputs = {
-            "flow_rate": 0.5,
-            "flow_type": "BOREHOLE",
-            "pre_designed": {
-                "arrangement": "MANUAL",
-                "H": 192,
-                "x": [0.0, 0.0, 0.0, 0.0, 5.0, 5.0, 5.0, 5.0, 10.0, 10.0, 10.0, 10.0, 15.0, 15.0, 15.0, 15.0],
-                "y": [0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0],
+            "design_volumetric_flow_rate_per_borehole_l_per_s": 0.5,
+            "fixed_borefield": {
+                "arrangement": "manual",
+                "active_borehole_length_m": 192,
+                "borehole_coordinates_m": [
+                    {"x": x, "y": y} for x in (0.0, 5.0, 10.0, 15.0) for y in (0.0, 5.0, 10.0, 15.0)
+                ],
             },
         }
         log_time_vals, g_vals, _g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")

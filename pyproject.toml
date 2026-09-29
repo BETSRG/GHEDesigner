@@ -14,6 +14,7 @@ requires-python = ">=3.11"
 dependencies = [
     "bhresist>=0.4.0",
     "click>=8.3.1",
+    "flask>=3.1.0",
     "jsonschema>=4.26.0",
     "numpy<2.4",
     "pygfunction>=2.3.1",
@@ -37,6 +38,7 @@ classifiers = [
 
 [project.scripts]
 ghedesigner = "ghedesigner.main:run_manager_from_cli"
+ghedesigner-gui = "ghedesigner.gui.runner:main_gui"
 
 [dependency-groups]
 app = [
@@ -66,4 +68,13 @@ default-groups = ["app", "dev", "docs"]
 
 [tool.uv.build-backend]
 module-root = ""
-source-exclude = ["ghedesigner/gui", "ghedesigner/tests"]
+source-exclude = ["ghedesigner/tests", "node_modules"]
+wheel-exclude = [
+    "ghedesigner/gui/frontend/src/**",
+    "ghedesigner/gui/frontend/index.html",
+    "ghedesigner/gui/frontend/package.json",
+    "ghedesigner/gui/frontend/pnpm-lock.yaml",
+    "ghedesigner/gui/frontend/pnpm-workspace.yaml",
+    "ghedesigner/gui/frontend/tsconfig*.json",
+    "ghedesigner/gui/frontend/vite.config.ts",
+]

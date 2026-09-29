@@ -3,7 +3,7 @@ from math import ceil
 import numpy as np
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import FlowConfigType, TimestepType
+from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
@@ -32,7 +32,6 @@ class Bisection1D:
         max_eft: float,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         max_iter=15,
         disp=False,
         search=True,
@@ -50,7 +49,6 @@ class Bisection1D:
         self.field_type = field_type
         # Flow rate tracking
         self.v_flow = v_flow
-        self.flow_type = flow_type
         v_flow_system, m_flow_borehole = self.retrieve_flow(coordinates, fluid.rho)
         self.method = method
         self.min_height = min_height
@@ -114,16 +112,9 @@ class Bisection1D:
             self.selection_key, self.selected_coordinates = self.search()
 
     def retrieve_flow(self, coordinates, rho):
-        if self.flow_type == FlowConfigType.BOREHOLE:
-            v_flow_system = self.v_flow * len(coordinates)
-            # Total fluid mass flow rate per borehole (kg/s)
-            m_flow_borehole = self.v_flow / 1000.0 * rho
-        elif self.flow_type == FlowConfigType.SYSTEM:
-            v_flow_system = self.v_flow
-            v_flow_borehole = self.v_flow / len(coordinates)
-            m_flow_borehole = v_flow_borehole / 1000.0 * rho
-        else:
-            raise ValueError("The flow argument should be either `borehole` or `system`.")
+        v_flow_system = self.v_flow * len(coordinates)
+        # Input flow is L/s per borehole; convert to kg/s per borehole.
+        m_flow_borehole = self.v_flow / 1000.0 * rho
         return v_flow_system, m_flow_borehole
 
     def initialize_ghe(self, coordinates, h, field_specifier="N/A"):
