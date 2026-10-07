@@ -80,6 +80,17 @@ def get_test_input_files() -> list[Path]:
     return demo_file_list
 
 
+def test_pre_designed_ghe_does_not_require_loads(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    input_path = Path(__file__).parents[2] / "demos" / "pre_designed_manual.json"
+
+    assert run(input_file_path=input_path, output_directory=tmp_path) == 0
+
+    captured = capsys.readouterr()
+    assert "Bad load specified" not in captured.out
+    assert (tmp_path / "Gfunction.csv").is_file()
+    assert (tmp_path / "SimulationSummary.json").is_file()
+
+
 @pytest.mark.parametrize("demo_file_path", get_test_input_files(), ids=lambda f: "Demo: " + f.stem)
 def test_demo_files(demo_file_path: Path, time_str: str):
     expected_results = expected_demo_results_dict.get(demo_file_path.stem)

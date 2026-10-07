@@ -10,10 +10,11 @@ from ghedesigner.tests.test_base_case import GHEBaseTest
 class TestSizeWithBldgLoads(GHEBaseTest):
     def test_size_with_bldg_loads(self):
         hp_data = {
-            "total_load": {
+            "total_load_source": {
                 "column_number": 0,
                 "file_path": self.test_data_directory / "test_bldg_loads.csv",
                 "heat_pump_cop": 3,
+                "value_units": "W",
             }
         }
 

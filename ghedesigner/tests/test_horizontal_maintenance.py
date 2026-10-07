@@ -82,7 +82,7 @@ def test_horizontal_component_simulator_uses_json_library(tmp_path, case_type):
     assert (name, success, error) == (run_name, True, None)
     output = pd.read_csv(tmp_path / f"{run_name}.csv")
     assert len(output) == 3
-    assert output["Time [hr]"].tolist() == pytest.approx([1.0, 2.0, 3.0])
+    assert output["Simulation: Elapsed Time [h]"].tolist() == pytest.approx([1.0, 2.0, 3.0])
 
 
 @pytest.mark.parametrize(
@@ -120,7 +120,9 @@ def test_horizontal_component_csv_rows_align_with_solved_intervals(
 
     assert (name, success, error) == (run_name, True, None)
     output = pd.read_csv(tmp_path / f"{run_name}.csv")
-    assert output[f"{run_name}_pipe_Inlet [C]"].tolist() == pytest.approx(expected_inlet_temperatures)
+    assert output[f"{run_name}_pipe: Entering Fluid Temperature [C]"].tolist() == pytest.approx(
+        expected_inlet_temperatures
+    )
 
 
 def test_horizontal_component_rejects_missing_inlet_csv(tmp_path):

@@ -3,13 +3,13 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
-from ghedesigner.enums import BHType, FlowConfigType, SimCompType
+from ghedesigner.enums import BHType, SimCompType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.ground_loads import HybridLoad
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Grout, Soil
-from ghedesigner.utilities import HPmodel, get_loads
+from ghedesigner.utilities import HPmodel, get_loads, validate_nonnegative_loads
 
 MIN_HYBRID_TIMESTEP_HOURS = 1.0
 
@@ -163,7 +163,6 @@ class ProcessLoads:
 
         self.mass_flow_rate = None
         self.mass_flow_borehole = None
-        self.flow_type = None
         self.bhe_type = None
         self.num_boreholes = None
 
@@ -174,20 +173,19 @@ class ProcessLoads:
 
         # Extract input values
         fluid_data = json_data["fluid"]
-        topology_ghe_name = next(
-            component["name"]
-            for component in json_data["topology"]
-            if component["type"].upper() == SimCompType.GROUND_HEAT_EXCHANGER.name
+        network_data = json_data["network"]
+        reference_ghe_name = next(
+            station["component_id"]
+            for station in network_data["stations"]
+            if station["component_id"] in json_data["ground_heat_exchangers"]
         )
-        ghe_name_lookup = {name.upper(): name for name in json_data["ground_heat_exchanger"]}
-        reference_ghe_name = ghe_name_lookup[topology_ghe_name.upper()]
-        ghe_data = json_data["ground_heat_exchanger"][reference_ghe_name]
+        ghe_data = json_data["ground_heat_exchangers"][reference_ghe_name]
         soil_data = json_data["soil"]
         grout_data = ghe_data["grout"]
         pipe_data = ghe_data["pipe"]
         borehole_data = ghe_data["borehole"]
         sim_data = json_data["simulation_control"]
-        self.hp_data = json_data.get("heat_pump", {})
+        self.hp_data = json_data.get("heat_pumps", {})
 
         self.n_years = sim_data["simulation_years"]
         self.start_month = 1
@@ -195,47 +193,51 @@ class ProcessLoads:
 
         # Construct objects
         self.fluid = Fluid(
-            fluid_name=fluid_data["fluid_name"],
-            temperature=fluid_data["temperature"],
+            fluid_name=fluid_data["fluid_type"],
+            temperature=fluid_data["property_evaluation_temperature_c"],
             percent=fluid_data["concentration_percent"],
         )
 
-        self.bhe_type = BHType(pipe_data["arrangement"].upper())
+        self.bhe_type = BHType(pipe_data["arrangement"].replace("_", "").upper())
         self.pipe = Pipe.init_from_dict(self.bhe_type, pipe_data)
-        self.soil = Soil(soil_data["conductivity"], soil_data["rho_cp"], soil_data["undisturbed_temp"])
-        self.grout = Grout(grout_data["conductivity"], grout_data["rho_cp"])
+        self.soil = Soil(
+            soil_data["thermal_conductivity_w_per_m_k"],
+            soil_data["volumetric_heat_capacity_j_per_m3_k"],
+            soil_data["undisturbed_ground_temperature_c"],
+        )
+        self.grout = Grout(
+            grout_data["thermal_conductivity_w_per_m_k"],
+            grout_data["volumetric_heat_capacity_j_per_m3_k"],
+        )
         self.num_boreholes = None
-        if "pre_designed" in ghe_data:
-            pre_designed_data = ghe_data["pre_designed"]
+        if "fixed_borefield" in ghe_data:
+            pre_designed_data = ghe_data["fixed_borefield"]
             self.borehole = Borehole(
-                burial_depth=borehole_data["buried_depth"],
-                borehole_radius=borehole_data["diameter"] / 2.0,
-                borehole_height=pre_designed_data["H"],
+                burial_depth=borehole_data["top_depth_below_grade_m"],
+                borehole_radius=borehole_data["diameter_m"] / 2.0,
+                borehole_height=pre_designed_data["active_borehole_length_m"],
             )
             self.num_boreholes = self._pre_designed_borehole_count(pre_designed_data)
         elif "design" in ghe_data:
             self.borehole = Borehole(
-                burial_depth=borehole_data["buried_depth"],
-                borehole_radius=borehole_data["diameter"] / 2.0,
-                borehole_height=ghe_data["design"]["max_height"],
+                burial_depth=borehole_data["top_depth_below_grade_m"],
+                borehole_radius=borehole_data["diameter_m"] / 2.0,
+                borehole_height=ghe_data["design"]["maximum_active_borehole_length_m"],
             )
         else:
             raise ValueError("Reference GHE contains neither a pre-designed GHE nor the definition to design one.")
         # mass flow rate
-        self.mass_flow_rate = ghe_data["flow_rate"]
-        self.flow_type = FlowConfigType(ghe_data["flow_type"].upper())
+        self.mass_flow_rate = ghe_data["design_volumetric_flow_rate_per_borehole_l_per_s"]
 
         return self.fluid, self.pipe, self.grout, self.soil, self.borehole
 
     @staticmethod
     def _pre_designed_borehole_count(pre_designed_data):
-        arrangement = pre_designed_data["arrangement"].upper()
-        if arrangement == "MANUAL":
-            num_boreholes = len(pre_designed_data["x"])
-        elif arrangement == "RECTANGLE":
-            num_boreholes = (
-                pre_designed_data["boreholes_in_x_dimension"] * pre_designed_data["boreholes_in_y_dimension"]
-            )
+        arrangement = pre_designed_data["arrangement"]
+        if arrangement == "manual":
+            num_boreholes = len(pre_designed_data["borehole_coordinates_m"])
+        elif arrangement == "rectangle":
+            num_boreholes = pre_designed_data["borehole_count_x"] * pre_designed_data["borehole_count_y"]
         else:
             raise ValueError(f"Unsupported pre-designed GHE arrangement: {arrangement}")
 
@@ -244,21 +246,10 @@ class ProcessLoads:
         return num_boreholes
 
     def _get_mass_flow_borehole(self):
-        mass_flow = self.mass_flow_rate / 1000.0 * self.fluid.rho
-        if self.flow_type == FlowConfigType.BOREHOLE:
-            return mass_flow
-        if self.flow_type == FlowConfigType.SYSTEM:
-            if self.num_boreholes is None:
-                raise ValueError(
-                    "Hybrid preprocessing cannot convert SYSTEM flow to per-borehole flow for a sizable GHE "
-                    "because its borehole count is not known until after sizing. Use BOREHOLE flow or provide a "
-                    "pre-designed field."
-                )
-            return mass_flow / self.num_boreholes
-        raise ValueError(f"Unsupported GHE flow type: {self.flow_type}")
+        return self.mass_flow_rate / 1000.0 * self.fluid.rho
 
-    def read_hp_load_from_json(self, json_data, beta=0.5):
-        building_data = json_data["building"]
+    def read_hp_load_from_json(self, json_data):
+        building_data = json_data["buildings"]
 
         self.zones = []
 
@@ -266,26 +257,28 @@ class ProcessLoads:
             zone = Zone()
             zone.name = bldg_id
 
-            if "heating_load" in bldg_data:
-                heating_load = bldg_data["heating_load"]
-                zone.q_htg_1yr = np.array(
+            if "heating_load_source" in bldg_data:
+                heating_load = bldg_data["heating_load_source"]
+                zone.q_htg_1yr = validate_nonnegative_loads(
                     get_loads(
-                        heating_load.get("heat_pump_name", f"{bldg_id}_heating"),
+                        heating_load.get("heat_pump_id", f"{bldg_id}_heating"),
                         SimCompType.HEAT_PUMP.name,
                         heating_load,
                     ),
-                    dtype=float,
+                    "heating",
+                    bldg_id,
                 )
 
-            if "cooling_load" in bldg_data:
-                cooling_load = bldg_data["cooling_load"]
-                zone.q_clg_1yr = np.array(
+            if "cooling_load_source" in bldg_data:
+                cooling_load = bldg_data["cooling_load_source"]
+                zone.q_clg_1yr = validate_nonnegative_loads(
                     get_loads(
-                        cooling_load.get("heat_pump_name", f"{bldg_id}_cooling"),
+                        cooling_load.get("heat_pump_id", f"{bldg_id}_cooling"),
                         SimCompType.HEAT_PUMP.name,
                         cooling_load,
                     ),
-                    dtype=float,
+                    "cooling",
+                    bldg_id,
                 )
 
             if zone.q_htg_1yr is None and zone.q_clg_1yr is None:
@@ -297,16 +290,13 @@ class ProcessLoads:
             if zone.q_clg_1yr is None:
                 zone.q_clg_1yr = np.zeros_like(zone.q_htg_1yr)
 
-            if "heating_load" in bldg_data and "heat_pump_cop" in bldg_data["heating_load"]:
-                zone.COP_htg = float(bldg_data["heating_load"]["heat_pump_cop"])
-            elif "heating_load" in bldg_data and "heat_pump_name" in bldg_data["heating_load"]:
-                hp_htg_name = bldg_data["heating_load"]["heat_pump_name"]
+            if "heating_load_source" in bldg_data and "heat_pump_cop" in bldg_data["heating_load_source"]:
+                zone.COP_htg = float(bldg_data["heating_load_source"]["heat_pump_cop"])
+            elif "heating_load_source" in bldg_data and "heat_pump_id" in bldg_data["heating_load_source"]:
+                hp_htg_name = bldg_data["heating_load_source"]["heat_pump_id"]
                 hp_htg_data = self.hp_data[hp_htg_name]
                 hp_htg = HPmodel(hp_htg_name, hp_htg_data, self.soil.ugt)
-                if "min_eft" in bldg_data:
-                    heating_temp = (1 - beta) * bldg_data["min_eft"] + beta * self.soil.ugt
-                else:
-                    heating_temp = self.soil.ugt
+                heating_temp = bldg_data.get("heating_cop_evaluation_temperature_c", self.soil.ugt)
                 q_extr_ratio = hp_htg.heating_ratio(heating_temp)
                 zone.COP_htg = 1.0 / (1.0 - q_extr_ratio)
             elif np.any(zone.q_htg_1yr != 0):
@@ -314,16 +304,13 @@ class ProcessLoads:
             else:
                 zone.COP_htg = 1.0  # assigning harmless value
 
-            if "cooling_load" in bldg_data and "heat_pump_cop" in bldg_data["cooling_load"]:
-                zone.COP_clg = float(bldg_data["cooling_load"]["heat_pump_cop"])
-            elif "cooling_load" in bldg_data and "heat_pump_name" in bldg_data["cooling_load"]:
-                hp_clg_name = bldg_data["cooling_load"]["heat_pump_name"]
+            if "cooling_load_source" in bldg_data and "heat_pump_cop" in bldg_data["cooling_load_source"]:
+                zone.COP_clg = float(bldg_data["cooling_load_source"]["heat_pump_cop"])
+            elif "cooling_load_source" in bldg_data and "heat_pump_id" in bldg_data["cooling_load_source"]:
+                hp_clg_name = bldg_data["cooling_load_source"]["heat_pump_id"]
                 hp_clg_data = self.hp_data[hp_clg_name]
                 hp_clg = HPmodel(hp_clg_name, hp_clg_data, self.soil.ugt)
-                if "max_eft" in bldg_data:
-                    cooling_temp = (1 - beta) * bldg_data["max_eft"] + beta * self.soil.ugt
-                else:
-                    cooling_temp = self.soil.ugt
+                cooling_temp = bldg_data.get("cooling_cop_evaluation_temperature_c", self.soil.ugt)
                 q_rej_ratio = hp_clg.cooling_ratio(cooling_temp)
                 zone.COP_clg = 1.0 / (q_rej_ratio - 1.0)
             elif np.any(zone.q_clg_1yr != 0):

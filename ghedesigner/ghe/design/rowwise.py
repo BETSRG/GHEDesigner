@@ -1,9 +1,9 @@
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 from pygfunction.boreholes import Borehole
 
 from ghedesigner.constants import RAD_TO_DEG
-from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.enums import DesignGeomType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.rowwise import field_optimization_fr, field_optimization_wp_space_fr, gen_shape
@@ -29,12 +29,24 @@ class GeometricConstraintsRowWise(GeometricConstraints):
     type: DesignGeomType = field(default=DesignGeomType.ROWWISE, init=False, repr=False)
 
     def to_input(self) -> dict:
-        return {
-            **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k != "type"}),
-            "min_rotation": self.min_rotation * RAD_TO_DEG,
-            "max_rotation": self.max_rotation * RAD_TO_DEG,
-            "method": self.type.name,
+        result = {
+            "method": "rowwise",
+            "minimum_borehole_spacing_m": self.min_spacing,
+            "maximum_borehole_spacing_m": self.max_spacing,
+            "minimum_rotation_degrees": self.min_rotation * RAD_TO_DEG,
+            "maximum_rotation_degrees": self.max_rotation * RAD_TO_DEG,
+            "rotation_step_degrees": self.rotate_step * RAD_TO_DEG,
+            "property_boundary_coordinates_m": [{"x": x, "y": y} for x, y in self.property_boundary],
         }
+        if self.perimeter_spacing_ratio is not None:
+            result["perimeter_spacing_ratio"] = self.perimeter_spacing_ratio
+        if self.spacing_step is not None:
+            result["borehole_spacing_step_m"] = self.spacing_step
+        if self.no_go_boundaries is not None:
+            result["no_go_boundary_coordinates_m"] = [
+                [{"x": x, "y": y} for x, y in boundary] for boundary in self.no_go_boundaries
+            ]
+        return result
 
 
 class DesignRowWise(DesignBase):
@@ -57,7 +69,6 @@ class DesignRowWise(DesignBase):
         geometric_constraints: GeometricConstraintsRowWise,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
     ) -> None:
         super().__init__(
@@ -78,7 +89,6 @@ class DesignRowWise(DesignBase):
             geometric_constraints,
             hourly_extraction_ground_loads,
             method,
-            flow_type,
             load_years,
         )
         self.geometric_constraints = geometric_constraints
@@ -112,7 +122,6 @@ class DesignRowWise(DesignBase):
             self.hourly_extraction_ground_loads,
             self.geometric_constraints,
             method=self.method,
-            flow_type=self.flow_type,
             disp=disp,
             field_type="row-wise",
             load_years=self.load_years,

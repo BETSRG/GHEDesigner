@@ -4,6 +4,7 @@ from typing import cast
 
 import numpy as np
 from bhr.borehole import Borehole as BHRBorehole
+from bhr.single_u_borehole import SingleUBorehole as BHRSingleUBorehole
 from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgtsv
@@ -131,6 +132,11 @@ class SingleUTube(GHEDesignerBoreholeBase):
         # resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.soil.ugt)
         resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.init_temp)  # change by NB
         return resist_bh_effective
+
+    def calc_pressure_loss(self, mass_flow_rate: float, temperature: float) -> float:
+        """Use BHResist to calculate loss through both legs of the U-tube."""
+        bhr_borehole = cast(BHRSingleUBorehole, self.bhr_borehole._bh)
+        return bhr_borehole.pressure_loss(mass_flow_rate, temperature)
 
     def to_single(self):
         return self

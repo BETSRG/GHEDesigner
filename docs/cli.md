@@ -28,6 +28,9 @@ Validate an input file without creating outputs:
 ghedesigner --validate-only demos/find_design_rectangle_single_u_tube.json
 ```
 
+Input files must use schema version 3. See the [input schema guide](input-schema.md) for the current field names, units,
+and workflow-specific sections.
+
 Convert a GHEDesigner simulation summary output to EnergyPlus IDF objects:
 
 ```bash

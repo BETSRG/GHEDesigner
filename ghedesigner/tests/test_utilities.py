@@ -4,13 +4,25 @@ import numpy as np
 import pytest
 
 from ghedesigner.tests.test_base_case import GHEBaseTest
-from ghedesigner.utilities import HPmodel, read_csv_column
+from ghedesigner.utilities import HPmodel, read_csv_column, validate_nonnegative_loads
 
 
 class TestUtilities(GHEBaseTest):
+    def test_validate_nonnegative_loads_reports_negative_values(self):
+        with pytest.raises(
+            ValueError,
+            match=r"Heating loads for building 'building_a'.*first at position 2.*minimum -4 W",
+        ):
+            validate_nonnegative_loads([1.0, -2.0, 3.0, -4.0], "heating", "building_a")
+
+    def test_validate_nonnegative_loads_accepts_zero_and_positive_values(self):
+        loads = validate_nonnegative_loads([0.0, 1.0, 2.0], "cooling", "building_a")
+
+        np.testing.assert_array_equal(loads, [0.0, 1.0, 2.0])
+
     def test_heat_pump_quadratics_hold_boundary_values_outside_curve_range(self):
         demo = json.loads((self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json").read_text())
-        heat_pump = HPmodel("hp1", demo["heat_pump"]["hp1"], ugt=20.0)
+        heat_pump = HPmodel("hp1", demo["heat_pumps"]["hp1"], ugt=20.0)
         temperatures = np.array([0.0, 10.0, 20.0, 35.0, 50.0])
 
         heating_ratios = heat_pump.heating_ratio(temperatures)
@@ -36,9 +48,9 @@ class TestUtilities(GHEBaseTest):
 
     def test_heat_pump_rejects_reversed_curve_temperature_limits(self):
         demo = json.loads((self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json").read_text())
-        heat_pump_data = demo["heat_pump"]["hp1"]
-        heat_pump_data["cooling_performance"]["minimum_curve_temperature"] = 40.0
-        heat_pump_data["cooling_performance"]["maximum_curve_temperature"] = 30.0
+        heat_pump_data = demo["heat_pumps"]["hp1"]
+        heat_pump_data["cooling_performance"]["minimum_curve_temperature_c"] = 40.0
+        heat_pump_data["cooling_performance"]["maximum_curve_temperature_c"] = 30.0
 
         with pytest.raises(ValueError, match="Cooling minimum curve temperature"):
             HPmodel("hp1", heat_pump_data, ugt=20.0)

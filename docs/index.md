@@ -97,10 +97,9 @@ GHEDesigner does not have every feature that is found in a tool like GLHEPRO. Cu
   computationally expensive than hybrid load aggregation.
 - Vertical borehole fields are the GHE technology sized by GHEDesigner. District simulations can include buried
   horizontal distribution piping, but horizontal ground heat exchanger fields are not sized as GHE fields.
-- GHEDesigner does not calculate the head loss in the ground heat exchanger or warn the user that head loss may be
-  excessive.
-- GHEDesigner does not have a graphical user interface.
-- GHEDesigner is a Python package and requires some Python knowledge to use.
+- GHEDesigner reports pressure losses for buildings, GHE borehole flow paths, and simulated horizontal pipes, along
+  with distribution and configured local GHE pump energy, but does not yet warn when the selected equipment has
+  insufficient head.
 
 ## Requirements
 
@@ -128,6 +127,14 @@ Run a demo file using GHEDesigner:
 ```bash
 ghedesigner demos/find_design_rectangle_single_u_tube.json ./tmp
 ```
+
+Launch the graphical input editor:
+
+```bash
+ghedesigner-gui
+```
+
+See [Graphical input editor](gui.md) for the editor workflow and network representation details.
 
 **Developers** - Clone the repository via git:
 

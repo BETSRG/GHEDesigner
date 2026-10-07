@@ -6,11 +6,11 @@ class HeatPumpFixedCOP:
     def __init__(self, name: str, data: dict) -> None:
         self.name = name
         self.comp_type = SimCompType.HEAT_PUMP
-        self.cop = data["total_load"]["heat_pump_cop"]
+        self.cop = data["total_load_source"]["heat_pump_cop"]
         if self.cop < 0:
             raise ValueError("Coefficient of Performance (COP) must be greater than zero.")
 
-        self.loads = get_loads(name, self.comp_type.name, data["total_load"])
+        self.loads = get_loads(name, self.comp_type.name, data["total_load_source"])
 
     def convert_bldg_load_to_ground_load(self, bldg_load):
         if bldg_load > 0:

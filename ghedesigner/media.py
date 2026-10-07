@@ -6,8 +6,15 @@ from ghedesigner.enums import FluidType
 
 class Fluid:
     def __init__(self, fluid_name: str, temperature: float = 20, percent: float = 0) -> None:
-        self.name = fluid_name
         self.fluid_type = self.get_fluid_type(fluid_name)
+        pygfunction_names = {
+            FluidType.ETHYLALCOHOL: "ETHYLALCOHOL",
+            FluidType.ETHYLENEGLYCOL: "ETHYLENEGLYCOL",
+            FluidType.METHYLALCOHOL: "METHYLALCOHOL",
+            FluidType.PROPYLENEGLYCOL: "PROPYLENEGLYCOL",
+            FluidType.WATER: "WATER",
+        }
+        self.name = pygfunction_names[self.fluid_type]
         self.temperature = temperature
         self.concentration_percent = percent
 
@@ -39,7 +46,7 @@ class Fluid:
 
     @staticmethod
     def get_fluid_type(fluid_name: str) -> FluidType:
-        fluid_name_upper = fluid_name.upper()
+        fluid_name_upper = fluid_name.replace("_", " ").upper()
         if fluid_name_upper in ["MEA", "ETHYLALCOHOL", "ETHYL ALCOHOL"]:
             return FluidType.ETHYLALCOHOL
         if fluid_name_upper in ["MEG", "ETHYLENEGLYCOL", "ETHYLENE GLYCOL"]:
@@ -76,7 +83,10 @@ class ThermalProperty:
         return output
 
     def to_input(self) -> dict:
-        return {"conductivity": self.k, "rho_cp": self.rho_cp}
+        return {
+            "thermal_conductivity_w_per_m_k": self.k,
+            "volumetric_heat_capacity_j_per_m3_k": self.rho_cp,
+        }
 
 
 class Grout(ThermalProperty):
@@ -98,4 +108,8 @@ class Soil(ThermalProperty):
         return output
 
     def to_input(self) -> dict:
-        return {"conductivity": self.k, "rho_cp": self.rho_cp, "undisturbed_temp": self.ugt}
+        return {
+            "thermal_conductivity_w_per_m_k": self.k,
+            "volumetric_heat_capacity_j_per_m3_k": self.rho_cp,
+            "undisturbed_ground_temperature_c": self.ugt,
+        }

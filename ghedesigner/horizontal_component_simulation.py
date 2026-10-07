@@ -15,6 +15,7 @@ from ghedesigner.district_system import CoupledHorizontalPipe, IsolatedHorizonta
 from ghedesigner.enums import CentralLoopType
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.media import Fluid, Soil
+from ghedesigner.output import columns as csv_columns
 from ghedesigner.utilities import float_tuple_to_string
 
 # Global variable to hold the library data for each worker process
@@ -274,15 +275,18 @@ def run_horizontal_simulation(config):
                 p.update_post_solve(x_vector, t)
 
         # --- Export Results ---
-        output_columns = {"Time [hr]": time_array[1:]}
+        time_column = csv_columns.ELAPSED_TIME.for_object(csv_columns.SIMULATION)
+        output_columns = {time_column: time_array[1:]}
         for p in pipes:
-            output_columns[f"{p.name}_Inlet [C]"] = p.t_in[1:]
-            output_columns[f"{p.name}_Outlet [C]"] = p.t_out_seg[-1, 1:]
+            output_columns[csv_columns.ENTERING_FLUID_TEMPERATURE.for_object(p.name)] = p.t_in[1:]
+            output_columns[csv_columns.EXITING_FLUID_TEMPERATURE.for_object(p.name)] = p.t_out_seg[-1, 1:]
             for k in range(p.num_segments):
-                output_columns[f"{p.name}_Node{k + 1}_Tmean [C]"] = p.t_mean_seg[k, 1:]
-                output_columns[f"{p.name}_Node{k + 1}_Q [W/m]"] = p.q_seg[k, 1:]
+                output_columns[csv_columns.segment_mean_fluid_temperature(k + 1).for_object(p.name)] = p.t_mean_seg[
+                    k, 1:
+                ]
+                output_columns[csv_columns.segment_heat_transfer_rate(k + 1).for_object(p.name)] = p.q_seg[k, 1:]
 
-        output_data = pd.DataFrame(output_columns).set_index("Time [hr]")
+        output_data = pd.DataFrame(output_columns).set_index(time_column)
         output_path = Path(config["output_dir"]) / f"{config['run_name']}.csv"
         output_data.to_csv(output_path, float_format="%0.4f")
 
