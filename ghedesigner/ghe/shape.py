@@ -1,9 +1,10 @@
-from copy import deepcopy
 from math import atan, inf, pi, sin, sqrt
 
 import numpy as np
 
 from ghedesigner.constants import PI_OVER_2, TWO_PI
+
+POSSIBLE_NUMBER_OF_VERTEX_INTERSECTIONS = (2, 4)
 
 
 class Shapes:
@@ -62,7 +63,7 @@ class Shapes:
         if edge_index == self.number_of_edges - 1:
             return [self.number_of_edges - 1, 0]
         else:
-            return[edge_index, edge_index + 1]
+            return [edge_index, edge_index + 1]
 
     def get_edge_line_segment(self, edge_index):
         if edge_index == self.number_of_edges - 1:
@@ -74,49 +75,62 @@ class Shapes:
         intersections = []
         for edx_1 in range(self.number_of_edges):
             for edx_2 in range(other_shape.number_of_edges):
-                edge_intersections = vector_intersect([val for point in self.get_edge_line_segment(edx_1) for val in point],
-                                                      [val for point in other_shape.get_edge_line_segment(edx_2) for val in point],
-                                                      intersection_tolerance,
-                                                      advanced=True,
-                                                      mark_intersections=True)
+                edge_intersections = vector_intersect(
+                    [val for point in self.get_edge_line_segment(edx_1) for val in point],
+                    [val for point in other_shape.get_edge_line_segment(edx_2) for val in point],
+                    intersection_tolerance,
+                    advanced=True,
+                    mark_intersections=True,
+                )
                 shape_1_vertex_indices = self.get_edge_vertex_indices(edx_1)
                 shape_2_vertex_indices = other_shape.get_edge_vertex_indices(edx_2)
                 coincident_vertices = []
                 for edge_intersection in edge_intersections:
                     if len(edge_intersection[1]) > 0:
-                        coincident_vertices.append([(e[0], shape_1_vertex_indices[e[1]] if e[0] == 0 else shape_2_vertex_indices[e[1]]) for e in edge_intersection[1]])
+                        coincident_vertices.append(
+                            [
+                                (e[0], shape_1_vertex_indices[e[1]] if e[0] == 0 else shape_2_vertex_indices[e[1]])
+                                for e in edge_intersection[1]
+                            ]
+                        )
                     else:
                         coincident_vertices.append([])
 
                 edge_intersections = [edge_intersection[0] for edge_intersection in edge_intersections]
                 if len(edge_intersections) == 1:
-                    intersections.append({
-                        "location": edge_intersections[0],
-                        "coincident_vertices": coincident_vertices[0],
-                        "shape_1_vertex_indices": shape_1_vertex_indices,
-                        "shape_2_vertex_indices": shape_2_vertex_indices
-                    })
-                elif len(edge_intersections) > 1:
-                    # Make sure the two intersections are counter-clockwise w/ respect to self.
-                    intersection_distances = (distance(self.c[shape_1_vertex_indices[0]], edge_intersections[0]),
-                                              distance(self.c[shape_1_vertex_indices[0]], edge_intersections[1]))
-                    if intersection_distances[0] > intersection_distances[1]:
-                        edge_intersections = (edge_intersections[1], edge_intersections[0])
-                        coincident_vertices = (coincident_vertices[1], coincident_vertices[0])
-                    intersections.extend([
+                    intersections.append(
                         {
                             "location": edge_intersections[0],
                             "coincident_vertices": coincident_vertices[0],
                             "shape_1_vertex_indices": shape_1_vertex_indices,
-                            "shape_2_vertex_indices": shape_2_vertex_indices
-                        },
-                        {
-                            "location": edge_intersections[1],
-                            "coincident_vertices": coincident_vertices[1],
-                            "shape_1_vertex_indices": shape_1_vertex_indices,
-                            "shape_2_vertex_indices": shape_2_vertex_indices
+                            "shape_2_vertex_indices": shape_2_vertex_indices,
                         }
-                    ])
+                    )
+                elif len(edge_intersections) > 1:
+                    # Make sure the two intersections are counter-clockwise w/ respect to self.
+                    intersection_distances = (
+                        distance(self.c[shape_1_vertex_indices[0]], edge_intersections[0]),
+                        distance(self.c[shape_1_vertex_indices[0]], edge_intersections[1]),
+                    )
+                    if intersection_distances[0] > intersection_distances[1]:
+                        edge_intersections = (edge_intersections[1], edge_intersections[0])
+                        coincident_vertices = (coincident_vertices[1], coincident_vertices[0])
+                    intersections.extend(
+                        [
+                            {
+                                "location": edge_intersections[0],
+                                "coincident_vertices": coincident_vertices[0],
+                                "shape_1_vertex_indices": shape_1_vertex_indices,
+                                "shape_2_vertex_indices": shape_2_vertex_indices,
+                            },
+                            {
+                                "location": edge_intersections[1],
+                                "coincident_vertices": coincident_vertices[1],
+                                "shape_1_vertex_indices": shape_1_vertex_indices,
+                                "shape_2_vertex_indices": shape_2_vertex_indices,
+                            },
+                        ]
+                    )
 
         return trim_vertex_intersection(intersections)
 
@@ -269,6 +283,7 @@ def sort_intersections(r_a, rotate):
     r_a = [row for _, row in zipped]
     return r_a
 
+
 def trim_vertex_intersection(intersections):
 
     # Mark where duplicate vertex intersections are.
@@ -287,11 +302,16 @@ def trim_vertex_intersection(intersections):
             new_intersection_list.append(intersection)
 
     # If vertex intersection logic is working properly, intersections should appear in groups of 2 or 4.
-    assert(np.all([(len(vertex_dictionary[key]) == 2 or len(vertex_dictionary[key]) == 4) for key in vertex_dictionary]))
+    if not np.all(
+        [(len(vertex_dictionary[key]) in POSSIBLE_NUMBER_OF_VERTEX_INTERSECTIONS) for key in vertex_dictionary]
+    ):
+        raise ValueError(
+            "Vertex intersections found in a group size of neither 2 or 4."
+            " This suggests an issue with the polygon intersection logic."
+        )
 
     # Add in one copy of the vertex intersection back into the intersection list.
-    for idx in vertex_dictionary:
-        index_list = vertex_dictionary[idx]
+    for _, index_list in vertex_dictionary.items():
         new_index = min(index_list)
         new_intersection_list.insert(new_index, intersections[new_index])
 
@@ -316,11 +336,13 @@ def mark_endpoint_intersections(perform_marking, l1, l2, intersection_points, in
     else:
         return intersection_points
 
+
 def tolerance_comparison(val_1, val_2, tolerance, conservative=False):
     if conservative:
         return (val_2 - val_1) > (tolerance)
     else:
         return (val_2 - val_1) > (-tolerance)
+
 
 def vector_intersect(l1, l2, intersection_tolerance, advanced=False, mark_intersections=False):
     """
@@ -352,11 +374,11 @@ def vector_intersect(l1, l2, intersection_tolerance, advanced=False, mark_inters
     l1_min_y_val, l1_max_y_val = sorted((y11, y12))
     l2_min_x_val, l2_max_x_val = sorted((x21, x22))
     l2_min_y_val, l2_max_y_val = sorted((y21, y22))
-    if (
-            tolerance_comparison(l2_max_x_val, l1_min_x_val, intersection_tolerance, conservative=True) or \
-            tolerance_comparison(l1_max_x_val, l2_min_x_val, intersection_tolerance, conservative=True) or \
-            tolerance_comparison(l2_max_y_val, l1_min_y_val, intersection_tolerance, conservative=True) or \
-            tolerance_comparison(l1_max_y_val, l2_min_y_val, intersection_tolerance, conservative=True)
+    if advanced and (
+        tolerance_comparison(l2_max_x_val, l1_min_x_val, intersection_tolerance, conservative=True)
+        or tolerance_comparison(l1_max_x_val, l2_min_x_val, intersection_tolerance, conservative=True)
+        or tolerance_comparison(l2_max_y_val, l1_min_y_val, intersection_tolerance, conservative=True)
+        or tolerance_comparison(l1_max_y_val, l2_min_y_val, intersection_tolerance, conservative=True)
     ):
         return []
     if x12 - x11 == 0:
@@ -377,14 +399,14 @@ def vector_intersect(l1, l2, intersection_tolerance, advanced=False, mark_inters
             if abs(x11 - x21) < intersection_tolerance:
                 if not advanced:
                     return mark_endpoint_intersections(
-                        mark_intersections, l1, l2,
-                        [[x11, y11], [x12, y12]], intersection_tolerance)
-                else: # Lines might have collinear intersection.
+                        mark_intersections, l1, l2, [[x11, y11], [x12, y12]], intersection_tolerance
+                    )
+                else:  # Lines might have collinear intersection.
                     l1_min_y, l1_max_y = sorted((y11, y12))
                     l2_min_y, l2_max_y = sorted((y21, y22))
 
-                    #Is there an overlapping portion of the lines?
-                    if  l1_min_y > l2_max_y or l1_max_y < l2_min_y:
+                    # Is there an overlapping portion of the lines?
+                    if l1_min_y > l2_max_y or l1_max_y < l2_min_y:
                         return []
                     else:
                         x_val = 0.25 * (x12 + x22 + x21 + x22)
@@ -397,93 +419,106 @@ def vector_intersect(l1, l2, intersection_tolerance, advanced=False, mark_inters
                             )
                         # Return the overlapping portion of the line segments
                         return mark_endpoint_intersections(
-                            mark_intersections, l1, l2,
-                            [[x_val, lower_y_val], [x_val, upper_y_val]], intersection_tolerance)
+                            mark_intersections,
+                            l1,
+                            l2,
+                            [[x_val, lower_y_val], [x_val, upper_y_val]],
+                            intersection_tolerance,
+                        )
             else:
                 return []
-        elif a1 == inf: # Is l1 vertical?
+        elif a1 == inf:  # Is l1 vertical?
+            if not advanced:
+                return mark_endpoint_intersections(
+                    mark_intersections, l1, l2, [[x11, a2 * x11 + c2]], intersection_tolerance
+                )
             x_a = 0.5 * (x11 + x12)
             y_p = a2 * x_a + c2
             x2_min, x2_max = sorted((x21, x22))
             y1_min, y1_max = sorted((y11, y12))
             if (
-                tolerance_comparison(y1_min, y_p, intersection_tolerance) and \
-                tolerance_comparison(y_p, y1_max, intersection_tolerance) and \
-                tolerance_comparison(x2_min, x_a, intersection_tolerance) and \
-                tolerance_comparison(x_a, x2_max, intersection_tolerance)
+                tolerance_comparison(y1_min, y_p, intersection_tolerance)
+                and tolerance_comparison(y_p, y1_max, intersection_tolerance)
+                and tolerance_comparison(x2_min, x_a, intersection_tolerance)
+                and tolerance_comparison(x_a, x2_max, intersection_tolerance)
             ):
-                return mark_endpoint_intersections(
-                    mark_intersections, l1, l2,
-                    [[x_a, y_p]], intersection_tolerance)
+                return mark_endpoint_intersections(mark_intersections, l1, l2, [[x_a, y_p]], intersection_tolerance)
             else:
                 return []
-        else: # l2 is vertical
+        else:  # l2 is vertical
+            if not advanced:
+                return mark_endpoint_intersections(
+                    mark_intersections, l1, l2, [[x21, a1 * x21 + c1]], intersection_tolerance
+                )
             x_a = 0.5 * (x21 + x22)
             y_p = a1 * x_a + c1
             x1_min, x1_max = sorted((x11, x12))
             y2_min, y2_max = sorted((y21, y22))
             if (
-                    tolerance_comparison(y2_min, y_p, intersection_tolerance) and \
-                    tolerance_comparison(y_p, y2_max, intersection_tolerance) and \
-                    tolerance_comparison(x1_min, x_a, intersection_tolerance) and \
-                    tolerance_comparison(x_a, x1_max, intersection_tolerance)
+                tolerance_comparison(y2_min, y_p, intersection_tolerance)
+                and tolerance_comparison(y_p, y2_max, intersection_tolerance)
+                and tolerance_comparison(x1_min, x_a, intersection_tolerance)
+                and tolerance_comparison(x_a, x1_max, intersection_tolerance)
             ):
-                return mark_endpoint_intersections(
-                    mark_intersections, l1, l2,
-                    [[x_a, y_p]], intersection_tolerance)
+                return mark_endpoint_intersections(mark_intersections, l1, l2, [[x_a, y_p]], intersection_tolerance)
             else:
                 return []
-    if abs(a1 - a2) <= 0: # Are line segments parallel?
+    if abs(a1 - a2) <= 0:  # Are line segments parallel?
         if not advanced:
             return []
-        else: # Lines might have collinear intersections.
-            if abs(y22 - (a1 * x22 + c1)) <= intersection_tolerance: # Are line segments collinear?
-                (l1_min_x_val, l1_min_y_val), (l1_max_x_val, l1_max_y_val) = sorted(((x11, y11), (x12, y12)))
-                (l2_min_x_val, l2_min_y_val), (l2_max_x_val, l2_max_y_val) = sorted(((x21, y21), (x22, y22)))
-                if (
-                    tolerance_comparison(l2_max_x_val, l1_min_x_val, intersection_tolerance, conservative=True) or \
-                    tolerance_comparison(l1_max_x_val, l2_min_x_val, intersection_tolerance, conservative=True)
-                ): # Do the line segments overlap?
-                    return []
-                else:
-                    lower_intersection_point = max((l1_min_x_val, l1_min_y_val), (l2_min_x_val, l2_min_y_val))
-                    upper_intersection_point = min((l1_max_x_val, l1_max_y_val), (l2_max_x_val, l2_max_y_val))
-                    # Do the lines intersect at only one point?
-                    if distance(lower_intersection_point, upper_intersection_point) <= intersection_tolerance:
-                        return mark_endpoint_intersections(
-                            mark_intersections, l1, l2,
-                            [point_average((lower_intersection_point, upper_intersection_point))],
-                            intersection_tolerance)
-                    else:
-                        return mark_endpoint_intersections(
-                            mark_intersections, l1, l2,
-                            [lower_intersection_point, upper_intersection_point],
-                            intersection_tolerance)
-            else:
+        elif abs(y22 - (a1 * x22 + c1)) <= intersection_tolerance:  # Are line segments collinear?
+            (l1_min_x_val, l1_min_y_val), (l1_max_x_val, l1_max_y_val) = sorted(((x11, y11), (x12, y12)))
+            (l2_min_x_val, l2_min_y_val), (l2_max_x_val, l2_max_y_val) = sorted(((x21, y21), (x22, y22)))
+            if tolerance_comparison(
+                l2_max_x_val, l1_min_x_val, intersection_tolerance, conservative=True
+            ) or tolerance_comparison(
+                l1_max_x_val, l2_min_x_val, intersection_tolerance, conservative=True
+            ):  # Do the line segments overlap?
                 return []
+            else:
+                lower_intersection_point = max((l1_min_x_val, l1_min_y_val), (l2_min_x_val, l2_min_y_val))
+                upper_intersection_point = min((l1_max_x_val, l1_max_y_val), (l2_max_x_val, l2_max_y_val))
+                # Do the lines intersect at only one point?
+                if distance(lower_intersection_point, upper_intersection_point) <= intersection_tolerance:
+                    return mark_endpoint_intersections(
+                        mark_intersections,
+                        l1,
+                        l2,
+                        [point_average((lower_intersection_point, upper_intersection_point))],
+                        intersection_tolerance,
+                    )
+                else:
+                    return mark_endpoint_intersections(
+                        mark_intersections,
+                        l1,
+                        l2,
+                        [lower_intersection_point, upper_intersection_point],
+                        intersection_tolerance,
+                    )
+        else:
+            return []
     rx = (c2 - c1) / (a1 - a2)
     ry = a1 * (c2 - c1) / (a1 - a2) + c1
-    if (
-            tolerance_comparison(rx, l1_min_x_val, intersection_tolerance, conservative=True) or \
-            tolerance_comparison(rx, l2_min_x_val, intersection_tolerance, conservative=True) or \
-            tolerance_comparison(l1_max_x_val, rx, intersection_tolerance, conservative=True) or \
-            tolerance_comparison(l2_max_x_val, rx, intersection_tolerance, conservative=True) or \
-            tolerance_comparison(ry, l1_min_y_val, intersection_tolerance, conservative=True) or \
-            tolerance_comparison(ry, l2_min_y_val, intersection_tolerance, conservative=True) or \
-            tolerance_comparison(l1_max_y_val, ry, intersection_tolerance, conservative=True) or \
-            tolerance_comparison(l2_max_y_val, ry, intersection_tolerance, conservative=True)
+    if advanced and (
+        tolerance_comparison(rx, l1_min_x_val, intersection_tolerance, conservative=True)
+        or tolerance_comparison(rx, l2_min_x_val, intersection_tolerance, conservative=True)
+        or tolerance_comparison(l1_max_x_val, rx, intersection_tolerance, conservative=True)
+        or tolerance_comparison(l2_max_x_val, rx, intersection_tolerance, conservative=True)
+        or tolerance_comparison(ry, l1_min_y_val, intersection_tolerance, conservative=True)
+        or tolerance_comparison(ry, l2_min_y_val, intersection_tolerance, conservative=True)
+        or tolerance_comparison(l1_max_y_val, ry, intersection_tolerance, conservative=True)
+        or tolerance_comparison(l2_max_y_val, ry, intersection_tolerance, conservative=True)
     ):
         return []
-    return mark_endpoint_intersections(
-        mark_intersections, l1, l2,
-        [[rx, ry]],
-        intersection_tolerance)
+    return mark_endpoint_intersections(mark_intersections, l1, l2, [[rx, ry]], intersection_tolerance)
+
 
 def point_average(points):
     number_of_points = len(points)
     x_average = np.sum([p[0] for p in points]) / number_of_points
     y_average = np.sum([p[1] for p in points]) / number_of_points
     return x_average, y_average
+
 
 def distance(pt_1, pt_2) -> float:
     return sqrt((pt_1[0] - pt_2[0]) ** 2 + (pt_1[1] - pt_2[1]) ** 2)
@@ -571,6 +606,7 @@ def get_area(c):
         area_sum += c[i][0] * c[i + 1][1] - (c[i][1] * c[i + 1][0])
     return 0.5 * area_sum
 
+
 def is_clockwise(points):
     summation = 0
     for i in range(len(points)):
@@ -579,16 +615,19 @@ def is_clockwise(points):
         summation += (p2[0] - p1[0]) * (p2[1] + p1[1])
     return summation > 0
 
+
 def reverse_points(points):
     return_list = []
     for i in range(len(points)):
         return_list.append(points[-1 - i])
     return return_list
 
+
 def circular_range(start, end, n):
     if start <= end:
         return list(range(start, end + 1))
-    return list(range(start, n)) + list(range(0, end + 1))
+    return list(range(start, n)) + list(range(end + 1))
+
 
 class PolygonIntersectionNode:
     def __init__(self, location, index, coincident_vertices):
@@ -653,6 +692,7 @@ class PolygonIntersectionNode:
         else:
             return self.successor_2
 
+
 class PolygonVertexNode:
     def __init__(self, location, index, shape_number):
         self.type = "vertex"
@@ -662,20 +702,21 @@ class PolygonVertexNode:
         self.predecessor = None
         self.shape_number = shape_number
 
-    def update_predecessor(self, new_predecessor, shape_1=True):
+    def update_predecessor(self, new_predecessor, shape_1=True):  # noqa: ARG002
         self.predecessor = new_predecessor
 
-    def update_successor(self, new_successor, shape_1=True):
+    def update_successor(self, new_successor, shape_1=True):  # noqa: ARG002
         self.successor = new_successor
 
     def get_identifier(self):
         return self.type, self.index
 
-    def next(self, reverse=False, shape_1=True):
+    def next(self, reverse=False, shape_1=True):  # noqa: ARG002
         if reverse:
             return self.predecessor
         else:
             return self.successor
+
 
 def insert_intersection_node_into_graph(intersection_node, shape_node_indices, shape_vertex_list, shape_1=True):
     # Note: we are assuming that shape_1_reference node is a vertex-type node.
@@ -689,50 +730,58 @@ def insert_intersection_node_into_graph(intersection_node, shape_node_indices, s
     shape_successor_node = shape_predecessor_node.next(shape_1=shape_1)
     insertion_location_found = False
 
-    if shape_1 and intersection_node.coincident_vertex_1 is not None: # Replace one of the two vertices in Shape 1's line segment.
+    if (
+        shape_1 and intersection_node.coincident_vertex_1 is not None
+    ):  # Replace one of the two vertices in Shape 1's line segment.
         if intersection_node.coincident_vertex_1 == shape_reference_node_index:
             intersection_node.update_successor(shape_reference_node.next(shape_1=shape_1), shape_1=shape_1)
-            intersection_node.update_predecessor(shape_reference_node.next(shape_1=shape_1, reverse=True), shape_1=shape_1)
+            intersection_node.update_predecessor(
+                shape_reference_node.next(shape_1=shape_1, reverse=True), shape_1=shape_1
+            )
             (intersection_node.next(shape_1=shape_1)).update_predecessor(intersection_node, shape_1=shape_1)
             (intersection_node.next(shape_1=shape_1, reverse=True)).update_successor(intersection_node, shape_1=shape_1)
             shape_reference_node = intersection_node
         elif intersection_node.coincident_vertex_1 == shape_final_node_index:
             intersection_node.update_successor(shape_final_node.next(shape_1=shape_1), shape_1=shape_1)
-            intersection_node.update_predecessor(shape_final_node.next(shape_1=shape_1, reverse=True),
-                                                 shape_1=shape_1)
-            (intersection_node.next(shape_1=shape_1)).update_predecessor(intersection_node, shape_1=shape_1)
-            (intersection_node.next(shape_1=shape_1, reverse=True)).update_successor(intersection_node, shape_1=shape_1)
-            shape_final_node = intersection_node
-        else:
-            raise ValueError("Coincident vertex on shape 1 found from intersection does not coincide with one of the corresponding line segment's endpoints. This suggests the presence of a bug in the polygon intersection algorithm.")
-    elif not shape_1 and intersection_node.coincident_vertex_2 is not None: # Replace one of the two vertices in Shape 2's line segment.
-        if intersection_node.coincident_vertex_2 == shape_reference_node_index:
-            intersection_node.update_successor(shape_reference_node.next(shape_1=shape_1), shape_1=shape_1)
-            intersection_node.update_predecessor(shape_reference_node.next(shape_1=shape_1, reverse=True),
-                                                 shape_1=shape_1)
-            (intersection_node.next(shape_1=shape_1)).update_predecessor(intersection_node, shape_1=shape_1)
-            (intersection_node.next(shape_1=shape_1, reverse=True)).update_successor(intersection_node, shape_1=shape_1)
-            shape_reference_node = intersection_node
-        elif intersection_node.coincident_vertex_2 == shape_final_node_index:
-            intersection_node.update_successor(shape_final_node.next(shape_1=shape_1), shape_1=shape_1)
-            intersection_node.update_predecessor(shape_final_node.next(shape_1=shape_1, reverse=True),
-                                                 shape_1=shape_1)
+            intersection_node.update_predecessor(shape_final_node.next(shape_1=shape_1, reverse=True), shape_1=shape_1)
             (intersection_node.next(shape_1=shape_1)).update_predecessor(intersection_node, shape_1=shape_1)
             (intersection_node.next(shape_1=shape_1, reverse=True)).update_successor(intersection_node, shape_1=shape_1)
             shape_final_node = intersection_node
         else:
             raise ValueError(
-                "Coincident vertex on shape 2 found from intersection does not coincide with one of the corresponding line segment's endpoints. This suggests the presence of a bug in the polygon intersection algorithm.")
+                "Coincident vertex on shape 1 found from intersection does not coincide with one of the corresponding"
+                " line segment's endpoints. This suggests the presence of a bug in the polygon intersection algorithm."
+            )
+    elif (
+        not shape_1 and intersection_node.coincident_vertex_2 is not None
+    ):  # Replace one of the two vertices in Shape 2's line segment.
+        if intersection_node.coincident_vertex_2 == shape_reference_node_index:
+            intersection_node.update_successor(shape_reference_node.next(shape_1=shape_1), shape_1=shape_1)
+            intersection_node.update_predecessor(
+                shape_reference_node.next(shape_1=shape_1, reverse=True), shape_1=shape_1
+            )
+            (intersection_node.next(shape_1=shape_1)).update_predecessor(intersection_node, shape_1=shape_1)
+            (intersection_node.next(shape_1=shape_1, reverse=True)).update_successor(intersection_node, shape_1=shape_1)
+            shape_reference_node = intersection_node
+        elif intersection_node.coincident_vertex_2 == shape_final_node_index:
+            intersection_node.update_successor(shape_final_node.next(shape_1=shape_1), shape_1=shape_1)
+            intersection_node.update_predecessor(shape_final_node.next(shape_1=shape_1, reverse=True), shape_1=shape_1)
+            (intersection_node.next(shape_1=shape_1)).update_predecessor(intersection_node, shape_1=shape_1)
+            (intersection_node.next(shape_1=shape_1, reverse=True)).update_successor(intersection_node, shape_1=shape_1)
+            shape_final_node = intersection_node
+        else:
+            raise ValueError(
+                "Coincident vertex on shape 2 found from intersection does not coincide with one of the corresponding"
+                " line segment's endpoints. This suggests the presence of a bug in the polygon intersection algorithm."
+            )
     else:
-
         # The vertices of shape 1 are listed counter-clockwise. If intersection(s) have been inserted into this
         # line-segment of shape 1 previously, we can use its distance from the preceding vertex to tell where
         # it should be placed.
 
         distance_from_reference = distance(intersection_node.location, shape_reference_node.location)
         while not insertion_location_found:
-            successor_distance_from_reference = distance(shape_successor_node.location,
-                                                         shape_reference_node.location)
+            successor_distance_from_reference = distance(shape_successor_node.location, shape_reference_node.location)
             if successor_distance_from_reference > distance_from_reference:
                 insertion_location_found = True
             else:
@@ -746,6 +795,7 @@ def insert_intersection_node_into_graph(intersection_node, shape_node_indices, s
         shape_successor_node.update_predecessor(intersection_node, shape_1=shape_1)
 
     return shape_reference_node, shape_final_node
+
 
 class PolygonIntersectionGraph:
     def __init__(self, p1_vertices, p2_vertices, intersections):
@@ -772,8 +822,9 @@ class PolygonIntersectionGraph:
         # Add intersection connections.
         self.intersection_nodes = []
         for i, intersection in enumerate(intersections):
-            new_intersection_node = PolygonIntersectionNode(intersection["location"], i,
-                                                            intersection["coincident_vertices"])
+            new_intersection_node = PolygonIntersectionNode(
+                intersection["location"], i, intersection["coincident_vertices"]
+            )
             self.intersection_nodes.append(new_intersection_node)
             shape_1_vertex_indices = intersection["shape_1_vertex_indices"]
             shape_2_vertex_indices = intersection["shape_2_vertex_indices"]
@@ -781,18 +832,16 @@ class PolygonIntersectionGraph:
             # Insert into shape 1
             self.shape_1_nodes[shape_1_vertex_indices[0]], self.shape_1_nodes[shape_1_vertex_indices[1]] = (
                 insert_intersection_node_into_graph(
-                    new_intersection_node,
-                    shape_1_vertex_indices,
-                    self.shape_1_nodes,
-                    shape_1=True))
+                    new_intersection_node, shape_1_vertex_indices, self.shape_1_nodes, shape_1=True
+                )
+            )
 
             # Insert into shape 2
             self.shape_2_nodes[shape_2_vertex_indices[0]], self.shape_2_nodes[shape_2_vertex_indices[1]] = (
                 insert_intersection_node_into_graph(
-                    new_intersection_node,
-                    shape_2_vertex_indices,
-                    self.shape_2_nodes,
-                    shape_1=False))
+                    new_intersection_node, shape_2_vertex_indices, self.shape_2_nodes, shape_1=False
+                )
+            )
 
 
 def merge_two_shapes(shape_1, shape_2, omit_contained_shapes=True, print_intersections=False):
@@ -813,20 +862,21 @@ def merge_two_shapes(shape_1, shape_2, omit_contained_shapes=True, print_interse
             return [[shape_2], []]
         else:
             return [[shape_1, shape_2], []]
-    elif number_of_intersections == 1: # Shapes touch at a single vertex. In this case, we will consider them separate.
+    elif number_of_intersections == 1:  # Shapes touch at a single vertex. In this case, we will consider them separate.
         return [[shape_1, shape_2], []]
-    else: # The shapes meaningfully intersect
+    else:  # The shapes meaningfully intersect
         int_graph = PolygonIntersectionGraph(shape_1.c, shape_2.c, shape_intersections)
         included_intersections = [False for _ in range(number_of_intersections)]
         contours = []
         branches = {}
         while not np.all(included_intersections):
             current_node = int_graph.intersection_nodes[included_intersections.index(False)]
-            starting_node_id = current_node.get_identifier()
             first_run = True
             current_walk_nodes = []
             current_walk_ids = []
-            while (cdx := current_node.get_identifier()) not in current_walk_ids or first_run: # We terminate once we reach the node we started at.
+            while (
+                cdx := current_node.get_identifier()
+            ) not in current_walk_ids or first_run:  # We terminate once we reach the node we started at.
                 current_walk_nodes.append(current_node)
                 current_walk_ids.append(cdx)
                 if first_run:
@@ -834,14 +884,15 @@ def merge_two_shapes(shape_1, shape_2, omit_contained_shapes=True, print_interse
                 if current_node.type == "vertex":
                     current_node = current_node.next()
                 else:
-
                     # We need to determine if traveling along shape 1 or shape 2 is appropriate at intersections.
                     candidate_point_1 = current_node.next_1()
                     candidate_point_2 = current_node.next_2()
                     shape_1_edge_in_shape_2 = point_polygon_check(
-                        shape_2.c, point_average((current_node.location, candidate_point_1.location)))
+                        shape_2.c, point_average((current_node.location, candidate_point_1.location))
+                    )
                     shape_2_edge_in_shape_1 = point_polygon_check(
-                        shape_1.c, point_average((current_node.location, candidate_point_2.location)))
+                        shape_1.c, point_average((current_node.location, candidate_point_2.location))
+                    )
 
                     # We want to choose the edge (from the two) that does not lead inside one of the polygons.
                     if shape_1_edge_in_shape_2 == 1 and shape_2_edge_in_shape_1 == 1:
@@ -858,13 +909,15 @@ def merge_two_shapes(shape_1, shape_2, omit_contained_shapes=True, print_interse
                         current_node = candidate_point_1
                     elif shape_2_edge_in_shape_1 == -1:
                         current_node = candidate_point_2
-                    elif shape_1_edge_in_shape_2 == 0: # Neither edges lead outside, but one might lead along existing edge.
+                    elif (
+                        shape_1_edge_in_shape_2 == 0
+                    ):  # Neither edges lead outside, but one might lead along existing edge.
                         current_node = candidate_point_1
                     else:
                         current_node = candidate_point_2
 
             # There is a loop in the walk we performed, so we need to trim out the non-loop part.
-            new_contour_nodes = current_walk_nodes[current_walk_ids.index(cdx):]
+            new_contour_nodes = current_walk_nodes[current_walk_ids.index(cdx) :]
             new_contour = [node.location for node in new_contour_nodes]
             for node in new_contour_nodes:
                 if node.type == "intersection":
@@ -872,7 +925,7 @@ def merge_two_shapes(shape_1, shape_2, omit_contained_shapes=True, print_interse
             contours.append(Shapes(new_contour))
         contour_areas = [contour.get_area() for contour in contours]
         max_area_index = contour_areas.index(max(contour_areas))
-        return [[contours[max_area_index]], contours[:max_area_index] + contours[max_area_index + 1:]]
+        return [[contours[max_area_index]], contours[:max_area_index] + contours[max_area_index + 1 :]]
 
 
 def clip_two_shapes(shape_1, shape_2, print_intersections=False):
@@ -891,42 +944,49 @@ def clip_two_shapes(shape_1, shape_2, print_intersections=False):
             return []
         else:
             return [shape_1]
-    elif number_of_intersections == 1: # Shapes touch at a single vertex. In this case, we will consider them separate.
+    elif number_of_intersections == 1:  # Shapes touch at a single vertex. In this case, we will consider them separate.
         return [shape_1]
-    else: # The shapes meaningfully intersect
+    else:  # The shapes meaningfully intersect
         int_graph = PolygonIntersectionGraph(shape_1.c, shape_2.c, shape_intersections)
         included_intersections = [False for _ in range(number_of_intersections)]
         contours = []
         branches = {}
         while not np.all(included_intersections):
             current_node = int_graph.intersection_nodes[included_intersections.index(False)]
-            starting_node_id = current_node.get_identifier()
             first_run = True
             current_walk_nodes = []
             current_walk_ids = []
-            while (cdx := current_node.get_identifier()) not in current_walk_ids or first_run: # We terminate once we reach the node we started at.
+            while (
+                cdx := current_node.get_identifier()
+            ) not in current_walk_ids or first_run:  # We terminate once we reach the node we started at.
                 current_walk_nodes.append(current_node)
                 current_walk_ids.append(cdx)
                 if first_run:
                     first_run = False
                 if current_node.type == "vertex":
-                    current_node = current_node.next() if current_node.shape_number == 0 else current_node.next(reverse=True)
+                    current_node = (
+                        current_node.next() if current_node.shape_number == 0 else current_node.next(reverse=True)
+                    )
                 else:
-
                     # We need to determine if traveling along shape 1 or shape 2 is appropriate at intersections.
                     candidate_point_1 = current_node.next_1()
-                    candidate_point_2 = current_node.next_2(reverse=True) # We trace clipping polygon clockwise.
+                    candidate_point_2 = current_node.next_2(reverse=True)  # We trace clipping polygon clockwise.
                     shape_1_edge_in_shape_2 = point_polygon_check(
-                        shape_2.c, point_average((current_node.location, candidate_point_1.location)))
+                        shape_2.c, point_average((current_node.location, candidate_point_1.location))
+                    )
                     shape_2_edge_in_shape_1 = point_polygon_check(
-                        shape_1.c, point_average((current_node.location, candidate_point_2.location)))
+                        shape_1.c, point_average((current_node.location, candidate_point_2.location))
+                    )
 
                     # The edge selection is more complicated than for polygon merging.
                     # At each intersection, we would like to follow the edge of shape 2 that goes inside of shape 1.
                     # If that does not exist, we want to make sure that we do not follow an edge of shape 1 that goes
                     # inside of shape 2.
-                    if (shape_1_edge_in_shape_2 == 1 and shape_2_edge_in_shape_1 == -1):
-                        if len(current_walk_ids) == 1: # When clipping, there are some intersections that we start at that are not part of any loop. This helps us still mark them off.
+                    if shape_1_edge_in_shape_2 == 1 and shape_2_edge_in_shape_1 == -1:
+                        if (
+                            len(current_walk_ids) == 1
+                        ):  # When clipping, there are some intersections that we start at that are not part of any
+                            # loop. This helps us still mark them off.
                             break
                         else:
                             raise ValueError("Both exiting edges from intersection in clip shapes are not valid.")
@@ -938,17 +998,19 @@ def clip_two_shapes(shape_1, shape_2, print_intersections=False):
                         else:
                             current_node = candidate_point_2
                             branches[cdx] = True
-                    elif shape_2_edge_in_shape_1 == 1: # Follow shape 2 edge into shape 1
+                    elif shape_2_edge_in_shape_1 == 1:  # Follow shape 2 edge into shape 1
                         current_node = candidate_point_2
-                    elif shape_1_edge_in_shape_2 == -1: # Follow shape 1 edge outside of shape 2
+                    elif shape_1_edge_in_shape_2 == -1:  # Follow shape 1 edge outside of shape 2
                         current_node = candidate_point_1
-                    elif shape_2_edge_in_shape_1 == 0: # Neither edges lead outside, but one might lead along existing edge.
+                    elif (
+                        shape_2_edge_in_shape_1 == 0
+                    ):  # Neither edges lead outside, but one might lead along existing edge.
                         current_node = candidate_point_2
                     else:
                         current_node = candidate_point_1
 
             # There is a loop in the walk we performed, so we need to trim out the non-loop part.
-            new_contour_nodes = current_walk_nodes[current_walk_ids.index(cdx):]
+            new_contour_nodes = current_walk_nodes[current_walk_ids.index(cdx) :]
             new_contour = [node.location for node in new_contour_nodes]
             for node in new_contour_nodes:
                 if node.type == "intersection":
@@ -975,5 +1037,3 @@ def clip_two_shapes(shape_1, shape_2, print_intersections=False):
                             included_intersections[node.index] = True
 
         return contours
-
-
