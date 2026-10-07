@@ -230,7 +230,6 @@ def gen_shape(prop_bound: list[list[float]], ng_zones=None) -> list[Shapes | lis
         r_a.append(None)
     return r_a
 
-
 def field_optimization_wp_space_fr(
     p_space,
     space_start,
