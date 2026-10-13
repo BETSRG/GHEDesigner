@@ -5,6 +5,7 @@ import numpy as np
 from ghedesigner.constants import PI_OVER_2, TWO_PI
 
 POSSIBLE_NUMBER_OF_VERTEX_INTERSECTIONS = (2, 4)
+MINIMUM_NUMBER_OF_VERTICES_FOR_POLYGON = 3
 
 
 class Shapes:
@@ -1037,3 +1038,136 @@ def clip_two_shapes(shape_1, shape_2, print_intersections=False):
                             included_intersections[node.index] = True
 
         return contours
+
+def offset_line(l1, offset_distance):
+    p1, p2 = l1
+    dx = p2[0] - p1[0]
+    dy = p2[1] - p1[1]
+    if dx == 0:
+        slope = inf
+    else:
+        slope = dy / dx
+
+    line_segment_magnitude = distance(p1, p2)
+    offset_vector = [-offset_distance * dy / line_segment_magnitude, offset_distance * dx / line_segment_magnitude]
+    p_avg = point_average([p1, p2])
+    pass_through_point = [p_avg[0] + offset_vector[0], p_avg[1] + offset_vector[1]]
+    if slope == inf:
+        return slope, pass_through_point[0]
+    else:
+        intercept = -slope * pass_through_point[0] + pass_through_point[1]
+        return slope, intercept
+
+def line_intersect(l1, l2, tolerance=1e-8):
+    m1, b1 = l1
+    m2, b2 = l2
+
+    if m1 == m2: # Lines are parallel.
+        if abs(b1 - b2) < tolerance: # lines overlap
+            return inf
+        else:
+            return None
+    else:
+        if m1 == inf:
+            return b1, m2 * b1 + b2
+        elif m2 == inf:
+            return b2, m1 * b2 + b1
+        else:
+            x_int = (b2 - b1) / (m1 - m2)
+            y_int = 0.5 * ((m1 * x_int + b1) + (m2 * x_int + b2))
+            return x_int, y_int
+
+def zero_length_edge_and_spike_removal(new_polygon_vertices, intersection_tolerance):
+    # Next we would like to move zero-length edges and spikes (adjacent edges w/ coincident angles equal to zero).
+    # Removing one case can cause the other to appear, so we have to keep processing edges/vertices until we make
+    # a lap without detecting zero-length edges or spikes.
+    number_of_vertices = len(new_polygon_vertices)
+    rv_idx = (0, False)
+    v_idx = 0
+    first_run = True
+    processing_edge = False
+    while (((v_idx, processing_edge) != rv_idx or first_run) and
+           number_of_vertices >= MINIMUM_NUMBER_OF_VERTICES_FOR_POLYGON):
+        if first_run:
+            first_run = False
+        if processing_edge:  # Check for zero-length edge
+            p1 = new_polygon_vertices[v_idx]
+            v2_idx = (v_idx + 1) % number_of_vertices
+            p2 = new_polygon_vertices[v2_idx]
+            edge_length = distance(p1, p2)
+            if edge_length < intersection_tolerance:
+                # Remove edge and check next one
+                new_vertex = point_average([p1, p2])
+                new_polygon_vertices[v_idx] = new_vertex
+                del new_polygon_vertices[v2_idx]
+                number_of_vertices -= 1
+                rv_idx = (v_idx, True)
+                first_run = True  # Delay checking for loop exit for one iteration.
+            else:  # Edge is fine move on to next vertex
+                v_idx = (v_idx + 1) % number_of_vertices
+                processing_edge = False
+        else:  # Check for spike
+            # It should be noted that this will also detect collinear edges. Which are not inherently a problem,
+            # but deleting them will not cause an issue either, so they are removed since a simple cross product
+            # check is an easy way to detect spikes.
+            v1_idx = (v_idx + 1) % number_of_vertices
+            v2_idx = (v_idx - 1) % number_of_vertices
+            p1 = new_polygon_vertices[v1_idx]
+            pr = new_polygon_vertices[v_idx]
+            p2 = new_polygon_vertices[v2_idx]
+            e1_vector = (p1[0] - pr[0], p1[1] - pr[1])
+            e2_vector = (p2[0] - pr[0], p2[1] - pr[1])
+            cross_product = e1_vector[0] * e2_vector[1] - e1_vector[1] * e2_vector[0]
+            if abs(cross_product) < intersection_tolerance:
+                del new_polygon_vertices[v_idx]
+                number_of_vertices -= 1
+                rv_idx = (v_idx, False)
+                first_run = True  # Delay checking for loop exit for one iteration.
+            else:  # Edges are not collinear or a spike. Move on to check edge length.
+                processing_edge = True
+    return new_polygon_vertices
+
+def offset_polygon(polygon, offset_distance, intersection_tolerance=1e-8):
+
+    number_of_edges = polygon.number_of_edges
+
+    # Generate lines that are offset from polygon's current line segments.
+    new_line_list = []
+    for edx in range(number_of_edges):
+        new_line_list.append(offset_line(polygon.get_edge_line_segment(edx), offset_distance))
+
+    # Generate new polygon from lines.
+    new_polygon_vertices = []
+    for edx in range(number_of_edges):
+        int_point = line_intersect(new_line_list[edx % number_of_edges], new_line_list[(edx + 1) % number_of_edges],
+                                   intersection_tolerance=intersection_tolerance)
+        if int_point is None:
+            raise ValueError("Adjacent offset lines do not intersect.")
+        elif int_point == inf:
+            pass # In the case of two parallel lines, we can just treat them as one moving forward.
+        else:
+            new_polygon_vertices.append(int_point)
+
+
+    new_polygon_vertices = zero_length_edge_and_spike_removal(new_polygon_vertices, intersection_tolerance)
+    number_of_vertices = len(new_polygon_vertices)
+
+
+    # In many cases this new polygon will still contain self-intersecting portions. The next step is to build
+    # a directed graph from intersections between non-adjacent line-segments.
+    intersections = []
+    for i in range(number_of_edges):
+        ldx_1 = i % number_of_edges
+        rdx_1 = (i + 1) % number_of_edges
+        for j in range(number_of_edges):
+            if abs(j - i) <= 1:  # Don't check adjacent lines.
+                continue
+            ldx_2 = j % number_of_edges
+            rdx_2 = (j + 1) % number_of_edges
+            intersections = vector_intersect(new_polygon_vertices[ldx_1] + new_polygon_vertices[rdx_1],
+                                             new_polygon_vertices[ldx_2] + new_polygon_vertices[rdx_2],
+                                             intersection_tolerance, advanced=True, mark_intersections=True)
+
+
+
+
