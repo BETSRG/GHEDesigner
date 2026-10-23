@@ -151,7 +151,7 @@ class Pipe(ThermalProperty):
         self.pos = pos  # Pipe positions either a list of tuples or tuple
         self.r_in = r_in  # Pipe inner radius (m) can be a float or list
         self.r_out = r_out  # Pipe outer radius (m) can be a float or list
-        self.s = s  # Center pipe to center pipe shank spacing
+        self.s = s  # shortest outerwall-to-outerwall distance between two legs of u-bend pipe in a cross-section
         self.roughness = roughness  # Pipe roughness (m)
         self.n_pipes = int(len(pos) / 2) if isinstance(pos, list) else 1
 
