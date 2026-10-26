@@ -5,7 +5,7 @@ from pygfunction.boreholes import Borehole
 from scipy.interpolate import interp1d
 
 from ghedesigner.constants import SEC_IN_HR, TWO_PI, VERSION
-from ghedesigner.enums import PipeType, TimestepType
+from ghedesigner.enums import BHType, TimestepType
 from ghedesigner.ghe.boreholes.factory import get_bhe_object
 from ghedesigner.ghe.gfunction import GFunction, calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_loads import HybridLoad
@@ -19,7 +19,7 @@ class GHE:
         self,
         v_flow_system: float,
         b_spacing: float,
-        bhe_type: PipeType,
+        bhe_type: BHType,
         fluid,
         borehole: Borehole,
         pipe: Pipe,
@@ -53,24 +53,26 @@ class GHE:
 
         # gFunction object
         self.gFunction = g_function
-        # Additional simulation parameters
-        self.start_month = start_month
-        self.end_month = end_month
 
-        # Hourly ground extraction loads
-        # Building cooling is negative, building heating is positive
-        self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
-        self.times = np.empty((0,), dtype=np.float64)
-        self.loading: list | None = None
+        if len(hourly_extraction_ground_loads) != 0:
+            # Additional simulation parameters
+            self.start_month = start_month
+            self.end_month = end_month
 
-        self.hybrid_load = HybridLoad(
-            self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
-        )
+            # Hourly ground extraction loads
+            # Building cooling is negative, building heating is positive
+            self.hourly_extraction_ground_loads = hourly_extraction_ground_loads
+            self.times: np.ndarray = np.empty((0,), dtype=np.float64)
+            self.loading: np.ndarray | None = None
 
-        # List of heat pump exiting fluid temperatures
-        self.hp_eft: list[float] = []
-        # list of change in borehole wall temperatures
-        self.dTb: list[float] = []
+            self.hybrid_load = HybridLoad(
+                self.hourly_extraction_ground_loads, self.bhe_eq, self.bhe_eq, start_month, end_month
+            )
+
+            # List of heat pump exiting fluid temperatures
+            self.hp_eft: list[float] = []
+            # list of change in borehole wall temperatures
+            self.dTb: list[float] = []
 
     def as_dict(self) -> dict:
         output = {
@@ -80,7 +82,6 @@ class GHE:
             "borehole_spacing": {"value": self.b_spacing, "units": "m"},
             "borehole_heat_exchanger": self.bhe.as_dict(),
             "equivalent_borehole_heat_exchanger": self.bhe_eq.as_dict(),
-            # "simulation_parameters": self.sim_params.as_dict(),
         }
         return output
 
@@ -158,6 +159,158 @@ class GHE:
 
         return hp_eft, delta_tb
 
+    # Source:
+    # 1. Claesson, J., & Javed, S. (2012). A load-aggregation method to calculate extraction temperatures of
+    # borehole heat exchangers. ASHRAE Transactions, 118(1), 530-540.
+    # 2. Mitchell, Matt S., and Jeffrey D. Spitler. "Characterization, testing, and optimization of load aggregation"
+    # "methods for ground heat exchanger response-factor models." Science and Technology for the Built Environment 25,
+    #  no. 8 (2019): 1036-1051.
+
+    def _time_claesson_javed(self, dt, tmax, growth=2.0, cells_per_level=5):
+        """
+        Build time vector for CJ2012 aggregation (matches pygfunction utility).
+        Cell width doubles every cells_per_level cells.
+        """
+        t = 0.0
+        i = 0
+        time = []
+        while t < tmax:
+            i += 1
+            v = np.ceil(i / cells_per_level)
+            width = growth ** (v - 1)
+            t += width * float(dt)
+            time.append(t)
+        return np.array(time)
+
+    def _build_claesson_javed_standard_data(
+        self,
+        q_dot_hourly: np.ndarray,
+        times: np.ndarray,
+        g: interp1d,
+        growth: float = 2.0,
+        cells_per_level: int = 5,
+    ):
+        rb = self.bhe.calc_effective_borehole_resistance()
+        m_dot = self.bhe.m_flow_borehole
+        cp = self.bhe.fluid.cp
+        tg = self.bhe.soil.ugt
+
+        height = self.bhe.borehole.H
+        two_pi_k = TWO_PI * self.bhe.soil.k
+        ts = self.bhe_eq.t_s
+
+        q_dot_hourly = np.asarray(q_dot_hourly, dtype=float)
+        times = np.asarray(times, dtype=float)
+
+        n_max = len(q_dot_hourly)
+        if n_max == 0:
+            return None
+
+        min_time_points = 2
+        if times.size >= min_time_points:
+            dts = np.diff(times)
+            if not np.allclose(dts, dts[0], rtol=0.0, atol=1e-12):
+                raise ValueError("Claesson Javed 2012 aggregation assumes uniform 'times' spacing (hours).")
+            dt_hr = float(dts[0])
+        else:
+            dt_hr = 1.0
+
+        dt_sec = dt_hr * SEC_IN_HR
+        tmax_sec = float(times[-1]) * SEC_IN_HR
+
+        q_dot_b_watt = q_dot_hourly / float(self.nbh)
+        q_dot = q_dot_b_watt / height
+
+        time_req_sec = self._time_claesson_javed(dt_sec, tmax_sec, growth=growth, cells_per_level=cells_per_level)
+        nt = len(time_req_sec)
+        if nt == 0:
+            return {
+                "empty": True,
+                "n_max": n_max,
+            }
+
+        widths = np.empty(nt, dtype=float)
+        widths[0] = 1.0
+        if nt > 1:
+            widths[1:] = (time_req_sec[1:] - time_req_sec[:-1]) / dt_sec
+
+        invw = 1.0 / widths
+
+        g_values = g(np.log(np.maximum(time_req_sec, 1e-12) / ts))
+        dg = np.empty(nt, dtype=float)
+        dg[0] = g_values[0]
+        dg[1:] = g_values[1:] - g_values[:-1]
+        g_s = dg / two_pi_k
+
+        return {
+            "empty": False,
+            "n_max": n_max,
+            "nt": nt,
+            "rb": rb,
+            "m_dot": m_dot,
+            "cp": cp,
+            "tg": tg,
+            "q_dot_b_watt": q_dot_b_watt,
+            "q_dot": q_dot,
+            "invw": invw,
+            "g_s": g_s,
+        }
+
+    def _run__build_claesson_javed_simulation(self, data):
+        n_max = data["n_max"]
+        nt = data["nt"]
+
+        rb = data["rb"]
+        m_dot = data["m_dot"]
+        cp = data["cp"]
+        tg = data["tg"]
+
+        q_dot_b_watt = data["q_dot_b_watt"]
+        q_dot = data["q_dot"]
+        invw = data["invw"]
+        g_s = data["g_s"]
+
+        q_n_old = np.zeros(nt, dtype=float)
+        q_n = np.zeros(nt, dtype=float)
+
+        hp_eft = np.zeros(n_max, dtype=float)
+        delta_tb = np.zeros(n_max, dtype=float)
+
+        for i in range(n_max):
+            q_n[0] = 0.0
+            q_n[1:] = q_n_old[1:] * (1.0 - invw[1:]) + q_n_old[:-1] * invw[1:]
+            q_n[0] = q_dot[i]
+
+            delta_tb_i = float(np.dot(g_s, q_n))
+            delta_tb[i] = delta_tb_i
+
+            tf_bulk = tg + delta_tb_i + q_dot[i] * rb
+            tf_out = tf_bulk - q_dot_b_watt[i] / (2.0 * m_dot * cp)
+            hp_eft[i] = tf_out
+
+            q_n_old[:] = q_n
+
+        return list(hp_eft), list(delta_tb)
+
+    def simulate_dynamic_load_agg(
+        self, q_dot_hourly, times: np.ndarray, g: interp1d, growth: float = 2.0, cells_per_level: int = 5
+    ):
+        data = self._build_claesson_javed_standard_data(
+            q_dot_hourly=q_dot_hourly,
+            times=times,
+            g=g,
+            growth=growth,
+            cells_per_level=cells_per_level,
+        )
+
+        if data is None:
+            return [], []
+
+        if data["empty"]:
+            return [np.nan] * data["n_max"], [np.nan] * data["n_max"]
+
+        return self._run__build_claesson_javed_simulation(data)
+
     def compute_g_functions(self, h_min: float, h_max: float):
         # Compute g-functions for a bracketed solution, based on min and max height
         self.gFunction = calc_g_func_for_multiple_lengths(
@@ -175,7 +328,7 @@ class GHE:
             self.bhe.soil,
         )
 
-    def simulate(self, method: TimestepType):
+    def simulate(self, method: TimestepType) -> tuple[float, float]:
         b = self.b_spacing
         b_over_h = b / self.bhe.borehole.H
 
@@ -194,24 +347,28 @@ class GHE:
             self.loading = q_dot
 
             hp_eft, d_tb = self._simulate_detailed(q_dot, time_values, g)
-        elif method == TimestepType.HOURLY:
+        elif method in {TimestepType.HOURLY, TimestepType.LOAD_AGGREGATION_HOURLY}:
             n_months = self.end_month - self.start_month + 1
             n_hours = int(n_months / 12.0 * 8760.0)
-            q_dot = self.hourly_extraction_ground_loads
+            q_dot_list = self.hourly_extraction_ground_loads
             # How many times does q need to be repeated?
             n_years = ceil(n_hours / 8760)
-            if len(q_dot) // 8760 < n_years:
-                q_dot = q_dot * n_years
+            if len(q_dot_list) // 8760 < n_years:
+                q_dot_list = q_dot_list * n_years
             else:
-                n_hours = len(q_dot)
-            q_dot = -1.0 * np.array(q_dot)  # Convert loads to rejection
+                n_hours = len(q_dot_list)
+            q_dot = -1.0 * np.array(q_dot_list)  # Convert loads to rejection
             # print("Times:",self.times)
             if len(self.times) == 0:
-                self.times = np.arange(1, n_hours + 1, 1)
+                self.times = np.arange(1, n_hours + 1, 1, dtype=np.float64)
             t = self.times
             self.loading = q_dot
 
-            hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
+            if method == TimestepType.LOAD_AGGREGATION_HOURLY:
+                hp_eft, d_tb = self.simulate_dynamic_load_agg(q_dot, t, g)
+            else:
+                hp_eft, d_tb = self._simulate_detailed(q_dot, t, g)
+
         else:
             raise ValueError("Only hybrid or hourly methods available.")
 

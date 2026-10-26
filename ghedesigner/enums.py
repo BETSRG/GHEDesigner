@@ -1,7 +1,7 @@
-from enum import Enum, auto
+from enum import Enum, StrEnum, auto
 
 
-class PipeType(Enum):
+class BHType(Enum):
     COAXIAL = "COAXIAL"
     DOUBLEUTUBEPARALLEL = "DOUBLEUTUBEPARALLEL"
     DOUBLEUTUBESERIES = "DOUBLEUTUBESERIES"
@@ -15,6 +15,7 @@ class DoubleUTubeConnType(Enum):
 
 class TimestepType(Enum):
     HOURLY = auto()
+    LOAD_AGGREGATION_HOURLY = auto()
     HYBRID = auto()
 
 
@@ -28,14 +29,38 @@ class DesignGeomType(Enum):
     NONE = auto()  # TODO: Check this won't break anything
 
 
-class FlowConfigType(Enum):
-    BOREHOLE = "BOREHOLE"
-    SYSTEM = "SYSTEM"
-
-
 class FluidType(Enum):
     ETHYLALCOHOL = auto()
     ETHYLENEGLYCOL = auto()
     METHYLALCOHOL = auto()
     PROPYLENEGLYCOL = auto()
     WATER = auto()
+
+
+class SimCompType(Enum):
+    BUILDING = auto()
+    GROUND_HEAT_EXCHANGER = auto()
+    SOURCE_SINK_HEAT_EXCHANGER = auto()
+    HEAT_PUMP = auto()
+    ISOLATED_HORIZONTAL_PIPE = auto()
+    COUPLED_HORIZONTAL_PIPE = auto()
+
+
+class CentralLoopType(Enum):
+    ONEPIPE = auto()
+    TWOPIPE = auto()
+    NETWORK = auto()
+
+
+class SourceSinkOpMode(Enum):
+    SOURCE = auto()
+    SINK = auto()
+
+
+class ParametricStudyParameters(StrEnum):
+    MAX_EFT_MODIFICATION = auto()
+    MIN_EFT_MODIFICATION = auto()
+    GROUT_CONDUCTIVITIES = auto()
+    PIPE_SIZES = auto()
+    BOREHOLE_HEIGHTS = auto()
+    UPDATED_TOPOLOGY = auto()

@@ -1,9 +1,10 @@
 from math import inf, sqrt
 
 import numpy as np
+from numpy.typing import NDArray
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import FlowConfigType, TimestepType
+from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
@@ -33,7 +34,6 @@ class RowWiseModifiedBisectionSearch:
         hourly_extraction_ground_loads: list,
         geometric_constraints,
         method: TimestepType,
-        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         max_iter: int = 10,
         disp: bool = False,
         search: bool = True,
@@ -65,7 +65,6 @@ class RowWiseModifiedBisectionSearch:
         self.end_month = end_month
         self.continue_if_design_unmet = continue_if_design_unmet
         self.v_flow = v_flow
-        self.flow_type = flow_type
         self.method = method
         self.log_time = eskilson_log_times()
         self.bhe_type = pipe.type
@@ -76,22 +75,15 @@ class RowWiseModifiedBisectionSearch:
         self.calculated_temperatures: dict = {}
         if advanced_tracking:
             self.advanced_tracking = [["TargetSpacing", "Field Specifier", "nbh", "ExcessTemperature"]]
-            self.checkedFields: list[np.ndarray[tuple[np.float64, np.float64]]] = []
+            self.checkedFields: list[NDArray[np.float64]] = []
         if search:
             self.selected_coordinates, self.selected_specifier = self.search()
             self.initialize_ghe(self.selected_coordinates, self.max_height, field_specifier=self.selected_specifier)
 
     def retrieve_flow(self, coordinates, rho):
-        if self.flow_type == FlowConfigType.BOREHOLE:
-            v_flow_system = self.v_flow * len(coordinates)
-            # Total fluid mass flow rate per borehole (kg/s)
-            m_flow_borehole = self.v_flow / 1000.0 * rho
-        elif self.flow_type == FlowConfigType.SYSTEM:
-            v_flow_system = self.v_flow
-            v_flow_borehole = self.v_flow / len(coordinates)
-            m_flow_borehole = v_flow_borehole / 1000.0 * rho
-        else:
-            raise ValueError("The flow argument should be either `borehole` or `system`.")
+        v_flow_system = self.v_flow * len(coordinates)
+        # Input flow is L/s per borehole; convert to kg/s per borehole.
+        m_flow_borehole = self.v_flow / 1000.0 * rho
         return v_flow_system, m_flow_borehole
 
     def initialize_ghe(self, coordinates, h, field_specifier="N/A"):
@@ -386,10 +378,11 @@ class RowWiseModifiedBisectionSearch:
                     )
 
                 distances = map(dist, other_points)
+                distance_points = zip(distances, other_points)
                 if method == "ascending":
-                    return [x for _, x in sorted(zip(distances, other_points))]
+                    return [x for _, x in sorted(distance_points, key=lambda pair: pair[0])]
                 elif method == "descending":
-                    return [x for _, x in sorted(zip(distances, other_points), reverse=True)]
+                    return [x for _, x in sorted(distance_points, key=lambda pair: pair[0], reverse=True)]
 
             # TODO: b_r_removal_method was an argument but it was never used
             # if b_r_removal_method == "CloseToCorner":
@@ -412,7 +405,7 @@ class RowWiseModifiedBisectionSearch:
 
             if self.advanced_tracking:
                 self.advanced_tracking.append(["N/A", "1X1", 1, t_e_single])
-                self.checkedFields.append([[0, 0]])
+                self.checkedFields.append(np.array([(0.0, 0.0)], dtype=np.float64))
             if t_e_single <= 0:
                 selected_temp_excess = t_e_single
                 selected_specifier = "1X1"

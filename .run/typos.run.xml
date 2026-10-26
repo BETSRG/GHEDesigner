@@ -7,7 +7,7 @@
         <option value="-a" />
       </list>
     </option>
-    <option name="checkSync" value="true" />
+    <option name="checkSync" value="false" />
     <option name="env">
       <map />
     </option>

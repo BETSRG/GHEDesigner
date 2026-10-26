@@ -1,11 +1,11 @@
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from math import floor
 
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.enums import DesignGeomType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
-from ghedesigner.ghe.domains import square_and_near_square
+from ghedesigner.ghe.domains import square_and_near_square, square_and_near_square_adjusted_nbh
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_1d import Bisection1D
 from ghedesigner.media import Fluid, Grout, Soil
@@ -23,8 +23,9 @@ class GeometricConstraintsNearSquare(GeometricConstraints):
 
     def to_input(self) -> dict:
         return {
-            **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k != "type"}),
-            "method": self.type.name,
+            "method": "near_square",
+            "borehole_spacing_m": self.b,
+            "length_m": self.length,
         }
 
 
@@ -48,7 +49,6 @@ class DesignNearSquare(DesignBase):
         geometric_constraints: GeometricConstraintsNearSquare,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
     ) -> None:
         super().__init__(
@@ -69,7 +69,6 @@ class DesignNearSquare(DesignBase):
             geometric_constraints,
             hourly_extraction_ground_loads,
             method,
-            flow_type,
             load_years,
         )
         self.geometric_constraints = geometric_constraints
@@ -80,10 +79,11 @@ class DesignNearSquare(DesignBase):
         # different lower range. The upper number of boreholes range is
         # calculated based on the spacing and length provided.
         n = floor(self.geometric_constraints.length / self.geometric_constraints.b) + 1
-        number_of_boreholes = int(n)
+        self.number_of_boreholes = int(n)
         self.coordinates_domain, self.fieldDescriptors = square_and_near_square(
-            1, number_of_boreholes, self.geometric_constraints.b
+            1, self.number_of_boreholes, self.geometric_constraints.b
         )
+        self.borehole_lengths = [len(coords) for coords in self.coordinates_domain]
 
     def find_design(self, disp=False) -> Bisection1D:
         if disp:
@@ -108,8 +108,15 @@ class DesignNearSquare(DesignBase):
             self.max_EFT_allowable,
             self.hourly_extraction_ground_loads,
             method=self.method,
-            flow_type=self.flow_type,
             disp=disp,
             field_type="near-square",
             load_years=self.load_years,
+        )
+
+    def get_bounds(self):
+        return min(self.borehole_lengths), max(self.borehole_lengths)
+
+    def closest_nbh(self, desired_nbh):
+        return square_and_near_square_adjusted_nbh(
+            1, self.number_of_boreholes, self.geometric_constraints.b, int(desired_nbh)
         )

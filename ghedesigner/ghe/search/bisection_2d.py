@@ -1,6 +1,6 @@
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import FlowConfigType, TimestepType
+from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_1d import Bisection1D
 from ghedesigner.media import Fluid, Grout, Soil
@@ -27,7 +27,6 @@ class Bisection2D(Bisection1D):
         max_eft: float,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         max_iter=15,
         disp=False,
         field_type="N/A",
@@ -59,7 +58,6 @@ class Bisection2D(Bisection1D):
             max_eft,
             hourly_extraction_ground_loads,
             method=method,
-            flow_type=flow_type,
             max_iter=max_iter,
             disp=disp,
             search=False,
@@ -77,17 +75,26 @@ class Bisection2D(Bisection1D):
 
         self.coordinates_domain = outer_domain
 
-        selection_key, _ = self.search()
+        outer_selection_key, _ = self.search()
 
         self.calculated_temperatures_nested.append(self.calculated_temperatures)
 
         # We tacked on one borehole to the beginning, so we need to subtract 1
         # on the index
-        inner_domain = coordinates_domain_nested[selection_key - 1]
+        inner_domain = coordinates_domain_nested[outer_selection_key - 1]
         self.coordinates_domain = inner_domain
-        self.fieldDescriptors = field_descriptors[selection_key - 1]
+        self.fieldDescriptors = field_descriptors[outer_selection_key - 1]
 
         # Reset calculated temperatures
         self.calculated_temperatures = {}
 
         self.selection_key, self.selected_coordinates = self.search()
+        if outer_selection_key == 0:
+            self.at_minimum_size = True
+        else:
+            self.at_minimum_size = False
+
+        if outer_selection_key == len(outer_domain) and self.at_maximum_size:
+            self.at_maximum_size = True
+        else:
+            self.at_maximum_size = False

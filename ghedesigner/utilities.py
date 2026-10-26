@@ -11,6 +11,8 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.optimize import brentq
 
+from ghedesigner.constants import SIMULATION_CONSTANT_COP_COOLING_OFFSET, SIMULATION_CONSTANT_COP_HEATING_OFFSET
+
 
 # Time functions
 # --------------
@@ -252,6 +254,10 @@ def check_arg_bounds(min_val: float, max_val: float, min_val_name: str, max_val_
         raise ValueError(f"{min_val_name} ({min_val}) should be less than or equal to {max_val_name} ({max_val})")
 
 
+def float_tuple_to_string(float_tuple):
+    return "_".join([str(val) for val in float_tuple])
+
+
 def combine_sts_lts(log_time_lts: list, g_lts: list, log_time_sts: list, g_sts: list) -> interp1d:
     # make sure the short time step doesn't overlap with the long time step
     max_log_time_sts = max(log_time_sts)
@@ -337,8 +343,209 @@ def read_csv_column(file_path: str | Path, column: int | str, try_convert_to_num
     return values
 
 
-def get_loads(loads_dict: dict) -> list[float]:
-    if "load_values" in loads_dict:
-        return loads_dict["load_values"]
+def get_loads(name, comp_type: str, data: dict) -> list[float]:
+    if "heat_transfer_rate_values_w" in data:
+        return data["heat_transfer_rate_values_w"]
     else:
-        return read_csv_column(loads_dict["file_path"], loads_dict["column"])
+        if "column_name" in data and "column_number" in data:
+            raise ValueError(
+                f"Both column_name and column_number cannot be provided for loads in {comp_type}, '{name}'"
+            )
+        elif "column_name" in data:
+            column = data["column_name"]
+        elif "column_number" in data:
+            column = data["column_number"]
+        else:
+            raise ValueError(f"column_name or column_number must be provided for loads in {comp_type}, '{name}'")
+
+        return read_csv_column(data["file_path"], column)
+
+
+def validate_nonnegative_loads(loads, load_type: str, building_name: str) -> np.ndarray:
+    """Return building loads as floats after checking that none are negative."""
+    values = np.asarray(loads, dtype=float)
+    negative_indices = np.flatnonzero(values < 0.0)
+    if negative_indices.size:
+        first_index = int(negative_indices[0])
+        raise ValueError(
+            f"{load_type.capitalize()} loads for building '{building_name}' must be non-negative; "
+            f"found {negative_indices.size} negative value(s), first at position {first_index + 1} "
+            f"({values[first_index]:g} W), minimum {values[negative_indices].min():g} W."
+        )
+    return values
+
+
+def absolutize_file_paths(json_path: Path, inplace: bool = False) -> dict:
+    """
+    Read a JSON file, traverse all nested structures, and convert any
+    'file_path' entries to absolute paths. Relative paths are resolved
+    relative to the JSON file's directory.
+
+    Parameters
+    ----------
+    json_path : Path
+        Path to the input JSON file.
+    inplace : bool, optional
+        If True, overwrite the input file with updated paths.
+        If False, return the updated data only.
+
+    Returns
+    -------
+    dict
+        The updated JSON data.
+    """
+
+    json_path = json_path.resolve()
+    base_dir = json_path.parent
+
+    data = loads(json_path.read_text())
+
+    def _walk(obj: Any) -> None:
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                if key == "file_path" and isinstance(value, str):
+                    path = Path(value)
+                    if not path.is_absolute():
+                        obj[key] = str((base_dir / path).resolve())
+                else:
+                    _walk(value)
+        elif isinstance(obj, list):
+            for item in obj:
+                _walk(item)
+
+    _walk(data)
+
+    if inplace:
+        json_path.write_text(dumps(data, indent=2))
+
+    return data
+
+
+def load_input_file(f_path: Path) -> dict:
+    return absolutize_file_paths(f_path, inplace=False)
+
+
+def bounded_quadratic_value(temperature, quadratic, linear, constant, minimum_temperature, maximum_temperature):
+    """Evaluate a quadratic while holding its value constant outside the fitted temperature range."""
+    bounded_temperature = np.clip(temperature, minimum_temperature, maximum_temperature)
+    return quadratic * bounded_temperature**2 + linear * bounded_temperature + constant
+
+
+def bounded_quadratic_slope(temperature, quadratic, linear, minimum_temperature, maximum_temperature):
+    """Evaluate the bounded quadratic derivative, which is zero outside the fitted range."""
+    temperature_array = np.asarray(temperature)
+    bounded_temperature = np.clip(temperature_array, minimum_temperature, maximum_temperature)
+    curve_slope = 2.0 * quadratic * bounded_temperature + linear
+    bounded_slope = np.where(
+        (temperature_array < minimum_temperature) | (temperature_array > maximum_temperature),
+        0.0,
+        curve_slope,
+    )
+    return float(bounded_slope) if np.isscalar(temperature) else bounded_slope
+
+
+class HPmodel:
+    def __init__(self, hp_id: str, hp_data: dict, ugt):
+        self.name = hp_id
+
+        heating_ratio = hp_data["heating_performance"]["heat_transfer_ratio_curve"]
+        cooling_ratio = hp_data["cooling_performance"]["heat_transfer_ratio_curve"]
+        heating_capacity = hp_data["heating_performance"]["capacity_curve"]
+        cooling_capacity = hp_data["cooling_performance"]["capacity_curve"]
+
+        self.a_htg = heating_ratio["quadratic_coefficient_per_c_squared"]
+        self.b_htg = heating_ratio["linear_coefficient_per_c"]
+        self.c_htg = heating_ratio["constant_coefficient"]
+
+        self.a_clg = cooling_ratio["quadratic_coefficient_per_c_squared"]
+        self.b_clg = cooling_ratio["linear_coefficient_per_c"]
+        self.c_clg = cooling_ratio["constant_coefficient"]
+
+        self.c1_htg = heating_capacity["quadratic_coefficient_w_per_c_squared"]
+        self.c2_htg = heating_capacity["linear_coefficient_w_per_c"]
+        self.c3_htg = heating_capacity["constant_coefficient_w"]
+
+        self.c1_clg = cooling_capacity["quadratic_coefficient_w_per_c_squared"]
+        self.c2_clg = cooling_capacity["linear_coefficient_w_per_c"]
+        self.c3_clg = cooling_capacity["constant_coefficient_w"]
+
+        self.cooling_min_temp = hp_data["cooling_performance"].get(
+            "minimum_curve_temperature_c", ugt - SIMULATION_CONSTANT_COP_HEATING_OFFSET
+        )
+        self.cooling_max_temp = hp_data["cooling_performance"].get(
+            "maximum_curve_temperature_c", ugt + SIMULATION_CONSTANT_COP_COOLING_OFFSET
+        )
+
+        self.heating_min_temp = hp_data["heating_performance"].get(
+            "minimum_curve_temperature_c", ugt - SIMULATION_CONSTANT_COP_HEATING_OFFSET
+        )
+        self.heating_max_temp = hp_data["heating_performance"].get(
+            "maximum_curve_temperature_c", ugt + SIMULATION_CONSTANT_COP_COOLING_OFFSET
+        )
+
+        if self.cooling_min_temp > self.cooling_max_temp:
+            raise ValueError("Cooling minimum curve temperature cannot exceed its maximum curve temperature.")
+        if self.heating_min_temp > self.heating_max_temp:
+            raise ValueError("Heating minimum curve temperature cannot exceed its maximum curve temperature.")
+
+        self.m_flow_single_hp = hp_data["design_mass_flow_rate_kg_per_s"]
+        self.design_pressure_loss = hp_data["design_pressure_drop_pa"]
+        self.pump_efficiency = hp_data["pump_efficiency_fraction"]
+
+    def heating_ratio(self, temperature):
+        return bounded_quadratic_value(
+            temperature,
+            self.a_htg,
+            self.b_htg,
+            self.c_htg,
+            self.heating_min_temp,
+            self.heating_max_temp,
+        )
+
+    def cooling_ratio(self, temperature):
+        return bounded_quadratic_value(
+            temperature,
+            self.a_clg,
+            self.b_clg,
+            self.c_clg,
+            self.cooling_min_temp,
+            self.cooling_max_temp,
+        )
+
+    def heating_ratio_slope(self, temperature):
+        return bounded_quadratic_slope(
+            temperature,
+            self.a_htg,
+            self.b_htg,
+            self.heating_min_temp,
+            self.heating_max_temp,
+        )
+
+    def cooling_ratio_slope(self, temperature):
+        return bounded_quadratic_slope(
+            temperature,
+            self.a_clg,
+            self.b_clg,
+            self.cooling_min_temp,
+            self.cooling_max_temp,
+        )
+
+    def heating_capacity(self, temperature):
+        return bounded_quadratic_value(
+            temperature,
+            self.c1_htg,
+            self.c2_htg,
+            self.c3_htg,
+            self.heating_min_temp,
+            self.heating_max_temp,
+        )
+
+    def cooling_capacity(self, temperature):
+        return bounded_quadratic_value(
+            temperature,
+            self.c1_clg,
+            self.c2_clg,
+            self.c3_clg,
+            self.cooling_min_temp,
+            self.cooling_max_temp,
+        )

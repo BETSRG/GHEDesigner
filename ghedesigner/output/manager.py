@@ -8,10 +8,98 @@ from numpy import ndarray
 from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.design.base import AnyBisectionType
 from ghedesigner.ghe.ground_heat_exchangers import GHE
+from ghedesigner.output import columns as csv_columns
 from ghedesigner.output.converters import ghe_time_convert, hours_to_month
 from ghedesigner.output.json_serializer import JsonSerializer
 from ghedesigner.output.text_serializer import TextSerializer
-from ghedesigner.utilities import write_flat_dict_to_csv, write_json
+from ghedesigner.utilities import write_json
+
+
+def _get_borehole_location_data(ghe: GHE, object_name: str) -> list[list[Any]]:
+    header = [
+        csv_columns.output_column(object_name, "Borehole X Coordinate", "m"),
+        csv_columns.output_column(object_name, "Borehole Y Coordinate", "m"),
+    ]
+    return [header] + [[x, y] for x, y in ghe.gFunction.bore_locations]
+
+
+def _get_hourly_loading_data(ghe: GHE, object_name: str) -> list[list[Any]]:
+    rows: list[list[Any]] = [
+        [
+            csv_columns.output_column(csv_columns.SIMULATION, "Month", "-"),
+            csv_columns.output_column(csv_columns.SIMULATION, "Day", "-"),
+            csv_columns.output_column(csv_columns.SIMULATION, "Hour", "-"),
+            csv_columns.ELAPSED_TIME.for_object(csv_columns.SIMULATION),
+            csv_columns.output_column(object_name, "Ground Heat Extraction Rate", "W"),
+        ]
+    ]
+    for hr, load in enumerate(ghe.hourly_extraction_ground_loads):
+        m, d, h = ghe_time_convert(hr)
+        rows.append([m, d, h, hr, load])
+    return rows
+
+
+def _get_g_function_data(ghe: GHE, object_name: str) -> list[list[Any]]:
+    gf_adj, gf_bhw = ghe.grab_g_function(ghe.b_spacing / ghe.bhe.borehole.H)
+    header = [
+        csv_columns.output_column(object_name, "Log Time Ratio", "-"),
+        csv_columns.output_column(object_name, "G-Function", "-"),
+        csv_columns.output_column(object_name, "Borehole-Wall G-Function", "-"),
+    ]
+    return [header] + [[x, y, z] for x, y, z in zip(gf_adj.x, gf_adj.y, gf_bhw.y)]
+
+
+def _get_loading_data(ghe: GHE, object_name: str) -> list[list[Any]]:
+    times = ghe.times
+    d_tb = ghe.dTb
+    hp_eft = ghe.hp_eft
+    loading = ghe.loading
+    denom = ghe.bhe.borehole.H * ghe.nbh
+    ugt = ghe.bhe.soil.ugt
+
+    rows: list[list[Any]] = [
+        [
+            csv_columns.ELAPSED_TIME.for_object(csv_columns.SIMULATION),
+            csv_columns.output_column(csv_columns.SIMULATION, "Elapsed Time", "month"),
+            csv_columns.output_column(object_name, "Ground Heat Rejection Rate Before Time Step", "W"),
+            csv_columns.output_column(object_name, "Ground Heat Rejection Rate Before Time Step", "W/m"),
+            csv_columns.output_column(object_name, "Borehole Wall Temperature", "C"),
+            csv_columns.EXITING_FLUID_TEMPERATURE.for_object(object_name),
+        ]
+    ]
+
+    n = len(times)
+    for i, t in enumerate(times):
+        month = hours_to_month(t)
+
+        # "Before time" row (uses current loading; Tb/EFT from previous index)
+        q_before = loading[i] if loading is not None and i > 1 else 0
+        rows.append(
+            [
+                t,
+                month,
+                q_before,
+                (q_before / denom) if i > 1 else 0,
+                # TODO The next two lines wrap to the last element when i==0, it's not clear if that's intentional
+                ugt + d_tb[i - 1],
+                hp_eft[i - 1],
+            ]
+        )
+
+        # "After time" row (uses next loading; current Tb/EFT)
+        q_after = loading[i + 1] if loading is not None and (i + 1) < n else 0
+        rows.append(
+            [
+                t,
+                month,
+                q_after,
+                (q_after / denom) if q_after else 0,
+                ugt + d_tb[i],
+                hp_eft[i],
+            ]
+        )
+
+    return rows
 
 
 class OutputManager:
@@ -29,12 +117,14 @@ class OutputManager:
         author: str,
         model_name: str,
         allocated_width: int = 100,
+        object_name: str = "GHE",
     ) -> None:
         self.project_name = project_name
         self.notes = notes
         self.author = author
         self.model_name = model_name
         self.allocated_width = allocated_width
+        self.object_name = object_name
 
         self.design: AnyBisectionType | None = None
         self.time: float = 0.0
@@ -46,6 +136,7 @@ class OutputManager:
         log_time: ndarray,
         g_values: ndarray,
         g_bhw_values: ndarray,
+        object_name: str = "GHE",
     ) -> None:
         output_directory.mkdir(parents=True, exist_ok=True)
         summary = {
@@ -54,7 +145,16 @@ class OutputManager:
             "g_bhw_values": g_bhw_values.tolist(),
         }
         write_json(output_directory / "SimulationSummary.json", summary)
-        write_flat_dict_to_csv(output_directory / "Gfunction.csv", summary)
+        rows = [
+            [
+                csv_columns.output_column(object_name, "Log Time Ratio", "-"),
+                csv_columns.output_column(object_name, "G-Function", "-"),
+                csv_columns.output_column(object_name, "Borehole-Wall G-Function", "-"),
+            ],
+            *zip(log_time, g_values, g_bhw_values),
+        ]
+        with open(output_directory / "Gfunction.csv", "w", newline="") as f:
+            csv.writer(f).writerows(rows)
 
     def set_design_data(
         self,
@@ -96,16 +196,16 @@ class OutputManager:
 
         # CSVs
         with open(output_directory / f"TimeDependentValues{file_suffix}.csv", "w", newline="") as f:
-            csv.writer(f).writerows(self._get_loading_data(ghe))
+            csv.writer(f).writerows(_get_loading_data(ghe, self.object_name))
 
         with open(output_directory / f"BoreFieldData{file_suffix}.csv", "w", newline="") as f:
-            csv.writer(f).writerows(self._get_borehole_location_data(ghe))
+            csv.writer(f).writerows(_get_borehole_location_data(ghe, self.object_name))
 
         with open(output_directory / f"Loadings{file_suffix}.csv", "w", newline="") as f:
-            csv.writer(f).writerows(self._get_hourly_loading_data(ghe))
+            csv.writer(f).writerows(_get_hourly_loading_data(ghe, self.object_name))
 
         with open(output_directory / f"Gfunction{file_suffix}.csv", "w", newline="") as f:
-            csv.writer(f).writerows(self._get_g_function_data(ghe))
+            csv.writer(f).writerows(_get_g_function_data(ghe, self.object_name))
 
         # JSON summary
         obj = JsonSerializer.summary_object(
@@ -144,84 +244,7 @@ class OutputManager:
         (output_directory / f"SimulationSummary{file_suffix}.txt").write_text(txt)
 
         with open(output_directory / f"BoreFieldData{file_suffix}.csv", "w", newline="") as f:
-            csv.writer(f).writerows(self._get_borehole_location_data(ghe))
+            csv.writer(f).writerows(_get_borehole_location_data(ghe, self.object_name))
 
         with open(output_directory / f"Gfunction{file_suffix}.csv", "w", newline="") as f:
-            csv.writer(f).writerows(self._get_g_function_data(ghe))
-
-        # This is commented out because it was writing dummy data
-        # write_json(output_directory / f"SimulationSummary{file_suffix}.json", {
-        #     "ghe_system": {
-        #         "number_of_boreholes": 1,
-        #         "active_borehole_length": {"value": 1},
-        #     }
-        # })
-
-    # Internal data extraction for CSVs
-    def _get_loading_data(self, ghe: GHE) -> list[list[Any]]:
-        times = ghe.times
-        d_tb = ghe.dTb
-        hp_eft = ghe.hp_eft
-        loading = ghe.loading
-        denom = ghe.bhe.borehole.H * ghe.nbh
-        ugt = ghe.bhe.soil.ugt
-
-        rows: list[list[Any]] = [
-            [
-                "Time (hr)",
-                "Time (month)",
-                "Q (Rejection) (W) (before time)",
-                "Q (Rejection) (W/m) (before time)",
-                "Tb (C)",
-                "GHE ExFT (C)",
-            ]
-        ]
-
-        n = len(times)
-        for i, t in enumerate(times):
-            month = hours_to_month(t)
-
-            # "Before time" row (uses current loading; Tb/EFT from previous index)
-            q_before = loading[i] if loading is not None and i > 1 else 0
-            rows.append(
-                [
-                    t,
-                    month,
-                    q_before,
-                    (q_before / denom) if i > 1 else 0,
-                    # TODO The next two lines wrap to the last element when i==0, it's not clear if that's intentional
-                    ugt + d_tb[i - 1],
-                    hp_eft[i - 1],
-                ]
-            )
-
-            # "After time" row (uses next loading; current Tb/EFT)
-            q_after = loading[i + 1] if loading is not None and (i + 1) < n else 0
-            rows.append(
-                [
-                    t,
-                    month,
-                    q_after,
-                    (q_after / denom) if q_after else 0,
-                    ugt + d_tb[i],
-                    hp_eft[i],
-                ]
-            )
-
-        return rows
-
-    def _get_borehole_location_data(self, ghe: GHE) -> list[list[Any]]:
-        return [["x", "y"]] + [[x, y] for x, y in ghe.gFunction.bore_locations]
-
-    def _get_hourly_loading_data(self, ghe: GHE) -> list[list[Any]]:
-        rows: list[list[Any]] = [["Month", "Day", "Hour", "Time (Hours)", "Loading (W) (Extraction)"]]
-        for hr, load in enumerate(ghe.hourly_extraction_ground_loads):
-            m, d, h = ghe_time_convert(hr)
-            rows.append([m, d, h, hr, load])
-        return rows
-
-    def _get_g_function_data(self, ghe: GHE) -> list[list[Any]]:
-        title = f"H: {ghe.bhe.borehole.H:0.2f} m"
-        gf_adj, gf_bhw = ghe.grab_g_function(ghe.b_spacing / ghe.bhe.borehole.H)
-        header = ["ln(t/ts)", title, f"{title} bhw"]
-        return [header] + [[x, y, z] for x, y, z in zip(gf_adj.x, gf_adj.y, gf_bhw.y)]
+            csv.writer(f).writerows(_get_g_function_data(ghe, self.object_name))

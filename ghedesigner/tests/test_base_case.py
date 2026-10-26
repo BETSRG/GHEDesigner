@@ -82,3 +82,40 @@ class GHEBaseTest(TestCase):
     @staticmethod
     def rel_error_within_tol(test: float, base: float, tol: float) -> bool:
         return abs((test - base) / base) <= tol
+
+    def assert_value_matches_any(
+        self,
+        actual_value: float,
+        expected_values: list[float],
+        delta: float = 0.1,
+        label: str = "value",
+    ) -> None:
+        for expected_value in expected_values:
+            if abs(actual_value - expected_value) <= delta:
+                return
+
+        expected_summary = ", ".join(f"{expected_value:.6f}±{delta:.2f}" for expected_value in expected_values)
+        self.fail(f"Unexpected {label}: {actual_value:.6f}; expected one of {expected_summary}")
+
+    def assert_design_matches_any(
+        self,
+        search,
+        expected_outcomes: list[tuple[float, int]],
+        delta: float = 0.25,
+    ) -> None:
+        actual_height = search.ghe.bhe.borehole.H
+        actual_boreholes = len(search.ghe.gFunction.bore_locations)
+
+        for expected_height, expected_boreholes in expected_outcomes:
+            if actual_boreholes == expected_boreholes and abs(actual_height - expected_height) <= delta:
+                return
+
+        expected_summary = ", ".join(
+            f"(height={expected_height:.2f}±{delta:.2f}, boreholes={expected_boreholes})"
+            for expected_height, expected_boreholes in expected_outcomes
+        )
+        self.fail(
+            "Unexpected design result: "
+            f"height={actual_height:.6f}, boreholes={actual_boreholes}; "
+            f"expected one of {expected_summary}"
+        )

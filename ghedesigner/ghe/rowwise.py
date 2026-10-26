@@ -2,6 +2,7 @@ from functools import lru_cache
 from math import atan, cos, inf, pi, sin, sqrt
 
 import numpy as np
+from numpy.typing import NDArray
 
 from ghedesigner.constants import DEG_TO_RAD, PI_OVER_2, RAD_TO_DEG
 from ghedesigner.ghe.shape import Shapes, point_polygon_check, sort_intersections
@@ -10,17 +11,18 @@ NEIGHBORHOOD_OFFSETS = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1,
 
 
 class DeferredDuplicateCheckList:
-    def __init__(self, spacing):
-        self.points = {}
-        self.buckets = {}
-        self.points_to_check = []
+    def __init__(self, spacing) -> None:
+        self.points: dict[int, list[np.float64]] = {}
+        self.buckets: dict[tuple[np.int64, np.int64], list[int]] = {}
+        self.points_to_check: list[tuple[int, int]] = []
         self.spacing = spacing
         self.partitioned = False
         self.proximity_checks_found = False
         self.largest_index = 0
         self.bucket_keys = None
+        self.points_to_check_to_ignore: list[int] = []
 
-    def _get_bucket_key(self, px, py):
+    def _get_bucket_key(self, px: np.float64, py: np.float64) -> tuple[int, int]:
         return int(px // self.spacing), int(py // self.spacing)
 
     def _get_bucket_keys(self, points_array):
@@ -38,6 +40,9 @@ class DeferredDuplicateCheckList:
         del self.buckets[key][index_to_delete]
         del self.points[point_index]
         del self.bucket_keys[bucket_keys_index]
+        for pair_index, pair in enumerate(self.points_to_check):
+            if point_index in pair:
+                self.points_to_check_to_ignore.append(pair_index)
 
     def index(self, ind):
         keys = list(self.points.keys())
@@ -71,7 +76,7 @@ class DeferredDuplicateCheckList:
                     self.points_to_check.append((key, j))
         self.proximity_checks_found = True
 
-    def append(self, element):
+    def reset_partition(self):
         # Since the spatial partitioning is done in bulk in "partition()", we have to reset the partitioning
         # when appending a new element.
         if self.partitioned:
@@ -82,6 +87,10 @@ class DeferredDuplicateCheckList:
         if self.proximity_checks_found:
             self.proximity_checks_found = False
             self.points_to_check = []
+            self.points_to_check_to_ignore = []
+
+    def append(self, element):
+        self.reset_partition()
         # Internally, points are contained in the self.points dictionary, but we want this classes usage
         # to be similar to a list/array. This can cause an issue when doing deletions (as we would
         # like to avoid readjusting the keys for all dict entries). In order to avoid generating an already
@@ -111,7 +120,9 @@ class DeferredDuplicateCheckList:
         duplicates = []
         keys_list = list(self.points.keys())
         squared_tolerance = tolerance * tolerance
-        for points_to_check in self.points_to_check:
+        for pair_index, points_to_check in enumerate(self.points_to_check):
+            if pair_index in self.points_to_check_to_ignore:
+                continue
             i, j = points_to_check
             p1 = self.points[i]
             p2 = self.points[j]
@@ -122,13 +133,13 @@ class DeferredDuplicateCheckList:
                 duplicates.append((keys_list.index(i), keys_list.index(j)))
         return duplicates
 
-    def get_line_partitions(self, p1x, p1y, p2x, p2y):
+    def get_line_partitions(self, p1x: np.float64, p1y: np.float64, p2x: np.float64, p2y: np.float64):
         # This is based on Amanatides & Woo's algorithm as described here:
         # https://github.com/cgyurgyik/fast-voxel-traversal-algorithm/blob/master/overview/FastVoxelTraversalOverview.md
         # It should be noted that this implementation assumes that the line segment begins on the spatial grid
-        # which simplifies the initialization of some of the values.
+        # which simplifies the initialization of some values.
 
-        buckets_visited = []
+        buckets_visited: list[tuple[int, int]] = []
 
         p1x_bucket, p1y_bucket = self._get_bucket_key(p1x, p1y)
         p2x_bucket, p2y_bucket = self._get_bucket_key(p2x, p2y)
@@ -173,7 +184,12 @@ class DeferredDuplicateCheckList:
                 t_max_y += t_delta_y
         return buckets_visited
 
-    def points_close_to_line(self, p1, p2, tolerance):
+    def points_close_to_line(
+        self,
+        p1: np.ndarray[tuple[int], np.dtype[np.float64]],
+        p2: np.ndarray[tuple[int], np.dtype[np.float64]],
+        tolerance,
+    ):
         if tolerance > self.spacing:
             raise ValueError("Requested tolerance exceeds that which is allowed by the given spatial partitioning.")
 
@@ -202,7 +218,7 @@ class DeferredDuplicateCheckList:
         return close_points
 
 
-def gen_shape(prop_bound: list[list[float]], ng_zones=None):
+def gen_shape(prop_bound: list[list[float]], ng_zones=None) -> list[Shapes | list[Shapes] | None]:
     """Returns an array of shapes objects representing the coordinates given"""
     r_a: list[Shapes | list[Shapes] | None] = [Shapes(prop_bound)]
     if ng_zones is not None:
@@ -219,12 +235,13 @@ def field_optimization_wp_space_fr(
     p_space,
     space_start,
     rotate_step,
-    prop_bound,
+    prop_bound: Shapes,
     ng_zones=None,
     rotate_start=None,
     rotate_stop=None,
     partition_ratio=1.0,
     duplicate_spacing_ratio=0.1,
+    sinter_spacing=None,
 ):
     """Optimizes a Field by iterating over input values w/o perimeter spacing
 
@@ -250,11 +267,11 @@ def field_optimization_wp_space_fr(
     space = space_start
     rt = rotate_start
 
-    y_s = space
-    x_s = y_s
+    y_s = sinter_spacing if sinter_spacing is not None else space
+    x_s = space
 
     max_l = 0
-    max_hole = None
+    max_hole: DeferredDuplicateCheckList | None = None
     max_rt = None
 
     while rt < rotate_stop:
@@ -278,6 +295,9 @@ def field_optimization_wp_space_fr(
 
         rt += rotate_step * DEG_TO_RAD
 
+    if max_hole is None:
+        raise ValueError("No borehole configuration found within the specified parameters")
+
     # Ensures that there are no repeated boreholes
     if duplicate_spacing_ratio != 0:
         max_hole = remove_duplicates(max_hole, duplicate_spacing_ratio * max(x_s, y_s, p_space * x_s))
@@ -297,7 +317,7 @@ def field_optimization_fr(
     intersection_tolerance=1e-5,
     partition_ratio=1.0,
     duplicate_spacing_ratio=0.1,
-):
+) -> tuple[np.ndarray[tuple[int, int], np.dtype[np.float64]], str]:
     """Optimizes a Field by iterating over input values w/o perimeter spacing
 
     Parameters: space_start(float): the initial target spacing that the optimization program will start with
@@ -358,21 +378,26 @@ def field_optimization_fr(
 
         rt += rotate_step * DEG_TO_RAD
 
+    if max_hole is None:
+        raise ValueError("No borehole configuration found within the specified parameters")
+
     # Ensures that there are no repeated boreholes
     if duplicate_spacing_ratio != 0:
         max_hole = remove_duplicates(max_hole, duplicate_spacing_ratio * max(x_s, y_s))
 
     field = max_hole
     field_name = f"S_{space:0.1f}_rt{max_rt:0.1f}"
-    return [field.toarray(), field_name]
+    return field.toarray(), field_name
 
 
-def sum_sq_dist(p1, p2):
+def sum_sq_dist(p1: np.ndarray[tuple[int], np.dtype[np.float64]], p2: np.ndarray[tuple[int], np.dtype[np.float64]]):
     """Returns the **sum of squared** cartesian distance between two points"""
     return (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
 
 
-def pts_dist(p1, p2):
+def pts_dist(
+    p1: np.ndarray[tuple[int], np.dtype[np.float64]], p2: np.ndarray[tuple[int], np.dtype[np.float64]]
+) -> float:
     """Returns the cartesian distance between two points"""
     return sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
@@ -416,12 +441,11 @@ def remove_duplicates(borefield: DeferredDuplicateCheckList, space, disp=False):
         )  # keep a space between the function name
         n_duplicates = original_size - borefield.size()
         print(f"The number of duplicates removed: {n_duplicates}")
-
     return borefield
 
 
 def two_space_gen_bhc(
-    field,
+    field: Shapes,
     y_space,
     x_space,
     no_go=None,
@@ -431,7 +455,8 @@ def two_space_gen_bhc(
     intersection_tolerance=1e-5,
     duplicate_spacing_ratio=0.1,
     partition_ratio=1.0,
-) -> np.array:
+    check_for_outside_points=False,
+) -> DeferredDuplicateCheckList:
     """Generates a borefield that has perimeter spacing
 
     Parameters:
@@ -445,7 +470,7 @@ def two_space_gen_bhc(
         i_space: Min spacing required from all edges
         intersection_tolerance:
         duplicate_spacing_ratio: Used for spatial partitioning (likely does not need to be modified).
-
+        partition_ratio: Defines the size of the space partitioning
     """
     if p_space is None:
         p_space = 0.9 * x_space
@@ -472,17 +497,17 @@ def two_space_gen_bhc(
         for ng in no_go:
             perimeter_distribute(ng, p_space, holes)
     holes.partition()
-    for i in range(holes.size() - 1, -1, -1):
-        point = holes.index(i)
-        if point_polygon_check(field.c, point, on_edge_tolerance=1e-3) == -1:
-            holes.delete(i)
-            continue
-        if no_go is not None:
-            for ng in no_go:
-                if point_polygon_check(ng.c, point, on_edge_tolerance=1e-3) == 1:
-                    holes.delete(i)
-                    break
-
+    if check_for_outside_points:
+        for i in range(holes.size() - 1, -1, -1):
+            point = holes.index(i)
+            if point_polygon_check(field.c, point, on_edge_tolerance=1e-3) == -1:
+                holes.delete(i)
+                continue
+            if no_go is not None:
+                for ng in no_go:
+                    if point_polygon_check(ng.c, point, on_edge_tolerance=1e-3) == 1:
+                        holes.delete(i)
+                        break
     return holes
 
 
@@ -579,7 +604,7 @@ def perimeter_distribute(field, space, r):
 
 
 def gen_borehole_config(
-    field,
+    field: Shapes,
     y_space,
     x_space,
     no_go=None,
@@ -587,7 +612,7 @@ def gen_borehole_config(
     intersection_tolerance=1e-6,
     duplicate_spacing_ratio=0.1,
     partition_ratio=1.0,
-):
+) -> DeferredDuplicateCheckList:
     """
     Function generates a series of x,y points representing a field of boreholes
     in a trapezoidal shape. Returns empty if boreHole field does not meet given requirements
@@ -614,8 +639,8 @@ def gen_borehole_config(
     # Decides which vertex to start generating boreholes at by finding the "lowest" vertex relative to a rotated x-axis
     lowest_vert_val = inf
     highest_vert_val = -inf
-    lowest_vert = None
-    highest_vert = None
+    lowest_vert: NDArray[np.float64] | None = None
+    highest_vert: NDArray[np.float64] | None = None
     for vert in field.c:
         phi = atan(vert[1] / vert[0]) if vert[0] != 0 else PI_OVER_2
         dist_vert = sqrt(vert[1] ** 2 + vert[0] ** 2)
@@ -633,10 +658,14 @@ def gen_borehole_config(
             highest_vert_val = yp
             highest_vert = vert
 
-    # Determines the number of rows as well as the distance between the rows
+    if lowest_vert is None:
+        raise ValueError("No borehole configuration found within the specified parameters")
+
+    # Determine the number of row intervals and their actual spacing. A span smaller than the requested spacing has
+    # no row intervals and therefore produces a single row.
     num_rows = int((highest_vert_val - lowest_vert_val) // y_space)
     d = highest_vert_val - lowest_vert_val
-    s = d / num_rows
+    s = d / num_rows if num_rows > 0 else y_space
     row_space = [-1 * s * cos(PI_OVER_2 - rotate), s * sin(PI_OVER_2 - rotate)]
 
     # Establishes the list object
@@ -730,8 +759,8 @@ def gen_borehole_config(
 
             i = 0
             while i < len_f_inters - 1:
-                left_offset = [0, 0]
-                right_offset = [0, 0]
+                left_offset = [0.0, 0.0]
+                right_offset = [0.0, 0.0]
 
                 # Checks if there is enough distance between this point and another and then will offset the point if
                 # there is not enough room

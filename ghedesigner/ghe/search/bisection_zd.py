@@ -1,7 +1,7 @@
 import numpy as np
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import FlowConfigType, TimestepType
+from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.pipe import Pipe
 from ghedesigner.ghe.search.bisection_1d import Bisection1D
 from ghedesigner.media import Fluid, Grout, Soil
@@ -28,7 +28,6 @@ class BisectionZD(Bisection1D):
         max_eft: float,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         max_iter=15,
         disp=False,
         field_type="N/A",
@@ -60,7 +59,6 @@ class BisectionZD(Bisection1D):
             max_eft,
             hourly_extraction_ground_loads,
             method=method,
-            flow_type=flow_type,
             max_iter=max_iter,
             disp=disp,
             search=False,
@@ -95,7 +93,7 @@ class BisectionZD(Bisection1D):
 
         i = self.selection_key_outer
 
-        old_height = 99999
+        # old_height = 99999
 
         while i < len(self.coordinates_domain_nested) and i < max_iter:
             self.coordinates_domain = self.coordinates_domain_nested[i]
@@ -120,10 +118,10 @@ class BisectionZD(Bisection1D):
             total_drilling = nbh * self.ghe.bhe.borehole.H
             self.calculated_heights[i] = total_drilling
 
-            if old_height < total_drilling:
-                break
-            else:
-                old_height = total_drilling
+            # if old_height < total_drilling:
+            #     break
+            # else:
+            #     old_height = total_drilling
 
             i += 1
 
@@ -139,8 +137,7 @@ class BisectionZD(Bisection1D):
         values = list(self.calculated_temperatures.values())
 
         negative_excess_values = [v for v in values if v <= 0.0]
-
-        excess_of_interest = max(negative_excess_values)
+        excess_of_interest = max(negative_excess_values) if len(negative_excess_values) > 0 else min(values)
         idx = values.index(excess_of_interest)
         selection_key = keys[idx]
         selected_coordinates = self.coordinates_domain_nested[selection_key_outer][selection_key]
@@ -152,5 +149,15 @@ class BisectionZD(Bisection1D):
         )
         self.ghe.compute_g_functions(self.min_height, self.max_height)
         self.ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
-
+        if (
+            selection_key_outer == len(self.coordinates_domain_nested) - 1
+            and selection_key == len(self.coordinates_domain_nested[selection_key_outer]) - 1
+        ):
+            self.at_maximum_size = True
+        else:
+            self.at_maximum_size = False
+        if selection_key_outer == 0 and selection_key == 0:
+            self.at_minimum_size = True
+        else:
+            self.at_minimum_size = False
         return selection_key, selected_coordinates

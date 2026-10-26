@@ -5,7 +5,7 @@
         <option value="serve" />
       </list>
     </option>
-    <option name="checkSync" value="true" />
+    <option name="checkSync" value="false" />
     <option name="env">
       <map>
         <entry key="LANGUAGE" value="en_US" />
