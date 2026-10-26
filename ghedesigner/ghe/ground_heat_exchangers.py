@@ -16,21 +16,21 @@ from ghedesigner.utilities import combine_sts_lts, solve_root
 
 class GHE:
     def __init__(
-            self,
-            v_flow_system: float,
-            b_spacing: float,
-            bhe_type: PipeType,
-            fluid,
-            borehole: Borehole,
-            pipe: Pipe,
-            grout: Grout,
-            soil: Soil,
-            g_function: GFunction,
-            start_month: int,
-            end_month: int,
-            hourly_extraction_ground_loads: list,
-            field_type="N/A",
-            field_specifier="N/A",
+        self,
+        v_flow_system: float,
+        b_spacing: float,
+        bhe_type: PipeType,
+        fluid,
+        borehole: Borehole,
+        pipe: Pipe,
+        grout: Grout,
+        soil: Soil,
+        g_function: GFunction,
+        start_month: int,
+        end_month: int,
+        hourly_extraction_ground_loads: list,
+        field_type="N/A",
+        field_specifier="N/A",
     ) -> None:
         self.field_type = field_type
         self.fieldSpecifier = field_specifier
@@ -182,12 +182,12 @@ class GHE:
         return np.array(time)
 
     def _build_claesson_javed_standard_data(
-            self,
-            q_dot_hourly: np.ndarray,
-            times: np.ndarray,
-            g: interp1d,
-            growth: float = 2.0,
-            cells_per_level: int = 5,
+        self,
+        q_dot_hourly: np.ndarray,
+        times: np.ndarray,
+        g: interp1d,
+        growth: float = 2.0,
+        cells_per_level: int = 5,
     ):
         rb = self.bhe.calc_effective_borehole_resistance()
         m_dot = self.bhe.m_flow_borehole
@@ -220,9 +220,7 @@ class GHE:
         q_dot_b_watt = q_dot_hourly / float(self.nbh)
         q_dot = q_dot_b_watt / height
 
-        time_req_sec = self._time_claesson_javed(
-            dt_sec, tmax_sec, growth=growth, cells_per_level=cells_per_level
-        )
+        time_req_sec = self._time_claesson_javed(dt_sec, tmax_sec, growth=growth, cells_per_level=cells_per_level)
         nt = len(time_req_sec)
         if nt == 0:
             return {
@@ -293,8 +291,9 @@ class GHE:
 
         return list(hp_eft), list(delta_tb)
 
-    def simulate_dynamic_load_agg(self, q_dot_hourly, times: np.ndarray, g: interp1d, growth: float = 2.0,
-                                  cells_per_level: int = 5 ):
+    def simulate_dynamic_load_agg(
+        self, q_dot_hourly, times: np.ndarray, g: interp1d, growth: float = 2.0, cells_per_level: int = 5
+    ):
         data = self._build_claesson_javed_standard_data(
             q_dot_hourly=q_dot_hourly,
             times=times,
@@ -378,8 +377,7 @@ class GHE:
         return max(hp_eft), min(hp_eft)
 
     def size(
-            self, method: TimestepType, max_height: float, min_height: float, design_max_eft: float,
-            design_min_eft: float
+        self, method: TimestepType, max_height: float, min_height: float, design_max_eft: float, design_min_eft: float
     ) -> None:
         # Size the ground heat exchanger
         def local_objective(h: float):

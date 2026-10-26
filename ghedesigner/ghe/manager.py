@@ -135,11 +135,11 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
         return ghe
 
     def design_and_size_ghe(
-            self,
-            ghe_dict: dict,
-            end_month: int,
-            timestep: str = "HYBRID",
-            loads_override: list[float] | None = None,
+        self,
+        ghe_dict: dict,
+        end_month: int,
+        timestep: str = "HYBRID",
+        loads_override: list[float] | None = None,
     ):
         ghe_loads = loads_override if loads_override else get_loads(ghe_dict["loads"])
 
@@ -194,7 +194,7 @@ class GroundHeatExchanger:  # TODO: Rename this.  Just GHEDesignerManager?  GHED
                     rect_geometry,
                     ghe_loads,
                     flow_type=flow_type,
-                    method= timestep_method,
+                    method=timestep_method,
                 )
             case DesignGeomType.NEARSQUARE:
                 near_sq_geometry: GeometricConstraintsNearSquare = GeometricConstraintsNearSquare(
