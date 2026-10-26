@@ -1,7 +1,7 @@
 from math import cos, pi, sin
 from typing import cast
 
-from ghedesigner.enums import PipeType
+from ghedesigner.enums import BHType
 from ghedesigner.media import ThermalProperty
 from ghedesigner.utilities import check_arg_bounds
 
@@ -10,56 +10,58 @@ TupleOrTuples = tuple | list[tuple]
 
 
 class Pipe(ThermalProperty):
-    def __init__(self, pipe_type: PipeType, conductivity: float | tuple[float, float], rho_cp: float) -> None:
+    def __init__(self, pipe_type: BHType, conductivity: float | tuple[float, float], rho_cp: float) -> None:
         super().__init__(conductivity, rho_cp)
         self.type = pipe_type
 
     @classmethod
-    def init_from_dict(cls, pipe_type: PipeType, pipe_props: dict) -> "Pipe":
-        rho_cp = pipe_props["rho_cp"]
+    def init_from_dict(cls, pipe_type: BHType, pipe_props: dict) -> "Pipe":
+        rho_cp = pipe_props["volumetric_heat_capacity_j_per_m3_k"]
 
         match pipe_type:
-            case PipeType.SINGLEUTUBE:
-                k = pipe_props["conductivity"]
+            case BHType.SINGLEUTUBE:
+                k = pipe_props["thermal_conductivity_w_per_m_k"]
                 return Pipe.init_single_u_tube(
                     conductivity=k,
                     rho_cp=rho_cp,
-                    inner_diameter=pipe_props["inner_diameter"],
-                    outer_diameter=pipe_props["outer_diameter"],
-                    shank_spacing=pipe_props["shank_spacing"],
-                    roughness=pipe_props["roughness"],
-                    num_pipes=pipe_props.get("num_pipes", 1),
+                    inner_diameter=pipe_props["inner_diameter_m"],
+                    outer_diameter=pipe_props["outer_diameter_m"],
+                    shank_spacing=pipe_props["shank_spacing_m"],
+                    roughness=pipe_props["surface_roughness_m"],
                 )
-            case PipeType.DOUBLEUTUBESERIES:
-                k = pipe_props["conductivity"]
+            case BHType.DOUBLEUTUBESERIES:
+                k = pipe_props["thermal_conductivity_w_per_m_k"]
                 return Pipe.init_double_u_tube_series(
                     conductivity=k,
                     rho_cp=rho_cp,
-                    inner_diameter=pipe_props["inner_diameter"],
-                    outer_diameter=pipe_props["outer_diameter"],
-                    shank_spacing=pipe_props["shank_spacing"],
-                    roughness=pipe_props["roughness"],
+                    inner_diameter=pipe_props["inner_diameter_m"],
+                    outer_diameter=pipe_props["outer_diameter_m"],
+                    shank_spacing=pipe_props["shank_spacing_m"],
+                    roughness=pipe_props["surface_roughness_m"],
                 )
-            case PipeType.DOUBLEUTUBEPARALLEL:
-                k = pipe_props["conductivity"]
+            case BHType.DOUBLEUTUBEPARALLEL:
+                k = pipe_props["thermal_conductivity_w_per_m_k"]
                 return Pipe.init_double_u_tube_parallel(
                     conductivity=k,
                     rho_cp=rho_cp,
-                    inner_diameter=pipe_props["inner_diameter"],
-                    outer_diameter=pipe_props["outer_diameter"],
-                    shank_spacing=pipe_props["shank_spacing"],
-                    roughness=pipe_props["roughness"],
+                    inner_diameter=pipe_props["inner_diameter_m"],
+                    outer_diameter=pipe_props["outer_diameter_m"],
+                    shank_spacing=pipe_props["shank_spacing_m"],
+                    roughness=pipe_props["surface_roughness_m"],
                 )
-            case PipeType.COAXIAL:
-                k = pipe_props["conductivity_inner"], pipe_props["conductivity_outer"]
+            case BHType.COAXIAL:
+                k = (
+                    pipe_props["inner_pipe_thermal_conductivity_w_per_m_k"],
+                    pipe_props["outer_pipe_thermal_conductivity_w_per_m_k"],
+                )
                 return Pipe.init_coaxial(
                     conductivity=k,
                     rho_cp=rho_cp,
-                    inner_pipe_d_in=pipe_props["inner_pipe_d_in"],
-                    inner_pipe_d_out=pipe_props["inner_pipe_d_out"],
-                    outer_pipe_d_in=pipe_props["outer_pipe_d_in"],
-                    outer_pipe_d_out=pipe_props["outer_pipe_d_out"],
-                    roughness=pipe_props["roughness"],
+                    inner_pipe_d_in=pipe_props["inner_pipe_inner_diameter_m"],
+                    inner_pipe_d_out=pipe_props["inner_pipe_outer_diameter_m"],
+                    outer_pipe_d_in=pipe_props["outer_pipe_inner_diameter_m"],
+                    outer_pipe_d_out=pipe_props["outer_pipe_outer_diameter_m"],
+                    roughness=pipe_props["surface_roughness_m"],
                 )
             case _:
                 raise ValueError(f"Pipe type {pipe_type} not recognized.")
@@ -73,13 +75,12 @@ class Pipe(ThermalProperty):
         outer_diameter: float,
         shank_spacing: float,
         roughness: float,
-        num_pipes: int = 1,
     ) -> "Pipe":
         check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
-        p = cls(PipeType.SINGLEUTUBE, conductivity, rho_cp)  # TODO: Untangle this a little more
+        p = cls(BHType.SINGLEUTUBE, conductivity, rho_cp)  # TODO: Untangle this a little more
         r_in = inner_diameter / 2.0
         r_out = outer_diameter / 2.0
-        pipe_positions = Pipe.place_pipes(shank_spacing, r_out, num_pipes)
+        pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 1)
         p._finalize(pipe_positions, r_in, r_out, shank_spacing, roughness)
         return p
 
@@ -94,7 +95,7 @@ class Pipe(ThermalProperty):
         roughness: float,
     ) -> "Pipe":
         check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
-        p = cls(PipeType.DOUBLEUTUBESERIES, conductivity, rho_cp)
+        p = cls(BHType.DOUBLEUTUBESERIES, conductivity, rho_cp)
         r_in = inner_diameter / 2.0
         r_out = outer_diameter / 2.0
         pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 2)
@@ -112,7 +113,7 @@ class Pipe(ThermalProperty):
         roughness: float,
     ) -> "Pipe":
         check_arg_bounds(inner_diameter, outer_diameter, "inner_diameter", "outer_diameter")
-        p = cls(PipeType.DOUBLEUTUBEPARALLEL, conductivity, rho_cp)
+        p = cls(BHType.DOUBLEUTUBEPARALLEL, conductivity, rho_cp)
         r_in = inner_diameter / 2.0
         r_out = outer_diameter / 2.0
         pipe_positions = Pipe.place_pipes(shank_spacing, r_out, 2)
@@ -132,7 +133,7 @@ class Pipe(ThermalProperty):
     ) -> "Pipe":
         check_arg_bounds(inner_pipe_d_in, inner_pipe_d_out, "inner_pipe_d_in", "inner_pipe_d_out")
         check_arg_bounds(outer_pipe_d_in, outer_pipe_d_out, "outer_pipe_d_in", "outer_pipe_d_out")
-        p = cls(PipeType.COAXIAL, conductivity, rho_cp)
+        p = cls(BHType.COAXIAL, conductivity, rho_cp)
         # Note: This convention is different from pygfunction
         r_inner = [inner_pipe_d_in / 2.0, inner_pipe_d_out / 2.0]  # The radii of the inner pipe from in to out
         r_outer = [outer_pipe_d_in / 2.0, outer_pipe_d_out / 2.0]  # The radii of the outer pipe from in to out
@@ -150,7 +151,7 @@ class Pipe(ThermalProperty):
         self.pos = pos  # Pipe positions either a list of tuples or tuple
         self.r_in = r_in  # Pipe inner radius (m) can be a float or list
         self.r_out = r_out  # Pipe outer radius (m) can be a float or list
-        self.s = s  # Center pipe to center pipe shank spacing
+        self.s = s  # Configured U-tube outer-wall shank spacing (m); zero for coaxial pipes
         self.roughness = roughness  # Pipe roughness (m)
         self.n_pipes = int(len(pos) / 2) if isinstance(pos, list) else 1
 

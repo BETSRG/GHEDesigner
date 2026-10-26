@@ -1,4 +1,4 @@
-from ghedesigner.enums import PipeType, TimestepType
+from ghedesigner.enums import BHType, TimestepType
 from ghedesigner.ghe.boreholes.core import Borehole
 from ghedesigner.ghe.coordinates import rectangle
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
@@ -112,7 +112,7 @@ class TestGHE(GHEBaseTest):
             self.dia / 2.0,
             self.bh_depth,
             self.m_flow_borehole,
-            PipeType.SINGLEUTUBE,
+            BHType.SINGLEUTUBE,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -124,7 +124,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.v_flow_system,
             self.B,
-            PipeType.SINGLEUTUBE,
+            BHType.SINGLEUTUBE,
             self.fluid,
             borehole,
             self.pipe_s,
@@ -136,12 +136,12 @@ class TestGHE(GHEBaseTest):
             self.hourly_extraction_ground_loads,
         )
 
-        max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HOURLY)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.LOAD_AGGREGATION_HOURLY)
 
         self.assertAlmostEqual(38.18, max_hp_eft, delta=0.1)
         self.assertAlmostEqual(16.56, min_hp_eft, delta=0.1)
 
-        ghe.size(TimestepType.HOURLY, self.max_height, self.min_height, self.max_eft, self.min_eft)
+        ghe.size(TimestepType.LOAD_AGGREGATION_HOURLY, self.max_height, self.min_height, self.max_eft, self.min_eft)
 
         self.assertEqual(156, ghe.nbh)
         self.assertAlmostEqual(124.35, ghe.bhe.borehole.H, delta=0.1)
@@ -159,7 +159,7 @@ class TestGHE(GHEBaseTest):
             self.dia / 2.0,
             self.bh_depth,
             self.m_flow_borehole,
-            PipeType.DOUBLEUTUBEPARALLEL,
+            BHType.DOUBLEUTUBEPARALLEL,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -171,7 +171,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.v_flow_system,
             self.B,
-            PipeType.DOUBLEUTUBEPARALLEL,
+            BHType.DOUBLEUTUBEPARALLEL,
             self.fluid,
             borehole,
             self.pipe_d,
@@ -183,12 +183,12 @@ class TestGHE(GHEBaseTest):
             self.hourly_extraction_ground_loads,
         )
 
-        max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HOURLY)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.LOAD_AGGREGATION_HOURLY)
 
         self.assertAlmostEqual(37.00, max_hp_eft, delta=0.1)
         self.assertAlmostEqual(17.01, min_hp_eft, delta=0.1)
 
-        ghe.size(TimestepType.HOURLY, self.max_height, self.min_height, self.max_eft, self.min_eft)
+        ghe.size(TimestepType.LOAD_AGGREGATION_HOURLY, self.max_height, self.min_height, self.max_eft, self.min_eft)
 
         self.assertEqual(156, ghe.nbh)
         self.assertAlmostEqual(115.7, ghe.bhe.borehole.H, delta=0.1)
@@ -206,7 +206,7 @@ class TestGHE(GHEBaseTest):
             self.dia / 2.0,
             self.bh_depth,
             self.m_flow_borehole,
-            PipeType.COAXIAL,
+            BHType.COAXIAL,
             self.log_time,
             self.coordinates,
             self.fluid,
@@ -218,7 +218,7 @@ class TestGHE(GHEBaseTest):
         ghe = GHE(
             self.v_flow_system,
             self.B,
-            PipeType.COAXIAL,
+            BHType.COAXIAL,
             self.fluid,
             borehole,
             self.pipe_c,
@@ -230,12 +230,12 @@ class TestGHE(GHEBaseTest):
             self.hourly_extraction_ground_loads,
         )
 
-        max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.HOURLY)
+        max_hp_eft, min_hp_eft = ghe.simulate(method=TimestepType.LOAD_AGGREGATION_HOURLY)
 
         self.assertAlmostEqual(36.83, max_hp_eft, delta=0.1)
         self.assertAlmostEqual(17.16, min_hp_eft, delta=0.1)
 
-        ghe.size(TimestepType.HOURLY, self.max_height, self.min_height, self.max_eft, self.min_eft)
+        ghe.size(TimestepType.LOAD_AGGREGATION_HOURLY, self.max_height, self.min_height, self.max_eft, self.min_eft)
 
         self.assertEqual(156, ghe.nbh)
         self.assertAlmostEqual(113.93, ghe.bhe.borehole.H, delta=0.1)

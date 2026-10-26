@@ -1,8 +1,8 @@
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import DesignGeomType, FlowConfigType, TimestepType
+from ghedesigner.enums import DesignGeomType, TimestepType
 from ghedesigner.ghe.design.base import DesignBase, GeometricConstraints
 from ghedesigner.ghe.domains import bi_rectangle_nested
 from ghedesigner.ghe.pipe import Pipe
@@ -25,8 +25,12 @@ class GeometricConstraintsBiRectangle(GeometricConstraints):
 
     def to_input(self) -> dict:
         return {
-            **asdict(self, dict_factory=lambda d: {k: v for k, v in d if k != "type"}),
-            "method": self.type.name,
+            "method": "bi_rectangle",
+            "length_m": self.length,
+            "width_m": self.width,
+            "minimum_borehole_spacing_m": self.b_min,
+            "maximum_borehole_spacing_x_m": self.b_max_x,
+            "maximum_borehole_spacing_y_m": self.b_max_y,
         }
 
 
@@ -50,7 +54,6 @@ class DesignBiRectangle(DesignBase):
         geometric_constraints: GeometricConstraintsBiRectangle,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         load_years=None,
     ) -> None:
         super().__init__(
@@ -71,7 +74,6 @@ class DesignBiRectangle(DesignBase):
             geometric_constraints,
             hourly_extraction_ground_loads,
             method,
-            flow_type,
             load_years,
         )
         self.geometric_constraints = geometric_constraints
@@ -107,7 +109,6 @@ class DesignBiRectangle(DesignBase):
             self.max_EFT_allowable,
             self.hourly_extraction_ground_loads,
             method=self.method,
-            flow_type=self.flow_type,
             disp=disp,
             field_type="bi-rectangle",
             load_years=self.load_years,

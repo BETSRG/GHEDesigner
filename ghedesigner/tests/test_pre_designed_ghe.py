@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from ghedesigner.enums import PipeType
+from ghedesigner.enums import BHType
 from ghedesigner.ghe.manager import GroundHeatExchanger
 
 
@@ -30,7 +30,7 @@ class TestPreDesignedGHE(TestCase):
             soil_undisturbed_temperature=ugt,
             borehole_buried_depth=burial_depth,
             borehole_radius=bh_radius,
-            pipe_arrangement_type=PipeType.SINGLEUTUBE,
+            pipe_arrangement_type=BHType.SINGLEUTUBE,
             pipe_parameters=pipe_params,
             fluid_name="water",
             fluid_concentration_percent=0,
@@ -42,9 +42,12 @@ class TestPreDesignedGHE(TestCase):
 
         # case 1: "g-function_library_1.0/rectangle_5m_v1.0.json, 1_1, 5._192._0.08"
         get_g_func_inputs = {
-            "flow_rate": 0.5,
-            "flow_type": "BOREHOLE",
-            "pre_designed": {"arrangement": "MANUAL", "H": 192, "x": [0.0], "y": [0.0]},
+            "design_volumetric_flow_rate_per_borehole_l_per_s": 0.5,
+            "fixed_borefield": {
+                "arrangement": "manual",
+                "active_borehole_length_m": 192,
+                "borehole_coordinates_m": [{"x": 0.0, "y": 0.0}],
+            },
         }
         log_time_vals, g_vals, _g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")
         self.assertAlmostEqual(-49.769, float(log_time_vals[0]), delta=0.001)
@@ -52,15 +55,22 @@ class TestPreDesignedGHE(TestCase):
         self.assertAlmostEqual(2.8351, float(g_vals[30]), delta=0.001)
         self.assertAlmostEqual(6.7569, float(g_vals[-1]), delta=0.1)
 
+        log_time_vals_stateful, g_vals_stateful, _g_bhw_vals_stateful = ghe.get_g_function(boundary_condition="UBWT")
+        self.assertAlmostEqual(float(log_time_vals[-1]), float(log_time_vals_stateful[-1]), delta=0.001)
+        self.assertAlmostEqual(float(g_vals[-1]), float(g_vals_stateful[-1]), delta=0.1)
+
         # case 2: "g-function_library_1.0/rectangle_5m_v1.0.json, 2_2, 5._192._0.08"
         get_g_func_inputs = {
-            "flow_rate": 0.5,
-            "flow_type": "BOREHOLE",
-            "pre_designed": {
-                "arrangement": "MANUAL",
-                "H": 192,
-                "x": [0.0, 0.0, 5.0, 5.0],
-                "y": [0.0, 5.0, 0.0, 5.0],
+            "design_volumetric_flow_rate_per_borehole_l_per_s": 0.5,
+            "fixed_borefield": {
+                "arrangement": "manual",
+                "active_borehole_length_m": 192,
+                "borehole_coordinates_m": [
+                    {"x": 0.0, "y": 0.0},
+                    {"x": 0.0, "y": 5.0},
+                    {"x": 5.0, "y": 0.0},
+                    {"x": 5.0, "y": 5.0},
+                ],
             },
         }
         log_time_vals, g_vals, _g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")
@@ -69,13 +79,13 @@ class TestPreDesignedGHE(TestCase):
 
         # case 3: "g-function_library_1.0/rectangle_5m_v1.0.json, 4_4, 5._192._0.08"
         get_g_func_inputs = {
-            "flow_rate": 0.5,
-            "flow_type": "BOREHOLE",
-            "pre_designed": {
-                "arrangement": "MANUAL",
-                "H": 192,
-                "x": [0.0, 0.0, 0.0, 0.0, 5.0, 5.0, 5.0, 5.0, 10.0, 10.0, 10.0, 10.0, 15.0, 15.0, 15.0, 15.0],
-                "y": [0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0, 0.0, 5.0, 10.0, 15.0],
+            "design_volumetric_flow_rate_per_borehole_l_per_s": 0.5,
+            "fixed_borefield": {
+                "arrangement": "manual",
+                "active_borehole_length_m": 192,
+                "borehole_coordinates_m": [
+                    {"x": x, "y": y} for x in (0.0, 5.0, 10.0, 15.0) for y in (0.0, 5.0, 10.0, 15.0)
+                ],
             },
         }
         log_time_vals, g_vals, _g_bhw_vals = ghe.get_g_function(get_g_func_inputs, boundary_condition="UBWT")

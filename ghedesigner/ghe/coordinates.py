@@ -1,3 +1,6 @@
+from ghedesigner.ghe.rowwise import dist_from_line, pts_dist
+
+
 def transpose_coordinates(coordinates) -> list[tuple[float, float]]:
     coordinates_transposed = []
     for x, y in coordinates:
@@ -38,6 +41,127 @@ def rectangle(
         for j in range(num_bh_y):
             r.append((x_0 + i * spacing_x, y_0 + j * spacing_y))
     return r
+
+
+def general_field_nbh_adjustment(coordinates, desired_nbh, removal_options):
+    removal_method = removal_options["borehole_removal_method"]
+    if removal_method.upper() == "RIGHT_TOP":
+        sorted_coordinates = sorted(coordinates)
+    elif removal_method.upper() == "RADIAL":
+        number_of_coordinates = len(coordinates)
+        x_vals = [p[0] for p in coordinates]
+        y_vals = [p[1] for p in coordinates]
+        cx = sum(x_vals) / number_of_coordinates
+        cy = sum(y_vals) / number_of_coordinates
+        squared_distances = [((x_vals[i] - cx) ** 2 + (y_vals[i] - cy) ** 2) for i in range(number_of_coordinates)]
+        sorted_coordinates = [coord for _, coord in sorted(zip(squared_distances, coordinates), reverse=True)]
+    elif removal_method.upper() == "LINE_SEGMENTS":
+        if "line_segments" not in removal_options:
+            raise ValueError('A list of line segments is necessary to use the "LINE_SEGMENTS" removal option.')
+        line_segments = removal_options["line_segments"]
+        reference_points = removal_options.get("points", [[0.0, 0.0]])
+        line_distances = []
+        point_distances = []
+        for point in coordinates:
+            min_line_dist = float("inf")
+            for line_segment in line_segments:
+                min_line_dist = min(min_line_dist, dist_from_line(line_segment[0], line_segment[1], point))
+            line_distances.append(min_line_dist)
+            min_point_dist = float("inf")
+            for reference_point in reference_points:
+                min_point_dist = min(min_point_dist, pts_dist(point, reference_point))
+            point_distances.append(min_point_dist)
+        sorted_coordinates = [
+            coord for _, _, coord in sorted(zip(line_distances, point_distances, coordinates), reverse=True)
+        ]
+    else:
+        raise ValueError('Unrecognized removal method provided to "general_field_nbh_adjustment".')
+    return sorted_coordinates[0:desired_nbh]
+
+
+def rectangle_adjusted_nbh(
+    num_bh_x: int,
+    num_bh_y: int,
+    spacing_x: int | float,
+    spacing_y: int | float,
+    desired_nbh: int,
+    origin=(0, 0),
+) -> list[tuple[float, float]]:
+    """
+    Creates a rectangular borehole field. Boreholes are removed from the middle row(s) to achieve a given
+    desired nbh.
+
+    X   X   X   X
+    X   X   X   X
+    X   X   X   X
+    X   X   X   X
+
+    Args:
+        num_bh_x: number of borehole rows in x-direction
+        num_bh_y: number of borehole rows in y-direction
+        spacing_x: spacing between borehole rows in x-direction
+        spacing_y: spacing between borehole rows in y-direction
+        desired_nbh: the number of boreholes desired for this field layout
+        origin: coordinates for origin at lower-left corner
+
+    Returns:
+        list of tuples (x, y) containing borehole coordinates
+    """
+    nominal_nbh = num_bh_x * num_bh_y
+    boreholes_to_remove = nominal_nbh - desired_nbh
+    if boreholes_to_remove >= num_bh_x or boreholes_to_remove < 0:
+        raise ValueError(
+            "The given desired nbh either exceeds the nominal nbh or requires the removal of an entire row."
+        )
+    r = []
+    x_0 = origin[0]
+    y_0 = origin[1]
+    if num_bh_y % 2 == 0:
+        row_to_modify_1 = int(num_bh_y / 2) - 1
+        row_to_modify_2 = int(num_bh_y / 2)
+        modified_row_1_nbh = num_bh_x - int(boreholes_to_remove * 0.5)
+        modified_row_2_nbh = num_bh_x - (int(boreholes_to_remove * 0.5) + 1)
+        modified_spacing_1 = (num_bh_x - 1) * spacing_x / (modified_row_1_nbh - 1)
+        if modified_row_2_nbh == 1:
+            modified_spacing_2 = (num_bh_x - 1) * spacing_x * 0.5
+        else:
+            modified_spacing_2 = (num_bh_x - 1) * spacing_x / (modified_row_2_nbh - 1)
+        for j in range(num_bh_y):
+            if j == row_to_modify_1:
+                row_nbh = modified_row_1_nbh
+                row_spacing = modified_spacing_1
+            elif j == row_to_modify_2:
+                row_nbh = modified_row_2_nbh
+                row_spacing = modified_spacing_2
+            else:
+                row_nbh = num_bh_x
+                row_spacing = spacing_x
+            for i in range(row_nbh):
+                if j == row_to_modify_2 and modified_row_2_nbh == 1:
+                    r.append((x_0 + (i + 1) * row_spacing, y_0 + j * spacing_y))
+                else:
+                    r.append((x_0 + i * row_spacing, y_0 + j * spacing_y))
+        return r
+    else:
+        row_to_modify = int(num_bh_y / 2)
+        modified_row_nbh = num_bh_x - boreholes_to_remove
+        if modified_row_nbh == 1:
+            modified_spacing = (num_bh_x - 1) * spacing_x * 0.5
+        else:
+            modified_spacing = (num_bh_x - 1) * spacing_x / (modified_row_nbh - 1)
+        for j in range(num_bh_y):
+            if j == row_to_modify:
+                row_nbh = modified_row_nbh
+                row_spacing = modified_spacing
+            else:
+                row_nbh = num_bh_x
+                row_spacing = spacing_x
+            for i in range(row_nbh):
+                if j == row_to_modify and modified_row_nbh == 1:
+                    r.append((x_0 + (i + 1) * row_spacing, y_0 + j * spacing_y))
+                else:
+                    r.append((x_0 + i * row_spacing, y_0 + j * spacing_y))
+        return r
 
 
 def open_rectangle(

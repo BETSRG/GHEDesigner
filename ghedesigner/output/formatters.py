@@ -1,4 +1,3 @@
-import warnings
 from typing import Any
 
 
@@ -74,7 +73,6 @@ def d_row(
     right = f"{value:{fmt}}"
     pad = width - len(left) - len(right)
     if pad < 0:
-        warnings.warn("Formatting width too small for d_row; truncating")
         pad = 4
     return f"{left}{' ' * pad}{right}\n"
 

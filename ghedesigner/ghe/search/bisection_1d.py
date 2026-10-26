@@ -3,7 +3,7 @@ from math import ceil
 import numpy as np
 from pygfunction.boreholes import Borehole
 
-from ghedesigner.enums import FlowConfigType, TimestepType
+from ghedesigner.enums import TimestepType
 from ghedesigner.ghe.gfunction import calc_g_func_for_multiple_lengths
 from ghedesigner.ghe.ground_heat_exchangers import GHE
 from ghedesigner.ghe.pipe import Pipe
@@ -32,7 +32,6 @@ class Bisection1D:
         max_eft: float,
         hourly_extraction_ground_loads: list,
         method: TimestepType,
-        flow_type: FlowConfigType = FlowConfigType.BOREHOLE,
         max_iter=15,
         disp=False,
         search=True,
@@ -50,7 +49,6 @@ class Bisection1D:
         self.field_type = field_type
         # Flow rate tracking
         self.v_flow = v_flow
-        self.flow_type = flow_type
         v_flow_system, m_flow_borehole = self.retrieve_flow(coordinates, fluid.rho)
         self.method = method
         self.min_height = min_height
@@ -107,21 +105,16 @@ class Bisection1D:
         )
 
         self.calculated_temperatures: dict[int, np.float64] = {}
+        self.at_maximum_size = False
+        self.at_minimum_size = False
 
         if search:
             self.selection_key, self.selected_coordinates = self.search()
 
     def retrieve_flow(self, coordinates, rho):
-        if self.flow_type == FlowConfigType.BOREHOLE:
-            v_flow_system = self.v_flow * len(coordinates)
-            # Total fluid mass flow rate per borehole (kg/s)
-            m_flow_borehole = self.v_flow / 1000.0 * rho
-        elif self.flow_type == FlowConfigType.SYSTEM:
-            v_flow_system = self.v_flow
-            v_flow_borehole = self.v_flow / len(coordinates)
-            m_flow_borehole = v_flow_borehole / 1000.0 * rho
-        else:
-            raise ValueError("The flow argument should be either `borehole` or `system`.")
+        v_flow_system = self.v_flow * len(coordinates)
+        # Input flow is L/s per borehole; convert to kg/s per borehole.
+        m_flow_borehole = self.v_flow / 1000.0 * rho
         return v_flow_system, m_flow_borehole
 
     def initialize_ghe(self, coordinates, h, field_specifier="N/A"):
@@ -189,7 +182,7 @@ class Bisection1D:
             x_r_idx = [idx for idx, x in enumerate(num_coordinates_in_each) if x < self.max_boreholes][-1]
         else:
             x_r_idx = len(self.coordinates_domain) - 1
-
+        x_max = x_r_idx
         if self.disp:
             print("Do some initial checks before searching.")
         # Get the lowest possible excess temperature from minimum height at the
@@ -217,6 +210,7 @@ class Bisection1D:
             if self.disp:
                 print("Size between min and max of lower bound in domain.")
             self.initialize_ghe(self.coordinates_domain[x_l_idx], self.max_height)
+            self.at_minimum_size = True
             return x_l_idx, self.coordinates_domain[x_l_idx]
         elif check_bracket(sign(t_0_upper), sign(t_m1)):
             if self.disp:
@@ -227,6 +221,7 @@ class Bisection1D:
                 "than what is possible based on the current design parameters."
             )
             print(condition_msg)
+            self.at_minimum_size = True
             if self.continue_if_design_unmet:
                 print("Smallest available configuration selected.")
                 selection_key = x_l_idx
@@ -326,4 +321,6 @@ class Bisection1D:
         self.initialize_ghe(
             self.coordinates_domain[selection_key], self.max_height, self.fieldDescriptors[selection_key]
         )
+        if selection_key == x_max:
+            self.at_maximum_size = True
         return selection_key, self.coordinates_domain[selection_key]

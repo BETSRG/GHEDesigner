@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import cast
 
 from bhr.borehole import Borehole as BHRBorehole
+from bhr.double_u_borehole import DoubleUTube as BHRDoubleUTube
 from numpy import log, sqrt
 from pygfunction.boreholes import Borehole
 
@@ -50,7 +51,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
 
         # New pipe geometry
         roughness = self.pipe.roughness
-        pipe = Pipe.init_single_u_tube(k_p_prime, rho_cp_p, r_p_i_prime * 2, r_p_o_prime * 2, s, roughness, 1)
+        pipe = Pipe.init_single_u_tube(k_p_prime, rho_cp_p, r_p_i_prime * 2, r_p_o_prime * 2, s, roughness)
 
         # Don't tie together the original and equivalent BHEs
         m_flow_borehole = self.m_flow_borehole
@@ -146,10 +147,9 @@ class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
             pipe_conductivity=pipe.k,
             grout_conductivity=grout.k,
             soil_conductivity=soil.k,
-            fluid_type=self.fluid.name,
-            fluid_concentration=self.fluid.concentration_percent / 100,
             boundary_condition="UNIFORM_BOREHOLE_WALL_TEMP",
             pipe_inlet_arrangement="ADJACENT",
+            fluid=self.fluid.scp_fluid,
         )
 
         self.calc_fluid_pipe_resistance()
@@ -161,6 +161,15 @@ class MultipleUTube(GHEDesignerBoreholeWithMultiplePipes):
     def calc_effective_borehole_resistance(self) -> float:
         resist_bh_effective = self.bhr_borehole.calc_bh_resist(self.m_flow_borehole, self.soil.ugt)
         return resist_bh_effective
+
+    def calc_pressure_loss(self, mass_flow_rate: float, temperature: float) -> float:
+        """Use BHResist for each U-tube path and honor the series/parallel connection."""
+        bhr_borehole = cast(BHRDoubleUTube, self.bhr_borehole._bh)
+        pipe_flow = self.calc_mass_flow_pipe(mass_flow_rate, self.flow_config)
+        pressure_loss = bhr_borehole.pressure_loss(pipe_flow, temperature)
+        if self.flow_config == DoubleUTubeConnType.SERIES:
+            pressure_loss *= 2.0
+        return pressure_loss
 
     def u_tube_volumes(self) -> tuple[float, float]:
         # Compute volumes for U-tube geometry

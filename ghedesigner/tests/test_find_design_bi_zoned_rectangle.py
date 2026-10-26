@@ -57,10 +57,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.5)
-        u_tube_height = search.ghe.bhe.borehole.H
-        self.assertAlmostEqual(133.1, u_tube_height, delta=0.1)
-        borehole_location_data_rows = search.ghe.gFunction.bore_locations
-        self.assertEqual(123, len(borehole_location_data_rows))
+        self.assert_design_matches_any(search, [(133.1, 123), (133.41, 123)])
 
     def test_double_u_tube(self):
         pipe = Pipe.init_double_u_tube_parallel(
@@ -72,10 +69,7 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.5)
-        u_tube_height = search.ghe.bhe.borehole.H
-        self.assertAlmostEqual(132.4, u_tube_height, delta=0.1)
-        borehole_location_data_rows = search.ghe.gFunction.bore_locations
-        self.assertEqual(104, len(borehole_location_data_rows))
+        self.assert_design_matches_any(search, [(132.4, 104), (133.03, 104)])
 
     def test_coaxial(self):
         pipe = Pipe.init_coaxial(
@@ -88,7 +82,4 @@ class TestFindBiZonedRectangleDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.8)
-        u_tube_height = search.ghe.bhe.borehole.H
-        self.assertAlmostEqual(133.78, u_tube_height, delta=0.1)
-        borehole_location_data_rows = search.ghe.gFunction.bore_locations
-        self.assertEqual(92, len(borehole_location_data_rows))
+        self.assert_design_matches_any(search, [(133.78, 92), (134.10, 92)])

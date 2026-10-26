@@ -1,30 +1,36 @@
-from scp.ethyl_alcohol import EthylAlcohol
-from scp.ethylene_glycol import EthyleneGlycol
-from scp.methyl_alcohol import MethylAlcohol
-from scp.propylene_glycol import PropyleneGlycol
-from scp.water import Water
+from scp import get_fluid
+from scp.base_fluid import BaseFluid
 
 from ghedesigner.enums import FluidType
 
 
 class Fluid:
     def __init__(self, fluid_name: str, temperature: float = 20, percent: float = 0) -> None:
-        self.name = fluid_name
         self.fluid_type = self.get_fluid_type(fluid_name)
+        pygfunction_names = {
+            FluidType.ETHYLALCOHOL: "ETHYLALCOHOL",
+            FluidType.ETHYLENEGLYCOL: "ETHYLENEGLYCOL",
+            FluidType.METHYLALCOHOL: "METHYLALCOHOL",
+            FluidType.PROPYLENEGLYCOL: "PROPYLENEGLYCOL",
+            FluidType.WATER: "WATER",
+        }
+        self.name = pygfunction_names[self.fluid_type]
         self.temperature = temperature
         self.concentration_percent = percent
 
+        fluid_keys = {
+            FluidType.ETHYLALCOHOL: "ethyl_alcohol",
+            FluidType.ETHYLENEGLYCOL: "ethylene_glycol",
+            FluidType.METHYLALCOHOL: "methyl_alcohol",
+            FluidType.PROPYLENEGLYCOL: "propylene_glycol",
+            FluidType.WATER: "water",
+        }
+        fluid_key = fluid_keys[self.fluid_type]
         concentration_frac = self.concentration_percent / 100
-        if self.fluid_type == FluidType.ETHYLALCOHOL:
-            self._fluid = EthylAlcohol(concentration_frac)
-        elif self.fluid_type == FluidType.ETHYLENEGLYCOL:
-            self._fluid = EthyleneGlycol(concentration_frac)
-        elif self.fluid_type == FluidType.METHYLALCOHOL:
-            self._fluid = MethylAlcohol(concentration_frac)
-        elif self.fluid_type == FluidType.PROPYLENEGLYCOL:
-            self._fluid = PropyleneGlycol(concentration_frac)
-        elif self.fluid_type == FluidType.WATER:
-            self._fluid = Water()
+        if self.fluid_type == FluidType.WATER:
+            self._fluid = get_fluid(fluid_key)
+        else:
+            self._fluid = get_fluid(fluid_key, concentration=concentration_frac)
 
         # supported props
         self.cp: float = 0.0
@@ -34,9 +40,13 @@ class Fluid:
         self.rho_cp: float = 0.0
         self.update_props_with_new_temp(temperature)
 
+    @property
+    def scp_fluid(self) -> BaseFluid:
+        return self._fluid
+
     @staticmethod
     def get_fluid_type(fluid_name: str) -> FluidType:
-        fluid_name_upper = fluid_name.upper()
+        fluid_name_upper = fluid_name.replace("_", " ").upper()
         if fluid_name_upper in ["MEA", "ETHYLALCOHOL", "ETHYL ALCOHOL"]:
             return FluidType.ETHYLALCOHOL
         if fluid_name_upper in ["MEG", "ETHYLENEGLYCOL", "ETHYLENE GLYCOL"]:
@@ -73,7 +83,10 @@ class ThermalProperty:
         return output
 
     def to_input(self) -> dict:
-        return {"conductivity": self.k, "rho_cp": self.rho_cp}
+        return {
+            "thermal_conductivity_w_per_m_k": self.k,
+            "volumetric_heat_capacity_j_per_m3_k": self.rho_cp,
+        }
 
 
 class Grout(ThermalProperty):
@@ -95,4 +108,8 @@ class Soil(ThermalProperty):
         return output
 
     def to_input(self) -> dict:
-        return {"conductivity": self.k, "rho_cp": self.rho_cp, "undisturbed_temp": self.ugt}
+        return {
+            "thermal_conductivity_w_per_m_k": self.k,
+            "volumetric_heat_capacity_j_per_m3_k": self.rho_cp,
+            "undisturbed_ground_temperature_c": self.ugt,
+        }
