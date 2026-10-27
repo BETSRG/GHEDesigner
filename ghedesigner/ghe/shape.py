@@ -1,11 +1,23 @@
 from math import atan, inf, pi, sin, sqrt
 
 import numpy as np
+from pyclipper import (
+    CT_DIFFERENCE,
+    CT_UNION,
+    ET_CLOSEDPOLYGON,
+    JT_SQUARE,
+    PFT_EVENODD,
+    PT_CLIP,
+    PT_SUBJECT,
+    Pyclipper,
+    PyclipperOffset,
+    scale_from_clipper,
+    scale_to_clipper,
+)
 
 from ghedesigner.constants import PI_OVER_2, TWO_PI
 
 POSSIBLE_NUMBER_OF_VERTEX_INTERSECTIONS = (2, 4)
-MINIMUM_NUMBER_OF_VERTICES_FOR_POLYGON = 3
 
 
 class Shapes:
@@ -16,9 +28,11 @@ class Shapes:
 
         # Make sure the vertices are counter-clockwise.
         if is_clockwise(c):
+            self.reversed_c = np.array(c, dtype=float)
             self.c = np.array(reverse_points(c), dtype=float)
         else:
             self.c = np.array(c, dtype=float)
+            self.reversed_c = np.array(reverse_points(c), dtype=float)
 
         self.max_x = np.max(self.c[:, 0])
         self.min_x = np.min(self.c[:, 0])
@@ -41,6 +55,12 @@ class Shapes:
                 c2 = self.c[i + 1]
             lengths.append(distance(c1, c2))
         return lengths
+
+    def get_polygon_vertices(self, clock_wise=False):
+        if clock_wise:
+            return reverse_points(self.c)
+        else:
+            return self.c
 
     def _prep_arc_length_piecewise_function(self):
         piecewise_maxes = [0.0]
@@ -67,10 +87,7 @@ class Shapes:
             return [edge_index, edge_index + 1]
 
     def get_edge_line_segment(self, edge_index):
-        if edge_index == self.number_of_edges - 1:
-            return [self.c[-1], self.c[0]]
-        else:
-            return [self.c[edge_index], self.c[edge_index + 1]]
+        return [self.c[edge_index], self.c[(edge_index + 1) % self.number_of_edges]]
 
     def get_shape_intersections(self, other_shape, intersection_tolerance=1e-8):
         intersections = []
@@ -624,550 +641,73 @@ def reverse_points(points):
     return return_list
 
 
-def circular_range(start, end, n):
-    if start <= end:
-        return list(range(start, end + 1))
-    return list(range(start, n)) + list(range(end + 1))
+def merge_shapes(shapes):
 
+    # You get different behavior with PyClipper merging depending on if the polygons are encoded as a PT_SUBJECT
+    # or a PT_CLIP. Both solutions are correct, but with testing, the behavior from merging two polygons at a time
+    # w/ one PT_CLIP and one PT_SUBJECT seems to be most appropriate in our use case.
 
-class PolygonIntersectionNode:
-    def __init__(self, location, index, coincident_vertices):
-        self.type = "intersection"
-        self.index = index
-        self.location = location
-        self.predecessor_1 = None
-        self.successor_1 = None
-        self.predecessor_2 = None
-        self.successor_2 = None
-        self.coincident_vertex_1 = None
-        self.coincident_vertex_2 = None
-        if coincident_vertices is not None:
-            for coincident_vertex in coincident_vertices:
-                if coincident_vertex[0] == 0:
-                    self.coincident_vertex_1 = coincident_vertex[1]
-                else:
-                    self.coincident_vertex_2 = coincident_vertex[1]
+    # It should be noted that if one polygon is completely contained within another, it is deleted. If two polygons
+    # do not intersect, then the individual polygons are returned.
 
-    def update_predecessor_1(self, new_predecessor):
-        self.predecessor_1 = new_predecessor
-
-    def update_predecessor_2(self, new_predecessor):
-        self.predecessor_2 = new_predecessor
-
-    def update_successor_1(self, new_successor):
-        self.successor_1 = new_successor
-
-    def update_successor_2(self, new_successor):
-        self.successor_2 = new_successor
-
-    def get_identifier(self):
-        return self.type, self.index
-
-    def update_predecessor(self, new_predecessor, shape_1=True):
-        if shape_1:
-            self.update_predecessor_1(new_predecessor)
+    # Call PyClipper
+    merger = Pyclipper()
+    for i, shape in enumerate(shapes):
+        if i == 0:
+            merger.AddPath(scale_to_clipper(shape.c), PT_SUBJECT, True)  # True for enclosed polygon.
         else:
-            self.update_predecessor_2(new_predecessor)
+            merger.AddPath(scale_to_clipper(shape.c), PT_CLIP, True)  # True for enclosed polygon.
+    merge_solution = merger.Execute(CT_UNION, PFT_EVENODD, PFT_EVENODD)
 
-    def update_successor(self, new_successor, shape_1=True):
-        if shape_1:
-            self.update_successor_1(new_successor)
+    # Split solution into outer polygons and holes.
+    outer_polygons = []
+    holes = []
+    for path in merge_solution:
+        if is_clockwise(path):
+            holes.append(Shapes(scale_from_clipper(path)))
         else:
-            self.update_successor_2(new_successor)
+            outer_polygons.append(Shapes(scale_from_clipper(path)))
+    return [outer_polygons, holes]
 
-    def next(self, reverse=False, shape_1=True):
-        if shape_1:
-            return self.next_1(reverse=reverse)
+
+def clip_shapes(outer_shapes, clipping_shapes):
+
+    # Call PyClipper
+    clipper = Pyclipper()
+    for shape in outer_shapes:
+        clipper.AddPath(scale_to_clipper(shape.c), PT_SUBJECT, True)  # True for enclosed polygon.
+    for shape in clipping_shapes:
+        clipper.AddPath(scale_to_clipper(shape.c), PT_CLIP, True)  # True for enclosed polygon.
+    clip_solution = clipper.Execute(CT_DIFFERENCE, PFT_EVENODD, PFT_EVENODD)
+
+    # Split solution into outer polygons and holes.
+    outer_polygons = []
+    holes = []
+    for path in clip_solution:
+        if is_clockwise(path):
+            holes.append(Shapes(scale_from_clipper(path)))
         else:
-            return self.next_2(reverse=reverse)
+            outer_polygons.append(Shapes(scale_from_clipper(path)))
 
-    def next_1(self, reverse=False):
-        if reverse:
-            return self.predecessor_1
+    return [outer_polygons, holes]
+
+
+def offset_polygon(outer_polygons, holes, offset):
+
+    # Call PyClipper
+    offsetter = PyclipperOffset()
+    offsetter.AddPaths([scale_to_clipper(polygon.c) for polygon in outer_polygons], JT_SQUARE, ET_CLOSEDPOLYGON)
+    if len(holes) > 0:
+        offsetter.AddPaths([scale_to_clipper(polygon.reversed_c) for polygon in holes], JT_SQUARE, ET_CLOSEDPOLYGON)
+    offset_solution = offsetter.Execute(-scale_to_clipper(offset))
+
+    # Split solution into outer polygons and holes
+    outer_polygons = []
+    holes = []
+    for path in offset_solution:
+        if is_clockwise(path):
+            holes.append(Shapes(scale_from_clipper(path)))
         else:
-            return self.successor_1
+            outer_polygons.append(Shapes(scale_from_clipper(path)))
 
-    def next_2(self, reverse=False):
-        if reverse:
-            return self.predecessor_2
-        else:
-            return self.successor_2
-
-
-class PolygonVertexNode:
-    def __init__(self, location, index, shape_number):
-        self.type = "vertex"
-        self.index = index
-        self.location = location
-        self.successor = None
-        self.predecessor = None
-        self.shape_number = shape_number
-
-    def update_predecessor(self, new_predecessor, shape_1=True):  # noqa: ARG002
-        self.predecessor = new_predecessor
-
-    def update_successor(self, new_successor, shape_1=True):  # noqa: ARG002
-        self.successor = new_successor
-
-    def get_identifier(self):
-        return self.type, self.index
-
-    def next(self, reverse=False, shape_1=True):  # noqa: ARG002
-        if reverse:
-            return self.predecessor
-        else:
-            return self.successor
-
-
-def insert_intersection_node_into_graph(intersection_node, shape_node_indices, shape_vertex_list, shape_1=True):
-    # Note: we are assuming that shape_1_reference node is a vertex-type node.
-
-    # Search where to place this intersection (this covers the case that there is already an intersection placed
-    # along this edge of shape.
-    shape_reference_node_index, shape_final_node_index = shape_node_indices
-    shape_reference_node = shape_vertex_list[shape_reference_node_index]
-    shape_final_node = shape_vertex_list[shape_final_node_index]
-    shape_predecessor_node = shape_reference_node
-    shape_successor_node = shape_predecessor_node.next(shape_1=shape_1)
-    insertion_location_found = False
-
-    if (
-        shape_1 and intersection_node.coincident_vertex_1 is not None
-    ):  # Replace one of the two vertices in Shape 1's line segment.
-        if intersection_node.coincident_vertex_1 == shape_reference_node_index:
-            intersection_node.update_successor(shape_reference_node.next(shape_1=shape_1), shape_1=shape_1)
-            intersection_node.update_predecessor(
-                shape_reference_node.next(shape_1=shape_1, reverse=True), shape_1=shape_1
-            )
-            (intersection_node.next(shape_1=shape_1)).update_predecessor(intersection_node, shape_1=shape_1)
-            (intersection_node.next(shape_1=shape_1, reverse=True)).update_successor(intersection_node, shape_1=shape_1)
-            shape_reference_node = intersection_node
-        elif intersection_node.coincident_vertex_1 == shape_final_node_index:
-            intersection_node.update_successor(shape_final_node.next(shape_1=shape_1), shape_1=shape_1)
-            intersection_node.update_predecessor(shape_final_node.next(shape_1=shape_1, reverse=True), shape_1=shape_1)
-            (intersection_node.next(shape_1=shape_1)).update_predecessor(intersection_node, shape_1=shape_1)
-            (intersection_node.next(shape_1=shape_1, reverse=True)).update_successor(intersection_node, shape_1=shape_1)
-            shape_final_node = intersection_node
-        else:
-            raise ValueError(
-                "Coincident vertex on shape 1 found from intersection does not coincide with one of the corresponding"
-                " line segment's endpoints. This suggests the presence of a bug in the polygon intersection algorithm."
-            )
-    elif (
-        not shape_1 and intersection_node.coincident_vertex_2 is not None
-    ):  # Replace one of the two vertices in Shape 2's line segment.
-        if intersection_node.coincident_vertex_2 == shape_reference_node_index:
-            intersection_node.update_successor(shape_reference_node.next(shape_1=shape_1), shape_1=shape_1)
-            intersection_node.update_predecessor(
-                shape_reference_node.next(shape_1=shape_1, reverse=True), shape_1=shape_1
-            )
-            (intersection_node.next(shape_1=shape_1)).update_predecessor(intersection_node, shape_1=shape_1)
-            (intersection_node.next(shape_1=shape_1, reverse=True)).update_successor(intersection_node, shape_1=shape_1)
-            shape_reference_node = intersection_node
-        elif intersection_node.coincident_vertex_2 == shape_final_node_index:
-            intersection_node.update_successor(shape_final_node.next(shape_1=shape_1), shape_1=shape_1)
-            intersection_node.update_predecessor(shape_final_node.next(shape_1=shape_1, reverse=True), shape_1=shape_1)
-            (intersection_node.next(shape_1=shape_1)).update_predecessor(intersection_node, shape_1=shape_1)
-            (intersection_node.next(shape_1=shape_1, reverse=True)).update_successor(intersection_node, shape_1=shape_1)
-            shape_final_node = intersection_node
-        else:
-            raise ValueError(
-                "Coincident vertex on shape 2 found from intersection does not coincide with one of the corresponding"
-                " line segment's endpoints. This suggests the presence of a bug in the polygon intersection algorithm."
-            )
-    else:
-        # The vertices of shape 1 are listed counter-clockwise. If intersection(s) have been inserted into this
-        # line-segment of shape 1 previously, we can use its distance from the preceding vertex to tell where
-        # it should be placed.
-
-        distance_from_reference = distance(intersection_node.location, shape_reference_node.location)
-        while not insertion_location_found:
-            successor_distance_from_reference = distance(shape_successor_node.location, shape_reference_node.location)
-            if successor_distance_from_reference > distance_from_reference:
-                insertion_location_found = True
-            else:
-                shape_predecessor_node = shape_successor_node
-                shape_successor_node = shape_predecessor_node.next(shape_1=shape_1)
-
-        # Insert intersection
-        intersection_node.update_predecessor(shape_predecessor_node, shape_1=shape_1)
-        intersection_node.update_successor(shape_successor_node, shape_1=shape_1)
-        shape_predecessor_node.update_successor(intersection_node, shape_1=shape_1)
-        shape_successor_node.update_predecessor(intersection_node, shape_1=shape_1)
-
-    return shape_reference_node, shape_final_node
-
-
-class PolygonIntersectionGraph:
-    def __init__(self, p1_vertices, p2_vertices, intersections):
-
-        # Instantiate Shape 1
-        self.shape_1_nodes = []
-        self.shape_1_size = len(p1_vertices)
-        for i, vertex in enumerate(p1_vertices):
-            self.shape_1_nodes.append(PolygonVertexNode(vertex, i, 0))
-        for vdx in range(self.shape_1_size):
-            self.shape_1_nodes[vdx].update_predecessor(self.shape_1_nodes[(vdx - 1) % self.shape_1_size])
-            self.shape_1_nodes[vdx].update_successor(self.shape_1_nodes[(vdx + 1) % self.shape_1_size])
-
-        # Instantiate Shape 2
-        self.shape_2_nodes = []
-        self.shape_2_size = len(p2_vertices)
-        index_offset = self.shape_1_size
-        for i, vertex in enumerate(p2_vertices):
-            self.shape_2_nodes.append(PolygonVertexNode(vertex, i + index_offset, 1))
-        for vdx in range(self.shape_2_size):
-            self.shape_2_nodes[vdx].update_predecessor(self.shape_2_nodes[(vdx - 1) % self.shape_2_size])
-            self.shape_2_nodes[vdx].update_successor(self.shape_2_nodes[(vdx + 1) % self.shape_2_size])
-
-        # Add intersection connections.
-        self.intersection_nodes = []
-        for i, intersection in enumerate(intersections):
-            new_intersection_node = PolygonIntersectionNode(
-                intersection["location"], i, intersection["coincident_vertices"]
-            )
-            self.intersection_nodes.append(new_intersection_node)
-            shape_1_vertex_indices = intersection["shape_1_vertex_indices"]
-            shape_2_vertex_indices = intersection["shape_2_vertex_indices"]
-
-            # Insert into shape 1
-            self.shape_1_nodes[shape_1_vertex_indices[0]], self.shape_1_nodes[shape_1_vertex_indices[1]] = (
-                insert_intersection_node_into_graph(
-                    new_intersection_node, shape_1_vertex_indices, self.shape_1_nodes, shape_1=True
-                )
-            )
-
-            # Insert into shape 2
-            self.shape_2_nodes[shape_2_vertex_indices[0]], self.shape_2_nodes[shape_2_vertex_indices[1]] = (
-                insert_intersection_node_into_graph(
-                    new_intersection_node, shape_2_vertex_indices, self.shape_2_nodes, shape_1=False
-                )
-            )
-
-
-def merge_two_shapes(shape_1, shape_2, omit_contained_shapes=True, print_intersections=False):
-    # This is an implementation of the Weiler-Atherton algorithm for merging.
-    # Returns intersections sorted counter-clockwise.
-    shape_intersections = shape_1.get_shape_intersections(shape_2)
-    if print_intersections:
-        print("Polygon Intersections")
-        for inter in shape_intersections:
-            coord = inter["location"]
-            print(f"{coord[0]}\t{coord[1]}")
-    number_of_intersections = len(shape_intersections)
-    # Shapes are either completely disparate, or one is completely contained within another.
-    if number_of_intersections == 0:
-        if omit_contained_shapes and shape_1.shape_is_contained_within(shape_2):
-            return [[shape_1], []]
-        elif omit_contained_shapes and shape_2.shape_is_contained_within(shape_1):
-            return [[shape_2], []]
-        else:
-            return [[shape_1, shape_2], []]
-    elif number_of_intersections == 1:  # Shapes touch at a single vertex. In this case, we will consider them separate.
-        return [[shape_1, shape_2], []]
-    else:  # The shapes meaningfully intersect
-        int_graph = PolygonIntersectionGraph(shape_1.c, shape_2.c, shape_intersections)
-        included_intersections = [False for _ in range(number_of_intersections)]
-        contours = []
-        branches = {}
-        while not np.all(included_intersections):
-            current_node = int_graph.intersection_nodes[included_intersections.index(False)]
-            first_run = True
-            current_walk_nodes = []
-            current_walk_ids = []
-            while (
-                cdx := current_node.get_identifier()
-            ) not in current_walk_ids or first_run:  # We terminate once we reach the node we started at.
-                current_walk_nodes.append(current_node)
-                current_walk_ids.append(cdx)
-                if first_run:
-                    first_run = False
-                if current_node.type == "vertex":
-                    current_node = current_node.next()
-                else:
-                    # We need to determine if traveling along shape 1 or shape 2 is appropriate at intersections.
-                    candidate_point_1 = current_node.next_1()
-                    candidate_point_2 = current_node.next_2()
-                    shape_1_edge_in_shape_2 = point_polygon_check(
-                        shape_2.c, point_average((current_node.location, candidate_point_1.location))
-                    )
-                    shape_2_edge_in_shape_1 = point_polygon_check(
-                        shape_1.c, point_average((current_node.location, candidate_point_2.location))
-                    )
-
-                    # We want to choose the edge (from the two) that does not lead inside one of the polygons.
-                    if shape_1_edge_in_shape_2 == 1 and shape_2_edge_in_shape_1 == 1:
-                        raise ValueError("Both exiting edges from intersection in merge shapes lead inside a shape.")
-                    elif shape_1_edge_in_shape_2 == -1 and shape_2_edge_in_shape_1 == -1:
-                        # Both branches are valid. This happens when a intersection node is part of two loops.
-                        # We can take either branch, but we need to remember to take the other branch in future loops.
-                        if cdx in branches:
-                            current_node = candidate_point_1
-                        else:
-                            current_node = candidate_point_2
-                            branches[cdx] = True
-                    elif shape_1_edge_in_shape_2 == -1:
-                        current_node = candidate_point_1
-                    elif shape_2_edge_in_shape_1 == -1:
-                        current_node = candidate_point_2
-                    elif (
-                        shape_1_edge_in_shape_2 == 0
-                    ):  # Neither edges lead outside, but one might lead along existing edge.
-                        current_node = candidate_point_1
-                    else:
-                        current_node = candidate_point_2
-
-            # There is a loop in the walk we performed, so we need to trim out the non-loop part.
-            new_contour_nodes = current_walk_nodes[current_walk_ids.index(cdx) :]
-            new_contour = [node.location for node in new_contour_nodes]
-            for node in new_contour_nodes:
-                if node.type == "intersection":
-                    included_intersections[node.index] = True
-            contours.append(Shapes(new_contour))
-        contour_areas = [contour.get_area() for contour in contours]
-        max_area_index = contour_areas.index(max(contour_areas))
-        return [[contours[max_area_index]], contours[:max_area_index] + contours[max_area_index + 1 :]]
-
-
-def clip_two_shapes(shape_1, shape_2, print_intersections=False):
-    # This is an implementation of the Weiler-Atherton algorithm for clipping.
-    # Returns intersections sorted counter-clockwise.
-    shape_intersections = shape_1.get_shape_intersections(shape_2)
-    if print_intersections:
-        print("Polygon Intersections")
-        for inter in shape_intersections:
-            coord = inter["location"]
-            print(f"{coord[0]}\t{coord[1]}")
-    number_of_intersections = len(shape_intersections)
-    # Shapes are either completely disparate, or one is completely contained within another.
-    if number_of_intersections == 0:
-        if shape_2.shape_is_contained_within(shape_1):
-            return []
-        else:
-            return [shape_1]
-    elif number_of_intersections == 1:  # Shapes touch at a single vertex. In this case, we will consider them separate.
-        return [shape_1]
-    else:  # The shapes meaningfully intersect
-        int_graph = PolygonIntersectionGraph(shape_1.c, shape_2.c, shape_intersections)
-        included_intersections = [False for _ in range(number_of_intersections)]
-        contours = []
-        branches = {}
-        while not np.all(included_intersections):
-            current_node = int_graph.intersection_nodes[included_intersections.index(False)]
-            first_run = True
-            current_walk_nodes = []
-            current_walk_ids = []
-            while (
-                cdx := current_node.get_identifier()
-            ) not in current_walk_ids or first_run:  # We terminate once we reach the node we started at.
-                current_walk_nodes.append(current_node)
-                current_walk_ids.append(cdx)
-                if first_run:
-                    first_run = False
-                if current_node.type == "vertex":
-                    current_node = (
-                        current_node.next() if current_node.shape_number == 0 else current_node.next(reverse=True)
-                    )
-                else:
-                    # We need to determine if traveling along shape 1 or shape 2 is appropriate at intersections.
-                    candidate_point_1 = current_node.next_1()
-                    candidate_point_2 = current_node.next_2(reverse=True)  # We trace clipping polygon clockwise.
-                    shape_1_edge_in_shape_2 = point_polygon_check(
-                        shape_2.c, point_average((current_node.location, candidate_point_1.location))
-                    )
-                    shape_2_edge_in_shape_1 = point_polygon_check(
-                        shape_1.c, point_average((current_node.location, candidate_point_2.location))
-                    )
-
-                    # The edge selection is more complicated than for polygon merging.
-                    # At each intersection, we would like to follow the edge of shape 2 that goes inside of shape 1.
-                    # If that does not exist, we want to make sure that we do not follow an edge of shape 1 that goes
-                    # inside of shape 2.
-                    if shape_1_edge_in_shape_2 == 1 and shape_2_edge_in_shape_1 == -1:
-                        if (
-                            len(current_walk_ids) == 1
-                        ):  # When clipping, there are some intersections that we start at that are not part of any
-                            # loop. This helps us still mark them off.
-                            break
-                        else:
-                            raise ValueError("Both exiting edges from intersection in clip shapes are not valid.")
-                    elif shape_1_edge_in_shape_2 == -1 and shape_2_edge_in_shape_1 == 1:
-                        # Both branches are valid. This happens when a intersection node is part of two loops.
-                        # We can take either branch, but we need to remember to take the other branch in future loops.
-                        if cdx in branches:
-                            current_node = candidate_point_1
-                        else:
-                            current_node = candidate_point_2
-                            branches[cdx] = True
-                    elif shape_2_edge_in_shape_1 == 1:  # Follow shape 2 edge into shape 1
-                        current_node = candidate_point_2
-                    elif shape_1_edge_in_shape_2 == -1:  # Follow shape 1 edge outside of shape 2
-                        current_node = candidate_point_1
-                    elif (
-                        shape_2_edge_in_shape_1 == 0
-                    ):  # Neither edges lead outside, but one might lead along existing edge.
-                        current_node = candidate_point_2
-                    else:
-                        current_node = candidate_point_1
-
-            # There is a loop in the walk we performed, so we need to trim out the non-loop part.
-            new_contour_nodes = current_walk_nodes[current_walk_ids.index(cdx) :]
-            new_contour = [node.location for node in new_contour_nodes]
-            for node in new_contour_nodes:
-                if node.type == "intersection":
-                    included_intersections[node.index] = True
-            if len(new_contour) > 1:
-                # There are instances where some intersections will only lead to existing contours.
-                # We need to make sure to mark these off to prevent looping forever.
-                if len(contours) == 0:
-                    include_new_contour = True
-                else:
-                    include_new_contour = False
-                    for existing_contour in contours:
-                        if len(existing_contour.c) == len(new_contour):
-                            for i in range(len(new_contour)):
-                                if new_contour[i] not in existing_contour.c:
-                                    include_new_contour = True
-                        else:
-                            include_new_contour = True
-                if include_new_contour:
-                    contours.append(Shapes(new_contour))
-                else:
-                    for node in current_walk_nodes:
-                        if node.type == "intersection":
-                            included_intersections[node.index] = True
-
-        return contours
-
-def offset_line(l1, offset_distance):
-    p1, p2 = l1
-    dx = p2[0] - p1[0]
-    dy = p2[1] - p1[1]
-    if dx == 0:
-        slope = inf
-    else:
-        slope = dy / dx
-
-    line_segment_magnitude = distance(p1, p2)
-    offset_vector = [-offset_distance * dy / line_segment_magnitude, offset_distance * dx / line_segment_magnitude]
-    p_avg = point_average([p1, p2])
-    pass_through_point = [p_avg[0] + offset_vector[0], p_avg[1] + offset_vector[1]]
-    if slope == inf:
-        return slope, pass_through_point[0]
-    else:
-        intercept = -slope * pass_through_point[0] + pass_through_point[1]
-        return slope, intercept
-
-def line_intersect(l1, l2, tolerance=1e-8):
-    m1, b1 = l1
-    m2, b2 = l2
-
-    if m1 == m2: # Lines are parallel.
-        if abs(b1 - b2) < tolerance: # lines overlap
-            return inf
-        else:
-            return None
-    else:
-        if m1 == inf:
-            return b1, m2 * b1 + b2
-        elif m2 == inf:
-            return b2, m1 * b2 + b1
-        else:
-            x_int = (b2 - b1) / (m1 - m2)
-            y_int = 0.5 * ((m1 * x_int + b1) + (m2 * x_int + b2))
-            return x_int, y_int
-
-def zero_length_edge_and_spike_removal(new_polygon_vertices, intersection_tolerance):
-    # Next we would like to move zero-length edges and spikes (adjacent edges w/ coincident angles equal to zero).
-    # Removing one case can cause the other to appear, so we have to keep processing edges/vertices until we make
-    # a lap without detecting zero-length edges or spikes.
-    number_of_vertices = len(new_polygon_vertices)
-    rv_idx = (0, False)
-    v_idx = 0
-    first_run = True
-    processing_edge = False
-    while (((v_idx, processing_edge) != rv_idx or first_run) and
-           number_of_vertices >= MINIMUM_NUMBER_OF_VERTICES_FOR_POLYGON):
-        if first_run:
-            first_run = False
-        if processing_edge:  # Check for zero-length edge
-            p1 = new_polygon_vertices[v_idx]
-            v2_idx = (v_idx + 1) % number_of_vertices
-            p2 = new_polygon_vertices[v2_idx]
-            edge_length = distance(p1, p2)
-            if edge_length < intersection_tolerance:
-                # Remove edge and check next one
-                new_vertex = point_average([p1, p2])
-                new_polygon_vertices[v_idx] = new_vertex
-                del new_polygon_vertices[v2_idx]
-                number_of_vertices -= 1
-                rv_idx = (v_idx, True)
-                first_run = True  # Delay checking for loop exit for one iteration.
-            else:  # Edge is fine move on to next vertex
-                v_idx = (v_idx + 1) % number_of_vertices
-                processing_edge = False
-        else:  # Check for spike
-            # It should be noted that this will also detect collinear edges. Which are not inherently a problem,
-            # but deleting them will not cause an issue either, so they are removed since a simple cross product
-            # check is an easy way to detect spikes.
-            v1_idx = (v_idx + 1) % number_of_vertices
-            v2_idx = (v_idx - 1) % number_of_vertices
-            p1 = new_polygon_vertices[v1_idx]
-            pr = new_polygon_vertices[v_idx]
-            p2 = new_polygon_vertices[v2_idx]
-            e1_vector = (p1[0] - pr[0], p1[1] - pr[1])
-            e2_vector = (p2[0] - pr[0], p2[1] - pr[1])
-            cross_product = e1_vector[0] * e2_vector[1] - e1_vector[1] * e2_vector[0]
-            if abs(cross_product) < intersection_tolerance:
-                del new_polygon_vertices[v_idx]
-                number_of_vertices -= 1
-                rv_idx = (v_idx, False)
-                first_run = True  # Delay checking for loop exit for one iteration.
-            else:  # Edges are not collinear or a spike. Move on to check edge length.
-                processing_edge = True
-    return new_polygon_vertices
-
-def offset_polygon(polygon, offset_distance, intersection_tolerance=1e-8):
-
-    number_of_edges = polygon.number_of_edges
-
-    # Generate lines that are offset from polygon's current line segments.
-    new_line_list = []
-    for edx in range(number_of_edges):
-        new_line_list.append(offset_line(polygon.get_edge_line_segment(edx), offset_distance))
-
-    # Generate new polygon from lines.
-    new_polygon_vertices = []
-    for edx in range(number_of_edges):
-        int_point = line_intersect(new_line_list[edx % number_of_edges], new_line_list[(edx + 1) % number_of_edges],
-                                   intersection_tolerance=intersection_tolerance)
-        if int_point is None:
-            raise ValueError("Adjacent offset lines do not intersect.")
-        elif int_point == inf:
-            pass # In the case of two parallel lines, we can just treat them as one moving forward.
-        else:
-            new_polygon_vertices.append(int_point)
-
-
-    new_polygon_vertices = zero_length_edge_and_spike_removal(new_polygon_vertices, intersection_tolerance)
-    number_of_vertices = len(new_polygon_vertices)
-
-
-    # In many cases this new polygon will still contain self-intersecting portions. The next step is to build
-    # a directed graph from intersections between non-adjacent line-segments.
-    intersections = []
-    for i in range(number_of_edges):
-        ldx_1 = i % number_of_edges
-        rdx_1 = (i + 1) % number_of_edges
-        for j in range(number_of_edges):
-            if abs(j - i) <= 1:  # Don't check adjacent lines.
-                continue
-            ldx_2 = j % number_of_edges
-            rdx_2 = (j + 1) % number_of_edges
-            intersections = vector_intersect(new_polygon_vertices[ldx_1] + new_polygon_vertices[rdx_1],
-                                             new_polygon_vertices[ldx_2] + new_polygon_vertices[rdx_2],
-                                             intersection_tolerance, advanced=True, mark_intersections=True)
-
-
-
-
+    return [outer_polygons, holes]
