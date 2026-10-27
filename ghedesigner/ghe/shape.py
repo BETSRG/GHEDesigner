@@ -6,7 +6,7 @@ from pyclipper import (
     CT_UNION,
     ET_CLOSEDPOLYGON,
     JT_SQUARE,
-    PFT_EVENODD,
+    PFT_NONZERO,
     PT_CLIP,
     PT_SUBJECT,
     Pyclipper,
@@ -57,10 +57,7 @@ class Shapes:
         return lengths
 
     def get_polygon_vertices(self, clock_wise=False):
-        if clock_wise:
-            return reverse_points(self.c)
-        else:
-            return self.c
+        return self.reversed_c if clock_wise else self.c
 
     def _prep_arc_length_piecewise_function(self):
         piecewise_maxes = [0.0]
@@ -153,7 +150,7 @@ class Shapes:
         return trim_vertex_intersection(intersections)
 
     def shape_is_contained_within(self, other_shape):
-        return np.all([point_polygon_check(self.c, p) == 1 for p in other_shape.c])
+        return np.all([point_polygon_check(other_shape.c, p) == 1 for p in self.c])
 
     def get_point_along_curve(self, relative_distance_along_curve):
         larger_index = next(i for i, x in enumerate(self.piecewise_maxes) if x >= relative_distance_along_curve)
@@ -306,7 +303,6 @@ def trim_vertex_intersection(intersections):
 
     # Mark where duplicate vertex intersections are.
     vertex_dictionary = {}
-    new_intersection_list = []
     for i, intersection in enumerate(intersections):
         coincident_vertices = intersection["coincident_vertices"]
         if len(coincident_vertices) > 0:
@@ -317,7 +313,6 @@ def trim_vertex_intersection(intersections):
                 vertex_dictionary[cv_key] = [i]
         else:
             intersection["coincident_vertices"] = None
-            new_intersection_list.append(intersection)
 
     # If vertex intersection logic is working properly, intersections should appear in groups of 2 or 4.
     if not np.all(
@@ -328,12 +323,13 @@ def trim_vertex_intersection(intersections):
             " This suggests an issue with the polygon intersection logic."
         )
 
-    # Add in one copy of the vertex intersection back into the intersection list.
-    for _, index_list in vertex_dictionary.items():
-        new_index = min(index_list)
-        new_intersection_list.insert(new_index, intersections[new_index])
-
-    return new_intersection_list
+    # Keep one copy of each vertex intersection, preserving the original ordering.
+    kept_indices = {min(index_list) for index_list in vertex_dictionary.values()}
+    return [
+        intersection
+        for i, intersection in enumerate(intersections)
+        if intersection["coincident_vertices"] is None or i in kept_indices
+    ]
 
 
 def mark_endpoint_intersections(perform_marking, l1, l2, intersection_points, intersection_tolerance):
@@ -427,13 +423,17 @@ def vector_intersect(l1, l2, intersection_tolerance, advanced=False, mark_inters
                     if l1_min_y > l2_max_y or l1_max_y < l2_min_y:
                         return []
                     else:
-                        x_val = 0.25 * (x12 + x22 + x21 + x22)
+                        x_val = 0.25 * (x11 + x12 + x21 + x22)
                         lower_y_val = max(l1_min_y, l2_min_y)
                         upper_y_val = min(l1_max_y, l2_max_y)
                         # Are lines intersecting at exactly one point?
                         if abs(lower_y_val - upper_y_val) <= intersection_tolerance:
                             return mark_endpoint_intersections(
-                                mark_intersections, l1, l2, [[x_val, 0.5 * (lower_y_val + upper_y_val)]]
+                                mark_intersections,
+                                l1,
+                                l2,
+                                [[x_val, 0.5 * (lower_y_val + upper_y_val)]],
+                                intersection_tolerance,
                             )
                         # Return the overlapping portion of the line segments
                         return mark_endpoint_intersections(
@@ -481,7 +481,7 @@ def vector_intersect(l1, l2, intersection_tolerance, advanced=False, mark_inters
                 return mark_endpoint_intersections(mark_intersections, l1, l2, [[x_a, y_p]], intersection_tolerance)
             else:
                 return []
-    if abs(a1 - a2) <= 0:  # Are line segments parallel?
+    if abs(a1 - a2) <= intersection_tolerance:  # Are line segments parallel?
         if not advanced:
             return []
         elif abs(y22 - (a1 * x22 + c1)) <= intersection_tolerance:  # Are line segments collinear?
@@ -626,19 +626,11 @@ def get_area(c):
 
 
 def is_clockwise(points):
-    summation = 0
-    for i in range(len(points)):
-        p2 = points[i]
-        p1 = points[i - 1]
-        summation += (p2[0] - p1[0]) * (p2[1] + p1[1])
-    return summation > 0
+    return get_area(points) < 0
 
 
 def reverse_points(points):
-    return_list = []
-    for i in range(len(points)):
-        return_list.append(points[-1 - i])
-    return return_list
+    return list(points)[::-1]
 
 
 def merge_shapes(shapes):
@@ -657,7 +649,7 @@ def merge_shapes(shapes):
             merger.AddPath(scale_to_clipper(shape.c), PT_SUBJECT, True)  # True for enclosed polygon.
         else:
             merger.AddPath(scale_to_clipper(shape.c), PT_CLIP, True)  # True for enclosed polygon.
-    merge_solution = merger.Execute(CT_UNION, PFT_EVENODD, PFT_EVENODD)
+    merge_solution = merger.Execute(CT_UNION, PFT_NONZERO, PFT_NONZERO)
 
     # Split solution into outer polygons and holes.
     outer_polygons = []
@@ -678,7 +670,7 @@ def clip_shapes(outer_shapes, clipping_shapes):
         clipper.AddPath(scale_to_clipper(shape.c), PT_SUBJECT, True)  # True for enclosed polygon.
     for shape in clipping_shapes:
         clipper.AddPath(scale_to_clipper(shape.c), PT_CLIP, True)  # True for enclosed polygon.
-    clip_solution = clipper.Execute(CT_DIFFERENCE, PFT_EVENODD, PFT_EVENODD)
+    clip_solution = clipper.Execute(CT_DIFFERENCE, PFT_NONZERO, PFT_NONZERO)
 
     # Split solution into outer polygons and holes.
     outer_polygons = []

@@ -3,7 +3,16 @@ from unittest import TestCase
 
 import numpy as np
 
-from ghedesigner.ghe.shape import Shapes, clip_shapes, get_area, merge_shapes, offset_polygon, point_polygon_check
+from ghedesigner.ghe.shape import (
+    Shapes,
+    clip_shapes,
+    get_area,
+    merge_shapes,
+    offset_polygon,
+    point_polygon_check,
+    trim_vertex_intersection,
+    vector_intersect,
+)
 
 CLIPPING_SHAPES = [
     Shapes([[7.5, 7.5], [12.5, 7.5], [12.5, 12.5], [7.5, 12.5]]),
@@ -329,27 +338,63 @@ class TestShapes(TestCase):
             )
         ]
         offset_polygons, holes = offset_polygon(offset_shapes, offset_holes, offset)
-        print(holes[0].c)
         assert polygon_list_comparison(offset_polygons, offset_reference, comparison_tolerance)
         assert polygon_list_comparison(holes, hole_reference, comparison_tolerance)
+
+    def test_vector_intersect_vertical_touching(self):
+        # Collinear vertical segments that share exactly one endpoint.
+        result = vector_intersect(
+            [0.0, 0.0, 0.0, 5.0], [0.0, 5.0, 0.0, 10.0], 1e-8, advanced=True, mark_intersections=True
+        )
+        assert len(result) == 1
+        assert point_comparison(result[0][0], (0.0, 5.0), 1e-8)
+
+    def test_vector_intersect_nearly_parallel(self):
+        # Slopes differ by less than the tolerance, so the segments are treated as parallel.
+        assert vector_intersect([0.0, 0.0, 10.0, 0.0], [0.0, 1.0, 10.0, 1.0 + 1e-10], 1e-8) == []
+
+    def test_trim_vertex_intersection_preserves_order(self):
+        intersections = [
+            {"location": (0, 0), "coincident_vertices": [(0, 1)]},
+            {"location": (0, 0), "coincident_vertices": [(0, 1)]},
+            {"location": (1, 0), "coincident_vertices": [(1, 2)]},
+            {"location": (1, 0), "coincident_vertices": [(1, 2)]},
+            {"location": (2, 0), "coincident_vertices": []},
+            {"location": (3, 0), "coincident_vertices": []},
+        ]
+        trimmed = trim_vertex_intersection(intersections)
+        assert [t["location"] for t in trimmed] == [(0, 0), (1, 0), (2, 0), (3, 0)]
+
+    def test_merge_overlapping_clip_shapes(self):
+        # The two clip shapes overlap each other outside the subject; the overlap must not become a hole.
+        clip_a = Shapes([[12.0, 0.0], [20.0, 0.0], [20.0, 10.0], [12.0, 10.0]])
+        clip_b = Shapes([[15.0, 0.0], [25.0, 0.0], [25.0, 10.0], [15.0, 10.0]])
+        merged_shapes, holes = merge_shapes([SUBJECT_SHAPE, clip_a, clip_b])
+        assert len(holes) == 0
+        assert sum(get_area(shape.c) for shape in merged_shapes) == 100.0 + 130.0
+
+    def test_shape_is_contained_within(self):
+        inner = Shapes([[2.0, 2.0], [4.0, 2.0], [4.0, 4.0], [2.0, 4.0]])
+        assert inner.shape_is_contained_within(SUBJECT_SHAPE)
+        assert not SUBJECT_SHAPE.shape_is_contained_within(inner)
 
 
 def polygon_list_comparison(poly_list_1, poly_list_2, tolerance):
 
+    if len(poly_list_1) != len(poly_list_2):
+        return False
+
     poly_list_1 = sort_polygons(poly_list_1)
     poly_list_2 = sort_polygons(poly_list_2)
 
-    if len(poly_list_1) > 0:
-        for i in range(len(poly_list_1)):
-            poly_1 = poly_list_1[i].c
-            poly_2 = poly_list_2[i].c
-            if len(poly_1) != len(poly_2):
-                return False
-            if not np.all([point_comparison(poly_1[j], poly_2[j], tolerance) for j in range(len(poly_1))]):
-                return False
-        return True
-    else:
-        return len(poly_list_2) == 0
+    for shape_1, shape_2 in zip(poly_list_1, poly_list_2):
+        poly_1 = shape_1.c
+        poly_2 = shape_2.c
+        if len(poly_1) != len(poly_2):
+            return False
+        if not np.all([point_comparison(poly_1[j], poly_2[j], tolerance) for j in range(len(poly_1))]):
+            return False
+    return True
 
 
 def sort_polygons(polygon_list):
@@ -357,8 +402,8 @@ def sort_polygons(polygon_list):
     for polygon in polygon_list:
         oriented_list.append(orient_polygon(polygon))
 
-    polygon_sort_metric = [get_area(polygon.c) for polygon in oriented_list]
-    return [polygon for _, polygon in sorted(zip(polygon_sort_metric, oriented_list))]
+    # Sort by area, then by the first (minimum) vertex to break ties between equal-area polygons.
+    return sorted(oriented_list, key=lambda polygon: (get_area(polygon.c), *polygon.c[0]))
 
 
 def orient_polygon(polygon):
