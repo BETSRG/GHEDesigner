@@ -507,6 +507,112 @@ class TestDistrictSys(GHEBaseTest):
         np.testing.assert_array_equal(building.power_circ_pump, 0.0)
         np.testing.assert_allclose(building.pressure_loss[:3], [10_000.0, 30_000.0, 30_000.0])
 
+    def _fixed_cop_pump_input_data(self) -> dict:
+        data = load_input_file(self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.json")
+        building_data = data["buildings"]["building1_htg_clg"]
+        building_data["heating_load_source"].update(
+            {"design_pressure_drop_pa": 10_000.0, "pump_efficiency_fraction": 0.5}
+        )
+        building_data["cooling_load_source"].update(
+            {"design_pressure_drop_pa": 30_000.0, "pump_efficiency_fraction": 0.75}
+        )
+        return data
+
+    def test_fixed_cop_building_pump_power_uses_load_source_hydraulics(self):
+        with TemporaryDirectory() as tmp_dir:
+            f_path_json = Path(tmp_dir) / "fixed_cop_pump_inputs.json"
+            f_path_json.write_text(json.dumps(self._fixed_cop_pump_input_data()))
+            system = GHEHPSystem(f_path_json)
+
+        building = next(b for b in system.buildings if b.name == "building1_htg_clg")
+        assert building.heating_fixed_cop is not None
+        assert building.cooling_fixed_cop is not None
+        building.m_flow_htg[:3] = [0.1, 0.0, 0.1]
+        building.m_flow_clg[:3] = [0.0, 0.15, 0.15]
+        building.m_flow[:3] = [0.1, 0.15, 0.15]
+
+        building.calc_energy()
+        np.testing.assert_allclose(building.pressure_loss[:3], [10_000.0, 30_000.0, 30_000.0])
+        expected_power = np.array(
+            [
+                0.1 * 10_000.0 / (building.fluid.rho * 0.5),
+                0.15 * 30_000.0 / (building.fluid.rho * 0.75),
+                0.15 * 30_000.0 / (building.fluid.rho * 0.75),
+            ]
+        )
+        np.testing.assert_allclose(building.power_circ_pump[:3], expected_power)
+
+        unconfigured = next(b for b in system.buildings if b.name != "building1_htg_clg")
+        unconfigured.m_flow_htg[:3] = 0.1
+        unconfigured.m_flow[:3] = 0.1
+        unconfigured.calc_energy()
+        np.testing.assert_array_equal(unconfigured.pressure_loss, 0.0)
+        np.testing.assert_array_equal(unconfigured.power_circ_pump, 0.0)
+
+        building.network_type = NetworkType.TWO_PIPE
+        building.calc_energy()
+        np.testing.assert_array_equal(building.power_circ_pump, 0.0)
+        np.testing.assert_allclose(building.pressure_loss[:3], [10_000.0, 30_000.0, 30_000.0])
+
+    def test_fixed_cop_building_pump_energy_is_included_with_hybrid_timesteps(self):
+        def simulate_hybrid(data: dict) -> GHEHPSystem:
+            data["simulation_control"]["load_method"] = "hybrid"
+            data["simulation_control"]["simulation_years"] = 2
+            with TemporaryDirectory() as tmp_dir:
+                f_path_json = Path(tmp_dir) / "fixed_cop_hybrid.json"
+                f_path_json.write_text(json.dumps(data))
+                system = GHEHPSystem(f_path_json)
+                system.size_and_simulate()
+            return system
+
+        configured = simulate_hybrid(self._fixed_cop_pump_input_data())
+        unconfigured = simulate_hybrid(
+            load_input_file(self.demos_path / "simulate_1_pipe_3_ghe_6_bldg_district_HOURLY.json")
+        )
+        configured_energy = configured.get_total_energy_consumption()
+        unconfigured_energy = unconfigured.get_total_energy_consumption()
+
+        building = next(b for b in configured.buildings if b.name == "building1_htg_clg")
+        building_pump_energy = np.sum(building.power_circ_pump * np.diff(configured.time_array))
+        assert building_pump_energy > 0.0
+        assert np.all(building.pressure_loss[building.m_flow > 0.0] > 0.0)
+        for other in configured.buildings:
+            if other is not building:
+                np.testing.assert_array_equal(other.power_circ_pump, 0.0)
+        assert configured_energy - unconfigured_energy == pytest.approx(building_pump_energy)
+
+    def test_fixed_cop_load_source_pump_inputs_are_validated(self):
+        with TemporaryDirectory() as tmp_dir:
+            valid_path = Path(tmp_dir) / "valid_fixed_cop_pump_inputs.json"
+            valid_path.write_text(json.dumps(self._fixed_cop_pump_input_data()))
+            validate_input_file(valid_path)
+
+        invalid_updates = {
+            "pressure_drop_without_efficiency": lambda source: source.pop("pump_efficiency_fraction"),
+            "efficiency_without_pressure_drop": lambda source: source.pop("design_pressure_drop_pa"),
+            "zero_efficiency": lambda source: source.update({"pump_efficiency_fraction": 0.0}),
+            "negative_pressure_drop": lambda source: source.update({"design_pressure_drop_pa": -1.0}),
+        }
+        for name, update in invalid_updates.items():
+            with self.subTest(name=name):
+                data = self._fixed_cop_pump_input_data()
+                update(data["buildings"]["building1_htg_clg"]["heating_load_source"])
+                with TemporaryDirectory() as tmp_dir:
+                    invalid_path = Path(tmp_dir) / f"{name}.json"
+                    invalid_path.write_text(json.dumps(data))
+                    with pytest.raises(ValidationError):
+                        validate_input_file(invalid_path)
+
+        data = load_input_file(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
+        load_source = next(iter(data["buildings"].values()))["heating_load_source"]
+        assert "heat_pump_id" in load_source
+        load_source.update({"design_pressure_drop_pa": 10_000.0, "pump_efficiency_fraction": 0.5})
+        with TemporaryDirectory() as tmp_dir:
+            invalid_path = Path(tmp_dir) / "heat_pump_map_with_pump_inputs.json"
+            invalid_path.write_text(json.dumps(data))
+            with pytest.raises(ValidationError):
+                validate_input_file(invalid_path)
+
     def test_heat_pump_required_part_load_ratio_reports_capacity_exceedance(self):
         system = GHEHPSystem(self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json")
         building = system.buildings[0]

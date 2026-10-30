@@ -82,6 +82,11 @@ A load source supplies values in one of three ways:
 Every form also requires `value_units: "W"`. A source may include either `heat_pump_id`, which references an entry in
 the top-level `heat_pumps` collection, or `heat_pump_cop` for fixed-COP conversion. Do not provide both.
 
+A fixed-COP source may also include `design_pressure_drop_pa` and `pump_efficiency_fraction`, which must be given
+together. They play the same role as the heat pump map fields of the same names: the building-side pressure loss while
+that mode operates, and the efficiency of the building's local circulation pump. Without them, a fixed-COP building
+reports zero pressure loss and zero circulation-pump power.
+
 A building contains one of these load arrangements:
 
 - `heating_load_source` and `cooling_load_source`.
@@ -169,8 +174,10 @@ is normalized by borehole depth. This reported borehole-only loss excludes local
 `circulation_pump.reference_pressure_drop_pa`, which represents the borefield and local headers and is used to calculate
 local pump power.
 Horizontal-pipe loss uses the mapped network segment's Darcy-Weisbach pressure loss, including configured roughness and
-minor-loss coefficients, and is normalized by segment length. Building loss is the active heat pump's configured
-`design_pressure_drop_pa`.
+minor-loss coefficients, and is normalized by segment length. Building loss is the active mode's configured
+`design_pressure_drop_pa`, from the heat pump map or, for a fixed-COP source, from the load source itself. In one-pipe
+networks, building `Circulation Pump Power [W]` is the building flow multiplied by that loss, divided by fluid density
+and the active mode's `pump_efficiency_fraction`.
 
 ## District network
 

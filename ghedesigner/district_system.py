@@ -1356,11 +1356,15 @@ class Building(BaseSimComp):
         self.cooling_cop_evaluation_temperature = bldg_data.get("cooling_cop_evaluation_temperature_c")
 
         self.heating_fixed_cop: float | None = None
+        self.heating_fixed_pressure_drop: float | None = None
+        self.heating_fixed_pump_efficiency: float | None = None
         self.hp_htg: HPmodel
         self.heating_mode = 0
         if self.heating_exists:
             if self.constant_cop and "heat_pump_cop" in bldg_data["heating_load_source"]:
                 self.heating_fixed_cop = bldg_data["heating_load_source"]["heat_pump_cop"]
+                self.heating_fixed_pressure_drop = bldg_data["heating_load_source"].get("design_pressure_drop_pa")
+                self.heating_fixed_pump_efficiency = bldg_data["heating_load_source"].get("pump_efficiency_fraction")
                 self.heating_mode = 1
                 self.heating_cp_offset_reciprocal = None
             else:
@@ -1385,11 +1389,15 @@ class Building(BaseSimComp):
                 self.heating_m_flow_single_hp = self.hp_htg.m_flow_single_hp
 
         self.cooling_fixed_cop: float | None = None
+        self.cooling_fixed_pressure_drop: float | None = None
+        self.cooling_fixed_pump_efficiency: float | None = None
         self.hp_clg: HPmodel
         self.cooling_mode = 0
         if self.cooling_exists:
             if self.constant_cop and "heat_pump_cop" in bldg_data["cooling_load_source"]:
                 self.cooling_fixed_cop = bldg_data["cooling_load_source"]["heat_pump_cop"]
+                self.cooling_fixed_pressure_drop = bldg_data["cooling_load_source"].get("design_pressure_drop_pa")
+                self.cooling_fixed_pump_efficiency = bldg_data["cooling_load_source"].get("pump_efficiency_fraction")
                 self.cooling_mode = 1
                 self.cooling_cp_offset_reciprocal = None
             else:
@@ -1700,11 +1708,13 @@ class Building(BaseSimComp):
 
         heating_governs = (self.m_flow_htg >= self.m_flow_clg) & (self.m_flow_htg > 0.0)
         cooling_governs = self.m_flow_clg > self.m_flow_htg
+        heating_hydraulics = self._mode_hydraulics(heating=True)
+        cooling_hydraulics = self._mode_hydraulics(heating=False)
         self.pressure_loss.fill(0.0)
-        if self.heating_exists and self.heating_fixed_cop is None:
-            self.pressure_loss[heating_governs] = self.hp_htg.design_pressure_loss
-        if self.cooling_exists and self.cooling_fixed_cop is None:
-            self.pressure_loss[cooling_governs] = self.hp_clg.design_pressure_loss
+        if heating_hydraulics is not None:
+            self.pressure_loss[heating_governs] = heating_hydraulics[0]
+        if cooling_hydraulics is not None:
+            self.pressure_loss[cooling_governs] = cooling_hydraulics[0]
 
         # One-pipe buildings have local circulation pumps. Two-pipe building
         # flow is provided by the network pump and is accounted for separately.
@@ -1712,18 +1722,37 @@ class Building(BaseSimComp):
         if self.network_type != NetworkType.ONE_PIPE:
             return
 
-        if self.heating_exists and self.heating_fixed_cop is None:
+        if heating_hydraulics is not None:
             self.power_circ_pump[heating_governs] = (
                 self.m_flow[heating_governs]
-                / (self.fluid.rho * self.hp_htg.pump_efficiency)
+                / (self.fluid.rho * heating_hydraulics[1])
                 * self.pressure_loss[heating_governs]
             )
-        if self.cooling_exists and self.cooling_fixed_cop is None:
+        if cooling_hydraulics is not None:
             self.power_circ_pump[cooling_governs] = (
                 self.m_flow[cooling_governs]
-                / (self.fluid.rho * self.hp_clg.pump_efficiency)
+                / (self.fluid.rho * cooling_hydraulics[1])
                 * self.pressure_loss[cooling_governs]
             )
+
+    def _mode_hydraulics(self, heating: bool) -> tuple[float, float] | None:
+        """Return (design pressure loss, pump efficiency) for a mode, or None if not configured."""
+        if heating:
+            if not self.heating_exists:
+                return None
+            if self.heating_fixed_cop is None:
+                return self.hp_htg.design_pressure_loss, self.hp_htg.pump_efficiency
+            if self.heating_fixed_pressure_drop is None or self.heating_fixed_pump_efficiency is None:
+                return None
+            return self.heating_fixed_pressure_drop, self.heating_fixed_pump_efficiency
+
+        if not self.cooling_exists:
+            return None
+        if self.cooling_fixed_cop is None:
+            return self.hp_clg.design_pressure_loss, self.hp_clg.pump_efficiency
+        if self.cooling_fixed_pressure_drop is None or self.cooling_fixed_pump_efficiency is None:
+            return None
+        return self.cooling_fixed_pressure_drop, self.cooling_fixed_pump_efficiency
 
 
 class GHEHPSystem:
