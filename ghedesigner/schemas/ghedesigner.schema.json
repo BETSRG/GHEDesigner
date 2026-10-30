@@ -94,6 +94,22 @@
       "type": "number",
       "description": "Units: watts per watt (W/W)."
     },
+    "fixed_cop_design_pressure_drop_pa": {
+      "title": "Design pressure loss",
+      "type": "number",
+      "minimum": 0,
+      "format": "Pascals",
+      "description": "Building-side pressure loss while this mode operates, used for one-pipe building circulation-pump power. Units: pascals (Pa).",
+      "x-unit": "Pa"
+    },
+    "fixed_cop_pump_efficiency_fraction": {
+      "title": "Pump efficiency",
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "description": "Building circulation-pump efficiency as a decimal fraction (0-1). Units: dimensionless.",
+      "x-unit": "1"
+    },
     "inner_diameter_m": {
       "title": "Pipe inner diameter",
       "type": "number",
@@ -192,6 +208,16 @@
           "title": "Heat pump COP",
           "$ref": "#/$defs/heat_pump_cop",
           "description": "Units: watts per watt (W/W)."
+        },
+        "design_pressure_drop_pa": {
+          "title": "Design pressure loss",
+          "$ref": "#/$defs/fixed_cop_design_pressure_drop_pa",
+          "x-unit": "Pa"
+        },
+        "pump_efficiency_fraction": {
+          "title": "Pump efficiency",
+          "$ref": "#/$defs/fixed_cop_pump_efficiency_fraction",
+          "x-unit": "1"
         },
         "value_units": {
           "title": "Load value units",
@@ -353,6 +379,16 @@
               "$ref": "#/$defs/heat_pump_cop",
               "description": "Units: watts per watt (W/W)."
             },
+            "design_pressure_drop_pa": {
+              "title": "Design pressure loss",
+              "$ref": "#/$defs/fixed_cop_design_pressure_drop_pa",
+              "x-unit": "Pa"
+            },
+            "pump_efficiency_fraction": {
+              "title": "Pump efficiency",
+              "$ref": "#/$defs/fixed_cop_pump_efficiency_fraction",
+              "x-unit": "1"
+            },
             "value_units": {
               "title": "Load value units",
               "type": "string",
@@ -364,6 +400,10 @@
             "heat_pump_cop",
             "value_units"
           ],
+          "dependencies": {
+            "design_pressure_drop_pa": ["pump_efficiency_fraction"],
+            "pump_efficiency_fraction": ["design_pressure_drop_pa"]
+          },
           "additionalProperties": false
         },
         {
@@ -382,6 +422,16 @@
               "$ref": "#/$defs/heat_pump_cop",
               "description": "Units: watts per watt (W/W)."
             },
+            "design_pressure_drop_pa": {
+              "title": "Design pressure loss",
+              "$ref": "#/$defs/fixed_cop_design_pressure_drop_pa",
+              "x-unit": "Pa"
+            },
+            "pump_efficiency_fraction": {
+              "title": "Pump efficiency",
+              "$ref": "#/$defs/fixed_cop_pump_efficiency_fraction",
+              "x-unit": "1"
+            },
             "value_units": {
               "title": "Load value units",
               "type": "string",
@@ -394,6 +444,10 @@
             "heat_pump_cop",
             "value_units"
           ],
+          "dependencies": {
+            "design_pressure_drop_pa": ["pump_efficiency_fraction"],
+            "pump_efficiency_fraction": ["design_pressure_drop_pa"]
+          },
           "additionalProperties": false
         },
         {
@@ -412,6 +466,16 @@
               "$ref": "#/$defs/heat_pump_cop",
               "description": "Units: watts per watt (W/W)."
             },
+            "design_pressure_drop_pa": {
+              "title": "Design pressure loss",
+              "$ref": "#/$defs/fixed_cop_design_pressure_drop_pa",
+              "x-unit": "Pa"
+            },
+            "pump_efficiency_fraction": {
+              "title": "Pump efficiency",
+              "$ref": "#/$defs/fixed_cop_pump_efficiency_fraction",
+              "x-unit": "1"
+            },
             "value_units": {
               "title": "Load value units",
               "type": "string",
@@ -424,6 +488,10 @@
             "heat_pump_cop",
             "value_units"
           ],
+          "dependencies": {
+            "design_pressure_drop_pa": ["pump_efficiency_fraction"],
+            "pump_efficiency_fraction": ["design_pressure_drop_pa"]
+          },
           "additionalProperties": false
         }
       ],

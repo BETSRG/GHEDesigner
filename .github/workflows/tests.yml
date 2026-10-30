@@ -19,6 +19,11 @@ jobs:
           version: "0.11.2"
       - name: Install the project
         run: uv sync --frozen --managed-python
+      - name: Pin nodeenv to Node LTS
+        # pre-commit always installs Node with nodeenv on Windows, and nodeenv can't parse a prerelease "latest"
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Set-Content -Path "$HOME/.nodeenvrc" -Value "[nodeenv]`nnode = lts"
       - name: Lint & Format
         run: uv run pre-commit run -a
       - name: Unit tests
