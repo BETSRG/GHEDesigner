@@ -769,6 +769,12 @@ class TestDistrictSys(GHEBaseTest):
             configured_input.write_text(json.dumps(data))
             configured = GHEHPSystem(configured_input)
             configured.solve_system_standard()
+            distribution_branch = configured.distribution_pump_branch
+            assert distribution_branch is not None
+            np.testing.assert_allclose(
+                configured.network_pump_mass_flow_history[distribution_branch.id],
+                configured.m_flow_loop,
+            )
 
         unconfigured = GHEHPSystem(source_path)
         unconfigured.ground_heat_exchangers[0].circulation_pump = None
@@ -779,21 +785,77 @@ class TestDistrictSys(GHEBaseTest):
             unconfigured_path = Path(tmp_dir) / "unconfigured.csv"
             configured.create_output(configured_path)
             unconfigured.create_output(unconfigured_path)
-            configured_columns = set(pd.read_csv(configured_path, nrows=0).columns)
-            unconfigured_columns = set(pd.read_csv(unconfigured_path, nrows=0).columns)
+            configured_output = pd.read_csv(configured_path)
+            unconfigured_output = pd.read_csv(unconfigured_path)
+            configured_columns = set(configured_output.columns)
+            unconfigured_columns = set(unconfigured_output.columns)
 
         assert "ghe1: Pump Mass Flow Rate [kg/s]" in configured_columns
         assert "ghe1: Local Recirculation Flow Rate [kg/s]" in configured_columns
-        assert "ghe1: Circulation Pump Power [W]" in configured_columns
-        assert "Network: Total GHE Circulation Pump Power [W]" in configured_columns
+        assert "ghe1: Pump Power [W]" in configured_columns
+        assert "building1: Pump Mass Flow Rate [kg/s]" in configured_columns
+        assert "building1: Pump Power [W]" in configured_columns
+        assert "Network: Distribution Pump Mass Flow Rate [kg/s]" in configured_columns
+        assert "Network: Distribution Pump Power [W]" in configured_columns
+        assert "Network: Aggregate Building Pump Mass Flow Rate [kg/s]" in configured_columns
+        assert "Network: Total Building Pump Power [W]" in configured_columns
+        assert "Network: Total GHE Pump Power [W]" in configured_columns
+        assert "Network: Total Network Pump Power [W]" in configured_columns
         assert "ghe1: Network Branch Mass Flow Rate [kg/s]" in configured_columns
         assert "ghe1: Network Branch Mass Flow Rate [kg/s]" in unconfigured_columns
         assert "ghe1: Mass Flow Rate [kg/s]" not in configured_columns | unconfigured_columns
         assert "Network: Mass Flow Rate [kg/s]" not in configured_columns | unconfigured_columns
+        assert "building1: Mass Flow Rate [kg/s]" not in configured_columns | unconfigured_columns
+        assert "building1: Circulation Pump Power [W]" not in configured_columns | unconfigured_columns
+        assert "ghe1: Circulation Pump Power [W]" not in configured_columns | unconfigured_columns
+        assert "Network: Total GHE Circulation Pump Power [W]" not in configured_columns | unconfigured_columns
         assert "ghe1: Mixed-Loop Exiting Fluid Temperature [C]" not in configured_columns | unconfigured_columns
-        assert all("Pump Mass Flow Rate" not in column for column in unconfigured_columns)
-        assert all("Local Recirculation Flow Rate" not in column for column in unconfigured_columns)
-        assert all("GHE Circulation Pump Power" not in column for column in unconfigured_columns)
+        assert "ghe1: Pump Mass Flow Rate [kg/s]" not in unconfigured_columns
+        assert "ghe1: Local Recirculation Flow Rate [kg/s]" not in unconfigured_columns
+        assert "ghe1: Pump Power [W]" not in unconfigured_columns
+        np.testing.assert_allclose(
+            configured_output["Network: Aggregate Building Pump Mass Flow Rate [kg/s]"],
+            configured_output["building1: Pump Mass Flow Rate [kg/s]"],
+        )
+        np.testing.assert_allclose(
+            configured_output["Network: Total GHE Pump Power [W]"],
+            configured_output["ghe1: Pump Power [W]"],
+        )
+        np.testing.assert_allclose(
+            configured_output["Network: Total Network Pump Power [W]"],
+            configured_output["Network: Total Building Pump Power [W]"]
+            + configured_output["Network: Total GHE Pump Power [W]"]
+            + configured_output["Network: Distribution Pump Power [W]"],
+            rtol=0.0,
+            atol=2e-4,
+        )
+
+    def test_two_pipe_pump_output_uses_physical_component_histories(self):
+        system = GHEHPSystem(self.demos_path / "simulate_2_pipe_3_ghe_6_bldg_district_HOURLY.json")
+        expected_flow = np.zeros(system.num_timesteps, dtype=float)
+        expected_power = np.zeros(system.num_timesteps, dtype=float)
+        for index, building in enumerate(system.buildings, start=1):
+            building.m_flow.fill(float(index))
+            branch = system.network_branch_by_component[building.ID]
+            system.network_pump_mass_flow_history[branch.id].fill(float(index))
+            system.network_pump_power_history[branch.id].fill(float(index * 10))
+            expected_flow += float(index)
+            expected_power += float(index * 10)
+
+        with TemporaryDirectory() as tmp_dir:
+            output_path = Path(tmp_dir) / "two_pipe.csv"
+            system.create_output(output_path)
+            output = pd.read_csv(output_path)
+
+        assert "Network: Distribution Pump Mass Flow Rate [kg/s]" not in output
+        assert "Network: Distribution Pump Power [W]" not in output
+        for index, building in enumerate(system.buildings, start=1):
+            np.testing.assert_allclose(output[f"{building.name}: Pump Mass Flow Rate [kg/s]"], float(index))
+            np.testing.assert_allclose(output[f"{building.name}: Pump Power [W]"], float(index * 10))
+        np.testing.assert_allclose(output["Network: Aggregate Building Pump Mass Flow Rate [kg/s]"], expected_flow)
+        np.testing.assert_allclose(output["Network: Total Building Pump Power [W]"], expected_power)
+        np.testing.assert_allclose(output["Network: Total GHE Pump Power [W]"], 0.0)
+        np.testing.assert_allclose(output["Network: Total Network Pump Power [W]"], expected_power)
 
     def test_hybrid_reference_properties_follow_topology_not_ghe_key_order(self):
         source_path = self.demos_path / "Network_Sizing_3GHE_6HP_BUPCRS.json"
