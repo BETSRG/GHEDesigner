@@ -1356,11 +1356,15 @@ class Building(BaseSimComp):
         self.cooling_cop_evaluation_temperature = bldg_data.get("cooling_cop_evaluation_temperature_c")
 
         self.heating_fixed_cop: float | None = None
+        self.heating_fixed_pressure_drop: float | None = None
+        self.heating_fixed_pump_efficiency: float | None = None
         self.hp_htg: HPmodel
         self.heating_mode = 0
         if self.heating_exists:
             if self.constant_cop and "heat_pump_cop" in bldg_data["heating_load_source"]:
                 self.heating_fixed_cop = bldg_data["heating_load_source"]["heat_pump_cop"]
+                self.heating_fixed_pressure_drop = bldg_data["heating_load_source"].get("design_pressure_drop_pa")
+                self.heating_fixed_pump_efficiency = bldg_data["heating_load_source"].get("pump_efficiency_fraction")
                 self.heating_mode = 1
                 self.heating_cp_offset_reciprocal = None
             else:
@@ -1385,11 +1389,15 @@ class Building(BaseSimComp):
                 self.heating_m_flow_single_hp = self.hp_htg.m_flow_single_hp
 
         self.cooling_fixed_cop: float | None = None
+        self.cooling_fixed_pressure_drop: float | None = None
+        self.cooling_fixed_pump_efficiency: float | None = None
         self.hp_clg: HPmodel
         self.cooling_mode = 0
         if self.cooling_exists:
             if self.constant_cop and "heat_pump_cop" in bldg_data["cooling_load_source"]:
                 self.cooling_fixed_cop = bldg_data["cooling_load_source"]["heat_pump_cop"]
+                self.cooling_fixed_pressure_drop = bldg_data["cooling_load_source"].get("design_pressure_drop_pa")
+                self.cooling_fixed_pump_efficiency = bldg_data["cooling_load_source"].get("pump_efficiency_fraction")
                 self.cooling_mode = 1
                 self.cooling_cp_offset_reciprocal = None
             else:
@@ -1700,11 +1708,13 @@ class Building(BaseSimComp):
 
         heating_governs = (self.m_flow_htg >= self.m_flow_clg) & (self.m_flow_htg > 0.0)
         cooling_governs = self.m_flow_clg > self.m_flow_htg
+        heating_hydraulics = self._mode_hydraulics(heating=True)
+        cooling_hydraulics = self._mode_hydraulics(heating=False)
         self.pressure_loss.fill(0.0)
-        if self.heating_exists and self.heating_fixed_cop is None:
-            self.pressure_loss[heating_governs] = self.hp_htg.design_pressure_loss
-        if self.cooling_exists and self.cooling_fixed_cop is None:
-            self.pressure_loss[cooling_governs] = self.hp_clg.design_pressure_loss
+        if heating_hydraulics is not None:
+            self.pressure_loss[heating_governs] = heating_hydraulics[0]
+        if cooling_hydraulics is not None:
+            self.pressure_loss[cooling_governs] = cooling_hydraulics[0]
 
         # One-pipe buildings have local circulation pumps. Two-pipe building
         # flow is provided by the network pump and is accounted for separately.
@@ -1712,18 +1722,37 @@ class Building(BaseSimComp):
         if self.network_type != NetworkType.ONE_PIPE:
             return
 
-        if self.heating_exists and self.heating_fixed_cop is None:
+        if heating_hydraulics is not None:
             self.power_circ_pump[heating_governs] = (
                 self.m_flow[heating_governs]
-                / (self.fluid.rho * self.hp_htg.pump_efficiency)
+                / (self.fluid.rho * heating_hydraulics[1])
                 * self.pressure_loss[heating_governs]
             )
-        if self.cooling_exists and self.cooling_fixed_cop is None:
+        if cooling_hydraulics is not None:
             self.power_circ_pump[cooling_governs] = (
                 self.m_flow[cooling_governs]
-                / (self.fluid.rho * self.hp_clg.pump_efficiency)
+                / (self.fluid.rho * cooling_hydraulics[1])
                 * self.pressure_loss[cooling_governs]
             )
+
+    def _mode_hydraulics(self, heating: bool) -> tuple[float, float] | None:
+        """Return (design pressure loss, pump efficiency) for a mode, or None if not configured."""
+        if heating:
+            if not self.heating_exists:
+                return None
+            if self.heating_fixed_cop is None:
+                return self.hp_htg.design_pressure_loss, self.hp_htg.pump_efficiency
+            if self.heating_fixed_pressure_drop is None or self.heating_fixed_pump_efficiency is None:
+                return None
+            return self.heating_fixed_pressure_drop, self.heating_fixed_pump_efficiency
+
+        if not self.cooling_exists:
+            return None
+        if self.cooling_fixed_cop is None:
+            return self.hp_clg.design_pressure_loss, self.hp_clg.pump_efficiency
+        if self.cooling_fixed_pressure_drop is None or self.cooling_fixed_pump_efficiency is None:
+            return None
+        return self.cooling_fixed_pressure_drop, self.cooling_fixed_pump_efficiency
 
 
 class GHEHPSystem:
@@ -2215,6 +2244,19 @@ class GHEHPSystem:
             for branch in self.network_graph.branches.values()
             if branch.component_id is not None
         }
+        pump_branches = {
+            branch.id: branch for branch in self.network_graph.branches.values() if branch.pump_id is not None
+        }
+        self.network_pump_mass_flow_history = {
+            branch_id: np.zeros(self.num_timesteps, dtype=float) for branch_id in pump_branches
+        }
+        self.network_pump_power_history = {
+            branch_id: np.zeros(self.num_timesteps, dtype=float) for branch_id in pump_branches
+        }
+        self.distribution_pump_branch = next(
+            (branch for branch in pump_branches.values() if branch.branch_type == BranchType.PUMP),
+            None,
+        )
         self.horizontal_by_id = {
             component.name: component
             for component in self.components
@@ -3256,6 +3298,10 @@ class GHEHPSystem:
                 building.generate_constant_cop_loads(average_ugt)
 
         self.pump_power_loop.fill(0.0)
+        for pump_flow in self.network_pump_mass_flow_history.values():
+            pump_flow.fill(0.0)
+        for pump_power in self.network_pump_power_history.values():
+            pump_power.fill(0.0)
         for pressure_loss in self.horizontal_pressure_losses.values():
             pressure_loss.fill(0.0)
         for idx_timestep in range(1, self.num_timesteps + 1):
@@ -3288,6 +3334,10 @@ class GHEHPSystem:
                 branch = self.network_branch_by_component[ghe.ID]
                 ghe.mass_flow_ghe = branch.mass_flow
                 ghe.m_ghe_array[idx_timestep - 1] = branch.mass_flow
+            for branch_id, pump_flow in self.network_pump_mass_flow_history.items():
+                branch = self.network_graph.branches[branch_id]
+                pump_flow[idx_timestep - 1] = abs(branch.mass_flow)
+                self.network_pump_power_history[branch_id][idx_timestep - 1] = branch.pump_power
             self.pump_power_loop[idx_timestep - 1] = sum(
                 branch.pump_power for branch in self.network_graph.branches.values()
             )
@@ -3349,8 +3399,9 @@ class GHEHPSystem:
         network_q_net_bldg_tot = np.zeros(self.num_timesteps, dtype=float)
         network_q_net_bldg_source_side_tot = np.zeros(self.num_timesteps, dtype=float)
         network_q_net_ghe_tot = np.zeros(self.num_timesteps, dtype=float)
-        configured_ghe_pump_power = np.zeros(self.num_timesteps, dtype=float)
-        has_configured_ghe_pump = False
+        aggregate_building_pump_flow = np.zeros(self.num_timesteps, dtype=float)
+        total_building_pump_power = np.zeros(self.num_timesteps, dtype=float)
+        total_ghe_pump_power = np.zeros(self.num_timesteps, dtype=float)
 
         self.calc_energy()
         self.calc_energy_ghe()
@@ -3365,7 +3416,10 @@ class GHEHPSystem:
                 output_columns[csv_columns.HEATING_LOAD.for_object(this_comp.name)] = this_comp.htg_vals
                 output_columns[csv_columns.COOLING_LOAD.for_object(this_comp.name)] = this_comp.clg_vals
                 output_columns[csv_columns.NET_BUILDING_LOAD.for_object(this_comp.name)] = this_comp.q_net
-                output_columns[csv_columns.MASS_FLOW_RATE.for_object(this_comp.name)] = this_comp.m_flow
+                building_branch = self.network_branch_by_component[this_comp.ID]
+                building_pump_flow = self.network_pump_mass_flow_history[building_branch.id]
+                output_columns[csv_columns.PUMP_MASS_FLOW_RATE.for_object(this_comp.name)] = building_pump_flow
+                aggregate_building_pump_flow += building_pump_flow
                 network_q_net_bldg_tot += this_comp.q_net
                 output_columns[csv_columns.HEATING_HEAT_PUMP_POWER.for_object(this_comp.name)] = this_comp.power_hp_htg
                 output_columns[csv_columns.HEATING_HEAT_PUMP_COP.for_object(this_comp.name)] = this_comp.cop_hp_htg
@@ -3378,9 +3432,12 @@ class GHEHPSystem:
                     this_comp.required_plr_hp_clg
                 )
                 output_columns[csv_columns.TOTAL_HEAT_PUMP_POWER.for_object(this_comp.name)] = this_comp.power_hp_tot
-                output_columns[csv_columns.CIRCULATION_PUMP_POWER.for_object(this_comp.name)] = (
-                    this_comp.power_circ_pump
-                )
+                if self.network_type == NetworkType.ONE_PIPE:
+                    building_pump_power = this_comp.power_circ_pump
+                else:
+                    building_pump_power = self.network_pump_power_history[building_branch.id]
+                output_columns[csv_columns.PUMP_POWER.for_object(this_comp.name)] = building_pump_power
+                total_building_pump_power += building_pump_power
                 output_columns[csv_columns.TOTAL_PRESSURE_LOSS.for_object(this_comp.name)] = this_comp.pressure_loss
 
                 q_src_clg = this_comp.clg_vals + this_comp.power_hp_clg
@@ -3423,9 +3480,8 @@ class GHEHPSystem:
                     output_columns[csv_columns.LOCAL_RECIRCULATION_FLOW_RATE.for_object(this_comp.name)] = (
                         this_comp.local_recirculation_flow
                     )
-                    output_columns[csv_columns.CIRCULATION_PUMP_POWER.for_object(this_comp.name)] = this_comp.P_ghe_cp
-                    configured_ghe_pump_power += this_comp.P_ghe_cp
-                    has_configured_ghe_pump = True
+                    output_columns[csv_columns.PUMP_POWER.for_object(this_comp.name)] = this_comp.P_ghe_cp
+                    total_ghe_pump_power += this_comp.P_ghe_cp
                 network_q_net_ghe_tot += this_comp.q_ghe * this_comp.nbh * this_comp.height
 
         for this_comp in self.components:
@@ -3461,8 +3517,25 @@ class GHEHPSystem:
                 output_columns[csv_columns.PRESSURE_LOSS_PER_LENGTH.for_object(this_comp.name)] = (
                     horizontal_pressure_loss / horizontal_branch.length
                 )
-        output_columns[csv_columns.output_column(csv_columns.NETWORK, "Distribution Pump Power", "W")] = (
-            self.pump_power_loop
+        distribution_pump_power = np.zeros(self.num_timesteps, dtype=float)
+        if self.distribution_pump_branch is not None:
+            distribution_branch_id = self.distribution_pump_branch.id
+            distribution_pump_power = self.network_pump_power_history[distribution_branch_id]
+            output_columns[csv_columns.DISTRIBUTION_PUMP_MASS_FLOW_RATE.for_object(csv_columns.NETWORK)] = (
+                self.network_pump_mass_flow_history[distribution_branch_id]
+            )
+            output_columns[csv_columns.DISTRIBUTION_PUMP_POWER.for_object(csv_columns.NETWORK)] = (
+                distribution_pump_power
+            )
+        output_columns[csv_columns.AGGREGATE_BUILDING_PUMP_MASS_FLOW_RATE.for_object(csv_columns.NETWORK)] = (
+            aggregate_building_pump_flow
+        )
+        output_columns[csv_columns.TOTAL_BUILDING_PUMP_POWER.for_object(csv_columns.NETWORK)] = (
+            total_building_pump_power
+        )
+        output_columns[csv_columns.TOTAL_GHE_PUMP_POWER.for_object(csv_columns.NETWORK)] = total_ghe_pump_power
+        output_columns[csv_columns.TOTAL_NETWORK_PUMP_POWER.for_object(csv_columns.NETWORK)] = (
+            total_building_pump_power + total_ghe_pump_power + distribution_pump_power
         )
         output_columns[csv_columns.output_column(csv_columns.NETWORK, "Total Building Net Heat Transfer Rate", "W")] = (
             network_q_net_bldg_tot
@@ -3474,10 +3547,6 @@ class GHEHPSystem:
         output_columns[csv_columns.output_column(csv_columns.NETWORK, "Total GHE Heat Transfer Rate", "W")] = (
             network_q_net_ghe_tot
         )
-        if has_configured_ghe_pump:
-            output_columns[csv_columns.output_column(csv_columns.NETWORK, "Total GHE Circulation Pump Power", "W")] = (
-                configured_ghe_pump_power
-            )
 
         # print("\n===== OUTPUT LENGTH CHECK =====")
         # print("Index length =", len(self.time_array[1:]))
