@@ -17,6 +17,7 @@ dependencies = [
     "flask>=3.1.0",
     "jsonschema>=4.26.0",
     "numpy<2.4",
+    "pyclipper>=1.4.0",
     "pygfunction>=2.3.1",
     "scipy>=1.15.3",
     "secondarycoolantprops>=1.5",
