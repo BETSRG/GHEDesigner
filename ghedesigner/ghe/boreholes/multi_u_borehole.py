@@ -67,6 +67,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         # equivalent to R_fp_prime
         def objective_pipe_conductivity(pipe_k: float):
             eq_single_u_tube.pipe.k = pipe_k
+            eq_single_u_tube.init_bhr_borehole()  # bhr only sees the new k once re-initialized
             eq_single_u_tube.calc_fluid_pipe_resistance()
             return eq_single_u_tube.R_fp - (resist_conv + resist_pipe)
 
@@ -76,12 +77,15 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         k_p_upper = eq_single_u_tube.pipe.k * 10.0
 
         # Solve for the pipe conductivity to make the resistance equal
-        solve_root(
+        k_p = solve_root(
             eq_single_u_tube.pipe.k,
             objective_pipe_conductivity,
             lower=k_p_lower,
             upper=k_p_upper,
         )
+        # Keep the solution, not the last value the root finder tried
+        eq_single_u_tube.pipe.k = k_p
+        eq_single_u_tube.init_bhr_borehole()
 
         return eq_single_u_tube
 
@@ -92,6 +96,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         def objective_resistance(k_g_in: float):
             # update new tubes grout thermal conductivity and relevant parameters
             preliminary_new_single_u_tube.grout.k = k_g_in
+            preliminary_new_single_u_tube.init_bhr_borehole()  # bhr only sees the new k once re-initialized
             # Update Delta-circuit thermal resistances
             # Initialize stored_coefficients
             resist_bh_prime = preliminary_new_single_u_tube.calc_effective_borehole_resistance()
@@ -105,6 +110,7 @@ class GHEDesignerBoreholeWithMultiplePipes(GHEDesignerBoreholeBase):
         k_g = solve_root(preliminary_new_single_u_tube.grout.k, objective_resistance, lower=kg_lower, upper=kg_upper)
         # Ensure the grout thermal conductivity is updated
         preliminary_new_single_u_tube.grout.k = k_g
+        preliminary_new_single_u_tube.init_bhr_borehole()
 
         return preliminary_new_single_u_tube
 
