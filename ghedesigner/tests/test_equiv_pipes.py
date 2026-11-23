@@ -78,6 +78,12 @@ class TestEquivalentPipes(GHEBaseTest):
 
         self.log(single_u_tube.as_dict())
 
+        # The equivalent single U-tube must reproduce the coaxial exchanger's effective
+        # borehole resistance, with physically sensible conductivities.
+        self.assertAlmostEqual(rb, coaxial.calc_effective_borehole_resistance(), delta=1e-6)
+        self.assertGreater(single_u_tube.grout.k, 0.1)
+        self.assertGreater(single_u_tube.pipe.k, 0.1)
+
     def test_equiv_pipes_double_to_single_u_tube(self):
         # Borehole dimensions
         h = 100.0  # Borehole length (m)
@@ -146,3 +152,9 @@ class TestEquivalentPipes(GHEBaseTest):
         self.log(f"Effective borehole resistance (m.K/W): {rb:0.8f}")
 
         self.log(single_u_tube.as_dict())
+
+        # The equivalent single U-tube must reproduce the double U-tube's effective
+        # borehole resistance, with physically sensible conductivities.
+        self.assertAlmostEqual(rb, double_u_tube.calc_effective_borehole_resistance(), delta=1e-6)
+        self.assertGreater(single_u_tube.grout.k, 0.1)
+        self.assertGreater(single_u_tube.pipe.k, 0.1)

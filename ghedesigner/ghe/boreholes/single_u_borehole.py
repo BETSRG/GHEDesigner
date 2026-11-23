@@ -50,18 +50,7 @@ class SingleUTube(GHEDesignerBoreholeBase):
         if not isinstance(pipe.r_out, float) or not isinstance(pipe.r_in, float):
             raise TypeError("pipe r_in and r_out must be floats")
 
-        self.bhr_borehole.init_single_u_borehole(
-            borehole_diameter=borehole.r_b * 2,
-            pipe_outer_diameter=(2.0 * pipe.r_out),
-            pipe_dimension_ratio=(2.0 * pipe.r_out) / (pipe.r_out - pipe.r_in),
-            length=borehole.H,
-            shank_space=(pipe.s / 2.0 + pipe.r_out),
-            pipe_conductivity=pipe.k,
-            grout_conductivity=grout.k,
-            soil_conductivity=soil.k,
-            boundary_condition="UNIFORM_BOREHOLE_WALL_TEMP",
-            fluid=self.fluid.scp_fluid,
-        )
+        self.init_bhr_borehole()
 
         # radial numerical initialization
         # "The one dimensional model has a fluid core, an equivalent convective
@@ -123,6 +112,27 @@ class SingleUTube(GHEDesignerBoreholeBase):
         # default is at least 49 hours, or up to -8.6 log time
         self.calc_time_in_sec = max([self.t_s * exp(-8.6), 49.0 * SEC_IN_HR])
         self.g_sts = None
+
+    def init_bhr_borehole(self) -> None:
+        """(Re)build the bhr borehole from the current geometry and conductivities.
+
+        bhr copies these values when the borehole is initialized, so this must be called
+        again whenever ``pipe.k`` or ``grout.k`` changes, or bhr keeps using the old values.
+        """
+        r_out = cast(float, self.pipe.r_out)
+        r_in = cast(float, self.pipe.r_in)
+        self.bhr_borehole.init_single_u_borehole(
+            borehole_diameter=self.borehole.r_b * 2,
+            pipe_outer_diameter=(2.0 * r_out),
+            pipe_dimension_ratio=(2.0 * r_out) / (r_out - r_in),
+            length=self.borehole.H,
+            shank_space=(self.pipe.s / 2.0 + r_out),
+            pipe_conductivity=self.pipe.k,
+            grout_conductivity=self.grout.k,
+            soil_conductivity=self.soil.k,
+            boundary_condition="UNIFORM_BOREHOLE_WALL_TEMP",
+            fluid=self.fluid.scp_fluid,
+        )
 
     def calc_fluid_pipe_resistance(self) -> float:
         self.R_fp = self.bhr_borehole.calc_fluid_pipe_resist(self.m_flow_borehole, self.soil.ugt)

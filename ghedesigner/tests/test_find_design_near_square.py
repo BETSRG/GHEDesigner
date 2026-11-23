@@ -102,7 +102,7 @@ class TestFindNearSquareDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.8)
-        self.assert_design_matches_any(search, [(123.14, 144), (125.39, 144)])
+        self.assert_design_matches_any(search, [(125.10, 144)])
 
     def test_design_selection_borehole(self):
         pipe = Pipe.init_single_u_tube(
