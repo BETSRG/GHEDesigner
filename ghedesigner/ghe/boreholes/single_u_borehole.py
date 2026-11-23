@@ -119,12 +119,14 @@ class SingleUTube(GHEDesignerBoreholeBase):
         bhr copies these values when the borehole is initialized, so this must be called
         again whenever ``pipe.k`` or ``grout.k`` changes, or bhr keeps using the old values.
         """
+        r_out = cast(float, self.pipe.r_out)
+        r_in = cast(float, self.pipe.r_in)
         self.bhr_borehole.init_single_u_borehole(
             borehole_diameter=self.borehole.r_b * 2,
-            pipe_outer_diameter=(2.0 * self.pipe.r_out),
-            pipe_dimension_ratio=(2.0 * self.pipe.r_out) / (self.pipe.r_out - self.pipe.r_in),
+            pipe_outer_diameter=(2.0 * r_out),
+            pipe_dimension_ratio=(2.0 * r_out) / (r_out - r_in),
             length=self.borehole.H,
-            shank_space=(self.pipe.s / 2.0 + self.pipe.r_out),
+            shank_space=(self.pipe.s / 2.0 + r_out),
             pipe_conductivity=self.pipe.k,
             grout_conductivity=self.grout.k,
             soil_conductivity=self.soil.k,
