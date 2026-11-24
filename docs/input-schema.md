@@ -82,6 +82,11 @@ A load source supplies values in one of three ways:
 Every form also requires `value_units: "W"`. A source may include either `heat_pump_id`, which references an entry in
 the top-level `heat_pumps` collection, or `heat_pump_cop` for fixed-COP conversion. Do not provide both.
 
+A fixed-COP source may also include `design_pressure_drop_pa` and `pump_efficiency_fraction`, which must be given
+together. They play the same role as the heat pump map fields of the same names: the building-side pressure loss while
+that mode operates, and the efficiency of the building's local circulation pump. Without them, a fixed-COP building
+reports zero pressure loss and zero circulation-pump power.
+
 A building contains one of these load arrangements:
 
 - `heating_load_source` and `cooling_load_source`.
@@ -158,7 +163,7 @@ The GHE flow columns distinguish flow provided by the district network from flow
 - `Local Recirculation Flow Rate [kg/s]` is the additional local flow required when network branch flow is below that
   minimum. It equals pump flow minus non-negative network branch flow and is otherwise zero.
 
-`Pump Mass Flow Rate` and `Local Recirculation Flow Rate` are reported only when the GHE has a configured
+`Pump Mass Flow Rate`, `Pump Power`, and `Local Recirculation Flow Rate` are reported only when the GHE has a configured
 `circulation_pump`.
 
 District simulation CSV files report `Total Pressure Loss [Pa]` for each building, GHE, and simulated horizontal pipe.
@@ -169,8 +174,10 @@ is normalized by borehole depth. This reported borehole-only loss excludes local
 `circulation_pump.reference_pressure_drop_pa`, which represents the borefield and local headers and is used to calculate
 local pump power.
 Horizontal-pipe loss uses the mapped network segment's Darcy-Weisbach pressure loss, including configured roughness and
-minor-loss coefficients, and is normalized by segment length. Building loss is the active heat pump's configured
-`design_pressure_drop_pa`.
+minor-loss coefficients, and is normalized by segment length. Building loss is the active mode's configured
+`design_pressure_drop_pa`, from the heat pump map or, for a fixed-COP source, from the load source itself. In one-pipe
+networks, building `Pump Power [W]` is the building flow multiplied by that loss, divided by fluid density and the
+active mode's `pump_efficiency_fraction`.
 
 ## District network
 
@@ -193,6 +200,13 @@ source of hydraulic diameter and roughness as well as thermal construction; the 
 The compact one-pipe representation automatically creates zero-loss station bypasses. Network flow is prescribed from
 building demand rather than allocated from pressure loss. Configured pressure-loss models are used for pump power;
 component pressure-loss outputs may also use component-specific calculations described above.
+
+District CSV output identifies physical component pumps by component name. Buildings and configured GHE pumps report
+`Pump Mass Flow Rate [kg/s]` and `Pump Power [W]`. One-pipe systems additionally report
+`Network: Distribution Pump Mass Flow Rate [kg/s]` and `Network: Distribution Pump Power [W]`. Network totals include
+`Aggregate Building Pump Mass Flow Rate [kg/s]`, `Total Building Pump Power [W]`, `Total GHE Pump Power [W]`, and
+`Total Network Pump Power [W]`. The total network pump power is the sum of building, GHE, and distribution-pump power;
+two-pipe systems omit the distribution-pump columns because they do not have a distribution-pump branch.
 
 When `parametric_study` is present, it explicitly requires `study_type` and
 `ground_heat_exchanger_ids_to_modify`. Parameter value specifications also require `parameter_range` to distinguish
