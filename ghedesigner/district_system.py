@@ -2417,7 +2417,8 @@ class GHEHPSystem:
     def set_ground_heat_exchanger_size(self, ratio):
         for ghe in self.sizable_ground_heat_exchangers:
             if not ghe.is_bypassed:
-                ghe.update_ghe_design_height(ratio * ghe.ghe_manager.max_height)
+                height = max(ghe.ghe_manager.min_height, ratio * ghe.ghe_manager.max_height)
+                ghe.update_ghe_design_height(height)
                 ghe.update_ghe_parameters()
 
     def size_ground_heat_exchangers(self, size_tolerance=1e-3):

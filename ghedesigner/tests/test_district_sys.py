@@ -947,6 +947,32 @@ class TestDistrictSys(GHEBaseTest):
         with pytest.raises(ValueError, match="do not have a common range"):
             GHEHPSystem._get_rowwise_spacing_bounds([make_ghe(4.5, 5.0), make_ghe(6.0, 8.0)])
 
+    def test_district_sizing_respects_minimum_borehole_height(self):
+        requested_heights = []
+        ghe = SimpleNamespace(
+            is_bypassed=False,
+            ghe_manager=SimpleNamespace(min_height=50.0, max_height=100.0),
+            update_ghe_design_height=requested_heights.append,
+            update_ghe_parameters=lambda: None,
+        )
+        system = object.__new__(GHEHPSystem)
+        system.sizable_ground_heat_exchangers = [ghe]
+        system.nbh_selections = ["candidate"]
+        system.excess_temperatures = []
+        system.nbh_values = []
+        system.total_drilling_values = []
+        system.borehole_heights = []
+        system.objective_function_values = []
+        system.search_method = "global_rowwise"
+        system.calculate_building_excess = lambda: -1.0
+        system.solve_system = Mock()
+        system.get_nbh_and_td = lambda: (1, requested_heights[-1], requested_heights[-1])
+
+        system.size_ground_heat_exchangers()
+
+        assert min(requested_heights) >= ghe.ghe_manager.min_height
+        assert requested_heights[-1] == pytest.approx(ghe.ghe_manager.min_height)
+
     def test_simulate_1_pipe_1_ghe_1_bldg_district(self):
         f_path_json = self.demos_path / "simulate_1_pipe_1_ghe_1_bldg_district.json"
         system = GHEHPSystem(f_path_json)
