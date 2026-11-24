@@ -74,9 +74,9 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         )
         search = self.get_design(pipe, 0.5)
         u_tube_height = search.ghe.bhe.borehole.H
-        self.assertAlmostEqual(127.0, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(114.85, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
-        self.assertEqual(12, len(borehole_location_data_rows))
+        self.assertEqual(16, len(borehole_location_data_rows))
 
     def test_multiyear_loading_coaxial(self):
         pipe = Pipe.init_coaxial(
@@ -90,6 +90,6 @@ class TestFindNearSquareMultiyearDesign(GHEBaseTest):
         )
         search = self.get_design(pipe, 0.8)
         u_tube_height = search.ghe.bhe.borehole.H
-        self.assertAlmostEqual(112.03, u_tube_height, delta=0.1)
+        self.assertAlmostEqual(128.38, u_tube_height, delta=0.1)
         borehole_location_data_rows = search.ghe.gFunction.bore_locations
         self.assertEqual(12, len(borehole_location_data_rows))

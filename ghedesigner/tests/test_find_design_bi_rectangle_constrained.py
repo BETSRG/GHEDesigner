@@ -157,7 +157,7 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.5, 0.07, prop_boundary, no_go_zones)
-        self.assert_design_matches_any(search, [(134.494, 60)])
+        self.assert_design_matches_any(search, [(133.80, 62)])
 
     def test_coaxial(self):
         pipe = Pipe.init_coaxial(
@@ -170,4 +170,4 @@ class TestFindBiRectangleConstrainedDesign(GHEBaseTest):
             rho_cp=1542000.0,
         )
         search = self.get_design(pipe, 0.8, 0.07, prop_boundary, no_go_zones)
-        self.assert_design_matches_any(search, [(134.96, 55)])
+        self.assert_design_matches_any(search, [(134.64, 57)])

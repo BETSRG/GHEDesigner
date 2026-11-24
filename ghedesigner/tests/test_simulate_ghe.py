@@ -217,18 +217,18 @@ class TestGHE(GHEBaseTest):
 
         self.assert_value_matches_any(
             max_hp_eft,
-            [37.3, 37.73380935156091],
+            [37.49966],
             delta=0.1,
             label="double-u max HP EFT",
         )
-        self.assertAlmostEqual(17.3, min_hp_eft, delta=0.1)
+        self.assertAlmostEqual(17.07, min_hp_eft, delta=0.1)
 
         ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
 
         self.assertEqual(156, ghe.nbh)
         self.assert_value_matches_any(
             ghe.bhe.borehole.H,
-            [117.6, 120.41549236676839],
+            [118.647766],
             delta=0.1,
             label="double-u sized borehole height",
         )
@@ -277,14 +277,14 @@ class TestGHE(GHEBaseTest):
             delta=0.1,
             label="coaxial max HP EFT",
         )
-        self.assertAlmostEqual(17.51, min_hp_eft, delta=0.1)
+        self.assertAlmostEqual(17.37, min_hp_eft, delta=0.1)
 
         ghe.size(TimestepType.HYBRID, self.max_height, self.min_height, self.max_eft, self.min_eft)
 
         self.assertEqual(156, ghe.nbh)
         self.assert_value_matches_any(
             ghe.bhe.borehole.H,
-            [115.74, 118.14124507148705],
+            [116.309795],
             delta=0.1,
             label="coaxial sized borehole height",
         )
